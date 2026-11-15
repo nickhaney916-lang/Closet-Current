@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact PR1126 parent and six-path no-deploy allowlist
+      - name: Exact PR1126 parent and seven-path no-deploy allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|scripts/build.mjs|tests/mission3-edit-backup-owner-lease.test.cjs|tests/mission3-private-import-locked-gate-v4-bridge.test.cjs|research/mission3-private-import-locked-gate/REPORT.md|.github/workflows/mission3-private-import-locked-gate-no-deploy.yml) ;;
+              public/app.js|scripts/build.mjs|scripts/test-mission3-edit-backup-owner-browser.mjs|tests/mission3-edit-backup-owner-lease.test.cjs|tests/mission3-private-import-locked-gate-v4-bridge.test.cjs|research/mission3-private-import-locked-gate/REPORT.md|.github/workflows/mission3-private-import-locked-gate-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -117,6 +117,7 @@ jobs:
           node --check tests/mission3-recognition-session-epoch.test.cjs
           node --check scripts/test-mission3-capture-status-cas-browser.mjs
           node --check scripts/test-mission3-crop-owner-lease-browser.mjs
+          node --check scripts/test-mission3-edit-backup-owner-browser.mjs
           node --check scripts/test-mission3-mobile-media-interruption-browser.mjs
           node --check tests/mission3-draft-row-cas.test.cjs
           node --check scripts/test-mission3-draft-row-cas-browser.mjs
@@ -166,7 +167,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Strict PR1126 six-path exact-parent diff gate
+      - name: Strict PR1126 seven-path exact-parent diff gate
         shell: bash
         run: |
           set -euo pipefail
@@ -175,7 +176,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|scripts/build.mjs|tests/mission3-edit-backup-owner-lease.test.cjs|tests/mission3-private-import-locked-gate-v4-bridge.test.cjs|research/mission3-private-import-locked-gate/REPORT.md|.github/workflows/mission3-private-import-locked-gate-no-deploy.yml) ;;
+              public/app.js|scripts/build.mjs|scripts/test-mission3-edit-backup-owner-browser.mjs|tests/mission3-edit-backup-owner-lease.test.cjs|tests/mission3-private-import-locked-gate-v4-bridge.test.cjs|research/mission3-private-import-locked-gate/REPORT.md|.github/workflows/mission3-private-import-locked-gate-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
