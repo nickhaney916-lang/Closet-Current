@@ -70,7 +70,9 @@ function savePiece(value,nextBatch,lease){
    value.recognitionPhoto?.image!==lease.recognition||
    value.outfitSourceId!==lease.sourceId||
    JSON.stringify(value.segmentHint??null)!==lease.maskRevision||
-   JSON.stringify(value.cropBounds??null)!==lease.cropRevision)
+   JSON.stringify(value.cropBounds??null)!==lease.cropRevision||
+   !lease.evidenceRevision||
+   ordinarySourceEvidence88(value)!==lease.evidenceRevision)
    throw Error('P88_REVOKED_REVIEWED_SAVE');
   // Compute the surviving drafts after cloud preflight. An older save must
   // never drop an unrelated garment captured while that await was pending.
@@ -92,7 +94,27 @@ function reviewedSaveLease88(item){
   image:item?.image,original:item?.originalPhoto?.image,
   recognition:item?.recognitionPhoto?.image,sourceId:item?.outfitSourceId,
   maskRevision:JSON.stringify(item?.segmentHint??null),
-  cropRevision:JSON.stringify(item?.cropBounds??null)};
+  cropRevision:JSON.stringify(item?.cropBounds??null),
+  evidenceRevision:ordinarySourceEvidence88(item)};
+}
+// A manual photo review permits category/type/color edits; it is not
+// independent provenance of a single physical garment or 3D geometry.
+// Preserve any existing source claims exactly; never manufacture new ones.
+function ordinarySourceEvidence88(item){
+ try{return JSON.stringify({
+  ownerId:item?.ownerId??null,userId:item?.userId??null,accountId:item?.accountId??null,
+  sourceKind:item?.sourceKind??null,sourceSHA256:item?.sourceSHA256??null,
+  ownerReviewed:item?.ownerReviewed??null,sourcePhotoOriginal:item?.sourcePhotoOriginal??null,
+  sourceHashVerified:item?.sourceHashVerified??null,
+  singleGarmentVerified:item?.singleGarmentVerified??null,
+  independentPhysicalItemVerified:item?.independentPhysicalItemVerified??null,
+  threeDReady:item?.threeDReady??null,originalSha256:item?.originalPhoto?.sha256??null,
+  originalVerified:item?.originalPhoto?.verified??null,
+  ownerSourceReview88:item?.ownerSourceReview88??null,
+  reconciliation70:item?.reconciliation70??null,
+  reconciliation70Status:item?.reconciliation70Status??null,
+  shoePair:item?.shoePair??null,combinedFragments70:item?.combinedFragments70??null
+ });}catch{return null;}
 }
 function reviewedSaveLeaseLive88(lease){
  try{
@@ -105,7 +127,8 @@ function reviewedSaveLeaseLive88(lease){
    item.recognitionPhoto?.image===lease.recognition&&
    item.outfitSourceId===lease.sourceId&&
    JSON.stringify(item.segmentHint??null)===lease.maskRevision&&
-   JSON.stringify(item.cropBounds??null)===lease.cropRevision);
+   JSON.stringify(item.cropBounds??null)===lease.cropRevision&&
+   !!lease.evidenceRevision&&ordinarySourceEvidence88(item)===lease.evidenceRevision);
  }catch{return false;}
 }
 

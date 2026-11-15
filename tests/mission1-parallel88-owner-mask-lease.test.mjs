@@ -1700,4 +1700,37 @@ test('P88 ordinary review save holds exact owner, image and IDB after cloud pref
   await assert.rejects(attempt,/P88_REVOKED_REVIEWED_SAVE/);
   assert.equal(s.writes,0,'replaced crop cannot reuse the old review lease');
  }
+
+  // Existing photos may be edited, but an ordinary review cannot mint a
+  // model-verified source, one-garment identity, or 3D-readiness token.
+  for(const alter of [
+   v=>{v.ownerReviewed=true;},v=>{v.sourcePhotoOriginal=true;},
+   v=>{v.sourceHashVerified=true;},v=>{v.singleGarmentVerified=true;},
+   v=>{v.independentPhysicalItemVerified=true;},v=>{v.threeDReady=true;},
+   v=>{v.sourceSHA256='a'.repeat(64);},
+   v=>{v.ownerId='owner-A';},v=>{v.sourceKind='verified-single';},
+   v=>{v.originalPhoto={image:v.image,sha256:'a'.repeat(64)};},
+   v=>{v.ownerSourceReview88={ownerReviewed:true};},
+   v=>{v.reconciliation70={ownerId:'owner-A',maskSha256:'a'.repeat(64)};},
+   v=>{v.shoePair={confirmedByOwner:true};}
+  ]){
+   const s=setup(),v=structuredClone(s.item);
+   alter(v);const pending=s.c.savePiece(v,[],s.lease);s.releaseGate();
+   await assert.rejects(pending,/P88_REVOKED_REVIEWED_SAVE/);
+   assert.equal(s.writes,0,'ordinary photo cannot silently become source-verified');
+  }
+  {
+   const s=setup(),pending=s.c.savePiece({...s.item},[],s.lease);
+   s.item.sourceHashVerified=true; // in-place change while preflight queued
+   s.releaseGate();await assert.rejects(pending,/P88_REVOKED_REVIEWED_SAVE/);
+   assert.equal(s.writes,0);
+  }
+  {
+   const s=setup(),v={...s.item,category:'Dresses',itemType:'Dress',
+    color:'Green',userAdjusted:true};
+   const pending=s.c.savePiece(v,[],s.lease);s.releaseGate();await pending;
+   assert.equal(s.written.items.category,'Dresses');
+   assert.equal(s.written.items.color,'Green');
+   assert.equal(s.writes,2,'legitimate owner details still persist');
+  }
 });
