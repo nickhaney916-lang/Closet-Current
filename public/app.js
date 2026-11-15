@@ -1957,7 +1957,7 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
    const image=original?.image===undefined?row.image:original.image;
    if(original?.image===undefined&&!claimed&&!photoClaim&&!verified)continue;
    if(typeof image!=='string'||image.length>11200000||
-      !/^data:image\\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image))
+      !/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image))
     throw Error('Backup original JPEG is unavailable or invalid. No clothing was imported.');
    let bytes;
    try{bytes=Uint8Array.from(atob(image.slice('data:image/jpeg;base64,'.length)),
