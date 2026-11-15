@@ -804,7 +804,7 @@ try{
   originalPhotoOnly:true,fitted3D:false,syntheticAuthOnly:true,
   hostedRLS:false,physicalPhone:false,familyAlpha:'HOLD'
  }));
- const lifecycle91={engine,browserVersion:browser.version(),elapsedMs:Math.round(performance.now()-started),
+ const lifecycle91={status:'passed',engine,browserVersion:browser.version(),elapsedMs:Math.round(performance.now()-started),
   uninterruptedSourceExportRestore:true,writeRetries:0,extraTamperReloads:0,ownerRecovery:true,
   originalPhotoByteTamperRefused:true,familyAlpha:'HOLD',releaseAuthorized:false,
   events:documentLifecycle91};
@@ -812,6 +812,13 @@ try{
  console.log('P91_FULL_JOURNEY_PASS',JSON.stringify({...lifecycle91,events:undefined}));
  await context.close();
 }catch(e){
+ // Preserve the lifecycle even when the browser/context is already gone.
+ // Only allowlisted categories and stage/event metadata enter the artifact.
+ const errorKind=/Execution context was destroyed|because of a navigation/.test(String(e))?
+  'generic-context-error':e?.name==='AssertionError'?'assertion':e?.name==='TimeoutError'?'timeout':'other';
+ await writeFile(join(out,'P91-LIFECYCLE.json'),JSON.stringify({status:'failed',engine,stage,
+  errorKind,elapsedMs:Math.round(performance.now()-started),events:documentLifecycle91,
+  familyAlpha:'HOLD',releaseAuthorized:false},null,2));
  console.error('M58_REAL_P88_WORKER_FAIL',JSON.stringify({
   stage,error:String(e?.stack||e).slice(0,950),
   external:external.slice(0,15),rejected:rejected.slice(0,15),issues:issues.slice(0,10),

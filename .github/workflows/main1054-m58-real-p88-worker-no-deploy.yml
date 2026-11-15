@@ -4,7 +4,7 @@ on:
     branches: [research/main1054-m58-real-p88-browser-worker-HOLD, fix/parallel91-browser-lifecycle-HOLD]
   pull_request:
     branches: [research/main1054-m58-real-p88-browser-worker-HOLD]
-    paths: [scripts/test-main58-actual-p88-wasm-browser.mjs, scripts/lib/owner-item-mutation91.mjs, scripts/test-browser-owner-mutation91.mjs, .github/workflows/main1054-m58-real-p88-worker-no-deploy.yml]
+    paths: [scripts/test-browser-legacy-context91.mjs, scripts/test-main58-actual-p88-wasm-browser.mjs, scripts/lib/owner-item-mutation91.mjs, scripts/test-browser-owner-mutation91.mjs, .github/workflows/main1054-m58-real-p88-worker-no-deploy.yml]
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -54,7 +54,7 @@ jobs:
           test "$(git rev-parse HEAD:public/app.js)" = d259d0b77a006d032699be50536adb2ebca459dd
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
-              scripts/test-main58-actual-p88-wasm-browser.mjs|scripts/lib/owner-item-mutation91.mjs|scripts/test-browser-owner-mutation91.mjs|research/master-consolidation-1054/MILESTONE58.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|public/outfit-board.js|research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|tests/detector-manual-recovery-65.test.mjs|tests/invalid-selection-race-71.test.mjs|tests/review-source-epoch-34.test.mjs|tests/mission3-outfit-card-picker-owner-lease.test.cjs|tests/mission3-outfit-suggestion-owner-lease.test.cjs|public/app.js|scripts/test-main1054-duplicate-fence-browser.mjs|tests/main1054-saved-photo-duplicate-fence.test.mjs|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/automatic-indexing.test.cjs) ;;
+              scripts/test-main58-actual-p88-wasm-browser.mjs|scripts/test-browser-legacy-context91.mjs|scripts/lib/owner-item-mutation91.mjs|scripts/test-browser-owner-mutation91.mjs|research/master-consolidation-1054/MILESTONE58.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|public/outfit-board.js|research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|tests/detector-manual-recovery-65.test.mjs|tests/invalid-selection-race-71.test.mjs|tests/review-source-epoch-34.test.mjs|tests/mission3-outfit-card-picker-owner-lease.test.cjs|tests/mission3-outfit-suggestion-owner-lease.test.cjs|public/app.js|scripts/test-main1054-duplicate-fence-browser.mjs|tests/main1054-saved-photo-duplicate-fence.test.mjs|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/automatic-indexing.test.cjs) ;;
               *) echo "MAIN58 blocked unexpected change: $path"; exit 1;;
             esac
           done
@@ -111,6 +111,9 @@ jobs:
             console.error('P91_PROTOCOL_ERROR_CATEGORY',category);
           `));
           JS
+      - name: P91 bounded historical comparison (every independent outcome retained; not current acceptance)
+        if: github.event_name == 'workflow_dispatch'
+        run: node scripts/test-browser-legacy-context91.mjs
       - name: P91 real IndexedDB commit, abort, owner replacement and document lifecycle regression
         run: P91_ENGINE=${{ matrix.engine }} node scripts/test-browser-owner-mutation91.mjs
       - name: Live original JPEG, native owner WebCrypto, exact P88 Worker, browser SegFormer WASM, NO SAVE
@@ -144,6 +147,7 @@ jobs:
           path: |
             benchmark/main58-real-p88-browser-worker/${{ matrix.engine }}/M58-ACTUAL-P88-BROWSER-NO-SILENT-SAVE.json
             benchmark/main58-real-p88-browser-worker/${{ matrix.engine }}/P91-LIFECYCLE.json
+            benchmark/main58-real-p88-browser-worker/${{ matrix.engine }}/P91-HISTORICAL-COMPARISON.json
           retention-days: 14
           if-no-files-found: ignore
 
