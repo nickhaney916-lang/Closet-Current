@@ -149,9 +149,9 @@ test('P90 M11 compares independent original triangle crossings to cached body BV
  assert.ok(source.includes("execFileSync(process.execPath,['scripts/check-parallel90-contact-bvh.mjs',donor],{stdio:'inherit'})"));
  assert.ok(source.includes("if(startupVariant90==='candidate')execFileSync"),
   'only candidate invokes the additional exact collision parity script');
- assert.ok(actual.includes("const bodyTree90=new MeshBVH(body)"));
- assert.ok(actual.includes("triangleContacts(makeGarment(shift),body,{collect:true,bodyTree90})"));
+ assert.ok(actual.includes("bodyTree90=new MeshBVH(body)"));
+ assert.ok(actual.includes("triangleContacts(optimizedShirt,body,{collect:true,bodyTree90})"));
  assert.ok(actual.includes("assert.deepEqual(reused,original)"));
- assert.ok(actual.includes("assert.ok(original.count>0"));
+ assert.ok(actual.includes("assert.ok(results[0].count>0"));
  assert.ok(actual.includes("assert.equal(noCross.count,0"));
 });
