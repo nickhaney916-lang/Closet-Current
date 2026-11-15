@@ -63,7 +63,8 @@ export function mountMultiGarmentCapture24({
  if(!host)return {active:false};
  // MAIN57: explicit research-only P88 donor transport, off for default app.
  // The donor stays in a Git-hash-attested, disposable same-origin CI fixture.
- const p88Transport57=new URLSearchParams(window.location.search).get('p88Transport57')==='research';
+ const p88Transport57=['127.0.0.1','localhost'].includes(window.location.hostname)&&
+  new URLSearchParams(window.location.search).get('p88Transport57')==='research';
  const style=el('style');style.textContent=`
  .multi24{margin-top:1rem;display:grid;gap:.85rem;min-width:0}
  .multi24 .multi24-source{max-width:100%;max-height:260px;object-fit:contain;border-radius:9px}
