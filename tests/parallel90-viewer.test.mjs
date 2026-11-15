@@ -401,7 +401,9 @@ test('P90 M22 source-honest original-photo fallback when WebGL2 is unavailable a
  assert.ok(source.includes("restored.resources90.textures,prior.resources90.textures"));
  assert.ok(source.includes("390-webgl-unavailable-fallback.json"));
  assert.ok(source.includes("realPhysicalGPUNoWebGLTested:false"));
- assert.ok(donor.includes("if(!probe)throw Error('WebGL2 unavailable')"));
+ assert.ok(donor.includes("const panel=donor+'/research/outfit-3d-01/research-panel.mjs'"));
+ assert.ok(donor.includes("df6885d6011cb33fb22dceb81a08f35a0ac4dd61"));
+ assert.ok(source.includes("Original-photo/2D fallback: WebGL2 unavailable"));
  assert.ok(native.includes("await attestOriginalBytes92()"));
  assert.ok(workflow.includes("engine: [chromium, webkit]"));
 });
