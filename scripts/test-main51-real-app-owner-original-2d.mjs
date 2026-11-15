@@ -129,7 +129,7 @@ try{
    // not evidence of a user-photo exfiltration or failed local app login.
    const hostname=new URL(url).hostname;
    if(route.request().method()==='GET'&&
-      ['fonts.googleapis.com','raw.githubusercontent.com'].includes(hostname))
+      ['fonts.googleapis.com','raw.githubusercontent.com','cdn.jsdelivr.net'].includes(hostname))
     return route.abort();
    network.push({engine,width,kind:'unexpected-remote',host:hostname,
     method:route.request().method()});
