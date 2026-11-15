@@ -341,3 +341,108 @@ test('legacy import rejects excessively nested metadata before any private stora
  assert.equal(f.counts.legacyWrites||0,0);
  assert.ok(f.events.some(x=>x.includes('nesting is unsafe')));
 });
+
+if(process.env.M3_TEST_DIST_ATOMIC==='1'){
+ test('built PWA imports original JPEG, looks and outfit in one native IDB transaction on Chromium and WebKit',async()=>{
+  const {createServer}=require('node:http');
+  const {readFile}=require('node:fs/promises');
+  const {resolve,extname}=require('node:path');
+  const {createHash}=require('node:crypto');
+  const {chromium,webkit}=require('playwright');
+  const sharp=require('sharp');
+  const root=resolve('dist');
+  const jpeg='data:image/jpeg;base64,'+(await sharp({create:{width:64,height:64,
+   channels:3,background:{r:72,g:132,b:181}}}).jpeg().toBuffer()).toString('base64');
+  const sha=createHash('sha256').update(Buffer.from(jpeg.slice('data:image/jpeg;base64,'.length),'base64')).digest('hex');
+  const server=createServer(async(req,res)=>{
+   try{
+    const url=new URL(req.url,'http://127.0.0.1');
+    const rel=decodeURIComponent(url.pathname).replace(/^\\/+/, '')||'index.html';
+    const file=resolve(root,rel);
+    if(!file.startsWith(root+'/'))throw Error('Outside PWA distribution');
+    const body=await readFile(file);
+    const mime=extname(file)==='.html'?'text/html':
+     /\\.(?:js|mjs)$/.test(file)?'text/javascript':'application/octet-stream';
+    res.writeHead(200,{'content-type':mime,'cache-control':'no-store'});res.end(body);
+   }catch{res.writeHead(404);res.end('not found');}
+  });
+  await new Promise(done=>server.listen(0,'127.0.0.1',done));
+  const origin='http://127.0.0.1:'+server.address().port;
+  try{
+   for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
+    const browser=await engine.launch({headless:true,args:name==='chromium'?['--no-sandbox']:[]});
+    try{
+     const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true,
+      hasTouch:true,serviceWorkers:'block'});
+     try{
+      const owner='signed-dist-'+name;
+      await ctx.route('**/auth.js*',route=>route.fulfill({contentType:'text/javascript',body:
+       "window.closetAuth={user:{id:'"+owner+"'},ready:Promise.resolve(),getAccessToken:async()=>'synthetic',assertCurrent:()=>{}};document.getElementById('authGate').hidden=true;document.getElementById('appShell').hidden=false;"}));
+      await ctx.route('**/cloud-backup.js*',route=>route.fulfill({contentType:'text/javascript',body:
+       'window.closetCloud={start:async()=>({started:true}),beforeWrite:async()=>{},changed:()=>{window.__privateCloudDirty=(window.__privateCloudDirty||0)+1}};'}));
+      const blocked=[];
+      await ctx.route('**/*',route=>{
+       const url=new URL(route.request().url());
+       if(url.hostname==='127.0.0.1'||url.protocol==='data:'||url.protocol==='blob:')
+        return route.fallback();
+       blocked.push(url.href);return route.abort();
+      });
+      await ctx.addInitScript(()=>{
+       class OfflineWorker{
+        constructor(){this.onmessage=null;this.terminated=false;}
+        postMessage(m){setTimeout(()=>{if(!this.terminated)this.onmessage?.({data:{
+         id:m.id,type:m.type==='load'?'ready':'result',choices:[],strong:false,details:{}
+        }});},0);}
+        terminate(){this.terminated=true;}
+       }
+       Object.defineProperty(window,'Worker',{configurable:true,value:OfflineWorker});
+      });
+      const page=await ctx.newPage(),errors=[];
+      page.on('pageerror',error=>errors.push(String(error)));
+      await page.goto(origin+'/?legacyAtomicM3=research',{waitUntil:'domcontentloaded'});
+      await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady,inspirationReady]));
+      const result=await page.evaluate(async({owner,jpeg,sha})=>{
+       const input={format:'closet-current',version:3,items:[{
+        id:'built-photo',ownerId:owner,name:'Original intact',category:'Tops',itemType:'T-shirt',
+        color:'Blue',image:jpeg,sourceHashVerified:true,sourceSHA256:sha,
+        originalPhoto:{image:jpeg,sha256:sha,ownerId:owner}
+       }],looks:[{id:'built-look',title:'Built PWA look',pieces:[]}],
+        outfitBoard:{current:{name:'Built outfit',slots:{top:'built-photo'}},
+         saved:[{name:'Saved built outfit',slots:{top:'built-photo'}}]}};
+       window.confirm=()=>true;
+       const json=JSON.stringify(input);
+       await document.getElementById('import').onchange({target:{
+        files:[{size:json.length,text:async()=>json}],value:'selected'}});
+       const rows=await new Promise((done,reject)=>{
+        const tx=db.transaction(['items','state'],'readonly');
+        const items=tx.objectStore('items').getAll(),state=tx.objectStore('state').getAll();
+        tx.oncomplete=()=>done({items:items.result,state:state.result});
+        tx.onerror=()=>reject(tx.error);
+       });
+       const byId=Object.fromEntries(rows.state.map(row=>[row.id,row]));
+       return {items:rows.items.map(item=>({id:item.id,ownerId:item.ownerId,
+        originalPhoto:item.originalPhoto?.image,sourceSHA256:item.sourceSHA256})),
+        looks:byId.looks?.looks?.map(x=>x.id),
+        outfit:byId['outfit-board']?.current?.slots?.top,
+        saved:byId['outfit-board']?.saved?.[0]?.slots?.top,
+        revision:byId['cloud-sync']?.localRevision,
+        dirty:byId['cloud-sync']?.dirty,
+        message:document.getElementById('message')?.textContent,
+        changed:window.__privateCloudDirty||0};
+      },{owner,jpeg,sha});
+      assert.deepEqual(result.items,[{id:'built-photo',ownerId:owner,
+       originalPhoto:jpeg,sourceSHA256:sha}],name+' original custody');
+      assert.deepEqual(result.looks,['built-look'],name+' inspiration');
+      assert.equal(result.outfit,'built-photo');
+      assert.equal(result.saved,'built-photo');
+      assert.equal(result.revision,1);
+      assert.equal(result.dirty,true);
+      assert.equal(result.changed,1);
+      assert.match(result.message,/imported atomically/i);
+      assert.deepEqual(errors,[]);assert.deepEqual(blocked,[]);
+     }finally{await ctx.close();}
+    }finally{await browser.close();}
+   }
+  }finally{server.close();}
+ });
+}
