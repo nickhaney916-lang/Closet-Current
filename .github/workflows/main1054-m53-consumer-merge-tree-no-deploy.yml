@@ -111,9 +111,13 @@ jobs:
              r.cases.map(x=>x.width).join(',')!=='320,390,430'||
              r.cases.some(x=>x.ownerAAtomicSavedRow!==1||x.ownerBPrivateRows!==0||
               x.exactOriginalRendered!==true||x.threeDAdmitted!==false||
-              x.logoutPhotoRevoked!==true||x.ownerBOriginalLeak!==false))
+              x.logoutPhotoRevoked!==true||x.ownerBOriginalLeak!==false||
+              x.realV4BackupDownload!==true||x.tamperedV4SourceRejected!==true||
+              x.foreignV4OwnerRejected!==true||x.nativeOwnerCanceledV4Unchanged!==true||
+              x.atomicV4OwnerRestore!==true||x.originalJPEGAndFlagsRestored!==true||
+              x.restoredNativeGallery!==true||x.cloudRevisionDirtyAfterRestore!==true))
            throw Error('M59 actual native browser photo-only owner privacy receipt invalid');
-          console.log('M59 native owner photo-only source evidence PASS',e);
+          console.log('M60 native owner photo-only source + actual v4 atomic restore evidence PASS',e);
           JS
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git diff --exit-code f33e6e328ca8e6c98e036b57defa847efd0213ba HEAD -- public/ supabase/ benchmark/ research/multi-garment-capture-01/ research/native-3d-05/ research/parallel89/ research/mission1-parallel88/
