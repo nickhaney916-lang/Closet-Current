@@ -127,6 +127,14 @@ export async function prepareLegacyAtomicM3({
  for(const row of incoming){
   const saved=allItems.get(row.id);
   if(!saved)continue;
+  // A legacy backup with null/missing owner tags may be admitted as a *new*
+  // unclaimed garment. It must not erase an existing item's independently
+  // saved owner claim, or the camera original's owner claim, under the same ID.
+  // Those claims survive only if the incoming row explicitly preserves them.
+  if((saved.ownerId===ownerId&&row.ownerId!==ownerId)||
+     (saved.originalPhoto?.ownerId===ownerId&&
+       row.originalPhoto?.ownerId!==ownerId))
+   throw Error('LEGACY_ATOMIC_EXISTING_OWNER_CLAIM_CONFLICT');
   // Older saved pieces may have only a preview JPEG, with no original-photo
   // receipt. That image is then the sole available source identity. Never
   // silently replace its pixels under the same saved ID during a merge;
