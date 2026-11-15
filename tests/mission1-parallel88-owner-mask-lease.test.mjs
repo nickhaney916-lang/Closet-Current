@@ -1083,3 +1083,51 @@ test('P88 queued original save preserves unrelated new photo draft added during 
  assert.equal(writes[1].value.batch[0].id,second.id);
  assert.equal(writes[0].value.id,item.id);
 });
+
+
+test('P88 queued P70 owner keep after cloud preflight preserves a newly captured separate photo',async()=>{
+ let release;const gate=new Promise(resolve=>{release=resolve;});
+ const h=unitDecisionHarness88({queueBeforeWrite:gate}),c=h.c;
+ const pending=vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ for(let n=0;n<12;n++)await Promise.resolve();
+ assert.equal(c.batch[0].reconciliation70Status,'separate_confirmed');
+ assert.equal(c.storageWrites.length,0,'owner physical-unit decision not yet durable');
+ // A second camera source arrives while queued cloud.beforeWrite has not returned.
+ const independent=h.ownerDraft('new-photo','another-original','owner-A');
+ c.batch.push(independent);
+ release();await pending;
+ assert.equal(c.storageWrites.length,1);
+ assert.deepEqual(c.storageWrites[0].batch.map(x=>x.id),['part-A','new-photo']);
+ assert.equal(c.storageWrites[0].batch[0].reconciliation70Status,'separate_confirmed');
+ assert.equal(c.storageWrites[0].batch[1].outfitSourceId,'another-original');
+ assert.equal(c.batch.length,2,'the independently captured draft remains visible');
+});
+
+test('P88 rejected P70 owner decision restores original region but keeps new photo',async()=>{
+ let rejectGate;const gate=new Promise((_resolve,reject)=>{rejectGate=reject;});
+ const h=unitDecisionHarness88({queueBeforeWrite:gate}),c=h.c;
+ const pending=vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ for(let n=0;n<12;n++)await Promise.resolve();
+ c.batch.push(h.ownerDraft('new-photo','another-original','owner-A'));
+ rejectGate(Error('cloud.beforeWrite deliberately refused this owner action'));
+ await pending;
+ assert.equal(c.storageWrites.length,0,'failed owner action cannot write a draft');
+ assert.deepEqual(c.batch.map(x=>x.id),['part-A','new-photo']);
+ assert.equal(c.batch[0].reconciliation70Status,'unresolved',
+  'only the uncommitted physical-unit owner action was rolled back');
+ assert.equal(c.batch[1].outfitSourceId,'another-original',
+  'the camera capture is NOT rolled back with the owner decision');
+ assert.match(c.outfitUnit70Error,/cloud.beforeWrite deliberately refused/);
+});
+
+test('P88 changed signed unit mask during P70 preflight is not persisted as an approved decision',async()=>{
+ let release;const gate=new Promise(resolve=>{release=resolve;});
+ const h=unitDecisionHarness88({queueBeforeWrite:gate}),c=h.c;
+ const pending=vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ for(let n=0;n<12;n++)await Promise.resolve();
+ c.batch[0].reconciliation70.maskSha256='f'.repeat(64);
+ release();await pending;
+ assert.equal(c.storageWrites.length,0,'stale owner source mask must never be committed');
+ assert.equal(c.batch[0].reconciliation70Status,'unresolved');
+ assert.match(c.outfitUnit70Error,/Owner or source garment changed before draft persistence/);
+});
