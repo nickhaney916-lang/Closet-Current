@@ -11,6 +11,40 @@ export const FASHION_MAIN_LABELS88=Object.freeze([
  'bag, wallet','scarf','umbrella'
 ]);
 export const FASHION_ACCESSORY_IDS88=Object.freeze([13,14,15,16,17,18,19,20,22,24,25,26]);
+/**
+ * This 46-class Fashionpedia research model exposes only 27 whole-object
+ * labels. These owner-important subtypes are NOT independent model outputs.
+ * A broad-category BBOX match must never be promoted as fine-subtype accuracy.
+ */
+export const FASHION_FINE_SUBTYPE_GAPS88=Object.freeze([
+ Object.freeze({
+  contrast:'t-shirt-vs-sweatshirt',categoryId:1,
+  reason:'ONE_SHARED_TOP_TSHIRT_SWEATSHIRT_CATEGORY'
+ }),
+ Object.freeze({
+  contrast:'sneaker-vs-ankle-boot',categoryId:23,
+  reason:'ONE_SHARED_SHOE_CATEGORY'
+ }),
+ Object.freeze({
+  contrast:'blouse-vs-tunic',categoryId:0,
+  reason:'NO_EXPLICIT_TUNIC_LABEL_AND_SHIRT_BLOUSE_COMBINED'
+ })
+]);
+const unsupportedFineContrasts88=new Map(FASHION_FINE_SUBTYPE_GAPS88.map(x=>[x.contrast,x]));
+export function fashionFineSubtypeClaimGate88(contrast,claimedAccuracy){
+ const entry=unsupportedFineContrasts88.get(contrast);
+ if(!entry||typeof claimedAccuracy!=='number'||!Number.isFinite(claimedAccuracy)||
+    claimedAccuracy<0||claimedAccuracy>1)
+  return {status:'BLOCKED',reason:'UNSUPPORTED_OR_UNVERIFIABLE_SUBTYPE_CLAIM',
+   fineSubtypeAccuracyMeasured:false,productPromotionAllowed:false,
+   automaticClosetSaveAllowed:false};
+ return {status:'BLOCKED',reason:entry.reason,broadCategoryId:entry.categoryId,
+  broadCategoryLabel:FASHION_MAIN_LABELS88[entry.categoryId],
+  historicallyClaimedAccuracyNotAccepted:claimedAccuracy,
+  fineSubtypeAccuracyMeasured:false,productPromotionAllowed:false,
+  automaticClosetSaveAllowed:false};
+}
+
 const accessories=new Set(FASHION_ACCESSORY_IDS88);
 export function fashionBoxNms88(proposals,limit=0.50){
  if(!Array.isArray(proposals)||proposals.length>10000||
