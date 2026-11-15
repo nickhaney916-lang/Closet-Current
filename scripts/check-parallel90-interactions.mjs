@@ -84,6 +84,7 @@ export async function checkViewer90(page,width,engine){
  assert.equal((await state()).renderStages90,null,'revoked original-photo 3D cannot expose stale render timings');
  assert.equal((await state()).sceneApplyStages90,null,'revoked viewer cannot expose stale WebGL apply-stage timings');
  assert.equal((await state()).sceneShirtStages90,null,'revoked original source cannot retain stale private shirt fitting diagnostics');
+ assert.equal((await state()).contactEvidence90,null,'revoked original source cannot expose stale cloth crossing witnesses');
  assert.equal(await page.locator('#outfit3D01Photos img').count(),0);
  assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
  await writeFile('benchmark/parallel90/'+engine+'/'+width+'.json',JSON.stringify({samples,landscape,contextLossSimulation:'PASS_WEBGL_lose_context',physicalPhone:false,familyAlpha:'HOLD'},null,2));
