@@ -7,8 +7,9 @@
  * rights, source-group, duplicate, human and sealed-ledger audit beforehand.
  */
 import {createHash,createPublicKey,verify as cryptoVerify} from 'node:crypto';
-import {readFile,stat} from 'node:fs/promises';
-import {resolve,relative,isAbsolute} from 'node:path';
+import {open,lstat,realpath} from 'node:fs/promises';
+import {constants} from 'node:fs';
+import {resolve,relative,isAbsolute,sep} from 'node:path';
 export const P88_BLIND_HANDOFF_SCHEMA='p88-blind-evaluator-handoff/v1';
 export const P88_FROZEN_CANDIDATE=Object.freeze({
  schema:'p88-fashion-onnx-candidate-freeze/v1',
@@ -162,11 +163,27 @@ export function verifyBlindEvaluatorHandoff88(packet,{
   familyAlphaHold:true,releaseApproval:false
  };
 }
-function externalPrivateFile(path){
- if(typeof path!=='string'||!isAbsolute(path))throw Error('PRIVATE_ABSOLUTE_PATH_REQUIRED');
- const full=resolve(path),rel=relative(process.cwd(),full);
- if(!rel||(!rel.startsWith('..')&&!isAbsolute(rel)))
+function beneath88(path,root){
+ const rel=relative(root,path);
+ return rel===''||(rel!=='..'&&!rel.startsWith('..'+sep)&&!isAbsolute(rel));
+}
+/** Validate the REAL location of a synthetic or authorized offline custody file.
+ * Pure path/metadata preflight; does not read any file content.
+ * Refuse checkout paths, symlinked aliases, directories, devices, pipes, and
+ * oversized envelopes before opening private input.
+ */
+export async function externalPrivateFile88(path,{cwd=process.cwd()}={}){
+ if(typeof path!=='string'||!isAbsolute(path))
+  throw Error('PRIVATE_ABSOLUTE_PATH_REQUIRED');
+ const full=resolve(path);
+ const checkout=await realpath(cwd);
+ const target=await realpath(full);
+ if(beneath88(full,resolve(cwd))||beneath88(target,checkout))
   throw Error('PRIVATE_CUSTODY_MUST_STAY_OUTSIDE_GIT');
+ if(target!==full)throw Error('PRIVATE_HANDOFF_SYMLINK_PATH_FORBIDDEN');
+ const meta=await lstat(full);
+ if(!meta.isFile())throw Error('PRIVATE_HANDOFF_REGULAR_FILE_REQUIRED');
+ if(meta.size>50000)throw Error('PRIVATE_HANDOFF_TOO_LARGE');
  return full;
 }
 if(process.argv[1]&&new URL('file:'+resolve(process.argv[1])).href===import.meta.url){
@@ -175,9 +192,19 @@ if(process.argv[1]&&new URL('file:'+resolve(process.argv[1])).href===import.meta
   throw Error('Usage: node blind-evaluator-handoff-88.mjs inspect ABS_PRIVATE_SIGNED_ENVELOPE');
  if(process.env.CI||process.env.GITHUB_ACTIONS)
   throw Error('PRIVATE_BLIND_HANDOFF_FORBIDDEN_IN_CI');
- const name=externalPrivateFile(process.argv[3]);
- if((await stat(name)).size>50000)throw Error('PRIVATE_HANDOFF_TOO_LARGE');
- const packet=JSON.parse(await readFile(name,'utf8'));
+ const name=await externalPrivateFile88(process.argv[3]);
+ // NOFOLLOW guards against a final-path symlink swap after preflight.
+ // NONBLOCK + descriptor.stat refuse named pipes and devices before read.
+ const handle=await open(name,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
+ let packet;
+ try{
+  const meta=await handle.stat();
+  if(!meta.isFile())throw Error('PRIVATE_HANDOFF_REGULAR_FILE_REQUIRED');
+  if(meta.size>50000)throw Error('PRIVATE_HANDOFF_TOO_LARGE');
+  const raw=await handle.readFile({encoding:'utf8'});
+  if(Buffer.byteLength(raw,'utf8')>50000)throw Error('PRIVATE_HANDOFF_TOO_LARGE');
+  packet=JSON.parse(raw);
+ }finally{await handle.close();}
  const outcome=verifyBlindEvaluatorHandoff88(packet,{
   p75RegistrarFingerprint:process.env.P88_APPROVED_P75_REGISTRAR_FINGERPRINT,
   p71EvaluatorFingerprint:process.env.P88_APPROVED_P71_EVALUATOR_FINGERPRINT
