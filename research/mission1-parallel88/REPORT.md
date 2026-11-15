@@ -263,3 +263,37 @@ The unrestricted nonshoe algorithm is preserved for reproducible research, with 
 Three additional source-executed Node VM scenarios pass: companion mask changed in-place during cloud preflight is refused with **zero writes**; duplicate source mask newly present in the closet is refused with **zero writes**; independent photo draft appended during cloud preflight remains present in the saved draft state after successful confirmation. Harness executes **actual** `sourceGroupRevision88`, `sourceSaveLease88` and original native `duplicateUnit70InCloset` source rather than replacing those with a mock. Earlier intermediate red CI was from incomplete VM source extraction of those helpers and was repaired; only the exact successful SHA above is used as valid evidence.
 
 **Scope/claims:** Still **12** allowlisted changed paths against P886 immutable parent `ab68cbbbd54376bbc9c099fc3504d1cc00ba632c`; only `public/app.js` and `tests/mission1-parallel88-owner-mask-lease.test.mjs` changed in this continuation. No original worker/model asset, auth backend, hosted Supabase, production, staging, original JPEG benchmark sources or private family records touched. Original P68 **exposed** genuine Fashionpedia 16 original JPEGs/53 human masks: P88 safe 27/53 IoU matches, 40 proposed, 13 false positives — **UNCHANGED**, not new model inference or fine subtype/color acceptance. Still **BLOCKED** independent new/source-disjoint double-human-labeled fine subtype/color and zero-wrong-save, physical Android/iPhone, WebKit continuous pretrained endurance, real two-account hosted JWT/RLS/backup and master M1→closet integration. Master #1054 consumes exact contract only, not divergent stacked history. Preserve original-photo 2D fallback, explicit owner decisions and **FAMILY ALPHA HOLD #255 OPEN; DRAFT/UNMERGED/UNDEPLOYED**.
+
+
+## P88 REAL EXPOSED SOURCE — CATEGORY LOSSES AND FIXED-MATCH CONFIDENCE RETENTION
+
+**Actual evidence, NOT simulated:** Retrieved [GitHub Actions run #43632277038](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43632277038), artifact ID `14128851214` (`p88-exposed-validation-human-instance-metrics`). Original artifact ZIP SHA-256 `b7edeecdfc76fe66b88aaebb3894e97dcb3486f7b0fbc487624156133184c766`; the released `real-validation-measured-88.json` SHA-256 `6eba8dcac54a44bf47a5663055747f2ec1d5b86f12145fc37424002351f79f97`, `real-validation-predictions-88.json` SHA-256 `9c45e5fbc09e5c660c3e6b75f8b7e5c56f619412011eac6f7ec9056ab3bc74b9`. The original public Fashionpedia source-manifest SHA-256 remains `b76e9890bda49c58c6adbbafb6f7dd738f4dcf604357fc56aa0b6e770ebe35bd`. These are **16 original public source JPEGs / 53 independently annotated human instances** from **already exposed P68 development/validation**, not a new sealed holdout or pretraining-disjoint sample. The 14-day original artifact is retained by GitHub until November 28, 2026; metrics and this provenance note are durable in this report.
+
+**Correct broad-category matches (safe P88 shoe-only connected components, actual source IoU ≥ 0.50 and one-to-one category compatibility):**
+
+| Human garment category | Correctly matched / independently human-labeled | Source-cohort recall |
+|:--|--:|--:|
+| Tops | 1 / 4 | 25% |
+| Outerwear | 2 / 2 | 100% (tiny N; not generalizable) |
+| Bottoms | 1 / 6 | 16.7% |
+| Dresses | 9 / 12 | 75% |
+| Shoes | 10 / 16 | 62.5% |
+| Accessories | 0 / 13 | 0% |
+| **Total** | **23 / 53** | **43.4%** |
+
+The safe method produced 40 proposals, with 23 category-compatible human-instance matches, 17 unmatched/incompatible proposals (fixed original matching protocol); **57.5% category-compatible precision at the prior exact IoU protocol**. Class-agnostic matching is a distinct, weaker criterion: 27/53 matched and 13 unmatched proposals. This is not fine subtype, color, whole-owner-flow correctness or automatic-save acceptance. The accessory audit also shows five of the 13 annotated human accessories lack a dedicated or partial SegFormer class (ontology gap); the 0/13 measured result is a genuine broader category failure, not a release-success signal.
+
+**Observational fixed-match confidence retention:** Compare frozen `p88Safe` mask mean confidences in `real-validation-predictions-88.json` to the **preexisting** one-to-one category-compatible match indices in `real-validation-measured-88.json`. Do **not** re-match masks after filtering and do **not** call this calibrated precision/recall; removing proposals can change the globally optimal matching. Numerators below are **retained previously established correct matches**, an intentionally conservative, precisely named diagnostic.
+
+| Mean region confidence retained | Retained proposed regions | Retained prior category-compatible matches | Unmatched under frozen original assignment |
+|:--|--:|--:|--:|
+| ≥ 0.80 | 40 | 23 | 17 |
+| ≥ 0.85 | 33 | 23 | 10 |
+| ≥ 0.90 | 24 | 20 | 4 |
+| ≥ 0.95 | 11 | 10 | 1 |
+
+Even at 0.90, **four of 24** retained proposals had no originally valid category-compatible instance match, while only **20 of 53** independent human garment instances retained such a match; 0.95 retains only **10 of 53**. **No cutoff is validated for confident garment auto-admission; the source-bound owner review / manual Adjust / Unknown and no-silent-save remain mandatory.** A score above 0.9 cannot distinguish sneaker vs boot, T-shirt vs sweatshirt, or primary color without independently verified subtype/color truth. No model-accuracy improvement is claimed.
+
+**Reproducibility and safeguards:** `score-public-validation-88.py` now includes `retained_fixed_match_diagnostic()` and preserves original numeric region confidences when scoring *genuine* model masks; future actual SegFormer public-source runs emit the retention matrix and mark `notRematchedIoU: true`, `notNovelCalibration: true`, `noAutoSaveAuthority: true`. The no-deploy source workflow source-executes this Python function on fixed illustrative data (three thresholds; rejects NaN, duplicate indices and damaged counts). A new **actual licensed-source** P68-exposed model run was requested at commit `2648c21c68234cc81c1f30a9f387f92500ed62b0` with the research trigger; its CI result must be checked separately and is not grandfathered from prior successes. Neither native production recognition thresholds nor pinned worker or model binaries changed.
+
+**Remaining release-gate gap:** This cohort lacks independent *fine subtype* and *primary color* truth. It cannot certify 10/10 no wrong saves, signed hosted two-owner cloud, source-disjoint blind physical-device acceptance, or master M1→closet integration. Collect a genuinely novel licensed source/photographer-disjoint cohort with human double annotations for those exact attributes and seal it before any candidate threshold fitting. Preserve P886 physical 23-case requirements and **FAMILY ALPHA HOLD #255 OPEN**, draft/no merge/no deploy.
