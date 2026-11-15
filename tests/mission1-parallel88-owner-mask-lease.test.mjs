@@ -490,19 +490,35 @@ test('P88 zero recognised outfit regions does not falsely declare a clean empty 
  assert.match(status,/watches, belts, headwear, bags or glasses/);
  assert.match(status,/Photograph missing items individually/);
 });
-test('P88 missing-category caution is flag-gated and legacy outfit completion text is unchanged',()=>{
+test('P88 default outfit workflow shows missing-category caution without enabling experimental instance splitting',()=>{
  const h=captureHarness({href:'https://example.test/closet'});
- assert.equal(h.c.worker.request.instanceReview840,undefined);
+ assert.equal(h.c.worker.request.instanceReview840,undefined,
+  'informational notice must not change worker inference flags');
  h.emit({type:'piece',piece:{
   image:'data:image/jpeg;base64,UElFQ0U=',
   hint:{categories:['Tops'],types:[],clipped:false},
   instanceMethod:'native_semantic_group'
  }});
  h.emit({type:'done',count:1});
- assert.match(h.node('outfitSplitStatus').textContent,/1 individual clothing photos cropped/);
- assert.doesNotMatch(h.node('outfitSplitStatus').textContent,/tentative clothing regions|watches/);
- assert.doesNotMatch(h.node('outfitSaveStatus').textContent,/watches|missing items/);
+ assert.match(h.node('outfitSplitStatus').textContent,
+  /1 tentative clothing regions cropped, not a verified garment count/);
+ assert.match(h.node('outfitSplitStatus').textContent,
+  /watches, belts, headwear, bags or glasses/);
+ assert.match(h.node('outfitSaveStatus').textContent,
+  /Compare these tentative regions with your original outfit photo/);
+ assert.match(h.node('outfitSaveStatus').textContent,/Photograph missing items individually/);
+ assert.equal(h.c.batch.length,1,'recognized drafts are still preserved');
+ assert.equal(h.c.items.length,0,'informational notice grants no save authority');
+});
+test('P88 default zero-region scan warns that a missing model detection is not an empty wardrobe',()=>{
+ const h=captureHarness({href:'https://example.test/closet'});
+ h.emit({type:'done',count:0});
+ assert.equal(h.c.worker.request.instanceReview840,undefined);
+ assert.match(h.node('outfitSplitStatus').textContent,/No clothing regions confidently located/);
+ assert.match(h.node('outfitSplitStatus').textContent,/not proof your outfit is empty/);
+ assert.match(h.node('outfitSplitStatus').textContent,/Photograph missing items individually/);
  assert.equal(h.c.items.length,0);
+ assert.equal(h.c.batch.length,0);
 });
 
 function unitDecisionHarness88({ownerId='owner-A',sourceId='src-A',apiPromise=null,queueBeforeWrite=null}={}){
