@@ -403,6 +403,12 @@ test('P90 M22 source-honest original-photo fallback when WebGL2 is unavailable a
  assert.ok(source.includes("realPhysicalGPUNoWebGLTested:false"));
  assert.ok(donor.includes("const panel=donor+'/research/outfit-3d-01/research-panel.mjs'"));
  assert.ok(donor.includes("df6885d6011cb33fb22dceb81a08f35a0ac4dd61"));
+ assert.ok(donor.includes("let lastGraphicsFailure90=null"));
+ assert.ok(donor.includes("lastGraphicsFailure90?'Original-photo/2D fallback: '"));
+ assert.ok(donor.includes("lastGraphicsFailure90=String(e.message||e)"));
+ assert.ok(donor.includes("lastGraphicsFailure90=null;putStatus('Loading actual photographed"));
+ assert.ok(donor.includes("function clearPrivate(){"));
+ assert.ok(source.includes("Original-photo/2D fallback: WebGL2 unavailable"));
  assert.ok(source.includes("Original-photo/2D fallback: WebGL2 unavailable"));
  assert.ok(native.includes("await attestOriginalBytes92()"));
  assert.ok(workflow.includes("engine: [chromium, webkit]"));
