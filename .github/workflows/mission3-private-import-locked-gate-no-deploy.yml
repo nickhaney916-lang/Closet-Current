@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact PR1126 parent and five-path no-deploy allowlist
+      - name: Exact PR1126 parent and six-path no-deploy allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-edit-backup-owner-lease.test.cjs|tests/mission3-private-import-locked-gate-v4-bridge.test.cjs|research/mission3-private-import-locked-gate/REPORT.md|.github/workflows/mission3-private-import-locked-gate-no-deploy.yml) ;;
+              public/app.js|scripts/build.mjs|tests/mission3-edit-backup-owner-lease.test.cjs|tests/mission3-private-import-locked-gate-v4-bridge.test.cjs|research/mission3-private-import-locked-gate/REPORT.md|.github/workflows/mission3-private-import-locked-gate-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -166,7 +166,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Strict PR1126 five-path exact-parent diff gate
+      - name: Strict PR1126 six-path exact-parent diff gate
         shell: bash
         run: |
           set -euo pipefail
@@ -175,7 +175,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-edit-backup-owner-lease.test.cjs|tests/mission3-private-import-locked-gate-v4-bridge.test.cjs|research/mission3-private-import-locked-gate/REPORT.md|.github/workflows/mission3-private-import-locked-gate-no-deploy.yml) ;;
+              public/app.js|scripts/build.mjs|tests/mission3-edit-backup-owner-lease.test.cjs|tests/mission3-private-import-locked-gate-v4-bridge.test.cjs|research/mission3-private-import-locked-gate/REPORT.md|.github/workflows/mission3-private-import-locked-gate-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -255,6 +255,27 @@ jobs:
         run: node --test tests/confirmed-edit-memory-44.test.cjs tests/review-color-provenance-23.test.cjs tests/family-reliability-edit.test.cjs
       - name: Build current application before PWA and full Node validation (NO DEPLOY)
         run: node scripts/build.mjs
+      - name: Verify actual built opt-in atomic module bytes, export and offline PWA manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {resolve} from 'node:path';
+          import {pathToFileURL} from 'node:url';
+          const p='research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs';
+          const source=await readFile(p),built=await readFile('dist/'+p);
+          assert.deepEqual(built,source,'Built PWA must carry the exact reviewed atomic helper');
+          const sw=await readFile('dist/sw.js','utf8');
+          assert.ok(sw.includes(p),'Offline PWA service worker must precache the atomic helper');
+          const api=await import(pathToFileURL(resolve('dist/'+p)).href);
+          assert.equal(typeof api.prepareLegacyAtomicM3,'function');
+          assert.equal(typeof api.commitLegacyAtomicM3,'function');
+          console.log('PASS: exact atomic helper bundled in dist and PWA offline cache, no deployment');
+          JS
+      - name: Native Chromium WebKit opt-in atomic import against built dist (no research server fallback)
+        run: M3_TEST_DIST_ATOMIC=1 node --test tests/mission3-private-import-locked-gate-v4-bridge.test.cjs
       - name: Browser-executed saved Style signed-owner switches on Chromium and WebKit mobile widths
         run: node scripts/test-mission3-style-card-owner-session-browser.mjs benchmark/mission3-style-card-owner-session-browser
       - name: Browser-executed native BOARD04 Save Cancel Delete owner-session races
