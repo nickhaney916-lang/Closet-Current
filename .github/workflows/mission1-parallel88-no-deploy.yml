@@ -171,7 +171,16 @@ jobs:
           old=d['shoeOnly68']['classAgnostic']
           assert safe['matched']>=old['matched'] and safe['falsePositives']<=old['falsePositives']
           assert d['newSealedAcceptance'] is False and d['autoSaveAcceptance']=='BLOCKED_NOT_CALIBRATED'
+          diag=d['confidenceRetentionResearchOnly']
+          assert [row['threshold'] for row in diag]==[.8,.85,.9,.95]
+          assert all(row['originalHumanInstances']==53 and row['notRematchedIoU'] is True
+                     and row['notNovelCalibration'] is True and row['noAutoSaveAuthority'] is True
+                     for row in diag)
+          assert d['confidenceCutoffPromotionAllowed'] is False
+          assert diag[0]['retainedProposals']==safe['predicted']
+          assert diag[0]['retainedPriorCategoryCompatibleMatches']==d['p88Safe']['categoryCompatible']['matched']
           print('P88_EXPOSED_SAFE_MASK_COUNTS_ONLY',safe, 'not human subtype/color or release acceptance')
+          print('P88_REAL_CONFIDENCE_RETENTION_DIAGNOSTIC',diag, 'not a recalibrated precision or authorized threshold')
           PY
           grep -Fq '"deltaP88VsShoeOnlyRecall"' benchmark/p88-real-validation-masks/real-validation-measured-88.json
           test -s benchmark/p88-real-validation-masks/real-validation-measured-88.json
