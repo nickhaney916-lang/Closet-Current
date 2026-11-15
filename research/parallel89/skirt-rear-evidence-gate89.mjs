@@ -35,17 +35,25 @@ export function summarizeOriginalSkirtUnphotographedRear89({rows,
    r.sourcePhoto2DFallbackRequired!==true||
    r.consumer3DAdmitted!==false||r.releaseAuthorized!==false||
    !Number.isSafeInteger(r.unphotographedRearMarkerPixels)||
+   !Number.isFinite(r.unphotographedRearFractionOfFullWebGLViewport)||
    !Number.isSafeInteger(r.opaqueSourceMeshProjectedMarkerPixels)||
    r.unphotographedRearMarkerPixels<0||
    r.opaqueSourceMeshProjectedMarkerPixels<r.unphotographedRearMarkerPixels||
    r.opaqueSourceMeshProjectedMarkerPixels<=0||
    r.opaqueSourceMeshProjectedMarkerPixels>390*690||
+   r.unphotographedRearFractionOfFullWebGLViewport<0||
+   r.unphotographedRearFractionOfFullWebGLViewport>1||
+   r.dynamicClothAndCollisionCertified!==false||
+   r.humanAppearanceAccepted!==false||r.familyAlpha!=='HOLD'||
    !Number.isFinite(r.inferredRearLowerBoundShareOfOpaqueProjectedOriginalSkirt)||
    r.inferredRearLowerBoundShareOfOpaqueProjectedOriginalSkirt<0||
    r.inferredRearLowerBoundShareOfOpaqueProjectedOriginalSkirt>1||
    r.opaqueFrontMarkerOverestimatesPhotographicAlphaCoverage!==true||
    r.projectedSourceDenominatorNotTruePhotographedVisiblePixels!==true
   )return error('genuine-pinned-original-source-360-material-frame-missing-or-forged');
+  if(Math.abs(r.unphotographedRearFractionOfFullWebGLViewport-
+   r.unphotographedRearMarkerPixels/(390*690))>.00002)
+   return error('false-native-viewport-rear-pixel-fraction');
   const proportion=r.unphotographedRearMarkerPixels/r.opaqueSourceMeshProjectedMarkerPixels;
   if(Math.abs(r.inferredRearLowerBoundShareOfOpaqueProjectedOriginalSkirt-proportion)>.00002)
    return error('false-gpu-original-photo-source-projected-ratio');
