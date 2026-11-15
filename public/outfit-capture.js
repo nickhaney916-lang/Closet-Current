@@ -42,6 +42,13 @@ function sameUnit70OwnerLease88(lease){
  return !!(lease?.user&&lease.id&&lease.sourceId&&user===lease.user&&
   user.id===lease.id&&outfitActiveId===lease.sourceId);
 }
+// A signed physical grouping contains an independent companion photo/mask.
+// Recheck its nested receipt and source bytes after asynchronous cloud preflight:
+// object reference equality alone cannot detect an in-place mutation.
+function unit70GroupRevision88(item){
+ try{return JSON.stringify([item?.shoePair||null,item?.combinedFragments70||null]);}
+ catch{return null;} // non-serializable evidence is never authorized
+}
 // The regular persistDraft() is a general-purpose queued best-effort write.
 // For a source-bound owner decision, verify authorization *inside* the queued
 // transaction callback, after the queue's asynchronous cloud.beforeWrite().
@@ -52,7 +59,9 @@ function persistUnit70Decision88(lease){
  // allowing a separate newly captured photo to be appended during the wait.
  const staged=batch.filter(x=>x.outfitSourceId===lease.sourceId&&x.reconciliation70)
   .map(item=>({item,status:item.reconciliation70Status,receipt:item.reconciliation70,
-   source:item.reconciliation70.sourceSha256,mask:item.reconciliation70.maskSha256}));
+   source:item.reconciliation70.sourceSha256,mask:item.reconciliation70.maskSha256,
+   image:item.image,original:item.originalPhoto?.image,
+   groupRevision:unit70GroupRevision88(item)}));
  if(!ownerDb||!sameUnit70OwnerLease88(lease))return Promise.reject(Error('Owner session changed before garment draft persistence.'));
  return queued(()=>{
   if(!sameUnit70OwnerLease88(lease)||db!==ownerDb||
@@ -70,7 +79,11 @@ function persistUnit70Decision88(lease){
     x.item.reconciliation70!==x.receipt||
     x.item.reconciliation70?.ownerId!==lease.id||
     x.item.reconciliation70?.sourceSha256!==x.source||
-    x.item.reconciliation70?.maskSha256!==x.mask))
+    x.item.reconciliation70?.maskSha256!==x.mask||
+    x.item.image!==x.image||
+    x.item.originalPhoto?.image!==x.original||
+    x.groupRevision===null||
+    unit70GroupRevision88(x.item)!==x.groupRevision))
    throw Error('Owner or source garment changed before draft persistence.');
   // IMPORTANT: snapshot only after the serialized queue's cloud preflight.
   // A stale preflight snapshot could delete an unrelated live unsaved garment.
