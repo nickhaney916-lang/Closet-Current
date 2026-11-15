@@ -62,7 +62,10 @@ try{
      return route.fulfill({status:204,body:''});
     if(url.pathname==='/auth/v1/token'){
      const body=JSON.parse(request.postData()||'{}');
-     const who=['m59-A','m59-B'].find(n=>body.email===n+'@example.test');
+     const grant=url.searchParams.get('grant_type');
+     const who=['m59-A','m59-B'].find(n=>
+      grant==='password'&&body.email===n+'@example.test'||
+      grant==='refresh_token'&&body.refresh_token==='refresh-m59-'+n);
      if(!who)return route.fulfill({status:401,contentType:'application/json',body:'{}'});
      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
       user:{id:who,email:who+'@example.test'},
