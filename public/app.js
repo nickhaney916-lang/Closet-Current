@@ -194,26 +194,65 @@ function cropClothingPhoto(item){
   return;
  }
  if(localPending.has(item.id)||busy)return;
+ // P88: unlike a read-only crop preview, a crop replacement writes private
+ // JPEG bytes. Freeze owner/session object, IDB, exact item, source and mask
+ // revision BEFORE opening an editor or awaiting photo analysis.
+ const lease=reviewedSaveLease88(item);
+ const cropLive88=()=>reviewedSaveLeaseLive88(lease)&&!hasSourceBoundMask88(item);
+ if(!cropLive88()){
+  message('This photo belongs to a different signed session or changed garment. Reopen Crop for the current owner.');
+  return;
+ }
  if(stream||cameraOpening)stopCamera();
  openPhotoCrop(item,{
-  async analyze(image){if(!localReady)await enableLocal();const result=await localRequest('classify',image,null);return (result.strong||result.categoryConfirmed)&&result.choices?.[0]&&segmentationAllows(item,result.choices[0])?{...result.choices[0],details:ClothingDetails.recognizedFields(result.choices[0],result.details)}:null;},
+  async analyze(image){
+   if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
+   if(!localReady)await enableLocal();
+   if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
+   const result=await localRequest('classify',image,null);
+   if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
+   return (result.strong||result.categoryConfirmed)&&result.choices?.[0]&&segmentationAllows(item,result.choices[0])?{...result.choices[0],details:ClothingDetails.recognizedFields(result.choices[0],result.details)}:null;
+  },
   async save(photo,choice){
-   // A crop editor may have opened before a segmentation receipt arrived.
-   // Re-check at write time; no stale masked source metadata can accompany
-   // newly cropped image pixels into the private draft/closet.
+   // A previously unsegmented photo can acquire a source-bound mask while
+   // the crop dialog remains open. Never recycle that mask with new pixels.
    if(hasSourceBoundMask88(item))throw Error('P88_SOURCE_MASK_CROP_FORBIDDEN');
+   if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
    const value={...structuredClone(item),...photo,userAdjusted:true,localAnalyzed:true,scanFailed:false,saveFailed:false,possibleDuplicate:false};
-   delete value.recognitionMemory;delete value.confirmedDetails;delete value.correctionReceipt72;delete value.learningReviewedWeek;delete value.weeklySuggestion;delete value.recognitionPhoto;delete value.colorMethod;if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}const quality=await checkPhoto(photo.image);
+   if(value.id!==item.id||hasSourceBoundMask88(value)||value.ownerSourceReview88)
+    throw Error('P88_CROP_CANNOT_REBIND_ID_OR_MASK');
+   delete value.recognitionMemory;delete value.confirmedDetails;delete value.correctionReceipt72;delete value.learningReviewedWeek;delete value.weeklySuggestion;delete value.recognitionPhoto;delete value.colorMethod;
+   if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}
+   const quality=await checkPhoto(photo.image);
    if(hasSourceBoundMask88(item))throw Error('P88_STALE_MASK_AFTER_PHOTO_CHECK');
-   Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')value.colorMethod='garment-mask';delete value.maskedColorEstimate;delete value.maskApplied;value.visualSignature=quality.signature;value.visualAspect=quality.aspect;delete value.localChoices;delete value.indexedAt;
+   if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
+   Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));
+   if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')value.colorMethod='garment-mask';
+   delete value.maskedColorEstimate;delete value.maskApplied;
+   value.visualSignature=quality.signature;value.visualAspect=quality.aspect;
+   delete value.localChoices;delete value.indexedAt;
    if(choice){applyLocalChoice(value,choice,true);Object.assign(value,ClothingDetails.fill(value,choice,choice.details,true));value.indexedAt=new Date().toISOString();}
    value.localStatus=choice?'Crop checked. Suggested details applied.':'Crop saved. Check recognition or adjust the clothing details.';
    if(hasSourceBoundMask88(item))throw Error('P88_MASK_REVISION_CHANGED_BEFORE_WRITE');
-   if(items.some(x=>x.id===item.id))await writeAll([value]);else await queued(()=>new Promise((resolve,reject)=>{
-    if(hasSourceBoundMask88(item))return reject(Error('P88_MASK_REVISION_CHANGED_IN_QUEUE'));
-    const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'draft',batch:batch.map(x=>x.id===item.id?value:x)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
-   }));
-   Object.assign(item,value);for(const key of ['visualSignature','visualAspect','localChoices','indexedAt','recognitionPhoto','colorMethod','recognitionMemory','confirmedDetails','correctionReceipt72','learningReviewedWeek','weeklySuggestion'])if(!(key in value))delete item[key];render();
+   if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
+   // Recheck INSIDE the shared cloud-beforeWrite queue. Commit only into
+   // the captured owner's original IDB. A new camera draft added during the
+   // wait must be kept, not wiped by an early batch snapshot.
+   await queued(()=>{
+    if(hasSourceBoundMask88(item)||hasSourceBoundMask88(value)||
+     !cropLive88()||value.id!==item.id||value.ownerSourceReview88)
+     throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
+    return new Promise((resolve,reject)=>{
+     const tx=lease.ownerDb.transaction(lease.wasDraft?'state':'items','readwrite');
+     if(lease.wasDraft)tx.objectStore('state').put({id:'draft',batch:structuredClone(batch.map(x=>x===item?value:x))});
+     else tx.objectStore('items').put(value);
+     tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+    });
+   });
+   if(!cropLive88())return; // Old owner's completed write cannot paint B's UI.
+   Object.assign(item,value);
+   for(const key of ['visualSignature','visualAspect','localChoices','indexedAt','recognitionPhoto','colorMethod','recognitionMemory','confirmedDetails','correctionReceipt72','learningReviewedWeek','weeklySuggestion'])if(!(key in value))delete item[key];
+   render();
   }
  }).catch(()=>message('Could not open this photo for cropping. Your saved photo is kept.'));
 }
