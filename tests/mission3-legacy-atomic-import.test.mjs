@@ -219,3 +219,55 @@ test('a valid pinned original JPEG remains exactly preserved through the atomic 
   assert.equal(after.sourceSHA256,sha);
  }finally{f.close();}
 });
+
+test('legacy ownerId null is an unclaimed provenance tag, not a foreign owner',async()=>{
+ const f=await fixture();
+ try{
+  const raw=backup(f.owner);
+  raw.items[0].ownerId=null;
+  raw.items[0].metadata={capture:{ownerId:null}};
+  raw.items[0].originalPhoto={ownerId:null,image:jpeg,sha256:sha};
+  raw.items[0].sourceSHA256=sha;
+  raw.items[0].sourceHashVerified=true;
+  const plan=await prep(f,raw);
+  await commit(f,plan);
+  const saved=(await snapshot(f.db)).items.find(x=>x.id==='new-top');
+  assert.equal(saved.ownerId,null);
+  assert.equal(saved.originalPhoto.ownerId,null);
+  assert.equal(saved.originalPhoto.image,jpeg);
+  assert.equal(saved.sourceSHA256,sha);
+ }finally{f.close();}
+});
+test('independent atomic helper refuses disagreeing original and source SHA receipts before writing',async()=>{
+ const f=await fixture();
+ try{
+  const raw=backup(f.owner),before=await snapshot(f.db);
+  raw.items[0].sourceSHA256=sha;
+  raw.items[0].originalPhoto={image:jpeg,sha256:'a'.repeat(64)};
+  await assert.rejects(prep(f,raw),/LEGACY_ATOMIC_ORIGINAL_RECEIPT_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('verified source flag without a source SHA receipt fails closed even when original bytes exist',async()=>{
+ const f=await fixture();
+ try{
+  const raw=backup(f.owner),before=await snapshot(f.db);
+  raw.items[0].sourceHashVerified=true;
+  raw.items[0].originalPhoto={image:jpeg};
+  await assert.rejects(prep(f,raw),/LEGACY_ATOMIC_ORIGINAL_RECEIPT_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('unverified legacy original with no SHA still imports without inventing attestation',async()=>{
+ const f=await fixture();
+ try{
+  const raw=backup(f.owner);
+  raw.items[0].originalPhoto={ownerId:null,image:jpeg};
+  const plan=await prep(f,raw);
+  await commit(f,plan);
+  const saved=(await snapshot(f.db)).items.find(x=>x.id==='new-top');
+  assert.equal(saved.originalPhoto.image,jpeg);
+  assert.equal(saved.sourceHashVerified,undefined);
+  assert.equal(saved.sourceSHA256,undefined);
+ }finally{f.close();}
+});
