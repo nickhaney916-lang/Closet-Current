@@ -1,0 +1,53 @@
+name: MAIN1054 M49 actual public original photo reviewed private outfit 2D NO DEPLOY
+on:
+  push:
+    branches: [research/main1054-m49-licensed-photo-private-outfit-2d-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+
+jobs:
+  original-photo-to-private-board-2d:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact verified M48 parent and strictly isolated source-safe no-deploy scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          PARENT=53498ac014eb054e028036dea97e0f793afaf581
+          git merge-base --is-ancestor "$PARENT" HEAD
+          for path in research/main1054-3d48/photo-neckline-edge-admission48.mjs scripts/test-main48-actual-source-neckline-admission.mjs research/main-thread-integration-1054/native-2d-preview.mjs research/main-thread-integration-1054/source-to-outfit.mjs public/outfit-board-engine.js public/native-reviewed-private-save-167.mjs public/native-owner-wardrobe-index-167.mjs; do
+            test "$(git rev-parse HEAD:$path)" = "$(git rev-parse $PARENT:$path)"
+          done
+          git diff --exit-code "$PARENT" HEAD -- public/ supabase/ benchmark/ research/native-3d-05/ research/main-thread-integration-1054/ research/main1054-3d48/
+          git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
+            case "$path" in
+              tests/main49-licensed-original-photo-private-outfit-2d.test.mjs|research/master-consolidation-1054/MILESTONE49.md|.github/workflows/main1054-m49-real-source-private-outfit-2d-no-deploy.yml) ;;
+              *) echo "BLOCKED unexpected M49 path $path"; exit 1;;
+            esac
+          done
+          node --check tests/main49-licensed-original-photo-private-outfit-2d.test.mjs
+      - name: Install exact no-deploy regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Consumer application source build unchanged
+        run: node scripts/build.mjs
+      - name: M49 genuine licensed original JPEG, signed test-owner saved photo, actual board and 2D fallback
+        run: node --test tests/main49-licensed-original-photo-private-outfit-2d.test.mjs
+      - name: Native verified-photo saved outfit and owner source regression
+        run: |
+          node --test tests/main31-photo119-to-signed-outfit.test.mjs tests/main39-native-provider.test.mjs tests/main40-p89-quality-gate.test.mjs
+          node --test research/main-thread-integration-1054/native-2d-display-lease16.test.mjs research/main-thread-integration-1054/native-live-board-display17.test.mjs
+      - name: Full inherited application source-only Node regression
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Original photo, private account, 3D donor and deployment source untouched
+        run: |
+          git diff --exit-code 53498ac014eb054e028036dea97e0f793afaf581 HEAD -- public/ supabase/ benchmark/ research/native-3d-05/ research/main-thread-integration-1054/ research/main1054-3d48/
+          test -f benchmark/fixtures/commons-0053.jpg
