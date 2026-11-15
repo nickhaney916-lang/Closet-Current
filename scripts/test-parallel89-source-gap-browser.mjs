@@ -156,6 +156,13 @@ try{
    assert.equal(contrast.consumer3DAuthorized,false);
    assert.equal(contrast.sourcePhoto2DFallbackRequired,true);
    assert.ok(['baseline','trial'].includes(contrast.researchOnlyPreferredVariant));
+   if(variant==='trial'){
+    // Pin the genuine-source current failure/improvement rather than letting
+    // a passing no-crossings CI silently endorse the female yoke regression.
+    assert.equal(contrast.researchOnlyPreferredVariant,
+     avatar==='female'?'baseline':'trial',
+     'known original licensed shoulder source gap veto changed');
+   }
    shoulderContrasts.push({...contrast,researchShapeVariant:variant});
   }
   const passing=shoulderContrasts.filter(x=>x.avatar===avatar&&
