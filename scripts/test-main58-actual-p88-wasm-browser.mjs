@@ -47,6 +47,7 @@ const origin='http://127.0.0.1:'+server.address().port;
 const auth='https://hlkgymugtfbirlpunsra.supabase.co';
 const cloudStub='window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};';
 const external=[],rejected=[],issues=[],modelResponses=[];
+const navigationReasonsM69=[],mainFrameNavigationsM69=[];
 let browser,stage='startup';
 const started=performance.now();
 function authFixture(route){
@@ -104,6 +105,25 @@ try{
   return route.abort();
  });
  const page=await context.newPage();
+ // M69: reproducible no-deploy diagnostics for the intermittent A→B→A
+ // navigation that can invalidate the M67 original-JPEG IDB mutation.
+ // Record stage, navigation reason and PATH ONLY (never private URLs/tokens).
+ const pathOnly=value=>{try{return new URL(value).pathname;}catch{return 'invalid';}};
+ page.on('framenavigated',frame=>{
+  if(frame===page.mainFrame())mainFrameNavigationsM69.push({
+   stage,path:pathOnly(frame.url()),elapsedMs:Math.round(performance.now()-started)
+  });
+ });
+ if(engine==='chromium'){
+  const cdp=await context.newCDPSession(page);
+  await cdp.send('Page.enable');
+  cdp.on('Page.frameRequestedNavigation',event=>{
+   navigationReasonsM69.push({
+    stage,reason:event.reason,disposition:event.disposition,
+    path:pathOnly(event.url),elapsedMs:Math.round(performance.now()-started)
+   });
+  });
+ }
  page.on('pageerror',e=>issues.push('pageerror-'+String(e.message).slice(0,120)));
  page.on('crash',()=>issues.push('browser-crash'));
  context.on('response',res=>{
@@ -774,7 +794,9 @@ try{
  console.error('M58_REAL_P88_WORKER_FAIL',JSON.stringify({
   stage,error:String(e?.stack||e).slice(0,950),
   external:external.slice(0,15),rejected:rejected.slice(0,15),issues:issues.slice(0,10),
-  modelStatuses:modelResponses.slice(0,12)
+  modelStatuses:modelResponses.slice(0,12),
+  navigationReasonsM69:navigationReasonsM69.slice(-12),
+  mainFrameNavigationsM69:mainFrameNavigationsM69.slice(-12)
  }));
  process.exitCode=1;
 }finally{
