@@ -301,3 +301,24 @@ test('P90 M18 real owner original-photo evidence shortcut is focusable and read-
  assert.match(interactions,/samples\.push\(\{figure,width,engine,before,after,[^\n]*\boriginalPhotosShortcut18\b/);
  assert.ok(flow.includes("engine: [chromium, webkit]"));
 });
+
+test('P90 M19 explicit auto-rotation pause retains native owner, source photos and original 163 bones',()=>{
+ const installer=readFileSync('scripts/install-parallel90-viewer.mjs','utf8');
+ const interactions=readFileSync('scripts/check-parallel90-interactions.mjs','utf8');
+ const workflow=readFileSync('.github/workflows/parallel90-viewer-no-deploy.yml','utf8');
+ assert.ok(installer.includes("['Rotate','Auto rotate'],['Stop90','Pause rotation']"));
+ assert.ok(installer.includes("const pause90=views.querySelector('#outfit3D01Stop90')"));
+ assert.ok(installer.includes("if(ready&&scene)scene.setSpin(false)"));
+ assert.ok(installer.includes("pause90.setAttribute('aria-label','Pause automatic avatar rotation without changing clothing')"));
+ assert.ok(interactions.includes("await page.locator('#outfit3D01Rotate').click()"));
+ assert.ok(interactions.includes("await page.waitForFunction(start=>"));
+ assert.ok(interactions.includes("now.camera90.angle-start"));
+ assert.ok(interactions.includes("await pause.click()"));
+ assert.ok(interactions.includes("drift<2"));
+ assert.ok(interactions.includes("later.garmentSources90,originalSpin.garmentSources90"));
+ assert.ok(interactions.includes("later.resources90.geometries,originalSpin.resources90.geometries"));
+ assert.ok(interactions.includes("later.resources90.textures,originalSpin.resources90.textures"));
+ assert.ok(interactions.includes("owner2DSessionPreserved:true"));
+ assert.match(interactions,/samples\.push\(\{figure,width,engine,before,after,[^\n]*\bautoSpinPause19\b/);
+ assert.ok(workflow.includes('engine: [chromium, webkit]'));
+});
