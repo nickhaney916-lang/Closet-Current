@@ -184,7 +184,7 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    assert.equal(await page.getByAltText(/Already saved photograph exactly matching/).count(),1);
    const savedPreview=page.locator('dialog[open]');
    await savedPreview.getByLabel('Main category').selectOption('Tops');
-   await savedPreview.getByLabel('Color').fill('Blue');
+   await savedPreview.locator('input[aria-label="Color"]').fill('Blue');
    await approve();
    assert.equal(await page.getByRole('button',{name:'Save changes'}).isDisabled(),true,
     'general model/owner review cannot bypass identical saved source');
