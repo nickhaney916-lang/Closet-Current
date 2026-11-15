@@ -127,6 +127,13 @@ try{
    assert.equal(shapeProof.p89MeasuredGapCandidateNeverAuthorized,true);
    assert.equal(shapeProof.p89OriginalPhoto2DFallbackRequired,true);
    assert.equal(shapeProof.p89Consumer3DAuthorized,false);
+   if(shapeProof.p89SourceGapGate!=='ORIGINAL_P84_TRIAL_REFUSED'){
+    assert.equal(shapeProof.p89FiveStaticPoseGuardCompleted,true,
+     'genuine original 25/75-percent poses were not measured');
+    assert.equal(shapeProof.p89QuarterStepPoseAuditCompleted,true);
+    assert.equal(typeof shapeProof.p89QuarterPoseStrictCrossingWorsened,'boolean');
+    assert.equal(typeof shapeProof.p89QuarterPoseSurfaceGapWorsened,'boolean');
+   }
    assert.ok(['REFUSED_AND_ORIGINAL_GEOMETRY_RESTORED',
     'ORIGINAL_P84_TRIAL_REFUSED','ACTUAL_SOURCE_POSE_GAPS_NONWORSENING_RESEARCH_ONLY']
     .includes(shapeProof.p89SourceGapGate),
