@@ -429,8 +429,9 @@ function auditOnlyUnobservedRearRenderedPixels(){
   depthTest:true,depthWrite:true
  });
  const size=390*690*4,raw=new Uint8Array(size),
-  baseline=new Uint8Array(size),gl=renderer.getContext();
- let tagged=0,restored=false;
+  baseline=new Uint8Array(size),projectedFrame=new Uint8Array(size),
+  gl=renderer.getContext();
+ let tagged=0,projected=0,restored=false;
  const read=out=>{
   render();
   gl.readPixels(0,0,390,690,gl.RGBA,gl.UNSIGNED_BYTE,out);
@@ -447,9 +448,24 @@ function auditOnlyUnobservedRearRenderedPixels(){
     Math.abs(raw[i+1]-baseline[i+1])+
     Math.abs(raw[i+2]-baseline[i+2])>150)tagged++;
   }
+  // Conservative projected-source-mesh denominator: mark both front and
+  // inferred rear solid. The real photo front contains source transparency;
+  // making that opaque can ONLY enlarge this coverage denominator, not
+  // prove which original photo pixels are observed or what fabric looks
+  // like. This is an explicitly LOWER BOUND on unphotographed material
+  // share against the entire opaque projected mesh silhouette.
+  mesh.material=[green,green];
+  read(projectedFrame);
+  for(let i=0;i<size;i+=4){
+   if(projectedFrame[i]<45&&projectedFrame[i+1]>220&&
+    projectedFrame[i+2]<45)projected++;
+  }
  }finally{
   mesh.material=original;green.dispose();render();restored=true;
  }
+ check(projected>0&&projected>=tagged,
+  'solid original-mesh ID marker did not bound actual visible inferred rear');
+
  check(mesh.material===original&&
    mesh.material[0].map?.isDataTexture===true&&
    mesh.material[1].isMeshStandardMaterial===true,
@@ -465,6 +481,11 @@ function auditOnlyUnobservedRearRenderedPixels(){
   unphotographedRearMarkerPixels:tagged,
   unphotographedRearFractionOfFullWebGLViewport:
    Math.round(tagged/(390*690)*1e5)/1e5,
+  opaqueSourceMeshProjectedMarkerPixels:projected,
+  inferredRearLowerBoundShareOfOpaqueProjectedOriginalSkirt:
+   Math.round(tagged/projected*1e5)/1e5,
+  opaqueFrontMarkerOverestimatesPhotographicAlphaCoverage:true,
+  projectedSourceDenominatorNotTruePhotographedVisiblePixels:true,
   originalPhotoFrontUVAndRGBUnchanged:true,
   originalSkirtSourcePhotoAndAnatomicalGeometryUnchanged:true,
   temporaryAttributionMaterialDisposedAndRestored:restored,
