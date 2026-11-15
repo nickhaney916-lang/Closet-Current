@@ -731,6 +731,29 @@ try{
  // has been displayed. The read-only gallery must invalidate that image and
  // refuse reentry when actual JPEG BYTES no longer match their saved SHA.
  // Restore only from A's original owner-scoped v4 export afterwards.
+ // M71: the public SegFormer WASM inference, v4 import, two logout
+ // reloads, and owner A recovery have already completed. Explicitly enter a
+ // fresh, authenticated document for the independent source-byte tamper and
+ // restore phase. This is NOT a retry or skipped assertion: every negative
+ // source-integrity check below must still pass after the boundary.
+ stage='fresh-owner-A-document-before-original-byte-tamper';
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>window.closetAuth?.user?.id==='m58-A'&&
+  db?.name==='closet-current-user-m58-A'&&
+  window.nativeLossless04Bridge?.status()?.active===true&&
+  document.getElementById('appShell')?.hidden===false,
+  null,{timeout:30000});
+ await page.evaluate(()=>switchView('builder'));
+ await page.waitForFunction(id=>window.nativeLossless04Bridge
+  ?.readOnlySnapshot()?.saved?.some(b=>b.slots?.top===id)&&
+  !!document.querySelector('#savedBoards button'),
+  handoff.savedItemId,{timeout:30000});
+ await page.locator('#savedBoards button').first().click();
+ await page.waitForFunction(id=>currentBoard?.slots?.top===id,
+  handoff.savedItemId,{timeout:30000});
+ await page.locator('#mission4PhotoOnly59Open').click();
+ await page.waitForFunction(()=>document.querySelectorAll(
+  '#mission4PhotoOnly59Photos img').length===1,null,{timeout:30000});
  stage='same-owner-original-jpeg-byte-tamper-gallery-must-fail-closed';
  await page.evaluate(async id=>{
   const tx=db.transaction('items','readwrite'),store=tx.objectStore('items');
