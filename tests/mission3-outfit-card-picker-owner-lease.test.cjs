@@ -13,7 +13,7 @@ function exact(a,b){
 }
 const leaseSource=exact('function beginOwnerBoardUiLease(){','function beginNativeBoardMountLease(){');
 const savedSource=exact('function renderSavedOutfitBoards(){','async function importBoardBackup(');
-const pickerSource=exact('function openBoardPicker(slotId){','function renderOutfitBoard(){');
+const pickerSource=exact('function boardPhotoRequiresUnitReview(item){','function renderOutfitBoard(){');
 const ownerModes=[
  ['different account',f=>f.swap()],
  ['same-ID new login',f=>f.relogin()],
@@ -44,8 +44,14 @@ function fixture(){
   currentBoard:{name:'DRAFT-A',slots:{}},savedOutfitBoards:[original],
   items:[item],outfitSlots:[{id:'top',label:'Top'}],choosingSlot:'top',
   $(id){return element(id)},
-  node(tag,label,className){const el={tag,label,className,isConnected:true,children:[],
-   append(...xs){this.children.push(...xs)},onclick:null,type:'',id:''};
+  node(tag,label,className){
+   const classes=new Set(String(className||'').split(/\s+/).filter(Boolean));
+   const attributes=new Map();
+   const el={tag,label,className,isConnected:true,children:[],
+    classList:{add(value){classes.add(value)},contains(value){return classes.has(value)}},
+    setAttribute(key,value){attributes.set(key,String(value))},
+    getAttribute(key){return attributes.get(key)||null},
+    append(...xs){this.children.push(...xs)},onclick:null,type:'',id:''};
    if(tag==='button')calls.push('button:'+String(label??className));
    return el;
   },
@@ -83,6 +89,14 @@ test('real default saved outfit card selects and saves only while signed owner i
 test('real default photo picker allows originating owner to select source',()=>{
  const f=fixture(),button=f.makePicker();f.calls.length=0;
  button.onclick();assert.deepEqual(f.calls,['select:top:owner-a-garment','picker-close']);
+});
+test('picker source-only photo warning is visible and accessible before selection',()=>{
+ const f=fixture(),button=f.makePicker();
+ assert.equal(button.classList.contains('source-unverified'),true);
+ assert.match(button.children.find(x=>x.tag==='small')?.label||'',
+  /Photo reference only.*garment outline unverified/i);
+ assert.match(button.getAttribute('aria-label'),
+  /individual garment outline unverified.*Select for 2D outfit/i);
 });
 for(const [reason,mutation] of ownerModes){
  test('former owner saved outfit card cannot touch new session after '+reason,()=>{
