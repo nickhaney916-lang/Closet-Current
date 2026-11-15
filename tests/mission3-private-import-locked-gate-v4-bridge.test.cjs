@@ -359,7 +359,7 @@ test('legacy import rejects excessively nested metadata before any private stora
 });
 
 if(process.env.M3_TEST_DIST_ATOMIC==='1'){
- test('built PWA imports original JPEG, looks and outfit in one native IDB transaction on Chromium and WebKit',async()=>{
+ test('DEFAULT built PWA atomically restores original JPEG, looks and outfit in Chromium and WebKit',async()=>{
   const {createServer}=require('node:http');
   const {readFile}=require('node:fs/promises');
   const {resolve,extname}=require('node:path');
@@ -415,7 +415,7 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
       });
       const page=await ctx.newPage(),errors=[];
       page.on('pageerror',error=>errors.push(String(error)));
-      await page.goto(origin+'/?legacyAtomicM3=research',{waitUntil:'domcontentloaded'});
+      await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
       await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady,inspirationReady]));
       const result=await page.evaluate(async({owner,jpeg,sha})=>{
        const input={format:'closet-current',version:3,items:[{
