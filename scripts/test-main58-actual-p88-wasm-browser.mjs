@@ -285,8 +285,8 @@ try{
  },handoff.savedItemId,{timeout:30000});
  const normal2D=await page.locator('#boardSlots .board-slot-top.owned img')
   .evaluate(img=>({decoded:img.naturalWidth>0,
-   sourceIsLocalJpeg:/^data:image\\/jpeg;base64,/.test(img.getAttribute('src')||'')}));
- assert.equal(normal2D.decoded,true,'owner's original-photo-derived 2D outfit image was not decoded');
+   sourceIsLocalJpeg:(img.getAttribute('src')||'').startsWith('data:image/jpeg;base64,')}));
+ assert.equal(normal2D.decoded,true,"owner's original-photo-derived 2D outfit image was not decoded");
  assert.equal(normal2D.sourceIsLocalJpeg,true,'native photo card did not retain local JPEG');
  stage='strict verified original preview and unsupported 3D must stay blocked';
  await page.locator('#mission4Preview1054Section button').waitFor({timeout:20000});
