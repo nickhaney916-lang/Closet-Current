@@ -77,8 +77,9 @@ const reports = Object.fromEntries(allModes.map(mode => [mode, {
   independentHumanMasks: true,
   humanSubtypeLabelsAvailable: false,
   humanColorLabelsAvailable: false,
-  sourceDisjointFromP68Development: true,
+  sourceDisjointFromP68Development: false, // exact same previously EXPOSED P68 16-photo validation set
   notSealedNovelAcceptance: true,
+  researchOnlyPixelGate: P88_EXPOSED_PIXEL_PROBES[mode] || null,
   automaticSave: false,
   physicalDevice: false,
   rows: []
