@@ -185,6 +185,99 @@ try{
   modelRequests:modelResponses.length,elapsedMs:receipt.elapsedWallMs,
   saved:0,hold:true
  }));
+ // M58 follow-on: real model has finished. The earlier receipt proved ZERO
+ // automatic saves. This second phase deliberately uses a SYNTHETIC test owner
+ // to annotate a separate manual region, exercising the *real* crop, checkbox,
+ // and atomic local IndexedDB write. These labels are NOT physical garment truth.
+ stage='synthetic-owner-manual-crop-after-real-model';
+ await page.getByRole('button',{name:'Add missed piece'}).click();
+ const manuallyAdded=page.locator('#multi24Grid .multi24-card[data-review-tier="manual"]').last();
+ await manuallyAdded.waitFor({timeout:20000});
+ await manuallyAdded.getByRole('button',{name:'Adjust crop/mask'}).click();
+ const cropEditor=page.locator('dialog.photo-crop-editor');
+ await cropEditor.waitFor({state:'visible',timeout:20000});
+ await cropEditor.getByRole('button',{name:'Save crop'}).click();
+ await cropEditor.waitFor({state:'hidden',timeout:20000});
+ await manuallyAdded.getByLabel('Main category').selectOption('Tops');
+ await manuallyAdded.getByLabel('Specific type').selectOption('T-shirt');
+ await manuallyAdded.getByLabel('Color (confirm visually)').fill('Blue');
+ await manuallyAdded.getByLabel('I confirm this visible garment, category and color').check();
+ assert.equal(await countRows(page),0,
+  'synthetic owner gesture must not save without the explicit Save action');
+ await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
+ await page.waitForFunction(()=>/saved together with the original photo SHA-256/.test(
+  document.getElementById('multi24Status')?.textContent||''),null,{timeout:45000});
+ assert.equal(await countRows(page),1,'exactly one explicit test-owner save');
+ stage='verified-outfit-source-admission-check';
+ const handoff=await page.evaluate(async()=> {
+  const owner='m58-A';
+  const items=await new Promise((resolve,reject)=>{
+   const req=db.transaction('items','readonly').objectStore('items').getAll();
+   req.onsuccess=()=>resolve(req.result);
+   req.onerror=()=>reject(req.error);
+  });
+  if(items.length!==1)throw Error('M58 private saved row count changed');
+  const item=items[0],original=item.originalPhoto?.image||'';
+  if(!original.startsWith('data:image/jpeg;base64,'))
+   throw Error('M58 source original not retained');
+  const bytes=Uint8Array.from(atob(original.slice('data:image/jpeg;base64,'.length)),x=>x.charCodeAt(0));
+  const dig=await crypto.subtle.digest('SHA-256',bytes);
+  const verifiedSHA=[...new Uint8Array(dig)].map(x=>x.toString(16).padStart(2,'0')).join('');
+  const {buildOwnerWardrobeIndex}=await import('/public/native-owner-wardrobe-index-167.mjs');
+  const index=buildOwnerWardrobeIndex(owner,items);
+  const unit=index.entries.find(x=>x.id===item.id);
+  const {preflightOwnedOutfit1054}=await import(
+   '/research/main-thread-integration-1054/source-to-outfit.mjs');
+  let admitted=false,refusal='';
+  try{
+   await preflightOwnedOutfit1054({
+    getSession:currentPhotoOwnerSession167,
+    readOwnerItems:signedOwnerSavedRows167,
+    cleanBoard:cleanOutfitBoard,
+    board:{name:'M58 synthetic test owner manual region',slots:{top:item.id}}
+   });
+   admitted=true;
+  }catch(error){refusal=String(error?.message||error);}
+  return {
+   sourceSHA:item.sourceSHA256,originalSHA:item.originalPhoto?.sha256,rehash:verifiedSHA,
+   sameOwner:item.ownerId===owner,reviewedCrop:item.sourceCropReviewed===true,
+   ownerAdjusted:item.userAdjusted===true,
+   singleGarmentVerified:item.singleGarmentVerified===true,
+   ownerReviewed:item.ownerReviewed===true,
+   sourcePhotoOriginal:item.sourcePhotoOriginal===true,
+   photoOnly:item.photoOnly===true,threeDReady:item.threeDReady===true,
+   sourceKind:unit?.sourceKind||'not-indexed',
+   reviewedCategory:item.category,reviewedSubtype:item.itemType,
+   admitted,refusal:refusal.slice(0,150)
+  };
+ });
+ for(const value of [handoff.sourceSHA,handoff.originalSHA,handoff.rehash])
+  assert.equal(value,sha,'original source SHA changed through explicit private save');
+ assert.equal(handoff.sameOwner,true);
+ assert.equal(handoff.reviewedCrop,true);
+ assert.equal(handoff.ownerAdjusted,true);
+ assert.equal(handoff.reviewedCategory,'Tops');
+ assert.equal(handoff.reviewedSubtype,'T-shirt');
+ assert.equal(handoff.sourceKind,'ambiguous-source',
+  'unproven physical garment unit must remain ambiguous');
+ assert.equal(handoff.singleGarmentVerified,false);
+ assert.equal(handoff.ownerReviewed,false);
+ assert.equal(handoff.sourcePhotoOriginal,false);
+ assert.equal(handoff.photoOnly,true);
+ assert.equal(handoff.threeDReady,false);
+ assert.equal(handoff.admitted,false,
+  'M51 must refuse a MULTI24 row lacking independently verified physical-unit evidence');
+ assert.match(handoff.refusal,/MAIN1054/,'source-to-outfit preflight did not issue its own refusal');
+ assert.deepEqual(rejected,[],'explicit local owner save caused forbidden external request');
+ assert.deepEqual(issues,[],'explicit synthetic owner review caused browser runtime error');
+ console.log('M58_SYNTHETIC_OWNER_NATIVE_SAVE_TO_M51_FAIL_CLOSED',JSON.stringify({
+  engine,originalSHA256:sha,actualP88InferenceFirst:true,
+  syntheticOwnerManualCropAndConfirm:true,localExplicitSaveCount:1,
+  sourceKind:handoff.sourceKind,verifiedOutfitAdmitted:false,
+  sourceOriginalRehashed:true,sourcePhoto2DOnly:true,
+  ownerLabelsAreHumanGroundTruth:false,hostedRLS:false,physicalPhone:false,
+  familyAlpha:'HOLD'
+ }));
  await context.close();
 }catch(e){
  console.error('M58_REAL_P88_WORKER_FAIL',JSON.stringify({
