@@ -81,7 +81,7 @@ test('M48 synthetic valid source contract still denies any physical garment prom
   assert.equal(verdict.consumer3DAdmitted,false);
   assert.equal(verdict.releaseAuthorized,false);
   assert.equal(verdict.familyAlpha,'HOLD');
- });
+ }
 });
 test('M48 rejects browser-label spoofing, release permission and invented sewn topology',()=>{
  const base=fixture();
