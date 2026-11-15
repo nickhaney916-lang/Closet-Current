@@ -2128,3 +2128,115 @@ test('P88 original shoe-pair and source-bound fragment receipts survive app relo
  assert.equal(h.batch[1].combinedFragments70.confirmedByOwner,true);
  assert.equal(h.batch[2].reconciliation70Status,'unresolved');
 });
+
+// P88: exercise the real async initial app owner/photo reload across each
+// awaited database boundary. No actual family photo, browser account, RLS,
+// or cloud access is implied by this source-executed fake owner IDB fixture.
+function ownerBootRevokeHarness88(){
+ const start=appSource.indexOf('function restoreMission1Draft88(');
+ const end=appSource.indexOf('for(const c of categories.slice(1))',start);
+ assert.ok(start>=0&&end>start,'native signed owner boot source present');
+ const deferred=()=>{
+  let resolve,reject;
+  const promise=new Promise((a,b)=>{resolve=a;reject=b;});
+  return {promise,resolve,reject};
+ };
+ const gates={open:deferred(),items:deferred(),draft:deferred()};
+ const starts={open:deferred(),items:deferred(),draft:deferred()};
+ const calls=[],messages=[],scans=[],renders=[];
+ const user={id:'owner-A'};let closes=0;
+ const ownerDb={name:'closet-current-user-owner-A',close(){closes++;}};
+ const c={window:{closetAuth:{ready:Promise.resolve(),user}},
+  openDB:()=>{calls.push('open');starts.open.resolve();return gates.open.promise;},
+  readAll:()=>{calls.push('items');starts.items.resolve();return gates.items.promise;},
+  readDraft:()=>{calls.push('draft');starts.draft.resolve();return gates.draft.promise;},
+  normalizeClothing:x=>structuredClone(x),
+  queueAutomatic:item=>scans.push(item),message:s=>messages.push(s),
+  render:()=>renders.push('render')};
+ vm.createContext(c);
+ vm.runInContext('let db,items=[],batch=[];\n'+appSource.slice(start,end),c);
+ const complete=vm.runInContext('closetReady',c);
+ return {c,user,ownerDb,gates,starts,calls,messages,scans,renders,complete,
+  get closes(){return closes;},
+  get items(){return vm.runInContext('items',c);},
+  get batch(){return vm.runInContext('batch',c);},
+  get db(){return vm.runInContext('db',c);}};
+}
+test('P88 owner A boot discarded before IndexedDB open resolves after switching to B',async()=>{
+ const h=ownerBootRevokeHarness88();
+ await h.starts.open.promise;
+ h.c.window.closetAuth.user={id:'owner-B'};
+ h.gates.open.resolve(h.ownerDb);
+ await h.complete;
+ assert.deepEqual(h.calls,['open'],'must never read A contents after logout');
+ assert.equal(h.closes,1);
+ assert.equal(h.db,undefined);
+ assert.equal(h.items.length,0);
+ assert.equal(h.batch.length,0);
+ assert.equal(h.scans.length,0);
+ assert.equal(h.renders.length,0);
+ assert.equal(h.messages.length,0,'old owner may not show a photo count in B');
+});
+test('P88 A wardrobe read finishing after B account switch never paints private A items into B',async()=>{
+ const h=ownerBootRevokeHarness88();
+ await h.starts.open.promise;h.gates.open.resolve(h.ownerDb);
+ await h.starts.items.promise;
+ h.c.window.closetAuth.user={id:'owner-B'};
+ h.gates.items.resolve([{id:'A-private-shirt',image:'data:image/jpeg;base64,QUFB'}]);
+ await h.complete;
+ assert.deepEqual(h.calls,['open','items']);
+ assert.equal(h.closes,1);
+ assert.equal(h.items.length,0);
+ assert.equal(h.batch.length,0);
+ assert.equal(h.renders.length,0);
+ assert.equal(h.messages.length,0);
+ assert.equal(h.scans.length,0);
+});
+test('P88 completed A clothing read does not leak A draft when login renewed during pending draft read',async()=>{
+ const h=ownerBootRevokeHarness88();
+ await h.starts.open.promise;h.gates.open.resolve(h.ownerDb);
+ await h.starts.items.promise;
+ h.gates.items.resolve([{id:'A-owned-dress',image:'data:image/jpeg;base64,QUJD'}]);
+ await h.starts.draft.promise;
+ h.c.window.closetAuth.user={id:'owner-A'}; // same ID is not the same signed session
+ h.gates.draft.resolve([{id:'A-private-camera',image:'data:image/jpeg;base64,UEhPVE8='}]);
+ await h.complete;
+ assert.deepEqual(h.calls,['open','items','draft']);
+ assert.equal(h.closes,1);
+ assert.equal(h.items.length,0,'A owned pieces never visible after renewed login');
+ assert.equal(h.batch.length,0,'A unfinished JPEG never visible after renewed login');
+ assert.equal(h.renders.length,0);
+ assert.equal(h.messages.length,0);
+ assert.equal(h.scans.length,0);
+});
+test('P88 replacement IDB during pending A draft load remains current; late old load cannot overwrite it',async()=>{
+ const h=ownerBootRevokeHarness88();
+ await h.starts.open.promise;h.gates.open.resolve(h.ownerDb);
+ await h.starts.items.promise;h.gates.items.resolve([]);
+ await h.starts.draft.promise;
+ const replacement={name:'closet-current-user-owner-A'};
+ h.c.db=replacement;
+ // top-level let db in VM is lexical and not a property of the context.
+ h.c.window.replacementBootDb88=replacement;
+ vm.runInContext('db=window.replacementBootDb88',h.c);
+ h.gates.draft.resolve([{id:'stale',image:'data:image/jpeg;base64,U1RBTEU='}]);
+ await h.complete;
+ assert.equal(h.db,replacement,'never clear newer db when older A DB revoked');
+ assert.equal(h.closes,1,'old connection is closed without affecting replacement');
+ assert.equal(h.batch.length,0);
+ assert.equal(h.renders.length,0);
+ assert.equal(h.scans.length,0);
+});
+test('P88 rejected old-owner draft read after account switch cannot display storage warning in B session',async()=>{
+ const h=ownerBootRevokeHarness88();
+ await h.starts.open.promise;h.gates.open.resolve(h.ownerDb);
+ await h.starts.items.promise;h.gates.items.resolve([]);
+ await h.starts.draft.promise;
+ h.c.window.closetAuth.user={id:'owner-B'};
+ h.gates.draft.reject(Error('owner A old database closed'));
+ await h.complete;
+ assert.equal(h.closes,1);
+ assert.equal(h.messages.length,0,'do not report old account private storage failure to new owner');
+ assert.equal(h.renders.length,0);
+ assert.equal(h.batch.length,0);
+});
