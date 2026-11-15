@@ -97,7 +97,7 @@ const output={
  donorResearchHeads:DONORS,comparisons:summaries,
  allDonorsVerifiedMerged:false,actualMergedAppAcceptance:false,
  productionUpdated:false,realOwnerJWTorRLSVerified:false,
- 3DPhotorealisticClothAccepted:false,sourceDisjointHumanRecognitionVerified:false,
+ physical3DPhotorealisticClothAccepted:false,sourceDisjointHumanRecognitionVerified:false,
  noLiveConsumerSourceMutation:true,releaseAuthorized:false,
  familyAlpha:'HOLD'
 };
