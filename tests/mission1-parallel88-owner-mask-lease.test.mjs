@@ -1131,3 +1131,35 @@ test('P88 changed signed unit mask during P70 preflight is not persisted as an a
  assert.equal(c.batch[0].reconciliation70Status,'unresolved');
  assert.match(c.outfitUnit70Error,/Owner or source garment changed before draft persistence/);
 });
+
+
+test('P88 queued P70 owner decision refuses another signed owner's newly appended source photo',async()=>{
+ let release;const gate=new Promise(resolve=>{release=resolve;});
+ const h=unitDecisionHarness88({queueBeforeWrite:gate}),c=h.c;
+ const pending=vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ for(let n=0;n<12;n++)await Promise.resolve();
+ assert.equal(c.batch[0].reconciliation70Status,'separate_confirmed');
+ const foreign=h.ownerDraft('foreign-owner-late-photo','source-B','owner-B');
+ c.batch.push(foreign);
+ release();await pending;
+ assert.equal(c.storageWrites.length,0,
+  'owner-A private IndexedDB must not receive an owner-B garment receipt');
+ assert.equal(c.batch.find(x=>x.id==='part-A').reconciliation70Status,'unresolved',
+  'uncommitted owner decision must be rolled back');
+ assert.match(c.outfitUnit70Error,/Owner or source garment changed before draft persistence/);
+ assert.equal(c.renderCalls,0,'invalid foreign owner batch never passes signed action');
+});
+
+test('P88 queued P70 decision refuses malformed same-source mask appended after preflight starts',async()=>{
+ let release;const gate=new Promise(resolve=>{release=resolve;});
+ const h=unitDecisionHarness88({queueBeforeWrite:gate}),c=h.c;
+ const pending=vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ for(let n=0;n<12;n++)await Promise.resolve();
+ const altered=h.ownerDraft('late-mask','src-A','owner-A');
+ altered.reconciliation70.maskSha256='NOT-SHA256';
+ c.batch.push(altered);
+ release();await pending;
+ assert.equal(c.storageWrites.length,0);
+ assert.equal(c.batch.find(x=>x.id==='part-A').reconciliation70Status,'unresolved');
+ assert.match(c.outfitUnit70Error,/Owner or source garment changed before draft persistence/);
+});
