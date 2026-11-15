@@ -80,7 +80,7 @@ test('synthetic three-pose proof-shape only: separate actual PNG proof requires 
  assert.equal(receipt.sourcePairContactLedger.length,4);
  assert.ok(receipt.sourcePairContactLedger.every(row=>
   row.originalSourcePoseCount===3&&row.candidateStaticCrossingsRemain===true&&
-  row.originalPhoto2DFallbackRequired===true&&row.consumer3DAuthorized===false&&
+  row.sourcePhoto2DFallbackRequired===true&&row.consumer3DAuthorized===false&&
   row.candidateStrictSourceCrossingsByLayer.denimBody===6));
  assert.equal(receipt.originalPhotoTwoPieceClearanceProved,false);
 });
