@@ -151,6 +151,42 @@ test('no looks or outfit board in a legacy backup preserves originals while addi
   assert.equal(state['outfit-board'].current.slots.top,'shirt');
  }finally{f.close();}
 });
+test('legacy merge without a replacement board refuses category drift in a saved outfit',async()=>{
+ const f=await fixture();
+ try{
+  const before=await snapshot(f.db);
+  const changed={format:'closet-current',version:3,
+   items:[row(f.owner,'shirt','Shoes')]};
+  await assert.rejects(prep(f,changed),/LEGACY_ATOMIC_EXISTING_OUTFIT_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('legacy merge without a replacement board refuses dress-over-bottom suppression',async()=>{
+ const f=await fixture();
+ try{
+  await replace(f.db,'items',row(f.owner,'pants','Bottoms'));
+  await replace(f.db,'state',{id:'outfit-board',
+   current:{slots:{top:'shirt',bottom:'pants'}},
+   saved:[{name:'My saved outfit',slots:{top:'shirt',bottom:'pants'}}]});
+  const before=await snapshot(f.db);
+  const changed={format:'closet-current',version:3,
+   items:[row(f.owner,'shirt','Dresses')]};
+  await assert.rejects(prep(f,changed),/LEGACY_ATOMIC_EXISTING_OUTFIT_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('compatible garment update keeps existing saved outfit slots without imported board',async()=>{
+ const f=await fixture();
+ try{
+  const updated={...row(f.owner,'shirt'),color:'Orange'};
+  const p=await prep(f,{format:'closet-current',version:3,items:[updated]});
+  await commit(f,p);
+  const s=await snapshot(f.db),saved=s.state.find(x=>x.id==='outfit-board');
+  assert.equal(s.items.find(x=>x.id==='shirt').color,'Orange');
+  assert.equal(saved.current.slots.top,'shirt');
+  assert.equal(saved.saved[0].slots.top,'shirt');
+ }finally{f.close();}
+});
 test('duplicate clothing IDs block preflight without touching wardrobe',async()=>{
  const f=await fixture();
  try{

@@ -139,6 +139,30 @@ export async function prepareLegacyAtomicM3({
   input.outfitBoard.saved.forEach((row,i)=>verifySlotsUnchanged(row,cleanSaved[i]));
   board={id:'outfit-board',current:cleanCurrent,saved:cleanSaved};
  }
+ // A backup with no outfit board must never silently corrupt already saved
+ // outfits when an incoming item replaces a referenced garment's ID. A category
+ // change can invalidate a slot; changing a shirt into a dress can also hide
+ // previously valid bottoms. Do not rewrite the owner's saved selections.
+ if(board===null && incoming.length){
+  const existingIDs=new Set(rows.items.map(row=>row.id));
+  const replaced=new Set(incoming.filter(row=>existingIDs.has(row.id)).map(row=>row.id));
+  const savedBoard=states.get('outfit-board');
+  if(savedBoard&&replaced.size){
+   const beforeCloset=rows.items.map(normalizeClothing);
+   const afterCloset=[...allItems.values()].map(normalizeClothing);
+   const outfits=[savedBoard.current,
+    ...(Array.isArray(savedBoard.saved)?savedBoard.saved:[])];
+   for(const outfit of outfits){
+    if(!plain(outfit)||!plain(outfit.slots)||
+       !Object.values(outfit.slots).some(id=>replaced.has(id)))continue;
+    const before=cleanOutfitBoard(outfit,beforeCloset);
+    const after=cleanOutfitBoard(outfit,afterCloset);
+    for(const [slot,id] of Object.entries(before.slots))
+     if(after.slots?.[slot]!==id)
+      throw Error('LEGACY_ATOMIC_EXISTING_OUTFIT_CONFLICT');
+   }
+  }
+ }
  const marker=states.get('cloud-sync')||{id:'cloud-sync',baseVersion:0,
   baseDocument:null,localRevision:0,dirty:false};
  if(!Number.isSafeInteger(marker.localRevision)||marker.localRevision<0||
