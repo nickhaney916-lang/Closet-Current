@@ -248,12 +248,46 @@ function renderUnit70Panel(){
   target.hidden=false;target.textContent='Garment reconciliation is unavailable. Your draft photographs are preserved. Use individual photos or retry.';
  });
 }
+// P88 owner-facing recall action for known missing accessory/garment regions.
+// Never infer a 46-class accessory box as a verified physical item. This only
+// navigates to the existing single-photo camera/import. It does not copy an
+// outfit mask/source lease, save inventory, or attach an independent JPEG to
+// the originally captured outfit automatically.
+function renderMissingOutfitGarment88(){
+ if(typeof document==='undefined')return;
+ const panel=$('outfitPieceActions'),target=panel?.querySelector?.('.actions');
+ if(!target)return;
+ let button=$('outfitRecoverMissing88');
+ if(!button){
+  button=document.createElement('button');
+  button.id='outfitRecoverMissing88';button.type='button';
+  button.className='secondary';
+  button.textContent='Photograph a missed item';
+  target.append(button);
+ }
+ const owner=captureOwner88(),ownerDb=db,source=outfitActiveId;
+ const live=()=>Boolean(owner?.id&&captureOwner88()===owner&&
+  db===ownerDb&&ownerDb?.name==='closet-current-user-'+owner.id&&
+  source&&outfitActiveId===source&&
+  [...batch,...items].some(x=>x.outfitSourceId===source));
+ button.hidden=!live();
+ button.disabled=!live()||busy||Boolean(outfitSplitJob);
+ button.onclick=()=>{
+  // Never transfer the old owner's outfit or original JPEG across sessions.
+  if(!live()||busy||outfitSplitJob){button.disabled=true;return;}
+  setCaptureMode('single');
+  switchView('scan');
+  $('start').focus();
+  message('Photograph the missing garment by itself. Confirm its category, type and color in Review; add it to your outfit board separately. Existing outfit pieces stay saved or awaiting review.');
+ };
+}
 function renderOutfitCapture(){
  if(!outfitActiveId)outfitActiveId=batch.find(x=>x.outfitSourceId)?.outfitSourceId||null;
  const pending=batch.filter(x=>x.outfitSourceId===outfitActiveId),saved=items.filter(x=>x.outfitSourceId===outfitActiveId);
  $('outfitPieceActions').hidden=!outfitActiveId||(!pending.length&&!saved.length);
  $('outfitPieceSummary').textContent=saved.length+' saved'+(pending.some(x=>localPending.has(x.id))?' · checking photos…':'')+(pending.some(x=>!localPending.has(x.id))?' · some pieces need review':'');
  $('useCapturedOutfit').disabled=!saved.length;renderUnit70Panel();
+ renderMissingOutfitGarment88();
 }
 function finishOutfitSplit(job,text,failed=false){
  if(job!==outfitSplitJob)return;

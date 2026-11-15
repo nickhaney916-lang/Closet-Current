@@ -2701,3 +2701,52 @@ test('P88 legacy memory suggestion cannot override later owner edits or another 
   assert.equal(h.ownerEdits.length,kind==='human'||kind==='valid'?1:0,kind);
  }
 });
+
+
+test('P88 missing outfit garment action opens the native single-item path, never promotes a source receipt',()=>{
+ const h=captureHarness({ownerId:'owner-A',autoStart:false});
+ const seen=[],actions={append(button){h.node('outfitRecoverMissing88').button=button;}};
+ const panel=h.node('outfitPieceActions');
+ panel.querySelector=selector=>selector==='.actions'?actions:null;
+ h.c.document={createElement:()=>({id:'',type:'',className:'',textContent:'',hidden:false,disabled:false})};
+ const source={id:'outfit-piece',outfitSourceId:'PHOTO-A',image:'data:image/jpeg;base64,UFJFU0VSVkVE',
+  reconciliation70:{maskSha256:'a'.repeat(64)}};
+ h.c.batch.push(source);
+ h.c.db={name:'closet-current-user-owner-A'};
+ h.c.setCaptureMode=mode=>seen.push('mode:'+mode);
+ h.c.switchView=view=>seen.push('view:'+view);
+ h.node('start').focus=()=>seen.push('focus:manual-photo');
+ h.c.message=text=>seen.push('message:'+text);
+ vm.runInContext("outfitActiveId='PHOTO-A'",h.c);
+ h.c.renderOutfitCapture();
+ const button=h.node('outfitRecoverMissing88').button;
+ assert.ok(button,'actual outfit Review creates the recovery control');
+ assert.equal(button.hidden,false);assert.equal(button.disabled,false);
+ button.onclick();
+ assert.deepEqual(seen.slice(0,3),['mode:single','view:scan','focus:manual-photo']);
+ assert.match(seen[3],/Confirm its category, type and color in Review/);
+ assert.equal(h.c.batch.length,1,'existing outfit source draft is retained');
+ assert.equal(h.c.batch[0],source,'no new synthetic/worker garment was created');
+ assert.equal(h.c.items.length,0,'no independent garment auto-save or 3D proof');
+});
+test('P88 missed-item action cannot carry source or owner permissions into a replacement session',()=>{
+ const h=captureHarness({ownerId:'owner-A',autoStart:false});
+ let button=null;let navigation=0;
+ h.node('outfitPieceActions').querySelector=()=>({append:node=>{button=node;}});
+ h.c.document={createElement:()=>({})};
+ h.c.db={name:'closet-current-user-owner-A'};
+ h.c.batch.push({id:'source',outfitSourceId:'PHOTO-A'});
+ h.c.setCaptureMode=()=>navigation++;
+ h.c.switchView=()=>navigation++;
+ h.c.message=()=>navigation++;
+ vm.runInContext("outfitActiveId='PHOTO-A'",h.c);
+ h.c.renderOutfitCapture();assert.ok(button);assert.equal(button.disabled,false);
+ h.c.window.closetAuth.user={id:'owner-A'}; // renewed same ID is distinct authorization
+ button.onclick();assert.equal(navigation,0);
+ assert.equal(button.disabled,true);
+ // Opening Review again on the new signed session cannot re-enable a stale
+ // private DB handle; a genuine new owner DB/ref must be separately validated.
+ h.c.db={name:'closet-current-user-owner-B'};
+ h.c.renderOutfitCapture();assert.equal(button.hidden,true);
+ assert.equal(navigation,0);
+});
