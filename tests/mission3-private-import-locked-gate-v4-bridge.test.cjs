@@ -357,12 +357,12 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
   const server=createServer(async(req,res)=>{
    try{
     const url=new URL(req.url,'http://127.0.0.1');
-    const rel=decodeURIComponent(url.pathname).replace(/^\\/+/, '')||'index.html';
+    const rel=decodeURIComponent(url.pathname).replace(/^\/+/, '')||'index.html';
     const file=resolve(root,rel);
     if(!file.startsWith(root+'/'))throw Error('Outside PWA distribution');
     const body=await readFile(file);
     const mime=extname(file)==='.html'?'text/html':
-     /\\.(?:js|mjs)$/.test(file)?'text/javascript':'application/octet-stream';
+     /\.(?:js|mjs)$/.test(file)?'text/javascript':'application/octet-stream';
     res.writeHead(200,{'content-type':mime,'cache-control':'no-store'});res.end(body);
    }catch{res.writeHead(404);res.end('not found');}
   });
