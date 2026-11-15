@@ -623,7 +623,19 @@ try{
    originalCenterFrontalVisibleMannequinFractions:results.originalPhoto45FrontVisibilityReports.map(x=>x.originalCenterFrontalVisibleMannequinFraction),
    rigid45mmCenterFrontalVisibleMannequinFractions:results.originalPhoto45FrontVisibilityReports.map(x=>x.rigid45mmCenterFrontalVisibleMannequinFraction),
    sourceSpine04ToSkirtRimVerticalOffsetMeters:results.waistAnchorLandmarkReports.map(x=>x.originalWaistRimAndSpine04HeightMismatchMeters),
-   photoSkirtRegistrationCrossingReduction:results.registrationTrials.map(x=>x.bestResearchOnly?.originalThreePoseStrictCrossingPairSum-x.bestResearchOnly?.trialThreePoseStrictCrossingPairSum||0),
+   photoSkirtRegistrationCrossingReduction:results.registrationTrials.map(x=>
+    x.bestResearchOnly?.originalThreePoseStrictCrossingPairSum-
+    x.bestResearchOnly?.trialThreePoseStrictCrossingPairSum||0),
+   originalFivePoseRegistrationStrictPairCounts:results.registrationTrials.map(x=>
+    x.originalFivePoseStrictCrossingPairSum),
+   researchBestFivePoseTrialPairCounts:results.registrationTrials.map(x=>
+    x.bestResearchOnly?.trialFivePoseStrictCrossingPairSum??null),
+   researchBestFivePoseShiftMillimeters:results.registrationTrials.map(x=>
+    x.bestResearchOnly?Math.round(x.bestResearchOnly.displacementMeters*1000):null),
+   researchBestFivePoseRegistrationNames:results.registrationTrials.map(x=>
+    x.bestResearchOnly?.name??null),
+   genuineFivePoseRankedCandidatesPerAvatar:results.registrationTrials.map(x=>x.trials.length),
+   fivePoseScoreNotSweptPhysicsOrHumanFit:true,
    measuredBodyFitResearchReduction:results.measuredBodyFitTrials.map(x=>x.bestProvisionalStructuralAB?.originalStrictSkirtBodyCrossingPairSum-x.bestProvisionalStructuralAB?.trialStrictSkirtBodyCrossingPairSum||0),
    sourceBodyCrossingPairs:results.staticSourceBodyCrossingPairSum??null,
    sourceBodyCrossingWitnessSamples:results.staticSourceBodyCrossingWitnesses??null,
