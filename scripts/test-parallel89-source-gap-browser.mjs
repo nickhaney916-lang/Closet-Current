@@ -122,6 +122,25 @@ try{
   if(variant==='baseline'){
    assert.equal(shapeProof.status,'BASELINE_UNMODIFIED');
    assert.equal(shapeProof.trialApplied,false);
+  }else{
+   assert.equal(shapeProof.p89ResearchOnly,true);
+   assert.equal(shapeProof.p89MeasuredGapCandidateNeverAuthorized,true);
+   assert.equal(shapeProof.p89OriginalPhoto2DFallbackRequired,true);
+   assert.equal(shapeProof.p89Consumer3DAuthorized,false);
+   assert.ok(['REFUSED_AND_ORIGINAL_GEOMETRY_RESTORED',
+    'ORIGINAL_P84_TRIAL_REFUSED','ACTUAL_SOURCE_POSE_GAPS_NONWORSENING_RESEARCH_ONLY']
+    .includes(shapeProof.p89SourceGapGate),
+    'P89 original-source rollback guard was bypassed');
+   if(!shapeProof.trialApplied)
+    assert.ok(['REFUSED_AND_ORIGINAL_GEOMETRY_RESTORED',
+     'ORIGINAL_P84_TRIAL_REFUSED'].includes(shapeProof.p89SourceGapGate),
+     'refused yoke must not persist as a garment research candidate');
+   if(avatar==='female'){
+    assert.equal(shapeProof.trialApplied,false,
+     'original female source yoke gap must not be worsened by a preview');
+    assert.ok(shapeProof.sourceGeometryRestored===true,
+     'female original photographed geometry must be restored');
+   }
   }
   // Original public-source geometry, real native WebGL rendering. PNG hashes
   // are evidence snapshots for independent human review, never fake approval.
