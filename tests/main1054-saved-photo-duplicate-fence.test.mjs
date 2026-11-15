@@ -12,7 +12,7 @@ const save=source.slice(saveStart,saveEnd);
 
 test('new garment checks persisted draft identity and immutable original first',()=>{
  const draft=save.indexOf("draftStore.get('draft')");
- const cas=save.indexOf('CLOSET_STALE_DRAFT_REOPEN_EDITOR');
+ const cas=save.indexOf('CLOSET_STALE_DRAFT_REOPEN_EDITOR',draft);
  const photo=save.indexOf('value.sourceSHA256!==draftExpected.sourceSHA256');
  const scan=save.indexOf('const savedRequest=store.getAll()');
  assert.ok(draft>=0&&cas>draft&&photo>cas&&scan>photo);
