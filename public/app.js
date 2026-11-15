@@ -88,6 +88,30 @@ function savePiece(value,nextBatch,lease){
   });
  });
 }
+// Saved-item edits must be scoped to the exact signed owner and private IDB,
+// including AFTER the asynchronous cloud.beforeWrite queue. A model or
+// manual source-claim must never be minted by changing only clothing details.
+function saveExistingPiece88(value,lease){
+ const live=()=>Boolean(lease&&!lease.wasDraft&&reviewedSaveLeaseLive88(lease)&&
+  value?.id===lease.item.id&&value.image===lease.image&&
+  value.originalPhoto?.image===lease.original&&
+  value.recognitionPhoto?.image===lease.recognition&&
+  value.outfitSourceId===lease.sourceId&&
+  JSON.stringify(value.segmentHint??null)===lease.maskRevision&&
+  JSON.stringify(value.cropBounds??null)===lease.cropRevision&&
+  JSON.stringify(value.exactSavedPhotoMatch88??null)===lease.exactSavedMarker88&&
+  JSON.stringify(value.ownerDuplicateReview88??null)===lease.duplicateReviewRevision88&&
+  !!lease.evidenceRevision&&ordinarySourceEvidence88(value)===lease.evidenceRevision);
+ if(!live())return Promise.reject(Error('P88_STALE_SAVED_EDITOR_OWNER_OR_SOURCE'));
+ return queued(()=>{
+  if(!live())throw Error('P88_REVOKED_SAVED_EDITOR_OWNER_OR_SOURCE');
+  return new Promise((resolve,reject)=>{
+   const tx=lease.ownerDb.transaction('items','readwrite');
+   tx.objectStore('items').put(value);
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+  });
+ });
+}
 function node(tag,text,className){const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;}
 // Keep exact-owner review helpers in the actual native Adjust source segment
 // also exercised by isolated P82/P846 Chromium and WebKit harnesses.
@@ -124,6 +148,7 @@ function reviewedSaveLease88(item){
   maskRevision:JSON.stringify(item?.segmentHint??null),
   cropRevision:JSON.stringify(item?.cropBounds??null),
   exactSavedMarker88:JSON.stringify(item?.exactSavedPhotoMatch88??null),
+  duplicateReviewRevision88:JSON.stringify(item?.ownerDuplicateReview88??null),
   exactPhotoPeers88:reviewedExactPhotoPeers88(item).map(x=>({item:x,id:x.id,image:x.image})),
   evidenceRevision:ordinarySourceEvidence88(item)};
 }
@@ -160,6 +185,7 @@ function reviewedSaveLeaseLive88(lease){
    JSON.stringify(item.cropBounds??null)===lease.cropRevision&&
    !!lease.evidenceRevision&&ordinarySourceEvidence88(item)===lease.evidenceRevision&&
    JSON.stringify(item.exactSavedPhotoMatch88??null)===lease.exactSavedMarker88&&
+   JSON.stringify(item.ownerDuplicateReview88??null)===lease.duplicateReviewRevision88&&
    reviewedExactPhotoPeers88(item).length===lease.exactPhotoPeers88.length&&
    reviewedExactPhotoPeers88(item).every((x,i)=>x===lease.exactPhotoPeers88[i].item&&
     x.id===lease.exactPhotoPeers88[i].id&&x.image===lease.exactPhotoPeers88[i].image));
@@ -1052,6 +1078,7 @@ function render(){
   const dialog=document.createElement('dialog');dialog.className='clothing-editor';
   dialog.style.cssText='border:1px solid #d9ddd2;border-radius:8px;max-width:440px;width:90%;padding:24px';
   const f=node('form'),draft=structuredClone(item);
+  const savedDetailsLease88=reviewedSaveLease88(item);
   let saveInFlight847=false,reviewSaved72=null,learnSaved72=null;
   const reviewedKeys72=new Set(['category','itemType']);
   const collect=clothingFields(f,draft,key=>{
@@ -1087,7 +1114,9 @@ function render(){
     if(learningMode72()&&(!dialog.open||scope!==learningScope72()||
       item.image!==source||item.recognitionPhoto?.image!==recognition||
       !items.some(x=>x===item)))throw Error('P847_STALE_SAVED_EDITOR');
-    await writeAll([recorded]);
+    await saveExistingPiece88(recorded,savedDetailsLease88);
+    // Never paint the previous owner's saved item into the replacement UI.
+    if(!reviewedSaveLeaseLive88(savedDetailsLease88)){dialog.close();return;}
     Object.assign(item,recorded);dialog.close();render();scheduleMemoryReview();
    }catch{
     saveInFlight847=false;ok.disabled=false;cancel.disabled=false;

@@ -1910,3 +1910,84 @@ test('P88 ordinary review save holds exact owner, image and IDB after cloud pref
    assert.equal(s.writes,2,'legitimate owner details still persist');
   }
 });
+
+
+// Source-executes the actual native saved-item row write with fake IndexedDB;
+// no hosted account or genuinely independent photo/garment recognition involved.
+function savedDetailsHarness88(){
+ const start=appSource.indexOf('function saveExistingPiece88(');
+ const end=appSource.indexOf('function node(',start);
+ const begin=appSource.indexOf('function reviewedExactPhotoPeers88(');
+ const finish=appSource.indexOf('function empty(',begin);
+ assert.ok(start>0&&end>start&&begin>end&&finish>begin);
+ assert.match(appSource,/await saveExistingPiece88\(recorded,savedDetailsLease88\)/);
+ const owner={id:'owner-A'},writes=[],item={id:'saved-1',
+  image:'data:image/jpeg;base64,/9j/2Q==',originalPhoto:{image:'data:image/jpeg;base64,/9j/2Q=='},
+  recognitionPhoto:{image:'data:image/jpeg;base64,/9j/2Q=='},
+  category:'Tops',itemType:'T-shirt',color:'Blue',userAdjusted:true,
+  segmentHint:{categories:['Tops']},cropBounds:{x:0,y:0,width:1,height:1},
+  ownerSourceReview88:{ownerReviewed:true,threeDReady:false},
+  ownerDuplicateReview88:{ownerAttestedDistinctPhysicalItem:true,threeDReady:false}};
+ const db={name:'closet-current-user-owner-A',transaction(store,mode){
+  assert.equal(store,'items');assert.equal(mode,'readwrite');
+  const tx={objectStore(name){assert.equal(name,'items');return {put(value){writes.push(structuredClone(value));}}}};
+  queueMicrotask(()=>tx.oncomplete?.());return tx;
+ }};
+ const c={window:{closetAuth:{user:owner}},db,items:[item],batch:[],structuredClone};
+ c.beforeWrite=async()=>{};
+ c.queued=async fn=>{await c.beforeWrite();return fn();};
+ vm.createContext(c);
+ vm.runInContext(appSource.slice(start,end)+appSource.slice(begin,finish),c);
+ const lease=c.reviewedSaveLease88(item);
+ return {c,item,db,owner,lease,writes};
+}
+test('P88 existing closet item accepts manual category/type/color edits in captured IDB only',async()=>{
+ const h=savedDetailsHarness88(),value=structuredClone(h.item);
+ value.category='Dresses';value.itemType='Dress';value.color='Green';
+ await h.c.saveExistingPiece88(value,h.lease);
+ assert.equal(h.writes.length,1);assert.equal(h.writes[0].itemType,'Dress');
+ assert.equal(h.writes[0].color,'Green');
+ assert.equal(h.writes[0].originalPhoto.image,h.item.originalPhoto.image);
+});
+test('P88 saved detail queued preflight refuses cross-owner, same-ID renewed login and changed IDB',async()=>{
+ for(const mutate of [
+  h=>{h.c.window.closetAuth.user={id:'owner-B'};h.c.db={name:'closet-current-user-owner-B'};},
+  h=>{h.c.window.closetAuth.user={id:'owner-A'};},
+  h=>{h.c.db={name:'closet-current-user-owner-A'};}
+ ]){
+  const h=savedDetailsHarness88(),value=structuredClone(h.item);value.color='Green';
+  h.c.beforeWrite=async()=>mutate(h);
+  await assert.rejects(h.c.saveExistingPiece88(value,h.lease),/P88_REVOKED_SAVED_EDITOR_OWNER_OR_SOURCE/);
+  assert.equal(h.writes.length,0,'old item never writes into a switched account');
+ }
+});
+test('P88 saved edit never resurrects deleted item or uses altered original and mask evidence',async()=>{
+ for(const mutate of [
+  h=>{h.c.items=[];},h=>{h.item.image='data:image/jpeg;base64,QUJD';},
+  h=>{h.item.originalPhoto.image='data:image/jpeg;base64,QUJD';},
+  h=>{h.item.ownerSourceReview88.ownerReviewed=false;},
+  h=>{h.item.ownerDuplicateReview88.threeDReady=true;},
+  h=>{h.item.segmentHint.categories.push('Shoes');}
+ ]){
+  const h=savedDetailsHarness88(),value=structuredClone(h.item);
+  value.itemType='Unknown';h.c.beforeWrite=async()=>mutate(h);
+  await assert.rejects(h.c.saveExistingPiece88(value,h.lease),/P88_REVOKED_SAVED_EDITOR_OWNER_OR_SOURCE/);
+  assert.equal(h.writes.length,0);
+ }
+});
+test('P88 saved editor cannot mint source verification/3D proof or change immutable original',async()=>{
+ for(const mutate of [
+  v=>{v.id='foreign-item';},v=>{v.image='data:image/jpeg;base64,QUJD';},
+  v=>{v.originalPhoto.image='data:image/jpeg;base64,QUJD';},
+  v=>{v.recognitionPhoto.image='data:image/jpeg;base64,QUJD';},
+  v=>{v.segmentHint.verified=true;},v=>{v.ownerSourceReview88.threeDReady=true;},
+  v=>{v.ownerDuplicateReview88.threeDReady=true;},
+  v=>{v.sourceHashVerified=true;},v=>{v.singleGarmentVerified=true;},
+  v=>{v.independentPhysicalItemVerified=true;},v=>{v.threeDReady=true;},
+  v=>{v.sourceKind='verified-single';}
+ ]){
+  const h=savedDetailsHarness88(),value=structuredClone(h.item);mutate(value);
+  await assert.rejects(h.c.saveExistingPiece88(value,h.lease),/P88_STALE_SAVED_EDITOR_OWNER_OR_SOURCE/);
+  assert.equal(h.writes.length,0);
+ }
+});
