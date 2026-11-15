@@ -36,11 +36,11 @@ function fixture(){
   sourceUV:g.getAttribute('uv').array.slice(),weight:g.getAttribute('skinWeight').array.slice()};
 }
 function run(x,mode='reduce',overrides={}){
- const poseNames=[];
+ const poseNames=[];let activePose='source';
  const receipt=compareActualOriginalPhotoSkirtRegistration89({
   mesh:x.mesh,avatar:'female',
   originalBodyFaceMask:Uint8Array.from({length:1100},(_,i)=>i%4===0?0:1),
-  applyPose:p=>{assert.ok(['source','blend-50','relaxed'].includes(p));poseNames.push(p);},
+  applyPose:p=>{assert.ok(['source','blend-25','blend-50','blend-75','relaxed'].includes(p));activePose=p;poseNames.push(p);},
   sampleContact:()=>{
    const changed=x.mesh.geometry!==x.original,
     geom=x.mesh.geometry,base=x.photoPositions;
@@ -49,6 +49,8 @@ function run(x,mode='reduce',overrides={}){
    if(changed&&mode==='reduce'&&dz>.01)pairs=['0|45','1|58'];
    else if(changed&&mode==='introduce')pairs=['0|45','1|58','3|99','5|108'];
    else if(changed&&mode==='depth')pairs=['0|45'];
+   else if(changed&&mode==='quarter-new'&&['blend-25','blend-75'].includes(activePose))
+    pairs=['0|45','1|58','2|72','3|99','5|108'];
    return {count:pairs.length,pairs:new Set(pairs),
     maxDepth:changed&&mode==='depth'?.02:.001,trueOriginalSkirtTriangleIndexStable:true,
     trueOriginalBodyTriangleIndexStable:true,
@@ -67,6 +69,13 @@ test('test-only photo-skirt rigid registration can find a reduction but never au
  assert.equal(row.maximumExploratoryOriginalWaistForwardRegistrationMeters,.06);
  assert.equal(row.photoRegistrationCandidatesRequireIndependentPhotoFidelityReview,true);
  assert.equal(row.bestResearchOnly.name,'front-15mm');
+ assert.equal(row.candidateMustPassAllFiveSourcePoses,true);
+ assert.deepEqual(row.actualIntermediatePoseNamesChecked,['blend-25','blend-75']);
+ assert.equal(row.originalIntermediatePoseStrictBodyCrossingPairs.length,2);
+ assert.equal(row.bestResearchOnly.intermediatePoseContactChecks.length,2);
+ assert.ok(row.bestResearchOnly.intermediatePoseContactChecks.every(x=>
+  x.newOriginalSourceFacePairIDs===0&&!x.planeDepthIncreased));
+ assert.equal(row.bestResearchOnly.intermediatePoseCrossingGuardPassed,true);
  assert.equal(row.original3PoseStrictBodyCrossingPairs,12);
  assert.equal(row.bestResearchOnly.trialThreePoseStrictCrossingPairSum,6);
  assert.equal(row.bestResearchOnly.genuineOriginalSkirtContactTopology.poses.length,3);
@@ -93,6 +102,18 @@ test('fake gross count decrease with new exact real-body pair is a rejected regi
  assert.ok(row.trials.every(v=>v.releaseAuthorized===false));
  assert.ok(row.trials.some(v=>v.introducedOriginalSourceFacePairIDs>=1));
  assert.equal(x.mesh.geometry,x.original);
+});
+test('new strict crossing in intermediate genuine pose vetoes three-pose registration victory',()=>{
+ const x=fixture(),row=run(x,'quarter-new');
+ assert.equal(row.status,'NO_SAFE_REDUCING_ORIGINAL_SKIRT_REGISTRATION_WITNESSED');
+ assert.equal(row.bestResearchOnly,null);
+ assert.ok(row.trials.some(v=>v.intermediatePoseContactChecks.some(q=>
+  q.newOriginalSourceFacePairIDs>0)));
+ assert.ok(row.trials.every(v=>!v.researchOnlyNonworseningReduction));
+ assert.equal(row.originalPhoto2DFallbackRequired,true);
+ assert.equal(row.consumer3DAdmitted,false);
+ assert.equal(x.mesh.geometry,x.original);
+ assert.deepEqual(x.mesh.geometry.getAttribute('uv').array,x.sourceUV);
 });
 test('worsened original oriented triangle plane depth vetoes registration even if counts improve',()=>{
  const x=fixture(),row=run(x,'depth');
