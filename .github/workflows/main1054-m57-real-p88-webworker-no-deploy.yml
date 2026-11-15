@@ -66,6 +66,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Container root and checkout owner differ; trust ONLY this checked-out workspace.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           P88=cc4554ef0104506a72bf0a28423fee52b6e4fff2
           mkdir -p .m57-exact-p88-donor/public
           for file in outfit-worker.mjs outfit-segmentation.mjs outfit-instance-review-840.mjs photo-color.js; do
