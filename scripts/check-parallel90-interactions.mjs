@@ -569,4 +569,97 @@ export async function checkViewer90(page,width,engine){
     hardwareGPUBytesMeasured:false,physicalPhone:false,
     realHostedOwnerRLS:false,releaseAuthorized:false,familyAlpha:'HOLD'},null,2));
  }
+ // M22: a real mobile browser can have NO WebGL2 even when the owner JPEG
+ // and native saved outfit remain correct. Force the genuine donor probe
+ // to fail, require its actual original-photo fallback (NOT fake mesh),
+ // then restore graphics and safely re-attest genuine source into a NEW rig.
+ if(width===390){
+  const prior=await state();
+  assert.equal(prior.modelReady,true);
+  assert.equal(prior.bones,163);
+  assert.ok(prior.garmentSources90.dress,
+   'licensed original dress must be source-attested before GPU failure test');
+  const expectedSHA=prior.garmentSources90.dress;
+  const savedBefore=await page.evaluate(()=>({
+   signedIn:window.nativeLossless04Bridge.status().active,
+   selected:window.nativeLossless04Bridge.selected
+  }));
+  assert.equal(savedBefore.signedIn,true);
+  await page.evaluate(()=>{
+   window.native3D05Bridge.close();
+   window.__p90M22GetContext=HTMLCanvasElement.prototype.getContext;
+   HTMLCanvasElement.prototype.getContext=function(type,...options){
+    if(type==='webgl2')return null;
+    return window.__p90M22GetContext.call(this,type,...options);
+   };
+  });
+  assert.equal(await page.locator('#outfit3D01Photos img').count(),0);
+  let fallbackVerified=false;
+  try{
+   await page.locator('#native3D05Preview').click();
+   await page.waitForFunction(()=>
+    document.getElementById('outfit3D01Status')?.textContent
+     .includes('Original-photo/2D fallback: WebGL2 unavailable'),
+    null,{timeout:150000});
+   const unsupported=await state();
+   assert.equal(unsupported.modelReady,false,
+    'GPU-unavailable native owner must NEVER claim verified 3D is running');
+   assert.equal(unsupported.bones,0,
+    'no unverified/generic anatomical mesh may substitute for missing GPU');
+   assert.equal(await page.locator('#outfit3D01Photos img').count(),4,
+    'all actual original saved owner clothing photos must remain available');
+   const photoSHA=await page.locator('#outfit3D01Photos img').first().evaluate(async img=>{
+    const bytes=await (await fetch(img.src)).arrayBuffer();
+    return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))]
+     .map(n=>n.toString(16).padStart(2,'0')).join('');
+   });
+   assert.equal(photoSHA,expectedSHA,
+    'fallback must display exact original SHA-attested owner JPEG, not a generic texture');
+   const stillOwner=await page.evaluate(()=>({
+    signedIn:window.nativeLossless04Bridge.status().active,
+    selected:window.nativeLossless04Bridge.selected
+   }));
+   assert.deepEqual(stillOwner,savedBefore,
+    'missing GPU must not mutate native signed owner or selected saved outfit');
+   fallbackVerified=true;
+  }finally{
+   // Failure injection must be removed even if the browser assertions fail.
+   await page.evaluate(()=>{
+    if(window.__p90M22GetContext){
+     HTMLCanvasElement.prototype.getContext=window.__p90M22GetContext;
+     delete window.__p90M22GetContext;
+    }
+    window.native3D05Bridge.close();
+   });
+  }
+  assert.equal(fallbackVerified,true);
+  assert.equal(await page.locator('#outfit3D01Photos img').count(),0,
+   'closed 2D fallback must remove all private owner photo DOM nodes');
+  await page.locator('#native3D05Preview').click();
+  await page.waitForFunction(()=>window.native3D05Bridge.state().modelReady&&
+   window.native3D05Bridge.state().bones===163,
+   null,{timeout:150000});
+  await verifyCanvas();
+  const restored=await state();
+  assert.equal(restored.garmentSources90.dress,expectedSHA);
+  assert.equal(restored.bones,163);
+  assert.equal(restored.figure90,prior.figure90);
+  assert.equal(restored.resources90.geometries,prior.resources90.geometries);
+  assert.equal(restored.resources90.textures,prior.resources90.textures);
+  const originalAngle=(await camera()).angle;
+  await page.locator('#outfit3D01Right90').click();await settle();
+  const newAngle=(await camera()).angle;
+  assert.ok(Math.abs(((newAngle-originalAngle+540)%360)-180)>5,
+   'recovered genuine 163-bone source must remain interactive after WebGL2 is restored');
+  await writeFile('benchmark/parallel90/'+engine+'/390-webgl-unavailable-fallback.json',
+   JSON.stringify({engine,cssWidth:width,originalSourceSHAReattested:true,
+    trueWebGL2ProbeUnavailableSimulated:true,noUnverified3D:true,
+    originalFourSavedOwnerPhotosPreserved:true,
+    originalJPEGWebCryptoSHA:true,nativeSignedOwnerAndSelectionPreserved:true,
+    restoredReal163BoneRenderer:true,restoredCameraInteractive:true,
+    unmodifiedOriginalTextureAndGeometryCounts:true,
+    realPhysicalGPUNoWebGLTested:false,realHostedAccountRLS:false,
+    releaseAuthorized:false,familyAlpha:'HOLD'},null,2));
+ }
+
 }
