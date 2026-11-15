@@ -34,8 +34,10 @@ const session=await ort.InferenceSession.create(modelBytes,{
 const input=session.inputNames[0],output=session.outputNames[0];
 if(session.inputNames.length!==1||session.outputNames.length!==1)
  throw Error('P88_FASHION_UNEXPECTED_ONNX_IO');
-const info=session.inputMetadata?.[input];
-const dims=info?.dimensions||[];
+// ONNX Runtime JS 1.22 exposes a positional ValueMetadata[] and
+// TensorValueMetadata.shape (not C#'s named inputMetadata/dimensions).
+const info=session.inputMetadata?.[0];
+const dims=info?.shape||[];
 if(dims.length!==4||dims[1]!==3||dims[2]!==640||dims[3]!==640)
  throw Error('P88_FASHION_UNEXPECTED_ONNX_INPUT '+JSON.stringify(dims));
 const SIZE=640;
