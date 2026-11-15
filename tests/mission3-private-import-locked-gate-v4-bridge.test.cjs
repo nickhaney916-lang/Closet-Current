@@ -128,3 +128,68 @@ test('bridge replacement before async approval callback prevents old confirmatio
  assert.ok(!f.events.includes('confirm'));
  assert.ok(!f.events.some(x=>x.includes('restored together')));
 });
+
+function legacyBackupFile(outfitBoard){
+ const data={format:'closet-current',version:3,items:[{
+  id:'new-shirt',category:'Tops',name:'Reviewed shirt',
+  image:'data:image/jpeg;base64,/9j/2Q==',color:'Blue'
+ }],outfitBoard};
+ const encoded=JSON.stringify(data);
+ return {size:encoded.length,text:async()=>encoded};
+}
+function legacyFixture(){
+ const f=fixture();
+ f.ctx.location.search='';
+ f.ctx.categories=['Tops','Uncategorized'];
+ f.ctx.items=[{id:'existing-shoe',category:'Shoes'}];
+ f.ctx.normalizeClothing=x=>x;
+ f.ctx.writeAll=async rows=>{
+  f.counts.legacyWrites=(f.counts.legacyWrites||0)+1;
+  f.ctx.items.push(...rows);
+ };
+ f.ctx.readAllFrom=async()=>f.ctx.items;
+ f.ctx.importBoardBackup=async()=>{
+  f.counts.boardWrites=(f.counts.boardWrites||0)+1;
+ };
+ f.ctx.render=()=>{};
+ f.ctx.boardHasUnsavedDraft=()=>false;
+ return f;
+}
+test('default legacy import rejects malformed saved outfits before any garment write',async()=>{
+ const f=legacyFixture();
+ await f.run(legacyBackupFile({current:{slots:{top:'new-shirt'}},saved:[null]}));
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.equal(f.counts.boardWrites||0,0);
+ assert.ok(f.events.some(x=>x.includes('invalid outfit data')));
+});
+test('default legacy import rejects missing saved garment references before writing',async()=>{
+ const f=legacyFixture();
+ await f.run(legacyBackupFile({current:{slots:{top:'missing-owner-item'}},saved:[]}));
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.equal(f.counts.boardWrites||0,0);
+ assert.ok(f.events.some(x=>x.includes('unavailable outfit garment')));
+});
+test('default legacy import refuses to overwrite an unfinished native outfit draft',async()=>{
+ const f=legacyFixture();
+ f.ctx.boardHasUnsavedDraft=()=>true;
+ await f.run(legacyBackupFile({current:{slots:{top:'new-shirt'}},saved:[]}));
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.ok(f.events.some(x=>x.includes('Save or discard unfinished outfit changes')));
+});
+test('default legacy import rechecks outfit edits after approval before writing',async()=>{
+ const f=legacyFixture();
+ let dirty=false;
+ f.ctx.boardHasUnsavedDraft=()=>dirty;
+ f.ctx.confirm=()=>{dirty=true;return true};
+ await f.run(legacyBackupFile({current:{slots:{top:'new-shirt'}},saved:[]}));
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.equal(f.counts.boardWrites||0,0);
+});
+test('default legacy import still allows a valid saved outfit referring to a new or existing garment',async()=>{
+ const f=legacyFixture();
+ await f.run(legacyBackupFile({current:{slots:{top:'new-shirt',shoes:'existing-shoe'}},
+  saved:[{name:'My saved outfit',slots:{top:'new-shirt',shoes:'existing-shoe'}}]}));
+ assert.equal(f.counts.legacyWrites,1);
+ assert.equal(f.counts.boardWrites,1);
+ assert.ok(f.events.some(x=>x.includes('Backup imported.')));
+});
