@@ -1319,6 +1319,7 @@ function cameraOwnerLive88(lease=cameraOwnerLease88){
   lease.ownerDb?.name==='closet-current-user-'+lease.ownerId);
 }
 function stopCamera(){
+ if(cameraOpening)busy=false;
  cameraRequest++;cameraOwnerLease88=null;cameraOpening=false;clearInterval(timer);timer=null;
  if(stream)stream.getTracks().forEach(t=>t.stop());
  stream=null;cameraMode=null;video.srcObject=null;video.classList.remove('visible');
@@ -1366,7 +1367,7 @@ async function startCamera(mode){
  try{audio=new(window.AudioContext||window.webkitAudioContext)();await audio.resume();}catch{}
  if(request!==cameraRequest||(browser&&!cameraOwnerLive88(lease))){
   if(request===cameraRequest)stopCamera();
-  busy=false;return;
+  return;
  }
  try{
   if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access unavailable. Choose saved photos or a closet video instead.');
@@ -1398,7 +1399,7 @@ async function startCamera(mode){
    if(stillOwner)message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));
   }
  }
- finally{busy=false;if(!stream)controls(false);}
+ finally{if(request===cameraRequest){busy=false;if(!stream)controls(false);}}
 }
 $('start').onclick=()=>startCamera('manual');
 $('startAuto').onclick=()=>startCamera('auto');

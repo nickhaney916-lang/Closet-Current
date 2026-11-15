@@ -2977,3 +2977,43 @@ test('P88 stale camera playback cannot erase replacement owner capture count or 
  assert.equal(h.el('lastCaptureImage').hidden,false);
  assert.equal(h.photos.length,0);assert.equal(h.views.length,0);
 });
+
+test('P88 cancelled pending camera releases busy before browser permission resolves',async()=>{
+ const gate=photoFillGated88(),h=nativeCameraLeaseHarness88({permissionGate:gate});
+ const task=h.c.startCamera('manual');
+ await photoFillReached88(()=>h.permissions===1);
+ h.c.stopCamera();
+ assert.equal(h.c.busy,false,'cancel must allow another capture/import immediately');
+ gate.resolve(h.mediaStream);await task;
+ assert.equal(h.tracks[0].stops,1);
+});
+test('P88 cancelled permission callback cannot unlock a newer pending camera request',async()=>{
+ const oldGate=photoFillGated88(),newGate=photoFillGated88();
+ const h=nativeCameraLeaseHarness88({permissionGate:oldGate});
+ const oldTask=h.c.startCamera('manual');
+ await photoFillReached88(()=>h.permissions===1);
+ h.c.stopCamera();
+ assert.equal(h.c.busy,false);
+ let newPermission=false;
+ h.c.navigator.mediaDevices.getUserMedia=()=>{newPermission=true;return newGate.promise;};
+ const newTask=h.c.startCamera('manual');
+ await photoFillReached88(()=>newPermission);
+ oldGate.resolve(h.mediaStream);await oldTask;
+ assert.equal(h.c.busy,true,'only the current permission request owns busy');
+ assert.equal(h.el('start').disabled,true);
+ const newTrack={stops:0,stop(){this.stops++;}};
+ const newStream={getTracks:()=>[newTrack]};
+ newGate.resolve(newStream);await newTask;
+ assert.equal(h.c.stream,newStream);assert.equal(h.c.busy,false);
+ assert.equal(newTrack.stops,0);h.c.stopCamera();
+});
+test('P88 cancelled audio resume cannot release a newer import busy state',async()=>{
+ const gate=photoFillGated88(),h=nativeCameraLeaseHarness88({audioGate:gate});
+ const task=h.c.startCamera('manual');
+ await photoFillReached88(()=>h.audios===1);
+ h.c.stopCamera();assert.equal(h.c.busy,false);
+ h.c.busy=true;h.el('upload').disabled=true;
+ gate.resolve();await task;
+ assert.equal(h.c.busy,true);assert.equal(h.el('upload').disabled,true);
+ assert.equal(h.permissions,0);assert.equal(h.photos.length,0);
+});

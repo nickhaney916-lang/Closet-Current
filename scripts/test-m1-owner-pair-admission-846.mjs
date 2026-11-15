@@ -89,8 +89,13 @@ const harness=[
 // Web Crypto is intentionally unavailable at insecure about:blank. The same
 // ephemeral loopback test host used by P82 exercises actual browser SHA-256.
 const {server,origin}=await server82();
+const cameraSource88=extract('function cameraOwnerLive88(', 'function waitEvent(');
+const selectedBrowser88=process.env.M1_BROWSER_846;
+if(selectedBrowser88&&!['chromium','webkit'].includes(selectedBrowser88))
+ throw Error('M1_BROWSER_846 must be chromium or webkit');
 try{
 for(const [browserName,engine] of Object.entries({chromium,webkit})){
+ if(selectedBrowser88&&selectedBrowser88!==browserName)continue;
  const browser=await engine.launch({headless:true,...(browserName==='chromium'?{args:['--no-sandbox']}:{})});
  try{
   for(const width of [320,390,430]){
@@ -312,6 +317,72 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     noAutomaticClosetSave:true,pageErrors:errors.length
    }));
    assert.deepEqual(errors,[]);
+   // Native camera source, genuine DOM nodes and browser promise scheduling;
+   // media permission/stream and accounts are synthetic transport doubles.
+   // Use a closure so these handlers cannot replace the review harness globals.
+   const cameraResult88=await page.evaluate(async source=>{
+    const run=new Function('source', `return (async()=>{
+     const nodes=new Map();
+     const $=id=>{if(!nodes.has(id)){const n=document.createElement('div');
+      n.value='1';nodes.set(id,n);}return nodes.get(id);};
+     const owner={id:'camera-owner-A'};
+     const window={document,closetAuth:{user:owner},AudioContext:class{async resume(){}}};
+     let db={name:'closet-current-user-camera-owner-A'},stream=null,busy=false;
+     let cameraMode=null,cameraOpening=false,cameraRequest=0,cameraOwnerLease88=null;
+     let timer=null,audio=null,session=0,batch=[],cadence=null;
+     let releasePlay,playReached=false,stops=0,photos=0,reviews=0;
+     const navigator={mediaDevices:{async getUserMedia(){return {
+      getTracks:()=>[{stop(){stops++;}}]
+     };}}};
+     const video=document.createElement('video');
+     // Real HTMLMediaElement transport setters reject fake streams; override
+     // only srcObject and play while retaining actual DOM/classList behavior.
+     Object.defineProperty(video,'srcObject',{writable:true,value:null});
+     video.play=()=>{playReached=true;return new Promise(r=>{releasePlay=r;});};
+     const candidate=()=>{photos++;},snap=()=> 'synthetic-jpeg';
+     const beep=()=>{},message=()=>{},switchView=()=>{reviews++;};
+     const CaptureCadence=class{};
+     eval(source);
+     const pending=startCamera('manual');
+     for(let i=0;i<20&&!playReached;i++)await Promise.resolve();
+     if(!playReached)throw Error('camera play boundary not reached');
+     window.closetAuth.user={id:'camera-owner-B'};
+     db={name:'closet-current-user-camera-owner-B'};
+     session=7;$('sessionCount').textContent='7';$('lastCaptureImage').hidden=false;
+     releasePlay();await pending;
+     takePhoto();finishScan();
+     const preserved={session,count:$('sessionCount').textContent,
+      previewHidden:$('lastCaptureImage').hidden,stops,photos,reviews};
+     window.closetAuth.user=owner;db={name:'closet-current-user-camera-owner-A'};
+     let releaseFirst,releaseSecond,requests=0;
+     navigator.mediaDevices.getUserMedia=()=>new Promise(r=>{
+      if(++requests===1)releaseFirst=r;else releaseSecond=r;
+     });
+     video.play=async()=>{};
+     const first=startCamera('manual');
+     for(let i=0;i<20&&!releaseFirst;i++)await Promise.resolve();
+     if(!releaseFirst)throw Error('first permission boundary not reached');
+     stopCamera();const cancelBusyReleased=!busy;
+     const second=startCamera('manual');
+     for(let i=0;i<20&&!releaseSecond;i++)await Promise.resolve();
+     if(!releaseSecond)throw Error('cancelled camera blocked retry');
+     releaseFirst({getTracks:()=>[{stop(){}}]});await first;
+     const newBusyProtected=busy&&$('start').disabled;
+     const nextStream={getTracks:()=>[{stop(){}}]};
+     releaseSecond(nextStream);await second;
+     const currentStreamRetained=stream===nextStream&&!busy;
+     stopCamera();
+     return {...preserved,cancelBusyReleased,newBusyProtected,currentStreamRetained};
+    })()`);
+    return run(source);
+   },cameraSource88);
+   assert.deepEqual(cameraResult88,{session:7,count:'7',previewHidden:false,
+    stops:1,photos:0,reviews:0,cancelBusyReleased:true,newBusyProtected:true,
+    currentStreamRetained:true});
+   console.log('M1_P88_BROWSER_CAMERA_PLAY_OWNER_LEASE',JSON.stringify({
+    browser:browserName,width,...cameraResult88,syntheticMediaTransport:true,
+    physicalDeviceAcceptance:false
+   }));
    console.log('M1_P846_BROWSER_OWNER_UNIT_REVIEW',JSON.stringify({
     browser:browserName,width,unresolvedBlocked:true,crossOwnerBlocked:true,
     companionDuplicateBlocked:true,pairedOneClosetUnit:true,sourceMasksRetained:true,

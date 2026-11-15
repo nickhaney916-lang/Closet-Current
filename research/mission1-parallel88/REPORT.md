@@ -785,3 +785,38 @@ RLS/backup/restore evidence. Never upload private originals or signer keys to
 GitHub; use existing P75/P79 offline custody and P886/P851 signed summaries.
 This fix cannot supply those measurements or justify an accuracy increase.
 **FAMILY ALPHA HOLD #255 OPEN; DRAFT, NO MERGE, NO DEPLOY.**
+
+## 2026-11-15 — cancelled camera request releases only its own busy state
+
+Continuation of existing draft #1175 from `9ae9ce677368df39d77fdc3ed27d4442d2c463d0`.
+Source reproduction found two native cancellation defects: stopping a camera
+while permission/audio/play was pending left `busy` true until the browser
+responded, blocking retry/import indefinitely; and an old callback's unconditional
+busy cleanup could unlock controls during a newer request. `stopCamera` now
+releases an opening camera's busy state immediately, and delayed audio/permission/
+play completion cannot release a replacement request's state. Three new actual-
+source Node regressions cover pending permission cancellation, cancelled request
+versus newer permission, and late audio resume versus a newer video import.
+The permission cases failed on the previous source and pass on the fix.
+
+Existing P846 browser suite now also executes native camera handlers against
+real desktop DOM/promise scheduling with deliberately synthetic media/auth
+transport. It verifies stale-owner playback preserves replacement-owner count
+and preview, cancellation allows immediate retry, and old permission resolution
+cannot unlock a pending new camera or discard its stream. Chromium PASS at
+320/390/430 CSS widths; old `5e4bf95` source FAIL reproduced with photo count 0
+instead of 7 and hidden preview. The first test-harness attempt redeclared the
+native `controls` function; removed that fixture collision before passing.
+`M1_BROWSER_846=chromium` or `webkit` explicitly selects one local engine; unset
+(the existing CI default) still requires BOTH. No partial-engine result counts
+as both engines passing. Physical phones/model recognition are not simulated
+as completed acceptance.
+
+Local candidate verification: 852/852 full Node with decoder required, native
+and no-account builds PASS; Chromium P846 owner/pair/crop plus camera checks
+PASS for all three widths. WebKit remains locally unavailable due missing
+shared libraries/root install; new exact-head CI must verify it. No model,
+threshold, source receipt, original image, private save or physical/3D authority
+changes. Independent human-photo, physical-device and hosted acceptance still
+BLOCKED; no new accuracy or completion claim. Existing 18-path scope preserved.
+**FAMILY ALPHA HOLD #255 OPEN; DRAFT, NO MERGE, NO DEPLOY.**
