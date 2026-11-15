@@ -122,6 +122,40 @@ test('small subthreshold gap changes without a meaningful gain still prefer the 
  assert.equal(receipt.researchSourceGapVetoReason,'NO_MEASURED_GAP_GAIN_AT_LEAST_05MM');
  assert.equal(receipt.consumer3DAuthorized,false);
 });
+test('research veto catches 0.1mm shrink of an already submillimeter shirt/body gap even when another pair improves',()=>{
+ const x=mock();
+ for(const row of x.trial.sourcePoseMeasurements){
+  row.distances.shirtBody.unsignedMinimumSurfaceDistanceMeters=.0002;
+  row.distances.shirtDenim.unsignedMinimumSurfaceDistanceMeters=.0023;
+  row.someSourceSurfacesWithin2mm=true;
+ }
+ const r=compareOriginalSourceShoulderGapAB89(x);
+ assert.equal(r.status,'ACTUAL_ORIGINAL_PHOTO_SHOULDER_AB_MEASURED_NOT_CLEARED');
+ assert.equal(r.changedGapWorsenedAtLeastQuarterMmCount,0);
+ assert.equal(r.changedGapImprovedAtLeastHalfMmCount,3);
+ assert.equal(r.someUnsignedSurfaceGapWorsened,false);
+ assert.equal(r.someUnsignedSurfaceGapShrinkExceeds50Microns,true);
+ assert.equal(r.minimumMeasuredGapDeltaMeters,-.00015);
+ assert.equal(r.studyCandidateMaximumAllowedGapDecreaseMeters,.00005);
+ assert.equal(r.researchOnlyPreferredVariant,'baseline');
+ assert.equal(r.researchSourceGapVetoReason,'ANY_SAMPLED_SOURCE_GAP_SHRINK_EXCEEDS_005MM');
+ assert.equal(r.consumer3DAuthorized,false);
+ assert.equal(r.sourcePhoto2DFallbackRequired,true);
+});
+test('an exactly 50-micron measured reduction without other harm remains a research-only comparison, never a release',()=>{
+ const x=mock();
+ for(const row of x.trial.sourcePoseMeasurements){
+  row.distances.shirtBody.unsignedMinimumSurfaceDistanceMeters=.001;
+  row.distances.shirtDenim.unsignedMinimumSurfaceDistanceMeters=.00145;
+ }
+ const r=compareOriginalSourceShoulderGapAB89(x);
+ assert.equal(r.status,'ACTUAL_ORIGINAL_PHOTO_SHOULDER_AB_MEASURED_NOT_CLEARED');
+ assert.equal(r.someUnsignedSurfaceGapShrinkExceeds50Microns,false);
+ assert.equal(r.researchOnlyPreferredVariant,'trial');
+ assert.equal(r.researchCandidateRetainedForStudy,true);
+ assert.equal(r.sourceSignedClearanceCertified,false);
+ assert.equal(r.consumer3DAuthorized,false);
+});
 test('exact public-source female and male native gap observations require opposite research decisions; no consumer approval',()=>{
  const female=mock();female.avatar='female';
  female.baseline.avatar='female';female.trial.avatar='female';
