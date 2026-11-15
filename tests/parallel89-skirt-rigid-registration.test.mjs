@@ -49,7 +49,7 @@ function run(x,mode='reduce',overrides={}){
    if(changed&&mode==='quarter-new'&&['blend-25','blend-75'].includes(activePose)&&dz>.01)
     pairs=['0|45','1|58','2|72','3|99','5|108'];
    else if(changed&&mode==='quarter-rank'&&dz>.01&&
-    ['blend-25','blend-75'].includes(activePose)&&dz<.030)
+    ['blend-25','blend-75'].includes(activePose)&&dz<.022)
     pairs=['0|45','1|58','2|72'];
    else if(changed&&['reduce','quarter-new','quarter-rank'].includes(mode)&&dz>.01)
     pairs=['0|45','1|58'];
