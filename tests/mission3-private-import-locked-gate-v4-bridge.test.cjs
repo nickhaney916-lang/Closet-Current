@@ -562,9 +562,16 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
         const changedJSON=JSON.stringify(changed);
         await document.getElementById('import').onchange({target:{
          files:[{size:changedJSON.length,text:async()=>changedJSON}],value:'selected'}});
-        ownerDowngradeChecks.push(JSON.stringify(await readSnapshot())===beforeOwnerConflicts&&
-         document.getElementById('message')?.textContent?.includes(
-          'LEGACY_ATOMIC_EXISTING_OWNER_CLAIM_CONFLICT'));
+        const observed=await readSnapshot();
+        ownerDowngradeChecks.push({
+         level,
+         unchanged:JSON.stringify(observed)===beforeOwnerConflicts,
+         message:document.getElementById('message')?.textContent||'',
+         actualRevision:observed.state.find(x=>x.id==='cloud-sync')?.localRevision,
+         originalRevision:nullOwnerState['cloud-sync']?.localRevision,
+         originalOwner:observed.items.find(x=>x.id==='built-photo')?.originalPhoto?.ownerId,
+         itemOwner:observed.items.find(x=>x.id==='built-photo')?.ownerId
+        });
        }
        const byId=Object.fromEntries(rows.state.map(row=>[row.id,row]));
        return {items:rows.items.map(item=>({id:item.id,ownerId:item.ownerId,
@@ -596,8 +603,12 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
       assert.equal(result.afterLegacyRevision,2,name+' increments cloud revision in atomic transaction');
       assert.equal(result.afterLegacyCloudChanged,3,name+' signals private backup after each atomic commit');
       assert.equal(result.unclaimedOwnerAccepted,true,name+' restores v2 unclaimed owner photo without false proof');
-      assert.deepEqual(result.ownerDowngradeChecks,[true,true],
-       name+' blocks same-ID item and camera-original owner claim downgrades without partial writes');
+      assert.deepEqual(result.ownerDowngradeChecks.map(x=>x.unchanged),[true,true],
+       name+' preserves complete database snapshot on owner downgrade '+
+       JSON.stringify(result.ownerDowngradeChecks));
+      assert.deepEqual(result.ownerDowngradeChecks.map(x=>
+       x.message.includes('LEGACY_ATOMIC_EXISTING_OWNER_CLAIM_CONFLICT')),[true,true],
+       name+' refuses same-ID ownership downgrade '+JSON.stringify(result.ownerDowngradeChecks));
       assert.equal(result.afterUnclaimedRevision,3,name+' records unclaimed import in private cloud revision');
       assert.match(result.message,/canceled|imported atomically/i);
       assert.deepEqual(errors,[]);
