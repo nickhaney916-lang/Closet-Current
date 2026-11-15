@@ -30,8 +30,8 @@ const mime={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html'
 const server=createServer(async(req,res)=>{
  try{
   const path=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
-  if(req.method!=='GET'||!/^\\/(public|research|benchmark|node_modules|\\.m57-exact-p88-donor)\\//.test(path)||
-     path.includes('\\\\')||path.includes('\\0')||path.split('/').includes('..'))
+  if(req.method!=='GET'||!['/public/','/research/','/benchmark/','/node_modules/','/.m57-exact-p88-donor/'].some(prefix=>path.startsWith(prefix))||
+     path.includes(String.fromCharCode(92))||path.includes(String.fromCharCode(0))||path.split('/').includes('..'))
    throw Error('not a source-only local asset');
   const absolute=resolve(root,'.'+path);
   if(!absolute.startsWith(root+'/'))throw Error('path escaped repository');
