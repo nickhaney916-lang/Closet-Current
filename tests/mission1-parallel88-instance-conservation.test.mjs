@@ -12,7 +12,8 @@ import {P88_FROZEN_CANDIDATE,frozenCandidateDigest88,canonicalP88,sha256,
 import assert from 'node:assert/strict';
 import {clothingLabelMap,clothingMaskGroups} from '../public/outfit-segmentation.mjs';
 import {exposedPixelGateMap88,P88_EXPOSED_PIXEL_PROBES,accessoryBoxIoU88,evaluateCocoAccessoryBoxes88,cocoAccessoryLabel88} from '../research/mission1-parallel88/exposed-threshold-probes-88.mjs';
-import {FASHION_MAIN_LABELS88,FASHION_ACCESSORY_IDS88,decodeFashionYolo88,scoreFashionAccessory88,fashionBoxNms88} from '../research/mission1-parallel88/fashion-onnx-probes-88.mjs';
+import {FASHION_MAIN_LABELS88,FASHION_ACCESSORY_IDS88,FASHION_FINE_SUBTYPE_GAPS88,
+ fashionFineSubtypeClaimGate88,decodeFashionYolo88,scoreFashionAccessory88,fashionBoxNms88} from '../research/mission1-parallel88/fashion-onnx-probes-88.mjs';
 import {clothingReviewInstances840} from '../public/outfit-instance-review-840.mjs';
 
 function fixture(width=48,height=48){
@@ -544,4 +545,36 @@ test('P88 private-file and ledger trust anchors remain checkout-bound from an ex
   assert.equal(result.status,0,result.stderr);
   assert.match(result.stdout,/P88_CROSS_CWD_TRUST_ANCHOR_PASS/);
  }finally{await rm(outside,{recursive:true,force:true});}
+});
+
+test('P88 real Fashionpedia 46-class outputs cannot be claimed as fine subtype correctness',()=>{
+ assert.equal(FASHION_MAIN_LABELS88.length,27);
+ assert.equal(FASHION_MAIN_LABELS88[1],'top, t-shirt, sweatshirt');
+ assert.equal(FASHION_MAIN_LABELS88[23],'shoe');
+ assert.equal(FASHION_MAIN_LABELS88[0],'shirt, blouse');
+ const cases=[
+  ['t-shirt-vs-sweatshirt',1,'ONE_SHARED_TOP_TSHIRT_SWEATSHIRT_CATEGORY'],
+  ['sneaker-vs-ankle-boot',23,'ONE_SHARED_SHOE_CATEGORY'],
+  ['blouse-vs-tunic',0,'NO_EXPLICIT_TUNIC_LABEL_AND_SHIRT_BLOUSE_COMBINED']
+ ];
+ assert.equal(FASHION_FINE_SUBTYPE_GAPS88.length,cases.length);
+ for(const [contrast,id,reason] of cases){
+  const outcome=fashionFineSubtypeClaimGate88(contrast,1);
+  assert.equal(outcome.status,'BLOCKED');
+  assert.equal(outcome.reason,reason);
+  assert.equal(outcome.broadCategoryId,id);
+  assert.equal(outcome.broadCategoryLabel,FASHION_MAIN_LABELS88[id]);
+  assert.equal(outcome.fineSubtypeAccuracyMeasured,false);
+  assert.equal(outcome.productPromotionAllowed,false);
+  assert.equal(outcome.automaticClosetSaveAllowed,false);
+ }
+ for(const [contrast,score] of [
+  ['dress-vs-long-top',1],['sneaker-vs-ankle-boot',NaN],
+  ['t-shirt-vs-sweatshirt',1.01],['blouse-vs-tunic',-0.2]
+ ]){
+  const denied=fashionFineSubtypeClaimGate88(contrast,score);
+  assert.equal(denied.status,'BLOCKED');
+  assert.equal(denied.fineSubtypeAccuracyMeasured,false);
+  assert.equal(denied.productPromotionAllowed,false);
+ }
 });
