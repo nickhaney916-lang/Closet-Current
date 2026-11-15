@@ -593,6 +593,20 @@ try{
   'owner B displayed A garment after rejected original v4 import');
  assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),0,
   'owner B displayed A original after rejected cross-account v4 import');
+ // M64: actively reopen the real, lazy consumer gallery as B after A's
+ // review, private export, logout, and the rejected valid A backup import.
+ // A harmless empty B board must refuse gallery admission, even if the
+ // research button and its click handler survive the signed-owner swap.
+ stage='same-browser-owner-B-must-reject-native-original-gallery-reentry';
+ await page.locator('#mission4PhotoOnly59Open').click();
+ await page.waitForFunction(()=>document.getElementById('mission4PhotoOnly59Status')
+  ?.textContent.includes('Photo-only gallery refused'),null,{timeout:20000});
+ assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),0,
+  'owner B re-opened original gallery and leaked A photo after session swap');
+ assert.equal(await page.locator('#outfit3D01Canvas').count(),0,
+  'cross-owner gallery reentry incorrectly admitted fitted 3D');
+ assert.deepEqual(await ownerSnapshot(),ownerBBeforeForeignRestore,
+  'owner B gallery reentry mutated private inventory/outfit after A import denial');
  assert.deepEqual(rejected,[],'synthetic owner switch caused forbidden external request');
  assert.deepEqual(issues,[],'native owner switch caused browser runtime error');
  console.log('M58_GENUINE_WORKER_SAVED_2D_OWNER_SWITCH_PRIVACY',JSON.stringify({
