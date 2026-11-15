@@ -25,11 +25,11 @@ function inspectTree(x,owner,depth=0,seen=new WeakSet()){
  }
  seen.delete(x);
 }
-async function verifyImage(image,hash=null){
- if(typeof image!=='string'||image.length>3_000_000||!img.test(image))
+async function verifyImage(image,hash=null,{maxEncoded=3_000_000,maxBytes=2_250_000}={}){
+ if(typeof image!=='string'||image.length>maxEncoded||!img.test(image))
   throw Error('LEGACY_ATOMIC_INVALID_JPEG');
  const bytes=Uint8Array.from(atob(image.slice('data:image/jpeg;base64,'.length)),x=>x.charCodeAt(0));
- if(bytes.length<4||bytes[0]!==255||bytes[1]!==216)
+ if(bytes.length<4||bytes.length>maxBytes||bytes[0]!==255||bytes[1]!==216)
   throw Error('LEGACY_ATOMIC_INVALID_JPEG_BYTES');
  if(hash){
   if(!sha.test(hash))throw Error('LEGACY_ATOMIC_INVALID_SHA');
@@ -88,7 +88,11 @@ export async function prepareLegacyAtomicM3({
   await verifyImage(row.image,(!row.originalPhoto?.image||row.originalPhoto.image===row.image)
    ?row.sourceSHA256||row.originalPhoto?.sha256||null:null);
   if(row.originalPhoto?.image){
-   await verifyImage(row.originalPhoto.image,row.originalPhoto.sha256||row.sourceSHA256||null);
+   // The preview is capped at 3 MB encoded. Preserved camera originals
+   // are a separate lossless asset: match default legacy preflight's 8 MiB
+   // decoded/11.2 MB encoded bound instead of rejecting genuine source JPEGs.
+   await verifyImage(row.originalPhoto.image,row.originalPhoto.sha256||row.sourceSHA256||null,
+    {maxEncoded:11_200_000,maxBytes:8*1024*1024});
   }else if(row.originalPhoto?.sha256||row.sourceSHA256&&row.sourceHashVerified===true){
    throw Error('LEGACY_ATOMIC_MISSING_ORIGINAL');
   }
