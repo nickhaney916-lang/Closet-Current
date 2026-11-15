@@ -142,14 +142,16 @@ const tokenRoute=route=>{
  if(url.pathname==='/auth/v1/token'){
   const info=JSON.parse(req.postData()||'{}');
   const type=url.searchParams.get('grant_type');
-  const owner=type==='password'&&info.email==='m54-A@example.test'?'m54-A':
-   type==='refresh_token'&&info.refresh_token==='m54-refresh-A'?'m54-A':null;
+  const owner=type==='password'&&/^m54-[AB]@example\.test$/.test(info.email||'')?
+   info.email.split('@')[0]:
+   type==='refresh_token'&&/^m54-refresh-[AB]$/.test(info.refresh_token||'')?
+   'm54-'+info.refresh_token.slice(-1):null;
   if(!owner)return route.fulfill({status:401,contentType:'application/json',
    body:'{"error":"invalid synthetic account"}'});
   return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
    user:{id:owner,email:owner+'@example.test'},
-   access_token:'synthetic-m54-owner-A',
-   refresh_token:'m54-refresh-A',expires_in:3600
+   access_token:'synthetic-m54-owner-'+owner,
+   refresh_token:'m54-refresh-'+owner.slice(-1),expires_in:3600
   })});
  }
  issues.push('unapproved-auth-endpoint');
@@ -351,6 +353,40 @@ try{
   await writeFile(join(out,positiveFile),positivePng);
   screenshots.push({filename:positiveFile,width,
    sha256:createHash('sha256').update(positivePng).digest('hex')});
+  // Positive P88-shaped model proposal has been saved and fitted to native
+  // 2D. Verify the SAME source cannot be retained after logout or used by B.
+  stage='revoke private model proposal on owner A logout';
+  await page.locator('.account-menu summary').click();
+  await page.locator('#logout').click();
+  await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false,
+   null,{timeout:30000});
+  assert.equal(await page.locator('#multi24Research img[src^="data:image/"]').count(),0,
+   'owner A original/crop remained in model review after logout');
+  assert.equal(await page.locator('#mission4Preview1054Photos img').count(),0,
+   'owner A certified original retained after logout');
+  stage='owner B cannot read A model proposal or saved source';
+  await page.locator('#authEmail').fill('m54-B@example.test');
+  await page.locator('#authPassword').fill('fixture-only');
+  await page.locator('#authSubmit').click();
+  await page.waitForFunction(()=>window.closetAuth?.user?.id==='m54-B'&&
+   db?.name==='closet-current-user-m54-B'&&
+   document.getElementById('appShell')?.hidden===false,
+   null,{timeout:30000});
+  assert.equal(await countRows(page),0,'B can read A P88-derived local private wardrobe');
+  await page.evaluate(()=>switchView('builder'));
+  const bState=await page.evaluate(id=>({
+   owner:window.closetAuth?.user?.id,dbName:db?.name,
+   inheritedItem:currentBoard?.slots?.top===id,
+   inheritedImages:document.querySelectorAll('#boardSlots .owned img').length,
+   staleReviewSource:document.querySelectorAll('#multi24Research img[src^="data:image/"]').length,
+   staleStrictPreview:document.querySelectorAll('#mission4Preview1054Photos img').length
+  }),stored.id);
+  assert.equal(bState.owner,'m54-B');
+  assert.equal(bState.dbName,'closet-current-user-m54-B');
+  assert.equal(bState.inheritedItem,false,'B inherited A model-selected outfit');
+  assert.equal(bState.inheritedImages,0,'B inherited A private 2D garment photo');
+  assert.equal(bState.staleReviewSource,0,'B retained A model proposal source');
+  assert.equal(bState.staleStrictPreview,0,'B retained A strict original');
   cases.push({engine,width,actualNativeApp:true,
    licensedSourceSHA:sourceSHA,realBrowserCrypto:true,
    p88UnresolvedWorkerReplaySynthetic:true,p88ReceiptSourceBound:true,
@@ -361,6 +397,7 @@ try{
    savedRows:0,manualOwnerReviewedSecondSource:true,
    sourceBoundModelProposalHumanReviewed:true,
    sourceMaskNotCertified:stored.sourceMaskNotCertified,
+   secondOwnerPrivateIsolation:true,revokedOldSourceOnLogout:true,
    secondOriginalSourceShaVerified:stored.sourceVerified,
    verifiedOriginalBytesRetained:stored.originalSha===dressSHA,
    oneOwnerPrivateGarmentRow:true,
