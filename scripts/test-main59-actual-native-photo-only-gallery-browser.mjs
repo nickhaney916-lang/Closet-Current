@@ -214,7 +214,7 @@ try{
    engine,sourceVerified:true,sourceSHA256:sha,realNativeApp:true,
    actualPrivateBrowserIndexedDB:true,humanTruthSynthetic:true,
    realIndependentLabelAccuracy:false,modelInferenceInThisWorkflow:false,
-   3DAuthorized:false,actualHostedRLS:false,physicalPhone:false,
+   threeDAuthorized:false,actualHostedRLS:false,physicalPhone:false,
    familyAlpha:'HOLD',releaseAuthorized:false,cases},null,2)+'\n');
  console.log('M59_ACTUAL_NATIVE_PHOTO_ONLY_REVIEWED_GALLERY_PASS',
   JSON.stringify({engine,widths:cases.map(c=>c.width),
