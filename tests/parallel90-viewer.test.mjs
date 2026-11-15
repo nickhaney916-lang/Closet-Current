@@ -322,3 +322,26 @@ test('P90 M19 explicit auto-rotation pause retains native owner, source photos a
  assert.match(interactions,/samples\.push\(\{figure,width,engine,before,after,[^\n]*\bautoSpinPause19\b/);
  assert.ok(workflow.includes('engine: [chromium, webkit]'));
 });
+
+test('P90 M20 system reduced-motion stops real auto-spin without changing admitted 163-bone/source rig',()=>{
+ const installer=readFileSync('scripts/install-parallel90-viewer.mjs','utf8');
+ const browser=readFileSync('scripts/check-parallel90-interactions.mjs','utf8');
+ const workflow=readFileSync('.github/workflows/parallel90-viewer-no-deploy.yml','utf8');
+ assert.ok(installer.includes("const reducedMotion90=doc.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)')||null"));
+ assert.ok(installer.includes("reducedMotion90?.addEventListener?.('change',onReducedMotion90)"));
+ assert.ok(installer.includes("reducedMotion90?.removeEventListener?.('change',onReducedMotion90)"));
+ assert.ok(installer.includes("if(reducedMotion90?.matches){"));
+ assert.ok(installer.includes("scene.setSpin(false)"));
+ assert.ok(installer.includes("Manual 3D rotation is available."));
+ assert.ok(browser.includes("await page.emulateMedia({reducedMotion:'reduce'})"));
+ assert.ok(browser.includes("await page.emulateMedia({reducedMotion:'no-preference'})"));
+ assert.ok(browser.includes("unintendedDrift<2"));
+ assert.ok(browser.includes("driftAfterChange<2"));
+ assert.ok(browser.includes("restoring no-preference must not silently restart"));
+ assert.ok(browser.includes("manual orbit must work independently"));
+ assert.ok(browser.includes("final.garmentSources90,original.garmentSources90"));
+ assert.ok(browser.includes("final.resources90.geometries,original.resources90.geometries"));
+ assert.ok(browser.includes("final.resources90.textures,original.resources90.textures"));
+ assert.match(browser,/samples\.push\(\{figure,width,engine,before,after,[^\n]*\breducedMotion20\b/);
+ assert.ok(workflow.includes('engine: [chromium, webkit]'));
+});
