@@ -405,9 +405,17 @@ function selectBoardPiece(slotId,itemId){
 // on the owner-private photo picker BEFORE the item is selected. An edited
 // crop or claimed single-piece flag is not independent geometry/3D evidence.
 function boardPhotoRequiresUnitReview(item){
- return !!item&&(item.singleGarmentVerified!==true||item.photoOnly===true||
+ // M75: an owner/source receipt can claim many positive booleans but still
+ // explicitly withhold independently verified physical-unit and rig evidence.
+ // Until accepted independent garment evidence is integrated into the same
+ // build, these flags alone must NEVER hide the normal 2D source warning.
+ return !!item&&(item.ownerSourceReview88!=null||
+  item.independentPhysicalItemVerified!==true||
+  item.threeDReady!==true||
+  item.singleGarmentVerified!==true||item.photoOnly===true||
   item.segmentHint?.clipped===true||item.segmentHint?.verified===false||
-  item.sourceHashVerified!==true||item.segmentHint?.rawMaskPixelsIndependentlyVerified!==true);
+  item.sourceHashVerified!==true||
+  item.segmentHint?.rawMaskPixelsIndependentlyVerified!==true);
 }
 // M74: Mission 1 owner-source-review/v1 is an owner DECISION record, never
 // independent proof of a physical unit, a sound pixel mask, or fitted 3D.
@@ -527,7 +535,16 @@ function renderBoardSuggestions(){
  const target=$('boardTarget').value||'shoes',slot=outfitSlots.find(s=>s.id===target),owned=closetGapOptions(target,currentBoard,items).slice(0,3);
  $('boardGapStatus').textContent=(['bag','accessory','finish'].includes(target)?'Optional finishing ideas. No accessory photos are needed. ':'')+(currentBoard.slots[target]?'Alternatives for your '+slot.label.toLowerCase()+'. ':'Ideas for the '+slot.label.toLowerCase()+' space. ')+(owned.length?'Try a piece you already own first.':'Compare the directions below, then open a purchase source.');
  const ownGrid=$('boardOwnedOptions');ownGrid.replaceChildren();
- for(const item of owned){const b=node('button',null,'board-owned-pick');b.type='button';const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('span','Already in your closet'),node('strong',item.name),node('small','Use this piece'));b.onclick=()=>{
+ for(const item of owned){const b=node('button',null,'board-owned-pick');b.type='button';const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('span','Already in your closet'),node('strong',item.name),node('small','Use this piece'));
+  // This owner-private alternatives button bypasses the modal picker.
+  // Disclose the same source uncertainty before applying the garment.
+  if(boardPhotoRequiresUnitReview(item)){
+   b.classList.add('source-unverified');
+   b.append(node('small',boardPhotoSourceNotice88(item)));
+   b.setAttribute('aria-label',(item.name||'Closet piece')+
+    ' · '+boardPhotoSourceAria88(item)+'. Use for a 2D outfit');
+  }
+  b.onclick=()=>{
   if(!suggestionsCurrent()||b.isConnected===false||
      ($('boardTarget').value||'shoes')!==target||!items.includes(item))return;
   if(typeof ownerPicker33Active!=='undefined'&&ownerPicker33Active){void ownerPicker33Choose(target,item.id,b,suggestionLease);return;}
