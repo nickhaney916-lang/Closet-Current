@@ -2493,7 +2493,8 @@ function photoFillHarness88({itemValues={},auto=false}={}){
   name:'',category:'Tops',itemType:'Unknown',color:'Blue',colorSource:'user',
   seasons:[],notes:'',pattern:'Unknown',sleeveLength:'Unknown',fit:'Unknown',
   ...itemValues};
- const c={window:{document:{},closetAuth:{user:owner}},db:ownerDb,
+ const c={window:{document:{},closetAuth:{user:owner}},
+  document:{createTextNode:text=>make('text',text)},db:ownerDb,
   item,nodes,make,node:make,field,choice,
   normalizeClothing:x=>({seasons:[],...x}),
   learningMode72:()=>false,
