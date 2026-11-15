@@ -571,7 +571,11 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
   }}).jpeg().toBuffer()).toString('base64');
   const root=resolve('dist'),scoped='/closet-current/';
   const moduleRequests=[];
+  let originDisconnected=false;
   const server=createServer(async(req,res)=>{
+   // WebKit Playwright's offline emulation may reject before SW interception.
+   // A severed origin socket tests the actual offline cache path instead.
+   if(originDisconnected){req.socket.destroy();return;}
    try{
     const url=new URL(req.url,'http://127.0.0.1');
     // Intentionally do NOT serve /research from the root. The import must
@@ -641,7 +645,8 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
       assert.equal(helperCache.present,true,name+' scoped offline cache includes atomic module');
       // The import module has NOT yet been fetched by the app script itself.
       // Cut the network now: onChange must load it from service-worker cache.
-      await ctx.setOffline(true);
+      if(name==='webkit')originDisconnected=true;
+      else await ctx.setOffline(true);
       const offlineProbe=await page.evaluate(async()=>{
        const url=new URL('./research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs',location.href);
        try{const res=await fetch(url.href,{cache:'no-store'});return {ok:res.ok,status:res.status,
@@ -683,8 +688,9 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
       assert.match(answer.message,/imported atomically/i);
       assert.deepEqual(errors,[]);
       assert.equal(external.some(x=>x.method!=='GET'),false,'No external private writes');
-      await ctx.setOffline(false);
-     }finally{await ctx.close();}
+      if(name==='webkit')originDisconnected=false;
+      else await ctx.setOffline(false);
+     }finally{originDisconnected=false;await ctx.close();}
     }finally{await browser.close();}
    }
    assert.equal(moduleRequests.length,2,'Each engine loaded the module from its scoped PWA folder');
