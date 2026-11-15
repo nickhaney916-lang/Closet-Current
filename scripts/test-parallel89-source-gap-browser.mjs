@@ -125,6 +125,10 @@ try{
   }
   // Original public-source geometry, real native WebGL rendering. PNG hashes
   // are evidence snapshots for independent human review, never fake approval.
+  // Original source P84 native renderer requires an actual next-frame draw
+  // after read-only pose-gap scanning restores the authentic skeleton.
+  await page.evaluate(()=>window.ccDress12SetView(0));
+  await page.waitForTimeout(100);
   const png=await page.locator('#avatar').screenshot({animations:'disabled'});
   assert.ok(png.length>1500&&png.length<10_000_000&&
    png.subarray(0,8).toString('hex')==='89504e470d0a1a0a',
