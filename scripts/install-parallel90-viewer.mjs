@@ -70,7 +70,9 @@ s=replace(s," left.append(views);body.append(left);",` left.append(views);
  });`);
 // M20: source-pinned viewer only. Respect owner operating-system reduced
 // motion without weakening any manual orbit/source-photo controls.
-s=replace(s," doc.getElementById('outfit3D01Rotate').onclick=()=>{\\n  try{current();if(ready)scene.setSpin(true);}catch{clearPrivate();}\\n };".replaceAll('\\n','\n'),` const reducedMotion90=doc.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)')||null;
+s=replace(s,` doc.getElementById('outfit3D01Rotate').onclick=()=>{
+  try{current();if(ready)scene.setSpin(true);}catch{clearPrivate();}
+ };`,` const reducedMotion90=doc.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)')||null;
  const onReducedMotion90=()=>{
   if(!reducedMotion90?.matches||!ready||!scene)return;
   try{
@@ -91,7 +93,8 @@ s=replace(s," doc.getElementById('outfit3D01Rotate').onclick=()=>{\\n  try{curre
   }catch{clearPrivate();}
  };`);
 s=replace(s,"  window.removeEventListener('pagehide',change);",
- "  window.removeEventListener('pagehide',change);\\n  reducedMotion90?.removeEventListener?.('change',onReducedMotion90);".replaceAll('\\n','\n'));
+ `  window.removeEventListener('pagehide',change);
+  reducedMotion90?.removeEventListener?.('change',onReducedMotion90);`);
 s=replace(s,"    geometries:view.geometries||0,textures:view.textures||0,frames:view.frames||0,",`    startup90:{...startupTimings90,...view.startup90},
     renderStages90:rendered?.renderStages90||null,
     sceneApplyStages90:view.applyStages90||null,
