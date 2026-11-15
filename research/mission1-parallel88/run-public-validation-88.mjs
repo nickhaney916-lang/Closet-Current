@@ -105,6 +105,10 @@ try {
     const start = performance.now();
     const inputs = await processor(image), output = await model(inputs);
     const map = clothingLabelMap(output.logits.data, output.logits.dims);
+    // Preserve the original native source/model elapsed duration; do not
+    // quietly include experimental research-only threshold sweeps in it.
+    const inferenceMs = performance.now() - start;
+    const probeStarted=performance.now();
     // For causal comparability, the two experimental variants have exactly
     // the SAME source JPEG, logits and original person-detection gate. Only
     // their pixel confidence/class-margin selection differs. Crucially, the
@@ -117,7 +121,7 @@ try {
       throw Error('P88_RESEARCH_PIXEL_GATE_NATIVE_PARITY_FAILED');
     const probeMaps=Object.fromEntries(Object.entries(P88_EXPOSED_PIXEL_PROBES).map(
       ([name,params])=>[name,exposedPixelGateMap88(output.logits.data,output.logits.dims,params)]));
-    const inferenceMs = performance.now() - start;
+    const experimentalPixelGateMs = performance.now() - probeStarted;
     output.logits.dispose?.();
     for (const obj of Object.values(inputs)) obj?.dispose?.();
 
@@ -161,7 +165,7 @@ try {
         id: row.id, sha256: row.sha256, width: image.width, height: image.height,
         sourceMatch: true, truthCount: row.annotations.length,
         predictedCount: regions.length, regions,
-        inferenceMs, automaticSave: false
+        inferenceMs, experimentalPixelGateMs, automaticSave: false
       });
     }
     console.log('P88_GENUINE_EXPOSED_VALIDATION', JSON.stringify({
@@ -173,7 +177,8 @@ try {
       candidateMasks: groupsByMode.p88.length,
       loose65ResearchMasks:groupsByMode.researchLoose65.length,
       loose55ResearchMasks:groupsByMode.researchLoose55.length,
-      inferenceMs: Math.round(inferenceMs)
+      inferenceMs: Math.round(inferenceMs),
+      experimentalPixelGateMs:Math.round(experimentalPixelGateMs)
     }));
     globalThis.gc?.();
   }
