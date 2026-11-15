@@ -8,7 +8,7 @@ test('WORKER38 revokes active worker and clears timeout before first IDB preflig
  const lock=at(/submitting=true;redraw\(\);freezeDetector38\(\);/);
  const preflight=at(/const existing=await new Promise\(\(resolve,reject\)=>\{/);
  assert.ok(lock<preflight);
- assert.match(ui,/function freezeDetector38\(\)\{\s*if\(!job\)return false;\s*const running=job;job=null;\s*clearTimeout\(running.timeout\);\s*running.worker\?\.terminate\(\);/);
+ assert.match(ui,/function freezeDetector38\(\)\{\s*if\(!job\)return false;\s*const running=job;job=null;\s*clearTimeout\(running.timeout\);\s*running.p88Intake57\?\.close\(\);\s*running.worker\?\.terminate\(\);/);
  assert.match(ui,/const view=state,epoch=renderVersion,owner=view.owner,proof=view.proof/);
  assert.match(ui,/snapshotConfirmations34\(state.pieces,schema,proof\)/);
 });
