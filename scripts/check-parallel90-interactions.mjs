@@ -216,6 +216,51 @@ export async function checkViewer90(page,width,engine){
     sameSourceSHA:true,same163BoneRig:true,sameResources:true,
     rearOriginalPhotoVerified:false,sourceNoticeVisible:true,physicalPhone:false};
   }
+  // M19: automatic camera motion must actually run, then an accessible
+  // pause control must stop it without changing the original photo or mesh.
+  // This exercises real 163-bone WebGL in BOTH Chromium/WebKit engines.
+  let autoSpinPause19=null;
+  if(width===390){
+   await page.locator('#outfit3D01Reset90').click();await settle();
+   const originalSpin=await state();
+   const originalPhotoCount=await page.locator('#outfit3D01Photos img').count();
+   await page.locator('#outfit3D01Rotate').click();
+   await page.waitForFunction(start=>{
+    const now=window.native3D05Bridge.state();
+    if(!now.modelReady||!Number.isFinite(now.camera90?.angle))return false;
+    return Math.abs(((now.camera90.angle-start+540)%360)-180)>5;
+   },originalSpin.camera90.angle,{timeout:8000});
+   const rotating=await state();
+   const moved=Math.abs(((rotating.camera90.angle-originalSpin.camera90.angle+540)%360)-180);
+   assert.ok(moved>5,'original anatomical auto-rotation must visibly move real 3D camera');
+   const pause=page.locator('#outfit3D01Stop90');
+   const bounds=await pause.boundingBox();
+   assert.ok(bounds&&bounds.width>=43&&bounds.height>=43,
+    'pause automatic avatar rotation must be mobile touch-sized');
+   assert.equal(await pause.getAttribute('aria-label'),
+    'Pause automatic avatar rotation without changing clothing');
+   await pause.click();
+   const stopped=await state();
+   await page.waitForTimeout(650);
+   const later=await state();
+   const drift=Math.abs(((later.camera90.angle-stopped.camera90.angle+540)%360)-180);
+   assert.ok(drift<2,'manual pause must genuinely stop autonomous camera motion');
+   assert.equal(later.bones,163);
+   assert.deepEqual(later.garmentSources90,originalSpin.garmentSources90,
+    'auto-spin and pause must not change authentic source photograph identity');
+   assert.equal(later.resources90.geometries,originalSpin.resources90.geometries);
+   assert.equal(later.resources90.textures,originalSpin.resources90.textures);
+   assert.equal(await page.locator('#outfit3D01Photos img').count(),originalPhotoCount);
+   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true,
+    'owner 2D wardrobe session remains signed in throughout auto-spin/pause');
+   await page.locator('#outfit3D01Reset90').click();await settle();
+   const restored=await state();
+   assert.ok(Math.min(restored.camera90.angle,360-restored.camera90.angle)<3);
+   autoSpinPause19={figure,engine,cssWidth:width,realCameraMoved:true,
+    userPauseStopsMotion:true,measuredPauseDriftDegrees:drift,
+    sourceAndResourcesUnchanged:true,photosUnchanged:true,
+    owner2DSessionPreserved:true,physicalPhone:false};
+  }
   // Repeated camera work must neither rebuild textures nor deform skeletons.
   const baseline=await state();const durations=[];
   for(let i=0;i<16;i++){
@@ -226,7 +271,7 @@ export async function checkViewer90(page,width,engine){
   assert.equal(final.resources90.textures,baseline.resources90.textures);
   // Camera work does not load new garments or textures (renderer metrics
   // are captured through the existing authenticated read-only panel).
-  samples.push({figure,width,engine,before,after,touchButtons90,touchSwipe16,fullCycle17,originalPhotosShortcut18,finalCamera:final.camera90,buttonRoundTripMs:durations,baselineBones:baseline.bones,finalBones:final.bones,baselineResources:baseline.resources90,finalResources:final.resources90});
+  samples.push({figure,width,engine,before,after,touchButtons90,touchSwipe16,fullCycle17,originalPhotosShortcut18,autoSpinPause19,finalCamera:final.camera90,buttonRoundTripMs:durations,baselineBones:baseline.bones,finalBones:final.bones,baselineResources:baseline.resources90,finalResources:final.resources90});
  }
  // M15: end the original, signed-in, source-attested WebGL session while
  // an ACTUAL browser pointer is held down on the anatomical viewer.
