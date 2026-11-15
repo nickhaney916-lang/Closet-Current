@@ -1148,6 +1148,8 @@ test('P88 queued P70 owner decision refuses another signed owner's newly appende
   'uncommitted owner decision must be rolled back');
  assert.match(c.outfitUnit70Error,/Owner or source garment changed before draft persistence/);
  assert.equal(c.renderCalls,0,'invalid foreign owner batch never passes signed action');
+ assert.equal(c.batch.some(x=>x.id==='foreign-owner-late-photo'),false,
+  'foreign owner's photo may not remain in current owner's review draft after veto');
 });
 
 test('P88 queued P70 decision refuses malformed same-source mask appended after preflight starts',async()=>{
@@ -1161,5 +1163,7 @@ test('P88 queued P70 decision refuses malformed same-source mask appended after 
  release();await pending;
  assert.equal(c.storageWrites.length,0);
  assert.equal(c.batch.find(x=>x.id==='part-A').reconciliation70Status,'unresolved');
+ assert.equal(c.batch.some(x=>x.id==='late-mask'),false,
+  'corrupt late-source receipt must not survive a failed owner decision');
  assert.match(c.outfitUnit70Error,/Owner or source garment changed before draft persistence/);
 });
