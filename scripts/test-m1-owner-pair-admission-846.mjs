@@ -67,6 +67,16 @@ const harness=[
  "  items=[{id:'already-owned',image:originalSource88,category:'Tops',itemType:'T-shirt',color:'Blue'}];",
  "  batch=[];return candidate(originalSource88);",
  "};",
+ "window.setupCropDuplicate88=()=>{",
+ "  for(const old of document.querySelectorAll('dialog'))old.remove();",
+ "  window.closetAuth.user={id:'owner-A'};window.beforeWriteTest=null;window.releaseCrop88=null;",
+ "  window.draftSnapshots=[];window.completions=[];window.stored=[];window.crop88Editor=null;window.writeCount=0;",
+ "  const saved={id:'saved-photo-exact',image:originalSource88,category:'Tops',itemType:'T-shirt',color:'Blue'};",
+ "  const draft={id:'crop-exact',image:originalSource88,name:'Photo needing crop',category:'Tops',itemType:'T-shirt',color:'Blue',",
+ "   seasons:[],userAdjusted:false,requiresOwnershipConfirmation:true,possibleDuplicate:true,",
+ "   exactSavedPhotoMatch88:{savedItemId:saved.id}};",
+ "  items=[saved];batch=[draft];cropClothingPhoto(draft);return draft;",
+ "};",
  "window.setupCrop88=()=>{",
  "  for(const old of document.querySelectorAll('dialog'))old.remove();",
  "  window.closetAuth.user={id:'owner-A'};window.beforeWriteTest=null;window.releaseCrop88=null;",
@@ -211,6 +221,39 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     exactSavedPeerPhotoVisible:true,distinctPhysicalItemOwnerConfirmed:true,
     duplicateStoredOnlyAfterSeparateAttestation:true,threeDAuthority:false,
     pageErrors:errors.length
+   }));
+   // The actual native Crop flow must expire the old identical-JPEG
+   // marker when a pending duplicate photo is genuinely recropped.
+   await page.evaluate(()=>window.setupCropDuplicate88());
+   await page.evaluate(()=>{
+    window.cropPromise88=window.crop88Editor.save({
+     image:'data:image/jpeg;base64,TkVXUElYRUxT',
+     cropBounds:{x:0,y:0,width:1,height:1}
+    },null);
+   });
+   await page.waitForFunction(()=>window.completions.length===1);
+   await page.evaluate(()=>window.completions.shift().resolve());
+   await page.evaluate(()=>window.cropPromise88);
+   const cropDuplicate=await page.evaluate(()=>{
+    const v=batch[0],lease=reviewedSaveLease88(v);
+    return {savedCount:items.length,pendingCount:batch.length,
+     changedPhoto:v.image==='data:image/jpeg;base64,TkVXUElYRUxT',
+     clearedOldMatch:v.exactSavedPhotoMatch88===undefined,
+     clearedOldAttestation:v.ownerDuplicateReview88===undefined,
+     ownerReviewStillRequired:v.requiresOwnershipConfirmation===true,
+     newSourceAdmissibleForOwnerReview:reviewedDistinctPhotoReceiptValid88(v,lease)};
+   });
+   assert.equal(cropDuplicate.savedCount,1);
+   assert.equal(cropDuplicate.pendingCount,1);
+   assert.equal(cropDuplicate.changedPhoto,true);
+   assert.equal(cropDuplicate.clearedOldMatch,true);
+   assert.equal(cropDuplicate.clearedOldAttestation,true);
+   assert.equal(cropDuplicate.ownerReviewStillRequired,true);
+   assert.equal(cropDuplicate.newSourceAdmissibleForOwnerReview,true);
+   console.log('M1_P88_BROWSER_CROP_DUPLICATE_EVIDENCE_EXPIRY',JSON.stringify({
+    browser:browserName,width,oldMatchCleared:true,
+    newCropRetainedAsUnsaved:true,reviewStillRequired:true,
+    staleDuplicateGateUnblocked:true,pageErrors:errors.length
    }));
    // Source-execute the actual native Crop controller in real Chromium and
    // WebKit. The crop editor transport and signed owner are synthetic; no
