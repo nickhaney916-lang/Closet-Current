@@ -12,6 +12,8 @@ import {createHash} from 'node:crypto';
 import {resolve,join,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
+import {auditOriginalSkirtResearchFrontCoverage89}
+ from '../research/parallel89/skirt-original-front-visibility89.mjs';
 const [donorArg,p84Arg]=process.argv.slice(2);
 const donor=resolve(donorArg||'.'),p84=resolve(p84Arg||'.'),here=resolve('.');
 const engine=process.env.P89_BROWSER||'chromium';
@@ -76,7 +78,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  originalPhoto2DShown:true,
  screenCaptureCountExpected:36,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
- captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],errors:[],offsite:[],
+ captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],originalPhoto45FrontVisibilityReports:[],errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -381,6 +383,29 @@ try{
     const img=await screenshot(page,['research-only-45mm-source-skirt',
      engine,avatar,testPose,angle].join('-')+'.png');
     const changedRGB=await changed(img,fromOriginal);
+    if(angle===0){
+     const [baseline,shifted]=await Promise.all([
+      sharp(fromOriginal).removeAlpha().raw().toBuffer({resolveWithObject:true}),
+      sharp(img).removeAlpha().raw().toBuffer({resolveWithObject:true})
+     ]);
+     assert.equal(baseline.info.width,390);assert.equal(baseline.info.height,690);
+     assert.equal(shifted.info.width,390);assert.equal(shifted.info.height,690);
+     assert.equal(baseline.info.channels,3);assert.equal(shifted.info.channels,3);
+     const visible=auditOriginalSkirtResearchFrontCoverage89({
+      originalRGB:new Uint8Array(baseline.data),
+      candidateRGB:new Uint8Array(shifted.data),
+      width:390,height:690,avatar,pose:testPose,sourceSHA256:required.skirt
+     });
+     assert.equal(visible.status,
+      'ORIGINAL_PHOTOGRAPH_CENTER_FRONT_COVERAGE_IMPROVED_RESEARCH_ONLY',
+      'candidate +45mm must visibly restore original source-photo center panel over original public mannequin, independent of 0 BVH crossings: '+JSON.stringify(visible));
+     assert.equal(visible.originalPhotoCenterFrontOcclusionReduced,true);
+     assert.equal(visible.humanVisualFitAccepted,false);
+     assert.equal(visible.originalPhoto2DFallbackRequired,true);
+     assert.equal(visible.consumer3DAdmitted,false);
+     assert.equal(visible.releaseAuthorized,false);
+     results.originalPhoto45FrontVisibilityReports.push(visible);
+    }
     poses.push({angle,changedRGBChannelsAbove12:changedRGB});
     results.research45OnlyPreviewScreenshots.push({
      avatar,pose:testPose,angle,changedRGBChannelsAbove12:changedRGB,
@@ -460,6 +485,7 @@ try{
  }
  assert.equal(results.research45OnlyQuarterPoseChecks.length,4);
  assert.equal(results.research45OnlyPreviewScreenshots.length,18);
+ assert.equal(results.originalPhoto45FrontVisibilityReports.length,6);
  assert.equal(results.research45OnlyPoseBVHChecks.length,6);
  assert.equal(results.waistAnchorLandmarkReports.length,2);
  assert.equal(results.registrationTrials.length,2);
@@ -499,6 +525,9 @@ try{
    researchOnly45mmQuarterStepStaticPoseBVHChecks:results.research45OnlyQuarterPoseChecks.length,
    researchOnly45mmQuarterStepStrictPairs:results.research45OnlyQuarterPoseChecks.map(x=>x.rigid45OnlyStrictCrossingPairs),
    researchOnly45mmScreenshots:results.research45OnlyPreviewScreenshots.length,
+   originalPhotoCreamFrontCoverageWitnesses:results.originalPhoto45FrontVisibilityReports.length,
+   originalCenterFrontalVisibleMannequinFractions:results.originalPhoto45FrontVisibilityReports.map(x=>x.originalCenterFrontalVisibleMannequinFraction),
+   rigid45mmCenterFrontalVisibleMannequinFractions:results.originalPhoto45FrontVisibilityReports.map(x=>x.rigid45mmCenterFrontalVisibleMannequinFraction),
    sourceSpine04ToSkirtRimVerticalOffsetMeters:results.waistAnchorLandmarkReports.map(x=>x.originalWaistRimAndSpine04HeightMismatchMeters),
    photoSkirtRegistrationCrossingReduction:results.registrationTrials.map(x=>x.bestResearchOnly?.originalThreePoseStrictCrossingPairSum-x.bestResearchOnly?.trialThreePoseStrictCrossingPairSum||0),
    measuredBodyFitResearchReduction:results.measuredBodyFitTrials.map(x=>x.bestProvisionalStructuralAB?.originalStrictSkirtBodyCrossingPairSum-x.bestProvisionalStructuralAB?.trialStrictSkirtBodyCrossingPairSum||0),
