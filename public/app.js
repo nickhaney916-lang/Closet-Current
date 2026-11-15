@@ -1977,6 +1977,11 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
   // data only after clothing has already been imported.
   const preflightLegacyBoard=()=>{
    const board=data.outfitBoard;
+   // Clothing-only merges can change pieces referenced by the owner's live
+   // unsaved outfit. The saved board snapshot cannot protect those edits.
+   // Check both before preview and again after confirmation, before commit.
+   if(typeof boardHasUnsavedDraft==='function'&&boardHasUnsavedDraft())
+    throw Error('Save or discard unfinished outfit changes before importing a backup.');
    if(!board||typeof importBoardBackup!=='function')return;
    const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
    if(!object(board)||!Array.isArray(board.saved)||board.saved.length>50)
