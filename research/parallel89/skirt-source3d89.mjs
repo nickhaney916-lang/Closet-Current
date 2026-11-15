@@ -31,7 +31,7 @@ const fail=reason=>Object.freeze({status:'ORIGINAL_SKIRT_PHOTO_2D_REQUIRED',reas
  * fixture; any missing decoder or impossible image fails to 2D.
  */
 async function decodeAttestedSourceRaster89(png){
- let data,width,height;
+ let data,width,height,sampledData,sampledWidth,sampledHeight;
  if(typeof document!=='undefined'&&typeof createImageBitmap==='function'){
   const bitmap=await createImageBitmap(new Blob([png],{type:'image/png'}),
    {premultiplyAlpha:'none',colorSpaceConversion:'none'});
@@ -45,18 +45,46 @@ async function decodeAttestedSourceRaster89(png){
    if(!ctx)throw Error('attested-skirt-cutout-raster-canvas-unavailable');
    ctx.clearRect(0,0,width,height);ctx.drawImage(bitmap,0,0);
    data=new Uint8Array(ctx.getImageData(0,0,width,height).data);
+   const factor=Math.min(240/width,240/height);
+   sampledWidth=Math.max(12,Math.round(width*factor));
+   sampledHeight=Math.max(12,Math.round(height*factor));
+   const sampled=document.createElement('canvas');
+   sampled.width=sampledWidth;sampled.height=sampledHeight;
+   const sampledCtx=sampled.getContext('2d',{willReadFrequently:true});
+   if(!sampledCtx)throw Error('attested-skirt-cutout-source-mask-canvas-unavailable');
+   sampledCtx.clearRect(0,0,sampledWidth,sampledHeight);
+   sampledCtx.drawImage(bitmap,0,0,sampledWidth,sampledHeight);
+   sampledData=sampledCtx.getImageData(0,0,sampledWidth,sampledHeight).data;
   }finally{bitmap.close();}
  }else if(typeof process!=='undefined'&&process.versions?.node){
   const {default:sharp}=await import('sharp');
   const out=await sharp(png).ensureAlpha().raw().toBuffer({resolveWithObject:true});
   width=out.info.width;height=out.info.height;
   data=new Uint8Array(out.data);
+  const factor=Math.min(240/width,240/height);
+  sampledWidth=Math.max(12,Math.round(width*factor));
+  sampledHeight=Math.max(12,Math.round(height*factor));
+  const sample=await sharp(png).resize({
+   width:sampledWidth,height:sampledHeight,fit:'fill'
+  }).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+  if(sample.info.width!==sampledWidth||sample.info.height!==sampledHeight||
+   sample.info.channels!==4)
+   throw Error('attested-skirt-cutout-source-mask-dimensions-invalid');
+  sampledData=sample.data;
  }else throw Error('attested-skirt-cutout-raster-decoder-missing');
  if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||
   width<64||height<64||width*height>9_000_000||
   !(data instanceof Uint8Array)||data.length!==width*height*4)
   throw Error('attested-skirt-cutout-raster-dimensions-invalid');
- return {data,width,height};
+ if(!Number.isSafeInteger(sampledWidth)||!Number.isSafeInteger(sampledHeight)||
+  sampledWidth<12||sampledHeight<12||
+  sampledWidth>512||sampledHeight>512||
+  sampledData?.length!==sampledWidth*sampledHeight*4)
+  throw Error('attested-skirt-cutout-source-mask-dimensions-invalid');
+ const alpha=new Uint8Array(sampledWidth*sampledHeight);
+ for(let i=0;i<alpha.length;i++)alpha[i]=sampledData[i*4+3];
+ return {raster:{data,width,height},
+  outline:sourceSkirtOutline89({alpha,width:sampledWidth,height:sampledHeight})};
 }
 /** Source attestation is byte-bound, process-local and intentionally NOT owner
  * approval; neither forged metadata nor same-category dress is admissible.
@@ -83,7 +111,7 @@ export async function attestActualSkirt89({originalBytes,cutoutBytes,lock,work47
     await sha(cutoutBytes)!==work47.cutoutSHA256)
    throw Error('exact-source-skirt-review-alpha-sha-required');
   // Decode only AFTER actual source PNG bytes passed immutable SHA/rights.
-  const trustedRaster=await decodeAttestedSourceRaster89(cutoutBytes);
+  const trustedAsset=await decodeAttestedSourceRaster89(cutoutBytes);
   const receipt=Object.freeze({schema:'P89-authentic-independent-source-skirt-photo-and-review-mask/v1',
    status:'SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED',
    sourceId:SKIRT_SOURCE89.id,originalSHA256:SKIRT_SOURCE89.originalSHA256,
@@ -92,7 +120,7 @@ export async function attestActualSkirt89({originalBytes,cutoutBytes,lock,work47
    photographSource:SKIRT_SOURCE89.photograph,license:SKIRT_SOURCE89.license,
    actual163BoneSkirtMeshFitted:false,sourceBacksideObserved:false,
    releaseAuthorized:false,familyAlpha:'HOLD'});
-  approved.set(receipt,trustedRaster);return receipt;
+  approved.set(receipt,trustedAsset);return receipt;
  }catch(e){return fail(e.message);}
 }
 /** Inspect the actual ORIGINAL cutout alpha rows without estimating fabric
@@ -222,9 +250,11 @@ function sourceSkeleton(root){
  */
 export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
   skirtLengthMeters=.65,waistHalfWidthMeters=.23,segments=48}={}){
- const trustedRaster=approved.get(receipt);
+ const trustedAsset=approved.get(receipt);
+ const trustedRaster=trustedAsset?.raster;
+ const verifiedOutline=trustedAsset?.outline;
  if(!trustedRaster||receipt.status!=='SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED'||
-   outline?.schema!=='P89-source-measured-skirt-silhouette/v1'||
+   verifiedOutline?.schema!=='P89-source-measured-skirt-silhouette/v1'||
    receipt.sourceId!=='commons-0043'||
    !Number.isInteger(segments)||segments<24||segments>96||segments%4!==0||
    !Number.isFinite(skirtLengthMeters)||skirtLengthMeters<.4||skirtLengthMeters>.9||
@@ -242,13 +272,13 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
   if(![at.x,at.y,at.z].every(Number.isFinite)||at.y<.5||at.y>2.2)
    throw Error('anatomical waist height invalid');
   const inverse=body.matrixWorld.clone().invert();
-  const center=outline.sourceRowWidths[0].centerPixels;
-  const scale=waistHalfWidthMeters/Math.max(1,outline.sourceRowWidths[0].widthPixels/2);
-  const heights=outline.sourceRowWidths;
+  const center=verifiedOutline.sourceRowWidths[0].centerPixels;
+  const scale=waistHalfWidthMeters/Math.max(1,verifiedOutline.sourceRowWidths[0].widthPixels/2);
+  const heights=verifiedOutline.sourceRowWidths;
   const verts=[],uv=[],bone=[],weights=[],tris=[],seams=[],rest=[];
   for(let ri=0;ri<heights.length;ri++){
    const s=heights[ri],t=ri/(heights.length-1);
-   const sourceMeasuredTextureV=sourceSkirtBandTextureV89(outline,ri);
+   const sourceMeasuredTextureV=sourceSkirtBandTextureV89(verifiedOutline,ri);
    const sourceHalfWidth=s.widthPixels/2*scale;
    const radiusX=Math.min(.70,Math.max(.12,sourceHalfWidth));
    const radiusZ=Math.min(.45,Math.max(.10,radiusX*.66)); // rear is PROVISIONAL
@@ -262,7 +292,7 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
     // Front only carries photo RGB. Source background alpha remains transparent.
     // Use the actual measured source row center/width, not a fictional
     // symmetric bounding-box projection that loses motif registration.
-    uv.push((s.centerPixels+x*s.widthPixels*.5)/outline.pixelDimensions[0],
+    uv.push((s.centerPixels+x*s.widthPixels*.5)/verifiedOutline.pixelDimensions[0],
       sourceMeasuredTextureV);
     if(ri<heights.length-1&&j<segments){
      const p=ri*(segments+1)+j,q=p+segments+1;
@@ -301,7 +331,7 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
    actualSkinnedMesh:true,sourceSkeletonBones:body.skeleton.bones.length,
    authenticLowerBodyBoneName,inferredPelvisBinding,
    distinctSourceOriginalJPEG:true,measuredSourceMaskRows:heights.length,
-   extractedSourceHemToWaistRatio:outline.sourceHemToWaistWidthRatio,
+   extractedSourceHemToWaistRatio:verifiedOutline.sourceHemToWaistWidthRatio,
    frontPhotoAppliedFromVerifiedCutout:true,unobservedBackNeutral:true,
    measuredPhysicalGarmentFit:false,sourceAbsoluteScaleInferred:true,
    sourcePhotoCameraUnadjudicated:true,originalPhotoBytesUntouched:true,
@@ -310,6 +340,8 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
    sourceRGBADataTextureBoundToFrontOnly:true,
    sourceRGBAWasDecodedFromExactAttestedCutoutPNG:true,
    callerSuppliedTexturePixelsAreNotTrusted:true,
+   originalMaskShapeDerivedFromExactAttestedCutoutPNG:true,
+   callerSuppliedSilhouetteIsNotTrusted:true,
    genuinePhotoShaderWebGLNotYetMeasured:true,triangleCount:tris.length/3,
    originalHumanVisualRealismAccepted:false,consumer3DAdmitted:false,
    originalPhoto2DFallbackRequired:true,releaseAuthorized:false,familyAlpha:'HOLD'
