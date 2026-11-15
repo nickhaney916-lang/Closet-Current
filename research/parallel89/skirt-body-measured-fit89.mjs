@@ -4,7 +4,8 @@
  *
  * WHOLE-ORIGINAL skinned body vertices (not invented hip measures) determine
  * radial clearance envelopes around seven source-alpha skirt bands at THREE
- * original skeletal poses. Candidate photo-skirt mesh fitting is reversible.
+ * original skeletal poses, plus two real intermediate skeletal poses in
+ * the fitted contact veto. Candidate fitting remains reversible.
  * Measured source front may move: original RGB/UV ARE unchanged, but photo
  * stretch/physical fit is NOT verified or approved. Entire source GLB, true
  * photo bytes, source UV/skin and 2D fallback remain untouched.
@@ -15,6 +16,7 @@
  */
 import * as T from 'three';
 const POSES=Object.freeze(['source','blend-50','relaxed']);
+const QUARTER_POSES=Object.freeze(['blend-25','blend-75']);
 const SEGMENTS=48,ROWS=7,N=ROWS*(SEGMENTS+1),TRIANGLES=(ROWS-1)*SEGMENTS*2;
 const REGIMES=Object.freeze([
  Object.freeze({name:'anatomy-fit-6mm',margin:.006,maxDisplacement:.07}),
@@ -249,7 +251,7 @@ export function compareActualMeasuredSkirtFit89({
  if(position?.count!==N||rest?.count!==N||index?.count!==TRIANGLES*3||
   uv?.count!==N||skinIndex?.count!==N||skinWeight?.count!==N)
   return fail('source-photographed alpha 7-ring garment topology unavailable');
- const saved=position.array.slice(),baseline=[],envelopeObservations=[],
+ const saved=position.array.slice(),baseline=[],quarterBaseline=[],envelopeObservations=[],
   protectedArrays=[['uv',uv.array.slice()],['skinIndex',skinIndex.array.slice()],
    ['skinWeight',skinWeight.array.slice()],['sourceSkirt89Rest',rest.array.slice()],
    ['index',index.array.slice()]];
@@ -272,6 +274,14 @@ export function compareActualMeasuredSkirtFit89({
    const contact=sampleContact(pose);
    if(!validContact(contact))throw Error('actual-posed-original-source-BVH-missing');
    baseline.push(contact);
+  }
+  // Extra original poses are true sampled BVH guards, not continuous motion.
+  for(const pose of QUARTER_POSES){
+   applyPose(pose);
+   const contact=sampleContact(pose);
+   if(!validContact(contact))
+    throw Error('original-source-intermediate-BVH-contact-missing');
+   quarterBaseline.push(contact);
   }
   // Preserve only six per-band strict crossing counts as a reproducible,
   // source-geometry-located research finding. NO body coordinates/photographic
@@ -330,6 +340,22 @@ export function compareActualMeasuredSkirtFit89({
     rejectReasons.push('new-body-skirt-original-triangle-crossing-IDs');
    if(contacts.some(x=>x.contactPlaneDepthWorsened))
     rejectReasons.push('oriented-anatomical-body-plane-depth-worsened');
+   // Never retain an apparent three-pose fit if genuine intermediate
+   // joint positions introduce an original indexed body/skirt face crossing.
+   const quarterContacts=[];
+   for(let i=0;i<QUARTER_POSES.length;i++){
+    applyPose(QUARTER_POSES[i]);
+    const after=sampleContact(QUARTER_POSES[i]);
+    if(!validContact(after))
+     throw Error('fitted-source-intermediate-BVH-contact-missing');
+    quarterContacts.push(Object.freeze({
+     pose:QUARTER_POSES[i],...collisionWitnesses(quarterBaseline[i],after)
+    }));
+   }
+   if(quarterContacts.some(x=>x.addedCrossingPairIDs>0))
+    rejectReasons.push('new-intermediate-body-skirt-original-triangle-crossing-IDs');
+   if(quarterContacts.some(x=>x.contactPlaneDepthWorsened))
+    rejectReasons.push('intermediate-oriented-body-plane-depth-worsened');
    const beforeTotal=baseline.reduce((n,x)=>n+x.count,0),
     afterTotal=contacts.reduce((n,x)=>n+x.after,0);
    if(!rejectReasons.length&&afterTotal>=beforeTotal)
@@ -346,6 +372,9 @@ export function compareActualMeasuredSkirtFit89({
     originalStrictSkirtBodyCrossingPairSum:beforeTotal,
     trialStrictSkirtBodyCrossingPairSum:contacts.length===POSES.length?afterTotal:null,
     realOriginalTriangleCrossingComparisons:contacts,
+    actualIntermediateSourcePoseContacts:quarterContacts,
+    baselineIntermediateStrictPairs:quarterBaseline.map(x=>x.count),
+    intermediateStrictContactVetoEnforced:true,
     acceptedForResearchA_BOnly:rejectReasons.length===0,
     refusedReasons:rejectReasons,
     realHumanVisualFitAccepted:false,consumer3DAdmitted:false,
@@ -376,7 +405,10 @@ export function compareActualMeasuredSkirtFit89({
    originalSkinnedSourceFacePlaneIntersectionsUsed:fullBody.every(x=>x.actualAnatomicalIndexedFaceCutsUsed),
    independentCoreTorsoLegBoneSourcePartMaskVerified:fullBody.every(x=>x.originalOutwardEnvelopeUsesSkinPartSpecificExclusions),
    unrelatedUpperExtremityOnlyExcludedFromRadialDesignNeverFromCollisionBVH:true,
-   sampledActualBonePoses:POSES,radialSourceBands:ROWS,sectorCount:SEGMENTS,
+   sampledActualBonePoses:POSES,
+   additionalOriginalSourceBodyContactPoses:QUARTER_POSES,
+   completeFivePoseStaticContactCheck:true,
+   radialSourceBands:ROWS,sectorCount:SEGMENTS,
    actualAnatomicalOriginalBodyCrossSectionSummaries:envelopeObservations,
    baselineStrictSkirtBodyTriangleCrossingsAcrossPoses:baseline.reduce((n,x)=>n+x.count,0),
    baselineCrossingsBySourceSkirtBand:baselineCrossingsByGarmentBand,
