@@ -28,10 +28,10 @@ jobs:
           BASE=ab68cbbbd54376bbc9c099fc3504d1cc00ba632c
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD | tee /tmp/m1-88-paths
-          test "$(wc -l < /tmp/m1-88-paths)" -eq 14
+          test "$(wc -l < /tmp/m1-88-paths)" -eq 16
           while IFS= read -r p; do
             case "$p" in
-              public/outfit-instance-review-840.mjs|public/outfit-capture.js|public/app.js|tests/mission1-parallel88-instance-conservation.test.mjs|tests/mission1-parallel88-owner-mask-lease.test.mjs|scripts/test-m1-owner-pair-admission-846.mjs|research/mission1-parallel88/REPORT.md|research/mission1-parallel88/frozen-public-validation-68.json|research/mission1-parallel88/recover-public-validation-88.py|research/mission1-parallel88/run-public-validation-88.mjs|research/mission1-parallel88/exposed-threshold-probes-88.mjs|research/mission1-parallel88/run-coco-accessory-88.mjs|research/mission1-parallel88/score-public-validation-88.py|.github/workflows/mission1-parallel88-no-deploy.yml) ;;
+              public/outfit-instance-review-840.mjs|public/outfit-capture.js|public/app.js|tests/mission1-parallel88-instance-conservation.test.mjs|tests/mission1-parallel88-owner-mask-lease.test.mjs|scripts/test-m1-owner-pair-admission-846.mjs|research/mission1-parallel88/REPORT.md|research/mission1-parallel88/frozen-public-validation-68.json|research/mission1-parallel88/recover-public-validation-88.py|research/mission1-parallel88/run-public-validation-88.mjs|research/mission1-parallel88/exposed-threshold-probes-88.mjs|research/mission1-parallel88/run-coco-accessory-88.mjs|research/mission1-parallel88/run-fashion-onnx-88.mjs|research/mission1-parallel88/fashion-onnx-probes-88.mjs|research/mission1-parallel88/score-public-validation-88.py|.github/workflows/mission1-parallel88-no-deploy.yml) ;;
               *) echo "P88_UNAUTHORIZED_PATH $p"; exit 1 ;;
             esac
           done < /tmp/m1-88-paths
@@ -47,6 +47,8 @@ jobs:
           node --check research/mission1-parallel88/run-public-validation-88.mjs
           node --check research/mission1-parallel88/exposed-threshold-probes-88.mjs
           node --check research/mission1-parallel88/run-coco-accessory-88.mjs
+          node --check research/mission1-parallel88/run-fashion-onnx-88.mjs
+          node --check research/mission1-parallel88/fashion-onnx-probes-88.mjs
           python -m py_compile research/mission1-parallel88/recover-public-validation-88.py research/mission1-parallel88/score-public-validation-88.py
           # Source-execute the actual stdlib-only confidence-retention
           # research function without requiring a model, private photos or COCO.
@@ -188,7 +190,7 @@ jobs:
       - name: Install pinned SegFormer native inference and human COCO IoU dependencies
         run: |
           set -euo pipefail
-          npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 sharp@0.34.3
+          npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 sharp@0.34.3 onnxruntime-node@1.22.0
           python -m pip install --disable-pip-version-check numpy==2.2.6 pycocotools==2.0.10
       - name: Actual fp32 SegFormer on original validation JPEGs — no owner save
         shell: bash
@@ -213,6 +215,23 @@ jobs:
           assert d['noAutomaticSaveAuthority'] is True
           assert d['newBlindHoldout'] is False and d['physicalPhoneAcceptance'] is False
           print('P88_GENUINE_COCO_ACCESSORY_EVIDENCE',d['aggregate'],'research-only bounding boxes')
+          PY
+          # 46-class licensed Fashionpedia YOLOv8n ONNX: pinned SHA, no PyTorch pickle.
+          # Same exposed historical public sources, all accessories represented.
+          node research/mission1-parallel88/run-fashion-onnx-88.mjs
+          python - <<'PY'
+          import json
+          d=json.load(open('benchmark/p88-real-validation-masks/real-fashion-onnx-88.json'))
+          assert d['model']=='louisJLN/yolo8-fashionpedia'
+          assert d['verifiedModelSha256']=='6b581af3abe2b4ae97a84cbe9aef5ae37207a68ee966d22b0b8d7969d79e6920'
+          a=d['aggregate']
+          assert a['photos']==16 and a['humanAccessoryInstances']==13
+          assert 0<=a['matchedAccessoryBoxes']<=13
+          assert a['unmatchedProposals']>=0 and a['missedAccessories']>=0
+          assert d['sameExposedP68Photos'] is True
+          assert d['consumerAutomaticSaveNotAuthorized'] is True
+          assert d['modelTrainingOverlapNotIndependentlyCleared'] is True
+          print('P88_GENUINE_FASHION_46CLASS_EVIDENCE',a,'bbox only, cannot promote to closet')
           PY
           grep -Fq '"shoeOnly68": {' benchmark/p88-real-validation-masks/real-validation-measured-88.json
           grep -Fq '"p88Safe": {' benchmark/p88-real-validation-masks/real-validation-measured-88.json
@@ -270,5 +289,6 @@ jobs:
             benchmark/p88-real-validation-masks/real-validation-measured-88.json
             benchmark/p88-real-validation-masks/real-validation-predictions-88.json
             benchmark/p88-real-validation-masks/real-public-coco-accessory-88.json
+            benchmark/p88-real-validation-masks/real-fashion-onnx-88.json
           if-no-files-found: error
           retention-days: 14
