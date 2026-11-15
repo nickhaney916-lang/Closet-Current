@@ -146,6 +146,15 @@ test('M54 malformed/array hint stays invalid even if a worker supplies a real so
  const malformed={...worker(),hint:['Tops']};
  assert.equal(intakeProposal58(malformed,[],1).accepted,false);
 });
+test('M54 direct full P88 worker output currently lacks MULTI24 instanceKey and is safely REJECTED pending a provenance-bound adapter',()=>{
+ // P88 public/outfit-worker.mjs (current blob ab7d3837...) has a top-level
+ // instanceMethod, but NO instanceKey; its consumer is different from MULTI24.
+ // Future integration must bind stable source/instance identity explicitly,
+ // not manufacture one from unsafe mutable owner or mask metadata.
+ const directP88={...worker(),instanceKey:undefined};
+ assert.equal(intakeProposal58(directP88,[],1).accepted,false);
+ assert.equal(intakeProposal58(directP88,[],1).reason,'invalid-or-duplicate-proposal');
+});
 test('M54 owner category/type/color and crop review cannot confirm an unresolved multi-garment mask',()=>{
  const safe=piece('10',normalHint());
  const flagged=piece('10',unresolved());
