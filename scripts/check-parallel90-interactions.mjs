@@ -61,8 +61,12 @@ export async function checkViewer90(page,width,engine){
    assert.equal(afterReset.bones,163);
    assert.deepEqual(afterReset.garmentSources90,touchBefore.garmentSources90,
     'touch input must not change source-photograph outfit identity');
-   assert.deepEqual(afterReset.resources90,touchBefore.resources90,
-    'touch input must not allocate additional mesh/texture resources');
+   assert.equal(afterReset.resources90.geometries,touchBefore.resources90.geometries,
+    'touch input must not allocate additional garment geometry');
+   assert.equal(afterReset.resources90.textures,touchBefore.resources90.textures,
+    'touch input must not allocate additional image texture');
+   assert.ok(afterReset.resources90.frames>=touchBefore.resources90.frames,
+    'actual touch-driven WebGL rendering must not roll back frame receipts');
    touchButtons90={figure,cssWidth:width,rotate:true,zoom:true,reset:true,
     realTouchscreenTap:true,sourceIdentitySame:true,resourceCountsSame:true,
     physicalPhone:false};

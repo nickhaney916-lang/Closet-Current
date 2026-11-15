@@ -210,6 +210,8 @@ test('P90 M14 mobile touchscreen buttons on actual original source 163-bone view
   assert.ok(live.includes("await tap90('#outfit3D01"+action+"')"),'actual touch event '+action);
  assert.ok(live.includes('afterReset.bones,163'));
  assert.ok(live.includes('afterReset.garmentSources90,touchBefore.garmentSources90'));
- assert.ok(live.includes('afterReset.resources90,touchBefore.resources90'));
+ assert.ok(live.includes('afterReset.resources90.geometries,touchBefore.resources90.geometries'));
+ assert.ok(live.includes('afterReset.resources90.textures,touchBefore.resources90.textures'));
+ assert.ok(live.includes('afterReset.resources90.frames>=touchBefore.resources90.frames'));
  assert.ok(live.includes('realTouchscreenTap:true'));
 });
