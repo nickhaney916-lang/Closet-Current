@@ -9,7 +9,7 @@
 import {createHash,createPublicKey,verify as cryptoVerify} from 'node:crypto';
 import {open,lstat,realpath} from 'node:fs/promises';
 import {constants} from 'node:fs';
-import {resolve,relative,isAbsolute,sep} from 'node:path';
+import {resolve,relative,isAbsolute,join,sep} from 'node:path';
 export const P88_BLIND_HANDOFF_SCHEMA='p88-blind-evaluator-handoff/v1';
 export const P88_FROZEN_CANDIDATE=Object.freeze({
  schema:'p88-fashion-onnx-candidate-freeze/v1',
@@ -186,10 +186,66 @@ export async function externalPrivateFile88(path,{cwd=process.cwd()}={}){
  if(meta.size>50000)throw Error('PRIVATE_HANDOFF_TOO_LARGE');
  return full;
 }
+/** This private 0700 directory protects ONE local offline evaluator's cohort.
+ * The directory must be owner-controlled and durable. This cannot prove global
+ * replay prevention across independent ledgers, reinstalls or compromised hosts.
+ */
+export async function externalPrivateLedgerDirectory88(path,{cwd=process.cwd()}={}){
+ if(typeof path!=='string'||!isAbsolute(path))
+  throw Error('PRIVATE_LEDGER_ABSOLUTE_PATH_REQUIRED');
+ const full=resolve(path),checkout=await realpath(cwd),target=await realpath(full);
+ if(beneath88(full,resolve(cwd))||beneath88(target,checkout))
+  throw Error('PRIVATE_LEDGER_MUST_STAY_OUTSIDE_GIT');
+ if(target!==full)throw Error('PRIVATE_LEDGER_SYMLINK_PATH_FORBIDDEN');
+ const meta=await lstat(full);
+ if(!meta.isDirectory())throw Error('PRIVATE_LEDGER_DIRECTORY_REQUIRED');
+ if((meta.mode&0o077)!==0||
+    (typeof process.getuid==='function'&&meta.uid!==process.getuid()))
+  throw Error('PRIVATE_LEDGER_OWNER_ONLY_REQUIRED');
+ return full;
+}
+function blockedReservation88(verdict,reason){
+ return {...verdict,status:'BLOCKED',errors:[reason],
+  canSendRestrictedHandoffToP71:false,oneTimePrivateReservationCreated:false};
+}
+/** Reserve the entire blind source cohort once; do not reserve individual
+ * model experiments separately. The ledger stores no photo, label or key.
+ */
+export async function reserveBlindEvaluatorHandoff88(packet,{
+ ledgerDir=null,...trust
+}={}){
+ const verdict=verifyBlindEvaluatorHandoff88(packet,trust);
+ if(verdict.status!=='SIGNED_CUSTODY_PREFLIGHT_ONLY')
+  return {...verdict,oneTimePrivateReservationCreated:false};
+ if(!ledgerDir)return blockedReservation88(verdict,'PRIVATE_LEDGER_REQUIRED');
+ try{
+  const dir=await externalPrivateLedgerDirectory88(ledgerDir);
+  const digest=sha256('p88-private-sealed-cohort-reservation/v1:'+
+   packet.sourceAudit.sealedBlindCommitment);
+  const marker=join(dir,'consumed-'+digest+'.lock');
+  let file;
+  try{
+   file=await open(marker,constants.O_CREAT|constants.O_EXCL|
+    constants.O_WRONLY|constants.O_NOFOLLOW,0o600);
+  }catch(e){
+   if(e?.code==='EEXIST')
+    return blockedReservation88(verdict,'PRIVATE_LEDGER_ALREADY_RESERVED');
+   throw e;
+  }
+  try{
+   await file.writeFile('p88-offline-reservation-only/v1\n','utf8');
+   await file.sync();
+  }finally{await file.close();}
+  return {...verdict,oneTimePrivateReservationCreated:true,
+   reservationScope:'ONE_OWNER_CONTROLLED_LOCAL_LEDGER_ONLY'};
+ }catch{
+  return blockedReservation88(verdict,'PRIVATE_LEDGER_WRITE_OR_TRUST_FAILURE');
+ }
+}
 if(process.argv[1]&&new URL('file:'+resolve(process.argv[1])).href===import.meta.url){
  // Private, externally approved custodian-only preflight; never run in Actions.
- if(process.argv[2]!=='inspect'||process.argv.length!==4)
-  throw Error('Usage: node blind-evaluator-handoff-88.mjs inspect ABS_PRIVATE_SIGNED_ENVELOPE');
+ if(!['inspect','reserve'].includes(process.argv[2])||process.argv.length!==4)
+  throw Error('Usage: node blind-evaluator-handoff-88.mjs inspect|reserve ABS_PRIVATE_SIGNED_ENVELOPE');
  if(process.env.CI||process.env.GITHUB_ACTIONS)
   throw Error('PRIVATE_BLIND_HANDOFF_FORBIDDEN_IN_CI');
  const name=await externalPrivateFile88(process.argv[3]);
@@ -213,10 +269,15 @@ if(process.argv[1]&&new URL('file:'+resolve(process.argv[1])).href===import.meta
   if(length>50000)throw Error('PRIVATE_HANDOFF_TOO_LARGE');
   packet=JSON.parse(buffer.toString('utf8',0,length));
  }finally{await handle.close();}
- const outcome=verifyBlindEvaluatorHandoff88(packet,{
+ const trust={
   p75RegistrarFingerprint:process.env.P88_APPROVED_P75_REGISTRAR_FINGERPRINT,
   p71EvaluatorFingerprint:process.env.P88_APPROVED_P71_EVALUATOR_FINGERPRINT
- });
+ };
+ const outcome=process.argv[2]==='reserve'
+  ?await reserveBlindEvaluatorHandoff88(packet,{
+   ...trust,ledgerDir:process.env.P88_PRIVATE_LEDGER_DIR
+  })
+  :verifyBlindEvaluatorHandoff88(packet,trust);
  console.log('P88_PRIVATE_CUSTODY_PREFLIGHT '+JSON.stringify(outcome));
  if(outcome.status==='BLOCKED')process.exitCode=3;
 }
