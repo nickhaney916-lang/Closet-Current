@@ -809,7 +809,15 @@ if(mission4Preview1054Active){
    const photos=document.createElement('div');
    photos.id='mission4Preview1054Photos';
    section.append(button,status,photos);builder.append(section);
+   // M68: strict original-photo verification is asynchronous and may finish
+   // after an owner/logout/DB revision. A stale request must not overwrite
+   // newer signed-owner preview status or reenable its active request.
+   let previewClickSerial1054=0;
    button.onclick=async()=>{
+    const lease=beginOwnerBoardUiLease();
+    if(!lease||button.disabled||!button.isConnected)return;
+    const serial=++previewClickSerial1054;
+    const live=()=>serial===previewClickSerial1054&&lease.current()&&button.isConnected;
     button.disabled=true;photos.replaceChildren();
     status.textContent='Verifying the signed owner, source photographs and selected outfit…';
     try{
@@ -818,6 +826,7 @@ if(mission4Preview1054Active){
       throw Error('Native signed photo source unavailable');
      const {mountOwnerOutfitPhotoPreview1054}=await import(
       '../research/main-thread-integration-1054/native-2d-preview.mjs');
+     if(!live())return;
      if(!mission4Preview1054Viewer)
       mission4Preview1054Viewer=mountOwnerOutfitPhotoPreview1054({
        target:photos,
@@ -828,16 +837,24 @@ if(mission4Preview1054Active){
        cleanBoard:cleanOutfitBoard,
        events:window,doc:document
       });
-     const result=await mission4Preview1054Viewer.refresh();
+     const viewer=mission4Preview1054Viewer;
+     const result=await viewer.refresh();
+     if(!live()||mission4Preview1054Viewer!==viewer)return;
      status.textContent=result.slotCount+
       ' owner-confirmed original photo(s) verified. 2D only; realistic 3D fit is not established.';
     }catch{
+     if(!live())return;
+     mission4Preview1054Viewer?.clear();
      photos.replaceChildren();
      status.textContent='Preview refused. Recheck the signed account, garment review, original photographs and outfit slots.';
-    }finally{button.disabled=false;}
+    }finally{
+     if(serial===previewClickSerial1054&&button.isConnected)button.disabled=false;
+    }
    };
    window.addEventListener('closet:session-locked',()=>{
+    ++previewClickSerial1054;
     mission4Preview1054Viewer?.clear();photos.replaceChildren();
+    button.disabled=false;
     status.textContent='Private preview cleared on account-session change.';
    });
   }catch{
