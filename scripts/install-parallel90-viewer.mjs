@@ -25,6 +25,23 @@ s=replace(s," left.append(views);body.append(left);",` left.append(views);
  sourceNotice90.setAttribute('aria-label','3D original photograph limitations');
  sourceNotice90.textContent='Original front photographs are authoritative. Side and rear garment details are not photograph-verified. Unsupported outfit pieces remain original-photo-only.';
  left.append(sourceNotice90);body.append(left);
+ const originalPhotos90=el('button','outfit3D01Originals90','View original photos');
+ originalPhotos90.type='button';
+ originalPhotos90.setAttribute('aria-label','View original saved clothing photographs and photo-only fallback');
+ views.append(originalPhotos90);
+ originalPhotos90.onclick=()=>{
+  try{
+   current();
+   if(!shown||!dialog.open)return;
+   // Focus only the EXISTING owner-private photo gallery: no copy,
+   // no new image URL, no 3D eligibility elevation or save operation.
+   cards.tabIndex=-1;
+   cards.setAttribute('role','region');
+   cards.setAttribute('aria-label','Original saved clothing photographs');
+   cards.focus({preventScroll:true});
+   cards.scrollIntoView({block:'start',behavior:'auto'});
+  }catch{clearPrivate();}
+ };
  const style90=el('style');style90.textContent='.cc3d-controls{display:flex;flex-wrap:wrap;gap:4px}.cc3d-controls button{min-width:44px;min-height:44px;flex:1 1 25%;touch-action:manipulation}.cc3d-viewer canvas:focus-visible{outline:3px solid #155db4}';dialog.append(style90);
  canvas.tabIndex=0;
  canvas.setAttribute('aria-label','3D anatomical outfit. Drag to rotate. Arrow keys rotate, plus and minus zoom, Home resets. Rear photograph unverified.');
