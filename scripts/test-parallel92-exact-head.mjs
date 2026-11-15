@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {readFileSync,writeFileSync,mkdirSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
-const base='878d624d8963109143c8775bb156bda4ba12a196';
+const base='45ef228ff5f5a57d840dfe65cdc41d92c71936ff';
 const engine=process.env.P92_ENGINE,trial=Number(process.env.P92_TRIAL);
 assert.ok(['chromium','webkit'].includes(engine));
 assert.ok(trial===1||trial===2);
@@ -22,7 +22,7 @@ const pins={
  'public/native-canonical-photo-source-167.mjs':'526d6d984bdb27cf775497132d2cf581ea2d3195',
  'research/main-thread-integration-1054/source-to-outfit.mjs':'5ea1e0e9b9f938fd98e7cb8875cc8ed8b68324b9',
  'public/native-default-atomic-import-m3.mjs':'8d0153671de7b7542b0178c4ed616c68da24cb95',
- 'scripts/test-main51-real-app-owner-original-2d.mjs':'1150a6db461b1d5968183d1c9e798cac7ae88478',
+ 'scripts/test-main51-real-app-owner-original-2d.mjs':'5f59269341247fa14ba346367549cb88f45e0843',
  'scripts/test-main58-actual-p88-wasm-browser.mjs':'96ba2f5ee2420de52f45911881fdcc139455c353'
 };
 for(const [p,blob] of Object.entries(pins))assert.equal(git('rev-parse','HEAD:'+p),blob,'source changed: '+p);
