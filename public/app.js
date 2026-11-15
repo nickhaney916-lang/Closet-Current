@@ -695,8 +695,22 @@ function savePiece(value,nextBatch,{expectedSavedRow=null,expectedDraftRow=null}
          throw Error('CLOSET_STALE_DRAFT_REOPEN_EDITOR');
         // Source row removal and new saved garment insertion commit
         // together, preserving all other-tab pending originals as-is.
-        store.add(value);
-        draftStore.put({id:'draft',batch:rows.filter(row=>row.id!==value.id)});
+        // MAIN1054: never silently create a second saved physical item from
+        // the same exact JPEG. The separate P88 owner-attestation UI is not
+        // integrated here yet; fail closed rather than infer distinctness.
+        // Check the actual persisted owner wardrobe INSIDE this transaction,
+        // not an earlier in-memory items snapshot (which another tab can stale).
+        const savedRequest=store.getAll();
+        savedRequest.onsuccess=()=>{
+         try{
+          requireLease();
+          if(savedRequest.result.some(row=>row.id!==value.id&&row.image===value.image))
+           throw Error('CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW');
+          store.add(value);
+          draftStore.put({id:'draft',batch:rows.filter(row=>row.id!==value.id)});
+         }catch(error){failure=error;try{tx.abort();}catch{}}
+        };
+        savedRequest.onerror=()=>{failure=savedRequest.error||Error('Saved photo comparison failed');try{tx.abort();}catch{}};
        }catch(error){failure=error;try{tx.abort();}catch{}}
       };
       draftRequest.onerror=()=>{failure=draftRequest.error||Error('Draft verification failed');try{tx.abort();}catch{}};
