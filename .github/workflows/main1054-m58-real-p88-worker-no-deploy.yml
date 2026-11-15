@@ -279,6 +279,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           DONOR=055f7a6569059c3845c0d8dc5960767fc944c6ac
           git cat-file -e "$DONOR^{commit}"
           for path in public/app.js scripts/test-main1054-duplicate-fence-browser.mjs tests/main1054-saved-photo-duplicate-fence.test.mjs; do
