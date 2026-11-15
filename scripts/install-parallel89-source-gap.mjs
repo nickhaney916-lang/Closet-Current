@@ -12,7 +12,8 @@ assert.ok(process.argv[2]&&donor!==here&&donor!=='/'&&
 const root='research/parallel89';
 await mkdir(join(donor,root),{recursive:true});
 for(const name of ['source-static-gap89.mjs','unsigned-surface-core89.mjs',
- 'source-gap-contrast89.mjs','gated-source-shoulder89.mjs'])
+ 'source-gap-contrast89.mjs','gated-source-shoulder89.mjs',
+ 'source-quarter-step89.mjs','source-quarter-compare89.mjs'])
  await copyFile(join(here,root,name),join(donor,root,name));
 const p=join(donor,'research/dress-mobile-01/dress-outfit-controller.mjs');
 let text=await readFile(p,'utf8');
