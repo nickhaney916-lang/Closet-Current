@@ -471,6 +471,89 @@ test('P88 late P70 mask receipt inserted after editor opens but before Save reje
  assert.equal(item.image,sampleSource88().image);
 });
 
+test('P88 Crop refuses A-to-B switch during awaited photo quality and never writes private source',async()=>{
+ let releaseQuality;
+ const c=cropHarness88({saved:true,checkPhoto:()=>new Promise(resolve=>{releaseQuality=resolve;})}),
+  item=sampleSource88();
+ c.cropClothingPhoto(item);
+ const pending=c.editor.save({image:'data:image/jpeg;base64,TkVXUElYRUxT'},null);
+ c.window.closetAuth.user={id:'owner-B'};
+ c.db={name:'closet-current-user-owner-B',transaction(){throw Error('CROSS_OWNER_CROP');}};
+ releaseQuality({colorEstimate:null,signature:[],aspect:1});
+ await assert.rejects(pending,/P88_STALE_CROP_OWNER_OR_SOURCE/);
+ assert.equal(c.written.length,0);
+ assert.equal(c.renderCount,0);
+ assert.equal(item.image,sampleSource88().image);
+});
+test('P88 Crop blocks same-ID renewed login after cloud preflight and cannot write old source',async()=>{
+ const c=cropHarness88({saved:true}),item=sampleSource88();
+ c.cropClothingPhoto(item);
+ let enter,release;
+ const started=new Promise(r=>{enter=r;});
+ c.beforeWrite=()=>{enter();return new Promise(r=>{release=r;});};
+ const pending=c.editor.save({image:'data:image/jpeg;base64,TkVXUElYRUxT'},null);
+ await started;
+ c.window.closetAuth.user={id:'owner-A'};
+ release();
+ await assert.rejects(pending,/P88_STALE_CROP_OWNER_OR_SOURCE/);
+ assert.equal(c.written.length,0);
+ assert.equal(item.image,sampleSource88().image);
+});
+test('P88 Crop keeps a different new draft captured during cloud preflight',async()=>{
+ const c=cropHarness88(),item=sampleSource88();
+ c.cropClothingPhoto(item);
+ let enter,release;
+ const started=new Promise(r=>{enter=r;});
+ c.beforeWrite=()=>{enter();return new Promise(r=>{release=r;});};
+ const pending=c.editor.save({image:'data:image/jpeg;base64,TkVXUElYRUxT'},null);
+ await started;
+ const other={id:'next-new-photo',image:'data:image/jpeg;base64,TkVYVA=='};
+ c.batch.push(other);
+ release();await pending;
+ assert.equal(c.written.length,1,'one atomic current-owner state write');
+ assert.equal(c.written[0].store,'state');
+ assert.deepEqual(c.written[0].value.batch.map(x=>x.id),[item.id,other.id]);
+ assert.equal(c.written[0].value.batch[0].image,'data:image/jpeg;base64,TkVXUElYRUxT');
+ assert.equal(c.written[0].value.batch[1].image,other.image);
+ assert.equal(item.image,'data:image/jpeg;base64,TkVXUElYRUxT');
+ assert.equal(c.renderCount,1);
+});
+test('P88 Crop rejects forged target ID and extra physical mask metadata',async()=>{
+ const c=cropHarness88({saved:true}),item=sampleSource88();
+ c.cropClothingPhoto(item);
+ for(const forged of [
+  {id:'different-item',image:'data:image/jpeg;base64,TkVXUElYRUxT'},
+  {image:'data:image/jpeg;base64,TkVXUElYRUxT',reconciliation70Status:'separate_confirmed'},
+  {image:'data:image/jpeg;base64,TkVXUElYRUxT',ownerSourceReview88:{ownerReviewed:true}}
+ ]){
+  await assert.rejects(c.editor.save(forged,null),/P88_CROP_CANNOT_REBIND_ID_OR_MASK/);
+ }
+ assert.equal(c.written.length,0);
+ assert.equal(item.image,sampleSource88().image);
+});
+test('P88 Crop analysis is denied on revoked signed owner after classifier await',async()=>{
+ const c=cropHarness88({saved:true}),item=sampleSource88();
+ c.cropClothingPhoto(item);
+ let done;
+ c.localRequest=()=>new Promise(resolve=>{done=resolve;});
+ const pending=c.editor.analyze('data:image/jpeg;base64,QU5BTFlTSVM=');
+ c.window.closetAuth.user={id:'owner-B'};
+ done({strong:true,choices:[{category:'Tops',itemType:'T-shirt'}]});
+ await assert.rejects(pending,/P88_STALE_CROP_OWNER_OR_SOURCE/);
+ assert.equal(c.written.length,0);
+});
+test('P88 Crop denied when segmentation receipt arrives while cloud preflight is queued',async()=>{
+ const c=cropHarness88({saved:true}),item=sampleSource88();
+ c.cropClothingPhoto(item);
+ let enter,release;const started=new Promise(resolve=>{enter=resolve;});
+ c.beforeWrite=()=>{enter();return new Promise(resolve=>{release=resolve;});};
+ const pending=c.editor.save({image:'data:image/jpeg;base64,TkVXUElYRUxT'},null);
+ await started;
+ item.segmentHint={componentReviewStatus:'owner_must_confirm_garment_units'};
+ release();
+ await assert.rejects(pending,/P88_STALE_CROP_OWNER_OR_SOURCE/);
+ assert.equal(c.written.length,0);
+});
 test('P88 an incomplete outfit scan prompts human comparison and independent close-up photos, never a complete item count',()=>{
  const h=captureHarness({ownerId:'owner-A'});
  h.emit({type:'piece',piece:{
