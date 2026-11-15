@@ -73,6 +73,30 @@ export function sourceSkirtOutline89({alpha,width,height}={}){
  if(right<=left||bottom-top<height*.25||visible<width*height*.04||
     visible>width*height*.88)
   throw Error('actual photographed skirt mask has no credible separated foreground');
+ // A bbox and seven sampled widths alone can mistake TWO separated garments
+ // for one skirt. Verify one dominant real foreground component, retaining
+ // minor loose threads/alpha dust without stitching disjoint items together.
+ // Eight-connected pixels allow diagonal photographed cloth boundaries.
+ const visited=new Uint8Array(alpha.length),stack=new Int32Array(alpha.length);
+ let largest=0,componentCount=0;
+ for(let start=0;start<alpha.length;start++){
+  if(visited[start]||alpha[start]<128)continue;
+  let head=0,tail=1,size=0;stack[0]=start;visited[start]=1;
+  while(head<tail){
+   const at=stack[head++],x=at%width,y=Math.floor(at/width);size++;
+   for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+    if(dx===0&&dy===0)continue;
+    const nx=x+dx,ny=y+dy;
+    if(nx<0||nx>=width||ny<0||ny>=height)continue;
+    const id=ny*width+nx;
+    if(visited[id]||alpha[id]<128)continue;
+    visited[id]=1;stack[tail++]=id;
+   }
+  }
+  componentCount++;largest=Math.max(largest,size);
+ }
+ if(componentCount===0||largest/visible<.8)
+  throw Error('source skirt mask contains multiple disconnected garment-sized regions');
  const span=bottom-top+1;
  const bands=[.08,.22,.36,.50,.64,.78,.92].map(p=>{
   const cy=top+Math.round((span-1)*p),rad=Math.max(1,Math.round(span*.025));
