@@ -99,6 +99,25 @@ export function sourceSkirtOutline89({alpha,width,height}={}){
   photoCameraAngleIndependentlyValidated:false,realPhysicalDimensionsMeasured:false,
   maskHumanApproved:false,releaseAuthorized:false,familyAlpha:'HOLD'});
 }
+/**
+ * Use exact measured source-alpha row locations for front RGB UV mapping.
+ * Mesh's physical height is a separate inferred parameter; do not stretch
+ * the photograph vertically by projecting equally spaced mesh rows onto
+ * unobserved top/bottom photo pixels.
+ */
+export function sourceSkirtBandTextureV89(outline,bandIndex){
+ const bands=outline?.sourceRowWidths;
+ if(outline?.schema!=='P89-source-measured-skirt-silhouette/v1'||
+  !Array.isArray(bands)||bands.length!==7||
+  !Number.isSafeInteger(bandIndex)||bandIndex<0||bandIndex>=bands.length||
+  !Number.isFinite(bands[bandIndex]?.p)||
+  !Number.isFinite(outline.crop?.[1])||
+  !Number.isFinite(outline.crop?.[3]))
+  throw Error('verified measured source-mask band required for UV transfer');
+ const y=outline.crop[1]+bands[bandIndex].p*outline.crop[3];
+ if(y<0||y>1)throw Error('original-source-photo-uv-row-outside-image');
+ return 1-y;
+}
 function sourceSkeleton(root){
  if(!root?.isObject3D)throw Error('actual skinned human required');
  let body;
@@ -151,6 +170,7 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,cutoutIm
   const verts=[],uv=[],bone=[],weights=[],tris=[],seams=[],rest=[];
   for(let ri=0;ri<heights.length;ri++){
    const s=heights[ri],t=ri/(heights.length-1);
+   const sourceMeasuredTextureV=sourceSkirtBandTextureV89(outline,ri);
    const sourceHalfWidth=s.widthPixels/2*scale;
    const radiusX=Math.min(.70,Math.max(.12,sourceHalfWidth));
    const radiusZ=Math.min(.45,Math.max(.10,radiusX*.66)); // rear is PROVISIONAL
@@ -165,7 +185,7 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,cutoutIm
     // Use the actual measured source row center/width, not a fictional
     // symmetric bounding-box projection that loses motif registration.
     uv.push((s.centerPixels+x*s.widthPixels*.5)/outline.pixelDimensions[0],
-      1-outline.crop[1]-t*outline.crop[3]);
+      sourceMeasuredTextureV);
     if(ri<heights.length-1&&j<segments){
      const p=ri*(segments+1)+j,q=p+segments+1;
      const offset=tris.length;tris.push(p,p+1,q,p+1,q+1,q);

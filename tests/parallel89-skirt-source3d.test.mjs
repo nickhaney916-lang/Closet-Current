@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {SKIRT_SOURCE89,attestActualSkirt89,sourceSkirtOutline89,
- buildOriginalPhotoSkirtProposal89} from '../research/parallel89/skirt-source3d89.mjs';
+ buildOriginalPhotoSkirtProposal89,sourceSkirtBandTextureV89} from '../research/parallel89/skirt-source3d89.mjs';
 
 const file=readFileSync(new URL('../benchmark/fixtures/commons-0043.jpg',import.meta.url));
 const dress=readFileSync(new URL('../benchmark/fixtures/commons-0053.jpg',import.meta.url));
@@ -52,6 +52,23 @@ test('provisional observed skirt source rows preserve bounded true mask taper an
  assert.ok(o.crop.every(x=>x>=0&&x<=1));
  assert.equal(o.photoCameraAngleIndependentlyValidated,false);
  assert.equal(o.maskHumanApproved,false);assert.equal(o.releaseAuthorized,false);
+});
+test('photographic skirt UV rows follow genuine source mask bands, not uniform proxy rings',()=>{
+ const o=sourceSkirtOutline89(sourceAlpha());
+ const rows=o.sourceRowWidths.map((band,i)=>sourceSkirtBandTextureV89(o,i));
+ for(const [i,row] of rows.entries()){
+  const expected=1-o.crop[1]-o.sourceRowWidths[i].p*o.crop[3];
+  assert.ok(Math.abs(row-expected)<1e-12);
+  assert.ok(row>0&&row<1);
+  if(i)assert.ok(rows[i-1]>row,'original image rows should remain ordered');
+ }
+ assert.notEqual(rows[0],1-o.crop[1],
+  'first photographed band is NOT the top of the entire source mask crop');
+ assert.notEqual(rows.at(-1),1-o.crop[1]-o.crop[3],
+  'last photographed band is NOT the bottom of the entire source mask crop');
+ assert.throws(()=>sourceSkirtBandTextureV89(o,-1));
+ assert.throws(()=>sourceSkirtBandTextureV89(o,7));
+ assert.throws(()=>sourceSkirtBandTextureV89({...o,crop:[0,1,1,1]},0));
 });
 test('unsegmented background, malformed alpha and tiny image are rejected, not fabricated',()=>{
  const c=sourceAlpha();
