@@ -142,6 +142,21 @@ try{
      'female original photographed geometry must be restored');
    }
   }
+  // Independent digest, generated from the actual rendered source mesh position,
+  // normal, index bytes. Never trust the rollback gate's own boolean alone.
+  const sourceDigest=await page.evaluate(()=>{
+   if(typeof window.__parallel89RealShirtGeometryDigest!=='function')
+    throw Error('independent real photo source mesh buffer digest hook missing');
+   return window.__parallel89RealShirtGeometryDigest();
+  });
+  assert.equal(sourceDigest.schema,
+   'P89-actual-public-original-shirt-position-normal-index-sha256/v1');
+  assert.equal(sourceDigest.originalShirtSHA256,SHA.shirt);
+  assert.ok(sourceDigest.meshCount>=1&&sourceDigest.meshCount<=12);
+  assert.ok(sourceDigest.combinedBufferBytes>100);
+  assert.match(sourceDigest.originalRenderedSourceBufferSHA256,/^[0-9a-f]{64}$/);
+  assert.equal(sourceDigest.originalPhotoOwnerReleaseAuthorized,false);
+  assert.equal(sourceDigest.originalSource2DFallbackRequired,true);
   // Original public-source geometry, real native WebGL rendering. PNG hashes
   // are evidence snapshots for independent human review, never fake approval.
   // Original source P84 native renderer requires an actual next-frame draw
@@ -154,15 +169,32 @@ try{
    'genuine source native avatar screenshot missing');
   const pngName=['P89','public','source-gap',engine,avatar,variant,'0'].join('-')+'.png';
   await writeFile(join(out,pngName),png);
-  byVariant[variant]={gap:report,shoulder:shapeProof,
+  byVariant[variant]={gap:report,shoulder:shapeProof,sourceDigest,
    screenshotSHA256:hash(png),screenshotName:pngName};
   receipts.push({...report,researchShoulderMode:variant,
    researchShoulderApplied:shapeProof.trialApplied,
    researchShoulderStatus:shapeProof.status,
+   originalRenderedShirtSourceBufferSHA256:sourceDigest.originalRenderedSourceBufferSHA256,
    actualPublicSourceNativeWebGLScreenshotPNG:byVariant[variant].screenshotName,
    actualPublicSourceNativeWebGLScreenshotSHA256:byVariant[variant].screenshotSHA256,
    humanAppearanceAcceptanceWasNotPerformed:true});
   await page.close();
+  }
+  const baselineDigest=byVariant.baseline.sourceDigest;
+  for(const variant of ['trial','low-drop','low-drop-outward']){
+   const item=byVariant[variant],digest=item.sourceDigest;
+   assert.equal(digest.meshCount,baselineDigest.meshCount,
+    'original photographed shirt parts inventory changed');
+   assert.equal(digest.combinedBufferBytes,baselineDigest.combinedBufferBytes,
+    'original skinned shirt triangle inventory changed');
+   if(!item.shoulder.trialApplied)
+    assert.equal(digest.originalRenderedSourceBufferSHA256,
+     baselineDigest.originalRenderedSourceBufferSHA256,
+     'refused yoke must restore EXACT independent shirt positions normals and indices');
+   else
+    assert.notEqual(digest.originalRenderedSourceBufferSHA256,
+     baselineDigest.originalRenderedSourceBufferSHA256,
+     'claimed applied original source yoke must actually move genuine garment vertices');
   }
   const candidates=['trial','low-drop','low-drop-outward'];
   for(const variant of candidates){
