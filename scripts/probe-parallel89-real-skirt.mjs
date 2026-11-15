@@ -61,8 +61,11 @@ const {root,body}=syntheticRig();
 // The actual source cutout pixels were verified above. The geometry is
 // constructed with a bound Three.Texture image placeholder here, with a
 // SEPARATE native real WebGL source-UV test required before photo-render claim.
+// Adversarial caller passes a different full-size RGBA raster. It MUST NOT
+// replace the original SHA-attested decoded PNG used for the material.
+const swappedRGBA=new Uint8Array(originalCutoutRGBA.data.length).fill(255);
 const candidate=buildOriginalPhotoSkirtProposal89({
- root,receipt,outline,cutoutImage:{data:new Uint8Array(originalCutoutRGBA.data),
+ root,receipt,outline,cutoutImage:{data:swappedRGBA,
   width:originalCutoutRGBA.info.width,height:originalCutoutRGBA.info.height}
 });
 if(candidate?.receipt?.status!=='ACTUAL_SOURCE_SKIRT_VISIBLE_FRONT_PROPOSAL_NOT_FITTED_OR_ACCEPTED')
@@ -74,6 +77,10 @@ if(mesh.skeleton!==body.skeleton||mesh.skeleton.bones.length!==163||
     mesh.material[0].map?.image?.data?.length!==originalCutoutRGBA.data.length||
     mesh.material[0].map?.image?.width!==originalCutoutRGBA.info.width||
     mesh.material[0].map?.image?.height!==originalCutoutRGBA.info.height||
+    !Buffer.from(mesh.material[0].map.image.data).equals(originalCutoutRGBA.data)||
+    Buffer.from(mesh.material[0].map.image.data).equals(Buffer.from(swappedRGBA))||
+    candidate.receipt.sourceRGBAWasDecodedFromExactAttestedCutoutPNG!==true||
+    candidate.receipt.callerSuppliedTexturePixelsAreNotTrusted!==true||
     g.getAttribute('skinIndex').count!==g.getAttribute('position').count||
     g.getAttribute('sourceSkirt89Rest').count!==g.getAttribute('position').count||
     g.getAttribute('uv').array.some(x=>!Number.isFinite(x)||x<0||x>1)||
@@ -90,6 +97,8 @@ const report={schema:'P89-actual-independent-licensed-skirt-alpha-to-THREE-shell
  croppedObservedMask: outline.crop,
  skinnedShellVertices:g.getAttribute('position').count,triangles:g.index.count/3,
  originalSourceRGBAActuallyBoundTo3DFrontTexture:true,
+ sourcePNGDecodeIndependentOfCallerSuppliedFakeRGBA:true,
+ originalTexturePixelBytesEqualToIndependentSharpSourceDecode:true,
  originalSourceRGBProjectedIntoNativeBrowser:false,
  originalSourcePhotoFrameModified:false,realAnatomicalAvatarTested:false,
  synthetic163BoneRigOnly:true,observedSkirtBack:false,
