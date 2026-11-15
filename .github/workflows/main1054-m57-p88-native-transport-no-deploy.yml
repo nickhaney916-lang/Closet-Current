@@ -73,6 +73,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Playwright root container owns the Git checkout as a different uid.
+          # actions/checkout safe.directory only applies to its temporary HOME.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           P88=cc4554ef0104506a72bf0a28423fee52b6e4fff2
           mkdir -p .m57-exact-p88-donor/public
           for file in outfit-worker.mjs outfit-segmentation.mjs outfit-instance-review-840.mjs photo-color.js; do
