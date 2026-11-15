@@ -8,6 +8,10 @@ import {execFileSync,spawnSync} from 'node:child_process';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {verifiedRecord24} from '../research/multi-garment-capture-01/atomic-group.mjs';
+import {buildOwnerWardrobeIndex} from '../public/native-owner-wardrobe-index-167.mjs';
+import {preflightOwnedOutfit1054} from '../research/main-thread-integration-1054/source-to-outfit.mjs';
 const REPO='nickhaney916-lang/Closet-Current';
 const M51='22f3db9f9d5dd34ff2d1323e59d3848935e65f4f';
 const DONORS=Object.freeze({
@@ -91,10 +95,93 @@ for(const [mission,donor] of Object.entries(DONORS)){
 assert.equal(git('diff','--name-only'),'',
  'git merge-tree must not modify even one tracked consumer file');
 assert.equal(git('rev-parse','HEAD').length,40);
+
+/**
+ * MAIN53 native interop contract witness, NOT a simulated success:
+ * A safely manually confirmed MULTI24 private row does not acquire proof
+ * that exactly one physical garment or a source cutout was verified.
+ * The native Outfit Builder must reject it rather than laundering it into
+ * PHOTO119's stronger signed-owner/review/single-garment admission class.
+ * This checks the actual shared module code against an original licensed
+ * public JPEG, no model inference, live owner, cloud or private images.
+ */
+const photo=readFileSync('benchmark/fixtures/commons-0003.jpg');
+const sourceSHA256=sha(photo);
+const rights=JSON.parse(readFileSync('benchmark/locked-photo-sources.json','utf8'))
+ .find(x=>x.id==='commons-0003');
+assert.equal(rights?.verified,true,'M53 witness requires locked public original rights');
+assert.equal(rights.sha256,sourceSHA256,'M53 source rights SHA mismatch');
+const sourceImage='data:image/jpeg;base64,'+photo.toString('base64');
+const owner='m53-test-owner';
+const syntheticPhotoProof={
+ sourceSHA256,sourceHashVerified:true,image:sourceImage,
+ originalPhoto:{image:sourceImage,sha256:sourceSHA256}
+};
+const confirmedManual={
+ id:'m53-confirmed-photo-only',instanceKey:'manual-60-60-700-700',
+ cropBounds:{x:.06,y:.06,width:.7,height:.7},image:sourceImage,
+ manual:true,cropReviewed:true,confirmed:true,category:'Dresses',
+ itemType:'Casual dress',color:'Black',hint:null
+};
+// The original JPEG stands in for cropped pixels ONLY in this isolated
+// record-shape test; no segmentation/garment-count correctness is inferred.
+const atomicRow=verifiedRecord24({
+ proof:syntheticPhotoProof,ownerId:owner,piece:confirmedManual
+});
+assert.equal(atomicRow.ownerId,owner);
+assert.equal(atomicRow.sourceSHA256,sourceSHA256);
+assert.equal(atomicRow.extractionReview,'human-confirmed');
+assert.equal(atomicRow.sourceCropReviewed,true);
+assert.equal(atomicRow.singleGarmentVerified,false);
+assert.equal(atomicRow.photoOnly,true);
+assert.equal(atomicRow.threeDReady,false);
+assert.equal(atomicRow.ownerReviewed,undefined);
+assert.equal(atomicRow.sourcePhotoOriginal,undefined);
+assert.equal(atomicRow.segmentHint?.cutoutSHA256,undefined);
+const ownerIndex=buildOwnerWardrobeIndex(owner,[atomicRow]);
+assert.equal(ownerIndex.entries.length,1);
+assert.equal(ownerIndex.entries[0].sourceKind,'ambiguous-source');
+assert.ok(ownerIndex.entries[0].reviewReasons.includes(
+ 'shared-source-needs-cutout-proof'
+),'M53 must not upgrade ambiguous source to verified garment');
+const authRef={user:{id:owner},assertCurrent(){}};
+const privateDbRef={name:'closet-current-user-'+owner};
+const getSession=()=>({
+ authenticated:true,ownerId:owner,epoch:1,operationEpoch:1,
+ privateDbName:privateDbRef.name,authRef,privateDbRef
+});
+const board={name:'Source-only negative test',slots:{top:atomicRow.id}};
+await assert.rejects(
+ ()=>preflightOwnedOutfit1054({
+  getSession,readOwnerItems:async()=>[atomicRow],board,
+  cleanBoard:value=>({...value,slots:{...value.slots}})
+ }),
+ /MAIN1054 selected garment lacks confirmed original and review evidence/,
+ 'native outfit admission must reject real MULTI24-shaped ambiguous source'
+);
+const sourceToOutfitContract={
+ schema:'MAIN53_NATIVE_MULTI24_PHOTO_ONLY_TO_OUTFIT_NEGATIVE_CONTRACT/v1',
+ source:'commons-0003',sourceSHA256,originalLicenseVerified:true,
+ recordShapeFromActualVerifiedRecord24:true,
+ ownerAndReviewValuesSynthetic:true,manualCropPixelsSynthetic:true,
+ persistedIDBOrActualNativeBrowser:false,
+ atomicPhotoOnlyRecordConfirmed:true,ambiguousPhysicalSource:true,
+ nativePreflightRejectedSafely:true,
+ verifiedCutoutOrSingleGarmentProven:false,
+ humanGarmentCountAccuracyProven:false,
+ sourcePhoto2DFallbackReconciled:false,ownerOutfitEndToEnd:false,
+ threeDAuthorized:false,familyAlpha:'HOLD',releaseAuthorized:false
+};
+console.log('MAIN53_NATIVE_MULTI24_OUTFIT_CONTRACT',
+ JSON.stringify({atomicReview:'human-confirmed',
+ sourceKind:'ambiguous-source',nativeOutfitPreflight:'BLOCKED_SAFE',
+ originalSourceSHA256:sourceSHA256,familyAlpha:'HOLD'}));
+
 const output={
  schema:'MAIN1054_M53_IMMUTABLE_CONSUMER_MERGE_TREE_READ_ONLY/v1',
  repository:REPO,mainVerifiedNativeAppHead:M51,
  donorResearchHeads:DONORS,comparisons:summaries,
+ sourceToOutfitContract,
  allDonorsVerifiedMerged:false,actualMergedAppAcceptance:false,
  productionUpdated:false,realOwnerJWTorRLSVerified:false,
  physical3DPhotorealisticClothAccepted:false,sourceDisjointHumanRecognitionVerified:false,
