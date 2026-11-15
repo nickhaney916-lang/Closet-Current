@@ -260,9 +260,16 @@ try{
   assert.equal(registration.sourceId,'commons-0043');
   assert.equal(registration.actualOriginalPhotoSkirtFaces,576);
   assert.equal(registration.original163BoneModelUnchanged,true);
-  assert.equal(registration.trials.length,7);
-  assert.deepEqual(registration.trials.map(t=>t.name),
-   ['front-15mm','front-30mm','front-45mm','front-60mm','back-15mm','up-20mm','down-20mm']);
+  assert.equal(registration.trials.length,11);
+  assert.deepEqual(registration.trials.map(t=>t.name),[
+   'front-15mm','front-30mm','front-35mm','front-40mm',
+   'front-45mm','front-50mm','front-55mm','front-60mm',
+   'back-15mm','up-20mm','down-20mm'
+  ]);
+  assert.equal(registration.allCandidateOriginalAndTrialFivePoseBVHSamplesObserved,true);
+  assert.equal(registration.bestResearchCandidateSelectedByFivePosePairSumThenMinimumDisplacement,true);
+  assert.equal(registration.candidateMustPassAllFiveSourcePoses,true);
+  assert.ok(registration.originalFivePoseStrictCrossingPairSum>=before);
   assert.equal(registration.maximumExploratoryOriginalWaistForwardRegistrationMeters,.06);
   assert.equal(registration.photoRegistrationCandidatesRequireIndependentPhotoFidelityReview,true);
   assert.equal(registration.original3PoseStrictBodyCrossingPairs,before);
@@ -281,6 +288,17 @@ try{
    assert.equal(t.originalSkirtRestEdgeLengthUnchanged,true);
    assert.equal(t.originalSkirtRestTriangleShapeUnchanged,true);
    assert.equal(t.perPoseContacts.length,3);
+   assert.equal(t.intermediatePoseContactChecks.length,2);
+   assert.equal(t.originalFivePoseStrictCrossingPairSum,
+    registration.originalFivePoseStrictCrossingPairSum);
+   assert.equal(t.trialFivePoseStrictCrossingPairSum,
+    t.trialThreePoseStrictCrossingPairSum+
+     t.intermediatePoseContactChecks.reduce((n,x)=>n+x.trialStrictTransversePairs,0));
+   assert.equal(t.introducedFivePoseSourceFacePairIDs,
+    t.introducedOriginalSourceFacePairIDs+
+     t.intermediatePoseContactChecks.reduce((n,x)=>n+x.newOriginalSourceFacePairIDs,0));
+   assert.equal(t.fivePoseEvidenceIsStaticNotSwept,true);
+   assert.ok(t.displacementMeters>0&&t.displacementMeters<=.06001);
    assert.equal(t.originalThreePoseStrictCrossingPairSum,before);
    const topology=t.genuineOriginalSkirtContactTopology;
    assert.equal(topology?.status,
@@ -326,8 +344,21 @@ try{
    if(t.researchOnlyNonworseningReduction){
     assert.equal(t.introducedOriginalSourceFacePairIDs,0);
     assert.equal(t.maxPlaneDepthWorsened,false);
-    assert.ok(t.trialThreePoseStrictCrossingPairSum<before);
+    assert.equal(t.introducedFivePoseSourceFacePairIDs,0);
+    assert.equal(t.intermediatePoseCrossingGuardPassed,true);
+    assert.ok(t.trialFivePoseStrictCrossingPairSum<
+     registration.originalFivePoseStrictCrossingPairSum);
    }
+  }
+  if(registration.bestResearchOnly){
+   const best=registration.bestResearchOnly;
+   assert.ok(registration.trials.filter(x=>x.researchOnlyNonworseningReduction)
+    .every(x=>best.trialFivePoseStrictCrossingPairSum<
+      x.trialFivePoseStrictCrossingPairSum||
+      best.trialFivePoseStrictCrossingPairSum===
+       x.trialFivePoseStrictCrossingPairSum&&best.displacementMeters<=
+        x.displacementMeters+.000001));
+   assert.equal(best.consumer3DAdmitted,false);
   }
   const restoredAfterRegistration=await page.evaluate(()=>window.nativeP89Skirt.getState());
   assert.equal(restoredAfterRegistration.originalSourceSHA256,required.skirt);
