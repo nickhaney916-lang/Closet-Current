@@ -28,10 +28,10 @@ jobs:
           BASE=ab68cbbbd54376bbc9c099fc3504d1cc00ba632c
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD | tee /tmp/m1-88-paths
-          test "$(wc -l < /tmp/m1-88-paths)" -eq 12
+          test "$(wc -l < /tmp/m1-88-paths)" -eq 13
           while IFS= read -r p; do
             case "$p" in
-              public/outfit-instance-review-840.mjs|public/outfit-capture.js|public/app.js|tests/mission1-parallel88-instance-conservation.test.mjs|tests/mission1-parallel88-owner-mask-lease.test.mjs|scripts/test-m1-owner-pair-admission-846.mjs|research/mission1-parallel88/REPORT.md|research/mission1-parallel88/frozen-public-validation-68.json|research/mission1-parallel88/recover-public-validation-88.py|research/mission1-parallel88/run-public-validation-88.mjs|research/mission1-parallel88/score-public-validation-88.py|.github/workflows/mission1-parallel88-no-deploy.yml) ;;
+              public/outfit-instance-review-840.mjs|public/outfit-capture.js|public/app.js|tests/mission1-parallel88-instance-conservation.test.mjs|tests/mission1-parallel88-owner-mask-lease.test.mjs|scripts/test-m1-owner-pair-admission-846.mjs|research/mission1-parallel88/REPORT.md|research/mission1-parallel88/frozen-public-validation-68.json|research/mission1-parallel88/recover-public-validation-88.py|research/mission1-parallel88/run-public-validation-88.mjs|research/mission1-parallel88/exposed-threshold-probes-88.mjs|research/mission1-parallel88/score-public-validation-88.py|.github/workflows/mission1-parallel88-no-deploy.yml) ;;
               *) echo "P88_UNAUTHORIZED_PATH $p"; exit 1 ;;
             esac
           done < /tmp/m1-88-paths
@@ -45,6 +45,7 @@ jobs:
           node --check tests/mission1-parallel88-owner-mask-lease.test.mjs
           node --check scripts/test-m1-owner-pair-admission-846.mjs
           node --check research/mission1-parallel88/run-public-validation-88.mjs
+          node --check research/mission1-parallel88/exposed-threshold-probes-88.mjs
           python -m py_compile research/mission1-parallel88/recover-public-validation-88.py research/mission1-parallel88/score-public-validation-88.py
           # Source-execute the actual stdlib-only confidence-retention
           # research function without requiring a model, private photos or COCO.
@@ -209,6 +210,24 @@ jobs:
                      and row['notNovelCalibration'] is True and row['noAutoSaveAuthority'] is True
                      for row in diag)
           assert d['confidenceCutoffPromotionAllowed'] is False
+          assert d['exposedResearchPixelGateControlParity'] is True
+          assert d['exposedResearchReusesSameHumanSource'] is True
+          assert d['exposedResearchNoModelOrAutoSavePromotion'] is True
+          assert d['exposedResearchPixelGateParameters']=={
+            'researchLoose65':{'pixelConfidence':0.65,'pixelMargin':0.12},
+            'researchLoose55':{'pixelConfidence':0.55,'pixelMargin':0.08}}
+          for name in ('researchLoose65','researchLoose55'):
+            candidate=d[name]
+            assert candidate['classAgnostic']['human']==53
+            assert candidate['categoryCompatible']['human']==53
+            assert candidate['classAgnostic']['matched']<=candidate['classAgnostic']['predicted']
+            assert candidate['categoryCompatible']['matched']<=candidate['classAgnostic']['matched']
+            delta=d['researchOnlyPixelGateDiffVsSafe'][name]
+            assert delta['addedProposals']==candidate['classAgnostic']['predicted']-safe['predicted']
+            assert delta['newClassAgnosticMatches']==candidate['classAgnostic']['matched']-safe['matched']
+            assert delta['notSealedAccuracy'] is True and delta['notProductionPromotion'] is True
+          print('P88_EXPOSED_PIXEL_GATE_RESEARCH_ONLY',d['researchOnlyPixelGateDiffVsSafe'],
+                'no threshold promotion; not blind')
           assert diag[0]['retainedProposals']==safe['predicted']
           assert diag[0]['retainedPriorCategoryCompatibleMatches']==d['p88Safe']['categoryCompatible']['matched']
           print('P88_EXPOSED_SAFE_MASK_COUNTS_ONLY',safe, 'not human subtype/color or release acceptance')
