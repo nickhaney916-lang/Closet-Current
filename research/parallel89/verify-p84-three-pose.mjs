@@ -60,10 +60,15 @@ export function auditActualPhotoPoseAB89({result,images,recomputedDiffs,engine}=
     hash(row.sha256)&&images[key]?.sha256===row.sha256&&
     images[key]?.width>100&&images[key]?.height>100,
     'missing-duplicate-forged-or-false-3d-pose-png');
+   const size={width:images[key].width,height:images[key].height};
+   if(frameDimensions)require89(equal(size,frameDimensions),
+    'source-webgl-pose-comparison-frame-dimensions-differ');
+   else frameDimensions=size;
   }
   require89(expected.size===0&&Object.keys(images).length===48,
    'missing-or-extra-photographic-source-frames');
-  const expectedOutfits=new Set();
+  const expectedOutfits=new Set(),pairContactLedger=[];
+  let frameDimensions=null;
   let originalTotal=0,refinedTotal=0,baselineContactWitnesses=0,
       refinedContactWitnesses=0,increasedPoseWitnesses=0,
       candidateTrials=0,refusedTrials=0,changedPixels=0,independentlyRecheckedTransitions=0;
@@ -82,7 +87,9 @@ export function auditActualPhotoPoseAB89({result,images,recomputedDiffs,engine}=
     row.visibleDistinctOriginalJointPoses.length===2,
     'no-verified-genuine-rig-pose-or-false-physics');
    const expectedPoses=new Set(poses),expectedPixels=new Set();
-   let localIncreased=false,localAdded=0;
+   const perLayerBaseline={shirtBody:0,denimBody:0,shirtDenim:0};
+   const perLayerRefined={shirtBody:0,denimBody:0,shirtDenim:0};
+   let localIncreased=false;
    for(const witness of row.poseWitnesses){
     require89(expectedPoses.delete(witness?.pose)&&
      witness.safeMotionNotProven===true&&
@@ -94,9 +101,9 @@ export function auditActualPhotoPoseAB89({result,images,recomputedDiffs,engine}=
      require89(integer(a)&&integer(b)&&Number.isSafeInteger(d)&&d===b-a,
       'falsified-source-contact-pose-delta');
      originalTotal+=a;refinedTotal+=b;
+     perLayerBaseline[k]+=a;perLayerRefined[k]+=b;
      if(a>0)baselineContactWitnesses++;
      if(b>0)refinedContactWitnesses++;
-     localAdded+=Math.max(0,d);
     }
     const increase=Object.values(witness.contactPairCountDeltas).some(n=>n>0);
     require89(witness.anyIncreaseOverBaseline===increase,'hidden-contact-worsening');
@@ -107,6 +114,9 @@ export function auditActualPhotoPoseAB89({result,images,recomputedDiffs,engine}=
     row.additionalStaticPoseContactReleaseBlock===localIncreased&&
     integer(row.sourcePoseNewContactPairs),
     'missing-static-pose-or-hidden-contact-block');
+   require89(typeof row.shapeTrialApplied==='boolean'&&
+    (!row.shapeTrialApplied||!localIncreased),
+    'applied-source-shape-trial-has-increased-sampled-layer-contact');
    if(row.shapeTrialApplied){
     candidateTrials++;
     require89(row.sourcePoseNewContactPairs===0,
@@ -139,6 +149,17 @@ export function auditActualPhotoPoseAB89({result,images,recomputedDiffs,engine}=
      'actual-distinct-anatomical-joint-pose-rgb-not-observed');
     independentlyRecheckedTransitions++;
    }
+   pairContactLedger.push(Object.freeze({
+    avatar:row.figure,denimSource:row.denim,
+    originalSourcePoseCount:3,
+    baselineStrictSourceCrossingsByLayer:Object.freeze(perLayerBaseline),
+    candidateStrictSourceCrossingsByLayer:Object.freeze(perLayerRefined),
+    candidateStaticCrossingsRemain:Object.values(perLayerRefined).some(n=>n>0),
+    witnessedIncreasedContactAtAnyPose:localIncreased,
+    researchTrialApplied:row.shapeTrialApplied,
+    sourcePhoto2DFallbackRequired:true,continuousMotionSafetyProved:false,
+    consumer3DAuthorized:false
+   }));
   }
   require89(expectedOutfits.size===4,'missing-genuine-source-poses');
   return Object.freeze({
@@ -147,6 +168,9 @@ export function auditActualPhotoPoseAB89({result,images,recomputedDiffs,engine}=
    engine,donorP84:P.p84,donorP541:P.p541,
    realPhotographedSourceFilesVerifiedByCLI:3,
    independentPNGHashMatches:48,actualSourceFittedGarmentPairs:4,
+   nativeSourcePoseFrameDimensions:frameDimensions,
+   sourcePairContactLedger:Object.freeze(pairContactLedger),
+   originalPhotoTwoPieceClearanceProved:false,
    original163BoneAvatarsObserved:2,originalPhotoSourceDenims:2,
    nativeBrowserEmulatedViewport:390,poseCount:3,angles,
    originalVsFittedStaticComparisonViews:24,
