@@ -16,6 +16,7 @@ const jpeg='data:image/jpeg;base64,'+(await sharp({create:{
 const differentJPEG='data:image/jpeg;base64,'+(await sharp({create:{
  width:320,height:240,channels:3,background:{r:225,g:89,b:58}
 }}).jpeg().toBuffer()).toString('base64');
+const jpegSHA=createHash('sha256').update(Buffer.from(jpeg.slice(jpeg.indexOf(',')+1),'base64')).digest('hex');
 const root=resolve('.'),pub=resolve('public'),
  types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript',
  '.css':'text/css','.json':'application/json','.svg':'image/svg+xml'};
@@ -68,7 +69,7 @@ try{
     page.on('pageerror',e=>errors.push({engine,width,error:String(e)}));
     await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
     await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady,inspirationReady]));
-    const result=await page.evaluate(async({ownerA,ownerB,jpeg,differentJPEG})=>{
+    const result=await page.evaluate(async({ownerA,ownerB,jpeg,differentJPEG,jpegSHA})=>{
      const idbRead=()=>new Promise((done,reject)=>{
       const tx=db.transaction(['items','state'],'readonly');
       const a=tx.objectStore('items').getAll(),b=tx.objectStore('state').getAll();
@@ -120,6 +121,17 @@ try{
       cloudChanged:window.__cloudLocalChanged||0
      };
      const fingerprint=JSON.stringify(await idbRead());
+     // M91 actual signed-owner default import: same JPEG, new ID, no write.
+     const duplicateOriginal=makeBackup();
+     duplicateOriginal.items[0]={...first,id:'same-original-new-id',
+      sourceHashVerified:true,sourceSHA256:jpegSHA,
+      originalPhoto:{image:jpeg,sha256:jpegSHA}};
+     await select(duplicateOriginal);
+     const originalAliasUnchanged=JSON.stringify(await idbRead())===fingerprint;
+     const originalAliasNotice=document.getElementById('message').textContent;
+     const originalAliasExplained=originalAliasNotice.includes('original photo already linked')&&
+      originalAliasNotice.includes('Nothing was imported')&&
+      originalAliasNotice.includes('Open My Closet');
      // A collided ID with a DIFFERENT full original JPEG must never overwrite
      // the older physical garment, regardless of bulk owner confirmation.
      const collision=makeBackup();
@@ -178,12 +190,12 @@ try{
      window.__resumeOldFile();
      await oldPending;
      const second=await idbRead();
-     return {...outcome,collidedUnchanged,duplicateIdsUnchanged,
+     return {...outcome,originalAliasUnchanged,originalAliasExplained,collidedUnchanged,duplicateIdsUnchanged,
       foreignUnchanged,unsavedBlocked,stagedRollbackUnchanged,
       badRefUnchanged,cancelledUnchanged,
       afterAccountSwitch:second.items.map(x=>({id:x.id,ownerId:x.ownerId})),
       currentOwner:window.closetAuth.user.id,currentScreenCount:document.getElementById('closetCount').textContent};
-    },{ownerA,ownerB,jpeg,differentJPEG});
+    },{ownerA,ownerB,jpeg,differentJPEG,jpegSHA});
     assert.deepEqual(result.mergedItems,[{id:'kept-original',ownerId:ownerA},{id:'new-top',ownerId:ownerA}]);
     assert.deepEqual(result.mergedLooks,['old-look','new-look']);
     assert.equal(result.boardTop,'new-top');
@@ -193,6 +205,8 @@ try{
     assert.equal(result.cloudChanged,1);
     assert.match(result.notice,/imported atomically/i);
     assert.equal(result.screenCount,'2');
+    assert.equal(result.originalAliasUnchanged,true);
+    assert.equal(result.originalAliasExplained,true);
     assert.equal(result.collidedUnchanged,true);
     assert.equal(result.duplicateIdsUnchanged,true);
     assert.equal(result.foreignUnchanged,true);
@@ -206,7 +220,8 @@ try{
     assert.equal(external.some(x=>x.method!=='GET'),false,'External write attempted');
     assert.equal(external.every(x=>x.blocked),true);
     cases.push({engine,width,defaultV3NativeAtomic:true,
-     originalIdCollisionBlocked:true,foreignOwnerBlocked:true,
+     originalIdCollisionBlocked:true,originalAliasSourceBlocked:true,
+     ownerFacingDuplicateRecoveryVerified:true,foreignOwnerBlocked:true,
      duplicateIdsBlocked:true,unsavedCaptureBlocked:true,
      syntheticStageRollback:true,mergePreservesItems:true,
      looksOutfitsOneCommit:true,cloudRevisionAtomic:true,badRefRollback:true,

@@ -405,3 +405,15 @@ test('M90 a genuinely different verified owner original remains importable',asyn
   assert.equal(s.items.find(x=>x.id==='shirt').sourceSHA256,sha);
  }finally{f.close();}
 });
+
+test('M91 native import explains duplicate original without a partial write',()=>{
+ const app=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
+ const start=app.indexOf("$('import').onchange=async e=>{");
+ const end=app.indexOf("window.addEventListener('beforeunload'",start);
+ assert.ok(start>=0&&end>start);
+ const handler=app.slice(start,end);
+ assert.match(handler,/LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW/);
+ assert.match(handler,/This backup repeats an original photo already linked to a saved closet piece/);
+ assert.match(handler,/Nothing was imported/);
+ assert.match(handler,/Open My Closet to review the saved piece/);
+});
