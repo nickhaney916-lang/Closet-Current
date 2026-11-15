@@ -295,7 +295,9 @@ function cropClothingPhoto(item){
    if(hasSourceBoundMask88(item))throw Error('P88_SOURCE_MASK_CROP_FORBIDDEN');
    if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
    const value={...structuredClone(item),...photo,userAdjusted:true,localAnalyzed:true,scanFailed:false,saveFailed:false,possibleDuplicate:false};
-   if(value.id!==item.id||hasSourceBoundMask88(value)||value.ownerSourceReview88)
+   if(value.id!==item.id||hasSourceBoundMask88(value)||value.ownerSourceReview88||
+    Object.hasOwn(photo,'ownerDuplicateReview88')||
+    Object.hasOwn(photo,'exactSavedPhotoMatch88'))
     throw Error('P88_CROP_CANNOT_REBIND_ID_OR_MASK');
    delete value.recognitionMemory;delete value.confirmedDetails;delete value.correctionReceipt72;delete value.learningReviewedWeek;delete value.weeklySuggestion;delete value.recognitionPhoto;delete value.colorMethod;
    if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}
@@ -318,6 +320,22 @@ function cropClothingPhoto(item){
     if(hasSourceBoundMask88(item)||hasSourceBoundMask88(value)||
      !cropLive88()||value.id!==item.id||value.ownerSourceReview88)
      throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
+    // Changing photo bytes invalidates old exact-JPEG duplicate consent.
+    // Another photo may have been saved during cloud.beforeWrite, so inspect
+    // saved peers INSIDE the exact-owner queued transaction boundary.
+    if(value.image!==lease.image){
+     delete value.ownerDuplicateReview88;
+     delete value.exactSavedPhotoMatch88;
+     if(lease.wasDraft){
+      const peer=items.find(x=>x!==item&&x.id!==item.id&&x.image===value.image);
+      if(peer){
+       value.exactSavedPhotoMatch88={savedItemId:peer.id};
+       value.possibleDuplicate=true;
+       value.requiresOwnershipConfirmation=true;
+       value.localStatus='This crop exactly matches another saved closet photo. Keep it unsaved and compare the physical garments in Adjust before adding.';
+      }
+     }
+    }
     return new Promise((resolve,reject)=>{
      const tx=lease.ownerDb.transaction(lease.wasDraft?'state':'items','readwrite');
      if(lease.wasDraft)tx.objectStore('state').put({id:'draft',batch:structuredClone(batch.map(x=>x===item?value:x))});
@@ -327,7 +345,7 @@ function cropClothingPhoto(item){
    });
    if(!cropLive88())return; // Old owner's completed write cannot paint B's UI.
    Object.assign(item,value);
-   for(const key of ['visualSignature','visualAspect','localChoices','indexedAt','recognitionPhoto','colorMethod','recognitionMemory','confirmedDetails','correctionReceipt72','learningReviewedWeek','weeklySuggestion'])if(!(key in value))delete item[key];
+   for(const key of ['visualSignature','visualAspect','localChoices','indexedAt','recognitionPhoto','colorMethod','recognitionMemory','confirmedDetails','correctionReceipt72','learningReviewedWeek','weeklySuggestion','ownerDuplicateReview88','exactSavedPhotoMatch88'])if(!(key in value))delete item[key];
    render();
   }
  }).catch(()=>message('Could not open this photo for cropping. Your saved photo is kept.'));
