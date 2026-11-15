@@ -38,7 +38,26 @@ function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open('
 function readAll(){return new Promise((resolve,reject)=>{const r=db.transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
 function writeAll(values){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');for(const v of values)tx.objectStore('items').put(v);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
 function removeItem(id){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');tx.objectStore('items').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);}));}
-function persistDraft(){if(!db)return;const snapshot=structuredClone(batch);return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'draft',batch:snapshot});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);})).catch(()=>message('Your unfinished scan could not be backed up. Keep this page open and save or export your pieces.'));}
+// P88: camera drafts contain private original JPEGs. A queued backup must
+// never follow a replacement auth session/IDB while cloud.beforeWrite waits.
+// Read the *live* same-owner batch at transaction time, not a stale snapshot
+// taken before a new photo, crop, cancellation or owner-confirmed save.
+function persistDraft(){
+ const owner=window.closetAuth?.user,ownerId=owner?.id,ownerDb=db;
+ if(!ownerId||!ownerDb||ownerDb.name!=='closet-current-user-'+ownerId)return;
+ const live=()=>window.closetAuth?.user===owner&&owner.id===ownerId&&
+  db===ownerDb&&ownerDb.name==='closet-current-user-'+ownerId;
+ return queued(()=>{
+  if(!live())throw Error('P88_REVOKED_DRAFT_BACKUP');
+  const snapshot=structuredClone(batch);
+  if(!live())throw Error('P88_REVOKED_DRAFT_BACKUP');
+  return new Promise((resolve,reject)=>{
+   const tx=ownerDb.transaction('state','readwrite');
+   tx.objectStore('state').put({id:'draft',batch:snapshot});
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+  });
+ }).catch(()=>{if(live())message('Your unfinished scan could not be backed up. Keep this page open and save or export your pieces.');});
+}
 function readDraft(){return new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
 // P88: ordinary one-photo review must not save into a replacement account
 // while cloud.beforeWrite waits. Freeze source bytes, draft identity and IDB.
