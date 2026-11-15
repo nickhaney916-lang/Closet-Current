@@ -2462,12 +2462,14 @@ async function photoFillReached88(predicate){
  }
  assert.fail('native photo-fill await was not reached');
 }
-function photoFillHarness88({itemValues={},auto=false}={}){
+function photoFillHarness88({itemValues={},auto=false,learning=false,legacy=false}={}){
  const start=appSource.indexOf('function clothingFields(body,item,onChange=()=>{}){');
  const end=appSource.indexOf('// P88: an owner photo crop',start);
  assert.ok(start>0&&end>start,'native source editor and photo-fill callback exists');
  const owner={id:'owner-A'},ownerDb={name:'closet-current-user-owner-A'};
  const nodes=[],photoCalls=[],modelCalls=[],ownerEdits=[];
+ const suggestionCalls=[],applicationCalls=[],scope={ownerId:'owner-A',active:true};
+ const legacySuggestion={requiresConfirmation:true,fields:{itemType:'T-shirt'}};
  const make=(tag,text)=>{
   const el={tag,textContent:text||'',value:'',disabled:false,isConnected:true,
    children:[],options:[],className:'',checked:false,src:'',alt:'',
@@ -2497,7 +2499,14 @@ function photoFillHarness88({itemValues={},auto=false}={}){
   document:{createTextNode:text=>make('text',text)},db:ownerDb,
   item,nodes,make,node:make,field,choice,
   normalizeClothing:x=>({seasons:[],...x}),
-  learningMode72:()=>false,
+  learningMode72:()=>learning,
+  learningScope72:()=>learning&&scope.active?scope:null,
+  ClothingMemory:(learning||legacy)?{
+   suggest:()=>legacy?legacySuggestion:null,weekly:()=>null,
+   apply:value=>({...value,itemType:'T-shirt'}),
+   suggest72:()=>{const gate=photoFillGated88();suggestionCalls.push(gate);return gate.promise;},
+   apply72:()=>{const gate=photoFillGated88();applicationCalls.push(gate);return gate.promise;}
+  }:undefined,
   localReady:true,
   items:[],
   categories:['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],
@@ -2522,7 +2531,7 @@ function photoFillHarness88({itemValues={},auto=false}={}){
  const find=label=>nodes.find(x=>x.ariaLabel===label);
  const fill=nodes.find(x=>x.textContent==='Fill missing details from photo');
  assert.ok(fill&&typeof fill.onclick==='function');
- return {c,item,owner,ownerDb,nodes,body,photoCalls,modelCalls,ownerEdits,fill,find};
+ return {c,item,owner,ownerDb,nodes,body,photoCalls,modelCalls,ownerEdits,fill,find,suggestionCalls,applicationCalls,scope};
 }
 test('P88 late photo color detection may not overwrite an owner-entered color while decoding',async()=>{
  const h=photoFillHarness88();
@@ -2609,4 +2618,86 @@ test('P88 background photo-color estimate cannot override an owner edit while pe
  assert.equal(h.item.color,'Red');
  assert.equal(h.item.colorSource,'user');
  assert.deepEqual(h.ownerEdits,['color']);
+});
+
+test('P88 late opt-in learning lookup cannot offer a model subtype after a manual correction',async()=>{
+ const h=photoFillHarness88({learning:true});
+ assert.equal(h.suggestionCalls.length,1);
+ const type=h.find('Item type');type.value='Blouse';type.oninput();
+ h.suggestionCalls[0].resolve({fields:{itemType:'T-shirt'},requiresConfirmation:true});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.nodes.filter(x=>x.textContent==='Use owner-confirmed suggestion').length,0);
+ assert.equal(h.item.itemType,'Blouse');
+});
+test('P88 opt-in learning proposal is source and signed-user scoped even before display',async()=>{
+ for(const kind of ['owner','renewed','idb','photo','mask','closed']){
+  const h=photoFillHarness88({learning:true});
+  if(kind==='owner')h.c.window.closetAuth.user={id:'owner-B'};
+  if(kind==='renewed')h.c.window.closetAuth.user={id:'owner-A'};
+  if(kind==='idb')h.c.db={name:'closet-current-user-owner-A'};
+  if(kind==='photo')h.item.image='data:image/jpeg;base64,TkVX';
+  if(kind==='mask')h.item.segmentHint={componentReviewStatus:'unresolved'};
+  if(kind==='closed')h.body.isConnected=false;
+  h.suggestionCalls[0].resolve({fields:{itemType:'T-shirt'},requiresConfirmation:true});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(h.nodes.filter(x=>x.textContent==='Use owner-confirmed suggestion').length,0,kind);
+ }
+});
+test('P88 late owner-learning apply cannot overwrite a newly corrected blouse subtype',async()=>{
+ const h=photoFillHarness88({learning:true});
+ h.suggestionCalls[0].resolve({fields:{itemType:'T-shirt'},requiresConfirmation:true});
+ await photoFillReached88(()=>h.nodes.some(x=>x.textContent==='Use owner-confirmed suggestion'));
+ const use=h.nodes.find(x=>x.textContent==='Use owner-confirmed suggestion');
+ const pending=use.onclick();await photoFillReached88(()=>h.applicationCalls.length===1);
+ const type=h.find('Item type');type.value='Blouse';type.oninput();
+ h.applicationCalls[0].resolve({...h.item,itemType:'T-shirt'});
+ await pending;
+ assert.equal(h.item.itemType,'Blouse');
+ assert.deepEqual(h.ownerEdits,['itemType']);
+});
+test('P88 late owner-learning apply cannot cross account, renewed session, IDB, original or mask',async()=>{
+ for(const kind of ['owner','renewed','idb','photo','recognition','mask','closed']){
+  const h=photoFillHarness88({learning:true});
+  h.suggestionCalls[0].resolve({fields:{itemType:'T-shirt'},requiresConfirmation:true});
+  await photoFillReached88(()=>h.nodes.some(x=>x.textContent==='Use owner-confirmed suggestion'));
+  const use=h.nodes.find(x=>x.textContent==='Use owner-confirmed suggestion');
+  const pending=use.onclick();await photoFillReached88(()=>h.applicationCalls.length===1);
+  if(kind==='owner')h.c.window.closetAuth.user={id:'owner-B'};
+  if(kind==='renewed')h.c.window.closetAuth.user={id:'owner-A'};
+  if(kind==='idb')h.c.db={name:'closet-current-user-owner-A'};
+  if(kind==='photo')h.item.image='data:image/jpeg;base64,TkVX';
+  if(kind==='recognition')h.item.recognitionPhoto={image:'data:image/jpeg;base64,TkVX'};
+  if(kind==='mask')h.item.segmentHint={componentReviewStatus:'unresolved'};
+  if(kind==='closed')h.body.isConnected=false;
+  h.applicationCalls[0].resolve({...h.item,itemType:'T-shirt'});
+  await pending;
+  assert.equal(h.item.itemType,'Unknown',kind);
+  assert.equal(h.ownerEdits.length,0,kind);
+ }
+});
+test('P88 current owner may apply opt-in learning suggestion while still requiring manual review',async()=>{
+ const h=photoFillHarness88({learning:true});
+ h.suggestionCalls[0].resolve({fields:{itemType:'T-shirt'},requiresConfirmation:true});
+ await photoFillReached88(()=>h.nodes.some(x=>x.textContent==='Use owner-confirmed suggestion'));
+ const use=h.nodes.find(x=>x.textContent==='Use owner-confirmed suggestion');
+ const pending=use.onclick();await photoFillReached88(()=>h.applicationCalls.length===1);
+ h.applicationCalls[0].resolve({...h.item,itemType:'T-shirt'});
+ await pending;
+ assert.equal(h.item.itemType,'T-shirt');
+ assert.equal(h.ownerEdits.length,1,'model changes revoke prior editor acknowledgement');
+ const count=h.applicationCalls.length;await use.onclick();
+ assert.equal(h.applicationCalls.length,count,'stale suggestion must not replay after revision');
+});
+test('P88 legacy memory suggestion cannot override later owner edits or another session',async()=>{
+ for(const kind of ['human','owner','photo','valid']){
+  const h=photoFillHarness88({legacy:true});
+  const use=h.nodes.find(x=>x.textContent==='Use suggested details');
+  assert.ok(use,kind);
+  if(kind==='human'){const type=h.find('Item type');type.value='Blouse';type.oninput();}
+  if(kind==='owner')h.c.window.closetAuth.user={id:'owner-B'};
+  if(kind==='photo')h.item.image='data:image/jpeg;base64,TkVX';
+  use.onclick();
+  assert.equal(h.item.itemType,kind==='human'?'Blouse':kind==='valid'?'T-shirt':'Unknown',kind);
+  assert.equal(h.ownerEdits.length,kind==='human'||kind==='valid'?1:0,kind);
+ }
 });
