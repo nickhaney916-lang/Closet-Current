@@ -201,9 +201,17 @@ if(process.argv[1]&&new URL('file:'+resolve(process.argv[1])).href===import.meta
   const meta=await handle.stat();
   if(!meta.isFile())throw Error('PRIVATE_HANDOFF_REGULAR_FILE_REQUIRED');
   if(meta.size>50000)throw Error('PRIVATE_HANDOFF_TOO_LARGE');
-  const raw=await handle.readFile({encoding:'utf8'});
-  if(Buffer.byteLength(raw,'utf8')>50000)throw Error('PRIVATE_HANDOFF_TOO_LARGE');
-  packet=JSON.parse(raw);
+  // Never buffer unbounded content even if an external writer grows the file
+  // between metadata preflight and the descriptor read.
+  const buffer=Buffer.alloc(50001);
+  let length=0;
+  while(length<buffer.length){
+   const {bytesRead}=await handle.read(buffer,length,buffer.length-length,null);
+   if(bytesRead===0)break;
+   length+=bytesRead;
+  }
+  if(length>50000)throw Error('PRIVATE_HANDOFF_TOO_LARGE');
+  packet=JSON.parse(buffer.toString('utf8',0,length));
  }finally{await handle.close();}
  const outcome=verifyBlindEvaluatorHandoff88(packet,{
   p75RegistrarFingerprint:process.env.P88_APPROVED_P75_REGISTRAR_FINGERPRINT,
