@@ -113,7 +113,7 @@ try{
   }
  });
  stage='sign-in';
- const params='multi24=research&p88Transport57=research&captureProof01=after&index04=after&nativeLossless04=research&nativeIndex07=research&index02=after&restoreAtomic01=research&styleOwned03=research&nativeCorrection10=research&mission4Preview=research';
+ const params='multi24=research&p88Transport57=research&captureProof01=after&index04=after&nativeLossless04=research&nativeIndex07=research&index02=after&restoreAtomic01=research&styleOwned03=research&nativeCorrection10=research&mission4Preview=research&reviewedPhotoGallery59=research';
  await page.goto(origin+'/public/index.html?'+params,{waitUntil:'domcontentloaded'});
  await page.locator('#authEmail').fill('m58-A@example.test');
  await page.locator('#authPassword').fill('fixture-only');
@@ -302,29 +302,20 @@ try{
  // disposable CI checkout, after real P88 inference and actual private save.
  // Do not modify public/ or loosen M54 mask/physical-garment admission.
  stage='same-browser-real-worker-to-pinned-M59-original-photo-only-gallery';
- const nativeGallery=await page.evaluate(async()=>{
-  const section=document.getElementById('mission4Preview1054Section');
-  if(!section)throw Error('M59 research gallery host missing');
-  const host=document.createElement('section');
-  host.id='m58M59OriginalGallery';
-  section.append(host);
-  const {mountReviewedPhotoOnlyGallery59}=await import(
-   '/research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs');
-  const gallery=mountReviewedPhotoOnlyGallery59({
-   target:host,getSession:currentPhotoOwnerSession167,
-   readOwnerItems:signedOwnerSavedRows167,
-   getBoard:()=>structuredClone(currentBoard),
-   cleanBoard:cleanOutfitBoard,events:window,doc:document
-  });
-  window.m58M59Gallery=gallery;
-  const receipt=await gallery.refresh();
+ // Use the ACTUAL opt-in native Outfit Builder button; no test-only DOM
+ // injection, direct mount calls, or synthetic wardrobe selection.
+ await page.locator('#mission4PhotoOnly59Open').click();
+ await page.waitForFunction(()=>document.querySelectorAll(
+  '#mission4PhotoOnly59Photos img').length===1,null,{timeout:30000});
+ const nativeGallery=await page.evaluate(()=>{
+  const section=document.getElementById('mission4PhotoOnly59Section'),
+   host=document.getElementById('mission4PhotoOnly59Photos');
   return {
-   photoCount:receipt.photoCount,
-   galleryStatus:receipt.status,
-   renderAuthorized3D:receipt.renderAuthorized3D,
-   releaseAuthorized:receipt.releaseAuthorized,
-   warning:host.querySelector('[data-physical-garment-unit]')?.textContent||'',
-   src:host.querySelector('img')?.getAttribute('src')||''
+   photoCount:host?.querySelectorAll('img').length||0,
+   renderAuthorized3D:section?.dataset.render3d!=='denied',
+   releaseAuthorized:section?.dataset.render3d!=='denied',
+   warning:host?.querySelector('[data-physical-garment-unit]')?.textContent||'',
+   src:host?.querySelector('img')?.getAttribute('src')||''
   };
  });
  assert.equal(nativeGallery.photoCount,1,'M59 failed on genuine-worker M58 private saved row');
@@ -340,11 +331,14 @@ try{
   currentBoard.occasion=currentBoard.occasion==='Dinner'?'Work':'Dinner';
   window.dispatchEvent(new Event('focus'));
  });
- assert.equal(await page.locator('#m58M59OriginalGallery img').count(),0,
+ assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),0,
   'stale owner source remained after outfit board mutation');
  await page.evaluate(value=>{currentBoard.occasion=value;},previousOccasion);
- const galleryAgain=await page.evaluate(()=>window.m58M59Gallery.refresh());
- assert.equal(galleryAgain.photoCount,1,'M59 failed to re-admit same reviewed original');
+ await page.locator('#mission4PhotoOnly59Open').click();
+ await page.waitForFunction(()=>document.querySelectorAll(
+  '#mission4PhotoOnly59Photos img').length===1,null,{timeout:30000});
+ assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),1,
+  'M59 failed to re-admit same reviewed original through native button');
  // BOARD04 photo-only slot selection remains an unsaved private draft until
  // the signed owner explicitly clicks native Save outfit. A v4 export must
  // NOT claim it contains that unsaved selection. Save via the real app button
@@ -463,10 +457,10 @@ try{
   await new Promise((resolve,reject)=>{
    tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(tx.error);
   });
-  window.m58M59Gallery.clear();
+  window.dispatchEvent(new Event('closet:style-owned-inventory-committed'));
  },handoff.savedItemId);
  assert.equal((await ownerSnapshot()).items[0].color,'Disposable synthetic edit');
- assert.equal(await page.locator('#m58M59OriginalGallery img').count(),0);
+ assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),0);
  const restoredNotice=await submitBackup(v4,true);
  assert.match(restoredNotice,/restored.*v4|v4.*restored/i,
   'native V4 restore did not commit original in same P88-inference session');
@@ -501,15 +495,17 @@ try{
   return board?.status()?.selected===0&&
    typeof currentBoard!=='undefined'&&currentBoard.slots?.top===id;
  },handoff.savedItemId,{timeout:30000});
- const restoredGallery=await page.evaluate(async()=>{
-  const gallery=window.m58M59Gallery;
-  if(!gallery)throw Error('M61 owner original gallery missing');
-  const result=await gallery.refresh();
-  const image=document.querySelector('#m58M59OriginalGallery img');
-  const warning=document.querySelector('#m58M59OriginalGallery [data-physical-garment-unit]');
-  return {count:result.photoCount,fit:result.fittedOutfitAuthorized,
-   threeD:result.renderAuthorized3D,src:image?.getAttribute('src'),
-   warning:warning?.textContent||''};
+ await page.locator('#mission4PhotoOnly59Open').click();
+ await page.waitForFunction(()=>document.querySelectorAll(
+  '#mission4PhotoOnly59Photos img').length===1,null,{timeout:30000});
+ const restoredGallery=await page.evaluate(()=>{
+  const root=document.getElementById('mission4PhotoOnly59Section');
+  const host=document.getElementById('mission4PhotoOnly59Photos');
+  return {count:host?.querySelectorAll('img').length||0,
+   fit:root?.dataset.render3d!=='denied',
+   threeD:root?.dataset.render3d!=='denied',
+   src:host?.querySelector('img')?.getAttribute('src'),
+   warning:host?.querySelector('[data-physical-garment-unit]')?.textContent||''};
  });
  assert.equal(restoredGallery.count,1);
  assert.equal(restoredGallery.fit,false);
@@ -538,7 +534,7 @@ try{
   null,{timeout:30000});
  assert.equal(await page.locator('#mission4Preview1054Photos img').count(),0,
   'owner A strict preview image remained after logout');
- assert.equal(await page.locator('#m58M59OriginalGallery img').count(),0,
+ assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),0,
   'M59 lower-trust original gallery retained A source after logout');
  assert.equal(await page.locator('#multi24Research img[src^="data:image/"]').count(),0,
   'owner A review original remained in the DOM after logout');
@@ -567,7 +563,7 @@ try{
  assert.equal(bView.ownerOwnedPhotoCards,0,'B has A private photo in its outfit UI');
  assert.equal(bView.ownerReviewOriginals,0,'B has A private review source');
  assert.equal(bView.strictPreviewOriginals,0,'B has A strict preview source');
- assert.equal(await page.locator('#m58M59OriginalGallery img').count(),0,
+ assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),0,
   'owner B can view owner A M59 research-gallery source');
  assert.deepEqual(rejected,[],'synthetic owner switch caused forbidden external request');
  assert.deepEqual(issues,[],'native owner switch caused browser runtime error');
