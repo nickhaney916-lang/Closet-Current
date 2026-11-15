@@ -265,7 +265,9 @@ function finishOutfitSplit(job,text,failed=false){
   // Successful or partial capture switches to Review, so the scan-only
   // outfitSplitStatus is not visible to the owner. Preserve the caution on
   // the actual Review screen with the unsaved pieces.
-  if(outfitInstances840)$('outfitSaveStatus').textContent+=' '+ownerCoverageReminder88;
+  // Default outfit scans also miss small accessories on the verified public
+  // cohort. Reminder is information only, never automatic detection or save.
+  $('outfitSaveStatus').textContent+=' '+ownerCoverageReminder88;
  }
 }
 function startOutfitSplit(image,sourceId=crypto.randomUUID()){
@@ -369,7 +371,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     // Never present detected region count as a complete wardrobe inventory.
     const result=outfitInstances840?
       (job.added?job.added+' tentative clothing regions found, not a verified garment count. ':'No confidently separated clothing regions found. ')+ownerCoverageReminder88:
-      (job.added?job.added+' individual clothing photos cropped. Review their suggested categories and colors before saving.':'No new clothing pieces could be located. Try a clearer full-body photo; exact duplicates may already be in Photo results.');
+      (job.added?job.added+' tentative clothing regions cropped, not a verified garment count. Review their suggested categories, types and colors before saving. ':'No clothing regions confidently located. This is not proof your outfit is empty. ')+ownerCoverageReminder88;
     finishOutfitSplit(job,result,false);
    }
    else if(data.type==='error')finishOutfitSplit(job,job.added?'Some pieces are kept; the rest could not be separated. Try again.':'This outfit could not be separated. Try another clear photo of one person, head to toe.',true);
