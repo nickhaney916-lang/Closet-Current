@@ -309,9 +309,14 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           DONOR=055f7a6569059c3845c0d8dc5960767fc944c6ac
           git cat-file -e "$DONOR^{commit}"
-          for path in public/app.js scripts/test-main1054-duplicate-fence-browser.mjs tests/main1054-saved-photo-duplicate-fence.test.mjs; do
-            test "$(git rev-parse "HEAD:$path")" = "$(git rev-parse "$DONOR:$path")"
-          done
+          # M85: M82-M84 intentionally changed those three files,
+          # so equality with the old P1212 donor would block tests before
+          # executing them. Pin ALL current blobs and attest old donor
+          # provenance separately. No unlisted application code is exempt.
+          test "$(git rev-parse "$DONOR:public/app.js")" = ce16b3e219ec9596ffd396264d882ade99590490
+          test "$(git rev-parse HEAD:public/app.js)" = d259d0b77a006d032699be50536adb2ebca459dd
+          test "$(git rev-parse HEAD:scripts/test-main1054-duplicate-fence-browser.mjs)" = 2665c14c998c3b0f5aff6f77ccb214766190f77a
+          test "$(git rev-parse HEAD:tests/main1054-saved-photo-duplicate-fence.test.mjs)" = 4393a2ecd16fa81a40e3a271444e0f31ffcbc1aa
           node --check public/app.js
           node --check scripts/test-main1054-duplicate-fence-browser.mjs
       - name: Execute owner durable write CAS and duplicate-source checks
