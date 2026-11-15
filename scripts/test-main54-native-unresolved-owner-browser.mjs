@@ -125,6 +125,13 @@ try{
    return route.abort();
   });
   const page=await context.newPage();
+  page.on('dialog',async dialog=>{
+   // Existing native REMOVE76 may ask once before discarding a human-edited
+   // unsaved crop. This gesture grants removal, NEVER clothing save.
+   if(dialog.type()==='confirm'&&/remove|discard/i.test(dialog.message()))
+    await dialog.accept();
+   else await dialog.dismiss();
+  });
   page.on('pageerror',e=>issues.push('pageerror-'+e.name));
   page.on('crash',()=>issues.push('browser-crash'));
   await page.addInitScript({content:workerFixture});
