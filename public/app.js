@@ -112,6 +112,20 @@ function saveExistingPiece88(value,lease){
   });
  });
 }
+// Owner-identified saved deletions must not follow a replaced auth session
+// or an unrelated private IDB after serialized cloud.beforeWrite finishes.
+function removeExistingPiece88(lease){
+ const live=()=>Boolean(lease&&!lease.wasDraft&&reviewedSaveLeaseLive88(lease));
+ if(!live())return Promise.reject(Error('P88_STALE_SAVED_DELETE_OWNER_OR_SOURCE'));
+ return queued(()=>{
+  if(!live())throw Error('P88_REVOKED_SAVED_DELETE_OWNER_OR_SOURCE');
+  return new Promise((resolve,reject)=>{
+   const tx=lease.ownerDb.transaction('items','readwrite');
+   tx.objectStore('items').delete(lease.item.id);
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+  });
+ });
+}
 function node(tag,text,className){const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;}
 // Keep exact-owner review helpers in the actual native Adjust source segment
 // also exercised by isolated P82/P846 Chromium and WebKit harnesses.
@@ -764,7 +778,24 @@ function adjustPhoto(item){
  }
  cancel.type=remove.type='button';cancel.onclick=()=>{if(!saveInFlight)dialog.close();};
  const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);item.userAdjusted=true;
- remove.onclick=async()=>{if(saveInFlight){message('This photo is currently being saved.');return;}try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
+ remove.onclick=async()=>{
+  if(saveInFlight){message('This photo is currently being saved.');return;}
+  const owner88=window.closetAuth?.user,db88=db;
+  try{
+   const saved=items.find(x=>x.id===item.id);
+   if(saved){
+    if(saved!==item)throw Error('P88_WRONG_SAVED_ITEM_DELETE');
+    const deleteLease=reviewedSaveLease88(item);
+    await removeExistingPiece88(deleteLease);
+    if(!reviewedSaveLeaseLive88(deleteLease))return;
+   }else if(!batch.includes(item))throw Error('P88_REMOVED_REVIEW_ITEM');
+   if(window.closetAuth?.user!==owner88||db!==db88)return;
+   items=items.filter(x=>x!==item);batch=batch.filter(x=>x!==item);
+   sessionCapturedIds.delete(item.id);await persistDraft();
+   if(window.closetAuth?.user!==owner88||db!==db88)return;
+   dialog.close();render();
+  }catch{message('Could not remove this photo. Try again.');}
+ };
  form.onsubmit=async event=>{
   event.preventDefault();
   // A disabled submit button is not a transaction lock: a scripted event or a
@@ -1129,7 +1160,15 @@ function render(){
   dialog.oncancel=e=>{if(saveInFlight847)e.preventDefault();};
   f.append(ok,cancel);dialog.append(f);document.body.append(dialog);
   dialog.onclose=()=>dialog.remove();dialog.showModal();
- };del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id);items=items.filter(x=>x.id!==item.id);render();}catch{message('Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));actions.append(edit,cropButton(item),del);body.append(actions);card.append(im,body);if(typeof enableClosetDrag==='function')enableClosetDrag(im,item);cg.append(card);}
+ };del.onclick=async()=>{
+  if(!confirm('Delete this closet piece?'))return;
+  const deleteLease=reviewedSaveLease88(item);
+  try{
+   await removeExistingPiece88(deleteLease);
+   if(!reviewedSaveLeaseLive88(deleteLease))return;
+   items=items.filter(x=>x!==item);render();
+  }catch{message('Could not delete the piece.');}
+ };if(typeof closetWearButton==='function')actions.append(closetWearButton(item));actions.append(edit,cropButton(item),del);body.append(actions);card.append(im,body);if(typeof enableClosetDrag==='function')enableClosetDrag(im,item);cg.append(card);}
  if(typeof renderClosetBrowser==='function')renderClosetBrowser();
  if(typeof renderTrendMatches==='function')renderTrendMatches();if(typeof renderOutfitBoard==='function')renderOutfitBoard();if(typeof renderStyledCollection==='function')renderStyledCollection();if(typeof renderHomePieces==='function')renderHomePieces();if(typeof renderOutfitCapture==='function')renderOutfitCapture();
 }

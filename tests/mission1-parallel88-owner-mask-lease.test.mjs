@@ -1921,7 +1921,7 @@ function savedDetailsHarness88(){
  const finish=appSource.indexOf('function empty(',begin);
  assert.ok(start>0&&end>start&&begin>end&&finish>begin);
  assert.match(appSource,/await saveExistingPiece88\(recorded,savedDetailsLease88\)/);
- const owner={id:'owner-A'},writes=[],item={id:'saved-1',
+ const owner={id:'owner-A'},writes=[],deletes=[],item={id:'saved-1',
   image:'data:image/jpeg;base64,/9j/2Q==',originalPhoto:{image:'data:image/jpeg;base64,/9j/2Q=='},
   recognitionPhoto:{image:'data:image/jpeg;base64,/9j/2Q=='},
   category:'Tops',itemType:'T-shirt',color:'Blue',userAdjusted:true,
@@ -1930,7 +1930,7 @@ function savedDetailsHarness88(){
   ownerDuplicateReview88:{ownerAttestedDistinctPhysicalItem:true,threeDReady:false}};
  const db={name:'closet-current-user-owner-A',transaction(store,mode){
   assert.equal(store,'items');assert.equal(mode,'readwrite');
-  const tx={objectStore(name){assert.equal(name,'items');return {put(value){writes.push(structuredClone(value));}}}};
+  const tx={objectStore(name){assert.equal(name,'items');return {put(value){writes.push(structuredClone(value));},delete(id){deletes.push(id);}}}};
   queueMicrotask(()=>tx.oncomplete?.());return tx;
  }};
  const c={window:{closetAuth:{user:owner}},db,items:[item],batch:[],structuredClone};
@@ -1939,7 +1939,7 @@ function savedDetailsHarness88(){
  vm.createContext(c);
  vm.runInContext(appSource.slice(start,end)+appSource.slice(begin,finish),c);
  const lease=c.reviewedSaveLease88(item);
- return {c,item,db,owner,lease,writes};
+ return {c,item,db,owner,lease,writes,deletes};
 }
 test('P88 existing closet item accepts manual category/type/color edits in captured IDB only',async()=>{
  const h=savedDetailsHarness88(),value=structuredClone(h.item);
@@ -1989,5 +1989,43 @@ test('P88 saved editor cannot mint source verification/3D proof or change immuta
   const h=savedDetailsHarness88(),value=structuredClone(h.item);mutate(value);
   await assert.rejects(h.c.saveExistingPiece88(value,h.lease),/P88_STALE_SAVED_EDITOR_OWNER_OR_SOURCE/);
   assert.equal(h.writes.length,0);
+ }
+});
+
+
+
+test('P88 existing saved item deletion is scoped to original owner and IDB row',async()=>{
+ const h=savedDetailsHarness88();
+ assert.match(appSource,/await removeExistingPiece88\(deleteLease\)/,
+  'native Adjust and Closet actions must invoke signed saved deletion');
+ assert.match(appSource,/await removeExistingPiece88\(deleteLease88\)/);
+ await h.c.removeExistingPiece88(h.lease);
+ assert.deepEqual(h.deletes,['saved-1']);
+ assert.equal(h.writes.length,0);
+});
+test('P88 saved delete rejects signed owner or database replacement after cloud preflight',async()=>{
+ for(const mutate of [
+  h=>{h.c.window.closetAuth.user={id:'owner-B'};h.c.db={name:'closet-current-user-owner-B'};},
+  h=>{h.c.window.closetAuth.user={id:'owner-A'};},
+  h=>{h.c.db={name:'closet-current-user-owner-A'};}
+ ]){
+  const h=savedDetailsHarness88();h.c.beforeWrite=async()=>mutate(h);
+  await assert.rejects(h.c.removeExistingPiece88(h.lease),/P88_REVOKED_SAVED_DELETE_OWNER_OR_SOURCE/);
+  assert.equal(h.deletes.length,0,'never delete a replacement account garment');
+ }
+});
+test('P88 saved delete refuses stale source, reintroduced ID, or edited owner physical evidence',async()=>{
+ for(const mutate of [
+  h=>{h.c.items=[];},
+  h=>{h.c.items=[structuredClone(h.item)];},
+  h=>{h.item.image='data:image/jpeg;base64,TkVX';},
+  h=>{h.item.originalPhoto.image='data:image/jpeg;base64,TkVX';},
+  h=>{h.item.segmentHint.categories.push('Shoes');},
+  h=>{h.item.ownerSourceReview88.ownerReviewed=false;},
+  h=>{h.item.ownerDuplicateReview88.threeDReady=true;}
+ ]){
+  const h=savedDetailsHarness88();h.c.beforeWrite=async()=>mutate(h);
+  await assert.rejects(h.c.removeExistingPiece88(h.lease),/P88_REVOKED_SAVED_DELETE_OWNER_OR_SOURCE/);
+  assert.equal(h.deletes.length,0,'stale deletion cannot remove or recreate a different row');
  }
 });
