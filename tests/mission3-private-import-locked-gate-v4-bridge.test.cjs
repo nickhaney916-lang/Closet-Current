@@ -202,6 +202,35 @@ test('default legacy import rechecks outfit edits after approval before writing'
  assert.equal(f.counts.legacyWrites||0,0);
  assert.equal(f.counts.boardWrites||0,0);
 });
+function clothingOnlyLegacyBackupFile(){
+ const json=JSON.stringify({format:'closet-current',version:3,
+  items:[{id:'new-shirt',category:'Tops',image:'data:image/jpeg;base64,/9j/2Q=='}]});
+ return {size:json.length,text:async()=>json};
+}
+test('clothing-only legacy import refuses existing unsaved outfit edits before confirmation',async()=>{
+ const f=legacyFixture();
+ f.ctx.boardHasUnsavedDraft=()=>true;
+ await f.run(clothingOnlyLegacyBackupFile());
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.equal(f.counts.cloudChanged||0,0);
+ assert.ok(f.events.some(x=>x.includes('Save or discard unfinished outfit changes')));
+});
+test('clothing-only legacy import rechecks unsaved outfit edits after confirmation',async()=>{
+ const f=legacyFixture();let dirty=false;
+ f.ctx.boardHasUnsavedDraft=()=>dirty;
+ f.ctx.confirm=()=>{dirty=true;return true};
+ await f.run(clothingOnlyLegacyBackupFile());
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.equal(f.counts.cloudChanged||0,0);
+ assert.ok(f.events.some(x=>x.includes('Save or discard unfinished outfit changes')));
+});
+test('clothing-only legacy import preserves valid no-board merge when outfit is saved',async()=>{
+ const f=legacyFixture();
+ await f.run(clothingOnlyLegacyBackupFile());
+ assert.equal(f.counts.legacyWrites,1,JSON.stringify(f.events));
+ assert.equal(f.counts.boardWrites||0,0);
+ assert.equal(f.counts.cloudChanged,1);
+});
 test('default legacy import still allows a valid saved outfit referring to a new or existing garment',async()=>{
  const f=legacyFixture();
  await f.run(legacyBackupFile({current:{slots:{top:'new-shirt',shoes:'existing-shoe'}},
