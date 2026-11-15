@@ -1301,7 +1301,61 @@ $('startAuto').onclick=()=>startCamera('auto');
 $('takePhoto').onclick=takePhoto;
 $('stop').onclick=finishScan;
 function waitEvent(target,event,timeout=15000){return new Promise((resolve,reject)=>{let t;const clean=()=>{clearTimeout(t);target.removeEventListener(event,ok);target.removeEventListener('error',fail);};const ok=()=>{clean();resolve();},fail=()=>{clean();reject(Error('This video could not be read. Try an MP4 recorded by your phone.'));};target.addEventListener(event,ok,{once:true});target.addEventListener('error',fail,{once:true});t=setTimeout(fail,timeout);});}
-async function upload(file){if(!file||busy)return;if(file.size>150*1024*1024)return message('Choose a video smaller than 150 MB. Short batches work best.');stopCamera();busy=true;controls(true);let url;const startLength=batch.length;try{url=URL.createObjectURL(file);video.src=url;video.classList.add('visible');$('placeholder').hidden=true;const loaded=waitEvent(video,'loadedmetadata');video.load();await loaded;if(!Number.isFinite(video.duration)||video.duration<=0)throw Error('Video duration could not be read. Try a regular MP4.');if(video.duration>180)throw Error('Please trim this video to 3 minutes or less.');session=0;const interval=Number($('interval').value);for(let t=Math.min(.1,video.duration/2);t<video.duration;t+=interval){const seek=waitEvent(video,'seeked');video.currentTime=t;await seek;candidate(snap());const progress=Math.round(t/video.duration*100);$('captureState').textContent=`Collecting images · ${progress}%`;}message('');switchView('review');}catch(e){render();if(batch.length>startLength){message(`${session} images recovered before processing stopped. ${e.message}`);switchView('review');}else message(e.message);}finally{busy=false;controls(false);video.removeAttribute('src');video.load();if(url)URL.revokeObjectURL(url);$('captureState').textContent='Ready for another batch';}}
+// Video decode/seek awaits belong to the original signed owner and IDB.
+// An old owner's frames must never be captured into a replacement session.
+async function upload(file){
+ if(!file||busy)return;
+ if(file.size>150*1024*1024)return message('Choose a video smaller than 150 MB. Short batches work best.');
+ const browser=typeof window!=='undefined'&&Boolean(window.document);
+ const owner=browser?window.closetAuth?.user:null,ownerDb=typeof db==='undefined'?null:db;
+ const live=()=>!browser||Boolean(owner?.id&&window.closetAuth?.user===owner&&
+  db===ownerDb&&ownerDb?.name==='closet-current-user-'+owner.id);
+ if(!live())return;
+ stopCamera();busy=true;controls(true);
+ let url;
+ const startLength=batch.length;
+ try{
+  url=URL.createObjectURL(file);
+  if(!live())return;
+  video.src=url;video.classList.add('visible');$('placeholder').hidden=true;
+  const loaded=waitEvent(video,'loadedmetadata');
+  video.load();await loaded;
+  if(!live())return;
+  if(!Number.isFinite(video.duration)||video.duration<=0)
+   throw Error('Video duration could not be read. Try a regular MP4.');
+  if(video.duration>180)throw Error('Please trim this video to 3 minutes or less.');
+  session=0;
+  const interval=Number($('interval').value);
+  for(let t=Math.min(.1,video.duration/2);t<video.duration;t+=interval){
+   if(!live())return;
+   const seek=waitEvent(video,'seeked');
+   video.currentTime=t;await seek;
+   if(!live())return;
+   // snap() derives bytes from the decoded video element. Check again before
+   // adding the frame, even if a sign-out happened during video.seeked.
+   const image=snap();
+   if(!live())return;
+   candidate(image);
+   $('captureState').textContent=`Collecting images · ${Math.round(t/video.duration*100)}%`;
+  }
+  if(!live())return;
+  message('');switchView('review');
+ }catch(e){
+  // Never paint A's stale video error, photo count or private review onto B.
+  if(!live())return;
+  render();
+  if(batch.length>startLength){
+   message(`${session} images recovered before processing stopped. ${e.message}`);
+   switchView('review');
+  }else message(e.message);
+ }finally{
+  busy=false;controls(false);
+  // Only revoke our own decoded video. A newer operation may have changed it.
+  if(url&&video.src===url){video.removeAttribute('src');video.load();}
+  if(url)URL.revokeObjectURL(url);
+  if(live())$('captureState').textContent='Ready for another batch';
+ }
+}
 $('upload').onchange=e=>{upload(e.target.files[0]);e.target.value='';};
 $('discard').onclick=()=>{if(batch.length&&confirm('Discard all unsaved images in this batch?')){batch=[];photoQualityHints73.clear();persistDraft();session=0;render();}};
 $('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await outfitBoardReady;if(!items.length&&(typeof inspirationLooks==='undefined'||!inspirationLooks.length))return message('Save a closet piece or inspiration look before exporting.');const blob=new Blob([JSON.stringify({format:'closet-current',version:3,items,looks:typeof inspirationLooks!=='undefined'?inspirationLooks:[],outfitBoard:typeof boardBackup==='function'?boardBackup():undefined})],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='closet-current-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Backup downloaded. Keep it somewhere you can find again.');};
@@ -1623,15 +1677,37 @@ async function recognizeBatch(){
 $('recognizeBatch').onclick=recognizeBatch;
 $('retryRecognition').onclick=recognizeBatch;
 
+// A local file can take seconds to decode on a phone. Do not admit an
+// A-account JPEG into the B-account pending batch after await Image.decode().
 async function importClothingPhotos(files){
  if(busy||!files.length)return;
  if(files.length>20)return message('Choose up to 20 clothing photos per batch.');
+ const browser=typeof window!=='undefined'&&Boolean(window.document);
+ const owner=browser?window.closetAuth?.user:null,ownerDb=typeof db==='undefined'?null:db;
+ const live=()=>!browser||Boolean(owner?.id&&window.closetAuth?.user===owner&&
+  db===ownerDb&&ownerDb?.name==='closet-current-user-'+owner.id);
+ if(!live())return;
  stopCamera();busy=true;controls(true);session=0;
  try{
-  const result=await readPhotoBatch(files,photoToJPEG,(image,file)=>{const accepted=candidate(image);if(accepted){const item=batch.at(-1);if(item)item.importFilename=file.name;}return accepted;});
+  const result=await readPhotoBatch(files,async file=>{
+   if(!live())throw Error('P88_REVOKED_PHOTO_IMPORT_OWNER');
+   const image=await photoToJPEG(file);
+   if(!live())throw Error('P88_REVOKED_PHOTO_IMPORT_OWNER');
+   return image;
+  },(image,file)=>{
+   if(!live())return false;
+   const accepted=candidate(image);
+   if(accepted){
+    const item=batch.at(-1);
+    if(item)item.importFilename=file.name;
+   }
+   return accepted;
+  });
+  if(!live())return;
   if(typeof window!=='undefined')window.__lastPhotoImportResult=result;
   if(result.added){switchView('review');message(result.errors.length?result.errors.join('; '):'');}
-  else message(result.errors.length?'No photos could be imported. '+result.errors.join('; '):'Exact duplicate photos were skipped; they are already in your closet or review batch.');
+  else message(result.errors.length?'No photos could be imported. '+result.errors.join('; '):
+   'Exact duplicate photos were skipped; they are already in your closet or review batch.');
  }finally{busy=false;controls(false);}
 }
 $('clothingPhotos').onchange=event=>{const files=Array.from(event.target.files);event.target.value='';importClothingPhotos(files);};
