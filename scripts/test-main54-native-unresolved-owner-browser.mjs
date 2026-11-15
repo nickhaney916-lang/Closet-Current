@@ -59,9 +59,9 @@ const workerFixture=String.raw`
       instanceKey:'seg-4-10-12-45-45-1',
       cropBounds:{x:.12,y:.12,width:.42,height:.52},
       personDetected:true,colorEstimate:{color:'Blue'},
+      // Exact current #88 worker method is a TOP-LEVEL field, not hint.
+      instanceMethod:'native_semantic_group_unresolved_fragments',
       hint:{categories:['Tops'],types:['T-shirt'],confidence:1,clipped:false,
-       componentReviewStatus:'unresolved_fragments_keep_source_mask',
-       instanceMethod:'native_semantic_group_unresolved_fragments',
        rawMask:'SHOULD_NOT_BE_SAVED'}
      }
     };
