@@ -7,8 +7,8 @@
  * reverse) or 2cm vertically. This tests local source garment registration,
  * NOT fabric stretching, apparel sizing, or physical garment reconstruction.
  *
- * All original full-body BVH strict skinned triangle contacts, three genuine
- * poses, and exact pair IDs are checked. A numerical improvement is NEVER
+ * All original full-body BVH strict skinned triangle contacts, five genuine
+ * sampled poses, and exact pair IDs are checked. A numerical improvement is NEVER
  * owner, garment fit, swept-collision, or visual-quality acceptance.
  */
 import {summarizeOriginalPhotoSkirtContactTopology89} from './skirt-contact-topology89.mjs';
@@ -19,7 +19,11 @@ const QUARTERS=Object.freeze(['blend-25','blend-75']);
 const MOVES=Object.freeze([
  Object.freeze({name:'front-15mm',dx:0,dy:0,dz:.015}),
  Object.freeze({name:'front-30mm',dx:0,dy:0,dz:.030}),
+ Object.freeze({name:'front-35mm',dx:0,dy:0,dz:.035}),
+ Object.freeze({name:'front-40mm',dx:0,dy:0,dz:.040}),
  Object.freeze({name:'front-45mm',dx:0,dy:0,dz:.045}),
+ Object.freeze({name:'front-50mm',dx:0,dy:0,dz:.050}),
+ Object.freeze({name:'front-55mm',dx:0,dy:0,dz:.055}),
  Object.freeze({name:'front-60mm',dx:0,dy:0,dz:.060}),
  Object.freeze({name:'back-15mm',dx:0,dy:0,dz:-.015}),
  Object.freeze({name:'up-20mm',dx:0,dy:.020,dz:0}),
@@ -130,26 +134,31 @@ export function compareActualOriginalPhotoSkirtRegistration89({
       topology.trialStrictCrossingPairSum!==trial||
       topology.newlyIntroducedOriginalBodySkirtFacePairSum!==introduced)
     throw Error('genuine-source-contact-turnover-analysis-failed');
-   // A 3-pose reduction is NOT a research candidate if the 25% or 75%
-   // authentic source pose adds any body/cloth crossing or worsens its
-   // oriented contact depth. Do not report unsampled poses as passes.
-   const primaryNonworsening=introduced===0&&!depthIncreased&&trial<original;
+   // Always score ALL FIVE genuine poses, not only quarter poses for a
+   // candidate that happened to improve the original three. A true
+   // quarter-pose improvement may matter even with a 3-pose tie.
+   // This is still strictly STATIC original skinned BVH contact evidence.
    const quarterPoseContacts=[];
-   if(primaryNonworsening){
-    for(let i=0;i<QUARTERS.length;i++){
-     applyPose(QUARTERS[i]);
-     const after=sampleContact(QUARTERS[i]);
-     if(!validContact(after))
-      throw Error('intermediate-candidate-source-BVH-pairs-missing');
-     quarterPoseContacts.push(Object.freeze({
-      pose:QUARTERS[i],...pairCounts(quarterBaseline[i],after)
-     }));
-    }
+   for(let i=0;i<QUARTERS.length;i++){
+    applyPose(QUARTERS[i]);
+    const after=sampleContact(QUARTERS[i]);
+    if(!validContact(after))
+     throw Error('intermediate-candidate-source-BVH-pairs-missing');
+    quarterPoseContacts.push(Object.freeze({
+     pose:QUARTERS[i],...pairCounts(quarterBaseline[i],after)
+    }));
    }
-   const intermediateSafe=quarterPoseContacts.length===QUARTERS.length&&
-    quarterPoseContacts.every(x=>x.newOriginalSourceFacePairIDs===0&&
-     !x.planeDepthIncreased);
-   const researchOnlyReduction=primaryNonworsening&&intermediateSafe;
+   const intermediateSafe=quarterPoseContacts.every(x=>
+    x.newOriginalSourceFacePairIDs===0&&!x.planeDepthIncreased);
+   const originalFive=original+quarterPoseContacts.reduce((n,x)=>
+    n+x.originalStrictTransversePairs,0);
+   const trialFive=trial+quarterPoseContacts.reduce((n,x)=>
+    n+x.trialStrictTransversePairs,0);
+   const allFiveNew=introduced+quarterPoseContacts.reduce((n,x)=>
+    n+x.newOriginalSourceFacePairIDs,0);
+   const researchOnlyReduction=allFiveNew===0&&!depthIncreased&&
+    intermediateSafe&&trialFive<originalFive;
+   const displacementMeters=Math.hypot(t.dx,t.dy,t.dz);
    const row=Object.freeze({
     name:t.name,localCameraFacingRegistrationMeters:[t.dx,t.dy,t.dz],
     sourceRGBAndReviewAlphaBytesUnchanged:true,originalSkirtUVUnchanged:true,
@@ -167,14 +176,24 @@ export function compareActualOriginalPhotoSkirtRegistration89({
     intermediatePoseBaselineStrictPairs:quarterBaseline.map(x=>x.count),
     intermediatePoseContactChecks:quarterPoseContacts,
     intermediatePoseCrossingGuardPassed:intermediateSafe,
+    originalFivePoseStrictCrossingPairSum:originalFive,
+    trialFivePoseStrictCrossingPairSum:trialFive,
+    introducedFivePoseSourceFacePairIDs:allFiveNew,
+    displacementMeters,
+    fivePoseEvidenceIsStaticNotSwept:true,
     researchOnlyNonworseningReduction:researchOnlyReduction,
     photographicFrontDepthAlignmentHumanApproved:false,
     garmentAbsolutePhysicalScaleKnown:false,realMotionAndDrapeApproved:false,
     consumer3DAdmitted:false,releaseAuthorized:false
    });
    trials.push(row);
+   // Select the lowest actual five-pose collision count. When reductions
+   // tie, prefer the smaller rigid displacement (lower photo misalignment).
+   // Never call this a fitted wearable garment or photograph fidelity pass.
    if(researchOnlyReduction&&(!best||
-    trial<best.trialThreePoseStrictCrossingPairSum))best=row;
+    trialFive<best.trialFivePoseStrictCrossingPairSum||
+    trialFive===best.trialFivePoseStrictCrossingPairSum&&
+     displacementMeters<best.displacementMeters-1e-9))best=row;
   }
   for(const [name,copy] of protectedSource){
    const b=name==='index'?original.index.array:original.getAttribute(name).array;
@@ -194,6 +213,10 @@ export function compareActualOriginalPhotoSkirtRegistration89({
    originalIntermediatePoseStrictBodyCrossingPairs:quarterBaseline.map(x=>x.count),
    actualIntermediatePoseNamesChecked:QUARTERS,
    candidateMustPassAllFiveSourcePoses:true,
+   allCandidateOriginalAndTrialFivePoseBVHSamplesObserved:true,
+   bestResearchCandidateSelectedByFivePosePairSumThenMinimumDisplacement:true,
+   originalFivePoseStrictCrossingPairSum:
+    baseline.reduce((n,x)=>n+x.count,0)+quarterBaseline.reduce((n,x)=>n+x.count,0),
    trials, bestResearchOnly:best,
    sourcePhotoPixelsAndMasksUnmodified:true,
    skinnedBodyVerticesNeverExported:true,
