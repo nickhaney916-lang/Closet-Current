@@ -44,6 +44,8 @@ for(const figure of ['female','male']){
    const original=data.baseline.samples.filter(x=>x.figure===figure)[i];
    assert.equal(rows[i].sourceSHA256,original.sourceSHA256);
    assert.deepEqual(rows[i].resources,original.resources);
+   assert.deepEqual(rows[i].contactEvidence,original.contactEvidence,
+    'BVH reuse must preserve exact real cloth crossing counts, pose passes and displacement');
   }
   metrics.push({figure,variant,samples:rows.length,
    medianEndToEndMs:median(rows.map(x=>x.elapsedMs)),
