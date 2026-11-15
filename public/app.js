@@ -1927,7 +1927,32 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
    }
    return;
   }
-  if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}assertImport();if(!confirm(`Import ${valid.length} pieces? Matching IDs will update existing pieces.`))return;assertImport();await writeAll(valid);assertImport();const restored=await readAllFrom(importLease.ownerDB);assertImport();items=restored.map(normalizeClothing);if(data.looks){assertImport();await importLooks(data.looks);assertImport();}if(data.outfitBoard&&typeof importBoardBackup==='function'){assertImport();await importBoardBackup(data.outfitBoard);assertImport();}render();importMessage('Backup imported.');}catch(err){importMessage(err.message||'Import failed.');}};
+  if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}// Legacy default v1–v3 restore is not yet a single wardrobe/board commit.
+  // Reject malformed or missing outfit references and live unsaved outfit edits
+  // BEFORE the first garments write, rather than discovering invalid board
+  // data only after clothing has already been imported.
+  const preflightLegacyBoard=()=>{
+   const board=data.outfitBoard;
+   if(!board||typeof importBoardBackup!=='function')return;
+   const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+   if(!object(board)||!Array.isArray(board.saved)||board.saved.length>50)
+    throw Error('Backup contains invalid outfit data. No clothing was imported.');
+   const known=new Set([
+    ...(typeof items!=='undefined'&&Array.isArray(items)?items:[]),...valid
+   ].map(item=>item.id));
+   for(const entry of [board.current??{},...board.saved]){
+    if(!object(entry)||entry.slots!==undefined&&!object(entry.slots))
+     throw Error('Backup contains invalid outfit data. No clothing was imported.');
+    for(const id of Object.values(entry.slots||{}))
+     if(typeof id!=='string'||!known.has(id))
+      throw Error('Backup references an unavailable outfit garment. No clothing was imported.');
+   }
+   if(typeof boardHasUnsavedDraft==='function'&&boardHasUnsavedDraft())
+    throw Error('Save or discard unfinished outfit changes before importing a backup.');
+  };
+  preflightLegacyBoard();
+  assertImport();if(!confirm(`Import ${valid.length} pieces? Matching IDs will update existing pieces.`))return;
+  assertImport();preflightLegacyBoard();await writeAll(valid);assertImport();const restored=await readAllFrom(importLease.ownerDB);assertImport();items=restored.map(normalizeClothing);if(data.looks){assertImport();await importLooks(data.looks);assertImport();}if(data.outfitBoard&&typeof importBoardBackup==='function'){assertImport();await importBoardBackup(data.outfitBoard);assertImport();}render();importMessage('Backup imported.');}catch(err){importMessage(err.message||'Import failed.');}};
 window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});
 const closetReady=(async()=>{
  await window.closetAuth.ready;
