@@ -56,6 +56,9 @@ const cloudStub='window.closetCloud={start:async()=>{},changed:()=>{},beforeWrit
 // The selected source is the genuine SHA-checked Commons-0003 JPEG.
 const acceptedMask=new Uint8Array(64);for(const i of [9,10,11,17,18,19,25,26,27])acceptedMask[i]=1;
 const maskSha=createHash('sha256').update(acceptedMask).digest('hex');
+const secondAcceptedMask=new Uint8Array(64);
+for(const i of [20,21,22,28,29,30,36,37,38])secondAcceptedMask[i]=1;
+const secondMaskSha=createHash('sha256').update(secondAcceptedMask).digest('hex');
 const workerFixture=String.raw`
 (()=>{
  const Native=window.Worker;
@@ -69,6 +72,38 @@ const workerFixture=String.raw`
      throw Error('M57 must send original JPEG with explicit P88 70/840 worker mode');
     window.__m57WorkerRequest={sourceOriginal:req.image.length,receipt:true,
      researchFlags:req.instanceReview70&&req.instanceReview840};
+    const requestNumber=(window.__m57WorkerRequestNumber=
+     (window.__m57WorkerRequestNumber||0)+1);
+    if(requestNumber===2){
+     // This independent P88-shaped, SOURCE-BOUND candidate is a synthetic
+     // research fixture, NOT measured segmentation or garment identity.
+     const method='connected_semantic_component_unverified';
+     const proposal={id:req.id,type:'piece',piece:{
+      cropBounds:{x:.18,y:.13,width:.61,height:.73},
+      instanceMethod:method,
+      hint:{categories:['Dresses'],types:['Casual dress'],
+       confidence:.53,clipped:false,
+       componentReviewStatus:'owner_must_confirm_garment_units'},
+      colorEstimate:{color:'Black'},
+      reconciliation70:{
+       sourceSha256:'${dressSHA}',maskSha256:'${secondMaskSha}',
+       instanceOrdinal:1,method
+      }
+     }};
+     const stale=JSON.parse(JSON.stringify(proposal));
+     stale.piece.reconciliation70.sourceSha256='${sourceSHA}';
+     stale.piece.reconciliation70.instanceOrdinal=0;
+     const replay=JSON.parse(JSON.stringify(proposal));
+     replay.piece.reconciliation70.instanceOrdinal=2;
+     const send=(value,delay)=>setTimeout(()=>{
+      if(!mock.terminated)mock.onmessage?.({data:value});
+     },delay);
+     send(stale,12); // old source cannot become an eligible garment
+     send(proposal,20);
+     send(replay,28); // one mask cannot become two physical garments
+     send({id:req.id,type:'done',count:3},48);
+     return;
+    }
     const method='native_semantic_group_unresolved_fragments';
     const packet={id:req.id,type:'piece',piece:{
      cropBounds:{x:.12,y:.12,width:.42,height:.52},
@@ -214,12 +249,10 @@ try{
   assert.equal(await page.locator('#multi24Grid .multi24-card').count(),0);
   assert.equal(await countRows(page),0);
 
-  // MAIN1054 finish-line positive journey in the SAME actual browser app:
-  // replace the rejected source with a second registered public original,
-  // reject the old P88 packet whose source SHA is now stale, and exercise
-  // an explicitly MANUAL crop/review/save and native 2D outfit selection.
-  // This is NOT model accuracy, human truth or a verified 3D garment.
-  stage='native owner-positive manually reviewed second original';
+  // MAIN1054 same-browser positive model-proposal journey, still synthetic
+  // inference: a P88-shaped source-bound candidate (NOT a manual add) goes
+  // through native owner crop/confirmation and the real 2D Outfit Builder.
+  stage='source-bound model proposal for second licensed original';
   await page.locator('#outfitUpload').setInputFiles({
    name:'commons-0053.jpg',mimeType:'image/jpeg',buffer:dressOriginal
   });
@@ -227,11 +260,17 @@ try{
    dressSHA,{timeout:30000});
   await page.waitForFunction(()=>window.multi24Research?.debug().working===false,
    null,{timeout:30000});
-  assert.equal(await page.locator('#multi24Grid .multi24-card').count(),0,
-   'stale P88 worker packet from previous original was accepted into new original');
-  await page.locator('#multi24Research').getByRole('button',{name:'Add missed piece'}).click();
   const manual=page.locator('#multi24Grid .multi24-card').first();
   await manual.waitFor({timeout:15000});
+  assert.equal(await page.locator('#multi24Grid .multi24-card').count(),1,
+   'stale source or duplicate P88 mask created a second review card');
+  assert.notEqual(await manual.getAttribute('data-review-tier'),'manual',
+   'source-bound model proposal was replaced by manual review');
+  assert.equal(await manual.locator('[data-mask-review54="recapture-required"]').count(),0,
+   'unverified model candidate was mislabeled as known unresolved fragments');
+  assert.equal(await manual.getByLabel(
+   'I confirm this visible garment, category and color').isDisabled(),true,
+   'unreviewed model proposal could be accepted before explicit crop review');
   await manual.getByRole('button',{name:'Adjust crop/mask'}).click();
   const manualEditor=page.locator('dialog.photo-crop-editor');
   await manualEditor.waitFor({state:'visible'});
@@ -261,7 +300,10 @@ try{
    });
    if(rows.length!==1)throw Error('exactly one explicitly confirmed private garment required');
    const row=rows[0];
-   if(row.ownerId!=='m54-A'||row.sourceSHA256!==expected||
+   if(!row.sourcePieceKey?.startsWith(expected+'/seg-')||
+      row.segmentHint?.categories?.[0]!=='Dresses'||
+      row.segmentHint?.confidence!==.53||
+      row.ownerId!=='m54-A'||row.sourceSHA256!==expected||
       row.originalPhoto?.sha256!==expected||row.sourceHashVerified!==true||
       row.sourceCropReviewed!==true||row.extractionReview!=='human-confirmed'||
       row.photoOnly!==true||row.threeDReady!==false||
@@ -275,7 +317,8 @@ try{
     b=>b.toString(16).padStart(2,'0')).join('');
    if(digest!==expected)throw Error('saved original JPEG bytes were modified');
    return {id:row.id,sourceVerified:true,originalSha:digest,
-    unverifiedPhysicalUnit:true,manuallyConfirmed:true};
+    unverifiedPhysicalUnit:true,manuallyConfirmed:true,
+    sourceBoundModelProposal:true,sourceMaskNotCertified:true};
   },dressSHA);
   stage='actual native owner private Outfit Builder selection';
   await page.evaluate(()=>switchView('builder'));
@@ -316,6 +359,8 @@ try{
    ownerConfirmDisabled:true,ownerTypedCategorySubtypeColorStillDenied:true,
    ownerCropDoesNotOverrideVeto:true,unsafeProposalRemoved:true,
    savedRows:0,manualOwnerReviewedSecondSource:true,
+   sourceBoundModelProposalHumanReviewed:true,
+   sourceMaskNotCertified:stored.sourceMaskNotCertified,
    secondOriginalSourceShaVerified:stored.sourceVerified,
    verifiedOriginalBytesRetained:stored.originalSha===dressSHA,
    oneOwnerPrivateGarmentRow:true,
