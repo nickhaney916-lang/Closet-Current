@@ -54,7 +54,7 @@ export function auditActualSourceQuarterStepSurfaceGaps89({
   m.geometry===geometry&&m.material===material&&geometry.index===index&&
   attr.every(({name,a,array})=>geometry.getAttribute(name)===a&&
    a.array.length===array.length&&array.every((v,i)=>Object.is(v,a.array[i]))));
- const receipts=[];
+ const receipts=[];let outcome;
  try{
   for(const pose of POSES){
    const p=applyPose(pose);
@@ -93,7 +93,7 @@ export function auditActualSourceQuarterStepSurfaceGaps89({
    }
   }
   if(!unchanged())throw Error('original-public-geometry-mutated');
-  return Object.freeze({...out,
+  outcome=Object.freeze({...out,
    status:'ACTUAL_PUBLIC_SOURCE_STATIC_QUARTERSTEP_MEASURED_NOT_SWEPT',
    avatar,originalShirtSHA256:SHIRT,
    originalDenimSourceId:pants.stats.sourceId,
@@ -104,15 +104,28 @@ export function auditActualSourceQuarterStepSurfaceGaps89({
    allOriginalFacePairsExamined:true,
    staticQuarterStepNotSweptMotion:true,
    originalSourceGeometryUnchanged:true,
-   originalBonesRestored:true
+   originalBonesRestored:false
   });
  }catch{
-  return deny('source-quarterstep-measurement-or-integrity-unverified');
+  outcome=deny('source-quarterstep-measurement-or-integrity-unverified');
  }finally{
-  for(const {b,p,q,s} of joints){
-   b.position.copy(p);b.quaternion.copy(q);b.scale.copy(s);
+  try{
+   for(const {b,p,q,s} of joints){
+    b.position.copy(p);b.quaternion.copy(q);b.scale.copy(s);
+   }
+   root.updateMatrixWorld(true);
+   for(const m of meshes)m.skeleton.update();
+   const restored=joints.every(({b,p,q,s})=>
+    b.position.toArray().every((v,i)=>Object.is(v,p.getComponent(i)))&&
+    b.quaternion.toArray().every((v,i)=>Object.is(v,q.toArray()[i]))&&
+    b.scale.toArray().every((v,i)=>Object.is(v,s.getComponent(i))));
+   if(!restored||!unchanged())
+    outcome=deny('original-anatomical-bones-or-source-buffers-not-restored');
+   else if(outcome?.status==='ACTUAL_PUBLIC_SOURCE_STATIC_QUARTERSTEP_MEASURED_NOT_SWEPT')
+    outcome=Object.freeze({...outcome,originalBonesRestored:true});
+  }catch{
+   outcome=deny('original-anatomical-skeleton-restoration-unverified');
   }
-  root.updateMatrixWorld(true);
-  for(const m of meshes)m.skeleton.update();
  }
+ return outcome;
 }
