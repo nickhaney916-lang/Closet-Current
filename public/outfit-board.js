@@ -415,7 +415,9 @@ function boardPhotoRequiresUnitReview(item){
 // locally available receipt still refers to the SAME saved source/crop.
 // No private JPEG bytes or owner receipt are sent to other services.
 function boardHasMatchingOwnerSourceReview88(item){
- const r=item?.ownerSourceReview88,owner=window.closetAuth?.user?.id;
+ const r=item?.ownerSourceReview88,owner=window.closetAuth?.user?.id,
+  companion=item?.shoePair?.companion||item?.combinedFragments70?.companion,
+  companionMask=companion?.reconciliation70?.maskSha256||null;
  if(!item||!r||typeof r!=='object'||Array.isArray(r)||!owner||
     db?.name!=='closet-current-user-'+owner||
     item.ownerId!==owner||r.schema!=='p88-owner-source-review/v1'||
@@ -428,6 +430,10 @@ function boardHasMatchingOwnerSourceReview88(item){
     r.derivedImageBytesVerified!==true||
     r.selectedMaskSha256!==item.reconciliation70?.maskSha256||
     !/^[a-f0-9]{64}$/.test(r.selectedMaskSha256||'')||
+    r.companionMaskSha256!==companionMask||
+    r.companionImageBytesVerified!==Boolean(companion)||
+    (companion?!/^[a-f0-9]{64}$/.test(r.companionImageSha256||''):
+      r.companionImageSha256!==null)||
     r.physicalUnitDecision!==item.reconciliation70Status||
     r.category!==item.category||r.itemType!==(item.itemType||'Unknown')||
     r.color!==item.color||
