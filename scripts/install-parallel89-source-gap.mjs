@@ -18,6 +18,17 @@ let text=await readFile(p,'utf8');
 const head="import {auditActualSkinnedOutfitLayers84} from '../parallel84-real-photo-layers/actual-skinned-layers84.mjs';";
 assert.equal(text.split(head).length,2,'actual pinned P84 installed native source required');
 text=text.replace(head,head+"\nimport {auditActualOriginalSourcePoseSurfaceGaps89} from '../parallel89/source-static-gap89.mjs';");
+// P84 original research controller uses one static 10mm-down / 15mm-out
+// shoulder trial. P89 installs ONLY a small URL-whitelisted parameter sweep
+// in the disposable donor. No user-supplied coordinates, clothing uploads,
+// shipped application files or other mission branch writes.
+const sourceTrial="requestedDropMeters:.010,outwardClearanceMeters:.015";
+assert.equal(text.split(sourceTrial).length,2,
+ 'original protected P84 shoulder candidate parameters changed');
+const selected="new URLSearchParams(globalThis.location.search).get('parallel89ShapeVariant')";
+text=text.replace(sourceTrial,
+ "requestedDropMeters:(['low-drop','low-drop-outward'].includes("+selected+")?.004:.010),"+
+ "outwardClearanceMeters:("+selected+"==='low-drop-outward'?.020:.015)");
 const marker="  globalThis.__parallel84SetStaticPose=name=>{\n   if(!['source','blend-50','relaxed'].includes(name))throw Error('Invalid P84 research pose');\n   return setResearchPose(root,name);\n  };\n}";
 assert.equal(text.split(marker).length,2,'original P84 static source-pose controller anchor changed');
 text=text.replace(marker,marker+"\nif(globalThis.location?.hostname==='127.0.0.1'&&next==='shirt-pants'&&\n new URLSearchParams(globalThis.location.search).get('parallel89Gap')==='audit'){\n globalThis.__parallel89GapAudit=()=>auditActualOriginalSourcePoseSurfaceGaps89({\n  root,shirt:built.shirt,pants:built.pants,\n  avatar:globalThis.document?.getElementById('model')?.value,\n  applyPose:researchPose=>setResearchPose(root,researchPose),\n  poseContactReceipt:globalThis.__parallel84PoseResult\n });\n}");
