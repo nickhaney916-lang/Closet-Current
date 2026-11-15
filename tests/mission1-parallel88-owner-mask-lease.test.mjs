@@ -1278,3 +1278,76 @@ test('P88 queued owner decision refuses modified original JPEG while preflight w
  assert.equal(c.batch.find(x=>x.id==='part-A').reconciliation70Status,'unresolved');
  assert.match(c.outfitUnit70Error,/Owner or source garment changed before draft persistence/);
 });
+
+
+test('P88 ordinary review save holds exact owner, image and IDB after cloud preflight',async()=>{
+ const begin=appSource.indexOf('function reviewedSaveLease88(');
+ const end=appSource.indexOf('function node(',begin);
+ assert.ok(begin>0&&end>begin,'native reviewed save source is present');
+ const native=appSource.slice(begin,end);
+ const setup=()=>{
+  let releaseGate,writeCount=0;
+  const gate=new Promise(resolve=>{releaseGate=resolve;});
+  const written={};
+  const database={name:'closet-current-user-owner-A',transaction(){
+   const tx={objectStore(store){
+    return {put(value){writeCount++;written[store]=structuredClone(value);}};
+   }};
+   queueMicrotask(()=>tx.oncomplete?.());
+   return tx;
+  }};
+  const user={id:'owner-A'};
+  const item={id:'source-1',image:'data:image/jpeg;base64,AA==',
+   category:'Tops',itemType:'T-Shirt',color:'Blue',
+   segmentHint:{categories:['Tops']},cropBounds:{x:0,y:0,width:1,height:1}};
+  const c={window:{closetAuth:{user}},db:database,batch:[item],items:[],
+   structuredClone,queued:async cb=>{await gate;return cb();}};
+  vm.createContext(c);vm.runInContext(native,c);
+  const lease=vm.runInContext('reviewedSaveLease88(batch[0])',c);
+  return {c,lease,item,user,database,written,releaseGate,
+   get writes(){return writeCount;}};
+ };
+ {
+  const s=setup();
+  const attempt=s.c.savePiece({...s.item},[],s.lease);
+  s.c.window.closetAuth.user={id:'owner-B'};
+  s.c.db={name:'closet-current-user-owner-B',transaction(){throw Error('WRONG_OWNER_WRITE');}};
+  s.releaseGate();
+  await assert.rejects(attempt,/P88_REVOKED_REVIEWED_SAVE/);
+  assert.equal(s.writes,0,'old photo never reaches replacement account');
+ }
+ {
+  const s=setup();
+  const attempt=s.c.savePiece({...s.item},[],s.lease);
+  s.c.window.closetAuth.user={id:'owner-A'}; // same-ID renewed login
+  s.releaseGate();
+  await assert.rejects(attempt,/P88_REVOKED_REVIEWED_SAVE/);
+  assert.equal(s.writes,0);
+ }
+ {
+  const s=setup();
+  const attempt=s.c.savePiece({...s.item},[],s.lease);
+  s.item.segmentHint.categories.push('Shoes'); // in-place source revision
+  s.releaseGate();
+  await assert.rejects(attempt,/P88_REVOKED_REVIEWED_SAVE/);
+  assert.equal(s.writes,0);
+ }
+ {
+  const s=setup();
+  const attempt=s.c.savePiece({...s.item},[],s.lease);
+  const other={id:'new-draft',image:'data:image/jpeg;base64,AQ=='};
+  s.c.batch.push(other);
+  s.releaseGate();await attempt;
+  assert.equal(s.writes,2,'one item and one draft-state write');
+  assert.equal(s.written.items.id,s.item.id);
+  assert.deepEqual(s.written.state.batch.map(x=>x.id),['new-draft'],
+   'a photo appended during async preflight is not lost');
+ }
+ {
+  const s=setup(),forged={...s.item,image:'data:image/jpeg;base64,AQ=='};
+  const attempt=s.c.savePiece(forged,[],s.lease);
+  s.releaseGate();
+  await assert.rejects(attempt,/P88_REVOKED_REVIEWED_SAVE/);
+  assert.equal(s.writes,0,'replaced crop cannot reuse the old review lease');
+ }
+});
