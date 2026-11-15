@@ -1927,7 +1927,20 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
    }
    return;
   }
-  if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}// Legacy default v1–v3 restore is not yet a single wardrobe/board commit.
+  if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const importedIds=new Set(),signedImportOwner=window.closetAuth?.user?.id;const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');
+   // A duplicate after legacy 100-character ID normalization could silently
+   // overwrite a different physical garment. Explicit foreign owner tags
+   // must never be imported into the currently signed private account.
+   const normalizedId=x.id.slice(0,100);
+   if(importedIds.has(normalizedId))
+    throw Error('Backup contains duplicate garment IDs. No clothing was imported.');
+   importedIds.add(normalizedId);
+   for(const tagged of [x,x.originalPhoto]){
+    if(tagged&&tagged.ownerId!==undefined&&tagged.ownerId!==null&&
+       tagged.ownerId!==signedImportOwner)
+     throw Error('Backup belongs to another account. No clothing was imported.');
+   }
+   return normalizeClothing({...x,id:normalizedId,image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}// Legacy default v1–v3 restore is not yet a single wardrobe/board commit.
   // Reject malformed or missing outfit references and live unsaved outfit edits
   // BEFORE the first garments write, rather than discovering invalid board
   // data only after clothing has already been imported.
