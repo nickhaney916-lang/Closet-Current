@@ -278,7 +278,7 @@ def main():
             sum(len(r["annotations"]) for r in truth["rows"]) != 53:
         raise ValueError("Human truth source changed")
     data = json.loads((MASKS / "real-validation-predictions-88.json").read_text())
-    research_modes = ("researchLoose65", "researchLoose55")
+    research_modes = ("researchLoose65", "researchLoose55", "researchLoose65ShoeSplit")
     all_modes = ("baseline", "shoeOnly68", "p88Safe", "p88") + research_modes
     if (data.get("schema") != "closet-current-p88-exposed-real-photo-comparison/v1" or
         data.get("pixelGateResearchOnly") is not True or
@@ -295,10 +295,15 @@ def main():
             {"pixelConfidence": 0.65, "pixelMargin": 0.12} or
         data["researchLoose55"].get("researchOnlyPixelGate") !=
             {"pixelConfidence": 0.55, "pixelMargin": 0.08} or
+        data["researchLoose65ShoeSplit"].get("researchOnlyPixelGate") !=
+            {"pixelConfidence": 0.65, "pixelMargin": 0.12} or
+        data["researchLoose65ShoeSplit"].get("researchOnlyShoeComponentReview") is not True or
+        any(data[x].get("researchOnlyShoeComponentReview") is not False
+            for x in ("baseline", "shoeOnly68", "p88Safe", "p88", "researchLoose65", "researchLoose55")) or
         any(data[x].get("researchOnlyPixelGate") is not None
             for x in ("baseline", "shoeOnly68", "p88Safe", "p88"))):
         raise ValueError("Research threshold definition altered")
-    baseline, shoes, safe, candidate, loose65, loose55 = (
+    baseline, shoes, safe, candidate, loose65, loose55, loose65_split = (
         measure(truth, data[mode]) for mode in all_modes)
     result = {
         "schema": "closet-current-p88-exposed-human-instance-iou/v1",
@@ -315,7 +320,9 @@ def main():
         "exposedResearchNoModelOrAutoSavePromotion": True,
         "exposedResearchPixelGateParameters": {
             "researchLoose65": {"pixelConfidence": 0.65, "pixelMargin": 0.12},
-            "researchLoose55": {"pixelConfidence": 0.55, "pixelMargin": 0.08}
+            "researchLoose55": {"pixelConfidence": 0.55, "pixelMargin": 0.08},
+            "researchLoose65ShoeSplit": {"pixelConfidence": 0.65, "pixelMargin": 0.12,
+                                          "conservativeShoeComponentReview": True}
         },
         "confidenceRetentionResearchOnly": retained_fixed_match_diagnostic(safe["rows"]),
         "categoryFailureAttributionResearchOnly": source_category_failure_diagnostic(safe["rows"]),
@@ -324,6 +331,7 @@ def main():
         "physicalDevice": False, "privateAccountTouched": False,
         "baseline": baseline, "shoeOnly68": shoes, "p88Safe": safe, "p88": candidate,
         "researchLoose65": loose65, "researchLoose55": loose55,
+        "researchLoose65ShoeSplit":loose65_split,
         "researchOnlyPixelGateDiffVsSafe": {
             x: {
                 "addedProposals": value["classAgnostic"]["predicted"]-safe["classAgnostic"]["predicted"],
@@ -332,7 +340,15 @@ def main():
                 "deltaUnmatchedProposals": value["classAgnostic"]["falsePositives"]-safe["classAgnostic"]["falsePositives"],
                 "notSealedAccuracy": True, "notProductionPromotion": True
             }
-            for x, value in (("researchLoose65",loose65),("researchLoose55",loose55))
+            for x, value in (("researchLoose65",loose65),("researchLoose55",loose55),
+                             ("researchLoose65ShoeSplit",loose65_split))
+        },
+        "researchShoeComponentRescueVsLoose65": {
+            "extraProposals":loose65_split["classAgnostic"]["predicted"]-loose65["classAgnostic"]["predicted"],
+            "extraAgnosticMatches":loose65_split["classAgnostic"]["matched"]-loose65["classAgnostic"]["matched"],
+            "extraCategoryMatches":loose65_split["categoryCompatible"]["matched"]-loose65["categoryCompatible"]["matched"],
+            "notBlindGeneralization":True,
+            "notDeploymentPermission":True
         },
         "deltaClassAgnosticRecall": candidate["classAgnostic"]["recall"] - baseline["classAgnostic"]["recall"],
         "deltaCategoryCompatibleRecall": candidate["categoryCompatible"]["recall"] - baseline["categoryCompatible"]["recall"],
