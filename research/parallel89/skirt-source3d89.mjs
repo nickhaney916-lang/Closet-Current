@@ -77,7 +77,8 @@ export function sourceSkirtOutline89({alpha,width,height}={}){
  // for one skirt. Verify one dominant real foreground component, retaining
  // minor loose threads/alpha dust without stitching disjoint items together.
  // Eight-connected pixels allow diagonal photographed cloth boundaries.
- const visited=new Uint8Array(alpha.length),stack=new Int32Array(alpha.length);
+ const visited=new Uint8Array(alpha.length),dominant=new Uint8Array(alpha.length),
+  stack=new Int32Array(alpha.length);
  let largest=0,componentCount=0;
  for(let start=0;start<alpha.length;start++){
   if(visited[start]||alpha[start]<128)continue;
@@ -93,17 +94,32 @@ export function sourceSkirtOutline89({alpha,width,height}={}){
     visited[id]=1;stack[tail++]=id;
    }
   }
-  componentCount++;largest=Math.max(largest,size);
+  componentCount++;
+  if(size>largest){
+   largest=size;dominant.fill(0);
+   for(let i=0;i<tail;i++)dominant[stack[i]]=1;
+  }
  }
  if(componentCount===0||largest/visible<.8)
   throw Error('source skirt mask contains multiple disconnected garment-sized regions');
+ // Only the measured dominant fabric component sets the image crop/UV rows.
+ // Otherwise a detached alpha speck can shift the actual photographed motif.
+ left=width;right=-1;top=height;bottom=-1;
+ for(let i=0;i<dominant.length;i++)if(dominant[i]){
+  const x=i%width,y=Math.floor(i/width);
+  left=Math.min(left,x);right=Math.max(right,x);
+  top=Math.min(top,y);bottom=Math.max(bottom,y);
+ }
+ visible=largest;
+ if(right<=left||bottom-top<height*.25||visible<width*height*.04)
+  throw Error('dominant source skirt silhouette not credible');
  const span=bottom-top+1;
  const bands=[.08,.22,.36,.50,.64,.78,.92].map(p=>{
   const cy=top+Math.round((span-1)*p),rad=Math.max(1,Math.round(span*.025));
   let widths=[],centers=[];
   for(let y=Math.max(top,cy-rad);y<=Math.min(bottom,cy+rad);y++){
    let a=width,b=-1,count=0;
-   for(let x=left;x<=right;x++)if(alpha[y*width+x]>=128){a=Math.min(a,x);b=Math.max(b,x);count++;}
+   for(let x=left;x<=right;x++)if(dominant[y*width+x]){a=Math.min(a,x);b=Math.max(b,x);count++;}
    if(b>a&&count>Math.max(3,(b-a)*.22)){widths.push(b-a+1);centers.push((a+b)/2);}
   }
   if(widths.length<2)throw Error('source garment silhouette missing horizontal band');
