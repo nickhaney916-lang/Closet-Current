@@ -14,6 +14,7 @@ import {createHash} from 'node:crypto';
 import {resolve,join,extname} from 'node:path';
 import {performance} from 'node:perf_hooks';
 import {chromium,webkit} from 'playwright';
+import {mutateOwnerItem91} from './lib/owner-item-mutation91.mjs';
 const file=await readFile('benchmark/fixtures/commons-0003.jpg');
 const sha=createHash('sha256').update(file).digest('hex');
 const locked=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'))
@@ -47,7 +48,7 @@ const origin='http://127.0.0.1:'+server.address().port;
 const auth='https://hlkgymugtfbirlpunsra.supabase.co';
 const cloudStub='window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};';
 const external=[],rejected=[],issues=[],modelResponses=[];
-const navigationReasonsM69=[],mainFrameNavigationsM69=[];
+const navigationReasonsM69=[],mainFrameNavigationsM69=[],documentLifecycle91=[];
 let browser,stage='startup';
 const started=performance.now();
 // M72: a real page reload runs the native refresh-token flow. This disposable
@@ -112,6 +113,14 @@ try{
   rejected.push({host:h,method:req.method(),path:url.pathname.slice(0,100)});
   return route.abort();
  });
+ await context.exposeBinding('__p91Lifecycle',(_source,event)=>{
+  documentLifecycle91.push({event:event.type,document:event.document,stage,elapsedMs:Math.round(performance.now()-started)});
+ });
+ await context.addInitScript(()=>{
+  window.__document91=crypto.randomUUID();
+  for(const type of ['DOMContentLoaded','pageshow','pagehide','beforeunload'])
+   window.addEventListener(type,()=>window.__p91Lifecycle({type,document:window.__document91}));
+ });
  const page=await context.newPage();
  // M69: reproducible no-deploy diagnostics for the intermittent A→B→A
  // navigation that can invalidate the M67 original-JPEG IDB mutation.
@@ -125,6 +134,9 @@ try{
  if(engine==='chromium'){
   const cdp=await context.newCDPSession(page);
   await cdp.send('Page.enable');
+  await cdp.send('Runtime.enable');
+  for(const name of ['Runtime.executionContextDestroyed','Runtime.executionContextsCleared','Page.frameNavigated','Page.navigatedWithinDocument'])
+   cdp.on(name,()=>documentLifecycle91.push({event:name,stage,elapsedMs:Math.round(performance.now()-started)}));
   cdp.on('Page.frameRequestedNavigation',event=>{
    navigationReasonsM69.push({
     stage,reason:event.reason,disposition:event.disposition,
@@ -426,6 +438,7 @@ try{
  // Toggle the existing V4 handler at call-time (restoreAtomic01's opt-in
  // export handler has precedence, so turn that flag off, without reloading
  // or replacing the actual authenticated owner/session/IndexedDB).
+ const sourceDocument91=await page.evaluate(()=>window.__document91);
  stage='same-real-worker-session-native-lossless-v4-export';
  await page.evaluate(()=>{
   const params=new URLSearchParams(location.search);
@@ -504,63 +517,9 @@ try{
  assert.deepEqual(await ownerSnapshot(),initial,
   'native v4 cancellation changed genuine-model session private source');
  stage='same-real-worker-session-native-v4-atomic-restore';
- const editOwnerSourceForRestore=()=>page.evaluate(async id=>{
-  const tx=db.transaction('items','readwrite'),store=tx.objectStore('items');
-  const record=await new Promise((resolve,reject)=>{
-   const req=store.get(id);
-   req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
-  });
-  if(!record)throw Error('M61 lost actual reviewed model-session source');
-  record.color='Disposable synthetic edit';
-  store.put(record);
-  await new Promise((resolve,reject)=>{
-   tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(tx.error);
-  });
-  window.dispatchEvent(new Event('closet:style-owned-inventory-committed'));
- },handoff.savedItemId);
- let recoveredNavigationM77=false;
- try{await editOwnerSourceForRestore();}
- catch(error){
-  // M77: Chromium can finish the real, byte-verified private V4 export,
-  // then replace its document during the next IndexedDB mutation. Do not
-  // silently ignore this: recovery is permitted only for an OBSERVED same-
-  // path navigation, followed by a fresh native signed-owner, original
-  // source and exact private outfit verification. Any other error fails.
-  if(!/Execution context was destroyed|because of a navigation/i.test(String(error)))
-   throw error;
-  await page.waitForLoadState('domcontentloaded',{timeout:30000});
-  if(!mainFrameNavigationsM69.some(n=>
-    n.stage==='same-real-worker-session-native-lossless-v4-export'&&
-    n.path==='/public/index.html'))
-   throw error;
-  await page.waitForFunction(()=>window.closetAuth?.user?.id==='m58-A'&&
-   db?.name==='closet-current-user-m58-A'&&
-   document.getElementById('appShell')?.hidden===false&&
-   window.nativeLossless04Bridge?.status()?.active===true,
-   null,{timeout:30000});
-  const afterReload=await ownerSnapshot();
-  assert.equal(afterReload.owner,initial.owner,'navigation changed original owner');
-  assert.equal(afterReload.items.length,1,'navigation lost the reviewed garment');
-  assert.equal(afterReload.items[0].id,handoff.savedItemId);
-  assert.equal(afterReload.items[0].sourceSHA256,sha);
-  assert.equal(afterReload.items[0].originalSHA,sha);
-  assert.equal(afterReload.top,handoff.savedItemId);
-  assert.equal(afterReload.savedOutfitCount,initial.savedOutfitCount);
-  assert.equal(afterReload.items[0].singleGarmentVerified,false);
-  assert.equal(afterReload.items[0].threeDReady,false);
-  assert.ok([initial.items[0].color,'Disposable synthetic edit']
-   .includes(afterReload.items[0].color),
-   'navigation changed private garment unexpectedly');
-  if(afterReload.items[0].color==='Disposable synthetic edit')
-   await page.evaluate(()=>window.dispatchEvent(
-    new Event('closet:style-owned-inventory-committed')));
-  else await editOwnerSourceForRestore();
-  recoveredNavigationM77=true;
-  console.log('M77_ORIGINAL_SOURCE_RESTORED_AFTER_UNEXPECTED_NAVIGATION',
-   JSON.stringify({engine,ownerRetained:true,originalSHA256:sha,
-    savedOutfitRetained:true,realModelRetained:false,
-    recoverableDocumentNavigation:true,physicalPhone:false,release:'HOLD'}));
- }
+ await mutateOwnerItem91(page,{id:handoff.savedItemId,ownerId:'m58-A',operation:'color'});
+ assert.equal(await page.evaluate(()=>window.__document91),sourceDocument91,
+  'export/restore mutation unexpectedly replaced the source document');
  assert.equal((await ownerSnapshot()).items[0].color,'Disposable synthetic edit');
  assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),0);
  const restoredNotice=await submitBackup(v4,true);
@@ -634,11 +593,12 @@ try{
  // AUTH's logout handler locks the UI immediately, but only reloads after
  // awaiting /auth/v1/logout. Waiting for authGate alone races that reload
  // and can destroy a B-session page.evaluate many steps later.
- const logoutReloadA=page.waitForEvent('framenavigated',{
-  predicate:frame=>frame===page.mainFrame(),timeout:30000
- });
+ const logoutDocumentA=await page.evaluate(()=>window.__document91);
+ const logoutReloadA=page.waitForEvent('load',{timeout:30000});
  await page.locator('#logout').click();
  await logoutReloadA;
+ assert.notEqual(await page.evaluate(()=>window.__document91),logoutDocumentA,
+  'logout did not replace the authenticated document');
  await page.waitForLoadState('domcontentloaded');
  await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false,
   null,{timeout:30000});
@@ -734,11 +694,12 @@ try{
  // Neither B nor A re-logins re-run the worker or seed a synthetic record.
  stage='same-browser-owner-B-logout-return-owner-A-private-recovery';
  await page.locator('.account-menu summary').click();
- const logoutReloadB=page.waitForEvent('framenavigated',{
-  predicate:frame=>frame===page.mainFrame(),timeout:30000
- });
+ const logoutDocumentB=await page.evaluate(()=>window.__document91);
+ const logoutReloadB=page.waitForEvent('load',{timeout:30000});
  await page.locator('#logout').click();
  await logoutReloadB;
+ assert.notEqual(await page.evaluate(()=>window.__document91),logoutDocumentB,
+  'logout did not replace the authenticated document');
  await page.waitForLoadState('domcontentloaded');
  await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false,
   null,{timeout:30000});
@@ -792,18 +753,8 @@ try{
  // has been displayed. The read-only gallery must invalidate that image and
  // refuse reentry when actual JPEG BYTES no longer match their saved SHA.
  // Restore only from A's original owner-scoped v4 export afterwards.
- // M71: the public SegFormer WASM inference, v4 import, two logout
- // reloads, and owner A recovery have already completed. Explicitly enter a
- // fresh, authenticated document for the independent source-byte tamper and
- // restore phase. This is NOT a retry or skipped assertion: every negative
- // source-integrity check below must still pass after the boundary.
- stage='fresh-owner-A-document-before-original-byte-tamper';
- await page.reload({waitUntil:'domcontentloaded'});
- await page.waitForFunction(()=>window.closetAuth?.user?.id==='m58-A'&&
-  db?.name==='closet-current-user-m58-A'&&
-  window.nativeLossless04Bridge?.status()?.active===true&&
-  document.getElementById('appShell')?.hidden===false,
-  null,{timeout:30000});
+ // P91: keep A's recovered document through source-byte tamper; no
+ // extra reload or navigation-error recovery is allowed here.
  await page.evaluate(()=>switchView('builder'));
  await page.waitForFunction(id=>window.nativeLossless04Bridge
   ?.readOnlySnapshot()?.saved?.some(b=>b.slots?.top===id)&&
@@ -816,24 +767,7 @@ try{
  await page.waitForFunction(()=>document.querySelectorAll(
   '#mission4PhotoOnly59Photos img').length===1,null,{timeout:30000});
  stage='same-owner-original-jpeg-byte-tamper-gallery-must-fail-closed';
- await page.evaluate(async id=>{
-  const tx=db.transaction('items','readwrite'),store=tx.objectStore('items');
-  const row=await new Promise((resolve,reject)=>{
-   const req=store.get(id);
-   req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
-  });
-  if(!row||row.ownerId!=='m58-A')throw Error('M67 owner item missing');
-  const image=row.originalPhoto?.image;
-  if(typeof image!=='string'||!image.startsWith('data:image/jpeg;base64,')||
-     image.length<500)throw Error('M67 original source missing');
-  const i=Math.floor(image.length*0.65);
-  row.originalPhoto.image=image.slice(0,i)+(image[i]==='A'?'B':'A')+image.slice(i+1);
-  store.put(row);
-  await new Promise((resolve,reject)=>{
-   tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(tx.error);
-  });
-  window.dispatchEvent(new Event('closet:style-owned-inventory-committed'));
- },handoff.savedItemId);
+ await mutateOwnerItem91(page,{id:handoff.savedItemId,ownerId:'m58-A',operation:'jpeg-byte'});
  await page.waitForFunction(()=>document.querySelectorAll(
   '#mission4PhotoOnly59Photos img').length===0,null,{timeout:20000});
  await page.locator('#mission4PhotoOnly59Open').click();
@@ -870,12 +804,19 @@ try{
   originalPhotoOnly:true,fitted3D:false,syntheticAuthOnly:true,
   hostedRLS:false,physicalPhone:false,familyAlpha:'HOLD'
  }));
+ const lifecycle91={engine,browserVersion:browser.version(),elapsedMs:Math.round(performance.now()-started),
+  uninterruptedSourceExportRestore:true,writeRetries:0,extraTamperReloads:0,ownerRecovery:true,
+  originalPhotoByteTamperRefused:true,familyAlpha:'HOLD',releaseAuthorized:false,
+  events:documentLifecycle91};
+ await writeFile(join(out,'P91-LIFECYCLE.json'),JSON.stringify(lifecycle91,null,2));
+ console.log('P91_FULL_JOURNEY_PASS',JSON.stringify({...lifecycle91,events:undefined}));
  await context.close();
 }catch(e){
  console.error('M58_REAL_P88_WORKER_FAIL',JSON.stringify({
   stage,error:String(e?.stack||e).slice(0,950),
   external:external.slice(0,15),rejected:rejected.slice(0,15),issues:issues.slice(0,10),
   modelStatuses:modelResponses.slice(0,12),
+  documentLifecycle91:documentLifecycle91.slice(-40),
   navigationReasonsM69:navigationReasonsM69.slice(-12),
   mainFrameNavigationsM69:mainFrameNavigationsM69.slice(-12)
  }));
