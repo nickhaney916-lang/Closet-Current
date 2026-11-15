@@ -26,3 +26,27 @@ The first CI run exposed four inherited `tests/mission3-edit-backup-owner-lease.
 **No exact-head test status is claimed until the dedicated CI jobs finish.** Unit and browser tests are not physical Android/iPhone or authorized hosted-cloud acceptance.
 
 Release blockers remain the same as PR #1126's completion audit: independently authorized signed four-account hosted backup/restore, physical phone end-to-end, genuine human-confirmed garment recognition, source-photo 3D garment fit, integrated source-to-outfit journey, and explicit owner release decision. #255 must remain OPEN/HOLD.
+## November 15 continuation — default legacy outfit preflight (pending exact-head CI)
+
+The default v1–v3 import path still performs multiple local writes (items,
+inspiration, outfit board) and is **not** a fully atomic restore. A source-level
+partial-restore risk was identified: an invalid `outfitBoard` structure or a
+saved slot referencing a missing garment was detected only by
+`importBoardBackup()`, after `writeAll(valid)` could already have committed.
+Similarly, an unfinished board draft was not fenced before that write.
+
+The existing Mission 3 draft now preflights the backup's outfit structure,
+saved-list size and slot garment identity against the imported + currently
+saved owner rows; refuses a currently unsaved outfit draft; and repeats the
+preflight after the owner accepts the import, before the first garment write.
+The previous visible behavior is retained for valid backups. Five source-
+executed synthetic tests were added to the existing private-import test
+file; the existing strict five-path workflow includes the test automatically.
+
+**Acceptance limits:** This is a bounded prevent-before-first-write fix,
+not a claim of atomic default legacy import. A database failure after
+`writeAll`, or races with another tab during the individual writes, still
+require a single-transaction migration / independent acceptance. Physical
+devices and actual hosted four-account restore remain blocked; Family Alpha
+#255 stays HOLD. Do not interpret new code as tested until its exact-head
+workflow finishes.
