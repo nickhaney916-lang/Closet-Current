@@ -183,6 +183,8 @@ test('P90 M13 authentic research owner-photo mobile background/freeze revoke on 
  assert.ok(workflow.includes('benchmark/native-3d-102/'));
  assert.ok(browser.includes("sourceLifecycleOut102='benchmark/native-3d-102'+(engine90==='webkit'?'-webkit':'')"));
  assert.ok(browser.includes("browser:engine90,simulatedBrowserVisibility:true"));
+ assert.ok(browser.includes("const sourceLifecycleReceipt102=engine90==='webkit'?'benchmark/native-3d-102-webkit/acceptance.json':'benchmark/native-3d-102/acceptance.json'"));
+ assert.ok(browser.includes("await writeFile(sourceLifecycleReceipt102,"));
  assert.ok(browser.includes("sourceReopenPassedActualNATIVE92OriginalBytes:native92"));
  assert.ok(browser.includes("document.dispatchEvent(new Event('visibilitychange'))"));
  assert.ok(browser.includes("document.dispatchEvent(new Event('freeze'))"));
