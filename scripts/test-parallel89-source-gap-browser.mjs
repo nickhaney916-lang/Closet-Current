@@ -9,6 +9,7 @@ import {resolve,join,extname} from 'node:path';
 import {createHash} from 'node:crypto';
 import {chromium,webkit} from 'playwright';
 import {compareOriginalSourceShoulderGapAB89} from '../research/parallel89/source-gap-contrast89.mjs';
+import {compareOriginalSourceQuarterStepAB89} from '../research/parallel89/source-quarter-compare89.mjs';
 const donor=resolve(process.argv[2]||'.');
 const engine=process.env.P89_BROWSER||'chromium';
 assert.ok(process.argv[2]&&donor!==resolve('.')&&
@@ -44,7 +45,7 @@ const server=createServer(async(req,res)=>{
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const origin='http://127.0.0.1:'+server.address().port;
 let browser;
-const receipts=[],shoulderContrasts=[],researchSelections=[],errors=[],offsite=[];
+const receipts=[],shoulderContrasts=[],quarterContrasts=[],researchSelections=[],errors=[],offsite=[];
 try{
  browser=await ({chromium,webkit})[engine].launch({headless:true,...(
   engine==='chromium'?{args:['--use-gl=angle','--use-angle=swiftshader',
@@ -116,6 +117,35 @@ try{
    assert.equal(row.someSourceSurfacesWithin2mm,Object.values(distances).some(x=>
     x.unsignedMinimumSurfaceDistanceMeters<=.002));
   }
+  const quarterProof=await page.evaluate(()=>{
+   if(typeof window.__parallel89QuarterGapAudit!=='function')
+    throw Error('actual original-source quarter arm pose audit missing');
+   return window.__parallel89QuarterGapAudit();
+  });
+  assert.equal(quarterProof.status,
+   'ACTUAL_PUBLIC_SOURCE_STATIC_QUARTERSTEP_MEASURED_NOT_SWEPT',
+   '25/75-percent real garment contact audit failed: '+quarterProof.reason);
+  assert.equal(quarterProof.avatar,avatar);
+  assert.equal(quarterProof.originalShirtSHA256,SHA.shirt);
+  assert.equal(quarterProof.originalDenimSHA256,SHA.denim);
+  assert.equal(quarterProof.authenticQuarterPoseCount,2);
+  assert.equal(quarterProof.poseWitnesses.length,2);
+  assert.equal(quarterProof.originalBonesRestored,true);
+  assert.equal(quarterProof.sweptContinuousCollisionCertified,false);
+  assert.equal(quarterProof.bodyContainmentCertified,false);
+  assert.equal(quarterProof.originalPhoto2DFallbackRequired,true);
+  assert.equal(quarterProof.consumer3DAuthorized,false);
+  for(const [i,row] of quarterProof.poseWitnesses.entries()){
+   assert.equal(row.pose,['blend-25','blend-75'][i]);
+   assert.deepEqual(Object.keys(row.sourcePairs),
+    ['shirtBody','denimBody','shirtDenim']);
+   for(const witness of Object.values(row.sourcePairs)){
+    assert.ok(witness.unsignedMinimumSurfaceDistanceMeters>=0&&
+     witness.unsignedMinimumSurfaceDistanceMeters<2);
+    assert.ok(Number.isSafeInteger(witness.originalTriangleCrossingPairs));
+    assert.equal(witness.dynamicSweptClothNotMeasured,true);
+   }
+  }
   const shapeProof=await page.evaluate(()=>window.__parallel84ShapeResult??null);
   assert.equal(shapeProof?.schema,'parallel84-source-bone-shoulder-yoke/v1');
   assert.equal(shapeProof.releaseAuthorized,false);
@@ -176,11 +206,12 @@ try{
    'genuine source native avatar screenshot missing');
   const pngName=['P89','public','source-gap',engine,avatar,variant,'0'].join('-')+'.png';
   await writeFile(join(out,pngName),png);
-  byVariant[variant]={gap:report,shoulder:shapeProof,sourceDigest,
+  byVariant[variant]={gap:report,quarter:quarterProof,shoulder:shapeProof,sourceDigest,
    screenshotSHA256:hash(png),screenshotName:pngName};
   receipts.push({...report,researchShoulderMode:variant,
    researchShoulderApplied:shapeProof.trialApplied,
    researchShoulderStatus:shapeProof.status,
+   authenticQuarterPoseWitnesses:quarterProof,
    originalRenderedShirtSourceBufferSHA256:sourceDigest.originalRenderedSourceBufferSHA256,
    actualPublicSourceNativeWebGLScreenshotPNG:byVariant[variant].screenshotName,
    actualPublicSourceNativeWebGLScreenshotSHA256:byVariant[variant].screenshotSHA256,
@@ -205,6 +236,19 @@ try{
   }
   const candidates=['trial','low-drop','low-drop-outward'];
   for(const variant of candidates){
+   const quarterContrast=compareOriginalSourceQuarterStepAB89({
+    avatar,baseline:byVariant.baseline.quarter,trial:byVariant[variant].quarter});
+   assert.ok(['QUARTER_STATIC_POSES_NO_NEW_WORSENING_NOT_SWEPT',
+    'QUARTER_STATIC_POSE_SOURCE_WORSENING_WITNESSED'].includes(quarterContrast.status),
+    'original quarter-pose A/B must be measured, not assumed');
+   assert.equal(quarterContrast.authenticOriginalSourceQuarterPoseCount,2);
+   assert.equal(quarterContrast.continuousSweptMotionCertified,false);
+   assert.equal(quarterContrast.consumer3DAuthorized,false);
+   if(byVariant[variant].shoulder.trialApplied)
+    assert.equal(quarterContrast.trialRetainedForResearchOnly,true,
+     'actual original-source active five-pose gate incorrectly retained worsening quarter poses');
+   quarterContrasts.push({...quarterContrast,researchShapeVariant:variant});
+
    const contrast=compareOriginalSourceShoulderGapAB89({avatar,
     baseline:byVariant.baseline.gap,trial:byVariant[variant].gap,
     baselineShoulder:byVariant.baseline.shoulder,
@@ -253,7 +297,7 @@ try{
  assert.deepEqual(offsite,[]);
  await writeFile(join(out,'receipt.json'),JSON.stringify({schema:'P89-authentic-licensed-shirt-denim-actual-163bone-static-unsigned-gap-browser/v3',
   engine,sourcePhotoOriginalVerified:true,
-  sourceSHA256:SHA,scenes:receipts,shoulderContrasts,researchSelections,
+  sourceSHA256:SHA,scenes:receipts,shoulderContrasts,quarterContrasts,researchSelections,
   comparativeOriginalSourceShoulderFitIsResearchOnly:true,
   actualNativeOriginalPublicSourcePNGVisualComparisonsArchived:true,
   humanReviewerApprovalReceived:false,
@@ -279,6 +323,7 @@ try{
     researchOnlyPreferredVariant:x.researchOnlyPreferredVariant,
     gapWorseningVeto:x.researchSourceGapVetoReason})),
    researchSelections,
+   quarterPoseVetoes:quarterContrasts.filter(x=>!x.trialRetainedForResearchOnly).map(x=>({avatar:x.avatar,variant:x.researchShapeVariant})),
    consumer3DAuthorized:false,releaseAuthorized:false,familyAlpha:'HOLD'}));
 }finally{
  await browser?.close();
