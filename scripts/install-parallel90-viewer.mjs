@@ -6,6 +6,8 @@ import assert from 'node:assert/strict';
 const startupVariant90=process.env.P90_PROFILE_VARIANT||'candidate';
 assert.ok(['baseline','candidate','restored'].includes(startupVariant90));
 const emptyStartup90=startupVariant90==='candidate';
+const bodyOriginalControl90=process.env.P90_BODY_BVH_CONTROL==='1';
+assert.ok(!bodyOriginalControl90||startupVariant90==='candidate','BVH control requires same optimized viewer and source loader');
 const donor=resolve(process.argv[2]||'.native05-donor-541');
 assert.notEqual(donor,resolve('.'));
 assert.equal(execFileSync('git',['-C',donor,'rev-parse','HEAD'],{encoding:'utf8'}).trim(),'df6885d6011cb33fb22dceb81a08f35a0ac4dd61');
@@ -218,7 +220,7 @@ s=await readFile(posedContact90,'utf8');
 // Fail closed if the immutable donor removed the actual iterative collision solver.
 assert.ok(s.includes('for(let pass=0;pass<12;pass++)'));
 assert.ok(s.includes('if(!c.count)'));
-if(startupVariant90==='candidate'){
+if(startupVariant90==='candidate'&&!bodyOriginalControl90){
  s=replace(s,"export function triangleContacts(a,b,{collect=false}={}){","export function triangleContacts(a,b,{collect=false,bodyTree90=null}={}){");
  s=replace(s,"const ba=new MeshBVH(a),bb=new MeshBVH(b),line=","const ba=new MeshBVH(a),bb=bodyTree90||new MeshBVH(b),line=");
  s=replace(s,"const began=performance.now();restore(base);const body=posedGeometry(bodies),groups=new Map(),membership=new Map();","const began=performance.now();restore(base);const body=posedGeometry(bodies),bodyTree90=new MeshBVH(body.g),groups=new Map(),membership=new Map();");
@@ -227,5 +229,5 @@ if(startupVariant90==='candidate'){
 }
 await writeFile(posedContact90,s);
 // Check independent actual triangle intersections against the single-body-BVH candidate.
-if(startupVariant90==='candidate')execFileSync(process.execPath,['scripts/check-parallel90-contact-bvh.mjs',donor],{stdio:'inherit'});
+if(startupVariant90==='candidate'&&!bodyOriginalControl90)execFileSync(process.execPath,['scripts/check-parallel90-contact-bvh.mjs',donor],{stdio:'inherit'});
 console.log('P90 disposable PR541 viewer controls installed; source garments and rigs unchanged');

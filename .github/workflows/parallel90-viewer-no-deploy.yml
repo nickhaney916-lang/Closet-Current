@@ -8,7 +8,7 @@ permissions:
 jobs:
   native-viewer:
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 55
     strategy:
       fail-fast: false
       matrix:
@@ -54,6 +54,10 @@ jobs:
         env:
           P90_ENGINE: ${{ matrix.engine }}
         run: node scripts/benchmark-parallel90-startup.mjs
+      - name: Same-source BVH-only control vs optimized contact measurement
+        env:
+          P90_ENGINE: ${{ matrix.engine }}
+        run: node scripts/benchmark-parallel90-bvh-ab.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

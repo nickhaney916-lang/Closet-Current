@@ -116,7 +116,7 @@ test('P90 M10 attributes previously untimed original rig/pose/contact/release wo
 });
 
 test('P90 M11 reuses only authentic original body BVH inside candidate pose-contact fit',()=>{
- assert.match(source,/if\(startupVariant90==='candidate'\)\{/);
+ assert.match(source,/if\(startupVariant90==='candidate'&&!bodyOriginalControl90\)\{/);
  assert.match(source,/const posedContact90=donor\+'\/research\/three-d-42\/posed-contact\.mjs'/);
  assert.ok(source.includes("bodyTree90||new MeshBVH(b)"));
  assert.ok(source.includes("bodyTree90=new MeshBVH(body.g)"));
@@ -147,11 +147,29 @@ test('P90 M11 real collision scalar parity is owner gated and required by browse
 test('P90 M11 compares independent original triangle crossings to cached body BVH in installed donor',()=>{
  const actual=readFileSync('scripts/check-parallel90-contact-bvh.mjs','utf8');
  assert.ok(source.includes("execFileSync(process.execPath,['scripts/check-parallel90-contact-bvh.mjs',donor],{stdio:'inherit'})"));
- assert.ok(source.includes("if(startupVariant90==='candidate')execFileSync"),
+ assert.ok(source.includes("if(startupVariant90==='candidate'&&!bodyOriginalControl90)execFileSync"),
   'only candidate invokes the additional exact collision parity script');
  assert.ok(actual.includes("bodyTree90=new MeshBVH(body)"));
  assert.ok(actual.includes("triangleContacts(optimizedShirt,body,{collect:true,bodyTree90})"));
  assert.ok(actual.includes("assert.deepEqual(reused,original,"));
  assert.ok(actual.includes("assert.ok(results[0].count>0"));
  assert.ok(actual.includes("assert.equal(noCross.count,0"));
+});
+
+test('P90 M12 isolates same source-loader and original geometry while toggling only per-pose BVH reuse',()=>{
+ const installer=readFileSync('scripts/install-parallel90-viewer.mjs','utf8');
+ const tester=readFileSync('scripts/test-native-3d-05-browser.mjs','utf8');
+ const switches=readFileSync('scripts/check-parallel90-saved-switch.mjs','utf8');
+ const ab=readFileSync('scripts/benchmark-parallel90-bvh-ab.mjs','utf8');
+ const workflow=readFileSync('.github/workflows/parallel90-viewer-no-deploy.yml','utf8');
+ assert.ok(installer.includes("const bodyOriginalControl90=process.env.P90_BODY_BVH_CONTROL==='1'"));
+ assert.ok(installer.includes("if(startupVariant90==='candidate'&&!bodyOriginalControl90){"));
+ assert.ok(installer.includes("if(startupVariant90==='candidate'&&!bodyOriginalControl90)execFileSync"));
+ for(const name of [tester,switches])assert.ok(name.includes("P90_PROFILE_OUTPUT"));
+ assert.ok(ab.includes("P90_PROFILE_VARIANT:'candidate'"));
+ assert.ok(ab.includes("P90_BODY_BVH_CONTROL:variant.control?'1':'0'"));
+ assert.ok(ab.includes("assert.deepEqual(after[i][key],before[i][key]"));
+ assert.ok(ab.includes("compareSourceFrames90(a,b)"));
+ assert.ok(ab.includes("for(const figure of ['female','male'])"));
+ assert.ok(workflow.includes("node scripts/benchmark-parallel90-bvh-ab.mjs"));
 });

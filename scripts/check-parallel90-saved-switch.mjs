@@ -13,7 +13,7 @@ export async function checkSavedSwitch90(page,engine){
  page.on('request',onDressManifestRequest);
  const count=Number(process.env.P90_SWITCH_COUNT||16);
  assert.ok([4,16].includes(count));
- const out=process.env.P90_PROFILE_VARIANT?'benchmark/parallel90-profile/'+engine+'/'+process.env.P90_PROFILE_VARIANT:'benchmark/parallel90/'+engine;
+ const out=process.env.P90_PROFILE_VARIANT?'benchmark/parallel90-profile/'+engine+'/'+(process.env.P90_PROFILE_OUTPUT||process.env.P90_PROFILE_VARIANT):'benchmark/parallel90/'+engine;
  await mkdir(out,{recursive:true});
  const original=await page.evaluate(()=>window.native3D05Bridge.state().opened);
  for(const index of [-1,1.5,999]){
