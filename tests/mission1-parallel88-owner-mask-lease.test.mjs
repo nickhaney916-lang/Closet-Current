@@ -377,7 +377,7 @@ test('P88 unit70 cannot accept receipts if original JPEG digest is unavailable o
  assert.match(h.node('outfitSplitStatus').textContent,/source did not match its original JPEG/);
 });
 
-function cropHarness88({saved=false,checkPhoto=null}={}){
+function cropHarness88({saved=false,checkPhoto=null,peers=[]}={}){
  const start=appSource.indexOf('function hasSourceBoundMask88(');
  const end=appSource.indexOf('// P846:',start);
  const leaseStart=appSource.indexOf('function reviewedExactPhotoPeers88(');
@@ -415,7 +415,7 @@ function cropHarness88({saved=false,checkPhoto=null}={}){
  const nativeCrop=c.cropClothingPhoto;
  c.cropClothingPhoto=item=>{
   // Match the exact object identity of the native saved closet or draft.
-  if(saved){c.items=[item];c.batch=[];}else{c.items=[];c.batch=[item];}
+  if(saved){c.items=[item,...peers];c.batch=[];}else{c.items=[...peers];c.batch=[item];}
   return nativeCrop(item);
  };
  return c;
@@ -450,6 +450,81 @@ test('P88 unsegmented single-photo crop still works with original owner-edit wor
  assert.equal(c.writeCount,1);
  assert.equal(item.image,'data:image/jpeg;base64,TkVXUElYRUxT');
  assert.equal(c.messages.length,0);
+});
+test('P88 changed cropped photo clears old exact-JPEG duplicate marker so owner may review new source',async()=>{
+ const original=sampleSource88();
+ const peer={id:'saved-identical',image:original.image};
+ const item={...sampleSource88(),exactSavedPhotoMatch88:{savedItemId:peer.id},
+  possibleDuplicate:true,requiresOwnershipConfirmation:true};
+ const c=cropHarness88({peers:[peer]});
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,TkVXUElYRUxT'},null);
+ assert.equal(c.written.length,1);
+ assert.equal(c.written[0].store,'state');
+ assert.equal(c.written[0].value.batch[0].exactSavedPhotoMatch88,undefined);
+ assert.equal(c.written[0].value.batch[0].ownerDuplicateReview88,undefined);
+ assert.equal(c.written[0].value.batch[0].possibleDuplicate,false);
+ assert.equal(item.exactSavedPhotoMatch88,undefined,'in-memory old duplicate proof must also be removed');
+ assert.equal(item.image,'data:image/jpeg;base64,TkVXUElYRUxT');
+ const lease=c.reviewedSaveLease88(item);
+ assert.equal(c.reviewedDistinctPhotoReceiptValid88({...item},lease),true,
+  'a genuinely new cropped source is not permanently stuck on the stale match');
+ assert.equal(c.writeCount,1);
+});
+test('P88 crop changing a saved duplicate-attested image revokes stale identical-byte attestation',async()=>{
+ const item={...sampleSource88(),
+  exactSavedPhotoMatch88:{savedItemId:'saved-peer'},
+  ownerDuplicateReview88:{schema:'p88-distinct-physical-owner-attestation/v1',
+   identicalSavedPhotoItemIds:['saved-peer'],ownerAttestedDistinctPhysicalItem:true}};
+ const c=cropHarness88({saved:true});
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,TkVXUElYRUxT'},null);
+ assert.equal(c.written.length,1);
+ assert.equal(c.written[0].store,'items');
+ assert.equal(c.written[0].value.ownerDuplicateReview88,undefined);
+ assert.equal(c.written[0].value.exactSavedPhotoMatch88,undefined);
+ assert.equal(item.ownerDuplicateReview88,undefined);
+ assert.equal(item.exactSavedPhotoMatch88,undefined);
+ assert.equal(c.writeCount,1);
+});
+test('P88 crop that now exactly matches an already owned DIFFERENT photo must require renewed duplicate review',async()=>{
+ const item=sampleSource88(),otherPhoto='data:image/jpeg;base64,TkVXUElYRUxT';
+ const peer={id:'other-owned-piece',image:otherPhoto};
+ const c=cropHarness88({peers:[peer]});
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:otherPhoto},null);
+ const updated=c.written[0].value.batch[0];
+ assert.equal(updated.image,otherPhoto);
+ assert.equal(updated.exactSavedPhotoMatch88.savedItemId,peer.id);
+ assert.equal(updated.possibleDuplicate,true);
+ assert.equal(updated.requiresOwnershipConfirmation,true);
+ assert.match(updated.localStatus,/exactly matches another saved closet photo/);
+ assert.equal(item.exactSavedPhotoMatch88.savedItemId,peer.id);
+ assert.equal(c.reviewedDistinctPhotoReceiptValid88({...item},c.reviewedSaveLease88(item)),false,
+  'same-photo owner physical-item consent is still mandatory after crop');
+});
+test('P88 new saved peer matching the crop during cloud wait cannot enter closet without duplicate review',async()=>{
+ const item=sampleSource88(),newPhoto='data:image/jpeg;base64,TkVXUElYRUxT';
+ const c=cropHarness88();
+ c.cropClothingPhoto(item);
+ c.beforeWrite=async()=>{c.items.push({id:'saved-while-cropping',image:newPhoto});};
+ await c.editor.save({image:newPhoto},null);
+ const updated=c.written[0].value.batch[0];
+ assert.equal(updated.exactSavedPhotoMatch88.savedItemId,'saved-while-cropping');
+ assert.equal(updated.requiresOwnershipConfirmation,true);
+ assert.equal(updated.possibleDuplicate,true);
+});
+test('P88 crop editor cannot inject fabricated duplicate-owner attestation or saved-photo marker',async()=>{
+ const c=cropHarness88(),item=sampleSource88();c.cropClothingPhoto(item);
+ for(const field of [
+  {ownerDuplicateReview88:{ownerAttestedDistinctPhysicalItem:true}},
+  {exactSavedPhotoMatch88:{savedItemId:'arbitrary'}}
+ ]){
+  await assert.rejects(c.editor.save({image:'data:image/jpeg;base64,TkVX',...field},null),
+   /P88_CROP_CANNOT_REBIND_ID_OR_MASK/);
+ }
+ assert.equal(c.writeCount,0);
+ assert.equal(item.image,sampleSource88().image);
 });
 test('P88 late P70 mask receipt during awaited crop photo-quality check forbids stale write',async()=>{
  let release;
