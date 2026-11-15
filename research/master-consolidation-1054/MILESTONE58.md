@@ -1,3 +1,36 @@
+<!-- MISSION4-CONSOLIDATED-CHECKPOINT-2026-11-15 -->
+# Mission 4 streamlined engineering checkpoint — November 15, 2026
+
+**One owner / one controller:** GitHub [master issue #1054](https://github.com/nickhaney916-lang/Closet-Current/issues/1054). All integration work stays on existing **draft PR #1210**, or is handed to that owner as a focused patch; do not create another Mission 4 issue, competing research PR, or cross-branch auto-merge. **Family Alpha #255 remains OPEN/HOLD.** This report is a source-verified coordination ledger, **not** a release signoff or claim that all research branches combine.
+
+## Exact pinned endpoints
+
+| Ownership | Existing source head at audit | What is actually supported | Remaining handoff |
+| --- | --- | --- | --- |
+| Mission 1 / #1175 | `640de76cbefad4e325685dc5195e8c3eee2861c4` | Default capture account/JPEG lease and missing-garment caution; no-deploy #43679068918: 2 executed jobs passed, genuine independent human-validation skipped | Per-individual-physical-garment source/mask/owner-reviewed receipt **not yet proven**. Never convert model regions into verified units or claim 10/10 classification. |
+| Mission 2 / #1177 | `91948f47372879727e35342da816762d635aa123` | Prior genuine original shirt+denim/skirt native source research | Exact-head #43678759108 Chromium rigged-GLB request abort **FAILED**; WebKit/pure-source jobs passed. Real cloth contact, inferred rear, natural drape and signed 3D quality **BLOCKED**. |
+| Mission 3 / #1136 | `0b646df3b1a74d59747ea36fdd81510e5bda81c6` | Exact-head #43551597192: 2/2 research CI passed, 2,088/2,088 Node, synthetic/ephemeral signed owner RLS and proof-of-evidence template | Real physical Android/iPhone and authorized hosted signed multi-account RLS/Storage/restore **not yet tested**. Do not rewrite private backup or infer four actual owner tests. |
+| 3D avatar UI / #1206 | `63151a04a03f330bee683bdaf3c2d117a759cb0f` | Exact-head #43678735200: 2/2 desktop Chromium/WebKit source-safe WebGL-absent fallback passed | An avatar renderer is not a real photograph-derived 3D garment; physical phone and visual fit remain **BLOCKED**. |
+| **Main Mission 4 / #1210** | `e5343a176686ab3a5c437a2460e317c8abc22985` (pre-checkpoint commit) | Exact-head [#43683108095](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43683108095): **6/6 dedicated jobs passed**, **2,777/2,777 Node**, original-source real pinned P88 browser WASM worker → **2 unverified regions/0 auto-saves** → explicit synthetic-owner manual crop/save → real native 2D outfit → native photo-only gallery → v4 local restore/account B isolation | No independently confirmed single physical clothing unit; no fitted 3D; ordinary consumer mode off by default; not all inherited branch-specific workflows pass. |
+
+**Git ancestry compatibility (real GitHub compare, not a merge test):**
+- #1210 vs latest Mission 1 #1175, Mission 2 #1177, Mission 3 #1136 and avatar #1206: **all are divergent**, with independently evolved app code and test history. Even when final PR changed-file lists are disjoint, do **not** substitute a Git “clean” comparison for runtime acceptance.
+- Main integration sibling [#1209](https://github.com/nickhaney916-lang/Closet-Current/pull/1209) head `233dff8bf714fc0b742b339d68b263c538a31397` has **diverged** from #1210: Git compare reports **15 ahead / 22 behind**, merge base `8eed18265db2191afdb553147330e2db7e412750`. Both modify `tests/detector-manual-recovery-65.test.mjs`, `tests/invalid-selection-race-71.test.mjs`, and `tests/review-source-epoch-34.test.mjs`. The current native #1209 dress/owner isolation checks are valuable **independent evidence**, but must not be force-merged into #1210.
+- Several pre-existing unrelated workflows on #1210 fail their **expected immutable-ancestry / changed-path scope guards** before their feature tests run. This does **not** negate the dedicated #1210 6/6 pass, but equally does **not** establish whole-repository green CI. Keep strict guards; create an explicit compatible-source acceptance run rather than weakening them.
+
+## Single Mission 4 integration sequence (no new missions)
+
+1. **Freeze native consumer truth.** Preserve original JPEG byte SHA, explicit human edits, authenticated owner/session and epoch, reviewed saved item, exact `currentBoard.slots` item references, unsaved-vs-saved outfits, and original-photo 2D fallback. The M62 photo-only button remains **double opt-in** research and denies 3D and physical-unit certification.
+2. **Receive Mission 1 actual physical-item receipt.** Only if source-specific crop/mask/physical pair segmentation and owner confirmation have independently verifiable provenance should stricter `preflightOwnedOutfit1054` admit a verified single garment. Otherwise maintain current M59 lower-trust original photo gallery and explicit “physical garment units unverified” label.
+3. **Reconcile Mission 3 owned backup.** Use the already demonstrated owner-private v4 local restore path; never claim signed hosted cloud RLS or invite real owners without separately authorized proof. Avoid transplanting entire M3 application source onto a divergent branch.
+4. **Accept Mission 2/Viewer only by proven source eligibility.** No fabricated drape, unseen rear texture, uncaught cloth crossing or 3D admission. Preserve original JPEG 2D if photo-derived cloth or actual renderer is unsafe/unsupported.
+5. **Execute one exact-head no-deploy acceptance** after compatible minimal source patches: genuine model worker → manual independent physical-unit review when available → same owner private saved item → true native outfit → eligible fitted 3D **only if independent source/fit acceptance**, else honest original-photo 2D → atomic v4 restore → account B denied → logout/refresh. Run inherited Node plus Chromium/WebKit, label desktop-width simulation as non-physical.
+6. **Score PASS / FAIL / BLOCKED / NOT TESTED** per stage, with HEAD, job IDs and real denominators. Keep Family Alpha #255 HOLD until separately signed physical devices, hosted accounts, real-photo garment recognition accuracy, human garment realism and cross-mission acceptance.
+
+**Rule:** This coordination checkpoint itself earns **no new completion percentage**. Mission 4 remains provisionally 60% engineering complete / 40% remaining; overall baseline ~57% complete / 43% remaining, **planning estimates only**.
+
+---
+
 # MAIN1054 M58 — Actual unmodified P88 browser Worker + real SegFormer WASM + native source-bound owner review
 
 **Research only. Draft/unmerged. Family Alpha #255 OPEN/HOLD. No production/staging/hosted Supabase, private family photos, donor PR branch changes, merge, paid API or deployment.**
