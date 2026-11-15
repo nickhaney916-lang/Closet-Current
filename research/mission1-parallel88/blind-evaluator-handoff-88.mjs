@@ -9,7 +9,9 @@
 import {createHash,createPublicKey,verify as cryptoVerify} from 'node:crypto';
 import {open,lstat,realpath} from 'node:fs/promises';
 import {constants} from 'node:fs';
-import {resolve,relative,isAbsolute,join,sep} from 'node:path';
+import {resolve,relative,isAbsolute,join,dirname,sep} from 'node:path';
+import {fileURLToPath} from 'node:url';
+const CHECKOUT_ROOT_88=resolve(dirname(fileURLToPath(import.meta.url)),'..','..');
 export const P88_BLIND_HANDOFF_SCHEMA='p88-blind-evaluator-handoff/v1';
 export const P88_FROZEN_CANDIDATE=Object.freeze({
  schema:'p88-fashion-onnx-candidate-freeze/v1',
@@ -172,7 +174,7 @@ function beneath88(path,root){
  * Refuse checkout paths, symlinked aliases, directories, devices, pipes, and
  * oversized envelopes before opening private input.
  */
-export async function externalPrivateFile88(path,{cwd=process.cwd()}={}){
+export async function externalPrivateFile88(path,{cwd=CHECKOUT_ROOT_88}={}){
  if(typeof path!=='string'||!isAbsolute(path))
   throw Error('PRIVATE_ABSOLUTE_PATH_REQUIRED');
  const full=resolve(path);
@@ -190,7 +192,7 @@ export async function externalPrivateFile88(path,{cwd=process.cwd()}={}){
  * The directory must be owner-controlled and durable. This cannot prove global
  * replay prevention across independent ledgers, reinstalls or compromised hosts.
  */
-export async function externalPrivateLedgerDirectory88(path,{cwd=process.cwd()}={}){
+export async function externalPrivateLedgerDirectory88(path,{cwd=CHECKOUT_ROOT_88}={}){
  if(typeof path!=='string'||!isAbsolute(path))
   throw Error('PRIVATE_LEDGER_ABSOLUTE_PATH_REQUIRED');
  const full=resolve(path),checkout=await realpath(cwd),target=await realpath(full);
