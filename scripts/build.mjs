@@ -3,10 +3,10 @@ import {createHash} from 'node:crypto';
 await rm('dist',{recursive:true,force:true});
 await mkdir('dist',{recursive:true});
 await cp('public','dist',{recursive:true});
-// The owner-private legacy atomic-import helper is referenced by the existing
-// opt-in app import URL ../research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs.
-// Publish ONLY that audited module so a built/offline app never resolves a
-// missing research asset. No default import behavior is enabled here.
+// The draft's default owner-private v1-v3 import resolves this audited helper
+// relative to app.js: ./research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs.
+// Package ONLY the reviewed module in the built PWA and its offline cache.
+// The entire branch remains DRAFT / NO DEPLOY while Family Alpha #255 is HOLD.
 const atomicModule='research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs';
 const atomicBytes=await readFile(atomicModule);
 await mkdir('dist/research/mission3-legacy-atomic-import',{recursive:true});
