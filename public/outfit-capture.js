@@ -257,7 +257,7 @@ function renderMissingOutfitGarment88(){
  if(typeof document==='undefined')return;
  const panel=$('outfitPieceActions'),target=panel?.querySelector?.('.actions');
  if(!target)return;
- let button=$('outfitRecoverMissing88');
+ let button=document.getElementById('outfitRecoverMissing88');
  if(!button){
   button=document.createElement('button');
   button.id='outfitRecoverMissing88';button.type='button';

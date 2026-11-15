@@ -2708,7 +2708,8 @@ test('P88 missing outfit garment action opens the native single-item path, never
  const seen=[],actions={append(button){h.node('outfitRecoverMissing88').button=button;}};
  const panel=h.node('outfitPieceActions');
  panel.querySelector=selector=>selector==='.actions'?actions:null;
- h.c.document={createElement:()=>({id:'',type:'',className:'',textContent:'',hidden:false,disabled:false})};
+ h.c.document={createElement:()=>({id:'',type:'',className:'',textContent:'',hidden:false,disabled:false}),
+  getElementById:id=>id==='outfitRecoverMissing88'?(h.node(id).button||null):null};
  const source={id:'outfit-piece',outfitSourceId:'PHOTO-A',image:'data:image/jpeg;base64,UFJFU0VSVkVE',
   reconciliation70:{maskSha256:'a'.repeat(64)}};
  h.c.batch.push(source);
@@ -2733,7 +2734,8 @@ test('P88 missed-item action cannot carry source or owner permissions into a rep
  const h=captureHarness({ownerId:'owner-A',autoStart:false});
  let button=null;let navigation=0;
  h.node('outfitPieceActions').querySelector=()=>({append:node=>{button=node;}});
- h.c.document={createElement:()=>({})};
+ h.c.document={createElement:()=>({}),
+  getElementById:id=>id==='outfitRecoverMissing88'?button:null};
  h.c.db={name:'closet-current-user-owner-A'};
  h.c.batch.push({id:'source',outfitSourceId:'PHOTO-A'});
  h.c.setCaptureMode=()=>navigation++;
