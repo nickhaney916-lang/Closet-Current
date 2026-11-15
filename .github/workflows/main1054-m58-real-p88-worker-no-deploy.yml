@@ -58,6 +58,26 @@ jobs:
             test "$(git hash-object ".m57-exact-p88-donor/public/$file")" = "$(git rev-parse "$P88:public/$file")"
           done
           test "$(git hash-object .m57-exact-p88-donor/public/outfit-worker.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Bring in exact verified M59 photo-only gallery as DISPOSABLE test donor
+        shell: bash
+        run: |
+          set -euo pipefail
+          M59=d3aa25c850d0a73e90a539c4e90595c378b86d11
+          git cat-file -e "$M59^{commit}"
+          for path in public/native-owner-wardrobe-index-167.mjs public/native-canonical-photo-source-167.mjs public/outfit-board-engine.js research/main-thread-integration-1054/source-to-outfit.mjs; do
+            test "$(git rev-parse "HEAD:$path")" = "$(git rev-parse "$M59:$path")"
+          done
+          for name in reviewed-photo-only-handoff59.mjs reviewed-photo-only-gallery59.mjs; do
+            path="research/master-consolidation-1054/$name"
+            test ! -e "$path"
+            git show "$M59:$path" > "$path"
+            test "$(git hash-object "$path")" = "$(git rev-parse "$M59:$path")"
+          done
+          test "$(git hash-object research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs)" = 2c06fcae0e8fb6f5099d313644951c7ff25c774d
+          test "$(git hash-object research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs)" = b607a3df58d8c50c0f7c4bb7c255daab4692a1d5
+          node --check research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs
+          node --check research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs
+          git diff --exit-code -- public/ research/multi-garment-capture-01/ supabase/
       - name: Install isolated native browser dependencies (NO paid API/deploy)
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Live original JPEG, native owner WebCrypto, exact P88 Worker, browser SegFormer WASM, NO SAVE

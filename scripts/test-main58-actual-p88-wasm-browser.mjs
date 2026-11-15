@@ -298,6 +298,53 @@ try{
   'ambiguous physical source was incorrectly certified as exact verified garment');
  assert.equal(await page.locator('#outfit3D01Canvas').count(),0,
   'unverified garment was incorrectly admitted to original/photo 3D');
+ // M60 integration: load byte-identical M59 gallery donors only in this
+ // disposable CI checkout, after real P88 inference and actual private save.
+ // Do not modify public/ or loosen M54 mask/physical-garment admission.
+ stage='same-browser-real-worker-to-pinned-M59-original-photo-only-gallery';
+ const nativeGallery=await page.evaluate(async()=>{
+  const section=document.getElementById('mission4Preview1054Section');
+  if(!section)throw Error('M59 research gallery host missing');
+  const host=document.createElement('section');
+  host.id='m58M59OriginalGallery';
+  section.append(host);
+  const {mountReviewedPhotoOnlyGallery59}=await import(
+   '/research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs');
+  const gallery=mountReviewedPhotoOnlyGallery59({
+   target:host,getSession:currentPhotoOwnerSession167,
+   readOwnerItems:signedOwnerSavedRows167,
+   getBoard:()=>structuredClone(currentBoard),
+   cleanBoard:cleanOutfitBoard,events:window,doc:document
+  });
+  window.m58M59Gallery=gallery;
+  const receipt=await gallery.refresh();
+  return {
+   photoCount:receipt.photoCount,
+   galleryStatus:receipt.status,
+   renderAuthorized3D:receipt.renderAuthorized3D,
+   releaseAuthorized:receipt.releaseAuthorized,
+   warning:host.querySelector('[data-physical-garment-unit]')?.textContent||'',
+   src:host.querySelector('img')?.getAttribute('src')||''
+  };
+ });
+ assert.equal(nativeGallery.photoCount,1,'M59 failed on genuine-worker M58 private saved row');
+ assert.equal(nativeGallery.renderAuthorized3D,false);
+ assert.equal(nativeGallery.releaseAuthorized,false);
+ assert.match(nativeGallery.warning,/physical garment boundaries/i);
+ assert.equal(nativeGallery.src,'data:image/jpeg;base64,'+file.toString('base64'),
+  'M59 gallery did not display exact rights-locked original JPEG');
+ assert.equal(await page.locator('#outfit3D01Canvas').count(),0);
+ // The original-photo gallery must immediately revoke on a native board edit.
+ const previousOccasion=await page.evaluate(()=>currentBoard.occasion);
+ await page.evaluate(()=>{
+  currentBoard.occasion=currentBoard.occasion==='Dinner'?'Work':'Dinner';
+  window.dispatchEvent(new Event('focus'));
+ });
+ assert.equal(await page.locator('#m58M59OriginalGallery img').count(),0,
+  'stale owner source remained after outfit board mutation');
+ await page.evaluate(value=>{currentBoard.occasion=value;},previousOccasion);
+ const galleryAgain=await page.evaluate(()=>window.m58M59Gallery.refresh());
+ assert.equal(galleryAgain.photoCount,1,'M59 failed to re-admit same reviewed original');
  // After the REAL Worker + one explicitly synthetic owner A save + actual
  // 2D board selection, exercise the native LOGOUT/login B UI in this SAME
  // browser. No new model run, source mock or direct IndexedDB insertion.
@@ -309,6 +356,8 @@ try{
   null,{timeout:30000});
  assert.equal(await page.locator('#mission4Preview1054Photos img').count(),0,
   'owner A strict preview image remained after logout');
+ assert.equal(await page.locator('#m58M59OriginalGallery img').count(),0,
+  'M59 lower-trust original gallery retained A source after logout');
  assert.equal(await page.locator('#multi24Research img[src^="data:image/"]').count(),0,
   'owner A review original remained in the DOM after logout');
  stage='same-browser-native-owner-B-private-indexeddb';
@@ -336,11 +385,15 @@ try{
  assert.equal(bView.ownerOwnedPhotoCards,0,'B has A private photo in its outfit UI');
  assert.equal(bView.ownerReviewOriginals,0,'B has A private review source');
  assert.equal(bView.strictPreviewOriginals,0,'B has A strict preview source');
+ assert.equal(await page.locator('#m58M59OriginalGallery img').count(),0,
+  'owner B can view owner A M59 research-gallery source');
  assert.deepEqual(rejected,[],'synthetic owner switch caused forbidden external request');
  assert.deepEqual(issues,[],'native owner switch caused browser runtime error');
  console.log('M58_GENUINE_WORKER_SAVED_2D_OWNER_SWITCH_PRIVACY',JSON.stringify({
   engine,realWorkerFirst:true,explicitOwnerASave:1,ownerBPrivateRows:0,
   ownerAOriginalNotVisibleToB:true,ownerAOutfitNotVisibleToB:true,
+  m59SourceOnlyGalleryUsesExactOriginal:true,
+  m59BoardMutationRevoked:true,m59LogoutAndBRevoked:true,
   localIndexedDBOnly:true,syntheticAuth:true,hostedRLS:false,
   independentHumanLabelAccuracy:false,physicalPhone:false,
   familyAlpha:'HOLD',releaseAllowed:false
