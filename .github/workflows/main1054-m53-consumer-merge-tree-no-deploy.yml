@@ -26,11 +26,13 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/ supabase/ benchmark/ research/native-3d-05/ research/parallel89/ research/mission1-parallel88/ research/main-thread-integration-1054/
           git diff --name-only "$BASE" HEAD | while IFS= read -r p; do
             case "$p" in
-              scripts/audit-main53-consumer-merge-tree.mjs|research/master-consolidation-1054/MILESTONE53.md|.github/workflows/main1054-m53-consumer-merge-tree-no-deploy.yml) ;;
+              scripts/audit-main53-consumer-merge-tree.mjs|research/master-consolidation-1054/MILESTONE53.md|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|tests/main59-reviewed-photo-only-handoff.test.mjs|.github/workflows/main1054-m53-consumer-merge-tree-no-deploy.yml) ;;
               *) echo "BLOCKED M53 unexpected changed source $p";exit 1;;
             esac
           done
           node --check scripts/audit-main53-consumer-merge-tree.mjs
+          node --check research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs
+          node --check tests/main59-reviewed-photo-only-handoff.test.mjs
       - name: Actual independent Git three-way merger conflict calculation, do NOT commit/merge
         run: node scripts/audit-main53-consumer-merge-tree.mjs
       - name: Preserve unchanged main M51 application original owner/2D source
@@ -41,6 +43,8 @@ jobs:
         run: node scripts/build.mjs
       - name: Install exact source-only regression dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: M59 actual native source-to-photo-only private owner/board adapter positive and adversarial tests
+        run: node --test tests/main59-reviewed-photo-only-handoff.test.mjs
       - name: Genuine licensed source private saved original 2D invariant
         run: node --test tests/main49-licensed-original-photo-private-outfit-2d.test.mjs
       - name: Full original M51 application regression, not full multi-branch merged app
