@@ -333,6 +333,14 @@ test('P90 M20 system reduced-motion stops real auto-spin without changing admitt
  assert.ok(installer.includes("if(reducedMotion90?.matches){"));
  assert.ok(installer.includes("scene.setSpin(false)"));
  assert.ok(installer.includes("Manual 3D rotation is available."));
+ assert.ok(installer.includes("const clearCameraInertia90=()=>"));
+ assert.ok(installer.includes("controls.enableDamping=false"));
+ assert.ok(installer.includes("controls.update()"));
+ assert.ok(installer.includes("controls.enableDamping=savedDamping"));
+ assert.ok(installer.includes("const front=()=>{clearCameraInertia90();spin=false"));
+ assert.ok(installer.includes("const side=()=>{clearCameraInertia90();spin=false"));
+ assert.ok(installer.includes("const back=()=>{clearCameraInertia90();spin=false"));
+ assert.ok(installer.includes("const rotate=degrees=>{"));
  assert.ok(browser.includes("await page.emulateMedia({reducedMotion:'reduce'})"));
  assert.ok(browser.includes("await page.emulateMedia({reducedMotion:'no-preference'})"));
  assert.ok(browser.includes("unintendedDrift<2"));
