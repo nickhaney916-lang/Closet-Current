@@ -122,6 +122,34 @@ test('small subthreshold gap changes without a meaningful gain still prefer the 
  assert.equal(receipt.researchSourceGapVetoReason,'NO_MEASURED_GAP_GAIN_AT_LEAST_05MM');
  assert.equal(receipt.consumer3DAuthorized,false);
 });
+test('exact public-source female and male native gap observations require opposite research decisions; no consumer approval',()=>{
+ const female=mock();female.avatar='female';
+ female.baseline.avatar='female';female.trial.avatar='female';
+ const originalFemale=.000343,trialFemale=.000092;
+ for(const p of female.baseline.sourcePoseMeasurements)
+  p.distances.shirtBody.unsignedMinimumSurfaceDistanceMeters=originalFemale;
+ for(const p of female.trial.sourcePoseMeasurements)
+  p.distances.shirtBody.unsignedMinimumSurfaceDistanceMeters=trialFemale;
+ const veto=compareOriginalSourceShoulderGapAB89(female);
+ assert.equal(veto.status,'ACTUAL_ORIGINAL_PHOTO_SHOULDER_AB_MEASURED_NOT_CLEARED');
+ assert.equal(veto.researchOnlyPreferredVariant,'baseline');
+ assert.equal(veto.changedGapWorsenedAtLeastQuarterMmCount,3);
+ assert.equal(veto.researchSourceGapVetoReason,'ANY_SAMPLED_SOURCE_GAP_DECREASED_AT_LEAST_025MM');
+ assert.equal(veto.consumer3DAuthorized,false);
+ const male=mock();
+ const maleBefore=[.000269,.000350,.000339],maleTrial=[.001390,.001470,.000554];
+ for(let i=0;i<3;i++){
+  male.baseline.sourcePoseMeasurements[i].distances.shirtBody.unsignedMinimumSurfaceDistanceMeters=maleBefore[i];
+  male.trial.sourcePoseMeasurements[i].distances.shirtBody.unsignedMinimumSurfaceDistanceMeters=maleTrial[i];
+ }
+ const measured=compareOriginalSourceShoulderGapAB89(male);
+ assert.equal(measured.status,'ACTUAL_ORIGINAL_PHOTO_SHOULDER_AB_MEASURED_NOT_CLEARED');
+ assert.equal(measured.researchOnlyPreferredVariant,'trial');
+ assert.equal(measured.changedGapImprovedAtLeastHalfMmCount,2);
+ assert.equal(measured.someUnsignedSurfaceGapWorsened,false);
+ assert.equal(measured.consumer3DAuthorized,false);
+ assert.equal(measured.sourceSignedClearanceCertified,false);
+});
 const negatives=[
  ['fake owner or 3D approval',r=>r.trial.consumer3DAuthorized=true],
  ['unsigned cannot be signed clearance',r=>r.trial.independentSignedDistanceOrBodyContainmentVerified=true],
