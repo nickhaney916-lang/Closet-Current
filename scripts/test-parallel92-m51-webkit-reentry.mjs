@@ -1,5 +1,5 @@
 /**
- * P92 independent native WebKit focus/reentry stress of EXACT M89 M51 source.
+ * P92 native WebKit repeat stress of EXACT M97 original-photo source/board mutations.
  * Real app, source JPEG, signed synthetic local DB and original assertions.
  * M89 owns failure classification; this test ONLY runs its unchanged script
  * repeatedly without retries, synthetic preview, product patches or image logs.
@@ -11,20 +11,23 @@ import {join} from 'node:path';
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
 const sha=git('rev-parse','HEAD');
 assert.equal(sha,process.env.P92_CHECKOUT_SHA,'must execute exact checked-out SHA');
-const m90='93696bfa890f573fbbb23da3530da27c45d4b890';
-assert.equal(git('merge-base',m90,sha),m90,'current M90 source not in ancestry');
+const m97='238577c7fc61c4c3dcb9cea11483a00ebdb9ea1b';
+assert.equal(git('merge-base',m97,sha),m97,'current M90 source not in ancestry');
 const script='scripts/test-main51-real-app-owner-original-2d.mjs';
 assert.equal(git('rev-parse','HEAD:'+script),
- '16cd06bcc1b1ef6bf8a6df3e3790c9abe2785167',
- 'M89 native M51 source changed');
+ '63cc9da00eaecbeb2576482dcae1528b44ea8189',
+ 'M97 native M51 source changed');
 assert.equal(git('rev-parse','HEAD:public/app.js'),
  '991c00457799f8e2b8ae958d5ace85cc9914aece',
  'consumer changed outside test ownership');
 assert.equal(git('rev-parse','HEAD:public/outfit-board.js'),
- '153455379b0b6d777eff8c1c508c129208c7fadc',
+ '42dc1a7a2503a1722e6addcd0b8613a7eb029b60',
  'Outfit Builder changed outside test ownership');
 assert.equal(git('rev-parse','HEAD:scripts/test-mission3-default-atomic-import-browser.mjs'),
  '20f85d5eeda42f2acd921f1393c10cc7522d22df','M91 native import acceptance changed');
+assert.ok(readFileSync(script,'utf8').includes("stage='m97-live-selected-original-photo-mutation-revokes-without-board-change'")&&
+ readFileSync(script,'utf8').includes("stage='m97-inflight-changed-source-must-not-publish-stale-original'"),
+ 'M97 live and in-flight source revocation acceptance missing');
 assert.ok(readFileSync(script,'utf8').includes('M88_SOURCE_SAFE_WEBKIT_PREVIEW_REFUSAL')&&
  readFileSync(script,'utf8').includes('__m89PreviewFailure'),
  'Missing main-owned M89 source-safe refusal diagnostics');
@@ -66,17 +69,17 @@ for(let trial=1;trial<=total;trial++){
   elapsedMs:Date.now()-started,status:r.status===0?'PASS':'FAIL',
   sourceSafeRefusals:safe};
  runs.push(row);
- console.log('P92_M90_NATIVE_WEBKIT_REENTRY_TRIAL',JSON.stringify(row));
+ console.log('P92_M97_NATIVE_WEBKIT_REENTRY_TRIAL',JSON.stringify(row));
  if(r.error||r.status!==0){
-  console.error('P92_M90_REENTRY_FAIL',JSON.stringify({
+  console.error('P92_M97_REENTRY_FAIL',JSON.stringify({
    trial,errorName:r.error?.name||null,exitCode:r.status,
    sourceSafeRefusals:safe}));
   break; // no retry masking
  }
 }
-const receipt={schema:'P92_M90_UNCHANGED_M89_M51_REAL_WEBKIT_REENTRY/v3',
- exactHead:sha,mainSourceM90:m90,
- nativeSourceBlob:'16cd06bcc1b1ef6bf8a6df3e3790c9abe2785167',
+const receipt={schema:'P92_M97_NATIVE_SOURCE_MUTATION_WEBKIT_REENTRY/v4',
+ exactHead:sha,mainSourceM97:m97,
+ nativeSourceBlob:'63cc9da00eaecbeb2576482dcae1528b44ea8189',
  expected:total,attempted:runs.length,
  result:runs.length===total&&runs.every(r=>r.status==='PASS')?'PASS':'FAIL',
  noSyntheticPreviewOrModel:true,realBrowser:true,realOriginalJPEG:true,
@@ -84,7 +87,7 @@ const receipt={schema:'P92_M90_UNCHANGED_M89_M51_REAL_WEBKIT_REENTRY/v3',
  independentHumanAccuracy:false,physicalPhone:false,full3DFitted:false,
  familyAlpha:'HOLD',releaseAllowed:false,runs};
 writeFileSync(join(path,'result.json'),JSON.stringify(receipt,null,2)+'\n');
-assert.equal(receipt.result,'PASS','real M89 WebKit M51 failed; do not hide or auto-retry');
-console.log('P92_M90_REAL_WEBKIT_REENTRY_STRESS_PASS',JSON.stringify({
+assert.equal(receipt.result,'PASS','real M97 WebKit M51 failed; do not hide or auto-retry');
+console.log('P92_M97_REAL_WEBKIT_REENTRY_STRESS_PASS',JSON.stringify({
  exactHead:sha,repetitions:total,widths:[320,390,430],
  photoSourceUnchanged:true,familyAlpha:'HOLD'}));

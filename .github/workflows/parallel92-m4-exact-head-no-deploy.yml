@@ -166,9 +166,9 @@ jobs:
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
-          test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = 16cd06bcc1b1ef6bf8a6df3e3790c9abe2785167
+          test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = 63cc9da00eaecbeb2576482dcae1528b44ea8189
           test "$(git rev-parse HEAD:public/app.js)" = 991c00457799f8e2b8ae958d5ace85cc9914aece
-          test "$(git rev-parse HEAD:public/outfit-board.js)" = 153455379b0b6d777eff8c1c508c129208c7fadc
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = 42dc1a7a2503a1722e6addcd0b8613a7eb029b60
       - name: Install immutable local browser test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Eight fresh same-source native WebKit trials including 320px focus reentry
@@ -207,7 +207,7 @@ jobs:
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
-          test "$(git merge-base 93696bfa890f573fbbb23da3530da27c45d4b890 HEAD)" = 93696bfa890f573fbbb23da3530da27c45d4b890
+          test "$(git merge-base 238577c7fc61c4c3dcb9cea11483a00ebdb9ea1b HEAD)" = 238577c7fc61c4c3dcb9cea11483a00ebdb9ea1b
           test "$(git rev-parse HEAD:public/app.js)" = 991c00457799f8e2b8ae958d5ace85cc9914aece
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 3a83e3336ce36334a49708d1c7b90cc27194c7b9
           test "$(git rev-parse HEAD:scripts/test-mission3-default-atomic-import-browser.mjs)" = 20f85d5eeda42f2acd921f1393c10cc7522d22df
@@ -285,10 +285,10 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
-          test "$(git merge-base 93696bfa890f573fbbb23da3530da27c45d4b890 HEAD)" = 93696bfa890f573fbbb23da3530da27c45d4b890
+          test "$(git merge-base 238577c7fc61c4c3dcb9cea11483a00ebdb9ea1b HEAD)" = 238577c7fc61c4c3dcb9cea11483a00ebdb9ea1b
           test "$(git rev-parse HEAD:public/app.js)" = 991c00457799f8e2b8ae958d5ace85cc9914aece
-          test "$(git rev-parse HEAD:public/outfit-board.js)" = 153455379b0b6d777eff8c1c508c129208c7fadc
-          git diff --name-only 93696bfa890f573fbbb23da3530da27c45d4b890 HEAD | while IFS= read -r p; do
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = 42dc1a7a2503a1722e6addcd0b8613a7eb029b60
+          git diff --name-only 238577c7fc61c4c3dcb9cea11483a00ebdb9ea1b HEAD | while IFS= read -r p; do
             case "$p" in
               scripts/test-parallel92-exact-head.mjs|scripts/test-parallel92-independent-browser.mjs|scripts/test-parallel92-m51-webkit-reentry.mjs|research/parallel92-integration/LEDGER.md|.github/workflows/parallel92-m4-exact-head-no-deploy.yml) ;;
               *) echo "P92 REFUSED CONSUMER/DONOR CHANGE: $p"; exit 1 ;;

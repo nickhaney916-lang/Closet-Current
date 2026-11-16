@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {readFileSync,writeFileSync,mkdirSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
-const base='93696bfa890f573fbbb23da3530da27c45d4b890';
+const base='238577c7fc61c4c3dcb9cea11483a00ebdb9ea1b';
 const engine=process.env.P92_ENGINE,trial=Number(process.env.P92_TRIAL);
 assert.ok(['chromium','webkit'].includes(engine));
 assert.ok(trial===1||trial===2);
@@ -17,12 +17,12 @@ const allowed=new Set(['scripts/test-parallel92-exact-head.mjs','scripts/test-pa
 for(const f of git('diff','--name-only',base,head).split('\n').filter(Boolean))assert.ok(allowed.has(f),'protected change: '+f);
 const pins={
  'public/app.js':'991c00457799f8e2b8ae958d5ace85cc9914aece',
- 'public/outfit-board.js':'153455379b0b6d777eff8c1c508c129208c7fadc',
+ 'public/outfit-board.js':'42dc1a7a2503a1722e6addcd0b8613a7eb029b60',
  'public/native-owner-wardrobe-index-167.mjs':'b940b6c4ec040464d7d8b6686c45b5c3767fb859',
  'public/native-canonical-photo-source-167.mjs':'526d6d984bdb27cf775497132d2cf581ea2d3195',
  'research/main-thread-integration-1054/source-to-outfit.mjs':'5ea1e0e9b9f938fd98e7cb8875cc8ed8b68324b9',
  'public/native-default-atomic-import-m3.mjs':'3a83e3336ce36334a49708d1c7b90cc27194c7b9',
- 'scripts/test-main51-real-app-owner-original-2d.mjs':'16cd06bcc1b1ef6bf8a6df3e3790c9abe2785167',
+ 'scripts/test-main51-real-app-owner-original-2d.mjs':'63cc9da00eaecbeb2576482dcae1528b44ea8189',
  'scripts/test-main58-actual-p88-wasm-browser.mjs':'96ba2f5ee2420de52f45911881fdcc139455c353',
  'scripts/test-mission3-default-atomic-import-browser.mjs':'20f85d5eeda42f2acd921f1393c10cc7522d22df',
  'tests/mission3-default-atomic-backup-source-guard.test.mjs':'5220f1a483604065446ce5fb07f8d1074e18df80'
@@ -119,7 +119,11 @@ for(const [key,value] of Object.entries({engine,uninterruptedSourceExportRestore
 const originalM51File='scripts/test-main51-real-app-owner-original-2d.mjs';
 const sourceM51=readFileSync(originalM51File,'utf8');
 const originalCountCheck="  assert.equal(await count(page),1);";
-assert.equal(sourceM51.split(originalCountCheck).length,2,'M51 native photo count contract changed');
+const firstPreviewMarker="  stage='actual-native-app-preview-button';\n  await clickPreview(page);\n  assert.equal(await count(page),1);";
+assert.equal(sourceM51.split(firstPreviewMarker).length,2,'M97 first approved original-photo preview contract changed');
+assert.ok(sourceM51.includes("stage='m97-live-selected-original-photo-mutation-revokes-without-board-change'"),'M97 real-source mutation guard removed');
+assert.ok(sourceM51.includes("stage='m97-inflight-changed-source-must-not-publish-stale-original'"),'M97 real-source mutation guard removed');
+assert.ok(sourceM51.includes("stage='m95-inflight-unchanged-rerender-keeps-source-verified-preview'"),'M97 real-source mutation guard removed');
 const diagnosticCountCheck=[
  "  const p92Count=await count(page);",
  "  if(p92Count!==1){",
@@ -150,8 +154,8 @@ const diagnosticCountCheck=[
 // Read-only transition probe in the disposable M51 test, *not* app code.
 // It records only event kinds and counts; it never reads a JPEG URL, owner ID,
 // private row or credentials. A photo-free success still fails the same assert.
-const previewMarker="  await clickPreview(page);\n  assert.equal(await count(page),1);";
-assert.equal(sourceM51.split(previewMarker).length,2,'M51 first original-photo preview contract changed');
+// Diagnostic is attached only to the UNIQUE first M97 owner-photo preview;
+// all subsequent M95/M96/M97 source-mutation assertions run unchanged.
 const previewEventProbe=String.raw`
   await page.evaluate(()=>{
    const root=document.getElementById('mission4Preview1054Photos');
@@ -181,7 +185,11 @@ const previewEventProbe=String.raw`
   });
 `;
 const p92NativeFile='scripts/.parallel92-m51-visibility-diagnostic.generated.mjs';
-writeFileSync(p92NativeFile,sourceM51.replace(previewMarker,previewEventProbe+previewMarker).replace(originalCountCheck,diagnosticCountCheck));
+const firstPreviewWithProbe=firstPreviewMarker
+ .replace('  await clickPreview(page);',previewEventProbe+'  await clickPreview(page);')
+ .replace(originalCountCheck,diagnosticCountCheck);
+assert.notEqual(firstPreviewWithProbe,firstPreviewMarker,'M97 preview diagnostic was not attached');
+writeFileSync(p92NativeFile,sourceM51.replace(firstPreviewMarker,firstPreviewWithProbe));
 try{run(p92NativeFile,[],{M51_ENGINE:engine});}
 finally{rmSync(p92NativeFile,{force:true});}
 
