@@ -24,8 +24,13 @@ const exact=runInNewContext(
 );
 const jpeg='data:image/jpeg;base64,'+Buffer.from([255,216,255,217]).toString('base64');
 const sha=createHash('sha256').update(Buffer.from([255,216,255,217])).digest('hex');
+// Distinct fixture photography for different legacy garments. Reusing one
+// synthetic JPEG across independent IDs would be correctly refused by M92.
+const anotherJpeg='data:image/jpeg;base64,'+Buffer.from([255,216,21,22,255,217]).toString('base64');
+const anotherSha=createHash('sha256').update(Buffer.from([255,216,21,22,255,217])).digest('hex');
 const row=(owner,id='shirt',category='Tops')=>({
- id,ownerId:owner,name:id,image:jpeg,category,itemType:category==='Shoes'?'Sneakers':'T-shirt',
+ id,ownerId:owner,name:id,image:id==='shirt'?jpeg:anotherJpeg,
+ category,itemType:category==='Shoes'?'Sneakers':'T-shirt',
  color:'Blue',colorSource:'user'
 });
 const look=(id)=>({id,title:id,sourceUrl:'',pieces:[]});
@@ -211,12 +216,12 @@ test('pinned original JPEG SHA mismatch blocks unverified legacy source substitu
 test('a valid pinned original JPEG remains exactly preserved through the atomic commit',async()=>{
  const f=await fixture();
  try{
-  const raw=backup(f.owner);raw.items[0].sourceSHA256=sha;
-  raw.items[0].originalPhoto={image:jpeg,sha256:sha};
+  const raw=backup(f.owner);raw.items[0].sourceSHA256=anotherSha;
+  raw.items[0].originalPhoto={image:anotherJpeg,sha256:anotherSha};
   const p=await prep(f,raw);await commit(f,p);
   const after=(await snapshot(f.db)).items.find(x=>x.id==='new-top');
-  assert.equal(after.originalPhoto.image,jpeg);
-  assert.equal(after.sourceSHA256,sha);
+  assert.equal(after.originalPhoto.image,anotherJpeg);
+  assert.equal(after.sourceSHA256,anotherSha);
  }finally{f.close();}
 });
 
@@ -424,7 +429,7 @@ test('M92 distinct IDs for one unverified legacy JPEG are refused without changi
  try{
   const before=await snapshot(f.db);
   await assert.rejects(prep(f,{format:'closet-current',version:1,
-   items:[row(f.owner,'unverified-alias')]}),
+   items:[{...row(f.owner,'unverified-alias'),image:jpeg}]}),
    /LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW/);
   assert.deepEqual(await snapshot(f.db),before);
  }finally{f.close();}
