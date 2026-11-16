@@ -487,7 +487,7 @@ jobs:
            "      const allowed=['saved','save-refused','other'];",
            "      const safe={engine,width,",
            "       category:allowed.includes(v.category)?v.category:'other',",
-           "       reasonClass:["missing-name-trim","draft-source-identity","transaction-rolled-back","owner-lease-revoked","missing-durable-draft","review-lease-changed","invalid-source-record","invalid-owner-db-boundary","owner-snapshot-aborted","review-not-verified","draft-owner-session-changed","editor-session-changed","write-owner-revoked","wardrobe-reload-needed","undefined-property","null-property","photo119-other","closet-other","unclassified"].includes(v.reasonClass)?v.reasonClass:\'unclassified\',",
+           "       reasonClass:['missing-name-trim','draft-source-identity','transaction-rolled-back','owner-lease-revoked','missing-durable-draft','review-lease-changed','invalid-source-record','invalid-owner-db-boundary','owner-snapshot-aborted','review-not-verified','draft-owner-session-changed','editor-session-changed','write-owner-revoked','wardrobe-reload-needed','undefined-property','null-property','photo119-other','closet-other','unclassified'].includes(v.reasonClass)?v.reasonClass:'unclassified',",
            "       recordPresent:v.recordPresent===true,",
            "       ownerReviewed:v.ownerReviewed===true,",
            "       sourceSHAConsistent:v.sourceSHAConsistent===true,",
