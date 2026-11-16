@@ -487,6 +487,7 @@ jobs:
            "      const allowed=['saved','save-refused','other'];",
            "      const safe={engine,width,",
            "       category:allowed.includes(v.category)?v.category:'other',",
+           "       reasonClass:["missing-name-trim","draft-source-identity","transaction-rolled-back","owner-lease-revoked","missing-durable-draft","review-lease-changed","invalid-source-record","invalid-owner-db-boundary","owner-snapshot-aborted","review-not-verified","draft-owner-session-changed","editor-session-changed","write-owner-revoked","wardrobe-reload-needed","undefined-property","null-property","photo119-other","closet-other","unclassified"].includes(v.reasonClass)?v.reasonClass:\'unclassified\',",
            "       recordPresent:v.recordPresent===true,",
            "       ownerReviewed:v.ownerReviewed===true,",
            "       sourceSHAConsistent:v.sourceSHAConsistent===true,",
@@ -506,7 +507,20 @@ jobs:
            "     }",
            "    });"
           ].join('\n');
-          const changed=src.replace(marker,marker+'\n'+trace);
+          // Only fixed source-safe error categories; no arbitrary exception
+          // text, owner account, SHA or image ever leaves the browser.
+          const editorMarker="      console.error('M144_SAFE_EDITOR_FAILURE',JSON.stringify({\n       category,recordPresent:!!confirmedLargeRow,";
+          assert.equal(src.split(editorMarker).length,2,
+           'M144 owner-editor safe receipt moved; refuse wrong edit');
+          const reasonLines=[
+           "      const allowedReasons="+JSON.stringify([["Cannot read properties of undefined (reading 'trim')","missing-name-trim"],["PHOTO119 source JPEG or cutout identity differs from saved draft","draft-source-identity"],["PHOTO119 reviewed source, owner or draft commit rejected","transaction-rolled-back"],["PHOTO119 capture owner review lease revoked","owner-lease-revoked"],["PHOTO119 saved owner capture draft is missing","missing-durable-draft"],["PHOTO119 source or owner review changed after lease check","review-lease-changed"],["PHOTO119 exact owner captured source record required","invalid-source-record"],["PHOTO119 live signed-owner IndexedDB boundary required","invalid-owner-db-boundary"],["PHOTO119 original wardrobe snapshot aborted","owner-snapshot-aborted"],["Original photograph or garment review could not be verified","review-not-verified"],["The private camera draft or signed-in account changed","draft-owner-session-changed"],["CLOSET_PHOTO_EDITOR_SESSION_CHANGED","editor-session-changed"],["Private wardrobe write cancelled","write-owner-revoked"],["Saved garment needs a safe wardrobe reload","wardrobe-reload-needed"],["Cannot read properties of undefined","undefined-property"],["Cannot read properties of null","null-property"]])+";",
+           "      const reasonClass=allowedReasons.find(pair=>text.includes(pair[0]))?.[1]||",
+           "       (text.includes('PHOTO119')?'photo119-other':",
+           "        text.includes('CLOSET_')?'closet-other':'unclassified');"
+          ].join('\n');
+          const classified=src.replace(editorMarker,reasonLines+
+           "\n      console.error('M144_SAFE_EDITOR_FAILURE',JSON.stringify({\n       category,reasonClass,recordPresent:!!confirmedLargeRow,");
+          const changed=classified.replace(marker,marker+'\n'+trace);
           assert.equal(changed.split("P92_MAIN_M141_EDITOR_FAILURE_SAFE").length,3,
            'safe-only diagnostic must have exactly two authorized log sites');
           writeFileSync('scripts/.parallel92-m141-safe-diagnostic.mjs',changed);
