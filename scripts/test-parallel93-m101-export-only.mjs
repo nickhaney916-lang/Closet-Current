@@ -48,6 +48,10 @@ try{
  // copied verbatim into scratch so Node can load it alongside real M101 app.
  const browserHarness=await readFile('scripts/test-parallel93-m101-v3-receipt-browser.mjs','utf8');
  await writeFile(join(staged,'scripts/test-parallel93-m101-v3-receipt-browser.mjs'),browserHarness);
+ const reviewedBrowserHarness=await readFile(
+  'scripts/test-parallel93-m101-reviewed-restore-2d-browser.mjs','utf8');
+ await writeFile(join(staged,'scripts/test-parallel93-m101-reviewed-restore-2d-browser.mjs'),
+  reviewedBrowserHarness);
  for(const d of donors){
   must('git',['cat-file','-e',d.head+'^{commit}']);
   assert.equal(must('git',['rev-parse',d.head+':'+d.path]),d.blob);
@@ -167,6 +171,29 @@ try{
   journeys:6,sourceEncodedOver3MB:true,
   realUnflaggedUIImport:true,syntheticAccounts:true,
   fullPhotoStillPrivate:true,consumer3DAdmission:false
+ };
+ // An independent consecutive journey checks the restored item is the real
+ // PHOTO119 owner-reviewed JPEG, not just a DB row with same-source bytes.
+ // The actual opt-in M4 owner/source 2D gallery must render the ORIGINAL,
+ // retain 3D denial and never infer human accuracy from synthetic reviews.
+ const reviewed=run('node',['scripts/test-parallel93-m101-reviewed-restore-2d-browser.mjs',
+  'benchmark/parallel93-m101-reviewed-restore-2d-browser'],staged);
+ assert.equal(reviewed.status,0,
+  'M101 reviewed full source => export => native UI restore => Outfit Builder 2D failed: '+
+  reviewed.stdout.slice(-3000)+reviewed.stderr.slice(-4000));
+ const verified=JSON.parse(await readFile(join(staged,
+  'benchmark/parallel93-m101-reviewed-restore-2d-browser/results.json'),'utf8'));
+ assert.equal(verified.familyAlpha,'HOLD');
+ assert.equal(verified.cases.length,6);
+ assert.equal(verified.errors.length,0);
+ assert(verified.cases.every(v=>
+  v.restoredPhoto2DVerified===true&&v.exportImportLargeOriginalUI===true&&
+  v.sourceTo3DAllowed===false&&v.realHostedJWT===false&&v.physicalDevice===false),
+  'Native restored PHOTO119 original 2D/denial acceptance incomplete');
+ results.checks.nativeReviewedPhotoToRestored2D={
+  status:'PASS',engines:['chromium','webkit'],widths:[320,390,430],
+  journeys:6,originalDisplayedNotPreview:true,
+  realPHOTO119OwnerReviewSynthetic:true,sourceTo3DAllowed:false
  };
 }finally{
  run('git',['worktree','remove','--force',staged]);
