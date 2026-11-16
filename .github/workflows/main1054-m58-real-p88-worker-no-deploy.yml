@@ -45,7 +45,7 @@ jobs:
           test "$(git rev-parse "$P88:public/outfit-instance-review-840.mjs")" = 6324d8eda33024f166311f424392ed83363e4942
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
           # M105: admit only the already-reviewed P93 M101 exporter correction.
-          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = 2b40350ec28aba030a8680a607906015f21cc43d
+          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = e70fdc392c2652dc969b7d7c4b807f3cafd81e03
           test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
           git diff --exit-code "$BASE" HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' supabase/ benchmark/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
           # M78: only byte-verified donor application is permitted beyond
