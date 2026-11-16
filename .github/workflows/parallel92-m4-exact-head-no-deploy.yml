@@ -330,6 +330,54 @@ jobs:
           if-no-files-found: ignore
           path: benchmark/parallel92-preview-terminal-candidate/${{ matrix.engine }}/trial-*/result.json
 
+  independent-main-m108-detached-browser-acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P92_ENGINE: ${{ matrix.engine }}
+      P92_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      P92_MAIN_PIN: 4372426a5849874be7daa3decbb3fcbf72b5c1f6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Independently run exact M108 main consumer in detached, disposable tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
+          git cat-file -e "$P92_MAIN_PIN^{commit}"
+          test "$(git rev-parse "$P92_MAIN_PIN:public/outfit-board.js")" = 22e76c92dc31d8a10d8186e259a4e3784e4b3c84
+          test "$(git rev-parse "$P92_MAIN_PIN:scripts/test-main1054-m106-preview-terminal-browser.mjs")" = 49edecd8e9338290ac54e7273ce2518c3b9b753e
+          mkdir -p /tmp/p92-m108-rehearsal
+          git worktree add --detach "/tmp/p92-m108-rehearsal/$P92_ENGINE" "$P92_MAIN_PIN"
+          cd "/tmp/p92-m108-rehearsal/$P92_ENGINE"
+          git config --global --add safe.directory "$PWD"
+          test "$(git rev-parse HEAD)" = "$P92_MAIN_PIN"
+          test -z "$(git status --porcelain)"
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node --check scripts/test-main1054-m106-preview-terminal-browser.mjs
+          for trial in 1 2 3 4; do
+            echo "P92 INDEPENDENT M108 ACTUAL NATIVE $P92_ENGINE FRESH PROCESS $trial/4, MAIN PIN $P92_MAIN_PIN"
+            M51_ENGINE="$P92_ENGINE" node scripts/test-main1054-m106-preview-terminal-browser.mjs
+          done
+          test "$(git rev-parse HEAD)" = "$P92_MAIN_PIN"
+          echo "P92 M108 INDEPENDENT 4/4 REAL-BROWSER PROCESSES PASS WITH UNCHANGED MAIN APP — HOLD"
+
   inherited-full-native-regressions:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
