@@ -1008,7 +1008,12 @@ if(mission4Preview1054Active){
      const viewer=mission4Preview1054Viewer;
      const result=await viewer.refresh();
      if(!live()||mission4Preview1054Viewer!==viewer){
-      viewer.clear();return;
+      // A superseded verification can resolve after a newer click has
+      // independently re-attested the SAME owner/original JPEG. The old
+      // continuation owns neither the shared viewer nor its newer pixels.
+      // Source/owner/DB changes already revoke synchronously in the viewer
+      // and redraw/session guards. Never clear a newer valid request here.
+      return;
      }
      if(viewer.status.phase!=='visible'||
         photos.querySelectorAll('img').length!==result.slotCount)
