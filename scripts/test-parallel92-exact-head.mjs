@@ -55,7 +55,55 @@ for(const name of ['M58-ACTUAL-P88-BROWSER-NO-SILENT-SAVE.json','P91-LIFECYCLE.j
  rmSync(join('benchmark','main58-real-p88-browser-worker',engine,name),{force:true});
 rmSync(join('benchmark','main51-real-app-owner-2d',engine,'M51-native-owner-source-2d-NOT-RELEASE.json'),{force:true});
 run('scripts/test-browser-owner-mutation91.mjs',[],{P91_ENGINE:engine});
-run('scripts/test-main58-actual-p88-wasm-browser.mjs',[],{M58_ENGINE:engine});
+// Diagnostic runner only: exact original M58 source, real immutable P88
+// browser model and original assertions; append FAIL-ONLY numeric/enum
+// diagnostics to a disposable same-directory test copy. Never retry a failed
+// browser or supply any mock model proposals.
+const mainM58File='scripts/test-main58-actual-p88-wasm-browser.mjs';
+const immutableM58=readFileSync(mainM58File,'utf8');
+const match="  assert.ok(state.cards>0&&state.cards<=12,\n   'Genuine P88 browser worker did not produce a bounded actual model proposal');";
+assert.equal(immutableM58.split(match).length,2,'P92 must not replace altered real M58 assertion');
+const numericAndEnumOnly=String.raw`
+  if(!(state.cards>0&&state.cards<=12)){
+   const statusText=String(state.status||'');
+   const category=/automatic extraction unavailable/i.test(statusText)?
+     'automatic-extraction-unavailable':/timed out/i.test(statusText)?
+     'extraction-timeout':/could not start/i.test(statusText)?
+     'extraction-start-error':/unverified region/i.test(statusText)?
+     'unverified-status-no-card':'unknown-status';
+   console.error('P92_P88_GENUINE_MODEL_NO_PROPOSAL',JSON.stringify({
+    engine,category,originalWorkerAndSourcePinned:true,
+    proposalCards:state.cards,working:state.debug?.working===true,
+    p88Transport57:state.debug?.p88Transport57===true,
+    passedNetworkResponses:modelResponses.filter(x=>x.status>=200&&x.status<300).length,
+    unexpectedOutbound:rejected.length,browserIssues:issues.length,
+    browserConsoleErrorClasses:p92ConsoleErrorClasses.slice(0,6),
+    releaseAllowed:false,familyAlpha:'HOLD'
+   }));
+  }
+`;
+const errorsMarker="const external=[],rejected=[],issues=[],modelResponses=[];";
+const eventMarker="  page.on('pageerror',e=>issues.push('pageerror-'+String(e.message).slice(0,120)));";
+assert.equal(immutableM58.split(errorsMarker).length,2,'M58 error accounting altered');
+assert.equal(immutableM58.split(eventMarker).length,2,'M58 real page accounting altered');
+const disposableM58=immutableM58
+ .replace(errorsMarker,errorsMarker+"\nconst p92ConsoleErrorClasses=[];")
+ .replace(eventMarker,eventMarker+String.raw`
+  page.on('console',msg=>{
+   if(msg.type()!=='error')return;
+   const s=String(msg.text()||'').toLowerCase();
+   p92ConsoleErrorClasses.push(/memory|allocation/.test(s)?'memory':
+     /wasm|webassembly/.test(s)?'wasm':
+     /onnx|inference|execution/.test(s)?'inference':
+     /network|fetch|timeout/.test(s)?'network':'other');
+  });
+`)
+ .replace(match,numericAndEnumOnly+match);
+const instrumentedFile='scripts/.parallel92-m58-diagnostic.generated.mjs';
+writeFileSync(instrumentedFile,disposableM58);
+try{run(instrumentedFile,[],{M58_ENGINE:engine});}
+finally{rmSync(instrumentedFile,{force:true});}
+
 const m=read(join('benchmark','main58-real-p88-browser-worker',engine,'M58-ACTUAL-P88-BROWSER-NO-SILENT-SAVE.json'));
 const l=read(join('benchmark','main58-real-p88-browser-worker',engine,'P91-LIFECYCLE.json'));
 for(const [key,value] of Object.entries({actualBrowser:engine,sourceVerified:true,actualNativeApp:true,viewportWidth:390,actualP88ModuleWorkerExecuted:true,noSyntheticWorker:true,ownerPrivateSaves:0,syntheticLogin:true,localIndexedDBOnly:true,humanAccuracyMeasured:false,full3DReady:false,hostedSignedRLS:false,familyAlpha:'HOLD',releaseAllowed:false}))
