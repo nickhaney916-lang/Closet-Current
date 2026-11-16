@@ -304,6 +304,33 @@ try{
   const filename=engine+'-'+width+'-native-owned-licensed-2d.png';
   await writeFile(join(out,filename),png);
   screens.push({width,sha256:hash(png),name:filename});
+  stage='m95-unchanged-board-rerender-keeps-verified-owner-original';
+  await page.evaluate(()=>renderOutfitBoard());
+  assert.equal(await count(page),1,'M95 harmless redraw lost source-verified original JPEG');
+  assert.match(await page.locator('#mission4Preview1054Status').innerText(),
+   /original photo\(s\) verified.*2D only/);
+  stage='m95-updated-board-redraw-revokes-owner-original-and-status';
+  await page.evaluate(()=>{currentBoard.occasion='Dinner';renderOutfitBoard();});
+  await blank(page,'M95 changed native outfit redraw');
+  assert.match(await page.locator('#mission4Preview1054Status').innerText(),
+   /Verify the original clothing photos again/);
+  await page.evaluate(()=>{currentBoard.occasion='Casual';renderOutfitBoard();});
+  await clickPreview(page);
+  assert.equal(await count(page),1);
+  stage='m95-inflight-unchanged-rerender-keeps-source-verified-preview';
+  await page.waitForFunction(()=>
+   document.querySelector('#mission4Preview1054Section button')?.disabled===false);
+  await page.evaluate(()=>{
+   document.querySelector('#mission4Preview1054Section button').click();
+   renderOutfitBoard();
+  });
+  await page.waitForFunction(()=>{
+   const status=document.getElementById('mission4Preview1054Status')?.textContent||'';
+   return status.includes('2D only')||status.includes('Preview refused');
+  },null,{timeout:20000});
+  assert.match(await page.locator('#mission4Preview1054Status').innerText(),
+   /original photo\(s\) verified.*2D only/);
+  assert.equal(await count(page),1,'M95 in-flight unchanged redraw canceled the private preview');
   stage='real-app-owner-session-and-board-revocation';
   await page.evaluate(()=>{
    currentBoard.occasion='Dinner';window.dispatchEvent(new Event('focus'));

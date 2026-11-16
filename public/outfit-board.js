@@ -3,6 +3,64 @@ const nativeLossless04Active=typeof URLSearchParams==='function'&&typeof locatio
 let nativeLossless04=null;
 const mission4Preview1054Active=typeof URLSearchParams==='function'&&typeof location!=='undefined'&&new URLSearchParams(location.search).get('mission4Preview')==='research';
 let mission4Preview1054Viewer=null;
+let mission4Preview1054ClickSerial=0,mission4Preview1054Pinned=null;
+// M95 research-only: compare the selected owner's exact JPEG strings by
+// reference (no duplicate Base64 allocation) and source-review receipts.
+// Harmless UI redraws retain a currently verified preview; changing the
+// board, photo, reviewed attributes or session still revokes old pixels.
+function mission4Preview1054SourceSnapshot(){
+ try{
+  if(!boardInitialized||!currentBoard?.slots||!Array.isArray(items))return null;
+  const selected=[];
+  for(const [slot,id] of Object.entries(currentBoard.slots)){
+   const row=items.find(item=>item?.id===id);
+   if(!row)return null;
+   selected.push({slot,id,image:row.image,original:row.originalPhoto?.image,
+    details:JSON.stringify([
+     row.id,row.ownerId,row.sourceSHA256,row.originalPhoto?.sha256,
+     row.originalPhoto?.ownerId,row.ownerReviewed,row.userAdjusted,
+     row.sourceHashVerified,row.sourcePhotoOriginal,row.singleGarmentVerified,
+     row.category,row.itemType,row.color,row.colorSource,row.confirmedCategory,
+     row.confirmedColor,row.sourcePieceKey,row.ownerSourceReview88,
+     row.segmentHint?.cutoutSHA256,row.segmentHint?.ownerReviewedInstance,
+     row.segmentHint?.verified,row.segmentHint?.clipped,
+     row.deleted,row.sourceRevoked
+    ])});
+  }
+  return {board:JSON.stringify(currentBoard),selected};
+ }catch{return null;}
+}
+function mission4Preview1054SameSource(left,right){
+ return !!left&&!!right&&left.board===right.board&&
+  left.selected.length===right.selected.length&&
+  left.selected.every((one,index)=>{
+   const two=right.selected[index];
+   return one.slot===two.slot&&one.id===two.id&&one.details===two.details&&
+    one.image===two.image&&one.original===two.original;
+  });
+}
+function mission4Preview1054ReconcileRedraw(){
+ if(!mission4Preview1054Active)return;
+ const viewer=mission4Preview1054Viewer;
+ const button=document.querySelector('#mission4Preview1054Section button');
+ const status=document.getElementById('mission4Preview1054Status');
+ let state=null;try{state=viewer?.status;}catch{}
+ const unchanged=mission4Preview1054SameSource(
+  mission4Preview1054Pinned,mission4Preview1054SourceSnapshot());
+ const checking=button?.disabled===true&&(!viewer||
+  state?.phase==='checking'||state?.phase==='revoked');
+ const visible=state?.phase==='visible'&&state.hasOwnerPhotos===true;
+ if(unchanged&&(checking||visible))return;
+ const hadPinned=mission4Preview1054Pinned!==null;
+ mission4Preview1054Pinned=null;
+ if(!hadPinned&&!viewer)return;
+ ++mission4Preview1054ClickSerial;
+ viewer?.clear();
+ if(button)button.disabled=false;
+ if(status&&(hadPinned||/verified|Verifying/.test(status.textContent||'')))
+  status.textContent='Outfit or saved photo changed. Verify the original clothing photos again.';
+}
+
 // M62: explicit DOUBLE opt-in. The ordinary consumer never imports M59 or
 // mounts any physical-unit-unverified research gallery.
 const mission4PhotoOnly59Active=mission4Preview1054Active&&
@@ -501,16 +559,17 @@ function openBoardPicker(slotId){
  $('boardPicker').showModal();
 }
 function renderOutfitBoard(){
- // Research-only: any saved outfit change revokes already displayed private photos.
- if(typeof mission4Preview1054Active!=='undefined'&&mission4Preview1054Active)mission4Preview1054Viewer?.clear();
+ // M95: only a changed source/board revokes owner-private original pixels.
  if(mission4PhotoOnly59Active)mission4PhotoOnly59Viewer?.clear();
- if(!boardInitialized)return;
+ if(!boardInitialized){mission4Preview1054ReconcileRedraw();return;}
  if(nativeLossless04Active){
   if(!nativeLossless04||!nativeLossless04.status().active){
+   mission4Preview1054Pinned=null;mission4Preview1054ReconcileRedraw();
    nativeLossless04ClearPreview();$('boardSummary').textContent='Private saved outfits locked · sign in again';return;
   }
   currentBoard=nativeLossless04.view();
  }else currentBoard=cleanOutfitBoard(currentBoard,items);
+ mission4Preview1054ReconcileRedraw();
  const top=items.find(x=>x.id===currentBoard.slots.top),dress=top?.category==='Dresses';
  $('outfitFigure').classList.toggle('has-outer-coat',currentBoard.layerCount>=3);const slots=$('boardSlots');slots.replaceChildren();
  for(const slot of outfitSlots){
@@ -909,12 +968,20 @@ if(mission4Preview1054Active){
    // M68: strict original-photo verification is asynchronous and may finish
    // after an owner/logout/DB revision. A stale request must not overwrite
    // newer signed-owner preview status or reenable its active request.
-   let previewClickSerial1054=0;
    button.onclick=async()=>{
     const lease=beginOwnerBoardUiLease();
     if(!lease||button.disabled||!button.isConnected)return;
-    const serial=++previewClickSerial1054;
-    const live=()=>serial===previewClickSerial1054&&lease.current()&&button.isConnected;
+    const pinned=mission4Preview1054SourceSnapshot();
+    if(!pinned){
+     status.textContent='Choose a signed-owner saved outfit and review its photos first.';
+     return;
+    }
+    mission4Preview1054Pinned=pinned;
+    const serial=++mission4Preview1054ClickSerial;
+    const live=()=>serial===mission4Preview1054ClickSerial&&
+     mission4Preview1054Pinned===pinned&&
+     mission4Preview1054SameSource(pinned,mission4Preview1054SourceSnapshot())&&
+     lease.current()&&button.isConnected;
     button.disabled=true;photos.replaceChildren();
     status.textContent='Verifying the signed owner, source photographs and selected outfit…';
     try{
@@ -936,20 +1003,26 @@ if(mission4Preview1054Active){
       });
      const viewer=mission4Preview1054Viewer;
      const result=await viewer.refresh();
-     if(!live()||mission4Preview1054Viewer!==viewer)return;
+     if(!live()||mission4Preview1054Viewer!==viewer){
+      viewer.clear();return;
+     }
+     if(viewer.status.phase!=='visible'||
+        photos.querySelectorAll('img').length!==result.slotCount)
+      throw Error('Research source-bound photo presentation was revoked');
      status.textContent=result.slotCount+
       ' owner-confirmed original photo(s) verified. 2D only; realistic 3D fit is not established.';
     }catch{
      if(!live())return;
+     mission4Preview1054Pinned=null;
      mission4Preview1054Viewer?.clear();
      photos.replaceChildren();
      status.textContent='Preview refused. Recheck the signed account, garment review, original photographs and outfit slots.';
     }finally{
-     if(serial===previewClickSerial1054&&button.isConnected)button.disabled=false;
+     if(serial===mission4Preview1054ClickSerial&&button.isConnected)button.disabled=false;
     }
    };
    window.addEventListener('closet:session-locked',()=>{
-    ++previewClickSerial1054;
+    ++mission4Preview1054ClickSerial;mission4Preview1054Pinned=null;
     mission4Preview1054Viewer?.clear();photos.replaceChildren();
     button.disabled=false;
     status.textContent='Private preview cleared on account-session change.';

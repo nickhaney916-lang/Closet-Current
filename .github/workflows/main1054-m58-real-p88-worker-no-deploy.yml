@@ -184,14 +184,14 @@ jobs:
           git cat-file -e "$M51^{commit}"
           # Preserve immutable M51 donor while pinning the additive failure reporter.
           test "$(git rev-parse "$M51:scripts/test-main51-real-app-owner-original-2d.mjs")" = 1150a6db461b1d5968183d1c9e798cac7ae88478
-          test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = 16cd06bcc1b1ef6bf8a6df3e3790c9abe2785167
+          test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = 6fa5108cb0bbcbc67e7efe58225d923379ddffbf
           node --check scripts/test-main51-real-app-owner-original-2d.mjs
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 3a83e3336ce36334a49708d1c7b90cc27194c7b9
           test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 5220f1a483604065446ce5fb07f8d1074e18df80
           git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' supabase/ research/main-thread-integration-1054/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
       - name: Install pinned isolated application test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
-      - name: Run M51 native owner-original 2D with M89 classified research-preview failure diagnostics
+      - name: Run M95 native source-verified 2D unchanged/redraw/in-flight lifecycle checks
         run: node scripts/test-main51-real-app-owner-original-2d.mjs
       - name: Assert actual app three widths and no unjustified 3D or release
         shell: bash
