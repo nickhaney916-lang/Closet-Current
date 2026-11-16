@@ -45,7 +45,8 @@ function photoIdentity(record){
   originalPhoto:record?.originalPhoto,
   image:record?.image,recognitionPhoto:record?.recognitionPhoto,
   cropBounds:record?.cropBounds,outfitSourceId:record?.outfitSourceId,
-  segmentHint:record?.segmentHint
+  segmentHint:record?.segmentHint,
+  displayPreviewReceipt:record?.displayPreviewReceipt
  });
 }
 // M129: match the SHA-signed v3 import/export envelope without widening the
@@ -72,15 +73,29 @@ function bytesFromJPEG(data,{original=false,preview=false}={}){
   return null;
  return Uint8Array.from(decoded,c=>c.charCodeAt(0));
 }
-function draftSourceMatches(draft,record,ownerId){
+function draftSourceMatches(draft,record,ownerId,{allowPreparedPreview=false}={}){
  if(!draft||draft.id!=='draft'||!Array.isArray(draft.batch))
   fail('saved owner capture draft is missing');
  const same=draft.batch.filter(x=>x?.id===record.id);
  if(same.length!==1)fail('missing or repeated private draft item');
  if(same[0].ownerId!==undefined&&same[0].ownerId!==ownerId)
   fail('foreign owner draft item');
- if(photoIdentity(same[0])!==photoIdentity(record))
-  fail('source JPEG or cutout identity differs from saved draft');
+ if(photoIdentity(same[0])===photoIdentity(record))return;
+ // M138: a freshly prepared display thumbnail may be committed together
+ // with explicit source-bound owner review, with no separate speculative
+ // write to the durable unsaved draft. Only image + display receipt may
+ // differ from its exact original-photo draft; the original SHA, owner,
+ // crop/segment and all other SOURCE fields must remain unchanged.
+ const prior=same[0];
+ if(allowPreparedPreview&&!record.segmentHint&&
+    prior.image===prior.originalPhoto?.image&&
+    prior.originalPhoto?.image===record.originalPhoto?.image&&
+    prior.displayPreviewReceipt===undefined&&
+    record.displayPreviewReceipt?.displayOnly===true&&
+    photoIdentity({...prior,image:record.image,
+     displayPreviewReceipt:record.displayPreviewReceipt})===photoIdentity(record))
+  return;
+ fail('source JPEG or cutout identity differs from saved draft');
 }
 async function snapshot(db){
  return new Promise((resolve,reject)=>{
@@ -144,7 +159,7 @@ function transactionCommit({db,ownerId,currentOwner,assertLease,record,
     // Compare ALL private snapshot metadata, not just selected source ID.
     if(seal(items)!==seal(pre.items)||seal(draft)!==seal(pre.draft))
      fail('wardrobe or unsaved garment draft changed during original SHA proof');
-    draftSourceMatches(draft,record,ownerId);
+    draftSourceMatches(draft,record,ownerId,{allowPreparedPreview:review?.previewConfirmed===true});
     const idx=buildOwnerWardrobeIndex(ownerId,items);
     const collision=previewOwnerWardrobeAddition(idx,ownerId,value);
     if(collision.status!=='allow')
@@ -190,7 +205,7 @@ export async function commitHumanReviewedPhoto119({
  const sourceStart=photoIdentity(record);
  const pre=await snapshot(db);
  checkLive({db,ownerId,currentOwner,assertLease,record,review,initial});
- draftSourceMatches(pre.draft,record,ownerId);
+ draftSourceMatches(pre.draft,record,ownerId,{allowPreparedPreview:review?.previewConfirmed===true});
  buildOwnerWardrobeIndex(ownerId,pre.items);
  const original=record.originalPhoto?.image;
  const sourceSHA=record.sourceSHA256;
