@@ -225,7 +225,7 @@ try{
       return status.includes('2D only')||status.includes('Preview refused');
     },null,{timeout:20000});
     const previewStatus=await page.locator('#mission4Preview1054Status').innerText();
-    if(!/original photo\\(s\\) verified.*2D only/.test(previewStatus)){
+    if(!/original photo\(s\) verified.*2D only/.test(previewStatus)){
      const context=await page.evaluate(async()=>{
       const row=items.find(x=>x?.id==='p93-original');
       const state={
@@ -319,7 +319,7 @@ try{
      console.error('P93_NATIVE_RESTORED_2D_REFUSAL',JSON.stringify({
       engine,width,diagnostic:context,releaseAuthorized:false,familyAlpha:'HOLD'}));
     }
-    assert.match(previewStatus,/original photo\\(s\\) verified.*2D only/,
+    assert.match(previewStatus,/original photo\(s\) verified.*2D only/,
      'Restored original source failed signed-owner source-to-2D preflight: '+previewStatus);
     const imgs=page.locator('#mission4Preview1054Photos img');
     assert.equal(await imgs.count(),1,'Expected one source-verified 2D photo');
