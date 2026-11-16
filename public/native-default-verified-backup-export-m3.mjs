@@ -30,6 +30,17 @@ function inspectOwner(value,owner,depth=0,seen=new WeakSet()){
  }
  seen.delete(value);
 }
+// Mirror the importer's pad-bit canonicalization: two legal Base64
+// spellings may decode to the same JPEG and must never appear distinct.
+function canonicalJPEG(image){
+ const pads=image.endsWith('==')?2:image.endsWith('=')?1:0;
+ if(!pads||!image.startsWith(mime))return image;
+ const idx=image.length-1-pads;
+ const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+ const sextet=alphabet.indexOf(image[idx]);
+ return sextet<0?image:
+  image.slice(0,idx)+alphabet[sextet&(pads===2?48:60)]+image.slice(idx+1);
+}
 async function checkedJPEG(image,claimedHash=null,{maxEncoded=3_000_000,maxBytes=2_250_000}={}){
  if(typeof image!=='string'||image.length>maxEncoded||
     !imagePattern.test(image)||(image.length-mime.length)%4!==0)
@@ -91,10 +102,9 @@ export async function exportDurableOwnerBackupM3({
   fail('UNFINISHED_PHOTOS_NOT_IN_V3');
  const items=[];
  const ids=new Set();
- // M110: v3 importer refuses two distinct item IDs sharing one original.
- // Never download a seemingly successful backup that cannot restore the
- // owner's complete selected wardrobe. M1 instance receipts remain blocked.
- const originalJPEGs=new Set(),originalReceipts=new Set();
+ // M116: match the v3 importer's cross-item photo identity fence, not just
+ // the canonical original: repeated previews also cause no-write refusal.
+ const seenPictures=new Set(),originalReceipts=new Set();
  if(snap.items.length>1000)fail('TOO_MANY_GARMENTS');
  for(const row of snap.items){
   if(!row||typeof row.id!=='string'||!row.id||row.id.length>100||
@@ -120,12 +130,14 @@ export async function exportDurableOwnerBackupM3({
   // A shared original can represent two legitimately different garments,
   // but current v3 cannot attest their separate mask/crop instances on
   // restore. Refuse export without deleting either private saved garment.
-  const actualOriginal=row.originalPhoto?.image||row.image;
+  const pictures=new Set([row.image,row.originalPhoto?.image]
+   .filter(image=>typeof image==='string'&&image.length)
+   .map(canonicalJPEG));
   const canonicalReceipt=row.originalPhoto?.sha256||row.sourceSHA256||null;
-  if(originalJPEGs.has(actualOriginal)||
+  if([...pictures].some(image=>seenPictures.has(image))||
      (canonicalReceipt&&originalReceipts.has(canonicalReceipt)))
    fail('SHARED_ORIGINAL_RESTORE_UNSUPPORTED');
-  originalJPEGs.add(actualOriginal);
+  for(const image of pictures)seenPictures.add(image);
   if(canonicalReceipt)originalReceipts.add(canonicalReceipt);
   check();
   // Older v1-v3 rows legitimately lacked an owner ID; stamp only the
