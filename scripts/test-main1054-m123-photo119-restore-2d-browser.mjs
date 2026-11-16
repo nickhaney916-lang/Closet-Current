@@ -158,37 +158,58 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
         largeDenied.sourceKind!=='display-preview-unverified'||
         JSON.stringify(await readRows())!==JSON.stringify(beforeLarge))
       throw Error('PHOTO119 incorrectly accepted large source/thumbnail or changed owner DB');
-     // M130: unlike the negative unrelated preview, this owner explicitly
-     // confirms a separately SHA-verified display-only preview of the full
-     // >3M encoded camera JPEG. Keep it distinct from cutout/3D geometry.
-     const largeConfirmedRecord={...largeRecord,image:largeDisplayJPEG,
-      displayPreviewReceipt:{schema:'photo119-owner-display-preview/v1',
-       ownerId:owner,originalSHA256:largeOriginalSHA,
-       previewSHA256:largeDisplaySHA,displayOnly:true}};
-     await update({states:[{id:'draft',batch:[structuredClone(largeConfirmedRecord)]}]});
-     const largeConfirmed=await commitHumanReviewedPhoto119({
-      db,ownerId:owner,currentOwner:()=>window.closetAuth?.user?.id,
-      record:largeConfirmedRecord,
-      review:{...largeReview,previewConfirmed:true,previewSHA256:largeDisplaySHA},
-      cryptoProvider:crypto,assertLease:lease
-     });
-     if(largeConfirmed.saved!==true||
-        largeConfirmed.sourceKind!=='human-reviewed-original-single-display-preview'||
-        largeConfirmed.releaseAuthorized!==false)
-      throw Error('M130 distinct display preview with owner SHA confirmation refused');
+     // M141: true original-only durable camera draft, then the ACTUAL owner
+     // editor: locally prepare bounded display, show it, check all three
+     // user-review controls and submit the native form. Never seed a ready-
+     // made PHOTO119 preview receipt directly into owner-private storage.
+     const captured={...largeRecord,image:largeOriginalJPEG};
+     await update({states:[{id:'draft',batch:[structuredClone(captured)]}]});
+     batch.push(captured);
+     adjustPhoto(captured);
+     const editor=document.querySelector('dialog.photo-adjust[open]');
+     const prep=[...editor.querySelectorAll('button')]
+      .find(button=>button.textContent==='Prepare smaller display photo');
+     if(!prep)throw Error('M141 editor did not offer a large-source preview');
+     await prep.onclick();
+     const preparedImg=editor.querySelector(
+      'img[alt="Locally generated wardrobe display of your full original photograph"]');
+     if(!preparedImg||preparedImg.hidden||!preparedImg.getAttribute('src')?.startsWith('data:image/jpeg;base64,'))
+      throw Error('M141 native owner editor failed to prepare preview');
+     const actualPreview=preparedImg.getAttribute('src');
+     const select=(name,value)=>{
+      const el=editor.querySelector('[aria-label="'+name+'"]');
+      if(!el)throw Error('M141 missing owner review field '+name);
+      el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));
+     };
+     select('Main category','Tops');select('Item type','T-shirt');select('Color','Blue');
+     for(const name of [
+      'I verified the category, clothing type and color',
+      'I confirmed this photo shows one garment',
+      'I verified that the smaller display photo matches this original'
+     ]){
+      const input=editor.querySelector('input[aria-label="'+name+'"]');
+      if(!input||input.disabled)throw Error('M141 required owner review control unavailable');
+      input.checked=true;
+     }
+     const submit=editor.querySelector('form')?.onsubmit;
+     if(typeof submit!=='function')throw Error('M141 owner editor save missing');
+     await submit({preventDefault(){}});
      const confirmedLargeRow=(await readRows()).items.find(x=>x.id===largeRecord.id);
      if(confirmedLargeRow?.originalPhoto?.image!==largeOriginalJPEG||
-        confirmedLargeRow?.image!==largeDisplayJPEG||
+        confirmedLargeRow?.image!==actualPreview||
         confirmedLargeRow?.sourceSHA256!==largeOriginalSHA||
-        confirmedLargeRow?.displayPreviewReceipt?.previewSHA256!==largeDisplaySHA||
-        confirmedLargeRow?.singleGarmentVerified!==true)
-      throw Error('M130 original or display SHA lost after atomic owner review');
+        !/^[a-f0-9]{64}$/.test(confirmedLargeRow?.displayPreviewReceipt?.previewSHA256||'')||
+        confirmedLargeRow?.singleGarmentVerified!==true||
+        confirmedLargeRow?.ownerReviewed!==true||batch.includes(captured)||
+        editor.open)
+      throw Error('M141 native owner preview editor failed atomic reviewed original save');
+     const savedPreviewSHA=confirmedLargeRow.displayPreviewReceipt.previewSHA256;
      const {exportDurableOwnerBackupM3:exportLarge}=await import('./native-default-verified-backup-export-m3.mjs');
      const largeExport=await exportLarge({ownerDB:db,ownerId:owner,
       assertLease:lease,assertIdle:()=>{}});
      if(largeExport.data.items.length!==1||
         largeExport.data.items[0].originalPhoto.image!==largeOriginalJPEG||
-        largeExport.data.items[0].image!==largeDisplayJPEG)
+        largeExport.data.items[0].image!==actualPreview)
       throw Error('M130 v3 backup lost owner-reviewed large original');
      await update({clear:true});
      window.confirm=()=>true;
@@ -198,9 +219,9 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
      const largeRestored=(await readRows()).items;
      if(largeRestored.length!==1||
         largeRestored[0]?.originalPhoto?.image!==largeOriginalJPEG||
-        largeRestored[0]?.image!==largeDisplayJPEG||
+        largeRestored[0]?.image!==actualPreview||
         largeRestored[0]?.sourceSHA256!==largeOriginalSHA||
-        largeRestored[0]?.displayPreviewReceipt?.previewSHA256!==largeDisplaySHA)
+        largeRestored[0]?.displayPreviewReceipt?.previewSHA256!==savedPreviewSHA)
       throw Error('M130 native v3 owner UI restore lost large reviewed source');
      // M134: prove the restored >3M original renders through the REAL native
      // signed owner 2D preview, never substitute the small display thumbnail.
@@ -309,7 +330,7 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
      const status=document.getElementById('message')?.textContent||'';
      const state=Object.fromEntries(after.state.map(x=>[x.id,x]));
      return {largePhoto119NotSilentlySaved:largeDenied.saved===false,
-      largeExplicitPreviewPhoto119Saved:largeConfirmed.saved===true,
+      largeExplicitPreviewPhoto119Saved:confirmedLargeRow?.ownerReviewed===true,
       largeOriginalV3UIRecovered:largeRestored.length===1&&
        largeRestored[0]?.originalPhoto?.image===largeOriginalJPEG,
       largeOriginal2DDisplayed:largePhoto?.getAttribute('src')===largeOriginalJPEG&&
@@ -485,5 +506,5 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
   exactSourceSHAVerified:true,releaseAuthorized:false,
   realBrowserEngines:[selectedEngine],cases,errors};
  await writeFile(resolve(output,'results.json'),JSON.stringify(report,null,2)+'\n');
- console.log('M134 MAIN owner-confirmed >3M original with real thumbnail restored and verified in signed 2D; two distinct PHOTO119 originals/outfit PASS 3/3; wrong preview vetoed; HOLD');
+ console.log('M141 MAIN real photo editor confirmed >3M original with local display preview, atomic save, v3 UI restore and signed 2D; two other reviewed originals/outfit PASS 3/3; wrong preview vetoed; HOLD');
 }finally{server.close();}
