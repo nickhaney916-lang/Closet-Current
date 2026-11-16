@@ -282,3 +282,21 @@ test('P93 isolated M3 adapter admits two independent source JPEGs and preserves 
   assert.equal(JSON.parse(backup.json).items.length,2);
  }finally{await clear(owner,db);}
 });
+
+test('P93 isolated M3 adapter prevents new piece from sharing the saved owner original',async()=>{
+ const owner='p93-m3-safe-existing-'+randomUUID(),db=await dbFor(owner);
+ try{
+  const [saved,incoming]=pieces(owner,true);
+  await writeRows(db,[saved]);
+  const before=await rowsOf(db);
+  const data={format:'closet-current',version:3,items:[incoming],looks:[]};
+  // The donor merge accepts the new ID even though it duplicates a saved
+  // original. The bounded adapter must inspect actual owner-private rows.
+  const bare=await prepareLegacyAtomicM3(args(owner,db,data));
+  assert.equal(bare.incoming.length,1);
+  await assert.rejects(prepareLegacyAtomicM3Restorable(args(owner,db,data)),
+    /P93_M3_V3_RESTORE_SHARED_ORIGINAL_OR_PREVIEW_REQUIRES_OWNER_REVIEW/);
+  assert.deepEqual(await rowsOf(db),before,
+    'Existing original and board survive a rejected source collision');
+ }finally{await clear(owner,db);}
+});
