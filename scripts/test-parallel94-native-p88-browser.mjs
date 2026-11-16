@@ -5,8 +5,7 @@
  * NO mock Worker, NO fake logits, NO synthetic model replies.
  * Signed auth HTTP is deliberately synthetic; hosted RLS is NOT tested.
  *
- * Required CI scratch: git-show exact immutable P88 worker/segmentation/
- * component review/photo color blobs into .m57-exact-p88-donor/public/.
+ * P94 installed native worker; NO scratch donor extraction, model imitation or replacement default worker.
  */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -36,7 +35,7 @@ const mime={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html'
 const server=createServer(async(req,res)=>{
  try{
   const path=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
-  if(req.method!=='GET'||!['/public/','/research/','/benchmark/','/node_modules/','/.m57-exact-p88-donor/'].some(prefix=>path.startsWith(prefix))||
+  if(req.method!=='GET'||!['/public/','/research/','/benchmark/','/node_modules/'].some(prefix=>path.startsWith(prefix))||
      path.includes(String.fromCharCode(92))||path.includes(String.fromCharCode(0))||path.split('/').includes('..'))
    throw Error('not a source-only local asset');
   const absolute=resolve(root,'.'+path);
@@ -125,6 +124,11 @@ try{
    window.addEventListener(type,()=>window.__p91Lifecycle({type,document:window.__document91}));
  });
  const page=await context.newPage();
+ const actualWorkerPaths94=[];
+ page.on('worker',worker=>{
+  try{actualWorkerPaths94.push(new URL(worker.url()).pathname);}
+  catch{actualWorkerPaths94.push('invalid-worker-url');}
+ });
  // M69: reproducible no-deploy diagnostics for the intermittent A→B→A
  // navigation that can invalidate the M67 original-JPEG IDB mutation.
  // Record stage, navigation reason and PATH ONLY (never private URLs/tokens).
@@ -193,6 +197,10 @@ try{
   'No pinned model/library network resource succeeded');
  assert.equal(state.debug.sourceSHA256,sha);
  assert.equal(state.debug.p88Transport57,true);
+ assert.ok(actualWorkerPaths94.includes('/public/outfit-worker-p94.mjs'),
+  'P94 test did not execute installed native P88 Worker inside real application');
+ assert.equal(actualWorkerPaths94.filter(p=>p.includes('/.m57-exact-p88-donor/')).length,0,
+  'scratch donor unexpectedly served as P94 native integration Worker');
  assert.equal(state.debug.working,false);
  assert.ok(state.cards>0&&state.cards<=12,
   'Genuine P88 browser worker did not produce a bounded actual model proposal');
@@ -205,7 +213,8 @@ try{
   schema:'MAIN1054_M58_UNMODIFIED_P88_REAL_BROWSER_WASM_OWNER_REVIEW/v1',
   source:'commons-0003',sourceSHA256:sha,originalJPEGBytes:file.length,
   sourceLicense:locked.attribution?.license,sourceVerified:true,
-  actualBrowser:engine,viewportWidth:390,actualNativeApp:true,
+  actualBrowser:engine,viewportWidth:width,actualNativeApp:true,
+  installedNativeP88Worker94:true,
   actualP88ModuleWorkerExecuted:true,noSyntheticWorker:true,
   actualModel:'Xenova/segformer_b0_clothes',modelRevision:'a2489ea8e7ec1ee912190546bad31a4906ccca76',
   browserModelRuntime:'wasm-fp32',
