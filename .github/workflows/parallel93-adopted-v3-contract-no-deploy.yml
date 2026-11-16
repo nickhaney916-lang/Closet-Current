@@ -1,0 +1,76 @@
+name: P93 exact adopted M102 native owner v3 source and 2D NO DEPLOY
+on:
+  push:
+    branches: [research/parallel93-source-convergence-HOLD]
+    paths:
+      - 'scripts/test-parallel93-m102-adopted-pair.mjs'
+      - 'scripts/test-parallel93-m101-reviewed-restore-2d-browser.mjs'
+      - 'scripts/test-parallel93-m101-v3-receipt-browser.mjs'
+      - 'tests/parallel93-m101-shared-original-restore.test.mjs'
+      - '.github/workflows/parallel93-adopted-v3-contract-no-deploy.yml'
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  adopted-main-owner-exporter:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact main M102 adopted source and P93 isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 93696bfa890f573fbbb23da3530da27c45d4b890 HEAD
+          test "$(git rev-parse 98478561668730dc45a7826971133fbeb78ff962:public/native-default-verified-backup-export-m3.mjs)" = 99d4da0aeffd43720fae98bddb414d55aeb3bc06
+          test "$(git rev-parse 98478561668730dc45a7826971133fbeb78ff962:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 3a83e3336ce36334a49708d1c7b90cc27194c7b9
+          git diff --exit-code 93696bfa890f573fbbb23da3530da27c45d4b890 HEAD -- public/ supabase/ benchmark/fixtures/
+          node --check scripts/test-parallel93-m102-adopted-pair.mjs
+          node --check scripts/test-parallel93-m101-reviewed-restore-2d-browser.mjs
+      - name: Install pinned no-deploy browser and private IDB test tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Test EXACT owner-adopted M102 export and import, human review/2D handoff
+        run: node scripts/test-parallel93-m102-adopted-pair.mjs
+      - name: Verify receipts and no foreign-mission source changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'JS'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const x=JSON.parse(fs.readFileSync('benchmark/parallel93-convergence/M102-DISPOSABLE-BROWSER-RESULT.json','utf8'));
+          assert.equal(x.m4ExactHead,'98478561668730dc45a7826971133fbeb78ff962');
+          assert.equal(x.checks.mainOwnedExporterAdoption?.sourceBlob,'99d4da0aeffd43720fae98bddb414d55aeb3bc06');
+          assert.equal(x.normalM4Adopted,true);
+          assert.equal(x.checks.actualAppBrowser?.journeys,6);
+          assert.equal(x.checks.largeOriginalActualBrowser?.journeys,6);
+          assert.equal(x.checks.nativeReviewedPhotoToRestored2D?.journeys,6);
+          assert.equal(x.checks.nativeReviewedPhotoToRestored2D?.sourceTo3DAllowed,false);
+          assert.equal(x.checks.nativeReviewedPhotoToRestored2D?.originalDisplayedNotPreview,true);
+          assert.equal(x.familyAlpha,'HOLD');
+          assert.equal(x.safeNoDeploy,true);
+          assert(x.diffFiles.every(x=>!x.startsWith('public/')));
+          console.log('PASS P93 main-owned M102 signed owner v3 source, native PHOTO119 review and 2D; still no release');
+          JS
+          git diff --exit-code 93696bfa890f573fbbb23da3530da27c45d4b890 HEAD -- public/ supabase/ benchmark/fixtures/
+      - name: Archive only numeric SHA and pass-fail receipts, never owner JPEGs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p93-M102-adopted-native-contract-HOLD
+          path: benchmark/parallel93-convergence/M102-DISPOSABLE-BROWSER-RESULT.json
+          if-no-files-found: ignore
+          retention-days: 14
