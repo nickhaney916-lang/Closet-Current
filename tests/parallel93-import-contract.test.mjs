@@ -82,7 +82,7 @@ async function donor(mode='exact'){
  const tmp=await mkdtemp(join(tmpdir(),'p93-import-donor-'));
  const path=join(tmp,mode+'-legacy-atomic-merge.mjs');
  const raw=readFileSync('research/parallel93-convergence/immutable-m3-legacy-import.donor.mjs');
- const blobSha=createHash('sha1').update('blob '+raw.length+'\\0').update(raw).digest('hex');
+ const blobSha=createHash('sha1').update('blob '+raw.length+'\0').update(raw).digest('hex');
  assert.equal(blobSha,'2d9ad8a5309a2f2392bd35ccfd1b0b2ad0ce7491',
   'Immutable M3 donor changed: '+M3);
  try{
