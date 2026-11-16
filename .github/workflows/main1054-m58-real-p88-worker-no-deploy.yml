@@ -207,7 +207,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs)" = 2872603d5a5d5d3916c10d73efd5d9b56d9f0fc0
+          test "$(git rev-parse HEAD:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs)" = 4318240d3536818bdd56188fa91929fc0d509eb5
           node --check scripts/test-main1054-m123-photo119-restore-2d-browser.mjs
           M123_ENGINE=${{ matrix.engine }} node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs
       - name: Assert actual app three widths and no unjustified 3D or release
@@ -279,7 +279,7 @@ jobs:
           node --test tests/mission3-default-atomic-backup-source-guard.test.mjs
           node --test tests/main1054-m104-large-original-export-receipts.test.mjs
           node --check public/native-reviewed-private-save-167.mjs
-          test "$(git rev-parse HEAD:tests/main1054-m132-photo119-large-display-preview.test.mjs)" = 0843c57ca602349606128a1019fcd5e91a53c1ef
+          test "$(git rev-parse HEAD:tests/main1054-m132-photo119-large-display-preview.test.mjs)" = 79295b94fc0b1abe954a621ccf056abb23a902a6
           node --test tests/main1054-m132-photo119-large-display-preview.test.mjs
           node --check public/native-default-atomic-import-m3.mjs
       - name: Actually test browser v4 lossless owner backup/restore and cross-owner refusal
