@@ -48,7 +48,7 @@ try{
  // checkout; all consumer source remains byte-for-byte at adopted M115.
  const browserHarness=await readFile('scripts/test-parallel93-m101-v3-receipt-browser.mjs','utf8');
  await writeFile(join(staged,'scripts/test-parallel93-m101-v3-receipt-browser.mjs'),browserHarness);
- const sharedSourceTest=await readFile('tests/parallel93-m115-shared-original-export.test.mjs','utf8');
+ const sharedSourceTest=await readFile('research/parallel93-convergence/m115-shared-original-export.pinned.mjs','utf8');
  await writeFile(join(staged,'tests/parallel93-m115-shared-original-export.test.mjs'),sharedSourceTest);
  const reviewedBrowserHarness=await readFile(
   'scripts/test-parallel93-m101-reviewed-restore-2d-browser.mjs','utf8');
