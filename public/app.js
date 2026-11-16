@@ -605,6 +605,35 @@ async function captureProofVerifyBeforeSave(value){
  if(captureProofOwner()!==owner)
   throw Error('Owner changed during original-photo integrity check');
 }
+// M139: local-only display for a separately SHA-verified camera original.
+// Never classify the thumbnail as a different garment, trusted mask or 3D.
+async function prepareReviewedPhoto119Display(image,expectedSHA){
+ const {jpegBytes,digestBytes}=await captureProof01Module();
+ if(typeof image!=='string'||image.length>11_200_000||
+    !/^[0-9a-f]{64}$/.test(expectedSHA||''))
+  throw Error('Original is outside the verified photo envelope.');
+ const bytes=jpegBytes(image);
+ if(bytes.length>8*1024*1024||await digestBytes(bytes)!==expectedSHA)
+  throw Error('Original photo SHA changed before preview preparation.');
+ const im=new Image();im.src=image;await im.decode();
+ const w=im.naturalWidth,h=im.naturalHeight;
+ if(!Number.isInteger(w)||!Number.isInteger(h)||w<1||h<1||w*h>80_000_000)
+  throw Error('Original photo dimensions cannot be safely previewed.');
+ const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
+ if(!ctx)throw Error('Local preview canvas unavailable.');
+ for(const maxEdge of [1024,768,512]){
+  const scale=Math.min(1,maxEdge/Math.max(w,h));
+  canvas.width=Math.max(1,Math.round(w*scale));
+  canvas.height=Math.max(1,Math.round(h*scale));
+  ctx.drawImage(im,0,0,canvas.width,canvas.height);
+  const data=canvas.toDataURL('image/jpeg',.78);
+  if(data.length>3_000_000)continue;
+  const previewBytes=jpegBytes(data);
+  if(previewBytes.length>2_250_000)continue;
+  return Object.freeze({image:data,sha256:await digestBytes(previewBytes)});
+ }
+ throw Error('Could not prepare a bounded display preview; original preserved.');
+}
 function nativeCorrection10Active(){
  const query=new URLSearchParams(location.search);
  return query.get('nativeCorrection10')==='research'&&
@@ -889,6 +918,7 @@ function adjustPhoto(item){
  // the separately SHA-proven atomic research commit. Never auto-check them.
  const reviewedCapture120=reviewedSave120Active&&!items.some(x=>x.id===item.id);
  let reviewConfirmed120=null,garmentConfirmed120=null;
+ let previewConfirmed120=null,preparedPreview120=null;
  if(reviewedCapture120){
   const confirmBox=node('div',null,'reviewed-save120-confirmation');
   confirmBox.style.cssText='border:1px solid #a7b5ce;border-radius:10px;padding:12px;margin:12px 0;background:#f5f7fc;min-width:0';
@@ -906,6 +936,46 @@ function adjustPhoto(item){
   sourceLabel.append(sourceCheck,document.createTextNode(multi?
    ' I reviewed this specific separated garment':' I confirmed this photo shows one garment'));
   confirmBox.append(sourceLabel);garmentConfirmed120=sourceCheck;
+  // The full camera original is already visible above. For originals too
+  // large to fit in the normal wardrobe display field, offer a derived local
+  // preview. It is not a garment cutout or evidence of fitted 3D.
+  if(!multi&&item.sourceHashVerified===true&&
+     typeof item.originalPhoto?.image==='string'&&
+     item.originalPhoto.image.length>3_000_000&&
+     item.image===item.originalPhoto.image){
+   const prepare=node('button','Prepare smaller display photo','secondary');
+   prepare.type='button';
+   const img=node('img');img.hidden=true;
+   img.style.cssText='max-width:160px;max-height:180px;object-fit:contain;display:block';
+   img.alt='Locally generated wardrobe display of your full original photograph';
+   const note=node('p','Prepare and inspect the smaller display photo before saving; the full original will be preserved.','fine');
+   const label=node('label'),check=node('input');
+   check.type='checkbox';check.disabled=true;check.required=true;
+   check.setAttribute('aria-label','I verified that the smaller display photo matches this original');
+   label.append(check,document.createTextNode(
+    ' I verified that this smaller display is the same photograph, not another garment'));
+   previewConfirmed120=check;
+   prepare.onclick=async()=>{
+    if(!editorSession.current()||!batch.includes(item)||!dialog.open)return;
+    prepare.disabled=true;check.checked=false;check.disabled=true;
+    preparedPreview120=null;
+    const source=item.originalPhoto?.image,sourceSHA=item.sourceSHA256;
+    try{
+     const prepared=await prepareReviewedPhoto119Display(source,sourceSHA);
+     editorSession.assertCurrent();
+     if(!dialog.open||!batch.includes(item)||item.originalPhoto?.image!==source||
+        item.sourceSHA256!==sourceSHA)throw Error('Source changed during preview');
+     preparedPreview120=prepared;img.src=prepared.image;img.hidden=false;
+     check.disabled=false;
+     note.textContent='Inspect this local preview, then check its own confirmation. The full camera original stays unchanged.';
+    }catch{
+     if(!editorSession.current())return;
+     img.hidden=true;
+     note.textContent='Display preview unavailable. Original remains in Photo results; retry without saving.';
+    }finally{if(editorSession.current()&&prepare.isConnected)prepare.disabled=false;}
+   };
+   confirmBox.append(prepare,img,note,label);
+  }
   form.append(confirmBox);
  }
  // CORRECTION10: opening and canceling Adjust must not mutate the saved
@@ -958,6 +1028,20 @@ function adjustPhoto(item){
     instanceConfirmed:multi&&garmentConfirmed120.checked,
     ...(multi?{cutoutSHA256:item.segmentHint?.cutoutSHA256}:{}),
    };
+   // M139: do not mutate the persisted original-only draft. PHOTO119
+   // atomically admits the SHA/owner-confirmed display replacement after
+   // comparing the untouched durable original and rechecking the live lease.
+   let recordForReview=item;
+   if(previewConfirmed120){
+    if(!previewConfirmed120.checked||!preparedPreview120)
+     throw Error('Inspect and confirm the smaller display photo before saving.');
+    review.previewConfirmed=true;
+    review.previewSHA256=preparedPreview120.sha256;
+    recordForReview={...structuredClone(item),image:preparedPreview120.image,
+     displayPreviewReceipt:{schema:'photo119-owner-display-preview/v1',
+      ownerId:owner,originalSHA256:item.sourceSHA256,
+      previewSHA256:preparedPreview120.sha256,displayOnly:true}};
+   }
    // P119 is the only writer for this research-only newly captured piece.
    // It independently re-hashes original JPEG (+ cutout JPEG for multi),
    // rechecks the actual saved owner draft and wardrobe *inside* the IDB
@@ -969,14 +1053,15 @@ function adjustPhoto(item){
     auth.assertCurrent?.();
     return liveOwner()===owner&&batch.includes(item)&&
      dialog.isConnected&&dialog.open&&
-     reviewConfirmed120.checked&&garmentConfirmed120.checked;
+     reviewConfirmed120.checked&&garmentConfirmed120.checked&&
+     (!previewConfirmed120||(previewConfirmed120.checked&&!!preparedPreview120));
    };
    const {commitHumanReviewedPhoto119}=await (nativeCanonical167Active
     ?import('./native-reviewed-private-save-167.mjs')
     :import('../research/manual-reviewed-private-save-119/reviewed-source-commit.mjs'));
    editorSession.assertCurrent();
    const result=await queued(()=>commitHumanReviewedPhoto119({
-    db:ownerDB,ownerId:owner,currentOwner:liveOwner,record:item,review,assertLease
+    db:ownerDB,ownerId:owner,currentOwner:liveOwner,record:recordForReview,review,assertLease
    }));
    editorSession.assertCurrent();
    if(!result.saved)throw Error('Original photograph or garment review could not be verified; nothing was saved.');
