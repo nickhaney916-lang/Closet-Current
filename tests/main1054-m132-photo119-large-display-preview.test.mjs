@@ -234,9 +234,14 @@ test('owner editor may atomically turn the existing ORIGINAL-only draft into a s
   assert.equal(state.state.find(x=>x.id==='draft').batch.length,0);
  });
 });
-test('original-only draft conversion must not launder an unreviewed unrelated preview',async()=>{
- await denied({originalDraftOnly:true,
-   reviewEdit:r=>delete r.previewConfirmed},'display-preview-unverified');
+test('original-only draft conversion without owner preview confirmation refuses BEFORE source mutation',async()=>{
+ await withOwner({originalDraftOnly:true,
+   reviewEdit:r=>delete r.previewConfirmed},async f=>{
+  const before=await f.read();
+  await assert.rejects(f.commit(),
+   /PHOTO119 source JPEG or cutout identity differs from saved draft/);
+  assert.deepEqual(await f.read(),before,'unconfirmed preview may not rewrite draft');
+ });
 });
 test('original-only draft conversion with changed source/crop identity is denied before any write',async()=>{
  await withOwner({originalDraftOnly:true},async f=>{
