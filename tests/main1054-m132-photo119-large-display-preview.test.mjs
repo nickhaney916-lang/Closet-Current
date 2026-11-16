@@ -45,9 +45,9 @@ async function ownerFixture({recordEdit=()=>{},reviewEdit=()=>{}}={}){
   tx.oncomplete=resolve;tx.onabort=tx.onerror=()=>reject(tx.error);
  });
  let valid=true;
- const lease=()=>valid,commit=()=>commitHumanReviewedPhoto119({
+ const lease=()=>valid,commit=(cryptoProvider=webcrypto)=>commitHumanReviewedPhoto119({
   db,ownerId:owner,currentOwner:()=>owner,record,review,
-  cryptoProvider:webcrypto,assertLease:lease
+  cryptoProvider,assertLease:lease
  });
  const read=()=>new Promise((resolve,reject)=>{
   const tx=db.transaction(['items','state'],'readonly');
@@ -175,5 +175,44 @@ test('owner generation revocation prevents atomic reviewed large-source save',as
   const before=await f.read();f.revoke();
   await assert.rejects(f.commit(),/PHOTO119 capture owner review lease revoked/);
   assert.deepEqual(await f.read(),before);
+ });
+});
+
+function heldSecondDigest(){
+ let release,seen;
+ const gate=new Promise(resolve=>release=resolve);
+ const reached=new Promise(resolve=>seen=resolve);
+ let calls=0;
+ return {reached,release,cryptoProvider:{
+  subtle:{digest:async(algorithm,bytes)=>{
+   calls++;
+   // The original-source digest occurs first, then preview-source digest.
+   if(calls===2){seen();await gate;}
+   return webcrypto.subtle.digest(algorithm,bytes);
+  }}
+ },calls:()=>calls};
+}
+test('changing display bytes while awaiting its SHA aborts before any private write',async()=>{
+ await withOwner({},async f=>{
+  const hold=heldSecondDigest(),pending=f.commit(hold.cryptoProvider);
+  await hold.reached;
+  const before=await f.read();
+  f.record.image=mime+Buffer.from([255,216,44,43,255,217]).toString('base64');
+  hold.release();
+  await assert.rejects(pending,/PHOTO119 photograph, category, subtype or reviewed color changed/);
+  assert.equal(hold.calls(),2);
+  assert.deepEqual(await f.read(),before,'changed display must not consume private draft');
+ });
+});
+test('revoking owner session while preview SHA awaits cannot save a stale photo',async()=>{
+ await withOwner({},async f=>{
+  const hold=heldSecondDigest(),pending=f.commit(hold.cryptoProvider);
+  await hold.reached;
+  const before=await f.read();
+  f.revoke();
+  hold.release();
+  await assert.rejects(pending,/PHOTO119 capture owner review lease revoked/);
+  assert.equal(hold.calls(),2);
+  assert.deepEqual(await f.read(),before,'revoked owner cannot mutate private wardrobe');
  });
 });
