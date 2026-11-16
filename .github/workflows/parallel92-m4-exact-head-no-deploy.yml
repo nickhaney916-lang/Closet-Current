@@ -8,6 +8,7 @@ on:
       - scripts/test-parallel92-exact-head.mjs
       - scripts/test-parallel92-independent-browser.mjs
       - scripts/test-parallel92-m51-webkit-reentry.mjs
+      - scripts/test-parallel92-preview-terminal-candidate.mjs
       - research/parallel92-integration/LEDGER.md
       - .github/workflows/parallel92-m4-exact-head-no-deploy.yml
 permissions:
@@ -275,6 +276,60 @@ jobs:
           path: |
             benchmark/parallel92-m101-import/trial-1/results.json
             benchmark/parallel92-m101-import/trial-2/results.json
+  guarded-stale-lease-disposable-candidate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P92_ENGINE: ${{ matrix.engine }}
+      P92_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned local browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Two fresh source-identical native baseline versus scratch-guard trials
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
+          node --check scripts/test-parallel92-preview-terminal-candidate.mjs
+          for trial in 1 2; do
+            P92_CANDIDATE_TRIAL="$trial" node scripts/test-parallel92-preview-terminal-candidate.mjs
+          done
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          for(const n of [1,2]){
+            const r=JSON.parse(fs.readFileSync('benchmark/parallel92-preview-terminal-candidate/'+process.env.P92_ENGINE+'/trial-'+n+'/result.json','utf8'));
+            if(r.exactHead!==process.env.P92_CHECKOUT_SHA||r.engine!==process.env.P92_ENGINE||
+               r.trial!==n||r.status!=='PASS'||r.comparisons?.length!==3||
+               r.publicSourceModified===true||r.releaseAllowed!==false)
+              throw Error('P92 scratch terminal candidate source-locked trial failed');
+          }
+          JS
+      - name: Archive only source-safe terminal-status receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p92-${{ matrix.engine }}-scratch-terminal-candidate-HOLD
+          retention-days: 14
+          if-no-files-found: ignore
+          path: benchmark/parallel92-preview-terminal-candidate/${{ matrix.engine }}/trial-*/result.json
+
   inherited-full-native-regressions:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -299,7 +354,7 @@ jobs:
           test "$(git rev-parse HEAD:public/outfit-board.js)" = 42dc1a7a2503a1722e6addcd0b8613a7eb029b60
           git diff --name-only 3bf2bdad10d264ebe23ba58e156389a1db5feb0b HEAD | while IFS= read -r p; do
             case "$p" in
-              scripts/test-parallel92-exact-head.mjs|scripts/test-parallel92-independent-browser.mjs|scripts/test-parallel92-m51-webkit-reentry.mjs|research/parallel92-integration/LEDGER.md|.github/workflows/parallel92-m4-exact-head-no-deploy.yml) ;;
+              scripts/test-parallel92-exact-head.mjs|scripts/test-parallel92-independent-browser.mjs|scripts/test-parallel92-m51-webkit-reentry.mjs|scripts/test-parallel92-preview-terminal-candidate.mjs|research/parallel92-integration/LEDGER.md|.github/workflows/parallel92-m4-exact-head-no-deploy.yml) ;;
               *) echo "P92 REFUSED CONSUMER/DONOR CHANGE: $p"; exit 1 ;;
             esac
           done
