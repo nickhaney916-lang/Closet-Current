@@ -115,15 +115,18 @@ export async function prepareDefaultAtomicM3({
  // instance receipt; legacy imports cannot mint one silently. All checks are
  // read-only preflight, before the single atomic items/state transaction.
  const samePinnedOriginal=(left,right)=>{
+  // Exact JPEG identity still requires owner review when a legacy v1/v2
+  // source lacks a SHA receipt or sourceHashVerified. Different saved IDs
+  // or different crops never prove distinct photographed garments.
+  const pictures=value=>[value.image,value.originalPhoto?.image]
+   .filter(image=>typeof image==='string'&&image.length>0);
+  const rightPictures=new Set(pictures(right));
+  if(pictures(left).some(image=>rightPictures.has(image)))return true;
   if(left.sourceHashVerified!==true&&right.sourceHashVerified!==true)return false;
   const pins=value=>[value.sourceSHA256,value.originalPhoto?.sha256]
    .filter(hash=>typeof hash==='string'&&sha.test(hash));
   const rightPins=new Set(pins(right));
-  if(pins(left).some(hash=>rightPins.has(hash)))return true;
-  const pictures=value=>[value.image,value.originalPhoto?.image]
-   .filter(image=>typeof image==='string'&&image.length>0);
-  const rightPictures=new Set(pictures(right));
-  return pictures(left).some(image=>rightPictures.has(image));
+  return pins(left).some(hash=>rightPins.has(hash));
  };
  for(const row of incoming){
   const prior=allItems.get(row.id);
