@@ -344,7 +344,7 @@ jobs:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       P92_ENGINE: ${{ matrix.engine }}
       P92_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      P92_MAIN_PIN: 80177aaa63a52a257f191a0a8cb15848eeaa0042
+      P92_MAIN_PIN: 482f9b34b417a1b7218fe154d6f099db6967a9c5
     steps:
       - uses: actions/checkout@v4
         with:
@@ -405,6 +405,61 @@ jobs:
             exit 1
           fi
           echo "P92 CURRENT MAIN EXACT-PIN STRICT $P92_ENGINE $REPS/$REPS PROCESSES AND $((REPS*3)) VIEWPORTS SUCCESS; NO RETRY, NO DEPLOY, HOLD"
+
+  independent-current-main-owner-export-atomic-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P92_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      P92_MAIN_PIN: 482f9b34b417a1b7218fe154d6f099db6967a9c5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify immutable current-main source and start disposable checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
+          test "$(git rev-parse "$P92_MAIN_PIN:public/outfit-board.js")" = 22e76c92dc31d8a10d8186e259a4e3784e4b3c84
+          test "$(git rev-parse "$P92_MAIN_PIN:public/app.js")" = cc4ee7ea3e575925fb13cc3e9627f0f59ac6919d
+          test "$(git rev-parse "$P92_MAIN_PIN:public/native-default-verified-backup-export-m3.mjs")" = e70fdc392c2652dc969b7d7c4b807f3cafd81e03
+          test "$(git rev-parse "$P92_MAIN_PIN:public/native-default-atomic-import-m3.mjs")" = e739f1533108d53961483d761a27f0525623af3d
+          test "$(git rev-parse "$P92_MAIN_PIN:tests/main1054-m104-large-original-export-receipts.test.mjs")" = a9de229139bcc64365295b9403e7d345b7b6e34f
+          test "$(git rev-parse "$P92_MAIN_PIN:scripts/test-mission3-default-atomic-import-browser.mjs")" = 375ff22b8c69bd6f7ddb19fc59cb6c4460eb7ba8
+          git worktree add --detach /tmp/p92-current-main-owner-export-atomic "$P92_MAIN_PIN"
+          cd /tmp/p92-current-main-owner-export-atomic
+          git config --global --add safe.directory "$PWD"
+          test "$(git rev-parse HEAD)" = "$P92_MAIN_PIN"
+          test -z "$(git status --porcelain)"
+      - name: Run full exact-main build + inherited source/export/import unit regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory /tmp/p92-current-main-owner-export-atomic
+          cd /tmp/p92-current-main-owner-export-atomic
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          node scripts/test-mission3-default-atomic-import-browser.mjs benchmark/parallel92-main-current-import
+          node scripts/test-main1054-duplicate-fence-browser.mjs
+          test "$(git rev-parse HEAD)" = "$P92_MAIN_PIN"
+          test -z "$(git status --porcelain --untracked-files=no)"
+          if test -n "$(git ls-files --others --exclude-standard -- public scripts research tests .github)"; then
+            echo "P92 REFUSED current-main exporter test's unexpected source modification"
+            exit 1
+          fi
+          echo "P92 VERIFIED FULL CURRENT-MAIN NODE AND REAL CHROMIUM/WEBKIT NATIVE EXPORT/IMPORT/CAS — NO DEPLOY, HOLD"
 
   inherited-full-native-regressions:
     runs-on: ubuntu-24.04
