@@ -28,7 +28,7 @@ jobs:
           git diff --exit-code "$PARENT" HEAD -- public/app.js public/auth.js public/native-canonical-photo-source-167.mjs public/native-default-atomic-import-m3.mjs public/native-default-verified-backup-export-m3.mjs public/native-reviewed-private-save-167.mjs supabase/
           git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
             case "$path" in
-              public/outfit-board.js|scripts/test-p1219-webkit-native-preview-reentry.mjs|.github/workflows/p1219-webkit-photo-reentry-no-deploy.yml|research/p1219-webkit-preview/*) ;;
+              public/outfit-board.js|scripts/test-p1219-webkit-native-preview-reentry.mjs|.github/workflows/p1219-webkit-photo-reentry-no-deploy.yml|.github/workflows/p1219-webkit-photo-soak-no-deploy.yml|research/p1219-webkit-preview/*) ;;
               *) echo "P1219 unauthorized touched path: $path"; exit 1;;
             esac
           done
