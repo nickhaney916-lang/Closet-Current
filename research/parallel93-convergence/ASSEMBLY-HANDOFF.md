@@ -1,5 +1,13 @@
 # Parallel #93 — executable cross-mission source convergence handoff (HOLD)
 
+## M2 transitive source-link acceptance (new P93 correction, not a 3D release)
+
+**Previously hidden compatibility gap:** M2 pinned `569a1b90780ab25651b6c9adf98cc1b078b501c0` `research/parallel89/skirt-rigid-registration89.mjs` blob `73177ed4645633ca060e7185eab881fa75d3a2bf` has a **static ESM import** `./skirt-contact-topology89.mjs`. That dependent module is **absent** from both the pinned M94 base and the M122 main source, so a one-file overlay is not executable, even if an unrelated native build succeeds without importing research code. The exact matching M2 dependency is `research/parallel89/skirt-contact-topology89.mjs` at blob `ffd41f458c1e19f1aee6a01c343487ea0a676f4f`. It has no further direct imports.
+
+**Safe correction within P93 only:** `scripts/test-parallel93-convergence.mjs` now stages **both** exact-source M2 files in disposable combined-source checkout, imports the real donor ESM, and asserts invalid geometry is refused with `REAL_PHOTOGRAPHED_SKIRT_REGISTRATION_NOT_VERIFIED`, 2D fallback required, `consumer3DAdmitted=false`, `familyAlpha=HOLD`. `scripts/test-parallel93-m121-adopted-source.mjs` repeats actual donor import against byte-pinned **normal unchanged M121 consumer**; the dedicated workflow asserts the same results. This is executable dependency provenance, **not proof of real photographed 3D fit**. The check is committed at P93 `42ff88177e399d1610fe854a186be7116c03ac95` and `f9def169ae0ecb5b7b79b567bdb58456b3569a8c`, with workflow assertion `50b94aaba2bf63715930e2ce644289c61f9b7a8d`. Exact CI is pending; see [M121 donor import run #43947178727](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43947178727) and [five-job source-check run #43947144534](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43947144534) for real status.
+
+**Main owner assembly rule:** adopt neither research donor into the normal application simply because imports pass. A valid M2 photo garment promotion still requires actual source JPEG/UV/skin/mesh continuity, BVH 163-bone collision/contact acceptance, independent garment fit and visual owner approval, and the existing positive 3D admission gate. No status in P93 asserts those.
+
 ## Current top-line handoff: M121 exact-image v3 parity (November 16, 2026)
 
 > This section **supersedes historical “current/latest” assertions further down this audit**. The older M94/M97/M98/M101 recipes below are preserved as immutable failure and source archaeology; DO NOT replay their deprecated importer/exporter patches onto current main.
