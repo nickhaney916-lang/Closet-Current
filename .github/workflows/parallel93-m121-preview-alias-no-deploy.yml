@@ -7,6 +7,7 @@ on:
       - 'scripts/test-parallel93-m101-reviewed-restore-2d-browser.mjs'
       - 'scripts/test-parallel93-m101-v3-receipt-browser.mjs'
       - 'research/parallel93-convergence/m121-preview-alias.pinned.mjs'
+      - 'research/parallel93-convergence/m3-restorable-legacy-adapter.mjs'
       - '.github/workflows/parallel93-m121-preview-alias-no-deploy.yml'
   workflow_dispatch: {}
 permissions:
@@ -59,7 +60,7 @@ jobs:
           assert.equal(x.checks.m2ResearchModuleImport?.requiredFiles,2);
           assert.equal(x.checks.m2ResearchModuleImport?.normal3DAdmitted,false);
           assert.equal(x.checks.latestM4ProtectedNode.status,'PASS');
-          assert(x.checks.latestM4ProtectedNode.tests>=104);
+          assert(x.checks.latestM4ProtectedNode.tests>=107);
           assert.equal(x.normalM4Adopted,true);
           assert.equal(x.checks.actualAppBrowser?.journeys,6);
           assert.equal(x.checks.largeOriginalActualBrowser?.journeys,6);
