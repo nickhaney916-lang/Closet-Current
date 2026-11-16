@@ -37,7 +37,7 @@ jobs:
           git diff --name-only "$BASE" HEAD > /tmp/p94-changed
           while IFS= read -r file; do
             case "$file" in
-              public/outfit-worker-p94.mjs|public/outfit-instance-review-840.mjs|research/multi-garment-capture-01/review-ui.mjs|scripts/test-parallel94-native-p88-browser.mjs|.github/workflows/parallel94-native-assembly-no-deploy.yml|research/parallel94-assembly/README.md) ;;
+              public/outfit-worker-p94.mjs|public/outfit-instance-review-840.mjs|research/multi-garment-capture-01/review-ui.mjs|scripts/test-parallel94-native-p88-browser.mjs|tests/main1054-m148-preview-click-ownership.test.mjs|.github/workflows/parallel94-native-assembly-no-deploy.yml|research/parallel94-assembly/README.md) ;;
               *) echo "Unexpected protected path: $file"; exit 1;;
             esac
           done < /tmp/p94-changed
@@ -45,6 +45,8 @@ jobs:
           node --check public/outfit-instance-review-840.mjs
           node --check research/multi-garment-capture-01/review-ui.mjs
           node --check scripts/test-parallel94-native-p88-browser.mjs
+          node --check tests/main1054-m148-preview-click-ownership.test.mjs
+          node --test tests/detector-manual-recovery-65.test.mjs tests/main1054-m148-preview-click-ownership.test.mjs
       - name: Install isolated pinned test tools
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Offline actual application build (never deploy)
