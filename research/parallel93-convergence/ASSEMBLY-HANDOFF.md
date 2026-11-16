@@ -46,7 +46,9 @@ BASE=93696bfa890f573fbbb23da3530da27c45d4b890
 M1=bec1ae8eba2a3979ec0581cb93a91b1ec3ad231c
 M2=569a1b90780ab25651b6c9adf98cc1b078b501c0
 M3=4d9a28bba60c7f17f934848fc36d4bd478ffea55
-git worktree add --detach /tmp/p93-check "$BASE"
+# The P93 test files must be checked out; never run the harness on BASE alone.
+P93=research/parallel93-source-convergence-HOLD
+git worktree add --detach /tmp/p93-check "origin/$P93"
 cd /tmp/p93-check
 for other in "$M1" "$M2" "$M3"; do
   git merge-base "$BASE" "$other"
@@ -60,7 +62,7 @@ node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
 # Never merge/push from the disposal worktree.
 ```
 
-Use a disposable worktree from **P93** rather than the base commit when running P93 scripts. Treat the above commands as the SOURCE and conflict reference recipe; checkout full P93 commit in a separate test worktree before running scripts, then let them create their own short-lived scratch sub-worktrees. Only the main controller may assess/port a carefully reviewed version of the owner import patch to #1210.
+The disposable worktree starts at the isolated P93 branch; the scripts themselves create and remove additional detached worktrees from pinned BASE. Never adopt a whole donor branch automatically. Refresh moving branches first, and repin/retest before any proposed owner change. Only the main controller may assess/port a carefully reviewed version of the owner import patch to #1210.
 
 ## Acceptance statuses
 
