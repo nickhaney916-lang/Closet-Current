@@ -586,3 +586,67 @@ test('M98 large original rejects tampered SHA, malformed Base64 and nested forei
   assert.deepEqual(await snapshot(f.db),before);
  }finally{f.close();}
 });
+
+// M99: never let expanded M98 image capacity downgrade owner-source proof.
+test('M99 unreceipted camera-size original refuses before owner-private writes',async()=>{
+ const f=await fixture();
+ try{
+  const photo=cameraOriginalM98(),raw=cameraBackupM98(f,photo);
+  delete raw.items[0].originalPhoto.sha256;
+  delete raw.items[0].sourceSHA256;
+  raw.items[0].sourceHashVerified=false;
+  const before=await snapshot(f.db);
+  await assert.rejects(prep(f,raw),/LEGACY_ATOMIC_ORIGINAL_SHA_REQUIRED/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('M99 contradictory canonical original and source SHA receipts are refused',async()=>{
+ const f=await fixture();
+ try{
+  const photo=cameraOriginalM98(),raw=cameraBackupM98(f,photo);
+  raw.items[0].sourceSHA256='b'.repeat(64);
+  const before=await snapshot(f.db);
+  await assert.rejects(prep(f,raw),/LEGACY_ATOMIC_ORIGINAL_SHA_CLAIM_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('M99 owner can still import SHA-verified large original using sourceSHA256 alone',async()=>{
+ const f=await fixture();
+ try{
+  const photo=cameraOriginalM98(),raw=cameraBackupM98(f,photo);
+  delete raw.items[0].originalPhoto.sha256;
+  const prepared=await prep(f,raw);
+  await commit(f,prepared);
+  const saved=(await snapshot(f.db)).items.find(x=>x.id==='camera-original');
+  assert.equal(saved.originalPhoto.image,photo.image);
+  assert.equal(saved.sourceSHA256,photo.sha);
+ }finally{f.close();}
+});
+test('M99 verified-source flag without a SHA cannot mint a fake original receipt',async()=>{
+ const f=await fixture();
+ try{
+  const incoming={...row(f.owner,'false-verified'),
+   sourceHashVerified:true,originalPhoto:{image:anotherJpeg,ownerId:f.owner}};
+  const before=await snapshot(f.db);
+  await assert.rejects(prep(f,{format:'closet-current',version:3,items:[incoming]}),
+   /LEGACY_ATOMIC_ORIGINAL_SHA_REQUIRED/);
+  assert.deepEqual(await snapshot(f.db),before);
+  delete incoming.originalPhoto;
+  await assert.rejects(prep(f,{format:'closet-current',version:3,items:[incoming]}),
+   /LEGACY_ATOMIC_MISSING_ORIGINAL/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('M99 small unverified legacy original remains importable without fabricating SHA',async()=>{
+ const f=await fixture();
+ try{
+  const incoming={...row(f.owner,'small-unverified'),
+   originalPhoto:{image:anotherJpeg,ownerId:f.owner}};
+  const prepared=await prep(f,{format:'closet-current',version:1,items:[incoming]});
+  await commit(f,prepared);
+  const saved=(await snapshot(f.db)).items.find(x=>x.id==='small-unverified');
+  assert.equal(saved.image,anotherJpeg);
+  assert.equal(saved.originalPhoto.image,anotherJpeg);
+  assert.equal(saved.sourceSHA256,undefined);
+ }finally{f.close();}
+});
