@@ -11,7 +11,7 @@ import {join} from 'node:path';
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
 const sha=git('rev-parse','HEAD');
 assert.equal(sha,process.env.P92_CHECKOUT_SHA,'must execute exact checked-out SHA');
-const m90='ebb8185dba7dcd54f026dd995f82b6238164be3b';
+const m90='93696bfa890f573fbbb23da3530da27c45d4b890';
 assert.equal(git('merge-base',m90,sha),m90,'current M90 source not in ancestry');
 const script='scripts/test-main51-real-app-owner-original-2d.mjs';
 assert.equal(git('rev-parse','HEAD:'+script),

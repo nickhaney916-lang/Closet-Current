@@ -118,8 +118,21 @@ export async function prepareDefaultAtomicM3({
   // Exact JPEG identity still requires owner review when a legacy v1/v2
   // source lacks a SHA receipt or sourceHashVerified. Different saved IDs
   // or different crops never prove distinct photographed garments.
+  // Base64 accepts several spellings of the same decoded final byte(s)
+  // when padding bits are nonzero. No full JPEG decode/copy is required:
+  // mask ONLY the unused low pad bits of the last sextet before comparing.
+  const canonicalJPEG=image=>{
+   const pads=image.endsWith('==')?2:image.endsWith('=')?1:0;
+   if(!pads||!image.startsWith('data:image/jpeg;base64,'))return image;
+   const idx=image.length-1-pads;
+   const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+   const sextet=alphabet.indexOf(image[idx]);
+   return sextet<0?image:
+    image.slice(0,idx)+alphabet[sextet&(pads===2?48:60)]+image.slice(idx+1);
+  };
   const pictures=value=>[value.image,value.originalPhoto?.image]
-   .filter(image=>typeof image==='string'&&image.length>0);
+   .filter(image=>typeof image==='string'&&image.length>0)
+   .map(canonicalJPEG);
   const rightPictures=new Set(pictures(right));
   if(pictures(left).some(image=>rightPictures.has(image)))return true;
   if(left.sourceHashVerified!==true&&right.sourceHashVerified!==true)return false;
