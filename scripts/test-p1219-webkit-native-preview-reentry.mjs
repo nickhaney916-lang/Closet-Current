@@ -20,7 +20,7 @@ assert.equal(git('rev-parse','HEAD:research/main-thread-integration-1054/native-
  'pinned signed owner source viewer changed');
 const original=readFileSync('scripts/test-main51-real-app-owner-original-2d.mjs','utf8');
 const viewerSource=readFileSync('research/main-thread-integration-1054/native-2d-preview.mjs','utf8');
-assert.equal(viewerSource.split('   return verified;\\n  },').length,2,
+assert.equal(viewerSource.split('   return verified;\n  },').length,2,
  'P1219 real signed-owner attested-success timing hook missing');
 const routeMarker='    body:previewText.replace(originalCatch,classifiedCatch)}));';
 const routeReplacement=[
