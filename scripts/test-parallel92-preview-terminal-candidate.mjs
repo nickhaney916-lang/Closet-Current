@@ -88,6 +88,14 @@ const race=[
  "   photoCount:document.querySelectorAll('#mission4Preview1054Photos img').length,",
  "   buttonDisabled:document.querySelector('#mission4Preview1054Section button')?.disabled===true",
  "  }));",
+ "  console.log('P92_CANDIDATE_STAGE_SAFE',JSON.stringify({",
+ "   engine,width,requestCount,candidateRouteHits:p92ServedCandidate,",
+ "   photoCount:race.photoCount,buttonDisabled:race.buttonDisabled,",
+ "   statusClass:race.status.includes('Verification stopped')?'safe-terminal':",
+ "    race.status.includes('Verifying')?'stale-verifying':",
+ "    race.status.includes('Preview refused')?'refused':'other',",
+ "   familyAlpha:'HOLD'",
+ "  }));",
  "  assert.equal(requestCount,1,'first real module import required');",
  "  assert.equal(race.photoCount,0,'stale private source was displayed');",
  "  assert.equal(race.buttonDisabled,false,'button still blocked');",
@@ -141,11 +149,24 @@ try{
  };
  writeFileSync(join(out,'result.json'),JSON.stringify(result,null,2)+'\n');
  comparisons.forEach(v=>console.log('P92_CANDIDATE_VIEWPORT',JSON.stringify(v)));
+ const diagnostics=lines.filter(v=>v.includes('P92_CANDIDATE_STAGE_SAFE ')).map(v=>{
+  try{return JSON.parse(v.split('P92_CANDIDATE_STAGE_SAFE ')[1]);}catch{return {parseFailed:true};}
+ });
+ diagnostics.forEach(v=>console.log('P92_CANDIDATE_SAFE_STAGE',JSON.stringify(v)));
  const failures=lines.filter(v=>v.includes('MAIN51_APP_SOURCE_FAIL '));
  for(const line of failures.slice(-2)){
   try{const v=JSON.parse(line.split('MAIN51_APP_SOURCE_FAIL ')[1]);
    console.error('P92_CANDIDATE_REAL_NATIVE_FAIL',JSON.stringify({
-    engine,width:v.width,stage:v.stage,errorClass:v.errorName||'unknown'
+    engine,width:v.width,stage:v.stage,errorClass:v.errorName||'unknown',
+    reasonClass:(()=>{const message=String(v.message||'');return
+     message.includes('scratch guard did not safely terminate')?'candidate-no-terminal':
+     message.includes('scratch guard did not terminate')?'candidate-no-terminal':
+     message.includes('scratch consumer was not served')?'scratch-route-count':
+     message.includes('stale private source')?'source-exposure':
+     message.includes('first real module import')?'module-interception-count':
+     message.includes('native main app finalizer')?'app-source-drift':
+     message.includes('unchanged source did not reproduce')?'baseline-drift':
+     message.includes('P92')?'test-harness':'unclassified';})()
    }));
   }catch{}
  }
