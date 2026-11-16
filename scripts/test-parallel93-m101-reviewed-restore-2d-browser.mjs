@@ -89,7 +89,7 @@ try{
     page.on('pageerror',e=>errors.push({engine,width,kind:String(e.name||'page-error')}));
     await page.goto(local+'/?mission4Preview=research',{waitUntil:'domcontentloaded'});
     await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady,inspirationReady]));
-    const result=await page.evaluate(async({owner,previewJPEG,originalJPEG,originalSHA})=>{
+    const result=await page.evaluate(async({owner,previewJPEG,originalJPEG,originalSHA,largeOriginalJPEG,largeOriginalSHA})=>{
      const readRows=()=>new Promise((resolve,reject)=>{
       const tx=db.transaction(['items','state'],'readonly');
       const i=tx.objectStore('items').getAll(),s=tx.objectStore('state').getAll();
