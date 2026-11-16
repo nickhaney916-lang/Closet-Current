@@ -504,3 +504,85 @@ test('M94 genuinely different JPEG bytes of the same Base64 length remain import
   assert.equal(rows.find(x=>x.id==='same-length-distinct').image,distinct);
  }finally{f.close();}
 });
+
+// M98: P93-proven camera original/preview size mismatch. All fixtures use
+// checked-in licensed JPEG pixels and synthetic APP15 camera metadata only.
+function cameraOriginalM98(){
+ const licensed=readFileSync('benchmark/fixtures/commons-0003.jpg');
+ assert.equal(licensed[0],255);assert.equal(licensed[1],216);
+ assert.equal(licensed.at(-2),255);assert.equal(licensed.at(-1),217);
+ const segments=[];
+ for(let i=0;i<56;i++){
+  const size=48000;
+  segments.push(Buffer.from([255,239,(size+2)>>8,(size+2)&255]),
+   Buffer.alloc(size,i&255));
+ }
+ const bytes=Buffer.concat([licensed.subarray(0,2),...segments,licensed.subarray(2)]);
+ const image='data:image/jpeg;base64,'+bytes.toString('base64');
+ assert(image.length>3_000_000&&image.length<=11_200_000);
+ return {bytes,image,sha:createHash('sha256').update(bytes).digest('hex')};
+}
+function cameraBackupM98(f,photo){
+ return {format:'closet-current',version:3,items:[{
+  ...row(f.owner,'camera-original'),image:anotherJpeg,
+  sourceSHA256:photo.sha,sourceHashVerified:true,
+  originalPhoto:{image:photo.image,sha256:photo.sha,ownerId:f.owner}
+ }]};
+}
+test('M98 signed owner restores a SHA-verified >3M original atomically while preserving small preview',async()=>{
+ const f=await fixture();
+ try{
+  const photo=cameraOriginalM98(),before=await snapshot(f.db);
+  const prepared=await prep(f,cameraBackupM98(f,photo));
+  assert.deepEqual(await snapshot(f.db),before,'preflight has no writes');
+  await commit(f,prepared);
+  const after=await snapshot(f.db),saved=after.items.find(x=>x.id==='camera-original');
+  assert(saved);assert.equal(saved.ownerId,f.owner);
+  assert.equal(saved.image,anotherJpeg);
+  assert.equal(saved.originalPhoto.image,photo.image);
+  assert.equal(saved.originalPhoto.sha256,photo.sha);
+  assert.equal(saved.sourceSHA256,photo.sha);
+  assert.equal(after.items.find(x=>x.id==='shirt').image,jpeg);
+  assert.equal(after.state.find(x=>x.id==='cloud-sync').localRevision,8);
+ }finally{f.close();}
+});
+test('M98 oversize original cannot masquerade as a 3M preview, with no private writes',async()=>{
+ const f=await fixture();
+ try{
+  const photo=cameraOriginalM98(),backup=cameraBackupM98(f,photo);
+  backup.items[0].image=photo.image;
+  const before=await snapshot(f.db);
+  await assert.rejects(prep(f,backup),/LEGACY_ATOMIC_INVALID_GARMENT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('M98 decoded camera source over 8MiB is refused even when encoded under 11.2M',async()=>{
+ const f=await fixture();
+ try{
+  const tooBig=Buffer.alloc(8*1024*1024+1,7);
+  tooBig[0]=255;tooBig[1]=216;tooBig[tooBig.length-2]=255;tooBig[tooBig.length-1]=217;
+  const image='data:image/jpeg;base64,'+tooBig.toString('base64');
+  assert(image.length<11_200_000);
+  const backup=cameraBackupM98(f,{
+   image,sha:createHash('sha256').update(tooBig).digest('hex')});
+  const before=await snapshot(f.db);
+  await assert.rejects(prep(f,backup),/LEGACY_ATOMIC_INVALID_JPEG_BYTES/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('M98 large original rejects tampered SHA, malformed Base64 and nested foreign owner atomically',async()=>{
+ const f=await fixture();
+ try{
+  const photo=cameraOriginalM98(),before=await snapshot(f.db);
+  const badHash=cameraBackupM98(f,photo);
+  badHash.items[0].originalPhoto.sha256='a'.repeat(64);
+  await assert.rejects(prep(f,badHash),/LEGACY_ATOMIC_JPEG_SHA_MISMATCH/);
+  const malformed=cameraBackupM98(f,photo);
+  malformed.items[0].originalPhoto.image=photo.image.slice(0,-4)+'####';
+  await assert.rejects(prep(f,malformed),/LEGACY_ATOMIC_INVALID_JPEG/);
+  const foreign=cameraBackupM98(f,photo);
+  foreign.items[0].originalPhoto.ownerId='foreign-owner';
+  await assert.rejects(prep(f,foreign),/LEGACY_ATOMIC_FOREIGN_OWNER/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
