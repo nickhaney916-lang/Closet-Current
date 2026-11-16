@@ -220,6 +220,57 @@ try{
       return status.includes('2D only')||status.includes('Preview refused');
     },null,{timeout:20000});
     const previewStatus=await page.locator('#mission4Preview1054Status').innerText();
+    if(!/original photo\\(s\\) verified.*2D only/.test(previewStatus)){
+     const context=await page.evaluate(async()=>{
+      const row=items.find(x=>x?.id==='p93-original');
+      const state={
+       boardInitialized:typeof boardInitialized==='boolean'&&boardInitialized,
+       selected:currentBoard?.slots?.top==='p93-original',
+       ownerReviewed:row?.ownerReviewed===true,
+       userAdjusted:row?.userAdjusted===true,
+       sourcePhotoOriginal:row?.sourcePhotoOriginal===true,
+       sourceHashVerified:row?.sourceHashVerified===true,
+       singleGarmentVerified:row?.singleGarmentVerified===true,
+       confirmedDetails:!!row?.confirmedDetails,
+       confirmedDetailsSource31:!!row?.confirmedDetailsSource31,
+       authUser:!!window.closetAuth?.user?.id,
+       dbPresent:!!db?.name?.startsWith('closet-current-user-'),
+       displayedCount:document.querySelectorAll('#mission4Preview1054Photos img').length,
+       viewerPhase:typeof mission4Preview1054Viewer==='undefined'?'absent':
+        mission4Preview1054Viewer?.status?.phase||'none',
+       preflight:'not-run',category:'not-run'
+      };
+      try{
+       const {preflightOwnedOutfit1054}=await import(
+        '/research/main-thread-integration-1054/source-to-outfit.mjs');
+       await preflightOwnedOutfit1054({
+        getSession:currentPhotoOwnerSession167,
+        readOwnerItems:signedOwnerSavedRows167,
+        cleanBoard:cleanOutfitBoard,board:structuredClone(currentBoard)
+       });
+       state.preflight='PASS';
+      }catch(e){
+       state.preflight='REFUSED';
+       const reason=String(e?.message||'');
+       const reasons=[
+        'signed owner session and private database required',
+        'owner session changed',
+        'selected garment lacks confirmed original and review evidence',
+        'missing or incompatible owned garment',
+        'original JPEG SHA does not match saved source',
+        'saved garment changed during source verification',
+        'outfit board changed during source verification',
+        'native outfit normalization would silently lose selected garment',
+        'selected garment has duplicate or ambiguous source identity',
+        'invalid or repeated outfit slot identity'
+       ];
+       state.category=reasons.find(x=>reason.includes(x))||'other';
+      }
+      return state;
+     });
+     console.error('P93_NATIVE_RESTORED_2D_REFUSAL',JSON.stringify({
+      engine,width,diagnostic:context,releaseAuthorized:false,familyAlpha:'HOLD'}));
+    }
     assert.match(previewStatus,/original photo\\(s\\) verified.*2D only/,
      'Restored original source failed signed-owner source-to-2D preflight: '+previewStatus);
     const imgs=page.locator('#mission4Preview1054Photos img');
