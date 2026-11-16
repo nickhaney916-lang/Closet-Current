@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {readFileSync,writeFileSync,mkdirSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
-const base='de3129bc07f6a50f98902abf5d268e527dc1bed1';
+const base='5ac312f620c02a033cb95b9b53b0966ebc07b986';
 const engine=process.env.P92_ENGINE,trial=Number(process.env.P92_TRIAL);
 assert.ok(['chromium','webkit'].includes(engine));
 assert.ok(trial===1||trial===2);
@@ -21,11 +21,11 @@ const pins={
  'public/native-owner-wardrobe-index-167.mjs':'b940b6c4ec040464d7d8b6686c45b5c3767fb859',
  'public/native-canonical-photo-source-167.mjs':'526d6d984bdb27cf775497132d2cf581ea2d3195',
  'research/main-thread-integration-1054/source-to-outfit.mjs':'5ea1e0e9b9f938fd98e7cb8875cc8ed8b68324b9',
- 'public/native-default-atomic-import-m3.mjs':'0a4b37751c5a46def7ae14676110a239ca6f34f8',
+ 'public/native-default-atomic-import-m3.mjs':'b4b7245686d81d47181f0795e9b9890bdb1642bc',
  'scripts/test-main51-real-app-owner-original-2d.mjs':'16cd06bcc1b1ef6bf8a6df3e3790c9abe2785167',
  'scripts/test-main58-actual-p88-wasm-browser.mjs':'96ba2f5ee2420de52f45911881fdcc139455c353',
- 'scripts/test-mission3-default-atomic-import-browser.mjs':'0cccb843a4ae0101cca8f242ee7c7410ec4f0e5d',
- 'tests/mission3-default-atomic-backup-source-guard.test.mjs':'dbd0b0b6c6db2e1d49560d0d65b22d68dcd69fb9'
+ 'scripts/test-mission3-default-atomic-import-browser.mjs':'20f85d5eeda42f2acd921f1393c10cc7522d22df',
+ 'tests/mission3-default-atomic-backup-source-guard.test.mjs':'041f4e6b25f495b86a4d4828da6c622d0c9b0192'
 };
 for(const [p,blob] of Object.entries(pins))assert.equal(git('rev-parse','HEAD:'+p),blob,'source changed: '+p);
 // Standalone-safe: reconstruct byte-for-byte immutable Worker import graph.

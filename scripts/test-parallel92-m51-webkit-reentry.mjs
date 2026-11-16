@@ -11,7 +11,7 @@ import {join} from 'node:path';
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
 const sha=git('rev-parse','HEAD');
 assert.equal(sha,process.env.P92_CHECKOUT_SHA,'must execute exact checked-out SHA');
-const m90='de3129bc07f6a50f98902abf5d268e527dc1bed1';
+const m90='5ac312f620c02a033cb95b9b53b0966ebc07b986';
 assert.equal(git('merge-base',m90,sha),m90,'current M90 source not in ancestry');
 const script='scripts/test-main51-real-app-owner-original-2d.mjs';
 assert.equal(git('rev-parse','HEAD:'+script),
@@ -24,7 +24,7 @@ assert.equal(git('rev-parse','HEAD:public/outfit-board.js'),
  '153455379b0b6d777eff8c1c508c129208c7fadc',
  'Outfit Builder changed outside test ownership');
 assert.equal(git('rev-parse','HEAD:scripts/test-mission3-default-atomic-import-browser.mjs'),
- '0cccb843a4ae0101cca8f242ee7c7410ec4f0e5d','M91 native import acceptance changed');
+ '20f85d5eeda42f2acd921f1393c10cc7522d22df','M91 native import acceptance changed');
 assert.ok(readFileSync(script,'utf8').includes('M88_SOURCE_SAFE_WEBKIT_PREVIEW_REFUSAL')&&
  readFileSync(script,'utf8').includes('__m89PreviewFailure'),
  'Missing main-owned M89 source-safe refusal diagnostics');

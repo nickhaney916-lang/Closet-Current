@@ -16,6 +16,9 @@ const jpeg='data:image/jpeg;base64,'+(await sharp({create:{
 const differentJPEG='data:image/jpeg;base64,'+(await sharp({create:{
  width:320,height:240,channels:3,background:{r:225,g:89,b:58}
 }}).jpeg().toBuffer()).toString('base64');
+const thirdJPEG='data:image/jpeg;base64,'+(await sharp({create:{
+ width:320,height:240,channels:3,background:{r:23,g:218,b:97}
+}}).jpeg().toBuffer()).toString('base64');
 const jpegSHA=createHash('sha256').update(Buffer.from(jpeg.slice(jpeg.indexOf(',')+1),'base64')).digest('hex');
 const root=resolve('.'),pub=resolve('public'),
  types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript',
@@ -69,7 +72,7 @@ try{
     page.on('pageerror',e=>errors.push({engine,width,error:String(e)}));
     await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
     await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady,inspirationReady]));
-    const result=await page.evaluate(async({ownerA,ownerB,jpeg,differentJPEG,jpegSHA})=>{
+    const result=await page.evaluate(async({ownerA,ownerB,jpeg,differentJPEG,thirdJPEG,jpegSHA})=>{
      const idbRead=()=>new Promise((done,reject)=>{
       const tx=db.transaction(['items','state'],'readonly');
       const a=tx.objectStore('items').getAll(),b=tx.objectStore('state').getAll();
@@ -93,7 +96,7 @@ try{
      items=(await readAllFrom(db)).map(normalizeClothing);
      await reloadCloudLooks();await reloadCloudBoard();render();
      const first=normalizeClothing({id:'new-top',ownerId:ownerA,
-      name:'New owner A garment',category:'Tops',itemType:'T-shirt',color:'Green',image:jpeg});
+      name:'New owner A garment',category:'Tops',itemType:'T-shirt',color:'Green',image:differentJPEG});
      const makeBackup=(opts={})=>({format:'closet-current',version:3,items:[first],
       looks:[{id:'new-look',title:'New inspiration',pieces:[]}],
       outfitBoard:{current:{name:'Imported',slots:{top:opts.badRef?'unknown-photo':'new-top'}},
@@ -115,12 +118,21 @@ try{
       cloudRevision:after['cloud-sync']?.localRevision,
       cloudDirty:after['cloud-sync']?.dirty,
       originalExists:committed.items.some(x=>x.id==='kept-original'&&x.image===jpeg),
-      newExists:committed.items.some(x=>x.id==='new-top'&&x.image===jpeg),
+      newExists:committed.items.some(x=>x.id==='new-top'&&x.image===differentJPEG),
       notice:document.getElementById('message').textContent,
       screenCount:document.getElementById('closetCount').textContent,
       cloudChanged:window.__cloudLocalChanged||0
      };
      const fingerprint=JSON.stringify(await idbRead());
+     // Default legacy v1-v3 importer must also block a same-byte JPEG alias
+     // when NEITHER the stored nor incoming original is source-verified.
+     const unverifiedAlias=makeBackup();
+     unverifiedAlias.items[0]={...first,id:'unverified-original-alias',image:jpeg};
+     await select(unverifiedAlias);
+     const unverifiedAliasUnchanged=JSON.stringify(await idbRead())===fingerprint;
+     const unverifiedAliasMessage=document.getElementById('message').textContent;
+     const unverifiedAliasExplained=unverifiedAliasMessage.includes('original photo already linked')&&
+      unverifiedAliasMessage.includes('Nothing was imported');
      // M91 actual signed-owner default import: same JPEG, new ID, no write.
      const duplicateOriginal=makeBackup();
      duplicateOriginal.items[0]={...first,id:'same-original-new-id',
@@ -156,7 +168,7 @@ try{
      // Force a staged outfit-store exception after clothing and looks put()
      // have been requested. Native IDB abort must roll ALL of them back.
      const rollback=makeBackup();
-     rollback.items[0]={...rollback.items[0],id:'rollback-top'};
+     rollback.items[0]={...rollback.items[0],id:'rollback-top',image:thirdJPEG};
      rollback.outfitBoard.current.slots.top='rollback-top';
      rollback.outfitBoard.saved[0].slots.top='rollback-top';
      const oldPut=IDBObjectStore.prototype.put;
@@ -190,12 +202,13 @@ try{
      window.__resumeOldFile();
      await oldPending;
      const second=await idbRead();
-     return {...outcome,originalAliasUnchanged,originalAliasExplained,collidedUnchanged,duplicateIdsUnchanged,
+     return {...outcome,unverifiedAliasUnchanged,unverifiedAliasExplained,
+      originalAliasUnchanged,originalAliasExplained,collidedUnchanged,duplicateIdsUnchanged,
       foreignUnchanged,unsavedBlocked,stagedRollbackUnchanged,
       badRefUnchanged,cancelledUnchanged,
       afterAccountSwitch:second.items.map(x=>({id:x.id,ownerId:x.ownerId})),
       currentOwner:window.closetAuth.user.id,currentScreenCount:document.getElementById('closetCount').textContent};
-    },{ownerA,ownerB,jpeg,differentJPEG,jpegSHA});
+    },{ownerA,ownerB,jpeg,differentJPEG,thirdJPEG,jpegSHA});
     assert.deepEqual(result.mergedItems,[{id:'kept-original',ownerId:ownerA},{id:'new-top',ownerId:ownerA}]);
     assert.deepEqual(result.mergedLooks,['old-look','new-look']);
     assert.equal(result.boardTop,'new-top');
@@ -205,6 +218,8 @@ try{
     assert.equal(result.cloudChanged,1);
     assert.match(result.notice,/imported atomically/i);
     assert.equal(result.screenCount,'2');
+    assert.equal(result.unverifiedAliasUnchanged,true);
+    assert.equal(result.unverifiedAliasExplained,true);
     assert.equal(result.originalAliasUnchanged,true);
     assert.equal(result.originalAliasExplained,true);
     assert.equal(result.collidedUnchanged,true);
@@ -220,7 +235,8 @@ try{
     assert.equal(external.some(x=>x.method!=='GET'),false,'External write attempted');
     assert.equal(external.every(x=>x.blocked),true);
     cases.push({engine,width,defaultV3NativeAtomic:true,
-     originalIdCollisionBlocked:true,originalAliasSourceBlocked:true,
+     originalIdCollisionBlocked:true,unverifiedLegacyJPEGAliasBlocked:true,
+     originalAliasSourceBlocked:true,
      ownerFacingDuplicateRecoveryVerified:true,foreignOwnerBlocked:true,
      duplicateIdsBlocked:true,unsavedCaptureBlocked:true,
      syntheticStageRollback:true,mergePreservesItems:true,

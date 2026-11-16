@@ -417,3 +417,52 @@ test('M91 native import explains duplicate original without a partial write',()=
  assert.match(handler,/Nothing was imported/);
  assert.match(handler,/Open My Closet to review the saved piece/);
 });
+
+// M92: don't downgrade original-source matching when old backups lack SHA proof.
+test('M92 distinct IDs for one unverified legacy JPEG are refused without changing owner IDB',async()=>{
+ const f=await fixture();
+ try{
+  const before=await snapshot(f.db);
+  await assert.rejects(prep(f,{format:'closet-current',version:1,
+   items:[row(f.owner,'unverified-alias')]}),
+   /LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('M92 two unverified different crops sharing one original in a backup are refused',async()=>{
+ const f=await fixture();
+ try{
+  const original='data:image/jpeg;base64,'+Buffer.from([255,216,90,91,255,217]).toString('base64');
+  const one={...row(f.owner,'crop-one'),image:'data:image/jpeg;base64,'+
+   Buffer.from([255,216,90,1,255,217]).toString('base64'),originalPhoto:{image:original}};
+  const two={...row(f.owner,'crop-two'),image:'data:image/jpeg;base64,'+
+   Buffer.from([255,216,90,2,255,217]).toString('base64'),originalPhoto:{image:original}};
+  const before=await snapshot(f.db);
+  await assert.rejects(prep(f,{format:'closet-current',version:2,items:[one,two]}),
+   /LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('M92 two distinct unverified original JPEGs can still be imported',async()=>{
+ const f=await fixture();
+ try{
+  const different='data:image/jpeg;base64,'+Buffer.from([255,216,95,96,255,217]).toString('base64');
+  const plan=await prep(f,{format:'closet-current',version:1,items:[
+   {...row(f.owner,'new-distinct'),image:different}]});
+  await commit(f,plan);
+  const rows=(await snapshot(f.db)).items;
+  assert.equal(rows.length,2);
+  assert.equal(rows.find(x=>x.id==='shirt').image,jpeg);
+  assert.equal(rows.find(x=>x.id==='new-distinct').image,different);
+ }finally{f.close();}
+});
+test('M92 same-ID owner metadata edit is still accepted for an unverified original',async()=>{
+ const f=await fixture();
+ try{
+  const plan=await prep(f,{format:'closet-current',version:1,
+   items:[{...row(f.owner,'shirt'),color:'Purple'}]});
+  await commit(f,plan);
+  const saved=(await snapshot(f.db)).items.find(x=>x.id==='shirt');
+  assert.equal(saved.color,'Purple');assert.equal(saved.image,jpeg);
+ }finally{f.close();}
+});
