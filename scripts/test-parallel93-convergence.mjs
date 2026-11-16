@@ -80,13 +80,16 @@ try{
  // instance-review export. M3 research importer is staged side-by-side with
  // native M4 (never substitutes for it). M2 contact geometry stays research-only.
  const overlay=join(root,'mission1');
- await symlink(resolve('node_modules'),join(overlay,'node_modules'),'dir');\n const paths=[
+ await symlink(resolve('node_modules'),join(overlay,'node_modules'),'dir');
+ const paths=[
   {name:'M1_review',sha:donor.mission1,path:'public/outfit-instance-review-840.mjs'},
   {name:'M3_research_import',sha:donor.mission3,path:'research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs'},
   {name:'M2_skirt_research',sha:donor.mission2,path:'research/parallel89/skirt-rigid-registration89.mjs'}
  ];
  for(const {name,sha,path} of paths){
-  const fetched=run('git',['show',sha+':'+path]);\n  assert.equal(fetched.status,0,'Missing donor path '+sha+':'+path);\n  const src=fetched.stdout;
+  const fetched=run('git',['show',sha+':'+path]);
+  assert.equal(fetched.status,0,'Missing donor path '+sha+':'+path);
+  const src=fetched.stdout;
   const target=join(overlay,path);
   await mkdir(resolve(target,'..'),{recursive:true});
   await writeFile(target,src);
