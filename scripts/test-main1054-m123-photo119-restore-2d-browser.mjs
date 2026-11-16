@@ -202,7 +202,28 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
         confirmedLargeRow?.singleGarmentVerified!==true||
         confirmedLargeRow?.ownerReviewed!==true||batch.includes(captured)||
         editor.open)
+     {
+      // M144: report ONLY fixed booleans/status categories for a failing
+      // native owner-save integration; NEVER print JPEGs, SHA, IDs or tokens.
+      const text=document.getElementById('message')?.textContent||'';
+      const category=text.includes('Reviewed garment was not saved')?'save-refused':
+       text.includes('saved to your private closet')?'saved':'other';
+      const state=await readRows();
+      console.error('M144_SAFE_EDITOR_FAILURE',JSON.stringify({
+       category,recordPresent:!!confirmedLargeRow,
+       ownerReviewed:confirmedLargeRow?.ownerReviewed===true,
+       sourceSHAConsistent:confirmedLargeRow?.sourceSHA256===largeOriginalSHA,
+       previewConsistent:confirmedLargeRow?.image===actualPreview,
+       originalConsistent:confirmedLargeRow?.originalPhoto?.image===largeOriginalJPEG,
+       previewReceiptValid:/^[a-f0-9]{64}$/.test(
+        confirmedLargeRow?.displayPreviewReceipt?.previewSHA256||''),
+       sourceSingle:confirmedLargeRow?.singleGarmentVerified===true,
+       draftStillInMemory:batch.includes(captured),dialogStillOpen:editor.open,
+       durableDraftCount:state.state.find(x=>x.id==='draft')?.batch?.length??-1,
+       photosSaved:state.items.length,releaseAuthorized:false
+      }));
       throw Error('M141 native owner preview editor failed atomic reviewed original save');
+     }
      const savedPreviewSHA=confirmedLargeRow.displayPreviewReceipt.previewSHA256;
      const {exportDurableOwnerBackupM3:exportLarge}=await import('./native-default-verified-backup-export-m3.mjs');
      const largeExport=await exportLarge({ownerDB:db,ownerId:owner,
