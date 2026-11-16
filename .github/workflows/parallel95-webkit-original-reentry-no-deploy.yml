@@ -1,0 +1,64 @@
+name: P95 exact-source native WebKit Chromium restored-original reentry NO DEPLOY
+on:
+  push:
+    branches: [fix/parallel95-webkit-source-restore-reentry-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  p95-native-m51:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [webkit, chromium]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M51_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact source ledger and protection
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor bddcc4da68bee90fb2aad545cffc2aaa620c959e HEAD
+          test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = 63cc9da00eaecbeb2576482dcae1528b44ea8189
+          test "$(git rev-parse HEAD:research/main-thread-integration-1054/native-2d-preview.mjs)" = 0af20d49d87436683630d587ec0284c611cd3414
+          git diff --exit-code bddcc4da68bee90fb2aad545cffc2aaa620c959e HEAD -- public/ supabase/ research/main-thread-integration-1054/
+          node --check scripts/test-parallel95-native-source-restore-reentry.mjs
+          node --check public/outfit-board.js
+      - name: Install disposable native-browser testing dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Real owner-original source mutation and restore, six reentries at every mobile viewport
+        run: node scripts/test-parallel95-native-source-restore-reentry.mjs
+      - name: Check independently implemented old-click ownership fence
+        run: node --test tests/main1054-m148-preview-click-ownership.test.mjs
+  p95-full-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install disposable Node regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Full inherited serial tests without hidden skip
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
