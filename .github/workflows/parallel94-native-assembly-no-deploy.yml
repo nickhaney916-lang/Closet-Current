@@ -97,6 +97,13 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs)" = b76ffa0625d421a36a1cf3bcc00d109e9cea42b9
           M123_ENGINE="${M58_ENGINE}" node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs "benchmark/parallel94-native-v3-distinct-sources/${M58_ENGINE}"
+      - name: Strict M3 v4 synthetic owner full atomic export/restore across BOTH browsers and all 3 widths
+        if: matrix.engine == 'chromium' && matrix.width == 390
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:scripts/test-mission3-lossless-v4-owner-acceptance-browser.mjs)" = dfba236c7188dba96420af55b1feced251155e9e
+          node scripts/test-mission3-lossless-v4-owner-acceptance-browser.mjs benchmark/parallel94-m3-v4-atomic
       - name: Archive source-safe metadata receipt ONLY
         if: always()
         uses: actions/upload-artifact@v4
