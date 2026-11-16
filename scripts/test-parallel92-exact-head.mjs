@@ -152,7 +152,7 @@ const diagnosticCountCheck=[
 // private row or credentials. A photo-free success still fails the same assert.
 const previewMarker="  await clickPreview(page);\n  assert.equal(await count(page),1);";
 assert.equal(sourceM51.split(previewMarker).length,2,'M51 first original-photo preview contract changed');
-const previewEventProbe=String.raw\`
+const previewEventProbe=String.raw`
   await page.evaluate(()=>{
    const root=document.getElementById('mission4Preview1054Photos');
    const status=document.getElementById('mission4Preview1054Status');
@@ -179,7 +179,7 @@ const previewEventProbe=String.raw\`
     ()=>mark('session-locked'),{capture:true});
    mark('probe-start');
   });
-\`;
+`;
 const p92NativeFile='scripts/.parallel92-m51-visibility-diagnostic.generated.mjs';
 writeFileSync(p92NativeFile,sourceM51.replace(previewMarker,previewEventProbe+previewMarker).replace(originalCountCheck,diagnosticCountCheck));
 try{run(p92NativeFile,[],{M51_ENGINE:engine});}
