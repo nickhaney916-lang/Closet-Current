@@ -239,3 +239,69 @@ jobs:
           path: benchmark/parallel93-convergence/M98-DISPOSABLE-BROWSER-RESULT.json
           retention-days: 14
           if-no-files-found: ignore
+
+  m101-disposable-combined-native-pair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin latest pre-reviewed M101 tree and P93 isolated commit ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse 3bf2bdad10d264ebe23ba58e156389a1db5feb0b:public/app.js)" = 438acfeda76e313b84a7f41a78aab4a748c4e932
+          test "$(git rev-parse 3bf2bdad10d264ebe23ba58e156389a1db5feb0b:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
+          test "$(git rev-parse 3bf2bdad10d264ebe23ba58e156389a1db5feb0b:public/native-default-verified-backup-export-m3.mjs)" = 3b25748f750f30f4b70b3c5daaf5bc83042f2804
+          git diff --exit-code 93696bfa890f573fbbb23da3530da27c45d4b890 HEAD -- public/ supabase/ benchmark/fixtures/
+          node --check scripts/test-parallel93-m101-export-only.mjs
+          node --check research/parallel93-convergence/proposed-v3-pair-adapter.mjs
+      - name: Install isolated native-browser test tools, no production dependency changes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Execute latest M101 disposable source-pair patch and inherited Chromium/WebKit native app
+        run: node scripts/test-parallel93-m101-export-only.mjs
+      - name: Assert scratch test receipt and protected working branch still exact
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const x=JSON.parse(fs.readFileSync('benchmark/parallel93-convergence/M101-DISPOSABLE-BROWSER-RESULT.json','utf8'));
+          if(x.m4ExactHead!=='3bf2bdad10d264ebe23ba58e156389a1db5feb0b'||
+             x.checks.nativeBuild!=='PASS'||x.checks.actualAppBrowser?.status!=='PASS'||
+             x.checks.actualAppBrowser.journeys!==6||
+             x.checks.largeOriginalActualBrowser?.status!=='PASS'||
+             x.checks.largeOriginalActualBrowser?.journeys!==6||
+             x.checks.largeOriginalActualBrowser.receiptGates.length!==7||
+             x.checks.reviewableOwnerPatch?.mainImporterUnchanged!==true||
+             x.diffFiles.some(p=>p.startsWith('public/')&&
+               p!=='public/native-default-verified-backup-export-m3.mjs')||
+             x.familyAlpha!=='HOLD'||x.safeNoDeploy!==true||
+             x.normalM4Adopted!==false||x.stagedDonors?.length!==3||
+             x.diffFiles.some(p=>p.startsWith('public/')&&![
+              'public/native-default-atomic-import-m3.mjs',
+              'public/native-default-verified-backup-export-m3.mjs'
+             ].includes(p)))
+            throw Error('P93 M101 disposable acceptance receipt failed');
+          console.log('PASS M101 exact unchanged importer and source-receipt strict exporter patch 6/6 actual-app browser; HOLD');
+          JS
+          git diff --exit-code 93696bfa890f573fbbb23da3530da27c45d4b890 HEAD -- public/ supabase/ benchmark/fixtures/
+      - name: Archive source hashes and counters only; no JPEG/model/owner material
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p93-m101-disposable-native-v3-receipt-HOLD
+          path: benchmark/parallel93-convergence/M101-DISPOSABLE-BROWSER-RESULT.json
+          retention-days: 14
+          if-no-files-found: ignore
