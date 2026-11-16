@@ -1,0 +1,115 @@
+name: P93 pinned cross-mission convergence and native Chromium WebKit NO DEPLOY
+on:
+  push:
+    branches: [research/parallel93-source-convergence-HOLD]
+    paths:
+      - 'scripts/test-parallel93-*.mjs'
+      - 'tests/parallel93-*.test.mjs'
+      - 'research/parallel93-convergence/**'
+      - '.github/workflows/parallel93-source-convergence-no-deploy.yml'
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  source-convergence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict exact original M4 source and no foreign-mission writes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 93696bfa890f573fbbb23da3530da27c45d4b890 HEAD
+          test "$(git rev-parse HEAD:public/app.js)" = 991c00457799f8e2b8ae958d5ace85cc9914aece
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = 153455379b0b6d777eff8c1c508c129208c7fadc
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 3a83e3336ce36334a49708d1c7b90cc27194c7b9
+          git diff --exit-code 93696bfa890f573fbbb23da3530da27c45d4b890 HEAD -- public/ supabase/ benchmark/fixtures/
+          node --check scripts/test-parallel93-convergence.mjs
+          node --check tests/parallel93-import-contract.test.mjs
+      - name: Pinned local test dependencies NO DEPLOY
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 sharp@0.34.3 playwright@1.56.1 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Actual no-commit merge-tree and cherry-pick plus three-donor overlay
+        run: node scripts/test-parallel93-convergence.mjs
+      - name: M3 original JPEG importer contract real-code proof
+        run: node --test tests/parallel93-import-contract.test.mjs
+      - name: Build native PWA and full inherited serial Node regression
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Final source isolation
+        run: git diff --exit-code 93696bfa890f573fbbb23da3530da27c45d4b890 HEAD -- public/ supabase/ benchmark/fixtures/
+      - name: Upload source conflicts only, no originals or private data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p93-source-convergence-HOLD
+          path: benchmark/parallel93-convergence/SOURCE-REHEARSAL.json
+          if-no-files-found: ignore
+          retention-days: 14
+  unchanged-m4-native-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Lock inherited exact app baseline and original 3-width script
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:public/app.js)" = 991c00457799f8e2b8ae958d5ace85cc9914aece
+          test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = 16cd06bcc1b1ef6bf8a6df3e3790c9abe2785167
+          git diff --exit-code 93696bfa890f573fbbb23da3530da27c45d4b890 HEAD -- public/ supabase/ benchmark/fixtures/
+      - name: Install locked Playwright dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Actual M4 native original-owner photo 2D across Chromium and WebKit at 320 390 430
+        run: |
+          M51_ENGINE=chromium node scripts/test-main51-real-app-owner-original-2d.mjs
+          M51_ENGINE=webkit node scripts/test-main51-real-app-owner-original-2d.mjs
+      - name: Fail closed on evidence of owner switch, source tamper or premature 3D
+        run: |
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          for(const engine of ['chromium','webkit']){
+            const p='benchmark/main51-real-app-owner-2d/'+engine+'/M51-native-owner-source-2d-NOT-RELEASE.json';
+            const r=JSON.parse(fs.readFileSync(p,'utf8'));
+            if(r.engine!==engine||r.actualNativeAppShell!==true||
+               r.actualAppOwnerButtonUsed!==true||r.screenshotCount!==3||
+               r.cases?.length!==3||r.consumer3D!==false||r.releaseAuthorized!==false||
+               r.familyAlpha!=='HOLD'||r.realUserAccounts!==false||
+               r.hostedJWTAndRLS!==false||r.physicalAndroidIphone!==false)
+              throw Error('P93 inherited baseline not accepted: '+engine);
+            for(const width of [320,390,430]){
+              const c=r.cases.find(x=>x.width===width);
+              if(!c||c.ownerBDeniedOldOwnerPhoto!==true||
+                 c.sourceTamperRejected!==true||c.originalPhoto2DOnly!==true)
+                throw Error('P93 native source/owner/2D veto failed: '+engine+' '+width);
+            }
+            console.log('PASS unchanged M4 native browser baseline',engine,'320/390/430, NOT cross-donor release');
+          }
+          JS
+      - name: Archive numeric browser receipts only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p93-unchanged-m4-browser-HOLD
+          path: benchmark/main51-real-app-owner-2d/**/M51-native-owner-source-2d-NOT-RELEASE.json
+          if-no-files-found: ignore
+          retention-days: 14
