@@ -148,6 +148,39 @@ jobs:
             echo "P1219_VIEWER_TRACE_PROCESS_STRICT_PASS trial=$trial widths=320,390,430"
           done
           echo "P1219_VIEWER_TRACE_12_OF_12_PASS"
+  p1219-webkit-occasion-click-entry-focus:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M51_ENGINE: webkit
+      P1219_FOCUS_STRESS: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pinned browser dependencies without deployment
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Six real app WebKit processes each with eight repeated focus and occasion reentries
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = 8d16533036794735a4bcf675719d2dd5b63700ab
+          for trial in $(seq 1 6); do
+            echo "P1219_FOCUS_PROCESS_BEGIN trial=$trial exactHead=$(git rev-parse HEAD)"
+            node scripts/test-p1219-webkit-native-preview-reentry.mjs
+            echo "P1219_FOCUS_PROCESS_STRICT_PASS trial=$trial widths=320,390,430"
+          done
+          echo "P1219_FOCUS_6_PROCESSES_X_8_REENTRIES_PASS"
   p1219-chromium-fresh-process-soak:
     runs-on: ubuntu-24.04
     timeout-minutes: 65
