@@ -1008,11 +1008,11 @@ if(mission4Preview1054Active){
      const viewer=mission4Preview1054Viewer;
      const result=await viewer.refresh();
      if(!live()||mission4Preview1054Viewer!==viewer){
-      // A superseded verification can resolve after a newer click has
-      // independently re-attested the SAME owner/original JPEG. The old
-      // continuation owns neither the shared viewer nor its newer pixels.
-      // Source/owner/DB changes already revoke synchronously in the viewer
-      // and redraw/session guards. Never clear a newer valid request here.
+      // A superseded click cannot clear a newer independently attested owner
+      // photo. A still-current click with a silently lost owner/DB/source
+      // lease MUST revoke its own pixels, even without a focus/logout event.
+      if(serial===mission4Preview1054ClickSerial&&
+         mission4Preview1054Viewer===viewer) viewer.clear();
       return;
      }
      if(viewer.status.phase!=='visible'||
