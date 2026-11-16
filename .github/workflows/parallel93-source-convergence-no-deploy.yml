@@ -266,6 +266,7 @@ jobs:
           test "$(git rev-parse 3bf2bdad10d264ebe23ba58e156389a1db5feb0b:public/native-default-verified-backup-export-m3.mjs)" = 3b25748f750f30f4b70b3c5daaf5bc83042f2804
           git diff --exit-code 93696bfa890f573fbbb23da3530da27c45d4b890 HEAD -- public/ supabase/ benchmark/fixtures/
           node --check scripts/test-parallel93-m101-export-only.mjs
+          node --check scripts/test-parallel93-m101-reviewed-restore-2d-browser.mjs
           node --check research/parallel93-convergence/proposed-v3-pair-adapter.mjs
       - name: Install isolated native-browser test tools, no production dependency changes
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
@@ -284,6 +285,10 @@ jobs:
              x.checks.largeOriginalActualBrowser?.status!=='PASS'||
              x.checks.largeOriginalActualBrowser?.journeys!==6||
              x.checks.largeOriginalActualBrowser.receiptGates.length!==7||
+             x.checks.nativeReviewedPhotoToRestored2D?.status!=='PASS'||
+             x.checks.nativeReviewedPhotoToRestored2D.journeys!==6||
+             x.checks.nativeReviewedPhotoToRestored2D.originalDisplayedNotPreview!==true||
+             x.checks.nativeReviewedPhotoToRestored2D.sourceTo3DAllowed!==false||
              x.checks.reviewableOwnerPatch?.mainImporterUnchanged!==true||
              x.diffFiles.some(p=>p.startsWith('public/')&&
                p!=='public/native-default-verified-backup-export-m3.mjs')||
