@@ -61,7 +61,7 @@ run('scripts/test-browser-owner-mutation91.mjs',[],{P91_ENGINE:engine});
 // browser or supply any mock model proposals.
 const mainM58File='scripts/test-main58-actual-p88-wasm-browser.mjs';
 const immutableM58=readFileSync(mainM58File,'utf8');
-const match="  assert.ok(state.cards>0&&state.cards<=12,\n   'Genuine P88 browser worker did not produce a bounded actual model proposal');";
+const match=" assert.ok(state.cards>0&&state.cards<=12,\n  'Genuine P88 browser worker did not produce a bounded actual model proposal');";
 assert.equal(immutableM58.split(match).length,2,'P92 must not replace altered real M58 assertion');
 const numericAndEnumOnly=String.raw`
   if(!(state.cards>0&&state.cards<=12)){
@@ -83,7 +83,7 @@ const numericAndEnumOnly=String.raw`
   }
 `;
 const errorsMarker="const external=[],rejected=[],issues=[],modelResponses=[];";
-const eventMarker="  page.on('pageerror',e=>issues.push('pageerror-'+String(e.message).slice(0,120)));";
+const eventMarker=" page.on('pageerror',e=>issues.push('pageerror-'+String(e.message).slice(0,120)));";
 assert.equal(immutableM58.split(errorsMarker).length,2,'M58 error accounting altered');
 assert.equal(immutableM58.split(eventMarker).length,2,'M58 real page accounting altered');
 const disposableM58=immutableM58
