@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash,webcrypto} from 'node:crypto';
+import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import {exportDurableOwnerBackupM3} from '../public/native-default-verified-backup-export-m3.mjs';
 const require=createRequire(import.meta.url);
@@ -158,4 +159,12 @@ test('two independent original SHA identities remain exportable together',async(
    new Set([sha,otherSHA]));
   assert.equal(result.releaseAuthorized,false);
  });
+});
+
+test('native signed-owner UI explains that an unrestorable multi-piece v3 backup was not downloaded',()=>{
+ const app=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
+ assert.match(app,/M3_EXPORT_SHARED_ORIGINAL_RESTORE_UNSUPPORTED/);
+ assert.match(app,/backup format cannot safely restore them as separate pieces/);
+ assert.match(app,/Your originals and saved clothing remain on this device/);
+ assert.match(app,/Do not delete or reset this closet/);
 });
