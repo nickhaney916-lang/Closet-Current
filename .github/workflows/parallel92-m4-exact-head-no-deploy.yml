@@ -344,7 +344,7 @@ jobs:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       P92_ENGINE: ${{ matrix.engine }}
       P92_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      P92_MAIN_PIN: 482f9b34b417a1b7218fe154d6f099db6967a9c5
+      P92_MAIN_PIN: 0bc70d01733437a7899184543adb455770595654
     steps:
       - uses: actions/checkout@v4
         with:
@@ -415,7 +415,7 @@ jobs:
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       P92_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      P92_MAIN_PIN: 482f9b34b417a1b7218fe154d6f099db6967a9c5
+      P92_MAIN_PIN: 0bc70d01733437a7899184543adb455770595654
     steps:
       - uses: actions/checkout@v4
         with:
@@ -435,8 +435,9 @@ jobs:
           test "$(git rev-parse "$P92_MAIN_PIN:public/app.js")" = cc4ee7ea3e575925fb13cc3e9627f0f59ac6919d
           test "$(git rev-parse "$P92_MAIN_PIN:public/native-default-verified-backup-export-m3.mjs")" = e70fdc392c2652dc969b7d7c4b807f3cafd81e03
           test "$(git rev-parse "$P92_MAIN_PIN:public/native-default-atomic-import-m3.mjs")" = e739f1533108d53961483d761a27f0525623af3d
-          test "$(git rev-parse "$P92_MAIN_PIN:tests/main1054-m104-large-original-export-receipts.test.mjs")" = a9de229139bcc64365295b9403e7d345b7b6e34f
+          test "$(git rev-parse "$P92_MAIN_PIN:tests/main1054-m104-large-original-export-receipts.test.mjs")" = 8bd85aba7a91a316b30bcd71f42c642dda626230
           test "$(git rev-parse "$P92_MAIN_PIN:scripts/test-mission3-default-atomic-import-browser.mjs")" = 375ff22b8c69bd6f7ddb19fc59cb6c4460eb7ba8
+          test "$(git rev-parse "$P92_MAIN_PIN:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs")" = 182de3ea4245ce10aa61402a606af5387a3604ff
           git worktree add --detach /tmp/p92-current-main-owner-export-atomic "$P92_MAIN_PIN"
           cd /tmp/p92-current-main-owner-export-atomic
           git config --global --add safe.directory "$PWD"
@@ -453,9 +454,21 @@ jobs:
           node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
           node scripts/test-mission3-default-atomic-import-browser.mjs benchmark/parallel92-main-current-import
           node scripts/test-main1054-duplicate-fence-browser.mjs
+          # M123 latest main: real PHOTO119 owner-reviewed photo -> v3 UI
+          # export/restore -> exact SHA-bound 2D preview; one strict process
+          # per engine at 320/390/430px. Independent labels/3D are NOT proven.
+          M123_ENGINE=chromium node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs benchmark/parallel92-current-main-m123-chromium
+          M123_ENGINE=webkit node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs benchmark/parallel92-current-main-m123-webkit
           test "$(git rev-parse HEAD)" = "$P92_MAIN_PIN"
           test -z "$(git status --porcelain --untracked-files=no)"
-          if test -n "$(git ls-files --others --exclude-standard -- public scripts research tests .github)"; then
+          # Report only untracked SOURCE PATHS, never file content, photos,
+          # tokens or owner metadata. This is failure-only and still exits red;
+          # prior run proved all 2837 source tests and both browsers pass but
+          # unexpectedly produced untracked source-path artifact(s).
+          newly_created="$(git ls-files --others --exclude-standard -- public scripts research tests .github)"
+          if test -n "$newly_created"; then
+            echo "P92 SOURCE-HYGIENE UNTRACKED PATH CLASSIFICATION:"
+            printf '%s\n' "$newly_created" | head -n 25
             echo "P92 REFUSED current-main exporter test's unexpected source modification"
             exit 1
           fi
