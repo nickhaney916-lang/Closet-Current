@@ -371,11 +371,30 @@ jobs:
           test -z "$(git status --porcelain)"
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
           node --check scripts/test-main1054-m106-preview-terminal-browser.mjs
+          # Main M108 failure-only diagnostic references loop-local `width`
+          # from the top-level clickPreview helper. On a real timeout this
+          # masks TimeoutError with ReferenceError. Patch ONLY one log field
+          # inside an UNTRACKED test-copy; all M51 assertions/app/SHA untouched.
+          node --input-type=module - <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync} from 'node:fs';
+          const original='scripts/test-main1054-m106-preview-terminal-browser.mjs';
+          const diagnostic='scripts/.parallel92-m106-safe-diagnostic.mjs';
+          const src=readFileSync(original,'utf8');
+          const before="console.error('M108_REENTRY_TIMEOUT_SAFE',JSON.stringify({engine,width,stage,...facts}));";
+          const after="console.error('M108_REENTRY_TIMEOUT_SAFE',JSON.stringify({engine,width:activeWidth,stage,...facts}));";
+          assert.equal(src.split(before).length,2,'main M108 diagnostic source drift: refuse scratch overlay');
+          writeFileSync(diagnostic,src.replace(before,after));
+          JS
+          trap 'rm -f scripts/.parallel92-m106-safe-diagnostic.mjs' EXIT
+          node --check scripts/.parallel92-m106-safe-diagnostic.mjs
           if [ "$P92_ENGINE" = "webkit" ]; then REPS=12; else REPS=6; fi
           for trial in $(seq 1 "$REPS"); do
             echo "P92 CURRENT-MAIN SOURCE-LOCKED $P92_ENGINE FRESH PROCESS $trial/$REPS, MAIN PIN $P92_MAIN_PIN"
-            M51_ENGINE="$P92_ENGINE" node scripts/test-main1054-m106-preview-terminal-browser.mjs
+            M51_ENGINE="$P92_ENGINE" node scripts/.parallel92-m106-safe-diagnostic.mjs
           done
+          rm -f scripts/.parallel92-m106-safe-diagnostic.mjs
+          trap - EXIT
           test "$(git rev-parse HEAD)" = "$P92_MAIN_PIN"
           # Source must remain unchanged. M51 intentionally writes public-fixture
           # screenshot/receipt outputs to benchmark/, which are untracked artifacts,
