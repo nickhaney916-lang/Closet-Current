@@ -471,3 +471,36 @@ test('M92 same-ID owner metadata edit is still accepted for an unverified origin
   assert.equal(saved.color,'Purple');assert.equal(saved.image,jpeg);
  }finally{f.close();}
 });
+
+// M94: textual Base64 padding bits are not physical-original evidence.
+// Browser atob accepts these different spellings as EXACTLY the same JPEG.
+test('M94 noncanonical padded Base64 alias cannot duplicate an unverified old original',async()=>{
+ const f=await fixture();
+ try{
+  const alias=jpeg.slice(0,-3)+'R==';
+  assert.notEqual(alias,jpeg);
+  assert.deepEqual(Buffer.from(alias.split(',')[1],'base64'),
+   Buffer.from(jpeg.split(',')[1],'base64'));
+  const before=await snapshot(f.db);
+  await assert.rejects(prep(f,{format:'closet-current',version:1,
+   items:[{...row(f.owner,'different-base64-text'),image:alias}]}),
+   /LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('M94 genuinely different JPEG bytes of the same Base64 length remain importable',async()=>{
+ const f=await fixture();
+ try{
+  const distinct='data:image/jpeg;base64,'+Buffer.from([255,216,254,217]).toString('base64');
+  assert.equal(distinct.length,jpeg.length);
+  assert.notDeepEqual(Buffer.from(distinct.split(',')[1],'base64'),
+   Buffer.from(jpeg.split(',')[1],'base64'));
+  const plan=await prep(f,{format:'closet-current',version:1,
+   items:[{...row(f.owner,'same-length-distinct'),image:distinct}]});
+  await commit(f,plan);
+  const rows=(await snapshot(f.db)).items;
+  assert.equal(rows.length,2);
+  assert.equal(rows.find(x=>x.id==='shirt').image,jpeg);
+  assert.equal(rows.find(x=>x.id==='same-length-distinct').image,distinct);
+ }finally{f.close();}
+});
