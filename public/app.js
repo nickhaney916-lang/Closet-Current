@@ -1005,7 +1005,8 @@ function adjustPhoto(item){
    'This pending photo changed or could not be removed. Nothing else was deleted. Reload Photo results and try again.');}};
  form.onsubmit=async event=>{event.preventDefault();save.disabled=true;try{
   editorSession.assertCurrent();
-  const value={...collect(),name:draft.name.trim()||(draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
+  const value={...collect(),name:(typeof draft.name==='string'?draft.name.trim():'')||
+   (draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
   if(typeof captureProof01Active!=='undefined'&&captureProof01Active&&
      (!captureProofOwner()||item.ownerId&&item.ownerId!==captureProofOwner()))
    throw Error('Owner changed. Sign in again before saving this photo.');
