@@ -242,8 +242,26 @@ try{
        displayedCount:document.querySelectorAll('#mission4Preview1054Photos img').length,
        viewerPhase:typeof mission4Preview1054Viewer==='undefined'?'absent':
         mission4Preview1054Viewer?.status?.phase||'none',
-       preflight:'not-run',category:'not-run'
+       preflight:'not-run',category:'not-run',
+       sessionEpochPresent:false,signedRead:'not-run',
+       errorName:'not-run',errorKind:'not-run'
       };
+      try{
+       const session=currentPhotoOwnerSession167();
+       state.sessionEpochPresent=typeof session?.epoch==='string'&&
+        session.epoch.length>=8;
+       const rows=await signedOwnerSavedRows167();
+       state.signedRead=Array.isArray(rows)?'PASS':'non-array';
+      }catch(e){
+       state.signedRead='REFUSED';
+       const msg=String(e?.message||'');
+       state.errorKind=[
+        'Private owner session is unavailable',
+        'Owner changed while reading private saved garments',
+        'currentPhotoOwnerSession167 is not defined',
+        'signedOwnerSavedRows167 is not defined'
+       ].find(x=>msg.includes(x))||'other';
+      }
       try{
        const {preflightOwnedOutfit1054}=await import(
         '/research/main-thread-integration-1054/source-to-outfit.mjs');
@@ -255,7 +273,18 @@ try{
        state.preflight='PASS';
       }catch(e){
        state.preflight='REFUSED';
+       state.errorName=['Error','TypeError','ReferenceError','AbortError']
+        .includes(e?.name)?e.name:'other';
        const reason=String(e?.message||'');
+       const known=[
+        'Private owner session is unavailable',
+        'Owner changed while reading private saved garments',
+        'currentPhotoOwnerSession167 is not defined',
+        'signedOwnerSavedRows167 is not defined',
+        'original JPEG has no usable source envelope',
+        'new ambiguous or duplicate source appeared during verification'
+       ];
+       state.errorKind=known.find(x=>reason.includes(x))||'other';
        const reasons=[
         'signed owner session and private database required',
         'owner session changed',
