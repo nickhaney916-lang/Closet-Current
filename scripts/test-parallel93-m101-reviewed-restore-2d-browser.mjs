@@ -264,7 +264,12 @@ try{
         'selected garment has duplicate or ambiguous source identity',
         'invalid or repeated outfit slot identity'
        ];
-       state.category=reasons.find(x=>reason.includes(x))||'other';
+       // MAIN1054 issue() emits only source-code static reason tokens.
+       // Reveal the exact bounded, printable, fixed-prefix reason for debugging
+       // but never arbitrary error text, account IDs or JPEG bytes.
+       state.category=reasons.find(x=>reason.includes(x))||
+        (/^MAIN1054 [A-Za-z0-9 .-]{1,100}$/.test(reason)?
+         reason.slice('MAIN1054 '.length):'other');
       }
       return state;
      });
