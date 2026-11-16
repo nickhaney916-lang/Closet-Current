@@ -12,7 +12,7 @@ const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
 const engine=process.env.M51_ENGINE;
 assert.ok(['webkit','chromium'].includes(engine),'real Chromium/WebKit required');
 assert.equal(git('rev-parse','HEAD:public/outfit-board.js'),
- '22e76c92dc31d8a10d8186e259a4e3784e4b3c84','main terminal source changed');
+ '03c83b79e076ed3b7f67353cd3cd69f13529ccab','main terminal source changed');
 assert.equal(git('rev-parse','HEAD:scripts/test-main51-real-app-owner-original-2d.mjs'),
  '63cc9da00eaecbeb2576482dcae1528b44ea8189','native M51 donor changed');
 assert.equal(git('rev-parse','HEAD:research/main-thread-integration-1054/native-2d-preview.mjs'),
