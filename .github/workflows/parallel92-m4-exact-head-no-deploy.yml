@@ -463,9 +463,68 @@ jobs:
           # source >3MB, local photo-derived display JPEG owner confirmation,
           # atomic PHOTO119 private save, real v3 backup + UI restore, plus
           # two further reviewed distinct originals and signed outfit 2D.
-          # Original M141 M123 test still runs as-is: no test bypass/retry.
-          M123_ENGINE=chromium node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs benchmark/parallel92-current-main-m123-chromium
-          M123_ENGINE=webkit node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs benchmark/parallel92-current-main-m123-webkit
+          # The original M141 native failure already emits safe fixed-shape
+          # M144 diagnostics inside the browser; Playwright's page console was
+          # not forwarded into the CI log. Add ONLY a read-only allowlisted
+          # browser-console bridge inside an UNTRACKED test copy, leaving
+          # owner review, source SHA, all original assertions and app intact.
+          node --input-type=module - <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync} from 'node:fs';
+          const path='scripts/test-main1054-m123-photo119-restore-2d-browser.mjs';
+          const src=readFileSync(path,'utf8');
+          const marker="    page.on('pageerror',e=>errors.push({engine,width,kind:String(e.name||'page-error')}));";
+          assert.equal(src.split(marker).length,2,'source M141 browser console lifecycle changed');
+          assert(src.includes("console.error('M144_SAFE_EDITOR_FAILURE'"),
+           'M144 safe-only editor receipt missing from exact main source');
+          const trace=[
+           "    page.on('console',message=>{",
+           "     const raw=message.text();",
+           "     const prefix='M144_SAFE_EDITOR_FAILURE ';",
+           "     if(!raw.startsWith(prefix))return;",
+           "     try{",
+           "      const v=JSON.parse(raw.slice(prefix.length));",
+           "      const allowed=['saved','save-refused','other'];",
+           "      const safe={engine,width,",
+           "       category:allowed.includes(v.category)?v.category:'other',",
+           "       recordPresent:v.recordPresent===true,",
+           "       ownerReviewed:v.ownerReviewed===true,",
+           "       sourceSHAConsistent:v.sourceSHAConsistent===true,",
+           "       previewConsistent:v.previewConsistent===true,",
+           "       originalConsistent:v.originalConsistent===true,",
+           "       previewReceiptValid:v.previewReceiptValid===true,",
+           "       sourceSingle:v.sourceSingle===true,",
+           "       draftStillInMemory:v.draftStillInMemory===true,",
+           "       dialogStillOpen:v.dialogStillOpen===true,",
+           "       durableDraftCount:Number.isInteger(v.durableDraftCount)?v.durableDraftCount:-1,",
+           "       photosSaved:Number.isInteger(v.photosSaved)?v.photosSaved:-1,",
+           "       familyAlpha:'HOLD',releaseAuthorized:false};",
+           "      console.error('P92_MAIN_M141_EDITOR_FAILURE_SAFE',JSON.stringify(safe));",
+           "     }catch{",
+           "      console.error('P92_MAIN_M141_EDITOR_FAILURE_SAFE',JSON.stringify({",
+           "       engine,width,receiptParse:'refused',familyAlpha:'HOLD'}));",
+           "     }",
+           "    });"
+          ].join('\n');
+          const changed=src.replace(marker,marker+'\n'+trace);
+          assert.equal(changed.split("P92_MAIN_M141_EDITOR_FAILURE_SAFE").length,3,
+           'safe-only diagnostic must have exactly two authorized log sites');
+          writeFileSync('scripts/.parallel92-m141-safe-diagnostic.mjs',changed);
+          JS
+          trap 'rm -f scripts/.parallel92-m141-safe-diagnostic.mjs' EXIT
+          node --check scripts/.parallel92-m141-safe-diagnostic.mjs
+          # Always examine both engines ONCE (not a retry); any one failure
+          # still fails the exact full job after removing only scratch code.
+          p92_native_failures=0
+          M123_ENGINE=chromium node scripts/.parallel92-m141-safe-diagnostic.mjs benchmark/parallel92-current-main-m141-chromium || p92_native_failures=$((p92_native_failures+1))
+          M123_ENGINE=webkit node scripts/.parallel92-m141-safe-diagnostic.mjs benchmark/parallel92-current-main-m141-webkit || p92_native_failures=$((p92_native_failures+1))
+          rm -f scripts/.parallel92-m141-safe-diagnostic.mjs
+          trap - EXIT
+          if test "$p92_native_failures" -ne 0; then
+            echo "P92 M141 CURRENT-MAIN ACTUAL OWNER REVIEW FAILED; NO RETRY, NO SOURCE BYPASS, HOLD"
+            exit 1
+          fi
+          echo "P92 M141 CURRENT-MAIN BOTH ENGINES ACTUAL OWNER REVIEW PASS; NO DEPLOY, HOLD"
           test "$(git rev-parse HEAD)" = "$P92_MAIN_PIN"
           test -z "$(git status --porcelain --untracked-files=no)"
           # Report only untracked SOURCE PATHS, never file content, photos,
