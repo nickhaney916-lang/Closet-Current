@@ -19,10 +19,13 @@ assert.equal(git('rev-parse','HEAD:research/main-thread-integration-1054/native-
  '0af20d49d87436683630d587ec0284c611cd3414',
  'pinned signed owner source viewer changed');
 const original=readFileSync('scripts/test-main51-real-app-owner-original-2d.mjs','utf8');
+const viewerSource=readFileSync('research/main-thread-integration-1054/native-2d-preview.mjs','utf8');
+assert.equal(viewerSource.split('   return verified;\\n  },').length,2,
+ 'P1219 real signed-owner attested-success timing hook missing');
 const routeMarker='    body:previewText.replace(originalCatch,classifiedCatch)}));';
 const routeReplacement=[
  "    body:previewText.replace(originalCatch,classifiedCatch).replace(",
- "     '    return verified;\\n  },',[",
+ "     '   return verified;\\n  },',[
  "      '    if(globalThis.__p1219PauseOneSuccess===true){',",
  "      '     globalThis.__p1219PauseOneSuccess=false;',",
  "      '     await new Promise(resolve=>{globalThis.__p1219ReleaseOriginal=resolve;});',",
