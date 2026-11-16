@@ -344,7 +344,7 @@ jobs:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       P92_ENGINE: ${{ matrix.engine }}
       P92_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      P92_MAIN_PIN: 0bc70d01733437a7899184543adb455770595654
+      P92_MAIN_PIN: e4b46b036b9f50b467b213f448f7dba106249b80
     steps:
       - uses: actions/checkout@v4
         with:
@@ -415,7 +415,7 @@ jobs:
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       P92_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      P92_MAIN_PIN: 0bc70d01733437a7899184543adb455770595654
+      P92_MAIN_PIN: e4b46b036b9f50b467b213f448f7dba106249b80
     steps:
       - uses: actions/checkout@v4
         with:
@@ -437,7 +437,7 @@ jobs:
           test "$(git rev-parse "$P92_MAIN_PIN:public/native-default-atomic-import-m3.mjs")" = e739f1533108d53961483d761a27f0525623af3d
           test "$(git rev-parse "$P92_MAIN_PIN:tests/main1054-m104-large-original-export-receipts.test.mjs")" = 8bd85aba7a91a316b30bcd71f42c642dda626230
           test "$(git rev-parse "$P92_MAIN_PIN:scripts/test-mission3-default-atomic-import-browser.mjs")" = 375ff22b8c69bd6f7ddb19fc59cb6c4460eb7ba8
-          test "$(git rev-parse "$P92_MAIN_PIN:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs")" = 182de3ea4245ce10aa61402a606af5387a3604ff
+          test "$(git rev-parse "$P92_MAIN_PIN:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs")" = bdce7392b44b9e82f4e42863ae56103f02c2bf53
           git worktree add --detach /tmp/p92-current-main-owner-export-atomic "$P92_MAIN_PIN"
           cd /tmp/p92-current-main-owner-export-atomic
           git config --global --add safe.directory "$PWD"
@@ -465,6 +465,17 @@ jobs:
           # tokens or owner metadata. This is failure-only and still exits red;
           # prior run proved all 2837 source tests and both browsers pass but
           # unexpectedly produced untracked source-path artifact(s).
+          # Python's regression-helper py_compile produces this exact
+          # disposable bytecode artifact; it is not application source.
+          # Confirm it was NOT tracked, then delete ONLY this one known
+          # generated .pyc before checking for all other unexpected paths.
+          pycache=scripts/__pycache__/rebuild-recognition-vectors.cpython-312.pyc
+          if test -f "$pycache"; then
+            test -z "$(git ls-files -- "$pycache")"
+            rm -f -- "$pycache"
+            rmdir scripts/__pycache__ 2>/dev/null || true
+            echo "P92 removed exactly one UNTRACKED generated Python cache file"
+          fi
           newly_created="$(git ls-files --others --exclude-standard -- public scripts research tests .github)"
           if test -n "$newly_created"; then
             echo "P92 SOURCE-HYGIENE UNTRACKED PATH CLASSIFICATION:"
