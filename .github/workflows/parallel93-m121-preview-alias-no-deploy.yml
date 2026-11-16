@@ -55,6 +55,9 @@ jobs:
           assert.equal(x.m4ExactHead,'482f9b34b417a1b7218fe154d6f099db6967a9c5');
           assert.equal(x.checks.mainOwnedExporterAdoption?.sourceBlob,'e70fdc392c2652dc969b7d7c4b807f3cafd81e03');
           assert.equal(x.checks.nativeReviewedPhotoToRestored2D?.journeys,6);
+          assert.equal(x.checks.m2ResearchModuleImport?.status,'PASS_REAL_DONOR_IMPORT_FAIL_CLOSED');
+          assert.equal(x.checks.m2ResearchModuleImport?.requiredFiles,2);
+          assert.equal(x.checks.m2ResearchModuleImport?.normal3DAdmitted,false);
           assert.equal(x.checks.latestM4ProtectedNode.status,'PASS');
           assert(x.checks.latestM4ProtectedNode.tests>=100);
           assert.equal(x.normalM4Adopted,true);
