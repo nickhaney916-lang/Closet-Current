@@ -330,9 +330,9 @@ jobs:
           if-no-files-found: ignore
           path: benchmark/parallel92-preview-terminal-candidate/${{ matrix.engine }}/trial-*/result.json
 
-  independent-main-m108-detached-browser-acceptance:
+  independent-current-main-detached-browser-reliability:
     runs-on: ubuntu-24.04
-    timeout-minutes: 110
+    timeout-minutes: 130
     strategy:
       fail-fast: false
       matrix:
@@ -344,7 +344,7 @@ jobs:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       P92_ENGINE: ${{ matrix.engine }}
       P92_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      P92_MAIN_PIN: 4372426a5849874be7daa3decbb3fcbf72b5c1f6
+      P92_MAIN_PIN: 80177aaa63a52a257f191a0a8cb15848eeaa0042
     steps:
       - uses: actions/checkout@v4
         with:
@@ -354,7 +354,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Independently run exact M108 main consumer in detached, disposable tree
+      - name: Independently run current main consumer repeated native WebKit 12x and Chromium 6x
         shell: bash
         run: |
           set -euo pipefail
@@ -371,12 +371,14 @@ jobs:
           test -z "$(git status --porcelain)"
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
           node --check scripts/test-main1054-m106-preview-terminal-browser.mjs
-          for trial in 1 2 3 4; do
-            echo "P92 INDEPENDENT M108 ACTUAL NATIVE $P92_ENGINE FRESH PROCESS $trial/4, MAIN PIN $P92_MAIN_PIN"
+          if [ "$P92_ENGINE" = "webkit" ]; then REPS=12; else REPS=6; fi
+          for trial in $(seq 1 "$REPS"); do
+            echo "P92 CURRENT-MAIN SOURCE-LOCKED $P92_ENGINE FRESH PROCESS $trial/$REPS, MAIN PIN $P92_MAIN_PIN"
             M51_ENGINE="$P92_ENGINE" node scripts/test-main1054-m106-preview-terminal-browser.mjs
           done
           test "$(git rev-parse HEAD)" = "$P92_MAIN_PIN"
-          echo "P92 M108 INDEPENDENT 4/4 REAL-BROWSER PROCESSES PASS WITH UNCHANGED MAIN APP — HOLD"
+          test -z "$(git status --porcelain)"
+          echo "P92 CURRENT MAIN EXACT-PIN STRICT $P92_ENGINE $REPS/$REPS PROCESSES AND $((REPS*3)) VIEWPORTS SUCCESS; NO RETRY, NO DEPLOY, HOLD"
 
   inherited-full-native-regressions:
     runs-on: ubuntu-24.04
