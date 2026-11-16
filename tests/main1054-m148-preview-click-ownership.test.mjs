@@ -9,9 +9,11 @@ import vm from 'node:vm';
 const source=readFileSync(new URL('../public/outfit-board.js',import.meta.url),'utf8');
 const start="     const result=await viewer.refresh();";
 const end="     if(viewer.status.phase!=='visible'||";
-assert.equal(source.split(start).length,2,'actual signed preview refresh point moved');
+// The separate photo-only research viewer also calls viewer.refresh(); use
+// the unique native original-photo terminal gate to select the correct block.
 assert.equal(source.split(end).length,2,'actual signed preview terminal point moved');
-const first=source.indexOf(start),last=source.indexOf(end,first);
+const last=source.indexOf(end);
+const first=source.lastIndexOf(start,last);
 assert(first>=0&&last>first,'test must execute actual consumer code');
 const completion=source.slice(first,last);
 assert.match(completion,/mission4Preview1054ClickSerial===serial|serial===mission4Preview1054ClickSerial/);
