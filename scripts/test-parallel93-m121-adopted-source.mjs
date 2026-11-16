@@ -15,6 +15,8 @@ const donors=[
   path:'public/outfit-instance-review-840.mjs',blob:'6324d8eda33024f166311f424392ed83363e4942'},
  {name:'M2',head:'569a1b90780ab25651b6c9adf98cc1b078b501c0',
   path:'research/parallel89/skirt-rigid-registration89.mjs',blob:'73177ed4645633ca060e7185eab881fa75d3a2bf'},
+ {name:'M2_topology_dependency',head:'569a1b90780ab25651b6c9adf98cc1b078b501c0',
+  path:'research/parallel89/skirt-contact-topology89.mjs',blob:'ffd41f458c1e19f1aee6a01c343487ea0a676f4f'},
  {name:'M3',head:'4d9a28bba60c7f17f934848fc36d4bd478ffea55',
   path:'research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs',
   blob:'2d9ad8a5309a2f2392bd35ccfd1b0b2ad0ce7491'}
@@ -70,6 +72,26 @@ try{
   results.stagedDonors.push({mission:d.name,head:d.head,path:d.path,blob:d.blob,
    mountedIntoNormalNativeConsumer:false});
  }
+ // A single imported M2 skirt-registration file is NOT an executable
+ // overlay: its exact "./skirt-contact-topology89.mjs" dependency is absent
+ // from normal M121/M122 consumer. Only the disposable research twin is loaded.
+ assert.notEqual(run('git',['cat-file','-e',
+  M121+':research/parallel89/skirt-contact-topology89.mjs']).status,0,
+  'M2 topology donor unexpectedly already exists in consumer; re-review overlay');
+ const stagedM2=await import('file://'+join(staged,
+  'research/parallel89/skirt-rigid-registration89.mjs'));
+ assert.equal(typeof stagedM2.compareActualOriginalPhotoSkirtRegistration89,'function');
+ const denial=stagedM2.compareActualOriginalPhotoSkirtRegistration89({});
+ assert.equal(denial.status,'REAL_PHOTOGRAPHED_SKIRT_REGISTRATION_NOT_VERIFIED');
+ assert.equal(denial.originalPhoto2DFallbackRequired,true);
+ assert.equal(denial.consumer3DAdmitted,false);
+ assert.equal(denial.familyAlpha,'HOLD');
+ results.checks.m2ResearchModuleImport={
+  status:'PASS_REAL_DONOR_IMPORT_FAIL_CLOSED',requiredFiles:2,
+  missingFromNormalConsumer:true,normal3DAdmitted:false,
+  sourceBlob:'73177ed4645633ca060e7185eab881fa75d3a2bf',
+  topologyBlob:'ffd41f458c1e19f1aee6a01c343487ea0a676f4f'
+ };
  assert.equal(must('git',['rev-parse',M121+':public/outfit-segmentation.mjs']),
   'd357955dd8fdab7c0cb727ea597c270edd9309ac',
   'M1 review dependency must be exactly available in latest M4');
