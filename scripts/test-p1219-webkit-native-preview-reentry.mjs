@@ -25,7 +25,7 @@ assert.equal(viewerSource.split('   return verified;\n  },').length,2,
 const routeMarker='    body:previewText.replace(originalCatch,classifiedCatch)}));';
 const routeReplacement=[
  "    body:previewText.replace(originalCatch,classifiedCatch).replace(",
- "     '   return verified;\\n  },',["
+ "     '   return verified;\\n  },',[",
  "      '    if(globalThis.__p1219PauseOneSuccess===true){',",
  "      '     globalThis.__p1219PauseOneSuccess=false;',",
  "      '     await new Promise(resolve=>{globalThis.__p1219ReleaseOriginal=resolve;});',",
