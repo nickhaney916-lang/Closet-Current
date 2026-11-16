@@ -276,6 +276,15 @@ try{
        state.errorName=['Error','TypeError','ReferenceError','AbortError']
         .includes(e?.name)?e.name:'other';
        const reason=String(e?.message||'');
+       // P93 safety: log only an allowlisted source module and static line
+       // number, NEVER the stack, message, account, private JPEG or tokens.
+       const frame=String(e?.stack||'').split('\n').find(line=>
+        /source-to-outfit\.mjs|native-owner-wardrobe-index-167\.mjs|native-canonical-photo-source-167\.mjs|outfit-board-engine\.js/.test(line))||'';
+       const site=frame.match(/(source-to-outfit|native-owner-wardrobe-index-167|native-canonical-photo-source-167|outfit-board-engine)\.(?:mjs|js):(\d+):\d+/);
+       state.errorSite=site?site[1]+':'+site[2]:'unknown';
+       const typeCodes=['Cannot read properties of undefined','Cannot read properties of null',
+        'not a function','not iterable','Invalid value','Cannot convert undefined'];
+       state.errorType=typeCodes.find(code=>reason.includes(code))||'other';
        const known=[
         'Private owner session is unavailable',
         'Owner changed while reading private saved garments',
