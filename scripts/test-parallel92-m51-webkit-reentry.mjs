@@ -52,7 +52,7 @@ for(const [segment,name] of stageReentries){
    "  stage='p92-focus-"+name+"';\n  await clickPreview(page);"));
 }
 
-const firstPreview="   stage='actual-native-app-preview-button';\n   await clickPreview(page);";
+const firstPreview="  stage='actual-native-app-preview-button';\n  await clickPreview(page);";
 assert.equal(classified.split(firstPreview).length,2,'native first import preview source changed');
 classified=classified.replace(firstPreview,String.raw`
    stage='actual-native-app-preview-button';
