@@ -8,11 +8,23 @@ test('RECOVERY65 worker startup and post exceptions cannot revoke original verif
  assert.match(ui,/try\{\s*if\(p88Transport57\)\{/);
  assert.match(ui,/const p88Transport57=\['127\.0\.0\.1','localhost'\]\.includes\(window\.location\.hostname\)&&/);
  assert.match(ui,/next\.p88Intake57=await openP88SourceIntake55\(/);
- assert.match(ui,/next\.worker=new Worker\(p88Transport57\?/);
+ // M154: the candidate can insert a locally gated *first* ternary
+ // without changing default model, source/owner fencing or error recovery.
+ // Test the real selected constructor rather than hardcoded ternary position.
+ const nativeP94=ui.includes('const parallel94Native=');
+ if(nativeP94){
+  assert.match(ui,/const parallel94Native=\['127\.0\.0\.1','localhost'\]\.includes\(window\.location\.hostname\)&&\s*new URLSearchParams\(window\.location\.search\)\.get\('parallel94Assembly'\)==='research'/);
+  assert.match(ui,/const p88Transport57=\['127\.0\.0\.1','localhost'\]\.includes\(window\.location\.hostname\)&&\s*\(parallel94Native\|\|/);
+  assert.match(ui,/next\.worker=new Worker\(parallel94Native\?/);
+  assert.match(ui,/'outfit-worker-p94\.mjs'\+\(recognitionAssetVersion\?'\?v='\+recognitionAssetVersion:''\):\s*p88Transport57\?/);
+ }else{
+  assert.match(ui,/next\.worker=new Worker\(p88Transport57\?/);
+ }
  assert.match(ui,/'\.\.\/\.m57-exact-p88-donor\/public\/outfit-worker\.mjs':\s*'outfit-worker\.mjs'\+/);
  assert.match(ui,/next\.worker\.postMessage\(next\.p88Intake57\?\s*next\.p88Intake57\.workerRequest\(\):\{id:next\.id,image:inference,multi24:true\}\)/);
  assert.match(ui,/catch\(workerError\)\{\s*detectorFallback65\(next,'Local detection could not start\.'/);
- const w=ui.indexOf('next.worker=new Worker(p88Transport57?');
+ const w=ui.indexOf(nativeP94?'next.worker=new Worker(parallel94Native?':
+  'next.worker=new Worker(p88Transport57?');
  const nativeException=ui.indexOf('}catch(workerError){',w);
  const proofCatch=ui.indexOf('}catch(error){',nativeException);
  assert.ok(w>0&&nativeException>w&&proofCatch>nativeException,
@@ -84,4 +96,18 @@ test('RECOVERY65 actual native browser test proves SHA/source owner private manu
  assert.match(browser,/reimportDuplicateBlocked:true/);
  assert.match(browser,/v4Backup:true,v4Restore:true/);
  assert.match(browser,/assert\.deepEqual\(diagnostics\.unexpectedUploads,\[\]\)/);
+});
+
+test('RECOVERY65 default worker stays unchanged when optional P94 local research worker is installed',()=>{
+ const native=ui.includes('const parallel94Native=');
+ assert.match(ui,/\.m57-exact-p88-donor\/public\/outfit-worker\.mjs/);
+ assert.match(ui,/'outfit-worker\.mjs'\+\(recognitionAssetVersion/);
+ assert.match(ui,/next\.worker\.postMessage\(next\.p88Intake57\?/);
+ if(native){
+  assert.match(ui,/get\('parallel94Assembly'\)==='research'/);
+  assert.match(ui,/parallel94Native\|\|new URLSearchParams/);
+  assert.match(ui,/outfit-worker-p94\.mjs/);
+ }else{
+  assert.doesNotMatch(ui,/outfit-worker-p94\.mjs/);
+ }
 });
