@@ -46,7 +46,9 @@ try{
  for(const d of donors){
   must('git',['cat-file','-e',d.head+'^{commit}']);
   assert.equal(must('git',['rev-parse',d.head+':'+d.path]),d.blob);
-  const source=must('git',['show',d.head+':'+d.path]);
+  const sourceResult=run('git',['show',d.head+':'+d.path]);
+  assert.equal(sourceResult.status,0,'Missing immutable donor '+d.head+':'+d.path);
+  const source=sourceResult.stdout;
   const destination=join(staged,d.path);
   await mkdir(dirname(destination),{recursive:true});
   await writeFile(destination,source);
