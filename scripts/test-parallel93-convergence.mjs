@@ -84,7 +84,8 @@ try{
  const paths=[
   {name:'M1_review',sha:donor.mission1,path:'public/outfit-instance-review-840.mjs'},
   {name:'M3_research_import',sha:donor.mission3,path:'research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs'},
-  {name:'M2_skirt_research',sha:donor.mission2,path:'research/parallel89/skirt-rigid-registration89.mjs'}
+  {name:'M2_skirt_research',sha:donor.mission2,path:'research/parallel89/skirt-rigid-registration89.mjs'},
+  {name:'M2_contact_topology_dependency',sha:donor.mission2,path:'research/parallel89/skirt-contact-topology89.mjs'}
  ];
  for(const {name,sha,path} of paths){
   const fetched=run('git',['show',sha+':'+path]);
@@ -122,6 +123,27 @@ try{
  receipts.selectiveOverlay.m1MaskReview={
   status:'PASS',syntheticMask:true,semanticProposals:2,canonicalMaskPixels:originalCount,
   automaticNativeSave:false,independentHumanLabels:false
+ };
+ // M2 donor path above imports a SECOND P89 research module. A filename-only
+ // transplant without that prerequisite builds native but fails on actual ESM
+ // import. Import the exact two-file donor now and prove it refuses ordinary
+ // synthetic/non-rig input rather than promoting research as fitted 3D.
+ assert.equal(receipts.selectiveOverlay.M2_contact_topology_dependency.blobSha,
+  'ffd41f458c1e19f1aee6a01c343487ea0a676f4f',
+  'M2 rigid-registration dependent topology source changed');
+ const stagedM2=await import('file://'+join(overlay,
+  'research/parallel89/skirt-rigid-registration89.mjs'));
+ assert.equal(typeof stagedM2.compareActualOriginalPhotoSkirtRegistration89,'function');
+ const unsupported=stagedM2.compareActualOriginalPhotoSkirtRegistration89({});
+ assert.equal(unsupported.status,'REAL_PHOTOGRAPHED_SKIRT_REGISTRATION_NOT_VERIFIED');
+ assert.equal(unsupported.consumer3DAdmitted,false);
+ assert.equal(unsupported.originalPhoto2DFallbackRequired,true);
+ assert.equal(unsupported.familyAlpha,'HOLD');
+ receipts.selectiveOverlay.m2ExecutableImport={
+  status:'PASS_TRANSITIVE_SOURCE_DEPENDENCY_RESOLVED',
+  missingAtM4Base:true,sourceResearchOnly:true,
+  topologyBlob:'ffd41f458c1e19f1aee6a01c343487ea0a676f4f',
+  unprovedPhotoSkirtRejected:true,consumer3DAdmitted:false
  };
  const built=run('node',['scripts/build.mjs'],overlay);
  assert.equal(built.status,0,'Disposable combined source build: '+built.stderr.slice(0,800));
