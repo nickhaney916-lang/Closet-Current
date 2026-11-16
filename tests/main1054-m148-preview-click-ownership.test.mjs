@@ -1,0 +1,85 @@
+/** M4 M148 — execute the actual async completion guard from the installed
+ * native research outfit viewer. A stale click may NEVER clear a newer
+ * owner's/board's shared original-photo DOM. No JWT, photo or network data.
+ */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+const source=readFileSync(new URL('../public/outfit-board.js',import.meta.url),'utf8');
+const start="     const result=await viewer.refresh();";
+const end="     if(viewer.status.phase!=='visible'||";
+// The separate photo-only research viewer also calls viewer.refresh(); use
+// the unique native original-photo terminal gate to select the correct block.
+assert.equal(source.split(end).length,2,'actual signed preview terminal point moved');
+const last=source.indexOf(end);
+const first=source.lastIndexOf(start,last);
+assert(first>=0&&last>first,'test must execute actual consumer code');
+const completion=source.slice(first,last);
+assert.match(completion,/mission4Preview1054ClickSerial===serial|serial===mission4Preview1054ClickSerial/);
+assert.match(completion,/mission4Preview1054Viewer===viewer/);
+function executeCompletion({clickSerial,activeSerial,ownedViewer,live,initialPixels}){
+ const displays={pixels:initialPixels,clears:0,ownershipRevokes:0};
+ const viewer={status:{phase:'visible'},async refresh(){return {slotCount:1};},
+  clear(){displays.clears++;displays.pixels=0;displays.ownershipRevokes++;}},
+  replacement={status:{phase:'visible'},clear(){throw Error('wrong viewer cleared')}};
+ const scope={viewer,serial:clickSerial,
+  mission4Preview1054ClickSerial:activeSerial,
+  mission4Preview1054Viewer:ownedViewer?viewer:replacement,
+  live:()=>live};
+ return Promise.resolve(vm.runInNewContext(
+  '(async()=>{'+completion+'})()',scope,{timeout:2000}
+ )).then(()=>displays);
+}
+test('stale click A cannot clear signed owner photo pixels presented by newer click B on same viewer',async()=>{
+ const state=await executeCompletion({clickSerial:1,activeSerial:2,ownedViewer:true,live:false,initialPixels:2});
+ assert.deepEqual(state,{pixels:2,clears:0,ownershipRevokes:0});
+});
+test('late old click cannot clear newer replacement viewer or its shared DOM',async()=>{
+ const state=await executeCompletion({clickSerial:1,activeSerial:2,ownedViewer:false,live:false,initialPixels:1});
+ assert.deepEqual(state,{pixels:1,clears:0,ownershipRevokes:0});
+});
+test('same currently owned click must still clear pixels after signed owner/source lease becomes stale',async()=>{
+ const state=await executeCompletion({clickSerial:3,activeSerial:3,ownedViewer:true,live:false,initialPixels:1});
+ assert.deepEqual(state,{pixels:0,clears:1,ownershipRevokes:1});
+});
+test('same click with replaced viewer cannot clear a new mounted viewer even if its old live signal is false',async()=>{
+ const state=await executeCompletion({clickSerial:3,activeSerial:3,ownedViewer:false,live:false,initialPixels:1});
+ assert.deepEqual(state,{pixels:1,clears:0,ownershipRevokes:0});
+});
+test('active owner lease and exact current viewer never get cleared by successful refresh completion',async()=>{
+ const state=await executeCompletion({clickSerial:4,activeSerial:4,ownedViewer:true,live:true,initialPixels:1});
+ assert.deepEqual(state,{pixels:1,clears:0,ownershipRevokes:0});
+});
+
+function beginHeldNativeRefresh(){
+ // Run the ACTUAL completion source while its awaited viewer.refresh is
+ // deliberately pending, then change the live click serial and DOM ownership.
+ let finish;
+ const gate=new Promise(resolve=>finish=resolve);
+ const state={pixels:0,clears:0};
+ const viewer={status:{phase:'checking'},refresh(){return gate;},
+  clear(){state.clears++;state.pixels=0;}};
+ const scope={viewer,serial:1,mission4Preview1054ClickSerial:1,
+  mission4Preview1054Viewer:viewer,live:()=>true};
+ const complete=vm.runInNewContext(
+  '(async()=>{'+completion+'})()',scope,{timeout:2000});
+ return {scope,state,viewer,finish,complete};
+}
+test('A awaits real refresh while B publishes newer pixels; A late completion must not revoke B',async()=>{
+ const {scope,state,viewer,finish,complete}=beginHeldNativeRefresh();
+ scope.mission4Preview1054ClickSerial=2;
+ scope.live=()=>false;
+ viewer.status.phase='visible';state.pixels=2;
+ finish({slotCount:2});
+ await complete;
+ assert.deepEqual(state,{pixels:2,clears:0});
+});
+test('when no newer click owns the viewer, an async owner-lease cancellation still clears stale pixels',async()=>{
+ const {scope,state,finish,complete}=beginHeldNativeRefresh();
+ scope.live=()=>false;
+ state.pixels=1;
+ finish({slotCount:1});
+ await complete;
+ assert.deepEqual(state,{pixels:0,clears:1});
+});

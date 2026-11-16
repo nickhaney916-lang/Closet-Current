@@ -605,6 +605,35 @@ async function captureProofVerifyBeforeSave(value){
  if(captureProofOwner()!==owner)
   throw Error('Owner changed during original-photo integrity check');
 }
+// M139: local-only display for a separately SHA-verified camera original.
+// Never classify the thumbnail as a different garment, trusted mask or 3D.
+async function prepareReviewedPhoto119Display(image,expectedSHA){
+ const {jpegBytes,digestBytes}=await captureProof01Module();
+ if(typeof image!=='string'||image.length>11_200_000||
+    !/^[0-9a-f]{64}$/.test(expectedSHA||''))
+  throw Error('Original is outside the verified photo envelope.');
+ const bytes=jpegBytes(image);
+ if(bytes.length>8*1024*1024||await digestBytes(bytes)!==expectedSHA)
+  throw Error('Original photo SHA changed before preview preparation.');
+ const im=new Image();im.src=image;await im.decode();
+ const w=im.naturalWidth,h=im.naturalHeight;
+ if(!Number.isInteger(w)||!Number.isInteger(h)||w<1||h<1||w*h>80_000_000)
+  throw Error('Original photo dimensions cannot be safely previewed.');
+ const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
+ if(!ctx)throw Error('Local preview canvas unavailable.');
+ for(const maxEdge of [1024,768,512]){
+  const scale=Math.min(1,maxEdge/Math.max(w,h));
+  canvas.width=Math.max(1,Math.round(w*scale));
+  canvas.height=Math.max(1,Math.round(h*scale));
+  ctx.drawImage(im,0,0,canvas.width,canvas.height);
+  const data=canvas.toDataURL('image/jpeg',.78);
+  if(data.length>3_000_000)continue;
+  const previewBytes=jpegBytes(data);
+  if(previewBytes.length>2_250_000)continue;
+  return Object.freeze({image:data,sha256:await digestBytes(previewBytes)});
+ }
+ throw Error('Could not prepare a bounded display preview; original preserved.');
+}
 function nativeCorrection10Active(){
  const query=new URLSearchParams(location.search);
  return query.get('nativeCorrection10')==='research'&&
@@ -695,8 +724,36 @@ function savePiece(value,nextBatch,{expectedSavedRow=null,expectedDraftRow=null}
          throw Error('CLOSET_STALE_DRAFT_REOPEN_EDITOR');
         // Source row removal and new saved garment insertion commit
         // together, preserving all other-tab pending originals as-is.
-        store.add(value);
-        draftStore.put({id:'draft',batch:rows.filter(row=>row.id!==value.id)});
+        // MAIN1054: never silently create a second saved physical item from
+        // the same exact JPEG. The separate P88 owner-attestation UI is not
+        // integrated here yet; fail closed rather than infer distinctness.
+        // Check the actual persisted owner wardrobe INSIDE this transaction,
+        // not an earlier in-memory items snapshot (which another tab can stale).
+        const savedRequest=store.getAll();
+        savedRequest.onsuccess=()=>{
+         try{
+          requireLease();
+          // Cropped or resized previews are not new physical garments.
+          // Until P88 distinct-item reconciliation is integrated with a
+          // source-bound owner approval, matching original bytes OR a valid
+          // original SHA is ambiguous even if the visible crop differs.
+          // Query the persisted owner wardrobe within this SAME write lock.
+          if(savedRequest.result.some(row=>{
+           if(row.id===value.id)return false;
+           if(row.image===value.image)return true;
+           if(typeof row.originalPhoto?.image==='string'&&
+              row.originalPhoto.image.length>0&&
+              row.originalPhoto.image===value.originalPhoto?.image)return true;
+           return [row.sourceSHA256,row.originalPhoto?.sha256].some(hash=>
+            typeof hash==='string'&&/^[a-f0-9]{64}$/.test(hash)&&
+            (hash===value.sourceSHA256||hash===value.originalPhoto?.sha256));
+          }))
+           throw Error('CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW');
+          store.add(value);
+          draftStore.put({id:'draft',batch:rows.filter(row=>row.id!==value.id)});
+         }catch(error){failure=error;try{tx.abort();}catch{}}
+        };
+        savedRequest.onerror=()=>{failure=savedRequest.error||Error('Saved photo comparison failed');try{tx.abort();}catch{}};
        }catch(error){failure=error;try{tx.abort();}catch{}}
       };
       draftRequest.onerror=()=>{failure=draftRequest.error||Error('Draft verification failed');try{tx.abort();}catch{}};
@@ -861,6 +918,7 @@ function adjustPhoto(item){
  // the separately SHA-proven atomic research commit. Never auto-check them.
  const reviewedCapture120=reviewedSave120Active&&!items.some(x=>x.id===item.id);
  let reviewConfirmed120=null,garmentConfirmed120=null;
+ let previewConfirmed120=null,preparedPreview120=null;
  if(reviewedCapture120){
   const confirmBox=node('div',null,'reviewed-save120-confirmation');
   confirmBox.style.cssText='border:1px solid #a7b5ce;border-radius:10px;padding:12px;margin:12px 0;background:#f5f7fc;min-width:0';
@@ -878,6 +936,46 @@ function adjustPhoto(item){
   sourceLabel.append(sourceCheck,document.createTextNode(multi?
    ' I reviewed this specific separated garment':' I confirmed this photo shows one garment'));
   confirmBox.append(sourceLabel);garmentConfirmed120=sourceCheck;
+  // The full camera original is already visible above. For originals too
+  // large to fit in the normal wardrobe display field, offer a derived local
+  // preview. It is not a garment cutout or evidence of fitted 3D.
+  if(!multi&&item.sourceHashVerified===true&&
+     typeof item.originalPhoto?.image==='string'&&
+     item.originalPhoto.image.length>3_000_000&&
+     item.image===item.originalPhoto.image){
+   const prepare=node('button','Prepare smaller display photo','secondary');
+   prepare.type='button';
+   const img=node('img');img.hidden=true;
+   img.style.cssText='max-width:160px;max-height:180px;object-fit:contain;display:block';
+   img.alt='Locally generated wardrobe display of your full original photograph';
+   const note=node('p','Prepare and inspect the smaller display photo before saving; the full original will be preserved.','fine');
+   const label=node('label'),check=node('input');
+   check.type='checkbox';check.disabled=true;check.required=true;
+   check.setAttribute('aria-label','I verified that the smaller display photo matches this original');
+   label.append(check,document.createTextNode(
+    ' I verified that this smaller display is the same photograph, not another garment'));
+   previewConfirmed120=check;
+   prepare.onclick=async()=>{
+    if(!editorSession.current()||!batch.includes(item)||!dialog.open)return;
+    prepare.disabled=true;check.checked=false;check.disabled=true;
+    preparedPreview120=null;
+    const source=item.originalPhoto?.image,sourceSHA=item.sourceSHA256;
+    try{
+     const prepared=await prepareReviewedPhoto119Display(source,sourceSHA);
+     editorSession.assertCurrent();
+     if(!dialog.open||!batch.includes(item)||item.originalPhoto?.image!==source||
+        item.sourceSHA256!==sourceSHA)throw Error('Source changed during preview');
+     preparedPreview120=prepared;img.src=prepared.image;img.hidden=false;
+     check.disabled=false;
+     note.textContent='Inspect this local preview, then check its own confirmation. The full camera original stays unchanged.';
+    }catch{
+     if(!editorSession.current())return;
+     img.hidden=true;
+     note.textContent='Display preview unavailable. Original remains in Photo results; retry without saving.';
+    }finally{if(editorSession.current()&&prepare.isConnected)prepare.disabled=false;}
+   };
+   confirmBox.append(prepare,img,note,label);
+  }
   form.append(confirmBox);
  }
  // CORRECTION10: opening and canceling Adjust must not mutate the saved
@@ -907,7 +1005,8 @@ function adjustPhoto(item){
    'This pending photo changed or could not be removed. Nothing else was deleted. Reload Photo results and try again.');}};
  form.onsubmit=async event=>{event.preventDefault();save.disabled=true;try{
   editorSession.assertCurrent();
-  const value={...collect(),name:draft.name.trim()||(draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
+  const value={...collect(),name:(typeof draft.name==='string'?draft.name.trim():'')||
+   (draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
   if(typeof captureProof01Active!=='undefined'&&captureProof01Active&&
      (!captureProofOwner()||item.ownerId&&item.ownerId!==captureProofOwner()))
    throw Error('Owner changed. Sign in again before saving this photo.');
@@ -930,6 +1029,20 @@ function adjustPhoto(item){
     instanceConfirmed:multi&&garmentConfirmed120.checked,
     ...(multi?{cutoutSHA256:item.segmentHint?.cutoutSHA256}:{}),
    };
+   // M139: do not mutate the persisted original-only draft. PHOTO119
+   // atomically admits the SHA/owner-confirmed display replacement after
+   // comparing the untouched durable original and rechecking the live lease.
+   let recordForReview=item;
+   if(previewConfirmed120){
+    if(!previewConfirmed120.checked||!preparedPreview120)
+     throw Error('Inspect and confirm the smaller display photo before saving.');
+    review.previewConfirmed=true;
+    review.previewSHA256=preparedPreview120.sha256;
+    recordForReview={...structuredClone(item),image:preparedPreview120.image,
+     displayPreviewReceipt:{schema:'photo119-owner-display-preview/v1',
+      ownerId:owner,originalSHA256:item.sourceSHA256,
+      previewSHA256:preparedPreview120.sha256,displayOnly:true}};
+   }
    // P119 is the only writer for this research-only newly captured piece.
    // It independently re-hashes original JPEG (+ cutout JPEG for multi),
    // rechecks the actual saved owner draft and wardrobe *inside* the IDB
@@ -941,14 +1054,15 @@ function adjustPhoto(item){
     auth.assertCurrent?.();
     return liveOwner()===owner&&batch.includes(item)&&
      dialog.isConnected&&dialog.open&&
-     reviewConfirmed120.checked&&garmentConfirmed120.checked;
+     reviewConfirmed120.checked&&garmentConfirmed120.checked&&
+     (!previewConfirmed120||(previewConfirmed120.checked&&!!preparedPreview120));
    };
    const {commitHumanReviewedPhoto119}=await (nativeCanonical167Active
     ?import('./native-reviewed-private-save-167.mjs')
     :import('../research/manual-reviewed-private-save-119/reviewed-source-commit.mjs'));
    editorSession.assertCurrent();
    const result=await queued(()=>commitHumanReviewedPhoto119({
-    db:ownerDB,ownerId:owner,currentOwner:liveOwner,record:item,review,assertLease
+    db:ownerDB,ownerId:owner,currentOwner:liveOwner,record:recordForReview,review,assertLease
    }));
    editorSession.assertCurrent();
    if(!result.saved)throw Error('Original photograph or garment review could not be verified; nothing was saved.');
@@ -991,6 +1105,8 @@ function adjustPhoto(item){
     'Another tab changed this garment. Your changes were not saved. Reload My Closet, then reopen Adjust details.':
    String(error?.message||error).includes('CLOSET_ALREADY_SAVED_RELOAD_WARDROBE')?
     'This photo was already saved in another tab. Reload My Closet and review the existing piece.':
+   String(error?.message||error).includes('CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW')?
+    'This original photo is already linked to a saved closet piece. Nothing new was saved and your photo is still in Photo results. Review the existing item in My Closet; separate garments from one photo need owner item review.':
    'Could not save changes. Try again.');
  }};
  dialog.onclose=()=>{if(editorSession.current()&&batch.includes(item)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
@@ -1929,6 +2045,8 @@ $('export').onclick=async()=>{
  }catch(error){
   report(error?.message?.startsWith('M3_EXPORT_UNFINISHED_PHOTOS')?
    'Unfinished photos are on this device but missing from v3 backups. Save or review every Photo result first; no partial backup was downloaded.':
+   error?.message==='M3_EXPORT_SHARED_ORIGINAL_RESTORE_UNSUPPORTED'?
+    'Backup not downloaded: two saved garments share original or display photograph content, and this backup format cannot safely restore them as separate pieces. Your originals and saved clothing remain on this device. Do not delete or reset this closet.':
    error?.message?.startsWith('M3_EXPORT_')?
     'Backup not downloaded: private photos or outfit data could not be verified ('+
     error.message+'). Your originals remain unchanged.':
@@ -2131,7 +2249,16 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
    assertImport();
    importMessage('Backup imported atomically. Reload My Closet to refresh the view.');
   }
- }catch(err){importMessage(err.message||'Import failed.');}};
+ }catch(err){
+  const reason=String(err?.message||'');
+  importMessage(reason==='LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW'
+   ?'This backup repeats an original photo already linked to a saved closet piece. Nothing was imported. Open My Closet to review the saved piece, and separately review any additional garment from that photo before trying again.'
+   :reason==='LEGACY_ATOMIC_ORIGINAL_SHA_REQUIRED'
+   ?'This backup has an original photo without a verification checksum. Nothing was imported. Export a fresh backup from the original signed-in closet and try again.'
+   :reason==='LEGACY_ATOMIC_ORIGINAL_SHA_CLAIM_CONFLICT'
+   ?'This backup has conflicting verification checksums for one original photo. Nothing was imported. Re-export from the original signed-in closet without changing the photo or its receipts.'
+   :reason||'Import failed.');
+ }};
 window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});
 const closetReady=(async()=>{
  await window.closetAuth.ready;
@@ -2371,11 +2498,33 @@ async function saveIndexed(item,index04ApprovedOwner=null,expectedDraftForIndex=
          draft.userAdjusted||draft.requiresOwnershipConfirmation||
          draft.colorSource==='user')
        throw Error('CLOSET_AUTO_INDEX_STALE_REVIEW');
-      // ADD rather than PUT rejects any same-owner saved-item ID collision.
-      // Remove only this verified draft from the ACTUAL persisted list,
-      // preserving other tabs' original photos and review records.
-      savedStore.add(value);
-      draftStore.put({id:'draft',batch:rows.filter(row=>row.id!==value.id)});
+      // M83: automatic indexing must obey the same persisted-source gate
+      // as manually approved saves, not just an item-ID collision check.
+      const savedRequest=savedStore.getAll();
+      savedRequest.onsuccess=()=>{
+       try{
+        auth.assertCurrent?.();
+        if(!current()||!batch.includes(item)||item.userAdjusted||
+           item.requiresOwnershipConfirmation)
+         throw Error('CLOSET_AUTO_INDEX_STALE_REVIEW');
+        if(savedRequest.result.some(row=>{
+         if(row.id===value.id)return false;
+         if(row.image===value.image)return true;
+         if(typeof row.originalPhoto?.image==='string'&&
+            row.originalPhoto.image.length>0&&
+            row.originalPhoto.image===value.originalPhoto?.image)return true;
+         return [row.sourceSHA256,row.originalPhoto?.sha256].some(hash=>
+          typeof hash==='string'&&/^[a-f0-9]{64}$/.test(hash)&&
+          (hash===value.sourceSHA256||hash===value.originalPhoto?.sha256));
+        }))
+         throw Error('CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW');
+        // ADD detects ID collisions; draft deletion is in the SAME owner
+        // transaction and cannot consume another tab's original/photo.
+        savedStore.add(value);
+        draftStore.put({id:'draft',batch:rows.filter(row=>row.id!==value.id)});
+       }catch(error){abort(error);}
+      };
+      savedRequest.onerror=()=>abort(savedRequest.error||Error('Saved source comparison failed'));
      }catch(error){abort(error);}
     };
     persisted.onerror=()=>abort(persisted.error||Error('Draft read failed'));
@@ -2509,6 +2658,8 @@ async function recognizeItem(item){
    recognitionState.phase='save-failed';
    item.localStatus=String(error?.message||error).includes('CLOSET_AUTO_INDEX_STALE_REVIEW')
     ?'Another tab changed this garment while recognition was running. Your original photo and newer edits were kept. Refresh Photo results before reviewing or saving.'
+    :String(error?.message||error).includes('CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW')
+    ?'This original photo is already linked to a saved closet piece. No duplicate was saved; your original photo remains in Photo results. Open My Closet to review the saved piece, or use Adjust for separate-garment review.'
     :'Could not save this piece. Keep this page open, check device storage, then try again or use Adjust.';
   }
   else if(!item.visualSignature)item.localStatus='Could not read this photo. Retake it or adjust details.';

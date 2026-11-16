@@ -1,0 +1,86 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+
+// Scope: static source-level regression for the interim fail-closed write
+// fence. NOT a substitute for signed-owner Chromium/WebKit IDB acceptance.
+const source=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
+const saveStart=source.indexOf('function savePiece(');
+const saveEnd=source.indexOf('\nfunction node(',saveStart);
+assert.ok(saveStart>=0&&saveEnd>saveStart,'normal savePiece implementation exists');
+const save=source.slice(saveStart,saveEnd);
+
+test('new garment checks persisted draft identity and immutable original first',()=>{
+ const draft=save.indexOf("draftStore.get('draft')");
+ const cas=save.indexOf('CLOSET_STALE_DRAFT_REOPEN_EDITOR',draft);
+ const photo=save.indexOf('value.sourceSHA256!==draftExpected.sourceSHA256');
+ const scan=save.indexOf('const savedRequest=store.getAll()');
+ assert.ok(draft>=0&&cas>draft&&photo>cas&&scan>photo);
+});
+
+test('saved JPEG comparison occurs inside same owner items/state write transaction',()=>{
+ const transaction=save.indexOf("ownerDB.transaction(['items','state'],'readwrite')");
+ const scan=save.indexOf('const savedRequest=store.getAll()');
+ const callback=save.indexOf('savedRequest.onsuccess=()=>');
+ const rejection=save.indexOf('CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW');
+ const add=save.indexOf('store.add(value)',callback);
+ const remove=save.indexOf("draftStore.put({id:'draft',batch:rows.filter(row=>row.id!==value.id)})",callback);
+ assert.ok(transaction>=0&&scan>transaction&&callback>scan);
+ assert.ok(rejection>callback&&add>rejection&&remove>add);
+ assert.match(save.slice(callback,add),/row\.image===value\.image/);
+ assert.match(save.slice(callback,add),/row\.originalPhoto\.image===value\.originalPhoto\?\.image/);
+ assert.match(save.slice(callback,add),/row\.sourceSHA256,row\.originalPhoto\?\.sha256/);
+ assert.match(save.slice(callback,add),/\^\[a-f0-9\]\{64\}/);
+});
+
+test('failure aborts transaction and never consumes draft before successful saved comparison',()=>{
+ const callback=save.indexOf('savedRequest.onsuccess=()=>');
+ const rejection=save.indexOf('CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW');
+ const add=save.indexOf('store.add(value)',callback);
+ const abort=save.indexOf('tx.abort()',add);
+ assert.ok(callback>=0&&rejection>callback&&add>rejection&&abort>add);
+ assert.match(save,/savedRequest\.onerror=\(\)=>\{failure=/);
+ assert.match(save,/tx\.onerror=tx\.onabort=\(\)=>reject\(/);
+});
+
+test('saved-row edit retains independent compare-and-swap',()=>{
+ assert.match(save,/if\(expected\)\{[\s\S]*?CLOSET_STALE_SAVED_GARMENT_REOPEN_EDITOR/);
+ assert.match(save,/if\(expected\)\{\s*\/\/ Editing a saved row[\s\S]*?store\.put\(value\)/);
+});
+
+
+test('owner editor clearly refuses cropped original duplication without losing draft',()=>{
+ assert.match(source,/CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW/);
+ assert.match(source,/This original photo is already linked to a saved closet piece/);
+ assert.match(source,/Nothing new was saved and your photo is still in Photo results/);
+});
+
+test('automatic Index04 indexes only after the same transaction checks saved original identity',()=>{
+ const start=source.indexOf('async function saveIndexed(');
+ const end=source.indexOf('\nasync function recognizeItem(',start);
+ assert.ok(start>=0&&end>start);
+ const auto=source.slice(start,end);
+ const tx=auto.indexOf("ownerDB.transaction(['items','state'],'readwrite')");
+ const persisted=auto.indexOf("draftStore.get('draft')");
+ const scan=auto.indexOf('const savedRequest=savedStore.getAll()');
+ const checked=auto.indexOf('savedRequest.onsuccess=()=>');
+ const reject=auto.indexOf('CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW',checked);
+ const add=auto.indexOf('savedStore.add(value)',checked);
+ const remove=auto.indexOf("draftStore.put({id:'draft',batch:rows.filter(row=>row.id!==value.id)})",checked);
+ assert.ok(tx>=0&&persisted>tx&&scan>persisted&&checked>scan&&reject>checked&&add>reject&&remove>add);
+ const guard=auto.slice(checked,add);
+ assert.match(guard,/row\.image===value\.image/);
+ assert.match(guard,/row\.originalPhoto\.image===value\.originalPhoto\?\.image/);
+ assert.match(guard,/row\.sourceSHA256,row\.originalPhoto\?\.sha256/);
+ assert.match(guard,/CLOSET_AUTO_INDEX_STALE_REVIEW/);
+ assert.match(auto,/savedRequest\.onerror=\(\)=>abort/);
+});
+
+test('automatic duplicate-source save explains owner review instead of pretending storage failed',()=>{
+ const start=source.indexOf('async function recognizeItem(');
+ const relevant=source.slice(start);
+ assert.ok(start>0);
+ assert.match(relevant,/CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW/);
+ assert.match(relevant,/No duplicate was saved; your original photo remains in Photo results/);
+ assert.match(relevant,/Open My Closet to review the saved piece/);
+});

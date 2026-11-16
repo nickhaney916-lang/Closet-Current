@@ -45,32 +45,57 @@ function photoIdentity(record){
   originalPhoto:record?.originalPhoto,
   image:record?.image,recognitionPhoto:record?.recognitionPhoto,
   cropBounds:record?.cropBounds,outfitSourceId:record?.outfitSourceId,
-  segmentHint:record?.segmentHint
+  segmentHint:record?.segmentHint,
+  displayPreviewReceipt:record?.displayPreviewReceipt
  });
 }
-function bytesFromJPEG(data){
- if(typeof data!=='string'||data.length>4000000||
-    !/^data:image\/jpeg;base64,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(data))
+// M129: match the SHA-signed v3 import/export envelope without widening the
+// display preview or verified segment. No nested group regex on camera photos.
+function bytesFromJPEG(data,{original=false,preview=false}={}){
+ const prefix='data:image/jpeg;base64,';
+ const maxEncoded=original?11_200_000:preview?3_000_000:4_000_000;
+ const maxBytes=original?8*1024*1024:preview?2_250_000:3_000_000;
+ if(typeof data!=='string'||data.length>maxEncoded||!data.startsWith(prefix))
   return null;
+ const encoded=data.slice(prefix.length);
+ if(encoded.length%4!==0||!/^[A-Za-z0-9+/]*={0,2}$/.test(encoded))
+  return null;
+ const pad=encoded.endsWith('==')?2:encoded.endsWith('=')?1:0;
+ const predicted=encoded.length/4*3-pad;
+ if(predicted<4||predicted>maxBytes)return null;
  let decoded;
- try{decoded=atob(data.slice('data:image/jpeg;base64,'.length));}
+ try{decoded=atob(encoded);}
  catch{return null;}
- if(decoded.length<4||decoded.length>3000000)return null;
+ if(decoded.length!==predicted)return null;
  const n=decoded.length;
  if(decoded.charCodeAt(0)!==255||decoded.charCodeAt(1)!==216||
     decoded.charCodeAt(n-2)!==255||decoded.charCodeAt(n-1)!==217)
   return null;
  return Uint8Array.from(decoded,c=>c.charCodeAt(0));
 }
-function draftSourceMatches(draft,record,ownerId){
+function draftSourceMatches(draft,record,ownerId,{allowPreparedPreview=false}={}){
  if(!draft||draft.id!=='draft'||!Array.isArray(draft.batch))
   fail('saved owner capture draft is missing');
  const same=draft.batch.filter(x=>x?.id===record.id);
  if(same.length!==1)fail('missing or repeated private draft item');
  if(same[0].ownerId!==undefined&&same[0].ownerId!==ownerId)
   fail('foreign owner draft item');
- if(photoIdentity(same[0])!==photoIdentity(record))
-  fail('source JPEG or cutout identity differs from saved draft');
+ if(photoIdentity(same[0])===photoIdentity(record))return;
+ // M138: a freshly prepared display thumbnail may be committed together
+ // with explicit source-bound owner review, with no separate speculative
+ // write to the durable unsaved draft. Only image + display receipt may
+ // differ from its exact original-photo draft; the original SHA, owner,
+ // crop/segment and all other SOURCE fields must remain unchanged.
+ const prior=same[0];
+ if(allowPreparedPreview&&!record.segmentHint&&
+    prior.image===prior.originalPhoto?.image&&
+    prior.originalPhoto?.image===record.originalPhoto?.image&&
+    prior.displayPreviewReceipt===undefined&&
+    record.displayPreviewReceipt?.displayOnly===true&&
+    photoIdentity({...prior,image:record.image,
+     displayPreviewReceipt:record.displayPreviewReceipt})===photoIdentity(record))
+  return;
+ fail('source JPEG or cutout identity differs from saved draft');
 }
 async function snapshot(db){
  return new Promise((resolve,reject)=>{
@@ -134,7 +159,7 @@ function transactionCommit({db,ownerId,currentOwner,assertLease,record,
     // Compare ALL private snapshot metadata, not just selected source ID.
     if(seal(items)!==seal(pre.items)||seal(draft)!==seal(pre.draft))
      fail('wardrobe or unsaved garment draft changed during original SHA proof');
-    draftSourceMatches(draft,record,ownerId);
+    draftSourceMatches(draft,record,ownerId,{allowPreparedPreview:review?.previewConfirmed===true});
     const idx=buildOwnerWardrobeIndex(ownerId,items);
     const collision=previewOwnerWardrobeAddition(idx,ownerId,value);
     if(collision.status!=='allow')
@@ -180,14 +205,13 @@ export async function commitHumanReviewedPhoto119({
  const sourceStart=photoIdentity(record);
  const pre=await snapshot(db);
  checkLive({db,ownerId,currentOwner,assertLease,record,review,initial});
- draftSourceMatches(pre.draft,record,ownerId);
+ draftSourceMatches(pre.draft,record,ownerId,{allowPreparedPreview:review?.previewConfirmed===true});
  buildOwnerWardrobeIndex(ownerId,pre.items);
  const original=record.originalPhoto?.image;
  const sourceSHA=record.sourceSHA256;
- if(!original||record.originalPhoto?.sha256!==sourceSHA||
-    (record.image!==original&&!record.segmentHint))
+ if(!original||record.originalPhoto?.sha256!==sourceSHA)
   return verdict('review-required','original-source-unverified');
- const originalBytes=bytesFromJPEG(original);
+ const originalBytes=bytesFromJPEG(original,{original:true});
  if(!originalBytes)
   return verdict('review-required','original-source-unverified');
  const first=await verifyOriginalSourceBytes(originalBytes,sourceSHA,cryptoProvider);
@@ -195,6 +219,35 @@ export async function commitHumanReviewedPhoto119({
  if(!first.verified)return verdict('review-required','original-source-unverified');
  const mode=validateReview(review,record,sourceSHA);
  if(!mode)return verdict('review-required','human-review-incomplete');
+ // A display preview is NOT a second photographed garment, verified cutout,
+ // independently proven reduction of the original, or a release-eligible 3D.
+ // Admit this owner-reviewed SOURCE+DISPLAY pair only when the actual JPEG
+ // digest, exact owner/source receipt and owner's separate preview decision
+ // agree. Missing receipts (the former P93 negative) still fail with NO write.
+ let saveKind=mode.kind;
+ if(!mode.multi){
+  if(record.image!==original){
+   const receipt=record.displayPreviewReceipt;
+   if(!receipt||receipt.schema!=='photo119-owner-display-preview/v1'||
+      receipt.ownerId!==ownerId||receipt.originalSHA256!==sourceSHA||
+      receipt.displayOnly!==true||!SHA.test(receipt.previewSHA256||'')||
+      review?.previewConfirmed!==true||
+      review.previewSHA256!==receipt.previewSHA256)
+    return verdict('review-required','display-preview-unverified');
+   const displayBytes=bytesFromJPEG(record.image,{preview:true});
+   if(!displayBytes)
+    return verdict('review-required','display-preview-unverified');
+   const displayProof=await verifyOriginalSourceBytes(
+    displayBytes,receipt.previewSHA256,cryptoProvider);
+   checkLive({db,ownerId,currentOwner,assertLease,record,review,initial});
+   if(!displayProof.verified)
+    return verdict('review-required','display-preview-unverified');
+   saveKind='human-reviewed-original-single-display-preview';
+  }else if(record.image.length>3_000_000){
+   // The normal v3 backup must never accept an oversized DISPLAY field.
+   return verdict('review-required','display-preview-required');
+  }
+ }
  if(mode.multi){
   if(record.segmentHint.cutoutImage===original||
      record.segmentHint.cutoutImage===record.image&&record.image===original)
@@ -236,6 +289,6 @@ export async function commitHumanReviewedPhoto119({
   fail('original JPEG source changed during correction review');
  return transactionCommit({
   db,ownerId,currentOwner,assertLease,record,review,initial,pre,
-  value,kind:mode.kind
+  value,kind:saveKind
  });
 }

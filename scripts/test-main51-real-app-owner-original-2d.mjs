@@ -90,6 +90,63 @@ async function clickPreview(page,{approved=true}={}){
    text.includes('Preview refused');
  },approved,{timeout:20000});
  const status=await page.locator('#mission4Preview1054Status').innerText();
+ // M88: on a genuine approved-preview refusal, inspect the signed native
+ // owner/source preflight read-only and report ONLY fixed reason categories.
+ // Never retry, change authorization, or print owner JPEGs/IDs/tokens.
+ if(approved&&status.includes('Preview refused')){
+  const evidence=await page.evaluate(async()=>{
+   const current=typeof currentBoard!=='undefined'?currentBoard:null;
+   const state={
+    internalRefusal:globalThis.__m89PreviewFailure||null,
+    viewerPhase:typeof mission4Preview1054Viewer!=='undefined'?
+     mission4Preview1054Viewer?.status?.phase||'absent':'unavailable',
+    boardInitialized:typeof boardInitialized==='boolean'&&boardInitialized,
+    boardHasSelection:!!current?.slots?.top,
+    boardSlotCount:Object.keys(current?.slots||{}).length,
+    boardOccasion:['Casual','Dinner','Active','Work'].includes(current?.occasion)?current.occasion:'other',
+    ownerSessionLive:!!window.closetAuth?.user?.id&&
+     db?.name==='closet-current-user-'+window.closetAuth.user.id,
+    authGateClosed:document.getElementById('authGate')?.hidden===true,
+    privateShellVisible:document.getElementById('appShell')?.hidden===false,
+    preflight:'not-run',preflightCategory:'not-run'
+   };
+   const reasons=[
+    'signed owner session and private database required',
+    'owner session changed',
+    'invalid or repeated outfit slot identity',
+    'native outfit normalization would silently lose selected garment',
+    'selected garment has duplicate or ambiguous source identity',
+    'selected garment lacks confirmed original and review evidence',
+    'missing or incompatible owned garment',
+    'original JPEG SHA does not match saved source',
+    'saved garment changed during source verification',
+    'new ambiguous or duplicate source appeared during verification',
+    'outfit board changed during source verification',
+    'native signed session unavailable',
+    'outfit selection changed during preview',
+    'original JPEG changed before preview',
+    'selected owner item changed before showing photos',
+    'native owner outfit board unavailable',
+    'source plan cannot authorize private image rendering'
+   ];
+   try{
+    const {preflightOwnedOutfit1054}=await import(
+     '/research/main-thread-integration-1054/source-to-outfit.mjs');
+    const plan=await preflightOwnedOutfit1054({
+     getSession:currentPhotoOwnerSession167,
+     readOwnerItems:signedOwnerSavedRows167,
+     cleanBoard:cleanOutfitBoard,board:structuredClone(current)
+    });
+    state.preflight='pass';state.eligibleSlots=plan.slots.length;
+   }catch(error){
+    state.preflight='refused';
+    const msg=String(error?.message||'');
+    state.preflightCategory=reasons.find(reason=>msg.includes(reason))||'other';
+   }
+   return state;
+  });
+  console.error('M88_SOURCE_SAFE_WEBKIT_PREVIEW_REFUSAL',JSON.stringify(evidence));
+ }
  if(approved)assert.match(status,/original photo\(s\) verified.*2D only/,
   'native shell failed owner-approved original JPEG preview: '+status);
  else assert.match(status,/Preview refused/,'native shell failed to refuse unreviewed/photo change');
@@ -135,6 +192,15 @@ try{
     method:route.request().method()});
    return route.abort();
   });
+  // M89 test-only source-safe classification of an existing failure.
+  // The exact native preview implementation and assert/abort flow remain.
+  const previewText=await readFile('research/main-thread-integration-1054/native-2d-preview.mjs','utf8');
+  const originalCatch="   }catch(error){\n    if(ticket===revision&&!closed){clear();phase='refused';}\n    throw error;\n   }";
+  const classifiedCatch="   }catch(error){\n    const message=String(error?.message||'');\n    const categories=[\"signed owner or refresh changed\",\"native signed session unavailable\",\"source plan cannot authorize private image rendering\",\"private outfit changed during repeated verification\",\"unsafe sampled 3D research cannot authorize owner garment\",\"foreign or stale source item\",\"canonical saved JPEG unavailable\",\"original JPEG changed before preview\",\"selected owner item changed before showing photos\",\"outfit selection changed during preview\",\"outfit selection changed at photo presentation\",\"signed owner session and private database required\",\"owner session changed\",\"native outfit normalization would silently lose selected garment\",\"original JPEG SHA does not match saved source\",\"saved garment changed during source verification\",\"invalid or repeated outfit slot identity\"];\n    globalThis.__m89PreviewFailure={\n     category:categories.find(value=>message.includes(value))||'unclassified',\n     type:['Error','TypeError','AbortError','InvalidStateError'].includes(error?.name)?error.name:'other',\n     ticketCurrent:ticket===revision,closed,phaseBeforeCatch:phase\n    };\n    if(ticket===revision&&!closed){clear();phase='refused';}\n    throw error;\n   }";
+  if(!previewText.includes(originalCatch))throw Error('M89 preview module changed');
+  await context.route('**/research/main-thread-integration-1054/native-2d-preview.mjs',
+   route=>route.fulfill({status:200,contentType:'text/javascript',
+    body:previewText.replace(originalCatch,classifiedCatch)}));
   const page=await context.newPage();
   page.on('pageerror',e=>failures.push({engine,width,kind:'js-exception',name:e.name}));
   page.on('crash',()=>failures.push({engine,width,kind:'crash'}));
@@ -238,6 +304,70 @@ try{
   const filename=engine+'-'+width+'-native-owned-licensed-2d.png';
   await writeFile(join(out,filename),png);
   screens.push({width,sha256:hash(png),name:filename});
+  stage='m95-unchanged-board-rerender-keeps-verified-owner-original';
+  await page.evaluate(()=>renderOutfitBoard());
+  assert.equal(await count(page),1,'M95 harmless redraw lost source-verified original JPEG');
+  assert.match(await page.locator('#mission4Preview1054Status').innerText(),
+   /original photo\(s\) verified.*2D only/);
+  stage='m95-updated-board-redraw-revokes-owner-original-and-status';
+  await page.evaluate(()=>{currentBoard.occasion='Dinner';renderOutfitBoard();});
+  await blank(page,'M95 changed native outfit redraw');
+  assert.match(await page.locator('#mission4Preview1054Status').innerText(),
+   /Verify the original clothing photos again/);
+  await page.evaluate(()=>{currentBoard.occasion='Casual';renderOutfitBoard();});
+  await clickPreview(page);
+  assert.equal(await count(page),1);
+  stage='m95-inflight-unchanged-rerender-keeps-source-verified-preview';
+  await page.waitForFunction(()=>
+   document.querySelector('#mission4Preview1054Section button')?.disabled===false);
+  await page.evaluate(()=>{
+   document.querySelector('#mission4Preview1054Section button').click();
+   renderOutfitBoard();
+  });
+  await page.waitForFunction(()=>{
+   const status=document.getElementById('mission4Preview1054Status')?.textContent||'';
+   return status.includes('2D only')||status.includes('Preview refused');
+  },null,{timeout:20000});
+  assert.match(await page.locator('#mission4Preview1054Status').innerText(),
+   /original photo\(s\) verified.*2D only/);
+  assert.equal(await count(page),1,'M95 in-flight unchanged redraw canceled the private preview');
+  stage='m97-live-selected-original-photo-mutation-revokes-without-board-change';
+  // Change ONLY disposable in-memory signed-owner selected row. The private
+  // IndexedDB original stays unchanged, proving the research preview responds
+  // immediately to local source edits rather than relying on a DB write.
+  await page.evaluate(()=>{
+   const row=items.find(item=>item.id===currentBoard.slots.top);
+   if(!row?.originalPhoto)throw Error('M97 selected synthetic source unavailable');
+   row.originalPhoto.image='data:image/jpeg;base64,/9j/2Q==';
+   renderOutfitBoard();
+  });
+  await blank(page,'M97 selected original-photo bytes changed with same outfit');
+  assert.match(await page.locator('#mission4Preview1054Status').innerText(),
+   /Verify the original clothing photos again/);
+  await page.evaluate(original=>{
+   const row=items.find(item=>item.id===currentBoard.slots.top);
+   row.originalPhoto.image=original;renderOutfitBoard();
+  },originalJPEG);
+  await clickPreview(page);
+  assert.equal(await count(page),1);
+  stage='m97-inflight-changed-source-must-not-publish-stale-original';
+  await page.waitForFunction(()=>
+   document.querySelector('#mission4Preview1054Section button')?.disabled===false);
+  await page.evaluate(()=>{
+   document.querySelector('#mission4Preview1054Section button').click();
+   const row=items.find(item=>item.id===currentBoard.slots.top);
+   row.originalPhoto.image='data:image/jpeg;base64,/9j/2Q==';
+   renderOutfitBoard();
+  });
+  await blank(page,'M97 changed selected JPEG during in-flight verification');
+  assert.match(await page.locator('#mission4Preview1054Status').innerText(),
+   /Verify the original clothing photos again/);
+  await page.evaluate(original=>{
+   const row=items.find(item=>item.id===currentBoard.slots.top);
+   row.originalPhoto.image=original;renderOutfitBoard();
+  },originalJPEG);
+  await clickPreview(page);
+  assert.equal(await count(page),1);
   stage='real-app-owner-session-and-board-revocation';
   await page.evaluate(()=>{
    currentBoard.occasion='Dinner';window.dispatchEvent(new Event('focus'));

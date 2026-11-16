@@ -16,6 +16,24 @@ const jpeg='data:image/jpeg;base64,'+(await sharp({create:{
 const differentJPEG='data:image/jpeg;base64,'+(await sharp({create:{
  width:320,height:240,channels:3,background:{r:225,g:89,b:58}
 }}).jpeg().toBuffer()).toString('base64');
+const thirdJPEG='data:image/jpeg;base64,'+(await sharp({create:{
+ width:320,height:240,channels:3,background:{r:23,g:218,b:97}
+}}).jpeg().toBuffer()).toString('base64');
+const jpegSHA=createHash('sha256').update(Buffer.from(jpeg.slice(jpeg.indexOf(',')+1),'base64')).digest('hex');
+// Real sharp-generated JPEG with intact image pixels and benign APP15 metadata.
+const baseJPEG=Buffer.from(jpeg.slice(jpeg.indexOf(',')+1),'base64');
+const largeParts=[];
+for(let i=0;i<56;i++){
+ const size=48000;
+ largeParts.push(Buffer.from([255,239,(size+2)>>8,(size+2)&255]),Buffer.alloc(size,i&255));
+}
+const largeBytes=Buffer.concat([baseJPEG.subarray(0,2),...largeParts,baseJPEG.subarray(2)]);
+const largeOriginal='data:image/jpeg;base64,'+largeBytes.toString('base64');
+const largeSHA=createHash('sha256').update(largeBytes).digest('hex');
+assert(largeOriginal.length>3_000_000&&largeOriginal.length<=11_200_000);
+const largePreview='data:image/jpeg;base64,'+(await sharp({create:{
+ width:120,height:90,channels:3,background:{r:192,g:84,b:131}
+}}).jpeg().toBuffer()).toString('base64');
 const root=resolve('.'),pub=resolve('public'),
  types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript',
  '.css':'text/css','.json':'application/json','.svg':'image/svg+xml'};
@@ -68,7 +86,7 @@ try{
     page.on('pageerror',e=>errors.push({engine,width,error:String(e)}));
     await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
     await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady,inspirationReady]));
-    const result=await page.evaluate(async({ownerA,ownerB,jpeg,differentJPEG})=>{
+    const result=await page.evaluate(async({ownerA,ownerB,jpeg,differentJPEG,thirdJPEG,jpegSHA,largeOriginal,largeSHA,largePreview})=>{
      const idbRead=()=>new Promise((done,reject)=>{
       const tx=db.transaction(['items','state'],'readonly');
       const a=tx.objectStore('items').getAll(),b=tx.objectStore('state').getAll();
@@ -92,7 +110,7 @@ try{
      items=(await readAllFrom(db)).map(normalizeClothing);
      await reloadCloudLooks();await reloadCloudBoard();render();
      const first=normalizeClothing({id:'new-top',ownerId:ownerA,
-      name:'New owner A garment',category:'Tops',itemType:'T-shirt',color:'Green',image:jpeg});
+      name:'New owner A garment',category:'Tops',itemType:'T-shirt',color:'Green',image:differentJPEG});
      const makeBackup=(opts={})=>({format:'closet-current',version:3,items:[first],
       looks:[{id:'new-look',title:'New inspiration',pieces:[]}],
       outfitBoard:{current:{name:'Imported',slots:{top:opts.badRef?'unknown-photo':'new-top'}},
@@ -114,12 +132,76 @@ try{
       cloudRevision:after['cloud-sync']?.localRevision,
       cloudDirty:after['cloud-sync']?.dirty,
       originalExists:committed.items.some(x=>x.id==='kept-original'&&x.image===jpeg),
-      newExists:committed.items.some(x=>x.id==='new-top'&&x.image===jpeg),
+      newExists:committed.items.some(x=>x.id==='new-top'&&x.image===differentJPEG),
       notice:document.getElementById('message').textContent,
       screenCount:document.getElementById('closetCount').textContent,
       cloudChanged:window.__cloudLocalChanged||0
      };
+     // M98 P93 native camera-original contract: preserve SHA+full JPEG, not just thumbnail.
+     let largeAccepted=true,largeTamperedNoWrite=true,largePreviewTooBigDenied=true,
+      largeWithoutReceiptDenied=true,largeConflictingReceiptsDenied=true;
+     if(largeOriginal){
+      const raw={format:'closet-current',version:3,items:[{
+       ...first,id:'large-camera-original',image:largePreview,
+       sourceSHA256:largeSHA,sourceHashVerified:true,
+       originalPhoto:{image:largeOriginal,sha256:largeSHA,ownerId:ownerA}
+      }]};
+      await select(raw);
+      const afterLarge=await idbRead();
+      const entry=afterLarge.items.find(x=>x.id==='large-camera-original');
+      largeAccepted=!!entry&&entry.ownerId===ownerA&&entry.image===largePreview&&
+       entry.originalPhoto?.image===largeOriginal&&entry.originalPhoto?.sha256===largeSHA&&
+       entry.sourceSHA256===largeSHA;
+      const positiveSnapshot=JSON.stringify(afterLarge);
+      const missingReceipt=structuredClone(raw);
+      missingReceipt.items[0].id='large-no-receipt';
+      delete missingReceipt.items[0].sourceSHA256;
+      delete missingReceipt.items[0].originalPhoto.sha256;
+      missingReceipt.items[0].sourceHashVerified=false;
+      await select(missingReceipt);
+      largeWithoutReceiptDenied=JSON.stringify(await idbRead())===positiveSnapshot&&
+       document.getElementById('message').textContent.includes('original photo without a verification checksum')&&
+       document.getElementById('message').textContent.includes('Nothing was imported')&&
+       document.getElementById('message').textContent.includes('Export a fresh backup');
+      const conflictingReceipts=structuredClone(raw);
+      conflictingReceipts.items[0].id='large-two-source-hashes';
+      conflictingReceipts.items[0].sourceSHA256='a'.repeat(64);
+      await select(conflictingReceipts);
+      largeConflictingReceiptsDenied=JSON.stringify(await idbRead())===positiveSnapshot&&
+       document.getElementById('message').textContent.includes('conflicting verification checksums for one original photo')&&
+       document.getElementById('message').textContent.includes('Nothing was imported')&&
+       document.getElementById('message').textContent.includes('Re-export from the original signed-in closet');
+      const tampered=structuredClone(raw);
+      tampered.items[0].originalPhoto.sha256='a'.repeat(64);
+      await select(tampered);
+      largeTamperedNoWrite=JSON.stringify(await idbRead())===positiveSnapshot;
+      const giantPreview=structuredClone(raw);
+      giantPreview.items[0].id='giant-display-preview';
+      giantPreview.items[0].image=largeOriginal;
+      await select(giantPreview);
+      largePreviewTooBigDenied=JSON.stringify(await idbRead())===positiveSnapshot;
+     }
      const fingerprint=JSON.stringify(await idbRead());
+     // Default legacy v1-v3 importer must also block a same-byte JPEG alias
+     // when NEITHER the stored nor incoming original is source-verified.
+     const unverifiedAlias=makeBackup();
+     unverifiedAlias.items[0]={...first,id:'unverified-original-alias',image:jpeg};
+     await select(unverifiedAlias);
+     const unverifiedAliasUnchanged=JSON.stringify(await idbRead())===fingerprint;
+     const unverifiedAliasMessage=document.getElementById('message').textContent;
+     const unverifiedAliasExplained=unverifiedAliasMessage.includes('original photo already linked')&&
+      unverifiedAliasMessage.includes('Nothing was imported');
+     // M91 actual signed-owner default import: same JPEG, new ID, no write.
+     const duplicateOriginal=makeBackup();
+     duplicateOriginal.items[0]={...first,id:'same-original-new-id',
+      sourceHashVerified:true,sourceSHA256:jpegSHA,
+      originalPhoto:{image:jpeg,sha256:jpegSHA}};
+     await select(duplicateOriginal);
+     const originalAliasUnchanged=JSON.stringify(await idbRead())===fingerprint;
+     const originalAliasNotice=document.getElementById('message').textContent;
+     const originalAliasExplained=originalAliasNotice.includes('original photo already linked')&&
+      originalAliasNotice.includes('Nothing was imported')&&
+      originalAliasNotice.includes('Open My Closet');
      // A collided ID with a DIFFERENT full original JPEG must never overwrite
      // the older physical garment, regardless of bulk owner confirmation.
      const collision=makeBackup();
@@ -144,7 +226,7 @@ try{
      // Force a staged outfit-store exception after clothing and looks put()
      // have been requested. Native IDB abort must roll ALL of them back.
      const rollback=makeBackup();
-     rollback.items[0]={...rollback.items[0],id:'rollback-top'};
+     rollback.items[0]={...rollback.items[0],id:'rollback-top',image:thirdJPEG};
      rollback.outfitBoard.current.slots.top='rollback-top';
      rollback.outfitBoard.saved[0].slots.top='rollback-top';
      const oldPut=IDBObjectStore.prototype.put;
@@ -178,12 +260,16 @@ try{
      window.__resumeOldFile();
      await oldPending;
      const second=await idbRead();
-     return {...outcome,collidedUnchanged,duplicateIdsUnchanged,
+     return {...outcome,largeAccepted,largeTamperedNoWrite,largePreviewTooBigDenied,
+      largeWithoutReceiptDenied,largeConflictingReceiptsDenied,
+      unverifiedAliasUnchanged,unverifiedAliasExplained,
+      originalAliasUnchanged,originalAliasExplained,collidedUnchanged,duplicateIdsUnchanged,
       foreignUnchanged,unsavedBlocked,stagedRollbackUnchanged,
       badRefUnchanged,cancelledUnchanged,
       afterAccountSwitch:second.items.map(x=>({id:x.id,ownerId:x.ownerId})),
       currentOwner:window.closetAuth.user.id,currentScreenCount:document.getElementById('closetCount').textContent};
-    },{ownerA,ownerB,jpeg,differentJPEG});
+    },{ownerA,ownerB,jpeg,differentJPEG,thirdJPEG,jpegSHA,
+     largeOriginal:width===320?largeOriginal:null,largeSHA,largePreview});
     assert.deepEqual(result.mergedItems,[{id:'kept-original',ownerId:ownerA},{id:'new-top',ownerId:ownerA}]);
     assert.deepEqual(result.mergedLooks,['old-look','new-look']);
     assert.equal(result.boardTop,'new-top');
@@ -193,6 +279,20 @@ try{
     assert.equal(result.cloudChanged,1);
     assert.match(result.notice,/imported atomically/i);
     assert.equal(result.screenCount,'2');
+    if(width===320){
+     assert.equal(result.largeAccepted,true,
+      'M98 real browser failed to restore SHA-verified >3M original');
+     assert.equal(result.largeWithoutReceiptDenied,true,
+      'M99 missing large original SHA did not fail closed with its exact reason');
+     assert.equal(result.largeConflictingReceiptsDenied,true,
+      'M99 inconsistent SHA claims did not fail closed with exact reason');
+     assert.equal(result.largeTamperedNoWrite,true);
+     assert.equal(result.largePreviewTooBigDenied,true);
+    }
+    assert.equal(result.unverifiedAliasUnchanged,true);
+    assert.equal(result.unverifiedAliasExplained,true);
+    assert.equal(result.originalAliasUnchanged,true);
+    assert.equal(result.originalAliasExplained,true);
     assert.equal(result.collidedUnchanged,true);
     assert.equal(result.duplicateIdsUnchanged,true);
     assert.equal(result.foreignUnchanged,true);
@@ -206,7 +306,14 @@ try{
     assert.equal(external.some(x=>x.method!=='GET'),false,'External write attempted');
     assert.equal(external.every(x=>x.blocked),true);
     cases.push({engine,width,defaultV3NativeAtomic:true,
-     originalIdCollisionBlocked:true,foreignOwnerBlocked:true,
+     largeCameraOriginalVerified:width===320?result.largeAccepted:null,
+     largeOriginalRequiresReceipt:width===320?result.largeWithoutReceiptDenied:null,
+     largeConflictingReceiptsDenied:width===320?result.largeConflictingReceiptsDenied:null,
+     largeOriginalTamperBlocked:width===320?result.largeTamperedNoWrite:null,
+     overlongDisplayPreviewBlocked:width===320?result.largePreviewTooBigDenied:null,
+     originalIdCollisionBlocked:true,unverifiedLegacyJPEGAliasBlocked:true,
+     originalAliasSourceBlocked:true,
+     ownerFacingDuplicateRecoveryVerified:true,foreignOwnerBlocked:true,
      duplicateIdsBlocked:true,unsavedCaptureBlocked:true,
      syntheticStageRollback:true,mergePreservesItems:true,
      looksOutfitsOneCommit:true,cloudRevisionAtomic:true,badRefRollback:true,

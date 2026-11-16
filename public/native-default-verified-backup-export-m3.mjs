@@ -7,7 +7,9 @@
  * are omitted. The opt-in, verified v4 lossless research path is unchanged.
  * Never access hosted/cloud data, change the database, or deploy.
  */
-const imagePattern=/^data:image\/jpeg;base64,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+// M101 source-only original JPEG validation must mirror the native importer
+// without weakening preview bounds or the signed owner / snapshot checks.
+const imagePattern=/^data:image\/jpeg;base64,[A-Za-z0-9+/]*={0,2}$/;
 const shaPattern=/^[0-9a-f]{64}$/;
 const mime='data:image/jpeg;base64,';
 const own=(obj,key)=>Object.prototype.hasOwnProperty.call(obj,key);
@@ -28,9 +30,25 @@ function inspectOwner(value,owner,depth=0,seen=new WeakSet()){
  }
  seen.delete(value);
 }
-async function checkedJPEG(image,claimedHash=null){
- if(typeof image!=='string'||image.length>3_000_000||
-    !imagePattern.test(image))fail('INVALID_JPEG');
+// Mirror the importer's pad-bit canonicalization: two legal Base64
+// spellings may decode to the same JPEG and must never appear distinct.
+function canonicalJPEG(image){
+ const pads=image.endsWith('==')?2:image.endsWith('=')?1:0;
+ if(!pads||!image.startsWith(mime))return image;
+ const idx=image.length-1-pads;
+ const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+ const sextet=alphabet.indexOf(image[idx]);
+ return sextet<0?image:
+  image.slice(0,idx)+alphabet[sextet&(pads===2?48:60)]+image.slice(idx+1);
+}
+async function checkedJPEG(image,claimedHash=null,{maxEncoded=3_000_000,maxBytes=2_250_000}={}){
+ if(typeof image!=='string'||image.length>maxEncoded||
+    !imagePattern.test(image)||(image.length-mime.length)%4!==0)
+  fail('INVALID_JPEG');
+ const encoded=image.slice(mime.length);
+ const padding=encoded.endsWith('==')?2:encoded.endsWith('=')?1:0;
+ const predicted=encoded.length/4*3-padding;
+ if(predicted<4||predicted>maxBytes)fail('INVALID_JPEG_BYTES');
  let bytes;
  try{bytes=Uint8Array.from(atob(image.slice(mime.length)),v=>v.charCodeAt(0));}
  catch{fail('INVALID_JPEG');}
@@ -84,6 +102,9 @@ export async function exportDurableOwnerBackupM3({
   fail('UNFINISHED_PHOTOS_NOT_IN_V3');
  const items=[];
  const ids=new Set();
+ // M116: match the v3 importer's cross-item photo identity fence, not just
+ // the canonical original: repeated previews also cause no-write refusal.
+ const seenPictures=new Set(),originalReceipts=new Set();
  if(snap.items.length>1000)fail('TOO_MANY_GARMENTS');
  for(const row of snap.items){
   if(!row||typeof row.id!=='string'||!row.id||row.id.length>100||
@@ -94,12 +115,30 @@ export async function exportDurableOwnerBackupM3({
    !row.originalPhoto?.image||row.originalPhoto.image===row.image
     ?row.sourceSHA256||row.originalPhoto?.sha256||null
     :null);
-  if(row.originalPhoto?.image)
-   await checkedJPEG(row.originalPhoto.image,
-    row.originalPhoto.sha256||row.sourceSHA256||null);
-  else if(row.originalPhoto?.sha256||
-          row.sourceSHA256&&row.sourceHashVerified===true)
+  if(row.originalPhoto?.image){
+   const receipt=row.originalPhoto.sha256||row.sourceSHA256||null;
+   if(row.originalPhoto.sha256&&row.sourceSHA256&&
+      row.originalPhoto.sha256!==row.sourceSHA256)
+    fail('SOURCE_SHA_CLAIM_CONFLICT');
+   if((row.originalPhoto.image.length>3_000_000||
+       row.sourceHashVerified===true)&&!receipt)
+    fail('SOURCE_SHA_REQUIRED');
+   await checkedJPEG(row.originalPhoto.image,receipt,
+    {maxEncoded:11_200_000,maxBytes:8*1024*1024});
+  }else if(row.originalPhoto?.sha256||row.sourceHashVerified===true)
    fail('MISSING_VERIFIED_ORIGINAL');
+  // A shared original can represent two legitimately different garments,
+  // but current v3 cannot attest their separate mask/crop instances on
+  // restore. Refuse export without deleting either private saved garment.
+  const pictures=new Set([row.image,row.originalPhoto?.image]
+   .filter(image=>typeof image==='string'&&image.length)
+   .map(canonicalJPEG));
+  const canonicalReceipt=row.originalPhoto?.sha256||row.sourceSHA256||null;
+  if([...pictures].some(image=>seenPictures.has(image))||
+     (canonicalReceipt&&originalReceipts.has(canonicalReceipt)))
+   fail('SHARED_ORIGINAL_RESTORE_UNSUPPORTED');
+  for(const image of pictures)seenPictures.add(image);
+  if(canonicalReceipt)originalReceipts.add(canonicalReceipt);
   check();
   // Older v1-v3 rows legitimately lacked an owner ID; stamp only the
   // exported copy. Never modify real on-device originals to do this.
