@@ -47,8 +47,12 @@ function mission4Preview1054ReconcileRedraw(){
  let state=null;try{state=viewer?.status;}catch{}
  const unchanged=mission4Preview1054SameSource(
   mission4Preview1054Pinned,mission4Preview1054SourceSnapshot());
- const checking=button?.disabled===true&&(!viewer||
-  state?.phase==='checking'||state?.phase==='revoked');
+ // The previous viewer can still report "visible" for one microtask
+ // after a repeat click has replaced its image DOM, but the button already
+ // indicates a new in-flight verification. Preserve only when the exact
+ // board/source snapshot is unchanged; the refresh still rechecks the
+ // signed owner/session, original JPEG SHA and every selected source.
+ const checking=button?.disabled===true;
  const visible=state?.phase==='visible'&&state.hasOwnerPhotos===true;
  if(unchanged&&(checking||visible))return;
  const hadPinned=mission4Preview1054Pinned!==null;
