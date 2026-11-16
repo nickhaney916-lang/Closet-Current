@@ -158,8 +158,7 @@ try{
   try{const v=JSON.parse(line.split('MAIN51_APP_SOURCE_FAIL ')[1]);
    console.error('P92_CANDIDATE_REAL_NATIVE_FAIL',JSON.stringify({
     engine,width:v.width,stage:v.stage,errorClass:v.errorName||'unknown',
-    reasonClass:(()=>{const message=String(v.message||'');return
-     message.includes('scratch guard did not safely terminate')?'candidate-no-terminal':
+    reasonClass:(()=>{const message=String(v.message||'');return message.includes('scratch guard did not safely terminate')?'candidate-no-terminal':
      message.includes('scratch guard did not terminate')?'candidate-no-terminal':
      message.includes('scratch consumer was not served')?'scratch-route-count':
      message.includes('stale private source')?'source-exposure':
