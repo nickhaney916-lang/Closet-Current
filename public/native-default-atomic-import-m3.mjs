@@ -1,3 +1,4 @@
+import {distinctReviewedSharedOriginal157} from './native-reviewed-shared-original-157.mjs';
 /**
  * MISSION3-DEFAULT-ATOMIC-IMPORT — DRAFT/HOLD release candidate.
  * Safely import v1-v3 wardrobe backups in ONE private IndexedDB transaction.
@@ -168,8 +169,14 @@ export async function prepareDefaultAtomicM3({
  };
  for(const row of incoming){
   const prior=allItems.get(row.id);
-  if(!prior&&[...allItems.values()].some(saved=>samePinnedOriginal(saved,row)))
-   throw Error('LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW');
+  if(!prior){
+   for(const saved of allItems.values()){
+    if(samePinnedOriginal(saved,row)&&
+       !await distinctReviewedSharedOriginal157(saved,row,ownerId))
+     throw Error('LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW');
+    assertLease();
+   }
+  }
   if(prior){
    // Normalization stamps a new legacy record into the signed DB. For an
    // existing same-ID row, that stamp must NOT turn a missing legacy owner
@@ -182,6 +189,10 @@ export async function prepareDefaultAtomicM3({
    // independently recorded source-instance review provenance.
    if((prior.sourceHashVerified===true&&row.sourceHashVerified!==true)||
       (prior.sourcePieceKey&&prior.sourcePieceKey!==row.sourcePieceKey)||
+       (prior.cutoutSHA256&&prior.cutoutSHA256!==row.cutoutSHA256)||
+       (prior.segmentHint?.cutoutSHA256&&
+        JSON.stringify(prior.segmentHint)!==JSON.stringify(row.segmentHint))||
+       (prior.singleGarmentVerified===true&&row.singleGarmentVerified===false)||
       (prior.ownerSourceReview88&&
        JSON.stringify(prior.ownerSourceReview88)!==
        JSON.stringify(row.ownerSourceReview88)))
