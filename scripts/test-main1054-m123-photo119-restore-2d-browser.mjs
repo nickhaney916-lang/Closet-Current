@@ -27,6 +27,14 @@ assert(largeOriginalJPEG.length>3_000_000&&largeOriginalJPEG.length<11_200_000);
 const originalJPEG='data:image/jpeg;base64,'+originBytes.toString('base64');
 const originalSHA=createHash('sha256').update(originBytes).digest('hex');
 assert(originalJPEG.length<=3_000_000);
+// A second independently sourced PUBLIC JPEG, distinct from the first,
+// proves two actual PHOTO119 owner review commits and both outfit slots.
+// These fixture labels are synthetic, NOT independent classification truth.
+const secondBytes=await readFile('benchmark/fixtures/commons-0002.jpg');
+assert(secondBytes[0]===255&&secondBytes[1]===216);
+const secondJPEG='data:image/jpeg;base64,'+secondBytes.toString('base64');
+const secondSHA=createHash('sha256').update(secondBytes).digest('hex');
+assert(secondSHA!==originalSHA&&secondJPEG.length<=3_000_000);
 const previewJPEG='data:image/jpeg;base64,'+(await sharp({create:{
  width:160,height:160,channels:3,background:{r:88,g:125,b:189}
 }}).jpeg().toBuffer()).toString('base64');
@@ -99,7 +107,7 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
     page.on('pageerror',e=>errors.push({engine,width,kind:String(e.name||'page-error')}));
     await page.goto(local+'/?mission4Preview=research',{waitUntil:'domcontentloaded'});
     await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady,inspirationReady]));
-    const result=await page.evaluate(async({owner,previewJPEG,originalJPEG,originalSHA,largeOriginalJPEG,largeOriginalSHA})=>{
+    const result=await page.evaluate(async({owner,previewJPEG,originalJPEG,originalSHA,secondJPEG,secondSHA,largeOriginalJPEG,largeOriginalSHA})=>{
      const readRows=()=>new Promise((resolve,reject)=>{
       const tx=db.transaction(['items','state'],'readonly');
       const i=tx.objectStore('items').getAll(),s=tx.objectStore('state').getAll();
@@ -164,10 +172,31 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
      if(row?.ownerReviewed!==true||row?.sourceSHA256!==originalSHA||
         row?.originalPhoto?.image!==originalJPEG)
       throw Error('PHOTO119 saved record lacks canonical owner review');
+     // M127: independent second real PHOTO119 signed-owner review, not a
+     // direct seeded item. The original is preserved and both sources differ.
+     const bottom={id:'m127-bottom',ownerId:owner,
+      name:'Synthetic confirmed bottom',category:'Uncategorized',
+      itemType:'Unknown',color:'Unknown',singleGarmentVerified:false,
+      image:secondJPEG,sourceSHA256:secondSHA,sourceHashVerified:true,
+      originalPhoto:{image:secondJPEG,sha256:secondSHA,ownerId:owner}};
+     await update({states:[{id:'draft',batch:[structuredClone(bottom)]}]});
+     const bottomReview={confirmed:true,recordId:bottom.id,
+      originalSHA256:secondSHA,category:'Bottoms',itemType:'Jeans',
+      color:'Gray',singleGarmentConfirmed:true};
+     const secondSaved=await commitHumanReviewedPhoto119({
+      db,ownerId:owner,currentOwner:()=>window.closetAuth?.user?.id,
+      record:bottom,review:bottomReview,cryptoProvider:crypto,assertLease:lease
+     });
+     if(secondSaved.saved!==true||secondSaved.releaseAuthorized!==false)
+      throw Error('Second PHOTO119 independently sourced synthetic review refused');
+     const secondRow=(await readRows()).items.find(x=>x.id===bottom.id);
+     if(secondRow?.originalPhoto?.image!==secondJPEG||
+        secondRow.sourceSHA256!==secondSHA||secondRow.ownerReviewed!==true)
+      throw Error('Second PHOTO119 original review lost durable source');
      const outfit={id:'outfit-board',current:{name:'Owner selected',
-      occasion:'Casual',slots:{top:'p93-original'}},
+      occasion:'Casual',slots:{top:'p93-original',bottom:'m127-bottom'}},
       saved:[{name:'Saved owned outfit',occasion:'Casual',
-      slots:{top:'p93-original'}}]};
+      slots:{top:'p93-original',bottom:'m127-bottom'}}]};
      await update({states:[outfit,
       {id:'cloud-sync',localRevision:3,baseVersion:1,baseDocument:null,dirty:false}]});
      items=(await readAllFrom(db)).map(normalizeClothing);
@@ -177,8 +206,12 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
      const exported=await exportDurableOwnerBackupM3({ownerDB:db,ownerId:owner,
       assertLease:()=>{if(window.closetAuth?.user?.id!==owner)throw Error('owner revoked');},
       assertIdle:()=>{}});
-     if(exported.data?.items?.[0]?.originalPhoto?.image!==originalJPEG||
-        exported.data?.outfitBoard?.current?.slots?.top!=='p93-original')
+     const exportedById=new Map(exported.data?.items?.map(x=>[x.id,x]));
+     if(exportedById.size!==2||
+        exportedById.get('p93-original')?.originalPhoto?.image!==originalJPEG||
+        exportedById.get('m127-bottom')?.originalPhoto?.image!==secondJPEG||
+        exported.data?.outfitBoard?.current?.slots?.top!=='p93-original'||
+        exported.data?.outfitBoard?.current?.slots?.bottom!=='m127-bottom')
       throw Error('Lossless original export invariant failed');
      // Independent large-camera SHA/thumbnail refusal and v3 recovery tests
      // remain in the other, unchanged P93 M101 browser harness.
@@ -195,22 +228,30 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
      const state=Object.fromEntries(after.state.map(x=>[x.id,x]));
      return {largePhoto119NotSilentlySaved:largeDenied.saved===false,
       reviewedSmallPhoto119Saved:row.ownerReviewed===true,
-      exportedSourceExact:exported.data.items[0].originalPhoto.image===originalJPEG,
-      exportedOriginalHashExact:exported.data.items[0].sourceSHA256===originalSHA,
+      exportedSourceExact:exportedById.get('p93-original')?.originalPhoto.image===originalJPEG&&
+       exportedById.get('m127-bottom')?.originalPhoto.image===secondJPEG,
+      exportedOriginalHashExact:exportedById.get('p93-original')?.sourceSHA256===originalSHA&&
+       exportedById.get('m127-bottom')?.sourceSHA256===secondSHA,
       exportedV3:exported.data.version===3,
       beforeEmpty:before.items.length===0,
-      restoredOnlyOwnOriginal:after.items.length===1&&
-       after.items[0].id==='p93-original'&&after.items[0].ownerId===owner,
-      preservedOriginalBytes:after.items[0]?.originalPhoto?.image===originalJPEG,
-      preservedSHA:after.items[0]?.sourceSHA256===originalSHA&&
-       after.items[0]?.originalPhoto?.sha256===originalSHA,
+      restoredOnlyOwnOriginal:after.items.length===2&&
+       after.items.every(x=>x.ownerId===owner)&&
+       new Set(after.items.map(x=>x.id)).size===2,
+      preservedOriginalBytes:after.items.find(x=>x.id==='p93-original')?.originalPhoto?.image===originalJPEG&&
+       after.items.find(x=>x.id==='m127-bottom')?.originalPhoto?.image===secondJPEG,
+      preservedSHA:after.items.find(x=>x.id==='p93-original')?.sourceSHA256===originalSHA&&
+       after.items.find(x=>x.id==='p93-original')?.originalPhoto?.sha256===originalSHA&&
+       after.items.find(x=>x.id==='m127-bottom')?.sourceSHA256===secondSHA&&
+       after.items.find(x=>x.id==='m127-bottom')?.originalPhoto?.sha256===secondSHA,
       selectedBoardRecovered:state['outfit-board']?.current?.slots?.top==='p93-original'&&
-       state['outfit-board']?.saved?.[0]?.slots?.top==='p93-original',
+       state['outfit-board']?.current?.slots?.bottom==='m127-bottom'&&
+       state['outfit-board']?.saved?.[0]?.slots?.top==='p93-original'&&
+       state['outfit-board']?.saved?.[0]?.slots?.bottom==='m127-bottom',
       cloudDirty:state['cloud-sync']?.dirty===true,
       cloudRevision:state['cloud-sync']?.localRevision,
       actualUIImport:status.includes('imported atomically'),
       cloudMarkerChanged:window.__p93CloudChanged||0};
-    },{owner,previewJPEG,originalJPEG,originalSHA,largeOriginalJPEG,largeOriginalSHA});
+    },{owner,previewJPEG,originalJPEG,originalSHA,secondJPEG,secondSHA,largeOriginalJPEG,largeOriginalSHA});
     for(const [field,value] of Object.entries(result)){
      if(['cloudRevision','cloudMarkerChanged'].includes(field))continue;
      assert.equal(value,true,engine+' width '+width+' lost reviewed native owner source at '+field);
@@ -222,7 +263,7 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
     await page.reload({waitUntil:'domcontentloaded'});
     await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady,inspirationReady]));
     await page.waitForFunction(()=>window.closetAuth?.user?.id&&
-     currentBoard?.slots?.top==='p93-original',null,{timeout:30000});
+     currentBoard?.slots?.top==='p93-original'&&currentBoard.slots.bottom==='m127-bottom',null,{timeout:30000});
     await page.evaluate(()=>switchView('builder'));
     await page.locator('#mission4Preview1054Section button').click();
     await page.waitForFunction(()=>{
@@ -327,14 +368,13 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
     assert.match(previewStatus,/original photo\(s\) verified.*2D only/,
      'Restored original source failed signed-owner source-to-2D preflight: '+previewStatus);
     const imgs=page.locator('#mission4Preview1054Photos img');
-    assert.equal(await imgs.count(),1,'Expected one source-verified 2D photo');
-    const displayed=await imgs.first().evaluate(async im=>{
-      await im.decode();
-      return {src:im.getAttribute('src'),w:im.naturalWidth,h:im.naturalHeight};
-    });
-    assert.equal(displayed.src,originalJPEG,
-     'Native Outfit Builder substituted preview for the restored full original');
-    assert(displayed.w>0&&displayed.h>0,'Restored original JPEG did not decode');
+    assert.equal(await imgs.count(),2,'Expected two source-verified 2D owner originals');
+    const displayed=await imgs.evaluateAll(async imgs=>Promise.all(imgs.map(async im=>{
+      await im.decode();return {src:im.getAttribute('src'),w:im.naturalWidth,h:im.naturalHeight};
+    })));
+    assert.deepEqual(new Set(displayed.map(x=>x.src)),new Set([originalJPEG,secondJPEG]),
+     'Native Outfit Builder substituted a preview for restored source JPEGs');
+    assert(displayed.every(x=>x.w>0&&x.h>0),'Restored original JPEG failed to decode');
     assert.equal(await page.locator('#outfit3D01Canvas').count(),0,
      'Unfitted restored photo must not authorize 3D');
     assert.deepEqual(errors,[],'Browser application errors');
@@ -344,7 +384,7 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
      originalEncodedLength:originalJPEG.length,canonicalOriginalSHAValid:true,
      actualUIV3RestoreVerified:true,losslessOriginal:true,
      ownerOriginalOutfitRecovered:true,
-     restoredPhoto2DVerified:true,restoredPhotoOriginalSHA:originalSHA,
+     restoredPhoto2DVerified:true,restoredOriginalCount:2,independentlyReviewedSyntheticSources:2,
      sourceTo3DAllowed:false,
      realHostedJWT:false,modelAccuracyMeasured:false,physicalDevice:false});
    }finally{
@@ -353,10 +393,10 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
   }
  }
  assert.equal(cases.length,3);
- const report={schema:'M123-main-reviewed-owner-v3-restored-original-2d/v1',
+ const report={schema:'M127-main-two-reviewed-owner-v3-restored-originals-2d/v1',
   familyAlpha:'HOLD',sourcePhotoPublicSyntheticMetadata:true,
   exactSourceSHAVerified:true,releaseAuthorized:false,
   realBrowserEngines:[selectedEngine],cases,errors};
  await writeFile(resolve(output,'results.json'),JSON.stringify(report,null,2)+'\n');
- console.log('M123 MAIN PHOTO119 reviewed original -> owner v3 backup/UI restore -> signed original 2D 3/3 PASS; mismatched large preview correctly vetoed; HOLD');
+ console.log('M127 MAIN TWO PHOTO119 reviewed distinct-source originals -> owner v3 UI restore -> signed outfit 2D 3/3 PASS; mismatched large preview vetoed; HOLD');
 }finally{server.close();}
