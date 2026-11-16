@@ -344,7 +344,7 @@ jobs:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       P92_ENGINE: ${{ matrix.engine }}
       P92_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      P92_MAIN_PIN: c4e45aa684f7120d216ae4eec192d4085823b073
+      P92_MAIN_PIN: 635bd385d0fbcc9a0dd59cce62e74cd310be283a
     steps:
       - uses: actions/checkout@v4
         with:
@@ -362,7 +362,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
           git cat-file -e "$P92_MAIN_PIN^{commit}"
           test "$(git rev-parse "$P92_MAIN_PIN:public/outfit-board.js")" = 22e76c92dc31d8a10d8186e259a4e3784e4b3c84
-          test "$(git rev-parse "$P92_MAIN_PIN:scripts/test-main1054-m106-preview-terminal-browser.mjs")" = 49edecd8e9338290ac54e7273ce2518c3b9b753e
+          test "$(git rev-parse "$P92_MAIN_PIN:scripts/test-main1054-m106-preview-terminal-browser.mjs")" = b147ca914e72999bd310caa70a6581407a19a547
           mkdir -p /tmp/p92-m108-rehearsal
           git worktree add --detach "/tmp/p92-m108-rehearsal/$P92_ENGINE" "$P92_MAIN_PIN"
           cd "/tmp/p92-m108-rehearsal/$P92_ENGINE"
@@ -371,30 +371,15 @@ jobs:
           test -z "$(git status --porcelain)"
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
           node --check scripts/test-main1054-m106-preview-terminal-browser.mjs
-          # Main M108 failure-only diagnostic references loop-local `width`
-          # from the top-level clickPreview helper. On a real timeout this
-          # masks TimeoutError with ReferenceError. Patch ONLY one log field
-          # inside an UNTRACKED test-copy; all M51 assertions/app/SHA untouched.
-          node --input-type=module - <<'JS'
-          import assert from 'node:assert/strict';
-          import {readFileSync,writeFileSync} from 'node:fs';
-          const original='scripts/test-main1054-m106-preview-terminal-browser.mjs';
-          const diagnostic='scripts/.parallel92-m106-safe-diagnostic.mjs';
-          const src=readFileSync(original,'utf8');
-          const before="console.error('M108_REENTRY_TIMEOUT_SAFE',JSON.stringify({engine,width,stage,...facts}));";
-          const after="console.error('M108_REENTRY_TIMEOUT_SAFE',JSON.stringify({engine,width:activeWidth,stage,...facts}));";
-          assert.equal(src.split(before).length,2,'main M108 diagnostic source drift: refuse scratch overlay');
-          writeFileSync(diagnostic,src.replace(before,after));
-          JS
-          trap 'rm -f scripts/.parallel92-m106-safe-diagnostic.mjs' EXIT
-          node --check scripts/.parallel92-m106-safe-diagnostic.mjs
+          # M146 main now owns the one-line source-safe failure-logger
+          # correction. Run its ORIGINAL exact pinned M106 test byte-for-byte.
+          # Never mask main WebKit preview failures with a disposable patch.
+          node --check scripts/test-main1054-m106-preview-terminal-browser.mjs
           if [ "$P92_ENGINE" = "webkit" ]; then REPS=12; else REPS=6; fi
           for trial in $(seq 1 "$REPS"); do
             echo "P92 CURRENT-MAIN SOURCE-LOCKED $P92_ENGINE FRESH PROCESS $trial/$REPS, MAIN PIN $P92_MAIN_PIN"
-            M51_ENGINE="$P92_ENGINE" node scripts/.parallel92-m106-safe-diagnostic.mjs
+            M51_ENGINE="$P92_ENGINE" node scripts/test-main1054-m106-preview-terminal-browser.mjs
           done
-          rm -f scripts/.parallel92-m106-safe-diagnostic.mjs
-          trap - EXIT
           test "$(git rev-parse HEAD)" = "$P92_MAIN_PIN"
           # Source must remain unchanged. M51 intentionally writes public-fixture
           # screenshot/receipt outputs to benchmark/, which are untracked artifacts,
@@ -415,7 +400,7 @@ jobs:
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       P92_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      P92_MAIN_PIN: c4e45aa684f7120d216ae4eec192d4085823b073
+      P92_MAIN_PIN: 635bd385d0fbcc9a0dd59cce62e74cd310be283a
     steps:
       - uses: actions/checkout@v4
         with:
@@ -432,14 +417,14 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
           test "$(git rev-parse "$P92_MAIN_PIN:public/outfit-board.js")" = 22e76c92dc31d8a10d8186e259a4e3784e4b3c84
-          test "$(git rev-parse "$P92_MAIN_PIN:public/app.js")" = b905392a2e81b4d93912aa7e4b1b5be663b436e4
+          test "$(git rev-parse "$P92_MAIN_PIN:public/app.js")" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
           test "$(git rev-parse "$P92_MAIN_PIN:public/native-reviewed-private-save-167.mjs")" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
           test "$(git rev-parse "$P92_MAIN_PIN:tests/main1054-m132-photo119-large-display-preview.test.mjs")" = 79295b94fc0b1abe954a621ccf056abb23a902a6
           test "$(git rev-parse "$P92_MAIN_PIN:public/native-default-verified-backup-export-m3.mjs")" = e70fdc392c2652dc969b7d7c4b807f3cafd81e03
           test "$(git rev-parse "$P92_MAIN_PIN:public/native-default-atomic-import-m3.mjs")" = e739f1533108d53961483d761a27f0525623af3d
           test "$(git rev-parse "$P92_MAIN_PIN:tests/main1054-m104-large-original-export-receipts.test.mjs")" = 8bd85aba7a91a316b30bcd71f42c642dda626230
           test "$(git rev-parse "$P92_MAIN_PIN:scripts/test-mission3-default-atomic-import-browser.mjs")" = 375ff22b8c69bd6f7ddb19fc59cb6c4460eb7ba8
-          test "$(git rev-parse "$P92_MAIN_PIN:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs")" = 4318240d3536818bdd56188fa91929fc0d509eb5
+          test "$(git rev-parse "$P92_MAIN_PIN:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs")" = b76ffa0625d421a36a1cf3bcc00d109e9cea42b9
           git worktree add --detach /tmp/p92-current-main-owner-export-atomic "$P92_MAIN_PIN"
           cd /tmp/p92-current-main-owner-export-atomic
           git config --global --add safe.directory "$PWD"
@@ -463,135 +448,13 @@ jobs:
           # source >3MB, local photo-derived display JPEG owner confirmation,
           # atomic PHOTO119 private save, real v3 backup + UI restore, plus
           # two further reviewed distinct originals and signed outfit 2D.
-          # The original M141 native failure already emits safe fixed-shape
-          # M144 diagnostics inside the browser; Playwright's page console was
-          # not forwarded into the CI log. Add ONLY a read-only allowlisted
-          # browser-console bridge inside an UNTRACKED test copy, leaving
-          # owner review, source SHA, all original assertions and app intact.
-          node --input-type=module - <<'JS'
-          import assert from 'node:assert/strict';
-          import {readFileSync,writeFileSync} from 'node:fs';
-          const path='scripts/test-main1054-m123-photo119-restore-2d-browser.mjs';
-          const src=readFileSync(path,'utf8');
-          const marker="    page.on('pageerror',e=>errors.push({engine,width,kind:String(e.name||'page-error')}));";
-          assert.equal(src.split(marker).length,2,'source M141 browser console lifecycle changed');
-          assert(src.includes("console.error('M144_SAFE_EDITOR_FAILURE'"),
-           'M144 safe-only editor receipt missing from exact main source');
-          const trace=[
-           "    page.on('console',message=>{",
-           "     const raw=message.text();",
-           "     const prefix='M144_SAFE_EDITOR_FAILURE ';",
-           "     if(!raw.startsWith(prefix))return;",
-           "     try{",
-           "      const v=JSON.parse(raw.slice(prefix.length));",
-           "      const allowed=['saved','save-refused','other'];",
-           "      const safe={engine,width,",
-           "       category:allowed.includes(v.category)?v.category:'other',",
-           "       reasonClass:['missing-name-trim','draft-source-identity','transaction-rolled-back','owner-lease-revoked','missing-durable-draft','review-lease-changed','invalid-source-record','invalid-owner-db-boundary','owner-snapshot-aborted','review-not-verified','draft-owner-session-changed','editor-session-changed','write-owner-revoked','wardrobe-reload-needed','undefined-property','null-property','photo119-other','closet-other','unclassified'].includes(v.reasonClass)?v.reasonClass:'unclassified',",
-           "       recordPresent:v.recordPresent===true,",
-           "       ownerReviewed:v.ownerReviewed===true,",
-           "       sourceSHAConsistent:v.sourceSHAConsistent===true,",
-           "       previewConsistent:v.previewConsistent===true,",
-           "       originalConsistent:v.originalConsistent===true,",
-           "       previewReceiptValid:v.previewReceiptValid===true,",
-           "       sourceSingle:v.sourceSingle===true,",
-           "       draftStillInMemory:v.draftStillInMemory===true,",
-           "       dialogStillOpen:v.dialogStillOpen===true,",
-           "       durableDraftCount:Number.isInteger(v.durableDraftCount)?v.durableDraftCount:-1,",
-           "       photosSaved:Number.isInteger(v.photosSaved)?v.photosSaved:-1,",
-           "       familyAlpha:'HOLD',releaseAuthorized:false};",
-           "      console.error('P92_MAIN_M141_EDITOR_FAILURE_SAFE',JSON.stringify(safe));",
-           "     }catch{",
-           "      console.error('P92_MAIN_M141_EDITOR_FAILURE_SAFE',JSON.stringify({",
-           "       engine,width,receiptParse:'refused',familyAlpha:'HOLD'}));",
-           "     }",
-           "    });"
-          ].join('\n');
-          // Only fixed source-safe error categories; no arbitrary exception
-          // text, owner account, SHA or image ever leaves the browser.
-          const editorMarker="      console.error('M144_SAFE_EDITOR_FAILURE',JSON.stringify({\n       category,recordPresent:!!confirmedLargeRow,";
-          assert.equal(src.split(editorMarker).length,2,
-           'M144 owner-editor safe receipt moved; refuse wrong edit');
-          const reasonLines=[
-           "      const allowedReasons="+JSON.stringify([["Cannot read properties of undefined (reading 'trim')","missing-name-trim"],["PHOTO119 source JPEG or cutout identity differs from saved draft","draft-source-identity"],["PHOTO119 reviewed source, owner or draft commit rejected","transaction-rolled-back"],["PHOTO119 capture owner review lease revoked","owner-lease-revoked"],["PHOTO119 saved owner capture draft is missing","missing-durable-draft"],["PHOTO119 source or owner review changed after lease check","review-lease-changed"],["PHOTO119 exact owner captured source record required","invalid-source-record"],["PHOTO119 live signed-owner IndexedDB boundary required","invalid-owner-db-boundary"],["PHOTO119 original wardrobe snapshot aborted","owner-snapshot-aborted"],["Original photograph or garment review could not be verified","review-not-verified"],["The private camera draft or signed-in account changed","draft-owner-session-changed"],["CLOSET_PHOTO_EDITOR_SESSION_CHANGED","editor-session-changed"],["Private wardrobe write cancelled","write-owner-revoked"],["Saved garment needs a safe wardrobe reload","wardrobe-reload-needed"],["Cannot read properties of undefined","undefined-property"],["Cannot read properties of null","null-property"]])+";",
-           "      const reasonClass=allowedReasons.find(pair=>text.includes(pair[0]))?.[1]||",
-           "       (text.includes('PHOTO119')?'photo119-other':",
-           "        text.includes('CLOSET_')?'closet-other':'unclassified');"
-          ].join('\n');
-          const classified=src.replace(editorMarker,reasonLines+
-           "\n      console.error('M144_SAFE_EDITOR_FAILURE',JSON.stringify({\n       category,reasonClass,recordPresent:!!confirmedLargeRow,");
-          const changed=classified.replace(marker,marker+'\n'+trace);
-          assert.equal(changed.split("P92_MAIN_M141_EDITOR_FAILURE_SAFE").length,3,
-           'safe-only diagnostic must have exactly two authorized log sites');
-          writeFileSync('scripts/.parallel92-m141-safe-diagnostic.mjs',changed);
-          JS
-          trap 'rm -f scripts/.parallel92-m141-safe-diagnostic.mjs' EXIT
-          node --check scripts/.parallel92-m141-safe-diagnostic.mjs
-          # Always examine both engines ONCE (not a retry); any one failure
-          # still fails the exact full job after removing only scratch code.
-          p92_native_failures=0
-          M123_ENGINE=chromium node scripts/.parallel92-m141-safe-diagnostic.mjs benchmark/parallel92-current-main-m141-chromium || p92_native_failures=$((p92_native_failures+1))
-          M123_ENGINE=webkit node scripts/.parallel92-m141-safe-diagnostic.mjs benchmark/parallel92-current-main-m141-webkit || p92_native_failures=$((p92_native_failures+1))
-          rm -f scripts/.parallel92-m141-safe-diagnostic.mjs
-          trap - EXIT
-          if test "$p92_native_failures" -ne 0; then
-            # Source-verified isolated engineering experiment ONLY. Keep
-            # the exact untouched original app/test failures RED. Demonstrate
-            # whether a safe missing-name default alone repairs the genuine
-            # PHOTO119 owner UI + v3 recovery + original-only 2D journey.
-            # The browser receives an in-memory script response; no public/
-            # source file, saved origin, photo SHA, cloud, owner lease or 3D
-            # gate is modified, and even a candidate PASS will NOT make CI green.
-            node --input-type=module - <<'JS'
-            import assert from 'node:assert/strict';
-            import {readFileSync,writeFileSync} from 'node:fs';
-            const path='scripts/test-main1054-m123-photo119-restore-2d-browser.mjs';
-            const original=readFileSync(path,'utf8');
-            const app=readFileSync('public/app.js','utf8');
-            const oldName='draft.name.trim()';
-            const candidate="(typeof draft.name==='string'?draft.name.trim():'')";
-            assert.equal(app.split(oldName).length,2,'app name field changed; refuse unsafe candidate');
-            const pageMarker="    const page=await context.newPage();";
-            const caseMarker="    cases.push({engine,width,actualNativeApp:true,";
-            assert.equal(original.split(pageMarker).length,2,'M141 page construction changed');
-            assert.equal(original.split(caseMarker).length,2,'M141 full journey check changed');
-            const route=[
-             "    let p92PatchedRequests=0;",
-             "    await context.route('**/app.js*',async route=>{",
-             "     const body=await readFile('public/app.js','utf8');",
-             "     assert.equal(body.split("+JSON.stringify(oldName)+").length,2,'app source drift');",
-             "     ++p92PatchedRequests;",
-             "     await route.fulfill({status:200,contentType:'text/javascript',",
-             "      body:body.replace("+JSON.stringify(oldName)+","+JSON.stringify(candidate)+")});",
-             "    });"
-            ].join('\n');
-            const receipt=[
-             "    assert.ok(p92PatchedRequests>=1,'actual app name guard response was never used');",
-             "    console.log('P92_M141_ONE_LINE_DISPOSABLE_PASS',JSON.stringify({",
-             "     engine,width,ownerApproval:'synthetic',originalSource:'unchanged',",
-             "     consumerOnlyInMemory:true,releaseAuthorized:false,familyAlpha:'HOLD'",
-             "    }));"
-            ].join('\n');
-            const swapped=original.replace(pageMarker,route+'\n'+pageMarker)
-             .replace(caseMarker,receipt+'\n'+caseMarker);
-            writeFileSync('scripts/.parallel92-m141-one-line-name-guard.mjs',swapped);
-            JS
-            trap 'rm -f scripts/.parallel92-m141-one-line-name-guard.mjs' EXIT
-            node --check scripts/.parallel92-m141-one-line-name-guard.mjs
-            p92_candidate_failures=0
-            M123_ENGINE=chromium node scripts/.parallel92-m141-one-line-name-guard.mjs benchmark/parallel92-disposable-m141-chromium || p92_candidate_failures=$((p92_candidate_failures+1))
-            M123_ENGINE=webkit node scripts/.parallel92-m141-one-line-name-guard.mjs benchmark/parallel92-disposable-m141-webkit || p92_candidate_failures=$((p92_candidate_failures+1))
-            rm -f scripts/.parallel92-m141-one-line-name-guard.mjs
-            trap - EXIT
-            if test "$p92_candidate_failures" -eq 0; then
-              echo "P92 DEMONSTRATION ONLY: one missing-name safety default completes M141 in both engines; untouched main remains FAIL, HOLD"
-            else
-              echo "P92 DEMONSTRATION STILL FAILS; do not adopt candidate, HOLD"
-            fi
-            echo "P92 ORIGINAL M141 UNMODIFIED CONSUMER FAILS; DO NOT PROMOTE CANDIDATE OR RELEASE"
-            exit 1
-          fi
-          echo "P92 M141 CURRENT-MAIN BOTH ENGINES ACTUAL OWNER REVIEW PASS; NO DEPLOY, HOLD"
+          # M146 current main has the actual missing-name safety fix
+          # in public/app.js and forwards fixed M144 status categories.
+          # Run unmodified M141 whole browser journeys at three viewports
+          # in BOTH Chromium and WebKit; zero skips, no retry, strict fail.
+          node --check scripts/test-main1054-m123-photo119-restore-2d-browser.mjs
+          M123_ENGINE=chromium node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs benchmark/parallel92-current-main-m146-chromium
+          M123_ENGINE=webkit node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs benchmark/parallel92-current-main-m146-webkit
           test "$(git rev-parse HEAD)" = "$P92_MAIN_PIN"
           test -z "$(git status --porcelain --untracked-files=no)"
           # Report only untracked SOURCE PATHS, never file content, photos,
