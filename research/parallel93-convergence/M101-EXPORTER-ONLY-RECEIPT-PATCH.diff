@@ -1,0 +1,55 @@
+diff --git a/public/native-default-verified-backup-export-m3.mjs b/public/native-default-verified-backup-export-m3.mjs
+--- a/public/native-default-verified-backup-export-m3.mjs
++++ b/public/native-default-verified-backup-export-m3.mjs
+@@ -7,7 +7,9 @@
+  * are omitted. The opt-in, verified v4 lossless research path is unchanged.
+  * Never access hosted/cloud data, change the database, or deploy.
+  */
+-const imagePattern=/^data:image\/jpeg;base64,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
++// M101 source-only original JPEG validation must mirror the native importer
++// without weakening preview bounds or the signed owner / snapshot checks.
++const imagePattern=/^data:image\/jpeg;base64,[A-Za-z0-9+/]*={0,2}$/;
+ const shaPattern=/^[0-9a-f]{64}$/;
+ const mime='data:image/jpeg;base64,';
+ const own=(obj,key)=>Object.prototype.hasOwnProperty.call(obj,key);
+@@ -28,9 +30,14 @@
+  }
+  seen.delete(value);
+ }
+-async function checkedJPEG(image,claimedHash=null){
+- if(typeof image!=='string'||image.length>3_000_000||
+-    !imagePattern.test(image))fail('INVALID_JPEG');
++async function checkedJPEG(image,claimedHash=null,{maxEncoded=3_000_000,maxBytes=2_250_000}={}){
++ if(typeof image!=='string'||image.length>maxEncoded||
++    !imagePattern.test(image)||(image.length-mime.length)%4!==0)
++  fail('INVALID_JPEG');
++ const encoded=image.slice(mime.length);
++ const padding=encoded.endsWith('==')?2:encoded.endsWith('=')?1:0;
++ const predicted=encoded.length/4*3-padding;
++ if(predicted<4||predicted>maxBytes)fail('INVALID_JPEG_BYTES');
+  let bytes;
+  try{bytes=Uint8Array.from(atob(image.slice(mime.length)),v=>v.charCodeAt(0));}
+  catch{fail('INVALID_JPEG');}
+@@ -94,11 +101,17 @@
+    !row.originalPhoto?.image||row.originalPhoto.image===row.image
+     ?row.sourceSHA256||row.originalPhoto?.sha256||null
+     :null);
+-  if(row.originalPhoto?.image)
+-   await checkedJPEG(row.originalPhoto.image,
+-    row.originalPhoto.sha256||row.sourceSHA256||null);
+-  else if(row.originalPhoto?.sha256||
+-          row.sourceSHA256&&row.sourceHashVerified===true)
++  if(row.originalPhoto?.image){
++   const receipt=row.originalPhoto.sha256||row.sourceSHA256||null;
++   if(row.originalPhoto.sha256&&row.sourceSHA256&&
++      row.originalPhoto.sha256!==row.sourceSHA256)
++    fail('SOURCE_SHA_CLAIM_CONFLICT');
++   if((row.originalPhoto.image.length>3_000_000||
++       row.sourceHashVerified===true)&&!receipt)
++    fail('SOURCE_SHA_REQUIRED');
++   await checkedJPEG(row.originalPhoto.image,receipt,
++    {maxEncoded:11_200_000,maxBytes:8*1024*1024});
++  }else if(row.originalPhoto?.sha256||row.sourceHashVerified===true)
+    fail('MISSING_VERIFIED_ORIGINAL');
+   check();
+   // Older v1-v3 rows legitimately lacked an owner ID; stamp only the
