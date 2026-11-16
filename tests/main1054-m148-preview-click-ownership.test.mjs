@@ -51,3 +51,35 @@ test('active owner lease and exact current viewer never get cleared by successfu
  const state=await executeCompletion({clickSerial:4,activeSerial:4,ownedViewer:true,live:true,initialPixels:1});
  assert.deepEqual(state,{pixels:1,clears:0,ownershipRevokes:0});
 });
+
+function beginHeldNativeRefresh(){
+ // Run the ACTUAL completion source while its awaited viewer.refresh is
+ // deliberately pending, then change the live click serial and DOM ownership.
+ let finish;
+ const gate=new Promise(resolve=>finish=resolve);
+ const state={pixels:0,clears:0};
+ const viewer={status:{phase:'checking'},refresh(){return gate;},
+  clear(){state.clears++;state.pixels=0;}};
+ const scope={viewer,serial:1,mission4Preview1054ClickSerial:1,
+  mission4Preview1054Viewer:viewer,live:()=>true};
+ const complete=vm.runInNewContext(
+  '(async()=>{'+completion+'})()',scope,{timeout:2000});
+ return {scope,state,viewer,finish,complete};
+}
+test('A awaits real refresh while B publishes newer pixels; A late completion must not revoke B',async()=>{
+ const {scope,state,viewer,finish,complete}=beginHeldNativeRefresh();
+ scope.mission4Preview1054ClickSerial=2;
+ scope.live=()=>false;
+ viewer.status.phase='visible';state.pixels=2;
+ finish({slotCount:2});
+ await complete;
+ assert.deepEqual(state,{pixels:2,clears:0});
+});
+test('when no newer click owns the viewer, an async owner-lease cancellation still clears stale pixels',async()=>{
+ const {scope,state,finish,complete}=beginHeldNativeRefresh();
+ scope.live=()=>false;
+ state.pixels=1;
+ finish({slotCount:1});
+ await complete;
+ assert.deepEqual(state,{pixels:0,clears:1});
+});
