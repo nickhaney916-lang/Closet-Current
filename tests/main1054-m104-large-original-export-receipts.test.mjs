@@ -7,6 +7,7 @@ import {createHash,webcrypto} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import {exportDurableOwnerBackupM3} from '../public/native-default-verified-backup-export-m3.mjs';
+import {prepareDefaultAtomicM3} from '../public/native-default-atomic-import-m3.mjs';
 const require=createRequire(import.meta.url);
 const {indexedDB}=require('fake-indexeddb');
 globalThis.crypto??=webcrypto;
@@ -147,8 +148,9 @@ test('two independent original SHA identities remain exportable together',async(
   const bytes=Buffer.from([255,216,42,43,44,255,217]);
   const otherSHA=createHash('sha256').update(bytes).digest('hex');
   const otherOriginal=mime+bytes.toString('base64');
+  const otherThumbnail=mime+Buffer.from([255,216,99,98,255,217]).toString('base64');
   await addSavedRow(f.db,{
-   ...structuredClone(f.item),id:'other-source',
+   ...structuredClone(f.item),id:'other-source',image:otherThumbnail,
    category:'Bottoms',itemType:'Jeans',
    originalPhoto:{image:otherOriginal,sha256:otherSHA,ownerId:f.owner},
    sourceSHA256:otherSHA,sourcePieceKey:'different-original'
@@ -167,4 +169,48 @@ test('native signed-owner UI explains that an unrestorable multi-piece v3 backup
  assert.match(app,/backup format cannot safely restore them as separate pieces/);
  assert.match(app,/Your originals and saved clothing remain on this device/);
  assert.match(app,/Do not delete or reset this closet/);
+});
+
+
+const rawSingle=(item)=>({format:'closet-current',version:3,items:[item],looks:[]});
+const importerOptions=(f,backup)=>({
+ data:backup,ownerDB:f.db,ownerId:f.owner,assertLease:()=>{},
+ normalizeClothing:row=>row,validLook:row=>row,
+ cleanOutfitBoard:board=>board
+});
+test('real v3 importer and exporter both refuse different originals sharing only a preview',async()=>{
+ await withFixture(()=>{},async f=>{
+  const otherBytes=Buffer.from([255,216,2,3,255,217]);
+  const otherSHA=createHash('sha256').update(otherBytes).digest('hex');
+  const second={...structuredClone(f.item),id:'other-original-same-preview',
+   category:'Bottoms',itemType:'Jeans',sourceSHA256:otherSHA,
+   originalPhoto:{image:mime+otherBytes.toString('base64'),
+    sha256:otherSHA,ownerId:f.owner}};
+  await assert.rejects(
+   prepareDefaultAtomicM3(importerOptions(f,rawSingle(second))),
+   /LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW/);
+  await addSavedRow(f.db,second);
+  await assert.rejects(f.export(),/M3_EXPORT_SHARED_ORIGINAL_RESTORE_UNSUPPORTED/);
+ });
+});
+test('equivalent padded Base64 spelling of shared preview cannot bypass v3 duplicate refusal',async()=>{
+ await withFixture(()=>{},async f=>{
+  const otherBytes=Buffer.from([255,216,9,10,255,217]);
+  const otherSHA=createHash('sha256').update(otherBytes).digest('hex');
+  assert.match(thumbnail,/Q==$/);
+  const alias=thumbnail.replace(/Q==$/,'R==');
+  assert.notEqual(alias,thumbnail);
+  assert.deepEqual(Buffer.from(alias.slice(mime.length),'base64'),
+   Buffer.from(thumbnail.slice(mime.length),'base64'));
+  const second={...structuredClone(f.item),id:'same-preview-pad-bits',
+   category:'Bottoms',itemType:'Jeans',image:alias,
+   sourceSHA256:otherSHA,
+   originalPhoto:{image:mime+otherBytes.toString('base64'),
+    sha256:otherSHA,ownerId:f.owner}};
+  await assert.rejects(
+   prepareDefaultAtomicM3(importerOptions(f,rawSingle(second))),
+   /LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW/);
+  await addSavedRow(f.db,second);
+  await assert.rejects(f.export(),/M3_EXPORT_SHARED_ORIGINAL_RESTORE_UNSUPPORTED/);
+ });
 });
