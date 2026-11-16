@@ -8,7 +8,6 @@ import {mkdtemp,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {spawnSync} from 'node:child_process';
 import {runInNewContext} from 'node:vm';
 import {createHash,webcrypto} from 'node:crypto';
 import {prepareDefaultAtomicM3} from '../public/native-default-atomic-import-m3.mjs';
@@ -82,10 +81,12 @@ async function donor(mode='exact'){
  assert(['exact','linear-adapter'].includes(mode));
  const tmp=await mkdtemp(join(tmpdir(),'p93-import-donor-'));
  const path=join(tmp,mode+'-legacy-atomic-merge.mjs');
- const git=spawnSync('git',['show',M3+':research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs'],{encoding:'utf8',maxBuffer:5e6});
+ const raw=readFileSync('research/parallel93-convergence/immutable-m3-legacy-import.donor.mjs');
+ const blobSha=createHash('sha1').update('blob '+raw.length+'\\0').update(raw).digest('hex');
+ assert.equal(blobSha,'2d9ad8a5309a2f2392bd35ccfd1b0b2ad0ce7491',
+  'Immutable M3 donor changed: '+M3);
  try{
-  assert.equal(git.status,0,'Pinned M3 donor available in full Git checkout');
-  let donorSource=git.stdout;
+  let donorSource=raw.toString('utf8');
   if(mode==='linear-adapter'){
    const oldLine=donorSource.split('\n').find(x=>x.startsWith('const img='));
    assert(oldLine?.includes('(?:[A-Za-z0-9+/]{4})*'),
