@@ -26,6 +26,12 @@ const largeOriginalSHA=createHash('sha256').update(full).digest('hex');
 assert(largeOriginalJPEG.length>3_000_000&&largeOriginalJPEG.length<11_200_000);
 const originalJPEG='data:image/jpeg;base64,'+originBytes.toString('base64');
 const originalSHA=createHash('sha256').update(originBytes).digest('hex');
+// M130: a genuine display thumbnail is derived from the same public
+// photographed source; its independently computed SHA is only a display
+// receipt, NEVER proof of a physical segment or an independently fitted 3D.
+const displayBytes=await sharp(originBytes).resize({width:160}).jpeg({quality:70}).toBuffer();
+const largeDisplayJPEG='data:image/jpeg;base64,'+displayBytes.toString('base64');
+const largeDisplaySHA=createHash('sha256').update(displayBytes).digest('hex');
 assert(originalJPEG.length<=3_000_000);
 // A second independently sourced PUBLIC JPEG, distinct from the first,
 // proves two actual PHOTO119 owner review commits and both outfit slots.
@@ -107,7 +113,7 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
     page.on('pageerror',e=>errors.push({engine,width,kind:String(e.name||'page-error')}));
     await page.goto(local+'/?mission4Preview=research',{waitUntil:'domcontentloaded'});
     await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady,inspirationReady]));
-    const result=await page.evaluate(async({owner,previewJPEG,originalJPEG,originalSHA,secondJPEG,secondSHA,largeOriginalJPEG,largeOriginalSHA})=>{
+    const result=await page.evaluate(async({owner,previewJPEG,originalJPEG,originalSHA,secondJPEG,secondSHA,largeOriginalJPEG,largeOriginalSHA,largeDisplayJPEG,largeDisplaySHA})=>{
      const readRows=()=>new Promise((resolve,reject)=>{
       const tx=db.transaction(['items','state'],'readonly');
       const i=tx.objectStore('items').getAll(),s=tx.objectStore('state').getAll();
@@ -152,6 +158,54 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
         largeDenied.sourceKind!=='original-source-unverified'||
         JSON.stringify(await readRows())!==JSON.stringify(beforeLarge))
       throw Error('PHOTO119 incorrectly accepted large source/thumbnail or changed owner DB');
+     // M130: unlike the negative unrelated preview, this owner explicitly
+     // confirms a separately SHA-verified display-only preview of the full
+     // >3M encoded camera JPEG. Keep it distinct from cutout/3D geometry.
+     const largeConfirmedRecord={...largeRecord,image:largeDisplayJPEG,
+      displayPreviewReceipt:{schema:'photo119-owner-display-preview/v1',
+       ownerId:owner,originalSHA256:largeOriginalSHA,
+       previewSHA256:largeDisplaySHA,displayOnly:true}};
+     await update({states:[{id:'draft',batch:[structuredClone(largeConfirmedRecord)]}]});
+     const largeConfirmed=await commitHumanReviewedPhoto119({
+      db,ownerId:owner,currentOwner:()=>window.closetAuth?.user?.id,
+      record:largeConfirmedRecord,
+      review:{...largeReview,previewConfirmed:true,previewSHA256:largeDisplaySHA},
+      cryptoProvider:crypto,assertLease:lease
+     });
+     if(largeConfirmed.saved!==true||
+        largeConfirmed.sourceKind!=='human-reviewed-original-single-display-preview'||
+        largeConfirmed.releaseAuthorized!==false)
+      throw Error('M130 distinct display preview with owner SHA confirmation refused');
+     const confirmedLargeRow=(await readRows()).items.find(x=>x.id===largeRecord.id);
+     if(confirmedLargeRow?.originalPhoto?.image!==largeOriginalJPEG||
+        confirmedLargeRow?.image!==largeDisplayJPEG||
+        confirmedLargeRow?.sourceSHA256!==largeOriginalSHA||
+        confirmedLargeRow?.displayPreviewReceipt?.previewSHA256!==largeDisplaySHA||
+        confirmedLargeRow?.singleGarmentVerified!==true)
+      throw Error('M130 original or display SHA lost after atomic owner review');
+     const {exportDurableOwnerBackupM3:exportLarge}=await import('./native-default-verified-backup-export-m3.mjs');
+     const largeExport=await exportLarge({ownerDB:db,ownerId:owner,
+      assertLease:lease,assertIdle:()=>{}});
+     if(largeExport.data.items.length!==1||
+        largeExport.data.items[0].originalPhoto.image!==largeOriginalJPEG||
+        largeExport.data.items[0].image!==largeDisplayJPEG)
+      throw Error('M130 v3 backup lost owner-reviewed large original');
+     await update({clear:true});
+     window.confirm=()=>true;
+     await document.getElementById('import').onchange({target:{
+      files:[{size:largeExport.json.length,text:async()=>largeExport.json}],
+      value:'m130-large-original-backup'}});
+     const largeRestored=(await readRows()).items;
+     if(largeRestored.length!==1||
+        largeRestored[0]?.originalPhoto?.image!==largeOriginalJPEG||
+        largeRestored[0]?.image!==largeDisplayJPEG||
+        largeRestored[0]?.sourceSHA256!==largeOriginalSHA||
+        largeRestored[0]?.displayPreviewReceipt?.previewSHA256!==largeDisplaySHA)
+      throw Error('M130 native v3 owner UI restore lost large reviewed source');
+     await update({clear:true});
+     // Test-only counter scope reset: only the FINAL two-piece import below
+     // should count toward the existing exactly-once cloud marker assertion.
+     window.__p93CloudChanged=0;
      // Positive control: actual PHOTO119 signed-owner save of one smaller
      // authentic public JPEG. Labels are explicitly SYNTHETIC owner input.
      const record={
@@ -227,6 +281,9 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
      const status=document.getElementById('message')?.textContent||'';
      const state=Object.fromEntries(after.state.map(x=>[x.id,x]));
      return {largePhoto119NotSilentlySaved:largeDenied.saved===false,
+      largeExplicitPreviewPhoto119Saved:largeConfirmed.saved===true,
+      largeOriginalV3UIRecovered:largeRestored.length===1&&
+       largeRestored[0]?.originalPhoto?.image===largeOriginalJPEG,
       reviewedSmallPhoto119Saved:row.ownerReviewed===true,
       exportedSourceExact:exportedById.get('p93-original')?.originalPhoto.image===originalJPEG&&
        exportedById.get('m127-bottom')?.originalPhoto.image===secondJPEG,
@@ -251,7 +308,7 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
       cloudRevision:state['cloud-sync']?.localRevision,
       actualUIImport:status.includes('imported atomically'),
       cloudMarkerChanged:window.__p93CloudChanged||0};
-    },{owner,previewJPEG,originalJPEG,originalSHA,secondJPEG,secondSHA,largeOriginalJPEG,largeOriginalSHA});
+    },{owner,previewJPEG,originalJPEG,originalSHA,secondJPEG,secondSHA,largeOriginalJPEG,largeOriginalSHA,largeDisplayJPEG,largeDisplaySHA});
     for(const [field,value] of Object.entries(result)){
      if(['cloudRevision','cloudMarkerChanged'].includes(field))continue;
      assert.equal(value,true,engine+' width '+width+' lost reviewed native owner source at '+field);
