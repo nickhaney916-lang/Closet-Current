@@ -111,6 +111,13 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
     });
     const page=await context.newPage();
     page.on('pageerror',e=>errors.push({engine,width,kind:String(e.name||'page-error')}));
+    // M146: surface ONLY M144's fixed photo-free diagnostic in CI, never
+    // full application console output, JPEG strings, source hashes or tokens.
+    page.on('console',entry=>{
+     const safe=entry.text();
+     if(entry.type()==='error'&&safe.startsWith('M144_SAFE_EDITOR_FAILURE '))
+      console.error(safe);
+    });
     await page.goto(local+'/?mission4Preview=research',{waitUntil:'domcontentloaded'});
     await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady,inspirationReady]));
     const result=await page.evaluate(async({owner,previewJPEG,originalJPEG,originalSHA,secondJPEG,secondSHA,largeOriginalJPEG,largeOriginalSHA,largeDisplayJPEG,largeDisplaySHA})=>{
