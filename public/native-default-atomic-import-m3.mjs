@@ -6,7 +6,11 @@
 const own=(x,k)=>Object.prototype.hasOwnProperty.call(x,k);
 const plain=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const safeId=x=>typeof x==='string'&&x.length>0&&x.length<=100&&!/[\u0000-\u001f]/.test(x);
-const img=/^data:image\/jpeg;base64,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+// M98: linear Base64 guard; grouped repetition exhausts call stacks with
+// camera-size originals. The preview and full-original limits remain distinct.
+const jpegPrefix='data:image/jpeg;base64,';
+const base64Chars=/^[A-Za-z0-9+/]*={0,2}$/;
+const maxOriginalEncoded=11_200_000,maxOriginalBytes=8*1024*1024;
 const sha=/^[0-9a-f]{64}$/;
 function inspectTree(x,owner,depth=0,seen=new WeakSet()){
  if(depth>32)throw Error('LEGACY_ATOMIC_METADATA_DEPTH');
@@ -24,11 +28,22 @@ function inspectTree(x,owner,depth=0,seen=new WeakSet()){
  }
  seen.delete(x);
 }
-async function verifyImage(image,hash=null){
- if(typeof image!=='string'||image.length>3_000_000||!img.test(image))
+async function verifyImage(image,hash=null,{original=false}={}){
+ // Keep strict preview bound; camera-original SHA receipts permit 8MiB source.
+ const maxEncoded=original?maxOriginalEncoded:3_000_000;
+ if(typeof image!=='string'||image.length>maxEncoded||
+    !image.startsWith(jpegPrefix))throw Error('LEGACY_ATOMIC_INVALID_JPEG');
+ const encoded=image.slice(jpegPrefix.length);
+ if(encoded.length%4!==0||!base64Chars.test(encoded))
   throw Error('LEGACY_ATOMIC_INVALID_JPEG');
- const bytes=Uint8Array.from(atob(image.slice('data:image/jpeg;base64,'.length)),x=>x.charCodeAt(0));
- if(bytes.length<4||bytes[0]!==255||bytes[1]!==216)
+ const padding=encoded.endsWith('==')?2:encoded.endsWith('=')?1:0;
+ const decodedLength=encoded.length/4*3-padding;
+ if(decodedLength<4||decodedLength>maxOriginalBytes)
+  throw Error('LEGACY_ATOMIC_INVALID_JPEG_BYTES');
+ let bytes;
+ try{bytes=Uint8Array.from(atob(encoded),x=>x.charCodeAt(0));}
+ catch{throw Error('LEGACY_ATOMIC_INVALID_JPEG');}
+ if(bytes.length!==decodedLength||bytes[0]!==255||bytes[1]!==216)
   throw Error('LEGACY_ATOMIC_INVALID_JPEG_BYTES');
  if(hash){
   if(!sha.test(hash))throw Error('LEGACY_ATOMIC_INVALID_SHA');
@@ -90,7 +105,8 @@ export async function prepareDefaultAtomicM3({
   await verifyImage(row.image,(!row.originalPhoto?.image||row.originalPhoto.image===row.image)
    ?row.sourceSHA256||row.originalPhoto?.sha256||null:null);
   if(row.originalPhoto?.image){
-   await verifyImage(row.originalPhoto.image,row.originalPhoto.sha256||row.sourceSHA256||null);
+   await verifyImage(row.originalPhoto.image,row.originalPhoto.sha256||row.sourceSHA256||null,
+    {original:true});
   }else if(row.originalPhoto?.sha256||row.sourceSHA256&&row.sourceHashVerified===true){
    throw Error('LEGACY_ATOMIC_MISSING_ORIGINAL');
   }

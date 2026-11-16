@@ -11,8 +11,8 @@ import {join} from 'node:path';
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
 const sha=git('rev-parse','HEAD');
 assert.equal(sha,process.env.P92_CHECKOUT_SHA,'must execute exact checked-out SHA');
-const m97='238577c7fc61c4c3dcb9cea11483a00ebdb9ea1b';
-assert.equal(git('merge-base',m97,sha),m97,'current M90 source not in ancestry');
+const m98='c387be237600bb93ce86f7955c2bb86692f80a26';
+assert.equal(git('merge-base',m98,sha),m98,'current M90 source not in ancestry');
 const script='scripts/test-main51-real-app-owner-original-2d.mjs';
 assert.equal(git('rev-parse','HEAD:'+script),
  '63cc9da00eaecbeb2576482dcae1528b44ea8189',
@@ -24,7 +24,7 @@ assert.equal(git('rev-parse','HEAD:public/outfit-board.js'),
  '42dc1a7a2503a1722e6addcd0b8613a7eb029b60',
  'Outfit Builder changed outside test ownership');
 assert.equal(git('rev-parse','HEAD:scripts/test-mission3-default-atomic-import-browser.mjs'),
- '20f85d5eeda42f2acd921f1393c10cc7522d22df','M91 native import acceptance changed');
+ '9e98aa31d26a3fda0594e1c76e995d55e7844b3a','M91 native import acceptance changed');
 assert.ok(readFileSync(script,'utf8').includes("stage='m97-live-selected-original-photo-mutation-revokes-without-board-change'")&&
  readFileSync(script,'utf8').includes("stage='m97-inflight-changed-source-must-not-publish-stale-original'"),
  'M97 live and in-flight source revocation acceptance missing');
@@ -78,7 +78,7 @@ for(let trial=1;trial<=total;trial++){
  }
 }
 const receipt={schema:'P92_M97_NATIVE_SOURCE_MUTATION_WEBKIT_REENTRY/v4',
- exactHead:sha,mainSourceM97:m97,
+ exactHead:sha,mainSourceM98:m98,
  nativeSourceBlob:'63cc9da00eaecbeb2576482dcae1528b44ea8189',
  expected:total,attempted:runs.length,
  result:runs.length===total&&runs.every(r=>r.status==='PASS')?'PASS':'FAIL',
