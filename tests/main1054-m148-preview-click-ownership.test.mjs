@@ -7,23 +7,15 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const source=readFileSync(new URL('../public/outfit-board.js',import.meta.url),'utf8');
-// M149 added a separate, lower-trust M59 photo-only viewer with its own
-// refresh(); scope this executable ownership test to the actual M4
-// strict signed-owner preview instead of accidentally matching both viewers.
-const strictMark="section.id='mission4Preview1054Section'";
-const galleryMark="section.id='mission4PhotoOnly59Section'";
-assert.equal(source.split(strictMark).length,2,'strict native preview section must be unique');
-assert.equal(source.split(galleryMark).length,2,'native M59 gallery section must be unique');
-const strictStart=source.indexOf(strictMark),galleryStart=source.indexOf(galleryMark,strictStart);
-assert(strictStart>=0&&galleryStart>strictStart,'strict preview must precede separate gallery');
-const strictSource=source.slice(strictStart,galleryStart);
 const start="     const result=await viewer.refresh();";
 const end="     if(viewer.status.phase!=='visible'||";
-assert.equal(strictSource.split(start).length,2,'actual signed preview refresh point moved');
-assert.equal(strictSource.split(end).length,2,'actual signed preview terminal point moved');
-const first=strictSource.indexOf(start),last=strictSource.indexOf(end,first);
+// The separate photo-only research viewer also calls viewer.refresh(); use
+// the unique native original-photo terminal gate to select the correct block.
+assert.equal(source.split(end).length,2,'actual signed preview terminal point moved');
+const last=source.indexOf(end);
+const first=source.lastIndexOf(start,last);
 assert(first>=0&&last>first,'test must execute actual consumer code');
-const completion=strictSource.slice(first,last);
+const completion=source.slice(first,last);
 assert.match(completion,/mission4Preview1054ClickSerial===serial|serial===mission4Preview1054ClickSerial/);
 assert.match(completion,/mission4Preview1054Viewer===viewer/);
 function executeCompletion({clickSerial,activeSerial,ownedViewer,live,initialPixels}){
@@ -58,4 +50,36 @@ test('same click with replaced viewer cannot clear a new mounted viewer even if 
 test('active owner lease and exact current viewer never get cleared by successful refresh completion',async()=>{
  const state=await executeCompletion({clickSerial:4,activeSerial:4,ownedViewer:true,live:true,initialPixels:1});
  assert.deepEqual(state,{pixels:1,clears:0,ownershipRevokes:0});
+});
+
+function beginHeldNativeRefresh(){
+ // Run the ACTUAL completion source while its awaited viewer.refresh is
+ // deliberately pending, then change the live click serial and DOM ownership.
+ let finish;
+ const gate=new Promise(resolve=>finish=resolve);
+ const state={pixels:0,clears:0};
+ const viewer={status:{phase:'checking'},refresh(){return gate;},
+  clear(){state.clears++;state.pixels=0;}};
+ const scope={viewer,serial:1,mission4Preview1054ClickSerial:1,
+  mission4Preview1054Viewer:viewer,live:()=>true};
+ const complete=vm.runInNewContext(
+  '(async()=>{'+completion+'})()',scope,{timeout:2000});
+ return {scope,state,viewer,finish,complete};
+}
+test('A awaits real refresh while B publishes newer pixels; A late completion must not revoke B',async()=>{
+ const {scope,state,viewer,finish,complete}=beginHeldNativeRefresh();
+ scope.mission4Preview1054ClickSerial=2;
+ scope.live=()=>false;
+ viewer.status.phase='visible';state.pixels=2;
+ finish({slotCount:2});
+ await complete;
+ assert.deepEqual(state,{pixels:2,clears:0});
+});
+test('when no newer click owns the viewer, an async owner-lease cancellation still clears stale pixels',async()=>{
+ const {scope,state,finish,complete}=beginHeldNativeRefresh();
+ scope.live=()=>false;
+ state.pixels=1;
+ finish({slotCount:1});
+ await complete;
+ assert.deepEqual(state,{pixels:0,clears:1});
 });

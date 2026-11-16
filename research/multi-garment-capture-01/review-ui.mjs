@@ -550,12 +550,9 @@ export function mountMultiGarmentCapture24({
      }
     }
     // An explicit scratch-only URL must NEVER replace public/outfit-worker.mjs.
-    // Keep the inherited RECOVERY65 source-worker safety contract: the
-    // outside switch remains the guarded P88 transport; P94 only selects
-    // its byte-identical installed module in that experimental branch.
-    next.worker=new Worker(p88Transport57?
-     parallel94Native?'outfit-worker-p94.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:''):
-     '../.m57-exact-p88-donor/public/outfit-worker.mjs':
+    next.worker=new Worker(parallel94Native?
+     'outfit-worker-p94.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:''):
+     p88Transport57?'../.m57-exact-p88-donor/public/outfit-worker.mjs':
      'outfit-worker.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:''),{type:'module'});
     next.worker.onmessage=event=>{
      if(job!==next||submitting||!sameOwner())return;

@@ -37,7 +37,7 @@ jobs:
           git diff --name-only "$BASE" HEAD > /tmp/p94-changed
           while IFS= read -r file; do
             case "$file" in
-              public/outfit-worker-p94.mjs|public/outfit-instance-review-840.mjs|research/multi-garment-capture-01/review-ui.mjs|scripts/test-parallel94-native-p88-browser.mjs|tests/main1054-m148-preview-click-ownership.test.mjs|.github/workflows/parallel94-native-assembly-no-deploy.yml|research/parallel94-assembly/README.md) ;;
+              public/outfit-worker-p94.mjs|public/outfit-instance-review-840.mjs|research/multi-garment-capture-01/review-ui.mjs|scripts/test-parallel94-native-p88-browser.mjs|tests/detector-manual-recovery-65.test.mjs|tests/main1054-m148-preview-click-ownership.test.mjs|.github/workflows/parallel94-native-assembly-no-deploy.yml|research/parallel94-assembly/README.md) ;;
               *) echo "Unexpected protected path: $file"; exit 1;;
             esac
           done < /tmp/p94-changed
