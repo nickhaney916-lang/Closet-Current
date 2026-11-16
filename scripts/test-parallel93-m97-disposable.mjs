@@ -43,6 +43,10 @@ const results={schema:'P93-M97-combined-source-with-test-only-backup-pair/v1',
 try{
  must('git',['worktree','add','--detach',staged,P93_M97]);
  await symlink(resolve('node_modules'),join(staged,'node_modules'),'dir');
+ // The dedicated P93 browser harness is isolated test-only code. It is
+ // copied verbatim into scratch so Node can load it alongside real M97 app.
+ const browserHarness=await readFile('scripts/test-parallel93-native-large-v3-browser.mjs','utf8');
+ await writeFile(join(staged,'scripts/test-parallel93-native-large-v3-browser.mjs'),browserHarness);
  for(const d of donors){
   must('git',['cat-file','-e',d.head+'^{commit}']);
   assert.equal(must('git',['rev-parse',d.head+':'+d.path]),d.blob);
@@ -115,6 +119,27 @@ try{
   widths:[320,390,430],journeys:6,
   sourceChecks:'all inherited ordinary native v3 duplicate/rollback/owner fences',
   syntheticOwners:true,physicalPhone:false};
+ // P93's own separate full-size source browser case: real native unflagged
+ // v3 export API and ACTUAL app UI import on the test-patched M97 tree.
+ const large=run('node',['scripts/test-parallel93-native-large-v3-browser.mjs',
+  'benchmark/parallel93-m97-large-original-browser'],staged);
+ assert.equal(large.status,0,'M97 native LARGE original browser: '+
+  large.stdout.slice(-4000)+large.stderr.slice(-4000));
+ const received=JSON.parse(await readFile(join(staged,
+  'benchmark/parallel93-m97-large-original-browser/results.json'),'utf8'));
+ assert.equal(received.familyAlpha,'HOLD');
+ assert.deepEqual(received.realBrowserEngines,['chromium','webkit']);
+ assert.equal(received.cases.length,6);
+ assert.equal(received.errors.length,0);
+ assert(received.cases.every(c=>c.actualNativeApp===true&&
+  c.exportImportLargeOriginalUI===true&&c.losslessOriginal===true&&
+  c.ownerOriginalOutfitRecovered===true&&c.sourceTo3DAllowed===false));
+ results.checks.largeOriginalActualBrowser={
+  status:'PASS',engines:['chromium','webkit'],widths:[320,390,430],
+  journeys:6,sourceEncodedOver3MB:true,
+  realUnflaggedUIImport:true,syntheticAccounts:true,
+  fullPhotoStillPrivate:true,consumer3DAdmission:false
+ };
 }finally{
  run('git',['worktree','remove','--force',staged]);
  await rm(stagingRoot,{recursive:true,force:true});
