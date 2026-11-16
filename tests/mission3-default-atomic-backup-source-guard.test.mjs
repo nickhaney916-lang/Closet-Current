@@ -575,7 +575,10 @@ test('M98 large original rejects tampered SHA, malformed Base64 and nested forei
  try{
   const photo=cameraOriginalM98(),before=await snapshot(f.db);
   const badHash=cameraBackupM98(f,photo);
+  // M100 fixture: both SHA receipts agree on an intentionally WRONG hash.
+  // Conflicting SHA receipts have their own separate M99 fail-closed test.
   badHash.items[0].originalPhoto.sha256='a'.repeat(64);
+  badHash.items[0].sourceSHA256='a'.repeat(64);
   await assert.rejects(prep(f,badHash),/LEGACY_ATOMIC_JPEG_SHA_MISMATCH/);
   const malformed=cameraBackupM98(f,photo);
   malformed.items[0].originalPhoto.image=photo.image.slice(0,-4)+'####';
