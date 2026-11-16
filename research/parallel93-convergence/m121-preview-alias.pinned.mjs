@@ -10,6 +10,8 @@ import {runInNewContext} from 'node:vm';
 import {exportDurableOwnerBackupM3} from '../public/native-default-verified-backup-export-m3.mjs';
 import {prepareDefaultAtomicM3,commitDefaultAtomicM3}
  from '../public/native-default-atomic-import-m3.mjs';
+import {prepareLegacyAtomicM3,commitLegacyAtomicM3}
+ from '../research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs';
 const {indexedDB}=createRequire(import.meta.url)('fake-indexeddb');
 globalThis.crypto??=webcrypto;
 const exact=runInNewContext(
@@ -173,4 +175,54 @@ test('M121 v3 restores two independently sourced items, exact slots and original
   assert.equal(board.saved[0].slots.bottom,'bottom-two');
   assert.equal(saved.state.find(x=>x.id==='cloud-sync')?.dirty,true);
  }finally{await clear(owner,db);}
+});
+
+async function proveLegacyDonorMakesUnrestorableV3({sameOriginal}){
+ const owner='p93-m3-donor-divergence-'+randomUUID();
+ const db=await dbFor(owner);
+ try{
+  const rows=pieces(owner,sameOriginal);
+  if(!sameOriginal)rows[1].image=rows[0].image;
+  const backup={format:'closet-current',version:3,items:rows,looks:[],
+   outfitBoard:{current:{name:'Reviewed synthetic outfit',
+     slots:{top:'top-one',bottom:'bottom-two'}},
+    saved:[{name:'Saved synthetic two-item outfit',
+      slots:{top:'top-one',bottom:'bottom-two'}}]}};
+  const empty=await rowsOf(db);
+  // Main native v3 must never admit duplicate original/preview identity.
+  await assert.rejects(prepareDefaultAtomicM3(args(owner,db,backup)),
+   /LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW/);
+  assert.deepEqual(await rowsOf(db),empty,
+   'Rejected native v3 import must have zero writes');
+  // The historical Mission 3 donor is a MERGE, not the main importer.
+  // Its independently callable prepare does not check cross-item images.
+  const plan=await prepareLegacyAtomicM3(args(owner,db,backup));
+  assert.equal(plan.incoming.length,2);
+  assert.equal(plan.releaseAuthorized,false);
+  assert.deepEqual(await rowsOf(db),empty,'M3 donor prepare is read-only');
+  await assert.rejects(commitLegacyAtomicM3({ownerDB:db,ownerId:owner,
+   assertLease:()=>{},prepared:plan,confirmed:false}),
+   /LEGACY_ATOMIC_OWNER_CONFIRMATION_REQUIRED/);
+  assert.deepEqual(await rowsOf(db),empty,'No implicit owner confirmation');
+  // Explicit *synthetic* confirmation demonstrates the dangerous contract
+  // drift; only isolated fake-indexeddb, never a hosted or real owner.
+  const committed=await commitLegacyAtomicM3({ownerDB:db,ownerId:owner,
+   assertLease:()=>{},prepared:plan,confirmed:true});
+  assert.equal(committed.committed,true);
+  const after=await rowsOf(db);
+  assert.equal(after.items.length,2);
+  assert.equal(after.state.find(x=>x.id==='outfit-board')?.current.slots.top,'top-one');
+  assert.equal(after.state.find(x=>x.id==='outfit-board')?.current.slots.bottom,'bottom-two');
+  assert.equal(after.state.find(x=>x.id==='cloud-sync')?.dirty,true);
+  await assert.rejects(exported(owner,db),
+   /M3_EXPORT_SHARED_ORIGINAL_RESTORE_UNSUPPORTED/);
+  assert.deepEqual(await rowsOf(db),after,
+   'Unrestorable export refusal must never erase donor-saved originals');
+ }finally{await clear(owner,db);}
+}
+test('P93 source mismatch: M3 research merge admits shared original that M121 native restore and backup refuse',async()=>{
+ await proveLegacyDonorMakesUnrestorableV3({sameOriginal:true});
+});
+test('P93 source mismatch: M3 research merge admits shared display preview despite distinct originals',async()=>{
+ await proveLegacyDonorMakesUnrestorableV3({sameOriginal:false});
 });
