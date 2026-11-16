@@ -36,6 +36,7 @@ const server=createServer(async(req,res)=>{
  try{
   const p=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
   const absolute=p.startsWith('/research/')?resolve(root,'.'+p):
+   p.startsWith('/public/')?resolve(pub,'.'+p.slice('/public'.length)):
    resolve(pub,'.'+(p==='/'?'/index.html':p));
   if(p.includes('\\')||
      (!absolute.startsWith(pub+'/')&&!absolute.startsWith(resolve(root,'research')+'/')))
