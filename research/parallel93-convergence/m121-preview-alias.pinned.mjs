@@ -12,6 +12,8 @@ import {prepareDefaultAtomicM3,commitDefaultAtomicM3}
  from '../public/native-default-atomic-import-m3.mjs';
 import {prepareLegacyAtomicM3,commitLegacyAtomicM3}
  from '../research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs';
+import {prepareLegacyAtomicM3Restorable}
+ from '../research/parallel93-convergence/m3-restorable-legacy-adapter.mjs';
 const {indexedDB}=createRequire(import.meta.url)('fake-indexeddb');
 globalThis.crypto??=webcrypto;
 const exact=runInNewContext(
@@ -225,4 +227,58 @@ test('P93 source mismatch: M3 research merge admits shared original that M121 na
 });
 test('P93 source mismatch: M3 research merge admits shared display preview despite distinct originals',async()=>{
  await proveLegacyDonorMakesUnrestorableV3({sameOriginal:false});
+});
+
+test('P93 isolated M3 adapter denies duplicate originals before owner-confirmed save',async()=>{
+ const owner='p93-m3-safe-shared-'+randomUUID(),db=await dbFor(owner);
+ try{
+  const rows=pieces(owner,true);
+  const data={format:'closet-current',version:3,items:rows,looks:[]};
+  const before=await rowsOf(db);
+  await assert.rejects(prepareLegacyAtomicM3Restorable(args(owner,db,data)),
+   /P93_M3_V3_RESTORE_SHARED_ORIGINAL_OR_PREVIEW_REQUIRES_OWNER_REVIEW/);
+  assert.deepEqual(await rowsOf(db),before,'Rejected adapter does not save');
+  // Crucial: compare with the historical donor, whose bare prepare permits it.
+  const donor=await prepareLegacyAtomicM3(args(owner,db,data));
+  assert.equal(donor.incoming.length,2);
+  assert.deepEqual(await rowsOf(db),before);
+ }finally{await clear(owner,db);}
+});
+test('P93 isolated M3 adapter denies canonical shared pad-bit preview with independent source JPEGs',async()=>{
+ const owner='p93-m3-safe-padbit-'+randomUUID(),db=await dbFor(owner);
+ try{
+  const rows=pieces(owner,false);
+  rows[0].image=jpeg([1,2,3]);
+  assert.match(rows[0].image,/Q==$/);
+  rows[1].image=rows[0].image.replace(/Q==$/,'R==');
+  assert.notEqual(rows[0].sourceSHA256,rows[1].sourceSHA256);
+  const data={format:'closet-current',version:3,items:rows,looks:[]};
+  const before=await rowsOf(db);
+  await assert.rejects(prepareLegacyAtomicM3Restorable(args(owner,db,data)),
+   /P93_M3_V3_RESTORE_SHARED_ORIGINAL_OR_PREVIEW_REQUIRES_OWNER_REVIEW/);
+  assert.deepEqual(await rowsOf(db),before);
+ }finally{await clear(owner,db);}
+});
+test('P93 isolated M3 adapter admits two independent source JPEGs and preserves native exportability',async()=>{
+ const owner='p93-m3-safe-distinct-'+randomUUID(),db=await dbFor(owner);
+ try{
+  const rows=pieces(owner,false);
+  const data={format:'closet-current',version:3,items:rows,looks:[]};
+  const before=await rowsOf(db);
+  const prepared=await prepareLegacyAtomicM3Restorable(args(owner,db,data));
+  assert.equal(prepared.incoming.length,2);
+  assert.equal(prepared.releaseAuthorized,false);
+  assert.deepEqual(await rowsOf(db),before,'Adapter is owner-private read-only preflight');
+  await assert.rejects(commitLegacyAtomicM3({ownerDB:db,ownerId:owner,
+    assertLease:()=>{},prepared,confirmed:false}),
+    /LEGACY_ATOMIC_OWNER_CONFIRMATION_REQUIRED/);
+  const committed=await commitLegacyAtomicM3({ownerDB:db,ownerId:owner,
+    assertLease:()=>{},prepared,confirmed:true});
+  assert.equal(committed.committed,true);
+  const after=await rowsOf(db);
+  assert.equal(after.items.length,2);
+  assert.equal(after.state.find(x=>x.id==='cloud-sync')?.dirty,true);
+  const backup=await exported(owner,db);
+  assert.equal(JSON.parse(backup.json).items.length,2);
+ }finally{await clear(owner,db);}
 });
