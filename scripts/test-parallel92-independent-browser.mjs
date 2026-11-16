@@ -4,7 +4,7 @@
  */
 import assert from 'node:assert/strict';
 import {execFileSync,spawnSync} from 'node:child_process';
-import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
 const engine=process.env.P92_ENGINE,trial=Number(process.env.P92_TRIAL);
 assert.ok(['chromium','webkit'].includes(engine));
@@ -31,7 +31,45 @@ const run=(file,args=[],env={})=>{
 };
 const read=p=>JSON.parse(readFileSync(p,'utf8'));
 run('scripts/test-browser-owner-mutation91.mjs',[],{P91_ENGINE:engine});
-run('scripts/test-main51-real-app-owner-original-2d.mjs',[],{M51_ENGINE:engine});
+// P92 exact native M51 source-only failure diagnosis. Test uses the same
+// real original JPEG, auth fixture, UI and ONE photo count assertion; there
+// are no retries, extra previews, synthetic pixels or bypasses. A diagnostic
+// copy is created only in this disposable native CI workspace.
+const originalM51File='scripts/test-main51-real-app-owner-original-2d.mjs';
+const sourceM51=readFileSync(originalM51File,'utf8');
+const originalCountCheck="  assert.equal(await count(page),1);";
+assert.equal(sourceM51.split(originalCountCheck).length,2,'M51 native photo count contract changed');
+const diagnosticCountCheck=[
+ "  const p92Count=await count(page);",
+ "  if(p92Count!==1){",
+ "   const details=await page.evaluate(()=>{",
+ "    const status=String(document.getElementById('mission4Preview1054Status')?.textContent||'');",
+ "    const viewer=mission4Preview1054Viewer?.status;",
+ "    const id=window.closetAuth?.user?.id;",
+ "    return {",
+ "     previewStatusCategory:status.includes('2D only')?'success-text-no-photo':status.includes('Preview refused')?'refused':'other',",
+ "     viewerPhase:viewer?.phase||'missing',",
+ "     viewerReportsPhotos:viewer?.hasOwnerPhotos===true,",
+ "     documentHidden:document.hidden,",
+ "     browserHasFocus:document.hasFocus(),",
+ "     realOwnerDBPresent:!!db&&!!id,",
+ "     realOwnerDbNameMatches:!!id&&db?.name==='closet-current-user-'+id,",
+ "     outfitHasSelectedTop:!!currentBoard?.slots?.top,",
+ "     previewButtonDisabled:!!document.querySelector('#mission4Preview1054Section button')?.disabled",
+ "    };",
+ "   });",
+ "   console.error('P92_M51_NATIVE_ORIGINAL_MISSING_PIXELS',JSON.stringify({",
+ "    engine,width,photoCount:p92Count,...details,realOriginalTest:true,",
+ "    releaseAuthorized:false,familyAlpha:'HOLD'",
+ "   }));",
+ "  }",
+ "  assert.equal(p92Count,1);"
+].join(String.fromCharCode(10));
+const p92NativeFile='scripts/.parallel92-m51-visibility-diagnostic.generated.mjs';
+writeFileSync(p92NativeFile,sourceM51.replace(originalCountCheck,diagnosticCountCheck));
+try{run(p92NativeFile,[],{M51_ENGINE:engine});}
+finally{rmSync(p92NativeFile,{force:true});}
+
 const n=read(join('benchmark','main51-real-app-owner-2d',engine,'M51-native-owner-source-2d-NOT-RELEASE.json'));
 for(const [k,v] of Object.entries({engine,actualNativeAppShell:true,actualAppOwnerButtonUsed:true,
  screenshotCount:3,consumer3D:false,releaseAuthorized:false,realUserAccounts:false,
