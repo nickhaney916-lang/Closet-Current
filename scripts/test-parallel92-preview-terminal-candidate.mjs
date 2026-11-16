@@ -10,7 +10,8 @@ import {execFileSync,spawnSync} from 'node:child_process';
 import {readFileSync,writeFileSync,rmSync,mkdirSync} from 'node:fs';
 import {join} from 'node:path';
 const git=(...a)=>execFileSync('git',a,{encoding:'utf8'}).trim();
-const engine=process.env.P92_ENGINE;
+const engine=process.env.P92_ENGINE,trial=Number(process.env.P92_CANDIDATE_TRIAL||1);
+assert.ok([1,2].includes(trial));
 assert.ok(['webkit','chromium'].includes(engine),'real browser required');
 const head=git('rev-parse','HEAD'),source='3bf2bdad10d264ebe23ba58e156389a1db5feb0b';
 assert.equal(head,process.env.P92_CHECKOUT_SHA,'refuse synthetic PR merge checkout');
@@ -114,7 +115,7 @@ const race=[
 ].join('\n');
 generated=generated.replace(firstPreview,race);
 const filename='scripts/.parallel92-preview-terminal-candidate.generated.mjs';
-const out=join('benchmark','parallel92-preview-terminal-candidate',engine);
+const out=join('benchmark','parallel92-preview-terminal-candidate',engine,'trial-'+trial);
 mkdirSync(out,{recursive:true});
 writeFileSync(filename,generated);
 try{
@@ -131,7 +132,7 @@ try{
  const status=test.status===0&&comparisons.length===3?'PASS':'FAIL';
  const result={
   schema:'P92_DISPOSABLE_STALE_LEASE_TERMINAL_DEMONSTRATION/v1',
-  exactHead:head,mainSource:source,engine,status,comparisons,
+  exactHead:head,mainSource:source,engine,trial,status,comparisons,
   nativeSourceUnchanged:true,scratchResponseOnly:true,
   originalJPEGChecksUnchanged:true,allNativeM51AssertionsRun:true,
   genuineBrowser:true,localSyntheticOwner:true,hostedRLS:false,
@@ -150,7 +151,7 @@ try{
  }
  assert.equal(status,'PASS','native app scratch candidate or source safety failed: no retry');
  console.log('P92_NATIVE_CANDIDATE_STRICT_PASS',JSON.stringify({
-  exactHead:head,engine,widths:[320,390,430],
+  exactHead:head,engine,trial,widths:[320,390,430],
   unchangedBaselineDefect:true,safeScratchTerminal:true,
   sourceConsumerGitUnmodified:true,familyAlpha:'HOLD'
  }));
