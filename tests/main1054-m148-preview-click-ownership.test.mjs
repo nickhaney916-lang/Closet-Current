@@ -7,13 +7,23 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const source=readFileSync(new URL('../public/outfit-board.js',import.meta.url),'utf8');
+// M149 added a separate, lower-trust M59 photo-only viewer with its own
+// refresh(); scope this executable ownership test to the actual M4
+// strict signed-owner preview instead of accidentally matching both viewers.
+const strictMark="section.id='mission4Preview1054Section'";
+const galleryMark="section.id='mission4PhotoOnly59Section'";
+assert.equal(source.split(strictMark).length,2,'strict native preview section must be unique');
+assert.equal(source.split(galleryMark).length,2,'native M59 gallery section must be unique');
+const strictStart=source.indexOf(strictMark),galleryStart=source.indexOf(galleryMark,strictStart);
+assert(strictStart>=0&&galleryStart>strictStart,'strict preview must precede separate gallery');
+const strictSource=source.slice(strictStart,galleryStart);
 const start="     const result=await viewer.refresh();";
 const end="     if(viewer.status.phase!=='visible'||";
-assert.equal(source.split(start).length,2,'actual signed preview refresh point moved');
-assert.equal(source.split(end).length,2,'actual signed preview terminal point moved');
-const first=source.indexOf(start),last=source.indexOf(end,first);
+assert.equal(strictSource.split(start).length,2,'actual signed preview refresh point moved');
+assert.equal(strictSource.split(end).length,2,'actual signed preview terminal point moved');
+const first=strictSource.indexOf(start),last=strictSource.indexOf(end,first);
 assert(first>=0&&last>first,'test must execute actual consumer code');
-const completion=source.slice(first,last);
+const completion=strictSource.slice(first,last);
 assert.match(completion,/mission4Preview1054ClickSerial===serial|serial===mission4Preview1054ClickSerial/);
 assert.match(completion,/mission4Preview1054Viewer===viewer/);
 function executeCompletion({clickSerial,activeSerial,ownedViewer,live,initialPixels}){
