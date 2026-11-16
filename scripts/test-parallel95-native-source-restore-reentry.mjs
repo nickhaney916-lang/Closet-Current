@@ -65,8 +65,9 @@ const instrumentation=[
  "   if(b)new MutationObserver(()=>emit('button-disabled-change')).observe(b,",
  "    {attributes:true,attributeFilter:['disabled']});",
  "  });",
- "  for(let cycle=0;cycle<6;cycle++){",
+ "  for(let cycle=0;cycle<12;cycle++){",
  "   stage='p95-restored-jpeg-signed-reentry-cycle-'+cycle;",
+ "   if(cycle%2===1)await page.evaluate(()=>window.dispatchEvent(new Event('focus')));",
  "   await p95State('before-click',cycle);",
  "   try{await clickPreview(page);assert.equal(await count(page),1);}",
  "   catch(error){",
@@ -87,7 +88,7 @@ const instrumentation=[
  "    throw error;",
  "   }",
  "   await p95State('after-click',cycle);",
- "   if(cycle<5){",
+ "   if(cycle<11){",
  "    await page.evaluate(()=>{",
  "     const row=items.find(item=>item.id===currentBoard.slots.top);",
  "     row.originalPhoto.image='data:image/jpeg;base64,/9j/2Q==';",
@@ -109,5 +110,5 @@ try{
  const result=spawnSync(process.execPath,[temp],{env:process.env,stdio:'inherit',timeout:12*60*1000});
  if(result.error)throw result.error;
  assert.equal(result.status,0,'P95 actual M51 browser reentry failed');
- console.log('P95_NATIVE_REENTRY_PASS engine='+engine+' widths=320,390,430 extraSourceCycles=5 each');
+ console.log('P95_NATIVE_REENTRY_PASS engine='+engine+' widths=320,390,430 extraSourceCycles=11 each');
 }finally{rmSync(temp,{force:true});}
