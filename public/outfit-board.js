@@ -1022,7 +1022,16 @@ if(mission4Preview1054Active){
      photos.replaceChildren();
      status.textContent='Preview refused. Recheck the signed account, garment review, original photographs and outfit slots.';
     }finally{
-     if(serial===mission4Preview1054ClickSerial&&button.isConnected)button.disabled=false;
+     if(serial===mission4Preview1054ClickSerial&&button.isConnected){
+      // M103: an invalidated owner/source lease must not leave this click
+      // showing Verifying after a guarded stale return. Never publish pixels.
+      if((status.textContent||'').startsWith('Verifying')&&!live()){
+       mission4Preview1054Pinned=null;
+       mission4Preview1054Viewer?.clear();photos.replaceChildren();
+       status.textContent='Verification stopped because the signed account, private session or selected outfit changed. Reopen the signed-owner photo preview.';
+      }
+      button.disabled=false;
+     }
     }
    };
    window.addEventListener('closet:session-locked',()=>{
