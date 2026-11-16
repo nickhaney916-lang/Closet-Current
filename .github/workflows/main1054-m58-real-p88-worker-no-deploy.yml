@@ -207,7 +207,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs)" = 6a1e98a1678328149b16a6cc5faf8dbaec6c3de9
+          test "$(git rev-parse HEAD:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs)" = 9657d39d1062588528b941ec955d286af6ee716f
           node --check scripts/test-main1054-m123-photo119-restore-2d-browser.mjs
           M123_ENGINE=${{ matrix.engine }} node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs
       - name: Assert actual app three widths and no unjustified 3D or release
