@@ -94,7 +94,7 @@ const instrumentation="  await page.evaluate(()=>{\n   const events=[],status=do
 assert.equal(original.split("  stage='actual-native-app-preview-button';").length,2,'M51 original app click changed');
 const generated=original.replace(routeMarker,routeReplacement)
  .replace(previewWait,safeWait)
- .replace("  stage='actual-native-app-preview-button';",instrumentation+'\n'+"  stage='actual-native-app-preview-button';")
+ .replace("  stage='actual-native-app-preview-button';",(process.env.P1219_TRACE_EVENTS==='true'?instrumentation+'\n':'')+"  stage='actual-native-app-preview-button';")
  .replace(stageMarker,probe+'\n'+stageMarker);
 const temp='scripts/.p1219-stale-photo-generated.mjs';
 writeFileSync(temp,generated);
