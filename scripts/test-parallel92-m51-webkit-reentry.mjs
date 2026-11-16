@@ -51,6 +51,71 @@ for(const [segment,name] of stageReentries){
    '  await clickPreview(page);',
    "  stage='p92-focus-"+name+"';\n  await clickPreview(page);"));
 }
+
+const firstPreview="   stage='actual-native-app-preview-button';\n   await clickPreview(page);";
+assert.equal(classified.split(firstPreview).length,2,'native first import preview source changed');
+classified=classified.replace(firstPreview,String.raw`
+   stage='actual-native-app-preview-button';
+   if(width===320){
+    // P92 deterministic injected auth-provider lease: module load is delayed
+    // on the exact original app while a signed-owner reference is replaced.
+    // The app must never show stale JPEGs. This is an expected-defect
+    // diagnostic, NOT a passing terminal-state acceptance test.
+    stage='p92-stale-lease-while-native-preview-import-pending';
+    const modulePattern='**/research/main-thread-integration-1054/native-2d-preview.mjs';
+    let releaseModule,notifyModule,intercepted=0;
+    const moduleGate=new Promise(resolve=>{releaseModule=resolve;});
+    const moduleSeen=new Promise(resolve=>{notifyModule=resolve;});
+    await page.route(modulePattern,async route=>{
+     intercepted++;
+     notifyModule();
+     await moduleGate;
+     await route.continue();
+    });
+    try{
+     await page.evaluate(()=>{
+      window.__p92OldAuthReference=window.closetAuth;
+      document.querySelector('#mission4Preview1054Section button').click();
+     });
+     await Promise.race([
+      moduleSeen,
+      new Promise((_,reject)=>setTimeout(()=>reject(Error('P92 initial import not intercepted')),15000))
+     ]);
+     await page.waitForFunction(()=>
+      document.getElementById('mission4Preview1054Status')?.textContent?.includes('Verifying'),
+      null,{timeout:5000});
+     await page.evaluate(()=>{
+      const auth=window.closetAuth;
+      window.closetAuth={...auth,user:auth.user,assertCurrent:()=>{}};
+     });
+    }finally{releaseModule();}
+    await page.waitForFunction(()=>
+     document.querySelector('#mission4Preview1054Section button')?.disabled===false,
+     null,{timeout:20000});
+    const stale=await page.evaluate(()=>({
+     status:String(document.getElementById('mission4Preview1054Status')?.textContent||''),
+     photos:document.querySelectorAll('#mission4Preview1054Photos img').length
+    }));
+    console.log('P92_STALE_OWNER_LEASE_DIAGNOSTIC',JSON.stringify({
+     engine,width,phase:'after-signed-provider-replacement-during-first-import',
+     statusClass:stale.status.includes('Verifying')?'verifying':'terminal',
+     photoCount:stale.photos,sourcePhotoDisplayed:stale.photos>0,
+     syntheticRaceInjection:true,mainApplicationUnchanged:true,
+     signedSessionReferenceRevoked:true,familyAlpha:'HOLD'
+    }));
+    assert.equal(intercepted,1,'expected one exact native module import');
+    assert.equal(stale.photos,0,'unsafe photo pixels survived stale session lease');
+    assert.match(stale.status,/Verifying/,
+     'historical stale-status code path changed; reclassify this diagnostic');
+    await page.evaluate(()=>{
+     window.closetAuth=window.__p92OldAuthReference;
+     delete window.__p92OldAuthReference;
+    });
+    await page.unroute(modulePattern);
+    stage='actual-native-app-preview-button';
+   }
+   await clickPreview(page);
+`);
 const resultWait=realWait.replace(' await page.waitForFunction',' try{\n await page.waitForFunction')+
 String.raw`
  }catch(error){
@@ -127,13 +192,26 @@ for(let trial=1;trial<=total;trial++){
     ownerPhotoVisible:v.ownerPhotoVisible===true,previewButtonDisabled:v.previewButtonDisabled===true};
   }catch{return {kind:'failed-to-classify'};}
  });
+
+const staleSignals=log.split('\n').filter(line=>line.includes('P92_STALE_OWNER_LEASE_DIAGNOSTIC ')).map(line=>{
+ try{
+  const value=JSON.parse(line.slice(line.indexOf('P92_STALE_OWNER_LEASE_DIAGNOSTIC ')+
+   'P92_STALE_OWNER_LEASE_DIAGNOSTIC '.length));
+  return {width:value.width,statusClass:value.statusClass,
+   photoCount:value.photoCount,syntheticRaceInjection:value.syntheticRaceInjection===true};
+ }catch{return {invalid:true};}
+});
+const expectedStalePath=staleSignals.length===1&&staleSignals[0].width===320&&
+ staleSignals[0].statusClass==='verifying'&&staleSignals[0].photoCount===0&&
+ staleSignals[0].syntheticRaceInjection===true;
 const row={trial,engine:'webkit',actualNativeApp:true,widths:[320,390,430],
   genuineLicensedSource:true,syntheticOwnerReview:true,
-  elapsedMs:Date.now()-started,status:r.status===0?'PASS':'FAIL',
+  elapsedMs:Date.now()-started,status:r.status===0&&expectedStalePath?'PASS_WITH_KNOWN_STATUS_DEFECT':'FAIL',
+  expectedStalePathReproduced:expectedStalePath,staleStatusSignals:staleSignals,
   sourceSafeRefusals:safe,strictTimeoutClassifications:waitClass};
  runs.push(row);
  console.log('P92_M97_NATIVE_WEBKIT_REENTRY_TRIAL',JSON.stringify(row));
- if(r.error||r.status!==0){
+ if(r.error||r.status!==0||!expectedStalePath){
   console.error('P92_M97_REENTRY_FAIL',JSON.stringify({
    trial,errorName:r.error?.name||null,exitCode:r.status,
    sourceSafeRefusals:safe,strictTimeoutClassifications:waitClass}));
@@ -145,14 +223,17 @@ const receipt={schema:'P92_M97_NATIVE_SOURCE_MUTATION_WEBKIT_REENTRY/v5',
  exactHead:sha,mainSourceM101:m101,
  nativeSourceBlob:'63cc9da00eaecbeb2576482dcae1528b44ea8189',
  expected:total,attempted:runs.length,
- result:runs.length===total&&runs.every(r=>r.status==='PASS')?'PASS':'FAIL',
+ result:runs.length===total&&runs.every(r=>r.status==='PASS_WITH_KNOWN_STATUS_DEFECT')?'PASS_WITH_KNOWN_STATUS_DEFECT':'FAIL',
  noSyntheticPreviewOrModel:true,realBrowser:true,realOriginalJPEG:true,
  noPrivatePhotosOrTokensInEvidence:true,unmodifiedNativeTimeoutMs:20000,
+ diagnosticStatusDefectReproduced:true,terminalStatusAccepted:false,
+ syntheticAuthReferenceRaceInjected:true,
  realSourceAssertionsUnchanged:true,hostedSignedRLS:false,
  independentHumanAccuracy:false,physicalPhone:false,full3DFitted:false,
  familyAlpha:'HOLD',releaseAllowed:false,runs};
 writeFileSync(join(path,'result.json'),JSON.stringify(receipt,null,2)+'\n');
-assert.equal(receipt.result,'PASS','real M97 WebKit M51 failed; do not hide or auto-retry');
-console.log('P92_M97_REAL_WEBKIT_REENTRY_STRESS_PASS',JSON.stringify({
+assert.equal(receipt.result,'PASS_WITH_KNOWN_STATUS_DEFECT',
+ 'native M51 WebKit failed OR expected stale terminal-status defect not established; do not retry-mask');
+console.log('P92_M97_REAL_WEBKIT_REENTRY_STRESS_WITH_KNOWN_STALE_STATUS_DEFECT',JSON.stringify({
  exactHead:sha,repetitions:total,widths:[320,390,430],
  photoSourceUnchanged:true,familyAlpha:'HOLD'}));
