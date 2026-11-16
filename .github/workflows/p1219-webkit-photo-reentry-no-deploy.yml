@@ -1,0 +1,79 @@
+name: P1219 native owner-original WebKit preview reentry NO DEPLOY
+on:
+  push:
+    branches: [fix/webkit-native-photo-preview-reentry-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  p1219-source-and-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact isolated M4 ancestry and unchanged owner/canonical source
+        shell: bash
+        run: |
+          set -euo pipefail
+          PARENT=c4e45aa684f7120d216ae4eec192d4085823b073
+          git merge-base --is-ancestor "$PARENT" HEAD
+          test "$(git rev-parse HEAD:research/main-thread-integration-1054/native-2d-preview.mjs)" = 0af20d49d87436683630d587ec0284c611cd3414
+          test "$(git rev-parse HEAD:public/native-canonical-photo-source-167.mjs)" = "$(git rev-parse "$PARENT:public/native-canonical-photo-source-167.mjs")"
+          git diff --exit-code "$PARENT" HEAD -- public/app.js public/auth.js public/native-canonical-photo-source-167.mjs public/native-default-atomic-import-m3.mjs public/native-default-verified-backup-export-m3.mjs public/native-reviewed-private-save-167.mjs supabase/
+          git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
+            case "$path" in
+              public/outfit-board.js|scripts/test-p1219-webkit-native-preview-reentry.mjs|.github/workflows/p1219-webkit-photo-reentry-no-deploy.yml|.github/workflows/p1219-webkit-photo-soak-no-deploy.yml|research/p1219-webkit-preview/*) ;;
+              *) echo "P1219 unauthorized touched path: $path"; exit 1;;
+            esac
+          done
+          node --check public/outfit-board.js
+          node --check scripts/test-p1219-webkit-native-preview-reentry.mjs
+      - name: Pinned research test dependencies, no deployment
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build actual application
+        run: node scripts/build.mjs
+      - name: Native exact JPEG signed owner plus cancellation/security unit tests
+        run: node --test research/main-thread-integration-1054/native-2d-display-lease16.test.mjs research/main-thread-integration-1054/native-live-board-display17.test.mjs tests/main49-licensed-original-photo-private-outfit-2d.test.mjs tests/native-original-jpeg-byte-attestation-92.test.mjs tests/mission3-native-board-session-lock.test.cjs
+      - name: Full serial inherited app Node tests
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  p1219-real-native-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M51_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Playwright and original-photo browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Exact native 320 390 430 owner-original reentry and inherited negative gates
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          node scripts/test-p1219-webkit-native-preview-reentry.mjs
+      - name: Archive sanitized status receipts only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1219-native-${{ matrix.engine }}-source-safe-HOLD
+          path: benchmark/main51-real-app-owner-2d/${{ matrix.engine }}/*NOT-RELEASE.json
+          retention-days: 10
+          if-no-files-found: ignore
