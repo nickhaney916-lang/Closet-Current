@@ -535,7 +535,60 @@ jobs:
           rm -f scripts/.parallel92-m141-safe-diagnostic.mjs
           trap - EXIT
           if test "$p92_native_failures" -ne 0; then
-            echo "P92 M141 CURRENT-MAIN ACTUAL OWNER REVIEW FAILED; NO RETRY, NO SOURCE BYPASS, HOLD"
+            # Source-verified isolated engineering experiment ONLY. Keep
+            # the exact untouched original app/test failures RED. Demonstrate
+            # whether a safe missing-name default alone repairs the genuine
+            # PHOTO119 owner UI + v3 recovery + original-only 2D journey.
+            # The browser receives an in-memory script response; no public/
+            # source file, saved origin, photo SHA, cloud, owner lease or 3D
+            # gate is modified, and even a candidate PASS will NOT make CI green.
+            node --input-type=module - <<'JS'
+            import assert from 'node:assert/strict';
+            import {readFileSync,writeFileSync} from 'node:fs';
+            const path='scripts/test-main1054-m123-photo119-restore-2d-browser.mjs';
+            const original=readFileSync(path,'utf8');
+            const app=readFileSync('public/app.js','utf8');
+            const oldName='draft.name.trim()';
+            const candidate="(typeof draft.name==='string'?draft.name.trim():'')";
+            assert.equal(app.split(oldName).length,2,'app name field changed; refuse unsafe candidate');
+            const pageMarker="    const page=await context.newPage();";
+            const caseMarker="    cases.push({engine,width,actualNativeApp:true,";
+            assert.equal(original.split(pageMarker).length,2,'M141 page construction changed');
+            assert.equal(original.split(caseMarker).length,2,'M141 full journey check changed');
+            const route=[
+             "    let p92PatchedRequests=0;",
+             "    await context.route('**/app.js*',async route=>{",
+             "     const body=await readFile('public/app.js','utf8');",
+             "     assert.equal(body.split("+JSON.stringify(oldName)+").length,2,'app source drift');",
+             "     ++p92PatchedRequests;",
+             "     await route.fulfill({status:200,contentType:'text/javascript',",
+             "      body:body.replace("+JSON.stringify(oldName)+","+JSON.stringify(candidate)+")});",
+             "    });"
+            ].join('\n');
+            const receipt=[
+             "    assert.ok(p92PatchedRequests>=1,'actual app name guard response was never used');",
+             "    console.log('P92_M141_ONE_LINE_DISPOSABLE_PASS',JSON.stringify({",
+             "     engine,width,ownerApproval:'synthetic',originalSource:'unchanged',",
+             "     consumerOnlyInMemory:true,releaseAuthorized:false,familyAlpha:'HOLD'",
+             "    }));"
+            ].join('\n');
+            const swapped=original.replace(pageMarker,route+'\n'+pageMarker)
+             .replace(caseMarker,receipt+'\n'+caseMarker);
+            writeFileSync('scripts/.parallel92-m141-one-line-name-guard.mjs',swapped);
+            JS
+            trap 'rm -f scripts/.parallel92-m141-one-line-name-guard.mjs' EXIT
+            node --check scripts/.parallel92-m141-one-line-name-guard.mjs
+            p92_candidate_failures=0
+            M123_ENGINE=chromium node scripts/.parallel92-m141-one-line-name-guard.mjs benchmark/parallel92-disposable-m141-chromium || p92_candidate_failures=$((p92_candidate_failures+1))
+            M123_ENGINE=webkit node scripts/.parallel92-m141-one-line-name-guard.mjs benchmark/parallel92-disposable-m141-webkit || p92_candidate_failures=$((p92_candidate_failures+1))
+            rm -f scripts/.parallel92-m141-one-line-name-guard.mjs
+            trap - EXIT
+            if test "$p92_candidate_failures" -eq 0; then
+              echo "P92 DEMONSTRATION ONLY: one missing-name safety default completes M141 in both engines; untouched main remains FAIL, HOLD"
+            else
+              echo "P92 DEMONSTRATION STILL FAILS; do not adopt candidate, HOLD"
+            fi
+            echo "P92 ORIGINAL M141 UNMODIFIED CONSUMER FAILS; DO NOT PROMOTE CANDIDATE OR RELEASE"
             exit 1
           fi
           echo "P92 M141 CURRENT-MAIN BOTH ENGINES ACTUAL OWNER REVIEW PASS; NO DEPLOY, HOLD"
