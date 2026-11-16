@@ -136,7 +136,8 @@ const diagnosticCountCheck=[
  "     realOwnerDBPresent:!!db&&!!id,",
  "     realOwnerDbNameMatches:!!id&&db?.name==='closet-current-user-'+id,",
  "     outfitHasSelectedTop:!!currentBoard?.slots?.top,",
- "     previewButtonDisabled:!!document.querySelector('#mission4Preview1054Section button')?.disabled",
+ "     previewButtonDisabled:!!document.querySelector('#mission4Preview1054Section button')?.disabled,",
+ "     previewTransitionKinds:Array.isArray(window.__p92NativePreviewEventLog)?window.__p92NativePreviewEventLog.slice(-32):[]",
  "    };",
  "   });",
  "   console.error('P92_M51_NATIVE_ORIGINAL_MISSING_PIXELS',JSON.stringify({",
@@ -146,8 +147,41 @@ const diagnosticCountCheck=[
  "  }",
  "  assert.equal(p92Count,1);"
 ].join(String.fromCharCode(10));
+// Read-only transition probe in the disposable M51 test, *not* app code.
+// It records only event kinds and counts; it never reads a JPEG URL, owner ID,
+// private row or credentials. A photo-free success still fails the same assert.
+const previewMarker="  await clickPreview(page);\n  assert.equal(await count(page),1);";
+assert.equal(sourceM51.split(previewMarker).length,2,'M51 first original-photo preview contract changed');
+const previewEventProbe=String.raw\`
+  await page.evaluate(()=>{
+   const root=document.getElementById('mission4Preview1054Photos');
+   const status=document.getElementById('mission4Preview1054Status');
+   const events=[];
+   const mark=kind=>{
+    if(events.length>=32)return;
+    const message=String(status?.textContent||'');
+    events.push({kind,photoCount:root?.querySelectorAll('img').length||0,
+     statusCategory:message.includes('2D only')?'success':
+      message.includes('Verifying')?'verifying':
+      message.includes('Preview refused')?'refused':'other'});
+   };
+   Object.defineProperty(window,'__p92NativePreviewEventLog',
+    {value:events,configurable:true});
+   if(root)new MutationObserver(()=>mark('photo-dom-mutation'))
+    .observe(root,{childList:true,subtree:true});
+   if(status)new MutationObserver(()=>mark('status-dom-mutation'))
+    .observe(status,{childList:true,characterData:true,subtree:true});
+   window.addEventListener('focus',()=>mark('window-focus'),{capture:true});
+   document.addEventListener('visibilitychange',()=>mark('visibility-change'),{capture:true});
+   window.addEventListener('closet:style-owned-inventory-committed',
+    ()=>mark('wardrobe-commit'),{capture:true});
+   window.addEventListener('closet:session-locked',
+    ()=>mark('session-locked'),{capture:true});
+   mark('probe-start');
+  });
+\`;
 const p92NativeFile='scripts/.parallel92-m51-visibility-diagnostic.generated.mjs';
-writeFileSync(p92NativeFile,sourceM51.replace(originalCountCheck,diagnosticCountCheck));
+writeFileSync(p92NativeFile,sourceM51.replace(previewMarker,previewEventProbe+previewMarker).replace(originalCountCheck,diagnosticCountCheck));
 try{run(p92NativeFile,[],{M51_ENGINE:engine});}
 finally{rmSync(p92NativeFile,{force:true});}
 
