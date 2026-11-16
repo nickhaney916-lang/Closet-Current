@@ -17,9 +17,13 @@ for(let n=0;n<56;n++){
 }
 chunks.push(originBytes.subarray(2));
 const full=Buffer.concat(chunks);
-const originalJPEG='data:image/jpeg;base64,'+full.toString('base64');
-const originalSHA=createHash('sha256').update(full).digest('hex');
-assert(originalJPEG.length>3_000_000&&originalJPEG.length<11_200_000);
+const largeOriginalJPEG='data:image/jpeg;base64,'+full.toString('base64');
+const largeOriginalSHA=createHash('sha256').update(full).digest('hex');
+// PHOTO119 review has a smaller contract than the new M101 legacy importer.
+assert(largeOriginalJPEG.length>3_000_000&&largeOriginalJPEG.length<11_200_000);
+const originalJPEG='data:image/jpeg;base64,'+originBytes.toString('base64');
+const originalSHA=createHash('sha256').update(originBytes).digest('hex');
+assert(originalJPEG.length<=3_000_000);
 const previewJPEG='data:image/jpeg;base64,'+(await sharp({create:{
  width:160,height:160,channels:3,background:{r:88,g:125,b:189}
 }}).jpeg().toBuffer()).toString('base64');
@@ -101,29 +105,55 @@ try{
       }
       tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
      });
-     // Native PHOTO119 uses SYNTHETIC owner-confirmed labels, not AI accuracy.
+     const {commitHumanReviewedPhoto119}=await import('./native-reviewed-private-save-167.mjs');
+     const review={confirmed:true,recordId:'p93-original',
+      originalSHA256:originalSHA,category:'Tops',itemType:'T-shirt',
+      color:'Blue',singleGarmentConfirmed:true};
+     const lease=()=>window.closetAuth?.user?.id===owner&&
+      db?.name==='closet-current-user-'+owner;
+     // Negative original+thumbnail proof. A >3M canonical original is
+     // importable in M101, but PHOTO119 must refuse to silently save its
+     // separate preview as an independently reviewed full original.
+     const largeRecord={
+      id:'p93-large-review-veto',ownerId:owner,
+      category:'Uncategorized',itemType:'Unknown',color:'Unknown',
+      singleGarmentVerified:false,
+      sourceSHA256:largeOriginalSHA,sourceHashVerified:true,
+      image:previewJPEG,
+      originalPhoto:{image:largeOriginalJPEG,sha256:largeOriginalSHA,ownerId:owner}
+     };
+     await update({states:[{id:'draft',batch:[structuredClone(largeRecord)]}]});
+     const largeReview={...review,recordId:largeRecord.id,
+      originalSHA256:largeOriginalSHA};
+     const beforeLarge=await readRows();
+     const largeDenied=await commitHumanReviewedPhoto119({
+      db,ownerId:owner,currentOwner:()=>window.closetAuth?.user?.id,
+      record:largeRecord,review:largeReview,cryptoProvider:crypto,assertLease:lease
+     });
+     if(largeDenied.saved!==false||largeDenied.needsReview!==true||
+        largeDenied.sourceKind!=='original-source-unverified'||
+        JSON.stringify(await readRows())!==JSON.stringify(beforeLarge))
+      throw Error('PHOTO119 incorrectly accepted large source/thumbnail or changed owner DB');
+     // Positive control: actual PHOTO119 signed-owner save of one smaller
+     // authentic public JPEG. Labels are explicitly SYNTHETIC owner input.
      const record={
       id:'p93-original',ownerId:owner,name:'Owner reviewed original',
       category:'Uncategorized',itemType:'Unknown',color:'Unknown',
       singleGarmentVerified:false,
-      image:previewJPEG,sourceSHA256:originalSHA,sourceHashVerified:true,
+      image:originalJPEG,sourceSHA256:originalSHA,sourceHashVerified:true,
       originalPhoto:{image:originalJPEG,sha256:originalSHA,ownerId:owner}
      };
-     const review={confirmed:true,recordId:'p93-original',
-      originalSHA256:originalSHA,category:'Tops',itemType:'T-shirt',
-      color:'Blue',singleGarmentConfirmed:true};
-     const {commitHumanReviewedPhoto119}=await import('./native-reviewed-private-save-167.mjs');
+     await update({states:[{id:'draft',batch:[structuredClone(record)]}]});
      const saved=await commitHumanReviewedPhoto119({
       db,ownerId:owner,currentOwner:()=>window.closetAuth?.user?.id,
-      record,review,cryptoProvider:crypto,
-      assertLease:()=>window.closetAuth?.user?.id===owner&&db?.name==='closet-current-user-'+owner
+      record,review,cryptoProvider:crypto,assertLease:lease
      });
      if(saved.saved!==true||saved.releaseAuthorized!==false)
-      throw Error('PHOTO119 synthetic owner review refused or authorized release');
+      throw Error('PHOTO119 synthetic small original review not saved: '+saved.sourceKind);
      const row=(await readRows()).items.find(x=>x.id==='p93-original');
      if(row?.ownerReviewed!==true||row?.sourceSHA256!==originalSHA||
         row?.originalPhoto?.image!==originalJPEG)
-      throw Error('PHOTO119 review lost canonical owner original');
+      throw Error('PHOTO119 saved record lacks canonical owner review');
      const outfit={id:'outfit-board',current:{name:'Owner selected',
       occasion:'Casual',slots:{top:'p93-original'}},
       saved:[{name:'Saved owned outfit',occasion:'Casual',
@@ -140,68 +170,8 @@ try{
      if(exported.data?.items?.[0]?.originalPhoto?.image!==originalJPEG||
         exported.data?.outfitBoard?.current?.slots?.top!=='p93-original')
       throw Error('Lossless original export invariant failed');
-     // Cross-mission M101 regression: an exporter MUST NOT create a v3
-     // backup which the changed M99/M101 importer cannot admit.
-     // The read-only exporter must reject invalid durable source receipts
-     // without mutating that owner's private item, board, or cloud state.
-     const preflight=async(mutator,expected)=>{
-      const candidate=structuredClone(row);mutator(candidate);
-      await update({items:[candidate]});
-      const snapshot=JSON.stringify(await readRows());
-      let error='';
-      try{
-       await exportDurableOwnerBackupM3({
-        ownerDB:db,ownerId:owner,assertLease:()=>{},
-        assertIdle:()=>{}
-       });
-      }catch(e){error=String(e?.message||e);}
-      if(!error.includes(expected))
-       throw Error('M101 exporter accepted incompatible source or wrong reason: '+expected+
-        ' actual '+error);
-      if(JSON.stringify(await readRows())!==snapshot)
-       throw Error('M101 exporter mutated private owner database on refusal');
-      await update({items:[row]});
-      return true;
-     };
-     const missingLargeReceiptBlocked=await preflight(v=>{
-      delete v.sourceSHA256;delete v.originalPhoto.sha256;
-      v.sourceHashVerified=false;
-     },'M3_EXPORT_SOURCE_SHA_REQUIRED');
-     const assertedVerifiedWithoutSHABlocked=await preflight(v=>{
-      delete v.sourceSHA256;delete v.originalPhoto.sha256;
-      v.sourceHashVerified=true;
-     },'M3_EXPORT_SOURCE_SHA_REQUIRED');
-     const conflictingReceiptBlocked=await preflight(v=>{
-      v.sourceSHA256='a'.repeat(64);
-     },'M3_EXPORT_SOURCE_SHA_CLAIM_CONFLICT');
-     const checksumMismatchBlocked=await preflight(v=>{
-      v.sourceSHA256='b'.repeat(64);
-      v.originalPhoto.sha256='b'.repeat(64);
-     },'M3_EXPORT_PHOTO_SHA_MISMATCH');
-     // The exporter verifies the small preview against the claimed full
-     // original digest first. Missing full source must fail at that earlier
-     // no-substitution fence, even before the missing-original branch.
-     const missingVerifiedOriginalBlocked=await preflight(v=>{
-      delete v.originalPhoto.image;
-     },'M3_EXPORT_PHOTO_SHA_MISMATCH');
-     const oversizedPreviewBlocked=await preflight(v=>{
-      v.image=originalJPEG;
-     },'M3_EXPORT_INVALID_JPEG');
-     // A legacy unverified SMALL original remains exportable, matching M101
-     // native import's backward compatible small-camera rule. Do not
-     // retroactively invent a SHA receipt.
-     const legacy=structuredClone(row);
-     legacy.originalPhoto.image=previewJPEG;
-     delete legacy.originalPhoto.sha256;
-     delete legacy.sourceSHA256;
-     legacy.sourceHashVerified=false;
-     await update({items:[legacy]});
-     const older=await exportDurableOwnerBackupM3({
-      ownerDB:db,ownerId:owner,assertLease:()=>{},assertIdle:()=>{}
-     });
-     const legacySmallAccepted=older.data.items[0].originalPhoto.image===previewJPEG&&
-      older.data.items[0].sourceSHA256===undefined;
-     await update({items:[row]});
+     // Independent large-camera SHA/thumbnail refusal and v3 recovery tests
+     // remain in the other, unchanged P93 M101 browser harness.
      // Now emulate a NEW, empty owner's device while retaining the same
      // cryptographically signed synthetic owner and app.
      await update({clear:true});
@@ -213,9 +183,8 @@ try{
      const after=await readRows();
      const status=document.getElementById('message')?.textContent||'';
      const state=Object.fromEntries(after.state.map(x=>[x.id,x]));
-     return {missingLargeReceiptBlocked,assertedVerifiedWithoutSHABlocked,
-      conflictingReceiptBlocked,checksumMismatchBlocked,
-      missingVerifiedOriginalBlocked,oversizedPreviewBlocked,legacySmallAccepted,
+     return {largePhoto119NotSilentlySaved:largeDenied.saved===false,
+      reviewedSmallPhoto119Saved:row.ownerReviewed===true,
       exportedSourceExact:exported.data.items[0].originalPhoto.image===originalJPEG,
       exportedOriginalHashExact:exported.data.items[0].sourceSHA256===originalSHA,
       exportedV3:exported.data.version===3,
@@ -231,7 +200,7 @@ try{
       cloudRevision:state['cloud-sync']?.localRevision,
       actualUIImport:status.includes('imported atomically'),
       cloudMarkerChanged:window.__p93CloudChanged||0};
-    },{owner,previewJPEG,originalJPEG,originalSHA});
+    },{owner,previewJPEG,originalJPEG,originalSHA,largeOriginalJPEG,largeOriginalSHA});
     for(const [field,value] of Object.entries(result)){
      if(['cloudRevision','cloudMarkerChanged'].includes(field))continue;
      assert.equal(value,true,engine+' width '+width+' lost native large original at '+field);
@@ -285,5 +254,5 @@ try{
   exactSourceSHAVerified:true,releaseAuthorized:false,
   realBrowserEngines:['chromium','webkit'],cases,errors};
  await writeFile(resolve(output,'results.json'),JSON.stringify(report,null,2)+'\n');
- console.log('P93 M101 native PHOTO119 reviewed -> 8MiB-aware v3 export -> native UI restore -> original 2D PASS 6/6 Chromium WebKit HOLD');
+ console.log('P93 M101 PHOTO119 small original review => v3 backup/restore => owner original 2D PASS 6/6; large separate preview review correctly vetoed; HOLD');
 }finally{server.close();}
