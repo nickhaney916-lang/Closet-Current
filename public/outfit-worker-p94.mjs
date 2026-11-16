@@ -1,0 +1,72 @@
+let loader;
+async function load(requestId){
+ if(!loader)loader=(async()=>{
+  self.postMessage({type:'progress',id:requestId,phase:'loading'});
+  const {AutoModelForSemanticSegmentation,AutoProcessor,RawImage,env}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js');
+  env.allowLocalModels=false;env.useBrowserCache=true;env.backends.onnx.wasm.numThreads=1;env.backends.onnx.wasm.proxy=false;
+  const modelId='Xenova/segformer_b0_clothes',revision='a2489ea8e7ec1ee912190546bad31a4906ccca76';
+  const processor=await AutoProcessor.from_pretrained(modelId,{revision});
+  const model=await AutoModelForSemanticSegmentation.from_pretrained(modelId,{revision,device:'wasm',dtype:'fp32',progress_callback:event=>self.postMessage({type:'progress',id:requestId,phase:'loading',percent:String(event.file||'').endsWith('.onnx')&&Number.isFinite(event.progress)?Math.round(event.progress):null})});
+  return {model,processor,RawImage};
+ })().catch(error=>{loader=null;throw error;});
+ return loader;
+}
+async function jpegData(image){
+ const bytes=new Uint8Array(await(await image.toBlob('image/jpeg',.94)).arrayBuffer());let text='';for(let i=0;i<bytes.length;i+=32768)text+=String.fromCharCode(...bytes.subarray(i,i+32768));return 'data:image/jpeg;base64,'+btoa(text);
+}
+async function sha256Bytes70(bytes){
+ const digest=await crypto.subtle.digest('SHA-256',bytes);
+ return [...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+async function sourceSha256For70(dataURI){
+ const encoded=dataURI.slice('data:image/jpeg;base64,'.length),raw=atob(encoded),bytes=new Uint8Array(raw.length);
+ for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+ return sha256Bytes70(bytes);
+}
+let chain=Promise.resolve();
+self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
+ try{
+  if(typeof request.image!=='string'||!/^data:image\/jpeg;base64,/.test(request.image)||request.image.length>12000000)throw Error('Invalid outfit photo.');
+  const {model,processor,RawImage}=await load(request.id);self.postMessage({type:'progress',id:request.id,phase:'separating'});
+  const image=await RawImage.read(request.image);if(!image.width||!image.height||Math.max(image.width,image.height)>3072)throw Error('Invalid outfit photo dimensions.');
+  const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
+  await import('./photo-color.js'+new URL(import.meta.url).search);
+  const map=clothingLabelMap(output.logits.data,output.logits.dims);
+  // P840 opt-in ONLY. Parallel #68's evaluated connected-footwear proposal
+  // is a private review draft, not new automatic wardrobe admission.
+  const groups=!map.personDetected?[]:request.instanceReview840===true?
+   (await import('./outfit-instance-review-840.mjs'+new URL(import.meta.url).search)).clothingReviewInstances840(map):
+   clothingMaskGroups(map);
+  const sourceSha256=request.instanceReview70===true?await sourceSha256For70(request.image):null;
+// Color #76 is a research-only, owner-scoped companion to the existing #70
+// original/mask binding. It never replaces the existing user-facing color.
+const color76=request.color76===true&&request.instanceReview70===true&&
+ typeof request.ownerId==='string'&&request.ownerId.length>0?
+ await import('./garment-color-76.mjs'):null;
+  let count=0;
+  for(const group of groups){
+   const isolated=isolateClothingPixels(image,map,group),raw=cropClothingPhotoPixels(image,map,group),sample=clothingColorSample(image,map,group),b=raw.bounds;
+   const piece={image:await jpegData(new RawImage(isolated.data,isolated.width,isolated.height,3)),recognitionPhoto:{image:await jpegData(new RawImage(raw.data,raw.width,raw.height,3))},cropBounds:{x:b.left/image.width,y:b.top/image.height,width:b.width/image.width,height:b.height/image.height},colorEstimate:(()=>{const palette=PhotoColor.maskedPalette(sample.data,sample.width,sample.height);return palette&&!palette.needsConfirmation?{color:palette.primary,source:'photo-estimate',support:palette.colors[0]?.share||0,secondaryColor:palette.secondary}:null;})(),label:group.label,instanceMethod:group.instanceMethod||'native_semantic_group',requiresReview:request.instanceReview840===true,hint:{categories:group.categories,types:group.types||[],clipped:group.clipped,confidence:group.confidence}};
+   if(request.instanceReview70===true){piece.reconciliation70={
+    sourceSha256,maskSha256:await sha256Bytes70(group.selected),instanceOrdinal:count,
+    method:piece.instanceMethod,colorEstimate:piece.colorEstimate||null
+   };}
+   if(color76){
+    // The original decoded image and exact selected garment mask are already
+    // in memory. No new decoding, recoloring, photo uploads or owner writes.
+    try{
+     const sampled=color76.sampleMask76(image,map,group);
+     piece.colorResearch76=color76.analyzeColor76(sampled,{
+      ownerId:request.ownerId,requestId:request.id,sourceSha256,
+      maskSha256:piece.reconciliation70.maskSha256
+     });
+    }catch{
+     // A broken experimental estimate cannot interrupt photo preservation.
+     piece.colorResearch76={method:'mask-aware-color-v1',status:'abstain',reasons:['research_unavailable']};
+    }
+   }
+   self.postMessage({type:'piece',id:request.id,piece});count++;
+  }
+  self.postMessage({type:'done',id:request.id,count});
+ }catch{self.postMessage({type:'error',id:request.id,text:'This outfit could not be separated on this device. Your existing photos are kept. Try another clear photo of one person, head to toe.'});}
+ }).catch(()=>self.postMessage({type:'error',id:request.id,text:'Outfit separation stopped. Try the photo again.'}));};
