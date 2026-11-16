@@ -326,7 +326,10 @@ jobs:
           M57=91723408a7d1ddc7240e5cbb67d90b242f6f4743
           git merge-base --is-ancestor "$BASE" HEAD
           git cat-file -e "$M57^{commit}"
-          for path in tests/detector-manual-recovery-65.test.mjs tests/invalid-selection-race-71.test.mjs tests/review-source-epoch-34.test.mjs; do
+          # M155: controlled M154 default/P94 optional worker-route test differs
+          # from immutable M57 ONLY in the test; retain and source-pin it.
+          test "$(git rev-parse HEAD:tests/detector-manual-recovery-65.test.mjs)" = 23e83af2cf40e37d640e6b302f1a6e0f751af673
+          for path in tests/invalid-selection-race-71.test.mjs tests/review-source-epoch-34.test.mjs; do
             test "$(git rev-parse "HEAD:$path")" = "$(git rev-parse "$M57:$path")"
           done
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
