@@ -207,11 +207,11 @@ jobs:
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
-          test "$(git merge-base 5ac312f620c02a033cb95b9b53b0966ebc07b986 HEAD)" = 5ac312f620c02a033cb95b9b53b0966ebc07b986
+          test "$(git merge-base ebb8185dba7dcd54f026dd995f82b6238164be3b HEAD)" = ebb8185dba7dcd54f026dd995f82b6238164be3b
           test "$(git rev-parse HEAD:public/app.js)" = 991c00457799f8e2b8ae958d5ace85cc9914aece
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = b4b7245686d81d47181f0795e9b9890bdb1642bc
           test "$(git rev-parse HEAD:scripts/test-mission3-default-atomic-import-browser.mjs)" = 20f85d5eeda42f2acd921f1393c10cc7522d22df
-          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 041f4e6b25f495b86a4d4828da6c622d0c9b0192
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = ece2954bc16c3c450ff7b3e1acd9cfa813bbaece
           node --check scripts/test-mission3-default-atomic-import-browser.mjs
       - name: Install pinned no-deploy native browser dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
@@ -278,10 +278,10 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
-          test "$(git merge-base 5ac312f620c02a033cb95b9b53b0966ebc07b986 HEAD)" = 5ac312f620c02a033cb95b9b53b0966ebc07b986
+          test "$(git merge-base ebb8185dba7dcd54f026dd995f82b6238164be3b HEAD)" = ebb8185dba7dcd54f026dd995f82b6238164be3b
           test "$(git rev-parse HEAD:public/app.js)" = 991c00457799f8e2b8ae958d5ace85cc9914aece
           test "$(git rev-parse HEAD:public/outfit-board.js)" = 153455379b0b6d777eff8c1c508c129208c7fadc
-          git diff --name-only 5ac312f620c02a033cb95b9b53b0966ebc07b986 HEAD | while IFS= read -r p; do
+          git diff --name-only ebb8185dba7dcd54f026dd995f82b6238164be3b HEAD | while IFS= read -r p; do
             case "$p" in
               scripts/test-parallel92-exact-head.mjs|scripts/test-parallel92-independent-browser.mjs|scripts/test-parallel92-m51-webkit-reentry.mjs|research/parallel92-integration/LEDGER.md|.github/workflows/parallel92-m4-exact-head-no-deploy.yml) ;;
               *) echo "P92 REFUSED CONSUMER/DONOR CHANGE: $p"; exit 1 ;;

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {readFileSync,writeFileSync,mkdirSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
-const base='5ac312f620c02a033cb95b9b53b0966ebc07b986';
+const base='ebb8185dba7dcd54f026dd995f82b6238164be3b';
 const engine=process.env.P92_ENGINE,trial=Number(process.env.P92_TRIAL);
 assert.ok(['chromium','webkit'].includes(engine));
 assert.ok(trial===1||trial===2);
@@ -25,7 +25,7 @@ const pins={
  'scripts/test-main51-real-app-owner-original-2d.mjs':'16cd06bcc1b1ef6bf8a6df3e3790c9abe2785167',
  'scripts/test-main58-actual-p88-wasm-browser.mjs':'96ba2f5ee2420de52f45911881fdcc139455c353',
  'scripts/test-mission3-default-atomic-import-browser.mjs':'20f85d5eeda42f2acd921f1393c10cc7522d22df',
- 'tests/mission3-default-atomic-backup-source-guard.test.mjs':'041f4e6b25f495b86a4d4828da6c622d0c9b0192'
+ 'tests/mission3-default-atomic-backup-source-guard.test.mjs':'ece2954bc16c3c450ff7b3e1acd9cfa813bbaece'
 };
 for(const [p,blob] of Object.entries(pins))assert.equal(git('rev-parse','HEAD:'+p),blob,'source changed: '+p);
 // Standalone-safe: reconstruct byte-for-byte immutable Worker import graph.
