@@ -59,7 +59,7 @@ jobs:
           assert.equal(x.checks.m2ResearchModuleImport?.requiredFiles,2);
           assert.equal(x.checks.m2ResearchModuleImport?.normal3DAdmitted,false);
           assert.equal(x.checks.latestM4ProtectedNode.status,'PASS');
-          assert(x.checks.latestM4ProtectedNode.tests>=100);
+          assert(x.checks.latestM4ProtectedNode.tests>=104);
           assert.equal(x.normalM4Adopted,true);
           assert.equal(x.checks.actualAppBrowser?.journeys,6);
           assert.equal(x.checks.largeOriginalActualBrowser?.journeys,6);
