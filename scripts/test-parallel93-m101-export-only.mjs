@@ -48,6 +48,8 @@ try{
  // copied verbatim into scratch so Node can load it alongside real M101 app.
  const browserHarness=await readFile('scripts/test-parallel93-m101-v3-receipt-browser.mjs','utf8');
  await writeFile(join(staged,'scripts/test-parallel93-m101-v3-receipt-browser.mjs'),browserHarness);
+ const sharedSourceTest=await readFile('tests/parallel93-m101-shared-original-restore.test.mjs','utf8');
+ await writeFile(join(staged,'tests/parallel93-m101-shared-original-restore.test.mjs'),sharedSourceTest);
  const reviewedBrowserHarness=await readFile(
   'scripts/test-parallel93-m101-reviewed-restore-2d-browser.mjs','utf8');
  await writeFile(join(staged,'scripts/test-parallel93-m101-reviewed-restore-2d-browser.mjs'),
@@ -120,7 +122,8 @@ try{
   'tests/mission3-default-atomic-backup-source-guard.test.mjs',
   'tests/mission3-default-export-snapshot-cas.test.mjs',
   'tests/main54-unresolved-multi-mask-owner-veto.test.mjs',
-  'tests/main55-p88-source-key-lease.test.mjs'],staged);
+  'tests/main55-p88-source-key-lease.test.mjs',
+  'tests/parallel93-m101-shared-original-restore.test.mjs'],staged);
  assert.equal(node.status,0,'M101 export-only exact-source tests: '+node.stdout.slice(-4000)+node.stderr.slice(-2000));
  const counts=node.stdout.match(/# tests (\d+)[\s\S]*?# pass (\d+)[\s\S]*?# fail (\d+)/);
  assert(counts,'Missing real Node TAP summary');
