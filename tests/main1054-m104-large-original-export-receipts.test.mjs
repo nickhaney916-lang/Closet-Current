@@ -7,7 +7,7 @@ import {createHash,webcrypto} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import {exportDurableOwnerBackupM3} from '../public/native-default-verified-backup-export-m3.mjs';
-import {prepareDefaultAtomicM3} from '../public/native-default-atomic-import-m3.mjs';
+import {prepareDefaultAtomicM3,commitDefaultAtomicM3} from '../public/native-default-atomic-import-m3.mjs';
 const require=createRequire(import.meta.url);
 const {indexedDB}=require('fake-indexeddb');
 globalThis.crypto??=webcrypto;
@@ -213,5 +213,66 @@ test('equivalent padded Base64 spelling of shared preview cannot bypass v3 dupli
    /LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW/);
   await addSavedRow(f.db,second);
   await assert.rejects(f.export(),/M3_EXPORT_SHARED_ORIGINAL_RESTORE_UNSUPPORTED/);
+ });
+});
+
+async function ownerRows(db){
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction(['items','state'],'readonly');
+  const items=tx.objectStore('items').getAll(),state=tx.objectStore('state').getAll();
+  tx.oncomplete=()=>resolve({items:items.result,state:state.result});
+  tx.onabort=tx.onerror=()=>reject(tx.error);
+ });
+}
+test('large original plus distinct-source garment v3 export restores atomically after explicit owner confirmation',async()=>{
+ await withFixture(()=>{},async f=>{
+  const bytes=Buffer.from([255,216,10,20,30,255,217]);
+  const otherSHA=createHash('sha256').update(bytes).digest('hex');
+  const otherPreview=mime+Buffer.from([255,216,50,60,255,217]).toString('base64');
+  const otherOriginal=mime+bytes.toString('base64');
+  await addSavedRow(f.db,{...structuredClone(f.item),id:'pants-2',
+   category:'Bottoms',itemType:'Jeans',image:otherPreview,
+   originalPhoto:{image:otherOriginal,sha256:otherSHA,ownerId:f.owner},
+   sourceSHA256:otherSHA});
+  const exported=await f.export();
+  assert.equal(exported.data.items.length,2);
+  const expected=structuredClone(exported.data.items);
+  assert.equal(expected.find(x=>x.id==='shirt-1').originalPhoto.image,original);
+  await new Promise((resolve,reject)=>{
+   const tx=f.db.transaction(['items','state'],'readwrite');
+   tx.objectStore('items').clear();
+   tx.objectStore('state').clear();
+   tx.oncomplete=resolve;tx.onabort=tx.onerror=()=>reject(tx.error);
+  });
+  const clean=await ownerRows(f.db);
+  assert.equal(clean.items.length,0);
+  const prepared=await prepareDefaultAtomicM3(importerOptions(f,exported.data));
+  assert.equal(prepared.counts.garments,2);
+  assert.equal((await ownerRows(f.db)).items.length,0,'preflight may not mutate owner items');
+  await assert.rejects(commitDefaultAtomicM3({
+   ownerDB:f.db,ownerId:f.owner,assertLease:()=>{},prepared,confirmed:false
+  }),/LEGACY_ATOMIC_OWNER_CONFIRMATION_REQUIRED/);
+  assert.equal((await ownerRows(f.db)).items.length,0,'denied confirmation may not write');
+  const result=await commitDefaultAtomicM3({
+   ownerDB:f.db,ownerId:f.owner,assertLease:()=>{},prepared,confirmed:true
+  });
+  assert.equal(result.committed,true);
+  assert.equal(result.atomic,true);
+  assert.equal(result.cloudDirty,true);
+  const restored=await ownerRows(f.db);
+  assert.equal(restored.items.length,2);
+  assert.deepEqual(new Set(restored.items.map(x=>x.id)),
+   new Set(['shirt-1','pants-2']));
+  for(const item of restored.items){
+   const before=expected.find(x=>x.id===item.id);
+   assert.equal(item.originalPhoto.image,before.originalPhoto.image,
+    'clean restore must preserve each exact original JPEG');
+   assert.equal(item.sourceSHA256,before.sourceSHA256);
+   assert.equal(item.originalPhoto.sha256,before.originalPhoto.sha256);
+   assert.equal(item.image,before.image);
+  }
+  const cloud=restored.state.find(x=>x.id==='cloud-sync');
+  assert.equal(cloud.localRevision,1);
+  assert.equal(cloud.dirty,true);
  });
 });
