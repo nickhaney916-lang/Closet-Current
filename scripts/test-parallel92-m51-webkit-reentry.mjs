@@ -70,7 +70,9 @@ classified=classified.replace(firstPreview,String.raw`
      intercepted++;
      notifyModule();
      await moduleGate;
-     await route.continue();
+     // Delegate to the unchanged M89 context route and its real source-safe
+     // failure categorization, rather than bypassing it with continue().
+     await route.fallback();
     });
     try{
      await page.evaluate(()=>{
