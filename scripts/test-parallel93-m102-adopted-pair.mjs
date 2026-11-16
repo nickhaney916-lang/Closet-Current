@@ -1,4 +1,4 @@
-// P93: verified latest-M4 executable combination and proposed EXPORT-ONLY v3 fix on M102 native importer.
+// P93: independently validate actual M102 main-owned v3 exporter and importer, no patch or protected source edits.
 // FULLY DISPOSABLE git worktree. The current branch, main PR, donor branches,
 // original photos and hosted storage are never modified.
 import assert from 'node:assert/strict';
@@ -44,15 +44,15 @@ const results={schema:'P93-M102-main-owned-import-export-adoption-with-real-brow
 try{
  must('git',['worktree','add','--detach',staged,M102]);
  await symlink(resolve('node_modules'),join(staged,'node_modules'),'dir');
- // The dedicated P93 browser harness is isolated test-only code. It is
- // copied verbatim into scratch so Node can load it alongside real M102 app.
- const browserHarness=await readFile('scripts/test-parallel93-m102-v3-receipt-browser.mjs','utf8');
- await writeFile(join(staged,'scripts/test-parallel93-m102-v3-receipt-browser.mjs'),browserHarness);
- const sharedSourceTest=await readFile('tests/parallel93-m102-shared-original-restore.test.mjs','utf8');
- await writeFile(join(staged,'tests/parallel93-m102-shared-original-restore.test.mjs'),sharedSourceTest);
+ // Copy independent test-only M101 fixture harness into frozen M102 detached
+ // checkout; all consumer source remains byte-for-byte at adopted M102.
+ const browserHarness=await readFile('scripts/test-parallel93-m101-v3-receipt-browser.mjs','utf8');
+ await writeFile(join(staged,'scripts/test-parallel93-m101-v3-receipt-browser.mjs'),browserHarness);
+ const sharedSourceTest=await readFile('tests/parallel93-m101-shared-original-restore.test.mjs','utf8');
+ await writeFile(join(staged,'tests/parallel93-m101-shared-original-restore.test.mjs'),sharedSourceTest);
  const reviewedBrowserHarness=await readFile(
-  'scripts/test-parallel93-m102-reviewed-restore-2d-browser.mjs','utf8');
- await writeFile(join(staged,'scripts/test-parallel93-m102-reviewed-restore-2d-browser.mjs'),
+  'scripts/test-parallel93-m101-reviewed-restore-2d-browser.mjs','utf8');
+ await writeFile(join(staged,'scripts/test-parallel93-m101-reviewed-restore-2d-browser.mjs'),
   reviewedBrowserHarness);
  for(const d of donors){
   must('git',['cat-file','-e',d.head+'^{commit}']);
@@ -119,8 +119,8 @@ try{
   'tests/mission3-default-export-snapshot-cas.test.mjs',
   'tests/main54-unresolved-multi-mask-owner-veto.test.mjs',
   'tests/main55-p88-source-key-lease.test.mjs',
-  'tests/parallel93-m102-shared-original-restore.test.mjs'],staged);
- assert.equal(node.status,0,'M102 export-only exact-source tests: '+node.stdout.slice(-4000)+node.stderr.slice(-2000));
+  'tests/parallel93-m101-shared-original-restore.test.mjs'],staged);
+ assert.equal(node.status,0,'M102 adopted exporter/importer exact-source tests: '+node.stdout.slice(-4000)+node.stderr.slice(-2000));
  const counts=node.stdout.match(/# tests (\d+)[\s\S]*?# pass (\d+)[\s\S]*?# fail (\d+)/);
  assert(counts,'Missing real Node TAP summary');
  assert.equal(counts[1],counts[2]);assert.equal(counts[3],'0');
@@ -148,8 +148,8 @@ try{
   sourceChecks:'all inherited ordinary native v3 duplicate/rollback/owner fences',
   syntheticOwners:true,physicalPhone:false};
  // P93's own separate full-size source browser case: real native unflagged
- // v3 export API and ACTUAL app UI import on the test-patched-export M102 tree.
- const large=run('node',['scripts/test-parallel93-m102-v3-receipt-browser.mjs',
+ // v3 export API and ACTUAL app UI import on UNMODIFIED main-owned M102.
+ const large=run('node',['scripts/test-parallel93-m101-v3-receipt-browser.mjs',
   'benchmark/parallel93-m102-large-original-browser'],staged);
  assert.equal(large.status,0,'M102 native LARGE original browser: '+
   large.stdout.slice(-4000)+large.stderr.slice(-4000));
@@ -175,7 +175,7 @@ try{
  // PHOTO119 owner-reviewed JPEG, not just a DB row with same-source bytes.
  // The actual opt-in M4 owner/source 2D gallery must render the ORIGINAL,
  // retain 3D denial and never infer human accuracy from synthetic reviews.
- const reviewed=run('node',['scripts/test-parallel93-m102-reviewed-restore-2d-browser.mjs',
+ const reviewed=run('node',['scripts/test-parallel93-m101-reviewed-restore-2d-browser.mjs',
   'benchmark/parallel93-m102-reviewed-restore-2d-browser'],staged);
  assert.equal(reviewed.status,0,
   'M102 reviewed full source => export => native UI restore => Outfit Builder 2D failed: '+
