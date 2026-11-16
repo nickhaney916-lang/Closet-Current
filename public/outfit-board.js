@@ -1008,7 +1008,13 @@ if(mission4Preview1054Active){
      const viewer=mission4Preview1054Viewer;
      const result=await viewer.refresh();
      if(!live()||mission4Preview1054Viewer!==viewer){
-      viewer.clear();return;
+      // M147: a previous click may finish after the new owner's/board's
+      // preview has reused this exact viewer and already published valid
+      // pixels. Only the currently owned click can revoke the shared DOM;
+      // late stale continuations must NOT clear newer verified originals.
+      if(serial===mission4Preview1054ClickSerial&&
+         mission4Preview1054Viewer===viewer) viewer.clear();
+      return;
      }
      if(viewer.status.phase!=='visible'||
         photos.querySelectorAll('img').length!==result.slotCount)
