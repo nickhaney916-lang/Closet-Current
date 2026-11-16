@@ -52,6 +52,14 @@ for(const [segment,name] of stageReentries){
    "  stage='p92-focus-"+name+"';\n  await clickPreview(page);"));
 }
 
+// Instrument only failure-time non-sensitive event ordering for the known M101
+// WebKit same-named private-DB reentry. Original app, M51 click and wait unchanged.
+const dbRefClickMarker="  stage='p92-focus-same-named-db-reference';\n  await clickPreview(page);";
+assert.equal(classified.split(dbRefClickMarker).length,2,
+ 'native M51 same-named DB-reference stage drift');
+const dbRefClickTrace="  stage='p92-focus-same-named-db-reference';\n  // Read-only P92 hook around ORIGINAL M51 click/assertions. No source changes.\n  await page.evaluate(()=>{\n   const status=document.getElementById('mission4Preview1054Status');\n   const button=document.querySelector('#mission4Preview1054Section button');\n   const entries=[];\n   const record=kind=>{\n    const label=status?.textContent||'';\n    let sourceMatch=false;\n    try{sourceMatch=mission4Preview1054SameSource(\n     mission4Preview1054Pinned,mission4Preview1054SourceSnapshot());}catch{}\n    entries.push({\n     kind,\n     statusClass:label.includes('Verifying')?'verifying':\n      label.includes('2D only')?'verified':\n      label.includes('Preview refused')?'refused':\n      label.includes('Verify the original clothing photos again')?'source-changed':\n      label.includes('Verification stopped')?'cancelled':'other',\n     pinned:mission4Preview1054Pinned!==null,\n     sourceMatch,\n     photoCount:document.querySelectorAll('#mission4Preview1054Photos img').length,\n     buttonDisabled:button?.disabled===true\n    });\n    if(entries.length>32)entries.shift();\n   };\n   const observer=new MutationObserver(()=>record('status-or-button'));\n   if(status)observer.observe(status,{childList:true,subtree:true,characterData:true});\n   if(button)observer.observe(button,{attributes:true,attributeFilter:['disabled']});\n   const focus=()=>record('focus');\n   window.addEventListener('focus',focus);\n   window.__p92PrivateDbTimeline={entries,record,close(){\n    observer.disconnect();window.removeEventListener('focus',focus);\n   }};\n   record('before-click');\n  });\n  try{\n   await clickPreview(page);\n  }catch(error){\n   const events=await page.evaluate(()=>{\n    const trace=window.__p92PrivateDbTimeline;\n    trace?.record('failed-original-wait');\n    return trace?.entries||[];\n   }).catch(()=>[]);\n   console.error('P92_DB_REF_TRANSITION_ORDER_SAFE',JSON.stringify({\n    stage:'p92-focus-same-named-db-reference',\n    engine,width:activeWidth,events,releaseAuthorized:false,familyAlpha:'HOLD'\n   }));\n   throw error;\n  }finally{\n   await page.evaluate(()=>{\n    window.__p92PrivateDbTimeline?.close();\n    delete window.__p92PrivateDbTimeline;\n   }).catch(()=>{});\n  }";
+classified=classified.replace(dbRefClickMarker,dbRefClickTrace);
+
 const firstPreview="  stage='actual-native-app-preview-button';\n  await clickPreview(page);";
 assert.equal(classified.split(firstPreview).length,2,'native first import preview source changed');
 classified=classified.replace(firstPreview,String.raw`
@@ -203,6 +211,26 @@ const staleSignals=log.split('\n').filter(line=>line.includes('P92_STALE_OWNER_L
    photoCount:value.photoCount,syntheticRaceInjection:value.syntheticRaceInjection===true};
  }catch{return {invalid:true};}
 });
+const dbTransitionEvents=log.split('\n').filter(line=>
+ line.includes('P92_DB_REF_TRANSITION_ORDER_SAFE ')).map(line=>{
+ try{
+  const x=JSON.parse(line.slice(line.indexOf('P92_DB_REF_TRANSITION_ORDER_SAFE ')+
+   'P92_DB_REF_TRANSITION_ORDER_SAFE '.length));
+  const categories=['verifying','verified','refused','source-changed','cancelled','other'];
+  const kinds=['status-or-button','focus','before-click','failed-original-wait'];
+  return {kind:'read-only-db-reentry-timeline',
+   stage:'p92-focus-same-named-db-reference',
+   width:[320,390,430].includes(x.width)?x.width:null,
+   entries:(x.events||[]).slice(-32).map(e=>({
+    event:kinds.includes(e.kind)?e.kind:'other',
+    statusClass:categories.includes(e.statusClass)?e.statusClass:'other',
+    pinned:e.pinned===true,
+    sourceMatch:e.sourceMatch===true,
+    photoCount:Number.isInteger(e.photoCount)?e.photoCount:null,
+    buttonDisabled:e.buttonDisabled===true
+   }))};
+ }catch{return {kind:'invalid-db-timeline-classification'};}
+});
 const expectedStalePath=staleSignals.length===1&&staleSignals[0].width===320&&
  staleSignals[0].statusClass==='verifying'&&staleSignals[0].photoCount===0&&
  staleSignals[0].syntheticRaceInjection===true;
@@ -210,13 +238,13 @@ const row={trial,engine:'webkit',actualNativeApp:true,widths:[320,390,430],
   genuineLicensedSource:true,syntheticOwnerReview:true,
   elapsedMs:Date.now()-started,status:r.status===0&&expectedStalePath?'PASS_WITH_KNOWN_STATUS_DEFECT':'FAIL',
   expectedStalePathReproduced:expectedStalePath,staleStatusSignals:staleSignals,
-  sourceSafeRefusals:safe,strictTimeoutClassifications:waitClass};
+  sourceSafeRefusals:safe,strictTimeoutClassifications:waitClass,dbTransitionEvents};
  runs.push(row);
  console.log('P92_M97_NATIVE_WEBKIT_REENTRY_TRIAL',JSON.stringify(row));
  if(r.error||r.status!==0||!expectedStalePath){
   console.error('P92_M97_REENTRY_FAIL',JSON.stringify({
    trial,errorName:r.error?.name||null,exitCode:r.status,
-   sourceSafeRefusals:safe,strictTimeoutClassifications:waitClass}));
+   sourceSafeRefusals:safe,strictTimeoutClassifications:waitClass,dbTransitionEvents}));
   break; // no retry masking
  }
 }
