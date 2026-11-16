@@ -1,7 +1,8 @@
 // M123 MAIN: source-pinned opt-in acceptance adaptation of P93 draft test-only browser harness.
 // Tests actual app review, export/UI restore and original-photo 2D, NEVER synthetic recognition accuracy, 3D fit, or hosted identity.
-// P93 M101 detached native app: PHOTO119 owner reviewed -> v3 export->import of a
-// SHA-bound large original JPEG. Uses only public JPEG + synthetic metadata,
+// Main M123 signed-owner native PHOTO119 reviewed small original ->
+// actual v3 export/import -> original-only 2D (large separate-preview refused).
+// Uses only public JPEG and synthetic account metadata,
 // synthetic owner account; no genuine model, hosted keys or remote writes.
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -212,11 +213,11 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
     },{owner,previewJPEG,originalJPEG,originalSHA,largeOriginalJPEG,largeOriginalSHA});
     for(const [field,value] of Object.entries(result)){
      if(['cloudRevision','cloudMarkerChanged'].includes(field))continue;
-     assert.equal(value,true,engine+' width '+width+' lost native large original at '+field);
+     assert.equal(value,true,engine+' width '+width+' lost reviewed native owner source at '+field);
     }
     assert.equal(result.cloudRevision,1);
     assert.equal(result.cloudMarkerChanged,1);
-    // The missing four-mission seam: owner-reviewed canonical original saved,
+    // Cross-mission native seam: owner-reviewed canonical small original saved,
     // exported and imported, then actual signed Outfit Builder 2D preview.
     await page.reload({waitUntil:'domcontentloaded'});
     await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady,inspirationReady]));
@@ -341,7 +342,7 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
      'Unexpected non-local cloud or account write');
     cases.push({engine,width,actualNativeApp:true,
      originalEncodedLength:originalJPEG.length,canonicalOriginalSHAValid:true,
-     exportImportLargeOriginalUI:true,losslessOriginal:true,
+     actualUIV3RestoreVerified:true,losslessOriginal:true,
      ownerOriginalOutfitRecovered:true,
      restoredPhoto2DVerified:true,restoredPhotoOriginalSHA:originalSHA,
      sourceTo3DAllowed:false,
@@ -355,7 +356,7 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
  const report={schema:'M123-main-reviewed-owner-v3-restored-original-2d/v1',
   familyAlpha:'HOLD',sourcePhotoPublicSyntheticMetadata:true,
   exactSourceSHAVerified:true,releaseAuthorized:false,
-  realBrowserEngines:['chromium','webkit'],cases,errors};
+  realBrowserEngines:[selectedEngine],cases,errors};
  await writeFile(resolve(output,'results.json'),JSON.stringify(report,null,2)+'\n');
  console.log('M123 MAIN PHOTO119 reviewed original -> owner v3 backup/UI restore -> signed original 2D 3/3 PASS; mismatched large preview correctly vetoed; HOLD');
 }finally{server.close();}
