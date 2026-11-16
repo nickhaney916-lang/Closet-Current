@@ -72,7 +72,17 @@ try{
  const exportPath='public/native-default-verified-backup-export-m3.mjs';
  const original=await readFile(join(staged,exportPath),'utf8');
  const patch=proposeP93SourceOnlyPatch(exportPath,original);
- await writeFile(join(staged,exportPath),patch.proposedSource);
+ // Test the actual owner-consumable, reviewable one-file unified diff, not
+ // just a dynamically generated abstract proposal. Reject source drift.
+ const ownerPatch=resolve('research/parallel93-convergence/M98-EXPORTER-ONLY-OWNER-PATCH.diff');
+ must('git',['apply','--check',ownerPatch],staged);
+ must('git',['apply',ownerPatch],staged);
+ const adopted=await readFile(join(staged,exportPath),'utf8');
+ assert.equal(adopted,patch.proposedSource,
+  'Tracked M98 owner-only patch disagrees with independently source-pinned adapter');
+ results.checks.reviewableOwnerPatch={appliesToExactM98:true,
+  onlyExporter:true,patchMatchesTestedCandidate:true,
+  normalApplicationPatched:false};
  const syntax=run('node',['--check',exportPath],staged);
  assert.equal(syntax.status,0,'Export-only candidate parser failure: '+syntax.stderr);
  results.checks[exportPath]={sourceSha:patch.originalGitBlob,
