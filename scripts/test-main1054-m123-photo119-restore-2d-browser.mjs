@@ -202,6 +202,34 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
         largeRestored[0]?.sourceSHA256!==largeOriginalSHA||
         largeRestored[0]?.displayPreviewReceipt?.previewSHA256!==largeDisplaySHA)
       throw Error('M130 native v3 owner UI restore lost large reviewed source');
+     // M134: prove the restored >3M original renders through the REAL native
+     // signed owner 2D preview, never substitute the small display thumbnail.
+     // This test calls the app's mounted button, not the source helper directly.
+     await update({states:[{id:'outfit-board',current:{
+      name:'Large owner-confirmed source',occasion:'Casual',
+      slots:{top:largeRecord.id}},saved:[]}]});
+     items=(await readAllFrom(db)).map(normalizeClothing);
+     await reloadCloudBoard();render();switchView('builder');
+     const largePreviewButton=document.querySelector('#mission4Preview1054Section button');
+     if(!largePreviewButton)throw Error('M134 native 2D preview button unavailable');
+     largePreviewButton.click();
+     let previewStatus='';
+     for(let attempt=0;attempt<200;attempt++){
+      previewStatus=document.getElementById('mission4Preview1054Status')?.textContent||'';
+      if(previewStatus.includes('2D only')||previewStatus.includes('Preview refused'))break;
+      await new Promise(resolve=>setTimeout(resolve,100));
+     }
+     const largePhoto=document.querySelector('#mission4Preview1054Photos img');
+     if(!/original photo\(s\) verified.*2D only/.test(previewStatus)||
+        !largePhoto||largePhoto.getAttribute('src')!==largeOriginalJPEG||
+        document.querySelectorAll('#mission4Preview1054Photos img').length!==1||
+        document.querySelector('#outfit3D01Canvas'))
+      throw Error('M134 owner-reviewed large original was not shown as exact 2D source');
+     await largePhoto.decode();
+     if(largePhoto.naturalWidth<100||largePhoto.naturalHeight<100)
+      throw Error('M134 camera-size original photo could not decode');
+     mission4Preview1054Viewer?.clear();
+     document.getElementById('mission4Preview1054Photos')?.replaceChildren();
      await update({clear:true});
      // Test-only counter scope reset: only the FINAL two-piece import below
      // should count toward the existing exactly-once cloud marker assertion.
@@ -284,6 +312,8 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
       largeExplicitPreviewPhoto119Saved:largeConfirmed.saved===true,
       largeOriginalV3UIRecovered:largeRestored.length===1&&
        largeRestored[0]?.originalPhoto?.image===largeOriginalJPEG,
+      largeOriginal2DDisplayed:largePhoto?.getAttribute('src')===largeOriginalJPEG&&
+       /original photo\(s\) verified.*2D only/.test(previewStatus),
       reviewedSmallPhoto119Saved:row.ownerReviewed===true,
       exportedSourceExact:exportedById.get('p93-original')?.originalPhoto.image===originalJPEG&&
        exportedById.get('m127-bottom')?.originalPhoto.image===secondJPEG,
@@ -455,5 +485,5 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
   exactSourceSHAVerified:true,releaseAuthorized:false,
   realBrowserEngines:[selectedEngine],cases,errors};
  await writeFile(resolve(output,'results.json'),JSON.stringify(report,null,2)+'\n');
- console.log('M127 MAIN TWO PHOTO119 reviewed distinct-source originals -> owner v3 UI restore -> signed outfit 2D 3/3 PASS; mismatched large preview vetoed; HOLD');
+ console.log('M134 MAIN owner-confirmed >3M original with real thumbnail restored and verified in signed 2D; two distinct PHOTO119 originals/outfit PASS 3/3; wrong preview vetoed; HOLD');
 }finally{server.close();}
