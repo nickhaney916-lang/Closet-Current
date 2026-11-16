@@ -24,3 +24,7 @@ For a **local** original repo source host only, open `/public/index.html?multi24
 5. Intermittent WebKit first-import preview reliability is owned by #1219. CI RED is not a release candidate. Family Alpha #255 HOLD remains open.
 
 Conflict-aware handoff: inspect exact native worker and P840 donor blobs first, the one explicit research-mode intake route second, then actual browser/Node CI results. No change to main #1210 or other missions, no cherry-pick/merge/deploy.
+
+## Additional distinct-original acceptance (no model-accuracy substitution)
+
+The P94 job at width 390 for each engine additionally invokes unchanged M123 exact blob `b76ffa0625d421a36a1cf3bcc00d109e9cea42b9`. M123 itself executes real native Chromium/WebKit app at 320, 390 and 430 widths, using two **different** public original JPEGs `commons-0003` and `commons-0002` with human-gesture *synthetic* category labels. It verifies explicit owner PHOTO119 review, both real saved top/bottom outfit slots, v3 export/import, large-original owner display review, source-bound original 2D and no unverified 3D. This is complementary to M58 genuine WASM source inference through one tested original; they are separate acceptance phases, and M123's Worker deliberately uses a controlled fixture. Never cite M123 as independent model accuracy or a two-garment SegFormer success.

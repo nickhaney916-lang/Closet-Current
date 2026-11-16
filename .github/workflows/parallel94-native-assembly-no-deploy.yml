@@ -90,6 +90,13 @@ jobs:
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Genuine SegFormer browser worker then human review, original, owner-private outfit and v4 atomic restore
         run: node scripts/test-parallel94-native-p88-browser.mjs
+      - name: Real native two-distinct-original v3 top/bottom photo-only restore (320/390/430)
+        if: matrix.width == 390
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs)" = b76ffa0625d421a36a1cf3bcc00d109e9cea42b9
+          M123_ENGINE="${M58_ENGINE}" node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs "benchmark/parallel94-native-v3-distinct-sources/${M58_ENGINE}"
       - name: Archive source-safe metadata receipt ONLY
         if: always()
         uses: actions/upload-artifact@v4
