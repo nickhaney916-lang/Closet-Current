@@ -18,7 +18,7 @@ assert(original.length>3_000_000&&original.length<11_200_000);
 const previewBytes=Buffer.from([255,216,0,1,2,255,217]);
 const thumbnail=mime+previewBytes.toString('base64'),thumbnailSHA=sha(previewBytes);
 let serial=0;
-async function ownerFixture({recordEdit=()=>{},reviewEdit=()=>{}}={}){
+async function ownerFixture({recordEdit=()=>{},reviewEdit=()=>{},originalDraftOnly=false}={}){
  const owner='m132-synthetic-'+(++serial),id='camera-source';
  const q=indexedDB.open('closet-current-user-'+owner,1);
  q.onupgradeneeded=()=>{
@@ -41,7 +41,9 @@ async function ownerFixture({recordEdit=()=>{},reviewEdit=()=>{}}={}){
  recordEdit(record);reviewEdit(review);
  await new Promise((resolve,reject)=>{
   const tx=db.transaction('state','readwrite');
-  tx.objectStore('state').put({id:'draft',batch:[structuredClone(record)]});
+  const initial=structuredClone(record);
+  if(originalDraftOnly){initial.image=original;delete initial.displayPreviewReceipt;}
+  tx.objectStore('state').put({id:'draft',batch:[initial]});
   tx.oncomplete=resolve;tx.onabort=tx.onerror=()=>reject(tx.error);
  });
  let valid=true;
@@ -214,5 +216,33 @@ test('revoking owner session while preview SHA awaits cannot save a stale photo'
   await assert.rejects(pending,/PHOTO119 capture owner review lease revoked/);
   assert.equal(hold.calls(),2);
   assert.deepEqual(await f.read(),before,'revoked owner cannot mutate private wardrobe');
+ });
+});
+
+test('owner editor may atomically turn the existing ORIGINAL-only draft into a signed display preview without a prior draft rewrite',async()=>{
+ await withOwner({originalDraftOnly:true},async f=>{
+  const before=await f.read();
+  assert.equal(before.state.find(x=>x.id==='draft').batch[0].image,original);
+  assert.equal(before.state.find(x=>x.id==='draft').batch[0].displayPreviewReceipt,undefined);
+  const result=await f.commit();
+  assert.equal(result.saved,true);
+  assert.equal(result.sourceKind,'human-reviewed-original-single-display-preview');
+  const state=await f.read();
+  assert.equal(state.items.length,1);
+  assert.equal(state.items[0].image,thumbnail);
+  assert.equal(state.items[0].originalPhoto.image,original);
+  assert.equal(state.state.find(x=>x.id==='draft').batch.length,0);
+ });
+});
+test('original-only draft conversion must not launder an unreviewed unrelated preview',async()=>{
+ await denied({originalDraftOnly:true,
+   reviewEdit:r=>delete r.previewConfirmed},'display-preview-unverified');
+});
+test('original-only draft conversion with changed source/crop identity is denied before any write',async()=>{
+ await withOwner({originalDraftOnly:true},async f=>{
+  const before=await f.read();
+  f.record.sourceId='different-source';
+  await assert.rejects(f.commit(),/PHOTO119 source JPEG or cutout identity differs from saved draft/);
+  assert.deepEqual(await f.read(),before);
  });
 });
