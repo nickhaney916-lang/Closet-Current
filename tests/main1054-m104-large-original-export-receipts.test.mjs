@@ -109,3 +109,53 @@ test('small legacy unverified originals still export unchanged',async()=>{
   assert.equal(result.data.items[0].sourceSHA256,undefined);
  });
 });
+
+
+async function addSavedRow(db,value){
+ await new Promise((resolve,reject)=>{
+  const tx=db.transaction('items','readwrite');
+  tx.objectStore('items').put(value);
+  tx.oncomplete=resolve;
+  tx.onabort=tx.onerror=()=>reject(tx.error);
+ });
+}
+test('v3 export refuses two owner-reviewed garment instances with a shared canonical original',async()=>{
+ await withFixture(()=>{},async f=>{
+  const second={...structuredClone(f.item),id:'pants-from-same-photo',
+   category:'Bottoms',itemType:'Jeans',sourcePieceKey:'instance-2'};
+  // Distinct reviewed/cropped item ID and category do NOT grant a v3
+  // restore permission for two pieces sharing the same source SHA.
+  await addSavedRow(f.db,second);
+  const before=await new Promise((resolve,reject)=>{
+   const tx=f.db.transaction('items','readonly'),q=tx.objectStore('items').getAll();
+   tx.oncomplete=()=>resolve(q.result);
+   tx.onerror=tx.onabort=()=>reject(tx.error);
+  });
+  await assert.rejects(f.export(),/M3_EXPORT_SHARED_ORIGINAL_RESTORE_UNSUPPORTED/);
+  const after=await new Promise((resolve,reject)=>{
+   const tx=f.db.transaction('items','readonly'),q=tx.objectStore('items').getAll();
+   tx.oncomplete=()=>resolve(q.result);
+   tx.onerror=tx.onabort=()=>reject(tx.error);
+  });
+  assert.deepEqual(after,before,'refused export must not mutate private original items');
+  assert.equal(after.length,2);
+ });
+});
+test('two independent original SHA identities remain exportable together',async()=>{
+ await withFixture(()=>{},async f=>{
+  const bytes=Buffer.from([255,216,42,43,44,255,217]);
+  const otherSHA=createHash('sha256').update(bytes).digest('hex');
+  const otherOriginal=mime+bytes.toString('base64');
+  await addSavedRow(f.db,{
+   ...structuredClone(f.item),id:'other-source',
+   category:'Bottoms',itemType:'Jeans',
+   originalPhoto:{image:otherOriginal,sha256:otherSHA,ownerId:f.owner},
+   sourceSHA256:otherSHA,sourcePieceKey:'different-original'
+  });
+  const result=await f.export();
+  assert.equal(result.data.items.length,2);
+  assert.deepEqual(new Set(result.data.items.map(x=>x.sourceSHA256)),
+   new Set([sha,otherSHA]));
+  assert.equal(result.releaseAuthorized,false);
+ });
+});
