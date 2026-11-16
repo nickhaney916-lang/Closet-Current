@@ -155,7 +155,7 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
       record:largeRecord,review:largeReview,cryptoProvider:crypto,assertLease:lease
      });
      if(largeDenied.saved!==false||largeDenied.needsReview!==true||
-        largeDenied.sourceKind!=='original-source-unverified'||
+        largeDenied.sourceKind!=='display-preview-unverified'||
         JSON.stringify(await readRows())!==JSON.stringify(beforeLarge))
       throw Error('PHOTO119 incorrectly accepted large source/thumbnail or changed owner DB');
      // M130: unlike the negative unrelated preview, this owner explicitly
