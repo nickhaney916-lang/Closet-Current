@@ -2165,6 +2165,10 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
   const reason=String(err?.message||'');
   importMessage(reason==='LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW'
    ?'This backup repeats an original photo already linked to a saved closet piece. Nothing was imported. Open My Closet to review the saved piece, and separately review any additional garment from that photo before trying again.'
+   :reason==='LEGACY_ATOMIC_ORIGINAL_SHA_REQUIRED'
+   ?'This backup has an original photo without a verification checksum. Nothing was imported. Export a fresh backup from the original signed-in closet and try again.'
+   :reason==='LEGACY_ATOMIC_ORIGINAL_SHA_CLAIM_CONFLICT'
+   ?'This backup has conflicting verification checksums for one original photo. Nothing was imported. Re-export from the original signed-in closet without changing the photo or its receipts.'
    :reason||'Import failed.');
  }};
 window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});

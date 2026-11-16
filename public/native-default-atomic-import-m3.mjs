@@ -105,9 +105,18 @@ export async function prepareDefaultAtomicM3({
   await verifyImage(row.image,(!row.originalPhoto?.image||row.originalPhoto.image===row.image)
    ?row.sourceSHA256||row.originalPhoto?.sha256||null:null);
   if(row.originalPhoto?.image){
-   await verifyImage(row.originalPhoto.image,row.originalPhoto.sha256||row.sourceSHA256||null,
-    {original:true});
-  }else if(row.originalPhoto?.sha256||row.sourceSHA256&&row.sourceHashVerified===true){
+   // M99: a camera-size original must have a SHA receipt and all claimed
+   // canonical-source SHA values must agree before any owner-private write.
+   // Preserve compatibility with small unverified v1-v3 photographs.
+   const originalSHA=row.originalPhoto.sha256||row.sourceSHA256||null;
+   if(row.originalPhoto.sha256&&row.sourceSHA256&&
+      row.originalPhoto.sha256!==row.sourceSHA256)
+    throw Error('LEGACY_ATOMIC_ORIGINAL_SHA_CLAIM_CONFLICT');
+   if((row.originalPhoto.image.length>3_000_000||
+       row.sourceHashVerified===true)&&!originalSHA)
+    throw Error('LEGACY_ATOMIC_ORIGINAL_SHA_REQUIRED');
+   await verifyImage(row.originalPhoto.image,originalSHA,{original:true});
+  }else if(row.originalPhoto?.sha256||row.sourceHashVerified===true){
    throw Error('LEGACY_ATOMIC_MISSING_ORIGINAL');
   }
   assertLease();

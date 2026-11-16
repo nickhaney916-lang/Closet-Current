@@ -43,8 +43,8 @@ jobs:
           test "$(git rev-parse "$P88:public/outfit-worker.mjs")" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
           test "$(git rev-parse "$P88:public/outfit-segmentation.mjs")" = d357955dd8fdab7c0cb727ea597c270edd9309ac
           test "$(git rev-parse "$P88:public/outfit-instance-review-840.mjs")" = 6324d8eda33024f166311f424392ed83363e4942
-          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 085abb27e83ca21504b3408ee6f276479384295a
-          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = bf13d178dcd1dd8ebc4f29bdf20831c512ecc48d
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
           git diff --exit-code "$BASE" HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' supabase/ benchmark/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
           # M78: only byte-verified donor application is permitted beyond
           # the existing M58 native board; no other protected app edits.
@@ -53,7 +53,7 @@ jobs:
           test "$(git rev-parse "$DONOR:public/app.js")" = ce16b3e219ec9596ffd396264d882ade99590490
           # M83: strict reviewed extension of the exact saved-photo donor,
           # only source identity comparisons and duplicate UX may differ.
-          test "$(git rev-parse HEAD:public/app.js)" = 991c00457799f8e2b8ae958d5ace85cc9914aece
+          test "$(git rev-parse HEAD:public/app.js)" = 438acfeda76e313b84a7f41a78aab4a748c4e932
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
               scripts/test-main58-actual-p88-wasm-browser.mjs|scripts/lib/owner-item-mutation91.mjs|scripts/test-browser-owner-mutation91.mjs|research/master-consolidation-1054/MILESTONE58.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|public/outfit-board.js|research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|tests/detector-manual-recovery-65.test.mjs|tests/invalid-selection-race-71.test.mjs|tests/review-source-epoch-34.test.mjs|tests/mission3-outfit-card-picker-owner-lease.test.cjs|tests/mission3-outfit-suggestion-owner-lease.test.cjs|public/app.js|scripts/test-main1054-duplicate-fence-browser.mjs|tests/main1054-saved-photo-duplicate-fence.test.mjs|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/automatic-indexing.test.cjs|public/native-default-atomic-import-m3.mjs|tests/mission3-default-atomic-backup-source-guard.test.mjs|scripts/test-main51-real-app-owner-original-2d.mjs|scripts/test-mission3-default-atomic-import-browser.mjs) ;;
@@ -97,8 +97,8 @@ jobs:
           grep -Fq "get('reviewedPhotoGallery59')==='research'" public/outfit-board.js
           node --check public/outfit-board.js
           node --check research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs
-          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 085abb27e83ca21504b3408ee6f276479384295a
-          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = bf13d178dcd1dd8ebc4f29bdf20831c512ecc48d
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
           git diff --exit-code -- public/ research/multi-garment-capture-01/ supabase/
       - name: Install isolated native browser dependencies (NO paid API/deploy)
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
@@ -139,8 +139,8 @@ jobs:
             throw Error('M58 actual model worker or no-silent-save receipt is invalid');
           console.log('M58 actual live browser donor worker real source proposals',r.sourceGroupsUnverified);
           JS
-          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 085abb27e83ca21504b3408ee6f276479384295a
-          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = bf13d178dcd1dd8ebc4f29bdf20831c512ecc48d
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
           git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' supabase/ benchmark/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
       - name: Archive metrics ONLY (NO private photos, masked crops, model weights)
         if: always()
@@ -186,8 +186,8 @@ jobs:
           test "$(git rev-parse "$M51:scripts/test-main51-real-app-owner-original-2d.mjs")" = 1150a6db461b1d5968183d1c9e798cac7ae88478
           test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = 63cc9da00eaecbeb2576482dcae1528b44ea8189
           node --check scripts/test-main51-real-app-owner-original-2d.mjs
-          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 085abb27e83ca21504b3408ee6f276479384295a
-          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = bf13d178dcd1dd8ebc4f29bdf20831c512ecc48d
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
           git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' supabase/ research/main-thread-integration-1054/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
       - name: Install pinned isolated application test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
@@ -247,8 +247,8 @@ jobs:
         run: |
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 085abb27e83ca21504b3408ee6f276479384295a
-          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = bf13d178dcd1dd8ebc4f29bdf20831c512ecc48d
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
           git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' supabase/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/
           test -s scripts/test-mission3-lossless-v4-owner-acceptance-browser.mjs
           node --check scripts/test-mission3-lossless-v4-owner-acceptance-browser.mjs
@@ -264,7 +264,7 @@ jobs:
         run: node scripts/test-mission3-lossless-v4-owner-acceptance-browser.mjs benchmark/main58-native-v4-owner-restore
       - name: Test M98 8MiB-preserved camera original and strict native legacy restore in Chromium/WebKit
         run: |
-          test "$(git rev-parse HEAD:scripts/test-mission3-default-atomic-import-browser.mjs)" = 9e98aa31d26a3fda0594e1c76e995d55e7844b3a
+          test "$(git rev-parse HEAD:scripts/test-mission3-default-atomic-import-browser.mjs)" = 375ff22b8c69bd6f7ddb19fc59cb6c4460eb7ba8
           node scripts/test-mission3-default-atomic-import-browser.mjs benchmark/main91-native-import-recovery
       - name: Confirm browser receipt and inherited app build, no deployment
         shell: bash
@@ -272,8 +272,8 @@ jobs:
           set -euo pipefail
           test -d benchmark/main58-native-v4-owner-restore
           node scripts/build.mjs
-          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 085abb27e83ca21504b3408ee6f276479384295a
-          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = bf13d178dcd1dd8ebc4f29bdf20831c512ecc48d
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
           git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' supabase/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/
 
   m58-full-inherited-native-node:
@@ -299,8 +299,8 @@ jobs:
           for path in tests/detector-manual-recovery-65.test.mjs tests/invalid-selection-race-71.test.mjs tests/review-source-epoch-34.test.mjs; do
             test "$(git rev-parse "HEAD:$path")" = "$(git rev-parse "$M57:$path")"
           done
-          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 085abb27e83ca21504b3408ee6f276479384295a
-          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = bf13d178dcd1dd8ebc4f29bdf20831c512ecc48d
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
           git diff --exit-code "$BASE" HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' supabase/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
       - name: Install isolated inherited native test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
@@ -343,7 +343,7 @@ jobs:
           # executing them. Pin ALL current blobs and attest old donor
           # provenance separately. No unlisted application code is exempt.
           test "$(git rev-parse "$DONOR:public/app.js")" = ce16b3e219ec9596ffd396264d882ade99590490
-          test "$(git rev-parse HEAD:public/app.js)" = 991c00457799f8e2b8ae958d5ace85cc9914aece
+          test "$(git rev-parse HEAD:public/app.js)" = 438acfeda76e313b84a7f41a78aab4a748c4e932
           test "$(git rev-parse HEAD:scripts/test-main1054-duplicate-fence-browser.mjs)" = 2665c14c998c3b0f5aff6f77ccb214766190f77a
           test "$(git rev-parse HEAD:tests/main1054-saved-photo-duplicate-fence.test.mjs)" = 4393a2ecd16fa81a40e3a271444e0f31ffcbc1aa
           node --check public/app.js
@@ -357,7 +357,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD:public/app.js)" = 991c00457799f8e2b8ae958d5ace85cc9914aece
-          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 085abb27e83ca21504b3408ee6f276479384295a
-          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = bf13d178dcd1dd8ebc4f29bdf20831c512ecc48d
+          test "$(git rev-parse HEAD:public/app.js)" = 438acfeda76e313b84a7f41a78aab4a748c4e932
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
           git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' supabase/

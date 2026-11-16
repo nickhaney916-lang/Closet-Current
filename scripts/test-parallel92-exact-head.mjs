@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {readFileSync,writeFileSync,mkdirSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
-const base='c387be237600bb93ce86f7955c2bb86692f80a26';
+const base='3bf2bdad10d264ebe23ba58e156389a1db5feb0b';
 const engine=process.env.P92_ENGINE,trial=Number(process.env.P92_TRIAL);
 assert.ok(['chromium','webkit'].includes(engine));
 assert.ok(trial===1||trial===2);
@@ -16,16 +16,16 @@ assert.equal(git('merge-base',base,head),base,'M4 ancestry changed');
 const allowed=new Set(['scripts/test-parallel92-exact-head.mjs','scripts/test-parallel92-independent-browser.mjs','scripts/test-parallel92-m51-webkit-reentry.mjs','.github/workflows/parallel92-m4-exact-head-no-deploy.yml','research/parallel92-integration/LEDGER.md']);
 for(const f of git('diff','--name-only',base,head).split('\n').filter(Boolean))assert.ok(allowed.has(f),'protected change: '+f);
 const pins={
- 'public/app.js':'991c00457799f8e2b8ae958d5ace85cc9914aece',
+ 'public/app.js':'438acfeda76e313b84a7f41a78aab4a748c4e932',
  'public/outfit-board.js':'42dc1a7a2503a1722e6addcd0b8613a7eb029b60',
  'public/native-owner-wardrobe-index-167.mjs':'b940b6c4ec040464d7d8b6686c45b5c3767fb859',
  'public/native-canonical-photo-source-167.mjs':'526d6d984bdb27cf775497132d2cf581ea2d3195',
  'research/main-thread-integration-1054/source-to-outfit.mjs':'5ea1e0e9b9f938fd98e7cb8875cc8ed8b68324b9',
- 'public/native-default-atomic-import-m3.mjs':'085abb27e83ca21504b3408ee6f276479384295a',
+ 'public/native-default-atomic-import-m3.mjs':'e739f1533108d53961483d761a27f0525623af3d',
  'scripts/test-main51-real-app-owner-original-2d.mjs':'63cc9da00eaecbeb2576482dcae1528b44ea8189',
  'scripts/test-main58-actual-p88-wasm-browser.mjs':'96ba2f5ee2420de52f45911881fdcc139455c353',
- 'scripts/test-mission3-default-atomic-import-browser.mjs':'9e98aa31d26a3fda0594e1c76e995d55e7844b3a',
- 'tests/mission3-default-atomic-backup-source-guard.test.mjs':'bf13d178dcd1dd8ebc4f29bdf20831c512ecc48d'
+ 'scripts/test-mission3-default-atomic-import-browser.mjs':'375ff22b8c69bd6f7ddb19fc59cb6c4460eb7ba8',
+ 'tests/mission3-default-atomic-backup-source-guard.test.mjs':'443c4f3a9b288aa8af36137985c684826b4414cd'
 };
 for(const [p,blob] of Object.entries(pins))assert.equal(git('rev-parse','HEAD:'+p),blob,'source changed: '+p);
 // Standalone-safe: reconstruct byte-for-byte immutable Worker import graph.

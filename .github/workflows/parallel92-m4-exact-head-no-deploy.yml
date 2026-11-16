@@ -167,7 +167,7 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
           test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = 63cc9da00eaecbeb2576482dcae1528b44ea8189
-          test "$(git rev-parse HEAD:public/app.js)" = 991c00457799f8e2b8ae958d5ace85cc9914aece
+          test "$(git rev-parse HEAD:public/app.js)" = 438acfeda76e313b84a7f41a78aab4a748c4e932
           test "$(git rev-parse HEAD:public/outfit-board.js)" = 42dc1a7a2503a1722e6addcd0b8613a7eb029b60
       - name: Install immutable local browser test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
@@ -183,7 +183,7 @@ jobs:
           path: benchmark/parallel92-webkit-reentry/result.json
           retention-days: 14
           if-no-files-found: ignore
-  m98-native-atomic-import-cross-engine:
+  m101-native-atomic-import-cross-engine:
     runs-on: ubuntu-24.04
     timeout-minutes: 55
     container:
@@ -201,42 +201,42 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Strict M98 exact main owner source and unchanged atomic import browser test
+      - name: Strict M101 exact main owner source and unchanged atomic import browser test
         shell: bash
         run: |
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
-          test "$(git merge-base c387be237600bb93ce86f7955c2bb86692f80a26 HEAD)" = c387be237600bb93ce86f7955c2bb86692f80a26
-          test "$(git rev-parse HEAD:public/app.js)" = 991c00457799f8e2b8ae958d5ace85cc9914aece
-          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 085abb27e83ca21504b3408ee6f276479384295a
-          test "$(git rev-parse HEAD:scripts/test-mission3-default-atomic-import-browser.mjs)" = 9e98aa31d26a3fda0594e1c76e995d55e7844b3a
-          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = bf13d178dcd1dd8ebc4f29bdf20831c512ecc48d
+          test "$(git merge-base 3bf2bdad10d264ebe23ba58e156389a1db5feb0b HEAD)" = 3bf2bdad10d264ebe23ba58e156389a1db5feb0b
+          test "$(git rev-parse HEAD:public/app.js)" = 438acfeda76e313b84a7f41a78aab4a748c4e932
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
+          test "$(git rev-parse HEAD:scripts/test-mission3-default-atomic-import-browser.mjs)" = 375ff22b8c69bd6f7ddb19fc59cb6c4460eb7ba8
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
           node --check scripts/test-mission3-default-atomic-import-browser.mjs
       - name: Install pinned no-deploy native browser dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
-      - name: Verify M98 8MiB original, Base64 identity and atomic rollback before browser import
+      - name: Verify M101 owner-readable SHA provenance refusals, 8MiB originals and rollback before browser import
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 085abb27e83ca21504b3408ee6f276479384295a
-          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = bf13d178dcd1dd8ebc4f29bdf20831c512ecc48d
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
           node --test tests/mission3-default-atomic-backup-source-guard.test.mjs
-      - name: Two independent native M98 trials across both engines at widths 320 390 430
+      - name: Two independent native M101 trials across both engines at widths 320 390 430
         shell: bash
         run: |
           set -euo pipefail
           for trial in 1 2; do
-            node scripts/test-mission3-default-atomic-import-browser.mjs "benchmark/parallel92-m98-import/trial-$trial"
+            node scripts/test-mission3-default-atomic-import-browser.mjs "benchmark/parallel92-m101-import/trial-$trial"
           done
           node --input-type=module - <<'JS'
           import fs from 'node:fs';
           for(const trial of [1,2]){
-            const r=JSON.parse(fs.readFileSync('benchmark/parallel92-m98-import/trial-'+trial+'/results.json','utf8'));
+            const r=JSON.parse(fs.readFileSync('benchmark/parallel92-m101-import/trial-'+trial+'/results.json','utf8'));
             if(r.kind!=='mission3-default-atomic-import-browser'||r.familyAlpha!=='HOLD'||
                r.realChromiumWebKit!==true||r.nativeIndexedDB!==true||
                r.hostedCloud!==false||r.physicalDevices!==false||
-               r.errors.length!==0||r.cases.length!==6)throw Error('Incomplete M98 browser receipt');
+               r.errors.length!==0||r.cases.length!==6)throw Error('Incomplete M101 browser receipt');
             for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
               const c=r.cases.find(x=>x.engine===engine&&x.width===width);
               const assertions=['nativeIndexedDB','originalAliasSourceBlocked','ownerFacingDuplicateRecoveryVerified',
@@ -245,20 +245,22 @@ jobs:
                'looksOutfitsOneCommit','cloudRevisionAtomic','badRefRollback',
                'cancellationPreserves','oldOwnerReject'];
               if(width===320){
-               for(const key of ['largeCameraOriginalVerified','largeOriginalTamperBlocked','overlongDisplayPreviewBlocked'])
+               for(const key of ['largeCameraOriginalVerified','largeOriginalRequiresReceipt','largeConflictingReceiptsDenied','largeOriginalTamperBlocked','overlongDisplayPreviewBlocked'])
                 if(c?.[key]!==true)throw Error('M98 camera original/thumbnail/rollback condition missing: '+key);
               }
-              else if(c?.largeCameraOriginalVerified!==null||c?.largeOriginalTamperBlocked!==null||
+              else if(c?.largeCameraOriginalVerified!==null||c?.largeOriginalRequiresReceipt!==null||
+               c?.largeConflictingReceiptsDenied!==null||c?.largeOriginalTamperBlocked!==null||
                c?.overlongDisplayPreviewBlocked!==null)throw Error('M98 390/430 camera-original flags not scoped');
               if(!c||assertions.some(k=>c[k]!==true)||c.syntheticOwners!==true||
                  c.hostedSupabase!==false||c.physicalPhone!==false)
                 throw Error('M98 native original/photo/owner rollback case failed');
             }
-            console.log('P92_M98_NATIVE_IMPORT_STRICT_PASS',JSON.stringify({
+            console.log('P92_M101_NATIVE_IMPORT_STRICT_PASS',JSON.stringify({
               exactHead:process.env.P92_CHECKOUT_SHA,trial,realBrowserCases:6,
               widths:[320,390,430],engines:['chromium','webkit'],
               duplicateOriginalDenied:true,unverifiedOriginalAliasesDenied:true,
-              original8MiBRetained:true,oversizePreviewDenied:true,rollbackAtomic:true,hostedRLS:false,
+              original8MiBRetained:true,shaRequiredForLargeOriginal:true,
+              conflictingSourceSHARefused:true,oversizePreviewDenied:true,rollbackAtomic:true,hostedRLS:false,
               familyAlpha:'HOLD'
             }));
           }
@@ -267,12 +269,12 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: p92-m98-native-import-twice-cross-engine-HOLD
+          name: p92-m101-native-import-twice-cross-engine-HOLD
           retention-days: 14
           if-no-files-found: ignore
           path: |
-            benchmark/parallel92-m98-import/trial-1/results.json
-            benchmark/parallel92-m98-import/trial-2/results.json
+            benchmark/parallel92-m101-import/trial-1/results.json
+            benchmark/parallel92-m101-import/trial-2/results.json
   inherited-full-native-regressions:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -292,10 +294,10 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
-          test "$(git merge-base c387be237600bb93ce86f7955c2bb86692f80a26 HEAD)" = c387be237600bb93ce86f7955c2bb86692f80a26
-          test "$(git rev-parse HEAD:public/app.js)" = 991c00457799f8e2b8ae958d5ace85cc9914aece
+          test "$(git merge-base 3bf2bdad10d264ebe23ba58e156389a1db5feb0b HEAD)" = 3bf2bdad10d264ebe23ba58e156389a1db5feb0b
+          test "$(git rev-parse HEAD:public/app.js)" = 438acfeda76e313b84a7f41a78aab4a748c4e932
           test "$(git rev-parse HEAD:public/outfit-board.js)" = 42dc1a7a2503a1722e6addcd0b8613a7eb029b60
-          git diff --name-only c387be237600bb93ce86f7955c2bb86692f80a26 HEAD | while IFS= read -r p; do
+          git diff --name-only 3bf2bdad10d264ebe23ba58e156389a1db5feb0b HEAD | while IFS= read -r p; do
             case "$p" in
               scripts/test-parallel92-exact-head.mjs|scripts/test-parallel92-independent-browser.mjs|scripts/test-parallel92-m51-webkit-reentry.mjs|research/parallel92-integration/LEDGER.md|.github/workflows/parallel92-m4-exact-head-no-deploy.yml) ;;
               *) echo "P92 REFUSED CONSUMER/DONOR CHANGE: $p"; exit 1 ;;

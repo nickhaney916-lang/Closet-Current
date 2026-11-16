@@ -138,7 +138,8 @@ try{
       cloudChanged:window.__cloudLocalChanged||0
      };
      // M98 P93 native camera-original contract: preserve SHA+full JPEG, not just thumbnail.
-     let largeAccepted=true,largeTamperedNoWrite=true,largePreviewTooBigDenied=true;
+     let largeAccepted=true,largeTamperedNoWrite=true,largePreviewTooBigDenied=true,
+      largeWithoutReceiptDenied=true,largeConflictingReceiptsDenied=true;
      if(largeOriginal){
       const raw={format:'closet-current',version:3,items:[{
        ...first,id:'large-camera-original',image:largePreview,
@@ -152,6 +153,24 @@ try{
        entry.originalPhoto?.image===largeOriginal&&entry.originalPhoto?.sha256===largeSHA&&
        entry.sourceSHA256===largeSHA;
       const positiveSnapshot=JSON.stringify(afterLarge);
+      const missingReceipt=structuredClone(raw);
+      missingReceipt.items[0].id='large-no-receipt';
+      delete missingReceipt.items[0].sourceSHA256;
+      delete missingReceipt.items[0].originalPhoto.sha256;
+      missingReceipt.items[0].sourceHashVerified=false;
+      await select(missingReceipt);
+      largeWithoutReceiptDenied=JSON.stringify(await idbRead())===positiveSnapshot&&
+       document.getElementById('message').textContent.includes('original photo without a verification checksum')&&
+       document.getElementById('message').textContent.includes('Nothing was imported')&&
+       document.getElementById('message').textContent.includes('Export a fresh backup');
+      const conflictingReceipts=structuredClone(raw);
+      conflictingReceipts.items[0].id='large-two-source-hashes';
+      conflictingReceipts.items[0].sourceSHA256='a'.repeat(64);
+      await select(conflictingReceipts);
+      largeConflictingReceiptsDenied=JSON.stringify(await idbRead())===positiveSnapshot&&
+       document.getElementById('message').textContent.includes('conflicting verification checksums for one original photo')&&
+       document.getElementById('message').textContent.includes('Nothing was imported')&&
+       document.getElementById('message').textContent.includes('Re-export from the original signed-in closet');
       const tampered=structuredClone(raw);
       tampered.items[0].originalPhoto.sha256='a'.repeat(64);
       await select(tampered);
@@ -242,6 +261,7 @@ try{
      await oldPending;
      const second=await idbRead();
      return {...outcome,largeAccepted,largeTamperedNoWrite,largePreviewTooBigDenied,
+      largeWithoutReceiptDenied,largeConflictingReceiptsDenied,
       unverifiedAliasUnchanged,unverifiedAliasExplained,
       originalAliasUnchanged,originalAliasExplained,collidedUnchanged,duplicateIdsUnchanged,
       foreignUnchanged,unsavedBlocked,stagedRollbackUnchanged,
@@ -262,6 +282,10 @@ try{
     if(width===320){
      assert.equal(result.largeAccepted,true,
       'M98 real browser failed to restore SHA-verified >3M original');
+     assert.equal(result.largeWithoutReceiptDenied,true,
+      'M99 missing large original SHA did not fail closed with its exact reason');
+     assert.equal(result.largeConflictingReceiptsDenied,true,
+      'M99 inconsistent SHA claims did not fail closed with exact reason');
      assert.equal(result.largeTamperedNoWrite,true);
      assert.equal(result.largePreviewTooBigDenied,true);
     }
@@ -283,6 +307,8 @@ try{
     assert.equal(external.every(x=>x.blocked),true);
     cases.push({engine,width,defaultV3NativeAtomic:true,
      largeCameraOriginalVerified:width===320?result.largeAccepted:null,
+     largeOriginalRequiresReceipt:width===320?result.largeWithoutReceiptDenied:null,
+     largeConflictingReceiptsDenied:width===320?result.largeConflictingReceiptsDenied:null,
      largeOriginalTamperBlocked:width===320?result.largeTamperedNoWrite:null,
      overlongDisplayPreviewBlocked:width===320?result.largePreviewTooBigDenied:null,
      originalIdCollisionBlocked:true,unverifiedLegacyJPEGAliasBlocked:true,

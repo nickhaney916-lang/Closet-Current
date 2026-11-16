@@ -11,20 +11,20 @@ import {join} from 'node:path';
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
 const sha=git('rev-parse','HEAD');
 assert.equal(sha,process.env.P92_CHECKOUT_SHA,'must execute exact checked-out SHA');
-const m98='c387be237600bb93ce86f7955c2bb86692f80a26';
-assert.equal(git('merge-base',m98,sha),m98,'current M90 source not in ancestry');
+const m101='3bf2bdad10d264ebe23ba58e156389a1db5feb0b';
+assert.equal(git('merge-base',m101,sha),m101,'current M101 source not in ancestry');
 const script='scripts/test-main51-real-app-owner-original-2d.mjs';
 assert.equal(git('rev-parse','HEAD:'+script),
  '63cc9da00eaecbeb2576482dcae1528b44ea8189',
  'M97 native M51 source changed');
 assert.equal(git('rev-parse','HEAD:public/app.js'),
- '991c00457799f8e2b8ae958d5ace85cc9914aece',
+ '438acfeda76e313b84a7f41a78aab4a748c4e932',
  'consumer changed outside test ownership');
 assert.equal(git('rev-parse','HEAD:public/outfit-board.js'),
  '42dc1a7a2503a1722e6addcd0b8613a7eb029b60',
  'Outfit Builder changed outside test ownership');
 assert.equal(git('rev-parse','HEAD:scripts/test-mission3-default-atomic-import-browser.mjs'),
- '9e98aa31d26a3fda0594e1c76e995d55e7844b3a','M91 native import acceptance changed');
+ '375ff22b8c69bd6f7ddb19fc59cb6c4460eb7ba8','M91 native import acceptance changed');
 assert.ok(readFileSync(script,'utf8').includes("stage='m97-live-selected-original-photo-mutation-revokes-without-board-change'")&&
  readFileSync(script,'utf8').includes("stage='m97-inflight-changed-source-must-not-publish-stale-original'"),
  'M97 live and in-flight source revocation acceptance missing');
@@ -142,7 +142,7 @@ const row={trial,engine:'webkit',actualNativeApp:true,widths:[320,390,430],
 }
 rmSync(instrumented,{force:true});
 const receipt={schema:'P92_M97_NATIVE_SOURCE_MUTATION_WEBKIT_REENTRY/v5',
- exactHead:sha,mainSourceM98:m98,
+ exactHead:sha,mainSourceM101:m101,
  nativeSourceBlob:'63cc9da00eaecbeb2576482dcae1528b44ea8189',
  expected:total,attempted:runs.length,
  result:runs.length===total&&runs.every(r=>r.status==='PASS')?'PASS':'FAIL',
