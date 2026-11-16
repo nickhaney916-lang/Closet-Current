@@ -167,7 +167,7 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
           test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = 16cd06bcc1b1ef6bf8a6df3e3790c9abe2785167
-          test "$(git rev-parse HEAD:public/app.js)" = d259d0b77a006d032699be50536adb2ebca459dd
+          test "$(git rev-parse HEAD:public/app.js)" = 991c00457799f8e2b8ae958d5ace85cc9914aece
           test "$(git rev-parse HEAD:public/outfit-board.js)" = 153455379b0b6d777eff8c1c508c129208c7fadc
       - name: Install immutable local browser test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
@@ -183,6 +183,82 @@ jobs:
           path: benchmark/parallel92-webkit-reentry/result.json
           retention-days: 14
           if-no-files-found: ignore
+  m91-native-atomic-import-cross-engine:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P92_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict M91 exact main owner source and unchanged atomic import browser test
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
+          test "$(git merge-base de3129bc07f6a50f98902abf5d268e527dc1bed1 HEAD)" = de3129bc07f6a50f98902abf5d268e527dc1bed1
+          test "$(git rev-parse HEAD:public/app.js)" = 991c00457799f8e2b8ae958d5ace85cc9914aece
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 0a4b37751c5a46def7ae14676110a239ca6f34f8
+          test "$(git rev-parse HEAD:scripts/test-mission3-default-atomic-import-browser.mjs)" = 0cccb843a4ae0101cca8f242ee7c7410ec4f0e5d
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = dbd0b0b6c6db2e1d49560d0d65b22d68dcd69fb9
+          node --check scripts/test-mission3-default-atomic-import-browser.mjs
+      - name: Install pinned no-deploy native browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Two independent native M91 trials across both engines at widths 320 390 430
+        shell: bash
+        run: |
+          set -euo pipefail
+          for trial in 1 2; do
+            node scripts/test-mission3-default-atomic-import-browser.mjs "benchmark/parallel92-m91-import/trial-$trial"
+          done
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          for(const trial of [1,2]){
+            const r=JSON.parse(fs.readFileSync('benchmark/parallel92-m91-import/trial-'+trial+'/results.json','utf8'));
+            if(r.kind!=='mission3-default-atomic-import-browser'||r.familyAlpha!=='HOLD'||
+               r.realChromiumWebKit!==true||r.nativeIndexedDB!==true||
+               r.hostedCloud!==false||r.physicalDevices!==false||
+               r.errors.length!==0||r.cases.length!==6)throw Error('Incomplete M91 browser receipt');
+            for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+              const c=r.cases.find(x=>x.engine===engine&&x.width===width);
+              const assertions=['nativeIndexedDB','originalAliasSourceBlocked','ownerFacingDuplicateRecoveryVerified',
+               'originalIdCollisionBlocked','foreignOwnerBlocked','duplicateIdsBlocked',
+               'unsavedCaptureBlocked','syntheticStageRollback','mergePreservesItems',
+               'looksOutfitsOneCommit','cloudRevisionAtomic','badRefRollback',
+               'cancellationPreserves','oldOwnerReject'];
+              if(!c||assertions.some(k=>c[k]!==true)||c.syntheticOwners!==true||
+                 c.hostedSupabase!==false||c.physicalPhone!==false)
+                throw Error('M91 real native import original/owner rollback case failed');
+            }
+            console.log('P92_M91_NATIVE_IMPORT_STRICT_PASS',JSON.stringify({
+              exactHead:process.env.P92_CHECKOUT_SHA,trial,realBrowserCases:6,
+              widths:[320,390,430],engines:['chromium','webkit'],
+              duplicateOriginalDenied:true,rollbackAtomic:true,hostedRLS:false,
+              familyAlpha:'HOLD'
+            }));
+          }
+          JS
+      - name: Archive non-sensitive native import proof only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p92-m91-native-import-twice-cross-engine-HOLD
+          retention-days: 14
+          if-no-files-found: ignore
+          path: |
+            benchmark/parallel92-m91-import/trial-1/results.json
+            benchmark/parallel92-m91-import/trial-2/results.json
   inherited-full-native-regressions:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -202,10 +278,10 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
-          test "$(git merge-base 7710fafdb03fd64a1de0cc6419a9aa1e0883f2c1 HEAD)" = 7710fafdb03fd64a1de0cc6419a9aa1e0883f2c1
-          test "$(git rev-parse HEAD:public/app.js)" = d259d0b77a006d032699be50536adb2ebca459dd
+          test "$(git merge-base de3129bc07f6a50f98902abf5d268e527dc1bed1 HEAD)" = de3129bc07f6a50f98902abf5d268e527dc1bed1
+          test "$(git rev-parse HEAD:public/app.js)" = 991c00457799f8e2b8ae958d5ace85cc9914aece
           test "$(git rev-parse HEAD:public/outfit-board.js)" = 153455379b0b6d777eff8c1c508c129208c7fadc
-          git diff --name-only 7710fafdb03fd64a1de0cc6419a9aa1e0883f2c1 HEAD | while IFS= read -r p; do
+          git diff --name-only de3129bc07f6a50f98902abf5d268e527dc1bed1 HEAD | while IFS= read -r p; do
             case "$p" in
               scripts/test-parallel92-exact-head.mjs|scripts/test-parallel92-independent-browser.mjs|scripts/test-parallel92-m51-webkit-reentry.mjs|research/parallel92-integration/LEDGER.md|.github/workflows/parallel92-m4-exact-head-no-deploy.yml) ;;
               *) echo "P92 REFUSED CONSUMER/DONOR CHANGE: $p"; exit 1 ;;

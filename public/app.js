@@ -2161,7 +2161,12 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
    assertImport();
    importMessage('Backup imported atomically. Reload My Closet to refresh the view.');
   }
- }catch(err){importMessage(err.message||'Import failed.');}};
+ }catch(err){
+  const reason=String(err?.message||'');
+  importMessage(reason==='LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW'
+   ?'This backup repeats an original photo already linked to a saved closet piece. Nothing was imported. Open My Closet to review the saved piece, and separately review any additional garment from that photo before trying again.'
+   :reason||'Import failed.');
+ }};
 window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});
 const closetReady=(async()=>{
  await window.closetAuth.ready;

@@ -10,15 +10,17 @@ const engine=process.env.P92_ENGINE,trial=Number(process.env.P92_TRIAL);
 assert.ok(['chromium','webkit'].includes(engine));
 assert.ok([1,2].includes(trial));
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
-const exact=git('rev-parse','HEAD'),base='7710fafdb03fd64a1de0cc6419a9aa1e0883f2c1';
+const exact=git('rev-parse','HEAD'),base='de3129bc07f6a50f98902abf5d268e527dc1bed1';
 assert.equal(exact,process.env.P92_CHECKOUT_SHA);
 assert.equal(git('merge-base',base,exact),base);
 const files=git('diff','--name-only',base,exact).split('\n').filter(Boolean);
 const allowed=new Set(['scripts/test-parallel92-exact-head.mjs','scripts/test-parallel92-independent-browser.mjs','scripts/test-parallel92-m51-webkit-reentry.mjs',
  '.github/workflows/parallel92-m4-exact-head-no-deploy.yml','research/parallel92-integration/LEDGER.md']);
 for(const f of files)assert.ok(allowed.has(f),'protected source change '+f);
-assert.equal(git('rev-parse','HEAD:public/app.js'),'d259d0b77a006d032699be50536adb2ebca459dd');
+assert.equal(git('rev-parse','HEAD:public/app.js'),'991c00457799f8e2b8ae958d5ace85cc9914aece');
 assert.equal(git('rev-parse','HEAD:public/outfit-board.js'),'153455379b0b6d777eff8c1c508c129208c7fadc');
+assert.equal(git('rev-parse','HEAD:scripts/test-mission3-default-atomic-import-browser.mjs'),'0cccb843a4ae0101cca8f242ee7c7410ec4f0e5d');
+assert.equal(git('rev-parse','HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs'),'dbd0b0b6c6db2e1d49560d0d65b22d68dcd69fb9');
 const started=Date.now(),out=join('benchmark','parallel92-independent',engine,'trial-'+trial);
 mkdirSync(out,{recursive:true});
 const run=(file,args=[],env={})=>{
