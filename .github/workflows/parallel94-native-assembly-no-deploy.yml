@@ -99,6 +99,13 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs)" = b76ffa0625d421a36a1cf3bcc00d109e9cea42b9
           M123_ENGINE="${M58_ENGINE}" node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs "benchmark/parallel94-native-v3-distinct-sources/${M58_ENGINE}"
+      - name: M106 actual native stale-first-import terminal preview and 2D owner reentry on all 3 viewports
+        if: matrix.width == 390
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:scripts/test-main1054-m106-preview-terminal-browser.mjs)" = 333b5bfd05b9e164edce95ea595ced4c898a4c53
+          M51_ENGINE="${M58_ENGINE}" node scripts/test-main1054-m106-preview-terminal-browser.mjs
       - name: Strict M3 v4 synthetic owner full atomic export/restore across BOTH browsers and all 3 widths
         if: matrix.engine == 'chromium' && matrix.width == 390
         shell: bash
