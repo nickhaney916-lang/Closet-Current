@@ -55,7 +55,7 @@ jobs:
           test "$(git rev-parse "$DONOR:public/app.js")" = ce16b3e219ec9596ffd396264d882ade99590490
           # M83: strict reviewed extension of the exact saved-photo donor,
           # only source identity comparisons and duplicate UX may differ.
-          test "$(git rev-parse HEAD:public/app.js)" = 438acfeda76e313b84a7f41a78aab4a748c4e932
+          test "$(git rev-parse HEAD:public/app.js)" = b1ba5991906be6256c4f998526ca264a1e96ce3f
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
               scripts/test-main58-actual-p88-wasm-browser.mjs|scripts/lib/owner-item-mutation91.mjs|scripts/test-browser-owner-mutation91.mjs|research/master-consolidation-1054/MILESTONE58.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|public/outfit-board.js|research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|tests/detector-manual-recovery-65.test.mjs|tests/invalid-selection-race-71.test.mjs|tests/review-source-epoch-34.test.mjs|tests/mission3-outfit-card-picker-owner-lease.test.cjs|tests/mission3-outfit-suggestion-owner-lease.test.cjs|public/app.js|scripts/test-main1054-duplicate-fence-browser.mjs|tests/main1054-saved-photo-duplicate-fence.test.mjs|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/automatic-indexing.test.cjs|public/native-default-atomic-import-m3.mjs|tests/mission3-default-atomic-backup-source-guard.test.mjs|scripts/test-main51-real-app-owner-original-2d.mjs|scripts/test-mission3-default-atomic-import-browser.mjs|public/native-default-verified-backup-export-m3.mjs|tests/main1054-m104-large-original-export-receipts.test.mjs|scripts/test-main1054-m106-preview-terminal-browser.mjs) ;;
@@ -350,7 +350,7 @@ jobs:
           # executing them. Pin ALL current blobs and attest old donor
           # provenance separately. No unlisted application code is exempt.
           test "$(git rev-parse "$DONOR:public/app.js")" = ce16b3e219ec9596ffd396264d882ade99590490
-          test "$(git rev-parse HEAD:public/app.js)" = 438acfeda76e313b84a7f41a78aab4a748c4e932
+          test "$(git rev-parse HEAD:public/app.js)" = b1ba5991906be6256c4f998526ca264a1e96ce3f
           test "$(git rev-parse HEAD:scripts/test-main1054-duplicate-fence-browser.mjs)" = 2665c14c998c3b0f5aff6f77ccb214766190f77a
           test "$(git rev-parse HEAD:tests/main1054-saved-photo-duplicate-fence.test.mjs)" = 4393a2ecd16fa81a40e3a271444e0f31ffcbc1aa
           node --check public/app.js
@@ -364,7 +364,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD:public/app.js)" = 438acfeda76e313b84a7f41a78aab4a748c4e932
+          test "$(git rev-parse HEAD:public/app.js)" = b1ba5991906be6256c4f998526ca264a1e96ce3f
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
           test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
           git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' supabase/
