@@ -191,9 +191,19 @@ test('disposable adapter refuses malformed JPEG, altered source SHA, foreign own
   malformed.items[0].originalPhoto.image=originalJPEG.slice(0,-8)+'!!!===';
   await assert.rejects(p.imp.prepareDefaultAtomicM3(args(f,malformed)),/INVALID_JPEG/);
   const oversize=backup(f.owner);
-  oversize.items[0].originalPhoto.image='data:image/jpeg;base64,'+appendMetadata(175).toString('base64');
+  // Exercise the DECODED 8 MiB guard separately from the encoded cap:
+  // exactly 2 KiB above 8 MiB, and still under 11.2M encoded characters.
+  const goal=8*1024*1024+2048;
+  const full=Math.floor((goal-licensed.length-4)/48004);
+  assert(full>0);
+  const base=appendMetadata(full),remainder=goal-base.length;
+  assert(remainder>=4&&remainder<65537);
+  const tag=Buffer.from([255,239,(remainder-2)>>8,(remainder-2)&255]);
+  const larger=Buffer.concat([base.subarray(0,2),tag,
+   Buffer.alloc(remainder-4),base.subarray(2)]);
+  assert.equal(larger.length,goal);
+  oversize.items[0].originalPhoto.image='data:image/jpeg;base64,'+larger.toString('base64');
   assert(oversize.items[0].originalPhoto.image.length<11_200_000);
-  assert(appendMetadata(175).length>8*1024*1024);
   await assert.rejects(p.imp.prepareDefaultAtomicM3(args(f,oversize)),
    /LEGACY_ATOMIC_INVALID_JPEG_BYTES/);
   assert.deepEqual(await snapshot(f),before);
