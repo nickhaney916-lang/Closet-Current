@@ -155,6 +155,8 @@ jobs:
           if(x.m4ExactHead!=='238577c7fc61c4c3dcb9cea11483a00ebdb9ea1b'||
              x.checks.nativeBuild!=='PASS'||x.checks.actualAppBrowser?.status!=='PASS'||
              x.checks.actualAppBrowser.journeys!==6||
+             x.checks.largeOriginalActualBrowser?.status!=='PASS'||
+             x.checks.largeOriginalActualBrowser?.journeys!==6||
              x.familyAlpha!=='HOLD'||x.safeNoDeploy!==true||
              x.normalM4Adopted!==false||x.stagedDonors?.length!==3||
              x.diffFiles.some(p=>p.startsWith('public/')&&![
