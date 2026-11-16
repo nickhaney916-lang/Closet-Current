@@ -344,7 +344,7 @@ jobs:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       P92_ENGINE: ${{ matrix.engine }}
       P92_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      P92_MAIN_PIN: e4b46b036b9f50b467b213f448f7dba106249b80
+      P92_MAIN_PIN: c4e45aa684f7120d216ae4eec192d4085823b073
     steps:
       - uses: actions/checkout@v4
         with:
@@ -415,7 +415,7 @@ jobs:
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       P92_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      P92_MAIN_PIN: e4b46b036b9f50b467b213f448f7dba106249b80
+      P92_MAIN_PIN: c4e45aa684f7120d216ae4eec192d4085823b073
     steps:
       - uses: actions/checkout@v4
         with:
@@ -432,12 +432,14 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
           test "$(git rev-parse "$P92_MAIN_PIN:public/outfit-board.js")" = 22e76c92dc31d8a10d8186e259a4e3784e4b3c84
-          test "$(git rev-parse "$P92_MAIN_PIN:public/app.js")" = cc4ee7ea3e575925fb13cc3e9627f0f59ac6919d
+          test "$(git rev-parse "$P92_MAIN_PIN:public/app.js")" = b905392a2e81b4d93912aa7e4b1b5be663b436e4
+          test "$(git rev-parse "$P92_MAIN_PIN:public/native-reviewed-private-save-167.mjs")" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
+          test "$(git rev-parse "$P92_MAIN_PIN:tests/main1054-m132-photo119-large-display-preview.test.mjs")" = 79295b94fc0b1abe954a621ccf056abb23a902a6
           test "$(git rev-parse "$P92_MAIN_PIN:public/native-default-verified-backup-export-m3.mjs")" = e70fdc392c2652dc969b7d7c4b807f3cafd81e03
           test "$(git rev-parse "$P92_MAIN_PIN:public/native-default-atomic-import-m3.mjs")" = e739f1533108d53961483d761a27f0525623af3d
           test "$(git rev-parse "$P92_MAIN_PIN:tests/main1054-m104-large-original-export-receipts.test.mjs")" = 8bd85aba7a91a316b30bcd71f42c642dda626230
           test "$(git rev-parse "$P92_MAIN_PIN:scripts/test-mission3-default-atomic-import-browser.mjs")" = 375ff22b8c69bd6f7ddb19fc59cb6c4460eb7ba8
-          test "$(git rev-parse "$P92_MAIN_PIN:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs")" = bdce7392b44b9e82f4e42863ae56103f02c2bf53
+          test "$(git rev-parse "$P92_MAIN_PIN:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs")" = 4318240d3536818bdd56188fa91929fc0d509eb5
           git worktree add --detach /tmp/p92-current-main-owner-export-atomic "$P92_MAIN_PIN"
           cd /tmp/p92-current-main-owner-export-atomic
           git config --global --add safe.directory "$PWD"
@@ -457,6 +459,11 @@ jobs:
           # M123 latest main: real PHOTO119 owner-reviewed photo -> v3 UI
           # export/restore -> exact SHA-bound 2D preview; one strict process
           # per engine at 320/390/430px. Independent labels/3D are NOT proven.
+          # M141 exact-current-main true native owner UI: original camera
+          # source >3MB, local photo-derived display JPEG owner confirmation,
+          # atomic PHOTO119 private save, real v3 backup + UI restore, plus
+          # two further reviewed distinct originals and signed outfit 2D.
+          # Original M141 M123 test still runs as-is: no test bypass/retry.
           M123_ENGINE=chromium node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs benchmark/parallel92-current-main-m123-chromium
           M123_ENGINE=webkit node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs benchmark/parallel92-current-main-m123-webkit
           test "$(git rev-parse HEAD)" = "$P92_MAIN_PIN"
