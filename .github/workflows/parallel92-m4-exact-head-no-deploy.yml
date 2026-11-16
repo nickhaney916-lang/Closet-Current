@@ -377,7 +377,14 @@ jobs:
             M51_ENGINE="$P92_ENGINE" node scripts/test-main1054-m106-preview-terminal-browser.mjs
           done
           test "$(git rev-parse HEAD)" = "$P92_MAIN_PIN"
-          test -z "$(git status --porcelain)"
+          # Source must remain unchanged. M51 intentionally writes public-fixture
+          # screenshot/receipt outputs to benchmark/, which are untracked artifacts,
+          # not source modifications; do not mistake them for a consumer diff.
+          test -z "$(git status --porcelain --untracked-files=no)"
+          if test -n "$(git ls-files --others --exclude-standard -- public scripts research tests .github)"; then
+            echo "P92 REFUSED UNTRACKED TEST OR CONSUMER CODE"
+            exit 1
+          fi
           echo "P92 CURRENT MAIN EXACT-PIN STRICT $P92_ENGINE $REPS/$REPS PROCESSES AND $((REPS*3)) VIEWPORTS SUCCESS; NO RETRY, NO DEPLOY, HOLD"
 
   inherited-full-native-regressions:
