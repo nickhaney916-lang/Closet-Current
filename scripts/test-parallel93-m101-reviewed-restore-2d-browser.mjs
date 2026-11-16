@@ -76,6 +76,10 @@ try{
      return route.abort();
     });
     await context.addInitScript(()=>{
+     // Synthetic local auth epoch matches the actual source-preflight shape.
+     // Never impersonates hosted JWT/RLS, only test browser local metadata.
+     localStorage.setItem('closet-current-auth-v1',
+      JSON.stringify({epoch:'p93-synthetic-owner-epoch-20261115'}));
      class OfflineWorker{
       constructor(){this.onmessage=null;this.terminated=false;}
       postMessage(m){setTimeout(()=>{if(!this.terminated)this.onmessage?.({data:{
