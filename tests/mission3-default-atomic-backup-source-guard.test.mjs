@@ -653,3 +653,18 @@ test('M99 small unverified legacy original remains importable without fabricatin
   assert.equal(saved.sourceSHA256,undefined);
  }finally{f.close();}
 });
+
+test('M101 native import explains missing/contradictory original receipt without reporting success',()=>{
+ const app=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
+ const start=app.indexOf("$('import').onchange=async e=>{");
+ const end=app.indexOf("window.addEventListener('beforeunload'",start);
+ assert.ok(start>=0&&end>start);
+ const handler=app.slice(start,end);
+ assert.match(handler,/LEGACY_ATOMIC_ORIGINAL_SHA_REQUIRED/);
+ assert.match(handler,/original photo without a verification checksum/);
+ assert.match(handler,/Export a fresh backup from the original signed-in closet/);
+ assert.match(handler,/LEGACY_ATOMIC_ORIGINAL_SHA_CLAIM_CONFLICT/);
+ assert.match(handler,/conflicting verification checksums for one original photo/);
+ assert.match(handler,/Re-export from the original signed-in closet/);
+ assert.match(handler,/Nothing was imported/);
+});

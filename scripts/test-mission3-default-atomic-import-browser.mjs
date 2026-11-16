@@ -160,13 +160,17 @@ try{
       missingReceipt.items[0].sourceHashVerified=false;
       await select(missingReceipt);
       largeWithoutReceiptDenied=JSON.stringify(await idbRead())===positiveSnapshot&&
-       document.getElementById('message').textContent.includes('LEGACY_ATOMIC_ORIGINAL_SHA_REQUIRED');
+       document.getElementById('message').textContent.includes('original photo without a verification checksum')&&
+       document.getElementById('message').textContent.includes('Nothing was imported')&&
+       document.getElementById('message').textContent.includes('Export a fresh backup');
       const conflictingReceipts=structuredClone(raw);
       conflictingReceipts.items[0].id='large-two-source-hashes';
       conflictingReceipts.items[0].sourceSHA256='a'.repeat(64);
       await select(conflictingReceipts);
       largeConflictingReceiptsDenied=JSON.stringify(await idbRead())===positiveSnapshot&&
-       document.getElementById('message').textContent.includes('LEGACY_ATOMIC_ORIGINAL_SHA_CLAIM_CONFLICT');
+       document.getElementById('message').textContent.includes('conflicting verification checksums for one original photo')&&
+       document.getElementById('message').textContent.includes('Nothing was imported')&&
+       document.getElementById('message').textContent.includes('Re-export from the original signed-in closet');
       const tampered=structuredClone(raw);
       tampered.items[0].originalPhoto.sha256='a'.repeat(64);
       await select(tampered);
