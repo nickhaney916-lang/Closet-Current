@@ -31,6 +31,9 @@ function must(command,args,cwd){
  return out.stdout.trim();
 }
 const current=must('git',['rev-parse','HEAD']);
+assert.notEqual(run('git',['cat-file','-e',
+ 'HEAD:tests/parallel93-m115-shared-original-export.test.mjs']).status,0,
+ 'M115-only source fixture must never enter inherited pre-M115 test glob');
 assert.equal(must('git',['merge-base',BASE,current]),BASE);
 assert.equal(must('git',['merge-base',BASE,M115]),BASE);
 const stagingRoot=await mkdtemp(join(tmpdir(),'closet-p93-m115-'));
