@@ -75,17 +75,32 @@ async function snapshot(f){
   tx.onerror=()=>reject(tx.error);
  });
 }
-let donorModule;
-async function donor(){
- if(donorModule)return donorModule;
+const donorModules=new Map();
+// P93 correction is confined to a DISPOSABLE donor copy; no owner-source edits.
+async function donor(mode='exact'){
+ if(donorModules.has(mode))return donorModules.get(mode);
+ assert(['exact','linear-adapter'].includes(mode));
  const tmp=await mkdtemp(join(tmpdir(),'p93-import-donor-'));
- const path=join(tmp,'legacy-atomic-merge.mjs');
+ const path=join(tmp,mode+'-legacy-atomic-merge.mjs');
  const git=spawnSync('git',['show',M3+':research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs'],{encoding:'utf8',maxBuffer:5e6});
  try{
-  assert.equal(git.status,0,'Pinned M3 donor is available from full git checkout');
-  await writeFile(path,git.stdout);
+  assert.equal(git.status,0,'Pinned M3 donor available in full Git checkout');
+  let donorSource=git.stdout;
+  if(mode==='linear-adapter'){
+   const oldLine=donorSource.split('\n').find(x=>x.startsWith('const img='));
+   assert(oldLine?.includes('(?:[A-Za-z0-9+/]{4})*'),
+    'M3 exact donor validator changed; re-review before adaptation');
+   const newLine='const img=/^data:image\\/jpeg;base64,[A-Za-z0-9+\\/]*={0,2}$/;';
+   donorSource=donorSource.replace(oldLine,newLine);
+   const oldCheck="if(typeof image!=='string'||image.length>maxEncoded||!img.test(image))";
+   assert(donorSource.includes(oldCheck),'M3 JPEG guard changed; re-review adapter');
+   const newCheck="if(typeof image!=='string'||image.length>maxEncoded||!img.test(image)||\n  (image.length-'data:image/jpeg;base64,'.length)%4!==0)";
+   donorSource=donorSource.replace(oldCheck,newCheck);
+   assert(!donorSource.includes(oldLine)&&!donorSource.includes(oldCheck));
+  }
+  await writeFile(path,donorSource);
   const m=await import(pathToFileURL(path).href);
-  donorModule=m;return m;
+  donorModules.set(mode,m);return m;
  }finally{await rm(tmp,{recursive:true,force:true});}
 }
 test('M4 native importer rejects a valid-provenance camera original over 3 MB encoded, WITHOUT a write',async()=>{
@@ -97,28 +112,38 @@ test('M4 native importer rejects a valid-provenance camera original over 3 MB en
   assert.deepEqual(await snapshot(f),before);
  }finally{f.close();}
 });
-test('M3 exact donor preflight accepts that same large-source v3 original, preserving SHA and board item ID',async()=>{
+test('M3 exact donor large-JPEG regex stack overflow is reproduced without a write',async()=>{
  const f=await fixture();
  try{
-  const m=await donor(),before=await snapshot(f);
-  assert.equal(typeof m.prepareLegacyAtomicM3,'function');
+  const m=await donor('exact'),before=await snapshot(f);
+  await assert.rejects(m.prepareLegacyAtomicM3(args(f,input(f.owner))),
+   error=>error instanceof RangeError&&/call stack/i.test(error.message));
+  assert.deepEqual(await snapshot(f),before);
+ }finally{f.close();}
+});
+test('P93 isolated linear JPEG guard accepts same source with SHA/owner/item identity intact',async()=>{
+ const f=await fixture();
+ try{
+  const m=await donor('linear-adapter'),before=await snapshot(f);
   const prepared=await m.prepareLegacyAtomicM3(args(f,input(f.owner)));
   assert.equal(prepared.incoming.length,1);
   assert.equal(prepared.incoming[0].id,'source-1');
   assert.equal(prepared.incoming[0].sourceSHA256,sourceSHA256);
-  assert.deepEqual(await snapshot(f),before,'Preflight alone may not write');
+  assert.deepEqual(await snapshot(f),before,'Preflight must not write');
  }finally{f.close();}
 });
 test('M3 donor still denies the changed original checksum and foreign-owner claim, no write',async()=>{
  const f=await fixture();
  try{
-  const m=await donor(),before=await snapshot(f);
+  const m=await donor('linear-adapter'),before=await snapshot(f);
   let bad=input(f.owner);
   bad.items[0].originalPhoto.sha256='a'.repeat(64);
   await assert.rejects(m.prepareLegacyAtomicM3(args(f,bad)),
    /JPEG_SHA_MISMATCH|ORIGINAL_RECEIPT_CONFLICT/);
   bad=input(f.owner);bad.items[0].originalPhoto.ownerId='another-owner';
   await assert.rejects(m.prepareLegacyAtomicM3(args(f,bad)),/FOREIGN_OWNER/);
+  bad=input(f.owner);bad.items[0].originalPhoto.image=original64.slice(0,-5)+'#####';
+  await assert.rejects(m.prepareLegacyAtomicM3(args(f,bad)),/INVALID_JPEG/);
   assert.deepEqual(await snapshot(f),before);
  }finally{f.close();}
 });
