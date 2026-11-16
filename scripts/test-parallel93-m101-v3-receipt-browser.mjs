@@ -160,9 +160,12 @@ try{
       v.sourceSHA256='b'.repeat(64);
       v.originalPhoto.sha256='b'.repeat(64);
      },'M3_EXPORT_PHOTO_SHA_MISMATCH');
+     // The exporter verifies the small preview against the claimed full
+     // original digest first. Missing full source must fail at that earlier
+     // no-substitution fence, even before the missing-original branch.
      const missingVerifiedOriginalBlocked=await preflight(v=>{
       delete v.originalPhoto.image;
-     },'M3_EXPORT_MISSING_VERIFIED_ORIGINAL');
+     },'M3_EXPORT_PHOTO_SHA_MISMATCH');
      const oversizedPreviewBlocked=await preflight(v=>{
       v.image=originalJPEG;
      },'M3_EXPORT_INVALID_JPEG');
