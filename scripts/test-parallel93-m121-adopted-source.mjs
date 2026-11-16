@@ -53,6 +53,11 @@ try{
  // checkout; all consumer source remains byte-for-byte at adopted M121.
  const browserHarness=await readFile('scripts/test-parallel93-m101-v3-receipt-browser.mjs','utf8');
  await writeFile(join(staged,'scripts/test-parallel93-m101-v3-receipt-browser.mjs'),browserHarness);
+ const safeMergeAdapter=await readFile(
+  'research/parallel93-convergence/m3-restorable-legacy-adapter.mjs','utf8');
+ await mkdir(join(staged,'research/parallel93-convergence'),{recursive:true});
+ await writeFile(join(staged,
+  'research/parallel93-convergence/m3-restorable-legacy-adapter.mjs'),safeMergeAdapter);
  const sharedSourceTest=await readFile('research/parallel93-convergence/m121-preview-alias.pinned.mjs','utf8');
  await writeFile(join(staged,'tests/parallel93-m121-preview-alias.test.mjs'),sharedSourceTest);
  const reviewedBrowserHarness=await readFile(
