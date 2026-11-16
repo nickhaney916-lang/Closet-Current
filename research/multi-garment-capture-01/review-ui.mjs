@@ -63,8 +63,13 @@ export function mountMultiGarmentCapture24({
  if(!host)return {active:false};
  // MAIN57: explicit research-only P88 donor transport, off for default app.
  // The donor stays in a Git-hash-attested, disposable same-origin CI fixture.
+ // P94 isolated locally hosted four-mission assembly: the exact immutable
+ // P88 worker is now a native public asset, not a scratch donor. Owner/source
+ // lease, review-only proposal and no-silent-save checks stay unchanged.
+ const parallel94Native=['127.0.0.1','localhost'].includes(window.location.hostname)&&
+  new URLSearchParams(window.location.search).get('parallel94Assembly')==='research';
  const p88Transport57=['127.0.0.1','localhost'].includes(window.location.hostname)&&
-  new URLSearchParams(window.location.search).get('p88Transport57')==='research';
+  (parallel94Native||new URLSearchParams(window.location.search).get('p88Transport57')==='research');
  const style=el('style');style.textContent=`
  .multi24{margin-top:1rem;display:grid;gap:.85rem;min-width:0}
  .multi24 .multi24-source{max-width:100%;max-height:260px;object-fit:contain;border-radius:9px}
@@ -545,8 +550,9 @@ export function mountMultiGarmentCapture24({
      }
     }
     // An explicit scratch-only URL must NEVER replace public/outfit-worker.mjs.
-    next.worker=new Worker(p88Transport57?
-     '../.m57-exact-p88-donor/public/outfit-worker.mjs':
+    next.worker=new Worker(parallel94Native?
+     'outfit-worker-p94.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:''):
+     p88Transport57?'../.m57-exact-p88-donor/public/outfit-worker.mjs':
      'outfit-worker.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:''),{type:'module'});
     next.worker.onmessage=event=>{
      if(job!==next||submitting||!sameOwner())return;

@@ -48,7 +48,7 @@ jobs:
           # M105: admit only the already-reviewed P93 M101 exporter correction.
           test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = e70fdc392c2652dc969b7d7c4b807f3cafd81e03
           test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
-          git diff --exit-code "$BASE" HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' supabase/ benchmark/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
+          git diff --exit-code "$BASE" HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ benchmark/ research/multi-garment-capture-01/ ':(exclude)research/multi-garment-capture-01/review-ui.mjs' research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
           # M78: only byte-verified donor application is permitted beyond
           # the existing M58 native board; no other protected app edits.
           DONOR=055f7a6569059c3845c0d8dc5960767fc944c6ac
@@ -57,9 +57,19 @@ jobs:
           # M83: strict reviewed extension of the exact saved-photo donor,
           # only source identity comparisons and duplicate UX may differ.
           test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          # M156: exact product/test assets verified in P94 #43977095961.
+          # Normal model, PHOTO119 owner save, private v3 and 3D gates unchanged.
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:public/outfit-instance-review-840.mjs)" = 6324d8eda33024f166311f424392ed83363e4942
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 77471549396d89336dc9e5ec8ea92a322b5ffa93
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          node --check public/outfit-worker-p94.mjs
+          node --check public/outfit-instance-review-840.mjs
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node --check scripts/test-parallel94-native-p88-browser.mjs
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
-              scripts/test-main58-actual-p88-wasm-browser.mjs|scripts/lib/owner-item-mutation91.mjs|scripts/test-browser-owner-mutation91.mjs|research/master-consolidation-1054/MILESTONE58.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|public/outfit-board.js|research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|tests/detector-manual-recovery-65.test.mjs|tests/invalid-selection-race-71.test.mjs|tests/review-source-epoch-34.test.mjs|tests/mission3-outfit-card-picker-owner-lease.test.cjs|tests/mission3-outfit-suggestion-owner-lease.test.cjs|public/app.js|scripts/test-main1054-duplicate-fence-browser.mjs|tests/main1054-saved-photo-duplicate-fence.test.mjs|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/automatic-indexing.test.cjs|public/native-default-atomic-import-m3.mjs|tests/mission3-default-atomic-backup-source-guard.test.mjs|scripts/test-main51-real-app-owner-original-2d.mjs|scripts/test-mission3-default-atomic-import-browser.mjs|public/native-default-verified-backup-export-m3.mjs|tests/main1054-m104-large-original-export-receipts.test.mjs|scripts/test-main1054-m106-preview-terminal-browser.mjs|scripts/test-main1054-m123-photo119-restore-2d-browser.mjs|public/native-reviewed-private-save-167.mjs|tests/main1054-m132-photo119-large-display-preview.test.mjs|tests/main1054-m148-preview-click-ownership.test.mjs) ;;
+              scripts/test-main58-actual-p88-wasm-browser.mjs|scripts/lib/owner-item-mutation91.mjs|scripts/test-browser-owner-mutation91.mjs|research/master-consolidation-1054/MILESTONE58.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|public/outfit-board.js|research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|tests/detector-manual-recovery-65.test.mjs|tests/invalid-selection-race-71.test.mjs|tests/review-source-epoch-34.test.mjs|tests/mission3-outfit-card-picker-owner-lease.test.cjs|tests/mission3-outfit-suggestion-owner-lease.test.cjs|public/app.js|scripts/test-main1054-duplicate-fence-browser.mjs|tests/main1054-saved-photo-duplicate-fence.test.mjs|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/automatic-indexing.test.cjs|public/native-default-atomic-import-m3.mjs|tests/mission3-default-atomic-backup-source-guard.test.mjs|scripts/test-main51-real-app-owner-original-2d.mjs|scripts/test-mission3-default-atomic-import-browser.mjs|public/native-default-verified-backup-export-m3.mjs|tests/main1054-m104-large-original-export-receipts.test.mjs|scripts/test-main1054-m106-preview-terminal-browser.mjs|scripts/test-main1054-m123-photo119-restore-2d-browser.mjs|public/native-reviewed-private-save-167.mjs|tests/main1054-m132-photo119-large-display-preview.test.mjs|tests/main1054-m148-preview-click-ownership.test.mjs|public/outfit-worker-p94.mjs|public/outfit-instance-review-840.mjs|research/multi-garment-capture-01/review-ui.mjs|scripts/test-parallel94-native-p88-browser.mjs) ;;
               *) echo "MAIN58 blocked unexpected change: $path"; exit 1;;
             esac
           done
@@ -123,6 +133,13 @@ jobs:
         run: P91_ENGINE=${{ matrix.engine }} node scripts/test-browser-owner-mutation91.mjs
       - name: Live original JPEG, native owner WebCrypto, exact P88 Worker, browser SegFormer WASM, NO SAVE
         run: node scripts/test-main58-actual-p88-wasm-browser.mjs
+      - name: M156 installed native P88 source -> signed private closet -> 2D and v4 restore (3 mobile widths)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            P94_WIDTH="$width" node scripts/test-parallel94-native-p88-browser.mjs
+          done
       - name: Verify source-safe actual worker receipt, zero private saves and immutable donor
         shell: bash
         run: |
@@ -146,7 +163,7 @@ jobs:
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
           test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
           test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
-          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' supabase/ benchmark/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
+          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ benchmark/ research/multi-garment-capture-01/ ':(exclude)research/multi-garment-capture-01/review-ui.mjs' research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
       - name: Archive metrics ONLY (NO private photos, masked crops, model weights)
         if: always()
         uses: actions/upload-artifact@v4
@@ -194,7 +211,7 @@ jobs:
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
           test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
           test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
-          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' supabase/ research/main-thread-integration-1054/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
+          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ research/main-thread-integration-1054/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
       - name: Install pinned isolated application test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Run M97 native original-photo redraw, live selected-source mutation and cancellation checks
@@ -272,7 +289,7 @@ jobs:
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
           test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
           test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
-          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' supabase/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/
+          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ research/multi-garment-capture-01/ ':(exclude)research/multi-garment-capture-01/review-ui.mjs' research/mission1-parallel88/ research/parallel89/
           test -s scripts/test-mission3-lossless-v4-owner-acceptance-browser.mjs
           node --check scripts/test-mission3-lossless-v4-owner-acceptance-browser.mjs
       - name: Install pinned no-deploy browser/test dependencies
@@ -304,7 +321,7 @@ jobs:
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
           test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
           test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
-          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' supabase/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/
+          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ research/multi-garment-capture-01/ ':(exclude)research/multi-garment-capture-01/review-ui.mjs' research/mission1-parallel88/ research/parallel89/
 
   m58-full-inherited-native-node:
     runs-on: ubuntu-24.04
@@ -335,7 +352,7 @@ jobs:
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
           test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
           test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
-          git diff --exit-code "$BASE" HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' supabase/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
+          git diff --exit-code "$BASE" HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ research/multi-garment-capture-01/ ':(exclude)research/multi-garment-capture-01/review-ui.mjs' research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
       - name: Install isolated inherited native test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       # tests/pwa.test.mjs reads dist/manifest.webmanifest and dist/sw.js.
@@ -346,7 +363,7 @@ jobs:
       - name: Run exact-head all inherited application and recognition tests
         run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - name: Final protected source and branch boundaries
-        run: git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' supabase/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
+        run: git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ research/multi-garment-capture-01/ ':(exclude)research/multi-garment-capture-01/review-ui.mjs' research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
 
   m58-duplicate-jpeg-durable-write:
     runs-on: ubuntu-24.04
@@ -395,4 +412,4 @@ jobs:
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = e739f1533108d53961483d761a27f0525623af3d
           test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
           test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
-          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' supabase/
+          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/
