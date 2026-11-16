@@ -1960,7 +1960,7 @@ $('export').onclick=async()=>{
   report(error?.message?.startsWith('M3_EXPORT_UNFINISHED_PHOTOS')?
    'Unfinished photos are on this device but missing from v3 backups. Save or review every Photo result first; no partial backup was downloaded.':
    error?.message==='M3_EXPORT_SHARED_ORIGINAL_RESTORE_UNSUPPORTED'?
-    'Backup not downloaded: two saved garments use the same original photograph, and this backup format cannot safely restore them as separate pieces. Your originals and saved clothing remain on this device. Do not delete or reset this closet.':
+    'Backup not downloaded: two saved garments share original or display photograph content, and this backup format cannot safely restore them as separate pieces. Your originals and saved clothing remain on this device. Do not delete or reset this closet.':
    error?.message?.startsWith('M3_EXPORT_')?
     'Backup not downloaded: private photos or outfit data could not be verified ('+
     error.message+'). Your originals remain unchanged.':
