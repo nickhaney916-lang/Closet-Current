@@ -91,6 +91,10 @@ export async function exportDurableOwnerBackupM3({
   fail('UNFINISHED_PHOTOS_NOT_IN_V3');
  const items=[];
  const ids=new Set();
+ // M110: v3 importer refuses two distinct item IDs sharing one original.
+ // Never download a seemingly successful backup that cannot restore the
+ // owner's complete selected wardrobe. M1 instance receipts remain blocked.
+ const originalJPEGs=new Set(),originalReceipts=new Set();
  if(snap.items.length>1000)fail('TOO_MANY_GARMENTS');
  for(const row of snap.items){
   if(!row||typeof row.id!=='string'||!row.id||row.id.length>100||
@@ -113,6 +117,16 @@ export async function exportDurableOwnerBackupM3({
     {maxEncoded:11_200_000,maxBytes:8*1024*1024});
   }else if(row.originalPhoto?.sha256||row.sourceHashVerified===true)
    fail('MISSING_VERIFIED_ORIGINAL');
+  // A shared original can represent two legitimately different garments,
+  // but current v3 cannot attest their separate mask/crop instances on
+  // restore. Refuse export without deleting either private saved garment.
+  const actualOriginal=row.originalPhoto?.image||row.image;
+  const canonicalReceipt=row.originalPhoto?.sha256||row.sourceSHA256||null;
+  if(originalJPEGs.has(actualOriginal)||
+     (canonicalReceipt&&originalReceipts.has(canonicalReceipt)))
+   fail('SHARED_ORIGINAL_RESTORE_UNSUPPORTED');
+  originalJPEGs.add(actualOriginal);
+  if(canonicalReceipt)originalReceipts.add(canonicalReceipt);
   check();
   // Older v1-v3 rows legitimately lacked an owner ID; stamp only the
   // exported copy. Never modify real on-device originals to do this.
