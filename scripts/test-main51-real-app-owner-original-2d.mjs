@@ -331,6 +331,43 @@ try{
   assert.match(await page.locator('#mission4Preview1054Status').innerText(),
    /original photo\(s\) verified.*2D only/);
   assert.equal(await count(page),1,'M95 in-flight unchanged redraw canceled the private preview');
+  stage='m97-live-selected-original-photo-mutation-revokes-without-board-change';
+  // Change ONLY disposable in-memory signed-owner selected row. The private
+  // IndexedDB original stays unchanged, proving the research preview responds
+  // immediately to local source edits rather than relying on a DB write.
+  await page.evaluate(()=>{
+   const row=items.find(item=>item.id===currentBoard.slots.top);
+   if(!row?.originalPhoto)throw Error('M97 selected synthetic source unavailable');
+   row.originalPhoto.image='data:image/jpeg;base64,/9j/2Q==';
+   renderOutfitBoard();
+  });
+  await blank(page,'M97 selected original-photo bytes changed with same outfit');
+  assert.match(await page.locator('#mission4Preview1054Status').innerText(),
+   /Verify the original clothing photos again/);
+  await page.evaluate(original=>{
+   const row=items.find(item=>item.id===currentBoard.slots.top);
+   row.originalPhoto.image=original;renderOutfitBoard();
+  },originalJPEG);
+  await clickPreview(page);
+  assert.equal(await count(page),1);
+  stage='m97-inflight-changed-source-must-not-publish-stale-original';
+  await page.waitForFunction(()=>
+   document.querySelector('#mission4Preview1054Section button')?.disabled===false);
+  await page.evaluate(()=>{
+   document.querySelector('#mission4Preview1054Section button').click();
+   const row=items.find(item=>item.id===currentBoard.slots.top);
+   row.originalPhoto.image='data:image/jpeg;base64,/9j/2Q==';
+   renderOutfitBoard();
+  });
+  await blank(page,'M97 changed selected JPEG during in-flight verification');
+  assert.match(await page.locator('#mission4Preview1054Status').innerText(),
+   /Verify the original clothing photos again/);
+  await page.evaluate(original=>{
+   const row=items.find(item=>item.id===currentBoard.slots.top);
+   row.originalPhoto.image=original;renderOutfitBoard();
+  },originalJPEG);
+  await clickPreview(page);
+  assert.equal(await count(page),1);
   stage='real-app-owner-session-and-board-revocation';
   await page.evaluate(()=>{
    currentBoard.occasion='Dinner';window.dispatchEvent(new Event('focus'));
