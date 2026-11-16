@@ -279,7 +279,7 @@ jobs:
           node --test tests/mission3-default-atomic-backup-source-guard.test.mjs
           node --test tests/main1054-m104-large-original-export-receipts.test.mjs
           node --check public/native-reviewed-private-save-167.mjs
-          test "$(git rev-parse HEAD:tests/main1054-m132-photo119-large-display-preview.test.mjs)" = 3ea53f0256fdcf36bd95fd83783628f675d83bf6
+          test "$(git rev-parse HEAD:tests/main1054-m132-photo119-large-display-preview.test.mjs)" = d1d8505af3f02038a0e632d9f7e992406a9e5e1d
           node --test tests/main1054-m132-photo119-large-display-preview.test.mjs
           node --check public/native-default-atomic-import-m3.mjs
       - name: Actually test browser v4 lossless owner backup/restore and cross-owner refusal
