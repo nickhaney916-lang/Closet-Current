@@ -286,7 +286,7 @@ jobs:
           node --check public/native-reviewed-private-save-167.mjs
           test "$(git rev-parse HEAD:tests/main1054-m132-photo119-large-display-preview.test.mjs)" = 79295b94fc0b1abe954a621ccf056abb23a902a6
           node --test tests/main1054-m132-photo119-large-display-preview.test.mjs
-          test "$(git rev-parse HEAD:tests/main1054-m148-preview-click-ownership.test.mjs)" = 417f8d6e33a8720c2c11716da68f2b716553d33b
+          test "$(git rev-parse HEAD:tests/main1054-m148-preview-click-ownership.test.mjs)" = 182e135803cb2be354211969ddfb83382eb828e5
           node --test tests/main1054-m148-preview-click-ownership.test.mjs
           node --check public/native-default-atomic-import-m3.mjs
       - name: Actually test browser v4 lossless owner backup/restore and cross-owner refusal
