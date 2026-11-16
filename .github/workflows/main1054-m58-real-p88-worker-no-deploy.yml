@@ -58,7 +58,7 @@ jobs:
           test "$(git rev-parse HEAD:public/app.js)" = cc4ee7ea3e575925fb13cc3e9627f0f59ac6919d
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
-              scripts/test-main58-actual-p88-wasm-browser.mjs|scripts/lib/owner-item-mutation91.mjs|scripts/test-browser-owner-mutation91.mjs|research/master-consolidation-1054/MILESTONE58.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|public/outfit-board.js|research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|tests/detector-manual-recovery-65.test.mjs|tests/invalid-selection-race-71.test.mjs|tests/review-source-epoch-34.test.mjs|tests/mission3-outfit-card-picker-owner-lease.test.cjs|tests/mission3-outfit-suggestion-owner-lease.test.cjs|public/app.js|scripts/test-main1054-duplicate-fence-browser.mjs|tests/main1054-saved-photo-duplicate-fence.test.mjs|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/automatic-indexing.test.cjs|public/native-default-atomic-import-m3.mjs|tests/mission3-default-atomic-backup-source-guard.test.mjs|scripts/test-main51-real-app-owner-original-2d.mjs|scripts/test-mission3-default-atomic-import-browser.mjs|public/native-default-verified-backup-export-m3.mjs|tests/main1054-m104-large-original-export-receipts.test.mjs|scripts/test-main1054-m106-preview-terminal-browser.mjs) ;;
+              scripts/test-main58-actual-p88-wasm-browser.mjs|scripts/lib/owner-item-mutation91.mjs|scripts/test-browser-owner-mutation91.mjs|research/master-consolidation-1054/MILESTONE58.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|public/outfit-board.js|research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|tests/detector-manual-recovery-65.test.mjs|tests/invalid-selection-race-71.test.mjs|tests/review-source-epoch-34.test.mjs|tests/mission3-outfit-card-picker-owner-lease.test.cjs|tests/mission3-outfit-suggestion-owner-lease.test.cjs|public/app.js|scripts/test-main1054-duplicate-fence-browser.mjs|tests/main1054-saved-photo-duplicate-fence.test.mjs|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/automatic-indexing.test.cjs|public/native-default-atomic-import-m3.mjs|tests/mission3-default-atomic-backup-source-guard.test.mjs|scripts/test-main51-real-app-owner-original-2d.mjs|scripts/test-mission3-default-atomic-import-browser.mjs|public/native-default-verified-backup-export-m3.mjs|tests/main1054-m104-large-original-export-receipts.test.mjs|scripts/test-main1054-m106-preview-terminal-browser.mjs|scripts/test-main1054-m123-photo119-restore-2d-browser.mjs) ;;
               *) echo "MAIN58 blocked unexpected change: $path"; exit 1;;
             esac
           done
@@ -199,6 +199,13 @@ jobs:
         run: |
           node --check scripts/test-main1054-m106-preview-terminal-browser.mjs
           node scripts/test-main1054-m106-preview-terminal-browser.mjs
+      - name: M123 actual native PHOTO119 reviewed-original to v3 UI restore to signed original 2D
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs)" = 77b750dce943da015e0fc7c28415d8710634ce26
+          node --check scripts/test-main1054-m123-photo119-restore-2d-browser.mjs
+          M123_ENGINE=${{ matrix.engine }} node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs
       - name: Assert actual app three widths and no unjustified 3D or release
         shell: bash
         run: |
