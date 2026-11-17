@@ -167,6 +167,7 @@ jobs:
           P96_NATIVE_4K: 'true'
         run: node scripts/test-parallel96-native-highres-browser.mjs
       - name: M172 24MP owner-private full state no-write on source mutation (real Chromium/WebKit)
+        shell: bash
         env:
           P96_NATIVE_4K: 'true'
         run: |
