@@ -8,6 +8,9 @@ jobs:
   one-time-verified-public-fixture:
     if: github.head_ref == 'research/main159-m157-4k-source-integrated-HOLD'
     runs-on: ubuntu-24.04
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
     timeout-minutes: 8
     steps:
       - name: Restore ONLY immutable public licensed 4K Commons cache
