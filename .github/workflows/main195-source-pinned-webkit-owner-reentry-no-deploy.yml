@@ -1,0 +1,64 @@
+name: MAIN195 owner/session WebKit 430px failure isolation NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main195-webkit-owner-session-stage-repro-HOLD]
+  pull_request:
+    branches: [research/main194-protected-m173-m193-source-guard-HOLD]
+permissions:
+  contents: read
+jobs:
+  genuine-source-pinned-browser:
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M51_ENGINE: ${{ matrix.engine }}
+      P99_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve pinned M194 original app and source authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 62bad171a97030846b0f1bb3bab740dec20ac5e7
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = 674797958366cc976a1a4abc8073087148d22975
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
+          node --check scripts/test-main195-webkit-owner-session-stage.mjs
+      - name: Install exact native test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build protected native app for acceptance
+        run: node scripts/build.mjs
+      - name: Exact M194 prior workload - three genuine normal Home to restored outfit journeys
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+          done
+      - name: Repeat original-photo reentry without forgiving a WebKit timeout
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$M51_ENGINE" = "webkit" ]; then cycles=6; else cycles=3; fi
+          for round in $(seq 1 "$cycles"); do
+            echo "M195_REAL_REENTRY_START engine=$M51_ENGINE round=$round of=$cycles"
+            node scripts/test-main195-webkit-owner-session-stage.mjs
+            echo "M195_REAL_REENTRY_PASS engine=$M51_ENGINE round=$round"
+          done
+          echo "M195_REAL_REENTRY_ALL_PASS engine=$M51_ENGINE runs=$cycles noRetries=true"
