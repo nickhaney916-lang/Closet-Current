@@ -622,7 +622,7 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
     });
     await page.locator('#mission4Preview1054Section button').click();
     try{
-     await page.waitForFunction(()=>/original photo\\(s\\) verified.*2D only/.test(
+     await page.waitForFunction(()=>/original photo\(s\) verified.*2D only/.test(
       document.getElementById('mission4Preview1054Status')?.textContent||''),null,{timeout:20000});
     }catch(error){
      const diagnostic=await page.evaluate(async()=>{
@@ -662,7 +662,7 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
        clickDelivered:window.__m157ClickCount>0,
        buttonConnected:!!document.querySelector('#mission4Preview1054Section button'),
        statusKind:allowed.find(k=>msg.includes(k))||(
-        /original photo\\(s\\) verified.*2D only/.test(msg)?'verified':'other'),
+        /original photo\(s\) verified.*2D only/.test(msg)?'verified':'other'),
        viewerPhase:mission4Preview1054Viewer?.status?.phase||'absent',
        visibleImages:document.querySelectorAll('#mission4Preview1054Photos img').length,
        signedRowsRead:read,rowCount:observedRows.length,
