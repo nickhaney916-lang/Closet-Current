@@ -614,9 +614,68 @@ for(const [engine,type] of [['chromium',chromium],['webkit',webkit]].filter(([na
     await page.waitForFunction(()=>currentBoard?.slots?.top==='m157-top'&&
      currentBoard?.slots?.bottom==='m157-bottom',null,{timeout:30000});
     await page.evaluate(()=>switchView('builder'));
+    // Capture only gesture-delivery boolean, never owner source or JPEG.
+    await page.evaluate(()=>{
+     window.__m157ClickCount=0;
+     document.querySelector('#mission4Preview1054Section button')?.addEventListener(
+      'click',()=>window.__m157ClickCount++,{capture:true});
+    });
     await page.locator('#mission4Preview1054Section button').click();
-    await page.waitForFunction(()=>/original photo\\(s\\) verified.*2D only/.test(
-     document.getElementById('mission4Preview1054Status')?.textContent||''),null,{timeout:20000});
+    try{
+     await page.waitForFunction(()=>/original photo\\(s\\) verified.*2D only/.test(
+      document.getElementById('mission4Preview1054Status')?.textContent||''),null,{timeout:20000});
+    }catch(error){
+     const diagnostic=await page.evaluate(async()=>{
+      const msg=document.getElementById('mission4Preview1054Status')?.textContent||'';
+      const {buildOwnerWardrobeIndex}=await import('./native-owner-wardrobe-index-167.mjs');
+      let observedRows=[],index=null,read='refused',preflight='not-run';
+      const allowed=[
+       'selected garment has duplicate or ambiguous source identity',
+       'selected garment lacks confirmed original and review evidence',
+       'native outfit normalization would silently lose selected garment',
+       'outfit board changed during source verification',
+       'original JPEG has no usable source envelope',
+       'original JPEG SHA does not match saved source',
+       'new ambiguous or duplicate source appeared during verification',
+       'multi-garment segment needs owner-confirmed original/cutout proof',
+       'selected owner item changed before showing photos',
+       'signed owner or refresh changed',
+       'invalid or repeated outfit slot identity',
+       'source plan cannot authorize private image rendering',
+       'same original',
+       'Preview refused'
+      ];
+      try{
+       observedRows=await signedOwnerSavedRows167();
+       index=buildOwnerWardrobeIndex(window.closetAuth.user.id,observedRows);
+       read='success';
+       const {preflightOwnedOutfit1054}=await import(
+        '/research/main-thread-integration-1054/source-to-outfit.mjs');
+       await preflightOwnedOutfit1054({
+        getSession:currentPhotoOwnerSession167,
+        readOwnerItems:signedOwnerSavedRows167,
+        cleanBoard:cleanOutfitBoard,board:structuredClone(currentBoard)
+       });
+       preflight='PASS';
+      }catch(e){preflight=allowed.find(k=>String(e?.message||'').includes(k))||'other';}
+      return {
+       clickDelivered:window.__m157ClickCount>0,
+       buttonConnected:!!document.querySelector('#mission4Preview1054Section button'),
+       statusKind:allowed.find(k=>msg.includes(k))||(
+        /original photo\\(s\\) verified.*2D only/.test(msg)?'verified':'other'),
+       viewerPhase:mission4Preview1054Viewer?.status?.phase||'absent',
+       visibleImages:document.querySelectorAll('#mission4Preview1054Photos img').length,
+       signedRowsRead:read,rowCount:observedRows.length,
+       sourceKinds:index?.entries?.map(x=>x.sourceKind)||[],
+       sourcePairs:index?.summary?.sourcePairs?.map(x=>x.status)||[],
+       preflight,photoOwnersAllCurrent:observedRows.every(x=>x.ownerId===window.closetAuth.user.id),
+       boardBothSelected:currentBoard?.slots?.top==='m157-top'&&currentBoard?.slots?.bottom==='m157-bottom',
+       releaseAuthorized:false
+      };
+     });
+     console.error('M157_SAFE_NATIVE_SAME_SOURCE_PREVIEW',JSON.stringify({engine,width,...diagnostic}));
+     throw error;
+    }
     const samePhotos=page.locator('#mission4Preview1054Photos img');
     assert.equal(await samePhotos.count(),2);
     const photos=await samePhotos.evaluateAll(async imgs=>Promise.all(
