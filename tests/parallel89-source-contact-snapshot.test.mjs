@@ -4,8 +4,10 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {snapshotOriginalSkirtBvhContact89 as snapshot} from
+import {snapshotOriginalSkirtBvhContact89 as sourceSnapshot} from
   '../research/parallel89/source-contact-snapshot89.mjs';
+
+const snapshot = sample => sourceSnapshot(sample, {bodyFaceCount:1100});
 
 const sourceProof = {
   trueOriginalSkirtTriangleIndexStable: true,
@@ -59,4 +61,18 @@ test('empty authentic contact is preserved without inferring a 3D fit pass', () 
   assert.equal(sample.pairs.size,0);
   assert.equal(Object.isFrozen(sample),true);
   assert.equal('consumer3DAdmitted' in sample,false);
+});
+
+test('source-indexed BVH receipts reject out-of-range original triangles on every pose', () => {
+  assert.deepEqual([...snapshot(contact(new Set(['575|1099']))).pairs], ['575|1099']);
+  assert.equal(snapshot(contact(new Set(['576|45']))), null);
+  assert.equal(snapshot(contact(new Set(['0|1100']))), null);
+  assert.equal(snapshot(contact(new Set(['9007199254740993|45']))), null);
+  assert.equal(snapshot(contact(new Set(['0|9007199254740993']))), null);
+  assert.equal(sourceSnapshot(contact(new Set(['0|45']))), null,
+    'unscoped contact evidence must not be admitted');
+  assert.equal(sourceSnapshot(contact(new Set(['0|45'])),
+    {bodyFaceCount:1100,skirtFaceCount:575}), null);
+  assert.equal(sourceSnapshot(contact(new Set(['0|45'])),
+    {bodyFaceCount:999}), null);
 });
