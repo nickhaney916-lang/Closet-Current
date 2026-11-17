@@ -95,7 +95,8 @@ export function mountOwnerOutfitPhotoPreview1054({
    row?.sourceHashVerified,row?.sourcePhotoOriginal,row?.category,
    row?.itemType,row?.color,row?.colorSource,row?.singleGarmentVerified,
    row?.segmentHint?.cutoutSHA256,row?.segmentHint?.ownerReviewedInstance,
-   row?.segmentHint?.verified,row?.segmentHint?.clipped
+   row?.segmentHint?.verified,row?.segmentHint?.clipped,
+   row?.deleted,row?.sourceRevoked
   ]);
  }
  return Object.freeze({
