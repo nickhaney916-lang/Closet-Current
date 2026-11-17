@@ -116,6 +116,46 @@ source=one(source,
   "       files:[{size:payload.length,text:async()=>payload}],value:'p93-selected-backup'}});",
   "     }finally{IDBDatabase.prototype.transaction=p100OriginalTx;}",
   "     const after=await readRows();"].join('\n'));
+// Deterministic owner-safe RED→GREEN control for a genuine, nonempty pending
+// Outfit Builder draft. This proves the native import guard refuses rather
+// than commits, and real "Load latest" clears the draft before the signed
+// original restore. Critically, assert that no unsaved draft existed BEFORE
+// introducing the control, so it cannot silently mask an original failure.
+source=one(source,
+ "     try{\n      await document.getElementById('import').onchange({target:{",
+ [
+  "     if(p100BeforeIdle.boardHasUnsavedDraft)",
+  "      throw Error('P100 unexpected outstanding draft before control; do not hide original intermittency');",
+  "     const p100BoardName=document.getElementById('boardName');",
+  "     if(!p100BoardName)throw Error('P100 native outfit field not mounted');",
+  "     p100BoardName.value+=' P100 unsaved control';",
+  "     p100BoardName.dispatchEvent(new Event('input',{bubbles:true}));",
+  "     const p100Pending=boardHasUnsavedDraft();",
+  "     await document.getElementById('import').onchange({target:{",
+  "      files:[{size:payload.length,text:async()=>payload}],value:'p100-refusal-control'}});",
+  "     const p100RefusedRows=await readRows();",
+  "     const p100RefusalText=document.getElementById('message')?.textContent||'';",
+  "     const p100Negative={",
+  "      pending:p100Pending,",
+  "      refused:p100RefusalText.includes('Finish saving your photos and outfit changes'),",
+  "      noRows:p100RefusedRows.items.length===0,",
+  "      noTransaction:p100Tx.started===0,",
+  "      ownerStillCurrent:db===p100Connection&&window.closetAuth===p100Auth,",
+  "      explicitIdleGate:window.__p100IdleFailureGate==='first',",
+  "      pendingBoardFlag:window.__p100IdleFailureFlags?.boardHasUnsavedDraft===true",
+  "     };",
+  "     if(Object.values(p100Negative).some(v=>v!==true))",
+  "      throw Error('P100 strict fail-closed control failed (no private source logged)');",
+  "     // The real, existing owner UI Load latest action explicitly discards",
+  "     // unsaved board edits. Never set native private state or bypass idle().",
+  "     await loadLatestBoardDraft();",
+  "     if(boardHasUnsavedDraft())throw Error('P100 owner Load latest did not clear draft');",
+  "     window.__p100Phases=[];",
+  "     window.__p100IdleFailureGate=null;window.__p100IdleFailureFlags=null;",
+  "     try{",
+  "      await document.getElementById('import').onchange({target:{"
+ ].join('\n'));
+
 source=one(source,'const state=Object.fromEntries(after.state.map(x=>[x.id,x]));',
  ['const state=Object.fromEntries(after.state.map(x=>[x.id,x]));',
  '     const p100MessageCodes=[',
@@ -138,6 +178,7 @@ source=one(source,'const state=Object.fromEntries(after.state.map(x=>[x.id,x]));
  '     const p100Phase={',
  '      beforeIdle:p100BeforeIdle,afterIdle:p100Idle(),messageCode:p100MessageCode,',
  '      stages:Array.isArray(window.__p100Phases)?window.__p100Phases.slice(0,24):[],',
+ '      unsavedDraftRefusalAndOwnerDismissal:p100Negative,',
  '      idleFailureGate:window.__p100IdleFailureGate||null,',
  '      idleFailureFlags:window.__p100IdleFailureFlags||null,',
  '      beforeCount:before.items.length,afterCount:after.items.length,',
