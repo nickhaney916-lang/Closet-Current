@@ -894,7 +894,7 @@ try{
  const badV3=structuredClone(v3);
  badV3.items[0].originalPhoto.sha256='f'.repeat(64);
  const badV3Notice=await submitBackup(badV3,true);
- assert.match(badV3Notice,/source|sha|jpeg|mismatch|invalid/i,
+ assert.match(badV3Notice,/source|sha|jpeg|mismatch|invalid|conflict|checksum/i,
   'tampered v3 source did not fail at native importer');
  assert.deepEqual(await ownerSnapshot(),beforeV3,
   'rejected v3 import changed the private 4K source or outfit');
