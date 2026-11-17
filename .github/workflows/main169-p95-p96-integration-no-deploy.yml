@@ -1,0 +1,104 @@
+name: MAIN169 M167+M168 exact-source integration rehearsal NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main169-p95-p96-cross-integration-rehearsal-HOLD]
+  pull_request:
+    branches: [research/main167-p95-current-jpeg-2d-integration-HOLD]
+permissions:
+  contents: read
+jobs:
+  m169-offline-source-and-full-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin exact M167 P95 base and unchanged donor blobs, reject all unexpected paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=4b608548cbd7729e13e25a51203c7acb667bc40a
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
+            case "$path" in
+              .github/workflows/main169-p95-p96-integration-no-deploy.yml|benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg|research/multi-garment-capture-01/review-ui.mjs|research/parallel96-highres/LICENSED_CAMERA_ORIGINAL_FIXTURE.md|research/parallel96-highres/source-derivative-intake96.mjs|scripts/test-parallel96-native-highres-browser.mjs|tests/parallel96-highres-source-derivative.test.mjs) ;;
+              *) echo "M169 unexpected changed path: $path"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = 5668a4bc6da2e94fc13d23392cd7fb4981d0bc2d
+          test "$(git rev-parse HEAD:scripts/test-parallel95-native-source-restore-reentry.mjs)" = afbb22bcfb4373b9ae2525703ab8dd04ddf0b800
+          test "$(git rev-parse HEAD:public/native-reviewed-shared-original-157.mjs)" = bae0d09e5f990f8c88a6c7d2d3b9d28a84604f6a
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg)" = 27864552c036f9bf089be147531c4da8ccdcb7d7
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = d478fcf6e4e8889a23b1620b444667ac949da7a9
+          test "$(git rev-parse HEAD:research/parallel96-highres/LICENSED_CAMERA_ORIGINAL_FIXTURE.md)" = 9d9fda3b897aa624bff11e1f32d3bf6e447f16a7
+          test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 4f8fe91ec1974ff936fa90d33874db7df0782e48
+          test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 58194c1bbcfca7b46f1c71b1ee0cc00c3dbc88c7
+          test "$(git rev-parse HEAD:tests/parallel96-highres-source-derivative.test.mjs)" = fcbad9d8744bd5fee68b72d1b3b235340d61883c
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node --check research/parallel96-highres/source-derivative-intake96.mjs
+          node --check scripts/test-parallel96-native-highres-browser.mjs
+          node --check scripts/test-parallel95-native-source-restore-reentry.mjs
+          node --check tests/parallel96-highres-source-derivative.test.mjs
+      - name: Install pinned no-deploy test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build locally only, NO DEPLOY
+        run: node scripts/build.mjs
+      - name: Entire inherited Node test suite including P95 and P96 gates
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+
+  m169-real-cross-donor-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      M51_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: '390'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check exact component blobs before native browser acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 4b608548cbd7729e13e25a51203c7acb667bc40a HEAD
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = 5668a4bc6da2e94fc13d23392cd7fb4981d0bc2d
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = d478fcf6e4e8889a23b1620b444667ac949da7a9
+          test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 4f8fe91ec1974ff936fa90d33874db7df0782e48
+          test "$(git rev-parse HEAD:benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg)" = 27864552c036f9bf089be147531c4da8ccdcb7d7
+      - name: Install pinned browser dependencies (NO PAID API)
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Local build only, no hosted API or deployment
+        run: node scripts/build.mjs
+      - name: Exact original 4000x6000 licensed public JPEG, genuine installed P88 inference and native private 2D/v3/v4
+        run: P96_NATIVE_4K=true node scripts/test-parallel96-native-highres-browser.mjs
+      - name: Original-hash-carrying derivative 4K source, real P88, private 2D and restore
+        run: node scripts/test-parallel96-native-highres-browser.mjs
+      - name: P95 real touch and photo-source mutation/reentry at 320 390 and 430
+        run: node scripts/test-parallel95-native-source-restore-reentry.mjs
+      - name: M157 shared original two reviewed owner cutouts to v3 restore and saved outfit
+        run: M123_ENGINE=${{ matrix.engine }} node scripts/test-main157-same-photo-native-outfit-browser.mjs
