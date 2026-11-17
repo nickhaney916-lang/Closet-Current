@@ -103,6 +103,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # The Playwright Docker workspace is mounted with an independent UID.
+          # Register only this checkout, not all Git directories or any source bypass.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD:scripts/test-main172-24mp-private-state-invariance.mjs)" = ad4cb6bfee719b6083b9abc6d11ade2551e77c58
           test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 58194c1bbcfca7b46f1c71b1ee0cc00c3dbc88c7
           P96_NATIVE_4K=true node scripts/test-main172-24mp-private-state-invariance.mjs
