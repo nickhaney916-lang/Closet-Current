@@ -1,0 +1,177 @@
+name: MAIN175 normal P99 + 24MP EXIF + private-state NO DEPLOY HOLD
+on:
+  push:
+    branches:
+      - research/main175-unflagged-exif-private-state-HOLD
+  pull_request:
+    branches:
+      - research/main1054-m174-exif-state-convergence-HOLD
+permissions:
+  contents: read
+jobs:
+  unflagged-node-and-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin immutable M174 EXIF/private-state parent and exact reviewed P99 consumer
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=5562e91e269d0249cc33d8b2a8b5bb64b846624e
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
+            case "$path" in
+              public/capture-navigation.js) ;;
+              public/index.html) ;;
+              public/native-2d-preview-p99.mjs) ;;
+              public/native-outfit-source-plan-p99.mjs) ;;
+              public/native-photo-3d-veto-p99.mjs) ;;
+              public/outfit-board.js) ;;
+              research/parallel99-normal-journey-HOLD/NORMAL-MODE-CONTRACT.md) ;;
+              scripts/test-parallel99-normal-app-browser.mjs) ;;
+              tests/capture-navigation.test.cjs) ;;
+              .github/workflows/main175-unflagged-exif-state-no-deploy.yml) ;;
+              research/master-consolidation-1054/M175-UNFLAGGED-EXIF-PRIVATE-STATE.md) ;;
+              *) echo "M173 unexpected protected change: $path"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/capture-navigation.js)" = 31223cd114984a72edf1cb0771122f320dc80ef9
+          test "$(git rev-parse HEAD:public/index.html)" = abd56ec794b44a447c9aac88129d6f6516180bd0
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 52d2b6d8834f27d9114e022fe8574947eda85206
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 58a2a1a81ad19e2341cebcdee83005296cd1d3a8
+          test "$(git rev-parse HEAD:public/native-photo-3d-veto-p99.mjs)" = 82b93d12d2fbcba146a190f5dce87a6ac5fc44af
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
+          test "$(git rev-parse HEAD:research/parallel99-normal-journey-HOLD/NORMAL-MODE-CONTRACT.md)" = 56e96d56adf063754112534cc6d6817ceb054f1c
+          test "$(git rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 9b8c3b37d1d8116e4bf9bc6dbf7ea82e2752433d
+          test "$(git rev-parse HEAD:tests/capture-navigation.test.cjs)" = 5e7b16c7b44cf6c258e79fcb1a92f0b7c2dea129
+          test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 1840c4496aefc28941f4c3de24a29bac1cb5e792
+          test "$(git rev-parse HEAD:tests/parallel96-highres-source-derivative.test.mjs)" = 2d913221968d4c09d9be33068efa80ef45b9de9b
+          test "$(git rev-parse HEAD:scripts/test-main172-24mp-private-state-invariance.mjs)" = ad4cb6bfee719b6083b9abc6d11ade2551e77c58
+          test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 58194c1bbcfca7b46f1c71b1ee0cc00c3dbc88c7
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
+          test "$(git rev-parse HEAD:benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg)" = 27864552c036f9bf089be147531c4da8ccdcb7d7
+          git diff --exit-code "$BASE" HEAD -- public/app.js public/auth.js public/native-default-atomic-import-m3.mjs public/native-default-verified-backup-export-m3.mjs public/outfit-worker-p94.mjs public/native-reviewed-shared-original-157.mjs supabase/
+      - name: Install pinned test tools; no hosted writes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Normal PWA offline build and packaged read-only source module
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          for file in native-outfit-source-plan-p99.mjs native-photo-3d-veto-p99.mjs native-2d-preview-p99.mjs; do test -s "dist/$file"; done
+          grep -Fq "const mission4Preview1054Active=true;" dist/outfit-board.js
+          grep -Fq "'./native-2d-preview-p99.mjs'" dist/outfit-board.js
+          node --check scripts/test-parallel99-normal-app-browser.mjs
+          node --check scripts/test-parallel96-native-highres-browser.mjs
+      - name: All inherited unit and source owner/backup regression tests
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  unflagged-genuine-browser:
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P99_ENGINE: ${{ matrix.engine }}
+      M51_ENGINE: ${{ matrix.engine }}
+      M58_ENGINE: ${{ matrix.engine }}
+      M123_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: '390'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Trusted checkout container and EXACT original owner/24MP source pins
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:public/capture-navigation.js)" = 31223cd114984a72edf1cb0771122f320dc80ef9
+          test "$(git rev-parse HEAD:public/index.html)" = abd56ec794b44a447c9aac88129d6f6516180bd0
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 52d2b6d8834f27d9114e022fe8574947eda85206
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 58a2a1a81ad19e2341cebcdee83005296cd1d3a8
+          test "$(git rev-parse HEAD:public/native-photo-3d-veto-p99.mjs)" = 82b93d12d2fbcba146a190f5dce87a6ac5fc44af
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
+          test "$(git rev-parse HEAD:research/parallel99-normal-journey-HOLD/NORMAL-MODE-CONTRACT.md)" = 56e96d56adf063754112534cc6d6817ceb054f1c
+          test "$(git rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 9b8c3b37d1d8116e4bf9bc6dbf7ea82e2752433d
+          test "$(git rev-parse HEAD:tests/capture-navigation.test.cjs)" = 5e7b16c7b44cf6c258e79fcb1a92f0b7c2dea129
+          test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 1840c4496aefc28941f4c3de24a29bac1cb5e792
+          test "$(git rev-parse HEAD:tests/parallel96-highres-source-derivative.test.mjs)" = 2d913221968d4c09d9be33068efa80ef45b9de9b
+          test "$(git rev-parse HEAD:scripts/test-main172-24mp-private-state-invariance.mjs)" = ad4cb6bfee719b6083b9abc6d11ade2551e77c58
+          test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 58194c1bbcfca7b46f1c71b1ee0cc00c3dbc88c7
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
+          test "$(git rev-parse HEAD:benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg)" = 27864552c036f9bf089be147531c4da8ccdcb7d7
+      - name: Install pinned native Chromium-WebKit and real model test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build unflagged PWA from combined source, no deployment
+        run: node scripts/build.mjs
+      - name: Real ordinary Home/gallery -> synthetic reviewed private closet -> saved outfit -> source-verified 2D -> restored outfit
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+          done
+      - name: Repeat original inherited private owner/session preview reentry in real browsers
+        run: node scripts/test-main51-real-app-owner-original-2d.mjs
+      - name: Preserve old M106/M147 stale/owner assertions; source-pin-only re-audit for normal viewer
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync,rmSync} from 'node:fs';
+          import {spawnSync} from 'node:child_process';
+          const src=readFileSync('scripts/test-main1054-m106-preview-terminal-browser.mjs','utf8');
+          const replacements=[
+           ["5668a4bc6da2e94fc13d23392cd7fb4981d0bc2d",
+            "b8ed5ebe18e81ec3f8f5659257289b8217a6877b"],
+           ["research/main-thread-integration-1054/native-2d-preview.mjs",
+            "public/native-2d-preview-p99.mjs"],
+           ["0af20d49d87436683630d587ec0284c611cd3414",
+            "52d2b6d8834f27d9114e022fe8574947eda85206"]
+          ];
+          let adapted=src;
+          for(const [old,newValue] of replacements){
+           assert.ok(adapted.includes(old),'M173 inherited M106 source or module path changed');
+           adapted=adapted.replaceAll(old,newValue);
+          }
+          // The SAME original M106 race/owner revocation assertions execute in
+          // a temporary test; only exact consumer blob and import path are pinned.
+          const path='scripts/.m173-normal-m106-repin.mjs';
+          try{
+           writeFileSync(path,adapted,{flag:'wx'});
+           const p=spawnSync(process.execPath,[path],{env:process.env,stdio:'inherit',timeout:12*60*1000});
+           if(p.error)throw p.error;
+           assert.equal(p.status,0,'M173 inherited M106 browser acceptance failed');
+          }finally{rmSync(path,{force:true});}
+          JS
+      - name: Genuine P88/WASM on unmodified public licensed 4000x6000 24MP original plus owner reviewed restore
+        env:
+          P96_NATIVE_4K: 'true'
+        run: node scripts/test-parallel96-native-highres-browser.mjs
+      - name: M172 24MP owner-private full state no-write on source mutation (real Chromium/WebKit)
+        env:
+          P96_NATIVE_4K: 'true'
+        run: |
+          set -euo pipefail
+          node --check scripts/test-main172-24mp-private-state-invariance.mjs
+          node scripts/test-main172-24mp-private-state-invariance.mjs
+      - name: Same-owner two-garment original v3 restoration to verified 2D without fitting-3D permission
+        run: node scripts/test-main157-same-photo-native-outfit-browser.mjs
