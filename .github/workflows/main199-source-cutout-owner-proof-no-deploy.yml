@@ -32,15 +32,15 @@ jobs:
           git merge-base --is-ancestor "$BASE" HEAD
           test "$(git rev-parse "$BASE:public/native-owner-wardrobe-index-167.mjs")" = 674797958366cc976a1a4abc8073087148d22975
           test "$(git rev-parse "$BASE:research/wardrobe-index-01/owner-wardrobe-index.mjs")" = 5719f83828c119f5210687640cd760ef468f9930
-          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = c99f82c90d25790b02677e4f7ceccc24ad70e5d9
-          test "$(git rev-parse HEAD:research/wardrobe-index-01/owner-wardrobe-index.mjs)" = 396171aefeceb0e122ee662b414ee4f9ded2e821
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
+          test "$(git rev-parse HEAD:research/wardrobe-index-01/owner-wardrobe-index.mjs)" = 60581e3b00f6877bbb424d0c090d9ab294890277
           test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
           test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 62bad171a97030846b0f1bb3bab740dec20ac5e7
           test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
           test "$(git rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 9b8c3b37d1d8116e4bf9bc6dbf7ea82e2752433d
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
-              public/native-owner-wardrobe-index-167.mjs|research/wardrobe-index-01/owner-wardrobe-index.mjs|tests/main199-source-cutout-owner-proof.test.mjs|.github/workflows/main199-source-cutout-owner-proof-no-deploy.yml) ;;
+              public/native-owner-wardrobe-index-167.mjs|research/wardrobe-index-01/owner-wardrobe-index.mjs|tests/main199-source-cutout-owner-proof.test.mjs|tests/wardrobe-index-01.test.mjs|.github/workflows/main199-source-cutout-owner-proof-no-deploy.yml) ;;
               *) echo "M199 refuses unrelated modification: $path"; exit 1 ;;
             esac
           done
