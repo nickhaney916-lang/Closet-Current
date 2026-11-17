@@ -200,8 +200,8 @@ const secondFixture="  stage='p95-two-distinct-licensed-photos-private-native-bo
 // switchView; this is test-input ownership, not owner/SHA authorization.
 // Keep exact pinned M51 source unchanged; never retry any failed gesture.
 const m167ClickOriginal=[
- "  await page.locator('#mission4Preview1054Section button').waitFor({timeout:20000});",
- "  await page.locator('#mission4Preview1054Section button').click();"
+ " await page.locator('#mission4Preview1054Section button').waitFor({timeout:20000});",
+ " await page.locator('#mission4Preview1054Section button').click();"
 ].join('\n');
 const m167ClickStable=[
  "  const m167Button=page.locator('#mission4Preview1054Section button');",
