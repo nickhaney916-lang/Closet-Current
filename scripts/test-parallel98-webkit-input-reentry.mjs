@@ -35,13 +35,13 @@ replaceOne(
  'four input modes');
 replaceOne(
  "    if(action==='tap')await p95Button.tap();",
- "    if(action==='tap')await p95Button.tap();\n"+
- "    else if(action==='keyboard-enter'){await p95Button.focus();await p95Button.press('Enter');}\n"+
+ "    if(action==='tap')await p95Button.tap();\\n"+
+ "    else if(action==='keyboard-enter'){await p95Button.focus();await p95Button.press('Enter');}\\n"+
  "    else if(action==='keyboard-space'){await p95Button.focus();await p95Button.press('Space');}",
  'genuine keyboard activation');
 replaceOne(
  "     const touchOnButton=events.some(e=>e.kind==='touchend');",
- "     const touchOnButton=events.some(e=>e.kind==='touchend');\n"+
+ "     const touchOnButton=events.some(e=>e.kind==='touchend');\\n"+
  "     const keyAtButton=events.some(e=>e.kind.startsWith('document-keydown-preview-'));",
  'keyboard trace classification');
 replaceOne(
@@ -50,8 +50,8 @@ replaceOne(
  'key event delivery receipt');
 replaceOne(
  "    if(!delivered.button||!delivered.onDocument){",
- "    if(action.startsWith('keyboard')&&!delivered.keyAtButton)\n"+
- "     throw Error('P98 genuine keyboard press did not reach native preview button');\n"+
+ "    if(action.startsWith('keyboard')&&!delivered.keyAtButton)\\n"+
+ "     throw Error('P98 genuine keyboard press did not reach native preview button');\\n"+
  "    if(!delivered.button||!delivered.onDocument){",
  'keyboard fail-closed expectation');
 const inputs="'touchstart','touchend'";
