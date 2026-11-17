@@ -1,0 +1,43 @@
+name: MAIN191 adopt verified M190 owner index into M189 NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main191-adopt-m190-retired-index-HOLD]
+  pull_request:
+    branches: [research/main189-adopt-m187-m188-private-source-auth-HOLD]
+    paths:
+      - public/native-owner-wardrobe-index-167.mjs
+      - tests/main190-retired-duplicate-owner-index.test.mjs
+      - .github/workflows/main191-retired-index-crossmission-no-deploy.yml
+permissions:
+  contents: read
+jobs:
+  source-provenance-and-red-before:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin untouched M189 admission candidate and original pre-M190 index
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=4dd80b3ef48803a1c1c7287b9288b030321371a6
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = b940b6c4ec040464d7d8b6686c45b5c3767fb859
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 62bad171a97030846b0f1bb3bab740dec20ac5e7
+          test "$(git rev-parse HEAD:tests/main190-retired-duplicate-owner-index.test.mjs)" = cf9fd805e3a257378ac658b23d50a9a9339daa0c
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              tests/main190-retired-duplicate-owner-index.test.mjs|.github/workflows/main191-retired-index-crossmission-no-deploy.yml) ;;
+              *) echo "M191 denied baseline code mutation: $file"; exit 1 ;;
+            esac
+          done
+          node --check tests/main190-retired-duplicate-owner-index.test.mjs
+      - name: Actual M190 owner-JPEG replacement behavior against unmodified M189
+        run: node --test tests/main190-retired-duplicate-owner-index.test.mjs
