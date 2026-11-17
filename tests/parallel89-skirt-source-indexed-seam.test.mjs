@@ -38,6 +38,8 @@ test('source original index-split closed cube yields opposite-wound proven virtu
  assert.equal(r.rawOriginalSourceSingleFaceBoundaryEdges,36);
  assert.equal(r.originalSourceGeometryTwinPairs,18);
  assert.equal(r.compatibleOriginalRestAndSkinTwinEdgePairs,18);
+ assert.equal(r.compatibleOriginalTwinPairsSharingOneIndexedEndpoint,0);
+ assert.equal(r.compatibleOriginalTwinPairsWithBothEndpointsSplit,18);
  assert.equal(r.compatibleOriginalRestAndSkinBoundaryEdges,36);
  assert.equal(r.unresolvedOriginalBoundaryEdges,0);
  assert.equal(r.originalSourceBoundaryEdgeConservationVerified,true);
@@ -52,6 +54,26 @@ test('source original index-split closed cube yields opposite-wound proven virtu
  assert.deepEqual(a.skinIndices,snap.skin);
  assert.deepEqual(a.skinWeights,snap.weights);
  assert.deepEqual(a.sourceMeshIds,snap.meshes);
+});
+test('a legitimate source seam may share ONE original vertex index and split only the other endpoint',()=>{
+ const rest=[
+  0,0,0, 1,0,0, 0,1,0, 1,0,0, 1,-1,0
+ ];
+ const r=measure({posedPositions:Float32Array.from(rest),
+  restPositions:Float32Array.from(rest),
+  indices:Uint16Array.from([0,1,2,3,0,4]),
+  skinIndices:new Uint16Array(5*4),
+  skinWeights:Float32Array.from({length:20},(_,i)=>i%4===0?1:0),
+  sourceMeshIds:new Uint16Array(5)});
+ assert.equal(r.rawOriginalSourceSingleFaceBoundaryEdges,6);
+ assert.equal(r.originalSourceGeometryTwinPairs,1);
+ assert.equal(r.compatibleOriginalRestAndSkinTwinEdgePairs,1);
+ assert.equal(r.compatibleOriginalTwinPairsSharingOneIndexedEndpoint,1);
+ assert.equal(r.compatibleOriginalTwinPairsWithBothEndpointsSplit,0);
+ assert.equal(r.compatibleOriginalRestAndSkinBoundaryEdges,2);
+ assert.equal(r.unresolvedOriginalBoundaryEdges,4);
+ assert.equal(r.originalSourceBoundaryEdgeConservationVerified,true);
+ assert.equal(r.releaseAuthorized,false);
 });
 test('source original open synthetic surface leaves genuine unmatched boundary, never fabricated seam closure',()=>{
  const a=fixture({facesUsed:faces.slice(0,-1)}),r=measure(a);
