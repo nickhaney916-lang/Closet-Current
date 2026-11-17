@@ -143,7 +143,10 @@ jobs:
           set -euo pipefail
           M59=d3aa25c850d0a73e90a539c4e90595c378b86d11
           git cat-file -e "$M59^{commit}"
-          for path in public/native-owner-wardrobe-index-167.mjs public/native-canonical-photo-source-167.mjs public/outfit-board-engine.js research/main-thread-integration-1054/source-to-outfit.mjs; do
+          # M193 M59 gallery source guard: the index was replaced with the verified
+          # M190 byte-exact retirement fix; all other M59 original source blobs stay pinned.
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = 674797958366cc976a1a4abc8073087148d22975
+          for path in public/native-canonical-photo-source-167.mjs public/outfit-board-engine.js research/main-thread-integration-1054/source-to-outfit.mjs; do
             test "$(git rev-parse "HEAD:$path")" = "$(git rev-parse "$M59:$path")"
           done
           for name in reviewed-photo-only-handoff59.mjs reviewed-photo-only-gallery59.mjs; do
