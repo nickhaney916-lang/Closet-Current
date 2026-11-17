@@ -540,7 +540,8 @@ export function mountMultiGarmentCapture24({
    // owner-private wardrobe rows are never touched by a source switch.
    revoke();canceled=false;
    const committedEpoch=renderVersion;
-   state={owner,proof,decoded,pieces:[],inference96:derivative96?.geometry||null};
+   state={owner,proof,decoded,pieces:[]};
+   state.inference96=derivative96?.geometry||null;
    original.src=proof.image;original.hidden=false;redraw();
    if(!currentLoading(committedEpoch,owner))return;
    const next={id:crypto.randomUUID(),worker:null,p88Intake57:null,pending:[],timeout:null,received:0,ignored:0,terminal:false};job=next;
@@ -548,11 +549,11 @@ export function mountMultiGarmentCapture24({
    // accelerate this timer only in an isolated test page.
    next.timeout=setTimeout(()=>{if(job===next&&!submitting)detectorFallback65(next,'Local segmentation timed out.');},300000);
    try{
-    if(manualOnly96){
-     detectorFallback65(next,'This full-resolution JPEG exceeds the safe local model/orientation budget. Keep the verified original, add pieces manually and review Unknown; nothing was saved.');
-     return;
-    }
     if(p88Transport57){
+     if(manualOnly96){
+      detectorFallback65(next,'This full-resolution JPEG exceeds the safe local model/orientation budget. Keep the verified original, add pieces manually and review Unknown; nothing was saved.');
+      return;
+     }
      // P96 source/derivative are verified separately under the SAME live
      // owner/source/request/epoch/DB lease. P88's original worker stays intact.
      const intakeArgs={
@@ -561,9 +562,10 @@ export function mountMultiGarmentCapture24({
       getReviewEpoch:()=>renderVersion,getActiveRequestId:()=>job?.id,
       getDbName:()=>getDb()?.name
      };
-     next.p88Intake57=derivative96?
-      await openHighResP88Intake96({...intakeArgs,derivative:derivative96}):
-      await openP88SourceIntake55(intakeArgs);
+     if(derivative96)next.p88Intake57=await openHighResP88Intake96({
+      ...intakeArgs,derivative:derivative96
+     });
+     else next.p88Intake57=await openP88SourceIntake55(intakeArgs);
      if(job!==next||!currentLoading(committedEpoch,owner)){
       next.p88Intake57.close();return;
      }
