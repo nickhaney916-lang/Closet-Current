@@ -21,8 +21,12 @@ const observations=[];
 const allowed=/^[a-f0-9]{40}$/;
 const head=new URLSearchParams(location.search).get('head')||'';
 const record={schema:'closet-current-device97-probe/v1',sourceHead:allowed.test(head)?head:'UNPINNED',
- environment:{secureContext:isSecureContext,deviceKind:'UNVERIFIED',browser:navigator.userAgent.replace(/[\r\n]/g,' ').slice(0,200),
-  memoryMiB:Number.isFinite(performance.memory?.usedJSHeapSize)?Math.round(performance.memory.usedJSHeapSize/1048576):null},observations};
+ environment:{secureContext:isSecureContext,deviceKind:'UNVERIFIED',
+  browserFamily:/CriOS/.test(navigator.userAgent)?'Chrome-iOS-WebKit':
+    /Chrome|Chromium/.test(navigator.userAgent)?'Chromium-family':
+    /Safari/.test(navigator.userAgent)?'Safari-family':'UNVERIFIED',
+  jsHeapUsedMiB:Number.isFinite(performance.memory?.usedJSHeapSize)?
+    Math.round(performance.memory.usedJSHeapSize/1048576):null},observations};
 $('secure').textContent=isSecureContext?'Secure context active; local-only processing.':'INSECURE: refuse permission/photo proof; use trusted HTTPS.';
 const output=()=>{$('output').textContent=JSON.stringify({sourceHead:record.sourceHead,secure:record.environment.secureContext,
  observations:observations.map(x=>({...x,sourceSha256:x.sourceSha256?.slice(0,12)+'…',convertedSha256:x.convertedSha256?.slice(0,12)+'…'}))},null,2)};

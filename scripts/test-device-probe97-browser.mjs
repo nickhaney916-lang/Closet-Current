@@ -51,6 +51,9 @@ try{
  assert.ok(photo&&permission,'real gallery and permission observations required');
  assert.equal(report.sourceHead,'a'.repeat(40));
  assert.equal(report.environment.deviceKind,'UNVERIFIED');
+ assert.equal(report.environment.browser,undefined,'raw user agent must not be exported');
+ assert.equal(report.environment.memoryMiB,undefined,'JS heap must not be presented as whole-device memory');
+ assert.ok(['Chromium-family','Chrome-iOS-WebKit','Safari-family','UNVERIFIED'].includes(report.environment.browserFamily));
  assert.equal(photo.sourceSha256,fixtureSha);
  assert.equal(photo.originalByteCount,fixture.length);
  assert.equal(photo.decode,'PASS');

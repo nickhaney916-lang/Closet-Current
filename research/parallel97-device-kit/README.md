@@ -43,3 +43,9 @@ M123_ENGINE=chromium node scripts/test-main1054-m123-photo119-restore-2d-browser
 Repeat engine chromium/webkit and viewport 320/390/430 using the strict source-pinned P97 workflow. The probe browser test uses an ephemeral self-signed HTTPS certificate and ignoreHTTPSErrors ONLY within the automated test; physical phones require an independently trusted LAN certificate. One green browser or isolated research test NEVER lifts #255.
 
 Source ownership handoff: inspect changes restricted to P97 scripts, probe, tests, documentation and no-deploy workflow; adopt them only after main #1054 integration compatibility review, not via automatic merging.
+
+## P97 continuation: source-proof and exact phone checklist
+
+See [SCENARIOS.md](SCENARIOS.md) for 21 exact phone operations, fail-closed expectations and evidence required for each platform. For source-original 2D and v3/v4 lossless restore, a physical PASS now requires original, saved and displayed/restored SHA-256, byte-count and decoded-dimension equality. A prose-only "looks okay" can no longer pass these integrity-critical checks. If actual bytes cannot be safely accessed on an authorized test account, mark BLOCKED, never invent source receipts.
+
+The HTTPS photo probe no longer exports raw browser user-agent strings or mislabels the optional JavaScript heap figure as device RAM. Browser-only engine checks remain separate from phone acceptance.

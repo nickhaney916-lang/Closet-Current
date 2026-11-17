@@ -16,7 +16,7 @@ test('manual witness requires physical metadata and explicit opt-in',()=>{
  assert.throws(()=>verifyLedger(d),/unobserved phone/);
  assert.throws(()=>verifyLedger(d,{allowPhysical:true}),/model required/);
  Object.assign(d.trials[0],{model:'Pixel test',osVersion:'17',browserVersion:'Chrome example',witness:'reviewer initials'});
- d.trials[0].cases[0].status='PASS';d.trials[0].cases[0].observation='actual camera capture';
+ Object.assign(d.trials[0].cases[0],{status:'PASS',observation:'actual camera capture',sourceSha256:hash,originalByteCount:12345,decodedWidth:400,decodedHeight:300});
  const s=verifyLedger(d,{allowPhysical:true});assert.equal(s.pass,1);assert.equal(s.physicalAcceptance,'BLOCKED');
 });
 test('reject identity, original bytes, unknown keys, filenames',()=>{
@@ -29,7 +29,7 @@ test('reject identity, original bytes, unknown keys, filenames',()=>{
 });
 test('source hashes and dimensions well formed',()=>{
  const d=blankLedger(SHA);d.trials[0].cases[0].sourceSha256='not-a-hash';
- assert.throws(()=>verifyLedger(d),/source SHA256/);
+ assert.throws(()=>verifyLedger(d),/sourceSha256/);
  d.trials[0].cases[0].sourceSha256=hash;d.trials[0].cases[0].decodedWidth=-1;
  assert.throws(()=>verifyLedger(d),/decodedWidth/);
 });
@@ -50,4 +50,59 @@ test('reject wrong platforms and missing negative gates',()=>{
  assert.throws(()=>verifyLedger(d),/platform order/);
  const e=blankLedger(SHA);e.trials[0].cases.pop();
  assert.throws(()=>verifyLedger(e),/all scenario rows/);
+});
+
+test('prose-only PHYSICAL checklist cannot certify original-photo integrity',()=>{
+ const d=blankLedger(SHA);
+ for(const p of d.trials){
+  Object.assign(p,{deviceKind:'PHYSICAL',model:'test phone',osVersion:'OS test',browserVersion:'test browser',witness:'tester initials'});
+  for(const c of p.cases){c.status='PASS';c.observation='looks good';}
+ }
+ assert.throws(()=>verifyLedger(d,{allowPhysical:true}),/sourceSha256 receipt required before PASS/);
+});
+const physical=()=>{
+ const d=blankLedger(SHA);Object.assign(d.trials[0],
+  {deviceKind:'PHYSICAL',model:'test phone',osVersion:'OS 17',browserVersion:'Chrome test',witness:'tester initials'});
+ return d;
+};
+const mark=(d,id,proof)=>{
+ const c=d.trials[0].cases.find(x=>x.id===id);Object.assign(c,{status:'PASS',observation:'on-device direct receipt checked',...proof});return c;
+};
+const source={sourceSha256:hash,originalByteCount:12345,decodedWidth:400,decodedHeight:300};
+test('source-only 2D refuses thumbnail digest, byte-count and dimension mismatches',()=>{
+ const d=physical(),c=mark(d,'source-original-2d',
+  {...source,savedSha256:hash,displayedSha256:'c'.repeat(64),savedByteCount:12345,displayedByteCount:12345,displayedWidth:400,displayedHeight:300});
+ assert.throws(()=>verifyLedger(d,{allowPhysical:true}),/displayed original SHA mismatch/);
+ c.displayedSha256=hash;c.displayedByteCount=12344;
+ assert.throws(()=>verifyLedger(d,{allowPhysical:true}),/displayed original byte count mismatch/);
+ c.displayedByteCount=12345;c.displayedWidth=399;
+ assert.throws(()=>verifyLedger(d,{allowPhysical:true}),/width mismatch/);
+ c.displayedWidth=400;assert.equal(verifyLedger(d,{allowPhysical:true}).pass,1);
+});
+test('v3/v4 restore requires unchanged source, exported, restored hash bytes and dimensions',()=>{
+ for(const id of ['v3-atomic-restore','v4-lossless-restore']){
+  const d=physical(),c=mark(d,id,{...source,savedSha256:hash,restoredSha256:hash,
+   savedByteCount:12345,restoredByteCount:12345,restoredWidth:400,restoredHeight:300});
+  assert.equal(verifyLedger(d,{allowPhysical:true}).pass,1);
+  c.restoredSha256='c'.repeat(64);
+  assert.throws(()=>verifyLedger(d,{allowPhysical:true}),/restored original SHA mismatch/);
+  c.restoredSha256=hash;c.restoredByteCount=12344;
+  assert.throws(()=>verifyLedger(d,{allowPhysical:true}),/restored byte count mismatch/);
+  c.restoredByteCount=12345;c.restoredHeight=301;
+  assert.throws(()=>verifyLedger(d,{allowPhysical:true}),/restored height mismatch/);
+ }
+});
+test('tamper and wrong-thumbnail negative cases require distinct source digests',()=>{
+ for(const [id,field] of [['tampered-original-rejected','tamperedSha256'],
+  ['thumbnail-source-mismatch-rejected','thumbnailSha256']]){
+  const d=physical(),c=mark(d,id,{sourceSha256:hash,[field]:hash});
+  assert.throws(()=>verifyLedger(d,{allowPhysical:true}),/must differ|did not change bytes/);
+  c[field]='c'.repeat(64);assert.equal(verifyLedger(d,{allowPhysical:true}).pass,1);
+ }
+});
+test('gallery PASS requires measured original hash, bytes and decoded dimensions',()=>{
+ const d=physical(),c=mark(d,'gallery-jpeg',{sourceSha256:hash});
+ assert.throws(()=>verifyLedger(d,{allowPhysical:true}),/originalByteCount receipt required/);
+ Object.assign(c,{originalByteCount:12345,decodedWidth:400,decodedHeight:300});
+ assert.equal(verifyLedger(d,{allowPhysical:true}).pass,1);
 });

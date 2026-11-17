@@ -30,7 +30,7 @@ jobs:
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
           git diff --name-only "$BASE" HEAD | while IFS= read -r p; do
             case "$p" in
-              scripts/device-acceptance97.mjs|scripts/serve-device97.mjs|scripts/test-device-probe97-browser.mjs|tests/device-acceptance97.test.mjs|tests/device-server97.test.mjs|research/parallel97-device-kit/README.md|research/parallel97-device-kit/probe.html|.github/workflows/parallel97-physical-device-readiness-no-deploy.yml) ;;
+              scripts/device-acceptance97.mjs|scripts/serve-device97.mjs|scripts/test-device-probe97-browser.mjs|tests/device-acceptance97.test.mjs|tests/device-server97.test.mjs|research/parallel97-device-kit/README.md|research/parallel97-device-kit/probe.html|research/parallel97-device-kit/SCENARIOS.md|.github/workflows/parallel97-physical-device-readiness-no-deploy.yml) ;;
               *) echo "P97 forbidden modified path: $p"; exit 1;;
             esac
           done
