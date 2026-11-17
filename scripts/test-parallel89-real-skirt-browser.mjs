@@ -690,6 +690,15 @@ try{
    assert.equal(proof.rawOriginalSourceSingleFaceBoundaryEdges,
     topology.sourceOpenBoundaryEdgeCount);
    assert.equal(proof.originalSourceBoundaryEdgeConservationVerified,true);
+   assert.equal(proof.originalGeometryTwinMismatchReasonsExhaustive,true);
+   assert.equal(proof.geometryTwinsWithConflictingOriginalProvenanceEdges,
+    proof.geometryTwinsDifferentOriginalSourceMeshEdges+
+    proof.geometryTwinsDifferentOriginalRestPoseEdges+
+    proof.geometryTwinsDifferentOriginalSkinInfluenceEdges+
+    proof.geometryTwinsDifferentOriginalSkinnedWorldEdges+
+    proof.geometryTwinsNonDistinctOriginalVertexIndexEdges,
+    'every virtual source edge provenance conflict must be explained');
+
    assert.equal(proof.compatibleOriginalRestAndSkinBoundaryEdges,
     proof.compatibleOriginalRestAndSkinTwinEdgePairs*2);
    assert.equal(proof.unresolvedOriginalBoundaryEdges+
@@ -892,6 +901,10 @@ try{
    originalSourceVirtualSeamProvenanceConflictEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.geometryTwinsWithConflictingOriginalProvenanceEdges),
    originalSourceVirtualSeamAmbiguousMultiEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.geometricAmbiguousMultiCandidateBoundaryEdges),
    originalSourceVirtualSeamUnmatchedEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.sourceUnmatchedBoundaryEdges),
+   originalSourceVirtualSeamDifferentMeshEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.geometryTwinsDifferentOriginalSourceMeshEdges),
+   originalSourceVirtualSeamDifferentRestEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.geometryTwinsDifferentOriginalRestPoseEdges),
+   originalSourceVirtualSeamDifferentSkinEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.geometryTwinsDifferentOriginalSkinInfluenceEdges),
+   originalSourceVirtualSeamDifferentPosedEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.geometryTwinsDifferentOriginalSkinnedWorldEdges),
    sourceOriginalBodyTopologyStatuses:results.selectedSourceWholeBodyClosureAudits.map(x=>x.status),
    sourceOriginalBodyTopologyIndexedTriangleCount:results.selectedSourceWholeBodyClosureAudits.map(x=>x.anatomicalSourceTopology.originalIndexedTriangleCount),
    sourceOriginalBodyBoundaryEdges:results.selectedSourceWholeBodyClosureAudits.map(x=>x.anatomicalSourceTopology.sourceOpenBoundaryEdgeCount),
