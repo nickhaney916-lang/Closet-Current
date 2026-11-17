@@ -89,7 +89,9 @@ test('07 distinct cutout JPEG bytes from same outfit remain distinct but REQUIRE
   originalPhoto:{image:original,sha256:sha},
   recognitionPhoto:{image:original},cropBounds:{left:10}});
  const previous=candidate({id:'other-cutout',category:'Bottoms',itemType:'Jeans',
-  singleGarmentVerified:false,cutoutSHA256:'c'.repeat(64)});
+  singleGarmentVerified:false,cutoutSHA256:'c'.repeat(64),
+  segmentHint:{verified:true,ownerReviewedInstance:true,originalSHA256:sha,
+   cutoutSHA256:'c'.repeat(64),clipped:false}});
  const r=await evaluate(record,recognition(),[previous]);
  assert.equal(r.duplicateStatus,'allow');
  assert.equal(r.autoSaveSafe,false,'model type from whole photo is not proven to belong to the cutout');
