@@ -1,0 +1,37 @@
+name: MAIN192 INDEX02 same owner lease no-deploy HOLD
+on:
+  push:
+    branches: [research/main192-index02-same-owner-lease-HOLD]
+  pull_request:
+    branches: [research/main191-adopt-m190-retired-index-HOLD]
+permissions:
+  contents: read
+jobs:
+  index-lease-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin M191 parent and original optional app lease source
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=b8910f6b63ff77ba754542b931c82f29f3ff186c
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse HEAD:research/wardrobe-index-02/mobile-index-app.mjs)" = 49542662732dc9965c2ab8945712f113a9efcfe8
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              tests/main192-index02-same-owner-lease.test.mjs|.github/workflows/main192-index02-owner-lease-no-deploy.yml) ;;
+              *) echo "M192 red-before unauthorized product edit: $file"; exit 1 ;;
+            esac
+          done
+          node --check tests/main192-index02-same-owner-lease.test.mjs
+      - name: Reproduce same-owner re-login and stale async private index
+        run: node --test tests/main192-index02-same-owner-lease.test.mjs
