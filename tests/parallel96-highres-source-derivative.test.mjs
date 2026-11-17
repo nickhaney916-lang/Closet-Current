@@ -103,7 +103,8 @@ test('P96 worker MASK is bound to derivative SHA, not original SHA',async()=>{
  assert.equal(correct.piece.personDetected,false);
  assert.ok(correct.piece.instanceKey.startsWith('seg-'));
  assert.equal(correct.piece.hint.categories[0],'Tops');
- assert.equal(correct.piece.hint.instanceMethod,'native_semantic_group');
+ assert.equal(correct.piece.hint.instanceMethod,undefined,
+  'sanitizer must not promote a worker method into human-verified identity');
  assert.equal(JSON.stringify(correct).includes('FOREIGN'),false);
  assert.equal(JSON.stringify(correct).includes('DO NOT PROPAGATE'),false);
  s.intake.close();
