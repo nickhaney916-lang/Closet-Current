@@ -78,7 +78,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  garmentFitNotHumanApproved:true,
  fullContinuousMeshContactNotCertified:true,
  originalPhoto2DShown:true,
- screenCaptureCountExpected:36,figurePoseSamplesExpected:6,
+ screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
  selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
@@ -693,7 +693,10 @@ try{
  assert.equal(results.registrationTrials.length,2);
  assert.equal(results.measuredBodyFitTrials.length,2);
  assert.equal(results.neutralRearTrials.length,2);
- assert.equal(results.captures.length,36);
+ assert.equal(results.captures.length,54);
+ assert.equal(results.captures.filter(x=>
+  x.file?.startsWith('selected-five-pose-source-skirt-')).length,18,
+  'selected original source screenshots must not be silently missing');
  assert.equal(results.poseSamples.length,6);
  assert.equal(results.diffs.length,18);
  assert.equal(results.errors.length,0,'real original source shader/crash problem');
