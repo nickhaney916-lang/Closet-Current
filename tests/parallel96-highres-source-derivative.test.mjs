@@ -183,7 +183,7 @@ function exifOriginalWithOrientation96(originalJPEG,orientation){
   1,0,0x12,1,3,0,1,0,0,0,orientation,0,0,0, // one SHORT orientation value
   0,0,0,0 // next IFD offset
  ]);
- const payload=Buffer.concat([Buffer.from('Exif\\0\\0','latin1'),tiff]);
+ const payload=Buffer.concat([Buffer.from([69,120,105,102,0,0]),tiff]);
  const length=payload.length+2;
  return 'data:image/jpeg;base64,'+Buffer.concat([
   src.subarray(0,2),Buffer.from([255,225,length>>8,length&255]),
