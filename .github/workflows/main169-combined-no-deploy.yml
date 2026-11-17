@@ -23,6 +23,8 @@ jobs:
           set -euo pipefail
           BASE=4b608548cbd7729e13e25a51203c7acb667bc40a
           git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse HEAD:public/native-reviewed-shared-original-157.mjs)" = bae0d09e5f990f8c88a6c7d2d3b9d28a84604f6a
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
           test "$(git rev-parse HEAD:public/outfit-board.js)" = 5668a4bc6da2e94fc13d23392cd7fb4981d0bc2d
           test "$(git rev-parse HEAD:scripts/test-parallel95-native-source-restore-reentry.mjs)" = afbb22bcfb4373b9ae2525703ab8dd04ddf0b800
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = d478fcf6e4e8889a23b1620b444667ac949da7a9
