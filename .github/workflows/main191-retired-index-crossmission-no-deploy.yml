@@ -1,0 +1,176 @@
+name: MAIN191 M190 retired owner index crossmission integration NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main191-adopt-m190-retired-index-HOLD]
+  pull_request:
+    branches: [research/main189-adopt-m187-m188-private-source-auth-HOLD]
+    paths:
+      - public/native-owner-wardrobe-index-167.mjs
+      - tests/main190-retired-duplicate-owner-index.test.mjs
+      - .github/workflows/main191-retired-index-crossmission-no-deploy.yml
+permissions:
+  contents: read
+jobs:
+  strict-source-and-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin tested M189 origin and exact M190 index donor; deny unrelated source changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=4dd80b3ef48803a1c1c7287b9288b030321371a6
+          git merge-base --is-ancestor "$BASE" HEAD
+          git merge-base --is-ancestor 0704de7694a4a8668094f2e705833a4132e51fc6 HEAD
+          git merge-base --is-ancestor e83692f0988bd6936d05da22046b084054e66958 HEAD
+          # M190 donor exists on its independent validated draft, not in M189 ancestry.
+          git cat-file -e '9e61f7b68a7adeca27e88d5b43da694141576a3f^{commit}'
+          test "$(git rev-parse 9e61f7b68a7adeca27e88d5b43da694141576a3f:public/native-owner-wardrobe-index-167.mjs)" = 674797958366cc976a1a4abc8073087148d22975
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = 674797958366cc976a1a4abc8073087148d22975
+          test "$(git rev-parse HEAD:tests/main190-retired-duplicate-owner-index.test.mjs)" = cf9fd805e3a257378ac658b23d50a9a9339daa0c
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 62bad171a97030846b0f1bb3bab740dec20ac5e7
+          test "$(git rev-parse HEAD:tests/main187-required-owner-assert-current.test.mjs)" = 392e8457c833a02ee4987cb4a302737a2c87d049
+          test "$(git rev-parse HEAD:tests/main188-owner-revoked-outfit-preview.test.mjs)" = b071964576659869bf11319aa335fb64a2bfe7a1
+          test "$(git rev-parse HEAD:.github/workflows/main187-required-owner-lease-no-deploy.yml)" = ed2d2e61b913e01f12c11506d90627c5629bd187
+          test "$(git rev-parse HEAD:.github/workflows/main188-owner-revoked-original-preview-no-deploy.yml)" = 3c0ea89a190afe20f8cdfa0d820ea685740ac994
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
+          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = 741e736ca107169c9e9861d803a49c2e6166e20b
+          # M189 exact reviewed source-only scope repins (topologically ordered).
+          test "$(git rev-parse HEAD:.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml)" = 14b0f9e09b28068d9d12f829ce5ecad8b3cfc662
+          test "$(git rev-parse HEAD:.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml)" = d442beaa482cb11dae1f5b103d32f1204b132a2b
+          test "$(git rev-parse HEAD:.github/workflows/main181-zero-proposal-native-no-deploy.yml)" = cf7731ed4c55bb5e9f96c47f5a13390b4c44ecf2
+          test "$(git rev-parse HEAD:.github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml)" = 3d435ee3c6fd7a26b4a854fa3af3141a72cbca0d
+          test "$(git rev-parse HEAD:.github/workflows/main183-outfit-session-epoch-no-deploy.yml)" = e1abe452c39eef25387ec0f1f16d4138aa696872
+          test "$(git rev-parse HEAD:.github/workflows/main189-lease-revocation-crossmission-no-deploy.yml)" = 39fca0b361ea33a9795a0505dd26acb32356d37b
+          git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
+            case "$path" in
+              public/native-owner-wardrobe-index-167.mjs|tests/main190-retired-duplicate-owner-index.test.mjs|.github/workflows/main191-retired-index-crossmission-no-deploy.yml|research/master-consolidation-1054/M191-M190-INDEX-ADOPTION-HOLD.md) ;;
+              *) echo "M191 refused unrelated code: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$BASE" HEAD -- public/ ':(exclude)public/native-owner-wardrobe-index-167.mjs' supabase/ benchmark/ scripts/ tests/ ':(exclude)tests/main190-retired-duplicate-owner-index.test.mjs'
+          node --check public/native-owner-wardrobe-index-167.mjs
+          node --check public/native-outfit-source-plan-p99.mjs
+          node --check public/native-2d-preview-p99.mjs
+      - name: M187 M188 and unchanged M190 original-owner-source regression cases
+        run: node --test tests/main187-required-owner-assert-current.test.mjs tests/main188-owner-revoked-outfit-preview.test.mjs tests/main190-retired-duplicate-owner-index.test.mjs
+      - name: Install pinned offline test tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build and all inherited owner security private Node tests
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  original-native-outfit:
+    name: genuine unflagged reviewed original-photo outfit browser (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P99_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin original unmodified browser harness, native source authority and owner 2D
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 9b8c3b37d1d8116e4bf9bc6dbf7ea82e2752433d
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 62bad171a97030846b0f1bb3bab740dec20ac5e7
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = 674797958366cc976a1a4abc8073087148d22975
+      - name: Install pinned Chromium/WebKit and offline build
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node scripts/build.mjs
+      - name: Genuine original photo to synthetic-reviewed owner outfit, v3 restore, source deny 320 390 430
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+          done
+  genuine-webkit-worker-crossmission:
+    name: real P88 original owner model plus 24MP M172 source WebKit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: webkit
+      P94_WIDTH: '390'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source-pinned unchanged installed SegFormer P88 WASM and M172 original
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = 674797958366cc976a1a4abc8073087148d22975
+          test "$(git rev-parse HEAD:scripts/test-main58-actual-p88-wasm-browser.mjs)" = 96ba2f5ee2420de52f45911881fdcc139455c353
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 58194c1bbcfca7b46f1c71b1ee0cc00c3dbc88c7
+          test "$(git rev-parse HEAD:scripts/test-main172-24mp-private-state-invariance.mjs)" = ad4cb6bfee719b6083b9abc6d11ade2551e77c58
+          P88=cc4554ef0104506a72bf0a28423fee52b6e4fff2
+          git cat-file -e "$P88^{commit}"
+          mkdir -p .m57-exact-p88-donor/public
+          for file in outfit-worker.mjs outfit-segmentation.mjs outfit-instance-review-840.mjs photo-color.js; do
+            git show "$P88:public/$file" > ".m57-exact-p88-donor/public/$file"
+            test "$(git hash-object ".m57-exact-p88-donor/public/$file")" = "$(git rev-parse "$P88:public/$file")"
+          done
+      - name: Install actual WebKit P88 and original licensed 24MP deps
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Seven consecutive unmodified real WebKit model owner/backup/2D safety journeys NO RETRY
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in 1 2 3 4 5 6 7; do
+            unset P96_NATIVE_4K || true
+            case "$i" in
+              1) script=scripts/test-main58-actual-p88-wasm-browser.mjs; export P94_WIDTH=390 ;;
+              2) script=scripts/test-parallel94-native-p88-browser.mjs; export P94_WIDTH=320 ;;
+              3) script=scripts/test-parallel94-native-p88-browser.mjs; export P94_WIDTH=390 ;;
+              4) script=scripts/test-parallel94-native-p88-browser.mjs; export P94_WIDTH=430 ;;
+              5) script=scripts/test-parallel96-native-highres-browser.mjs; export P94_WIDTH=390 ;;
+              6) script=scripts/test-parallel96-native-highres-browser.mjs; export P94_WIDTH=390; export P96_NATIVE_4K=true ;;
+              7) script=scripts/test-main172-24mp-private-state-invariance.mjs; export P94_WIDTH=390; export P96_NATIVE_4K=true ;;
+            esac
+            echo "M191_REAL_P88_WEBKIT_BEGIN step=$i"
+            node "$script"
+            echo "M191_REAL_P88_WEBKIT_PASS step=$i"
+          done
+          echo 'M191_REAL_WEBKIT_SEVEN_STEP_DONE noRetries=true false3D=false familyAlpha=HOLD'

@@ -69,6 +69,12 @@ function normalizedRow(owner,record,position){
  if(record.possibleDuplicate)reasons.push('possible-duplicate');
  if(record.requiresOwnershipConfirmation)reasons.push('ownership-unconfirmed');
  if(record.segmentHint?.clipped)reasons.push('clipped-source');
+ // Retired/explicitly revoked rows may remain in a restored private
+ // snapshot for conflict/audit resolution. They cannot participate in
+ // live source matching, outfit slots, or new-garment admission.
+ const inactive=Boolean(record.deleted)||Boolean(record.sourceRevoked);
+ if(record.deleted)reasons.push('deleted-record');
+ if(record.sourceRevoked)reasons.push('source-revoked');
  const photo=identity(record);
  if(photo.kind==='ambiguous-source')reasons.push('shared-source-needs-cutout-proof');
  const validSeasons=Array.isArray(record.seasons)?unique(record.seasons.filter(s=>seasons.has(s))):[];
@@ -80,12 +86,14 @@ function normalizedRow(owner,record,position){
   id,position,category,itemType,color:color&&canonical(color)!=='unknown'?color:'Unknown',
   seasons:Object.freeze(normalizedSeasons),sleeveLength:safeText(record.sleeveLength)||'Unknown',
   slotIds:Object.freeze(slotsFor(category,itemType)),
+  inactive,
   searchTokens:Object.freeze(unique(text)),
   reviewReasons:Object.freeze(unique(reasons)),
   source:photo.source,cutout:photo.cutout,sourceKind:photo.kind
  });
 }
 function sameIdentity(a,b){
+ if(a.inactive||b.inactive)return 'none';
  if(!a.source||a.source!==b.source)return 'none';
  if(a.sourceKind==='verified-cutout'&&b.sourceKind==='verified-cutout')
   return a.cutout===b.cutout?'duplicate':'different-segments';
@@ -133,7 +141,10 @@ export function queryOwnerWardrobeIndex(index,ownerId,filters={}){
  const review=filters.review;
  if(cat&&!INDEX01_CATEGORIES.includes(cat))throw new WardrobeIndexError('invalid-category');
  if(slot&&!INDEX01_SLOTS.includes(slot))throw new WardrobeIndexError('invalid-slot');
- const all=index.entries.filter(row=>(!cat||row.category===cat)&&(!type||row.itemType===type)&&
+ // A retired row remains visible in the owner's review list, but must never
+ // appear in the actionable slot picker. Keep its type/category slot metadata
+ // so the existing source-finalization veto reports the original M188 reason.
+ const all=index.entries.filter(row=>(!slot||!row.inactive)&&(!cat||row.category===cat)&&(!type||row.itemType===type)&&
   (!color||canonical(row.color)===color)&&(!season||row.seasons.includes('All seasons')||row.seasons.includes(season))&&
   (!sleeve||row.sleeveLength===sleeve)&&(!slot||row.slotIds.includes(slot))&&
   (review===undefined||Boolean(row.reviewReasons.length)===Boolean(review))&&
@@ -160,6 +171,7 @@ export function previewOwnerWardrobeAddition(index,ownerId,candidate){
  if(!index||index.version!==1||ownerId!==index.ownerId||!allowedOwner(ownerId))
   throw new WardrobeIndexError('owner-mismatch');
  const row=normalizedRow(ownerId,candidate,index.entries.length);
+ if(row.inactive)return Object.freeze({status:'reject',reason:'retired-or-revoked-candidate'});
  if(index.entries.some(x=>x.id===row.id))
   return Object.freeze({status:'reject',reason:'duplicate-item-id'});
  let ambiguous=false;
