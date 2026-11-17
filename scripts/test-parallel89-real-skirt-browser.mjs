@@ -81,7 +81,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
- selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
+ selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -555,6 +555,37 @@ try{
     selected.perPoseContacts[index].trialStrictTransversePairs;
    assert.equal(live.strictTransverseSourceBodyTriangleCrossings,expected,
     'ACTUAL rendered true selected-original-photo source/BVH trial differs from measured five-pose best');
+   // Independent geometric body radial witness. Zero crossing pairs are NOT
+   // sufficient to prove the cloth is outside the body or physically sized.
+   const radial=await page.evaluate(()=>
+    window.nativeP89Skirt.auditSelectedSourceRadialGap89());
+   assert.equal(radial.schema,'P89-actual-original-163bone-source-radial-body-gap/v1');
+   assert.ok([
+    'SAMPLED_SOURCE_RADIAL_BODY_COVERAGE_INCOMPLETE_NOT_WEARABLE',
+    'SAMPLED_SOURCE_RADIAL_INWARD_BODY_OVERLAP_WITNESSED_NOT_WEARABLE',
+    'SAMPLED_SOURCE_RADIAL_GAP_OBSERVED_NOT_CLOSED_VOLUME_FIT'
+   ].includes(radial.status),'genuine source ring geometry unavailable: '+JSON.stringify(radial));
+   assert.equal(radial.avatar,avatar);
+   assert.equal(radial.pose,selectedPose);
+   assert.equal(radial.originalPhotoSHA256,required.skirt);
+   assert.equal(radial.source163BoneRig,true);
+   assert.equal(radial.originalTorsoLegSkinWeightedFaceClassificationUsed,true);
+   assert.equal(radial.actualIndexedOriginalBodyFaceCutUsed,true);
+   assert.equal(radial.sevenOriginalSourceSkirtBands.length,7);
+   assert.equal(radial.originalSourceGarmentRingAngularSamples,336);
+   assert.ok(radial.originalBodySourcePlaneCutSegmentCount>=0);
+   assert.equal(radial.sampledInwardBodyGapAngularSectors+
+    radial.sampledUnknownBodyGapAngularSectors+
+    radial.sampledOutwardBodyGapAngularSectors+
+    radial.sevenOriginalSourceSkirtBands.reduce((n,x)=>n+x.sampledRadialGapWithin2mm,0),336,
+    'true source radial body sectors lost or double counted');
+   assert.equal(radial.garmentSourceAbsoluteSizeInferredNotMeasured,true);
+   assert.equal(radial.radialWitnessIsNotSignedClosedMeshContainment,true);
+   assert.equal(radial.originalPhotographedRearAbsent,true);
+   assert.equal(radial.originalPhoto2DFallbackRequired,true);
+   assert.equal(radial.consumer3DAdmitted,false);
+   assert.equal(radial.releaseAuthorized,false);
+   results.selectedSourceBodyRadialGapAudits.push(radial);
    results.selectedResearchPoseChecks.push({
     avatar,pose:selectedPose,selectedName:selected.name,
     selectedOriginalSourceTrialPairs:expected,
@@ -661,6 +692,7 @@ try{
    });
   }
  }
+ assert.equal(results.selectedSourceBodyRadialGapAudits.length,10);
  assert.equal(results.selectedResearchPoseChecks.length,10);
  assert.equal(results.selectedResearchNativeScreenshots.length,18);
  assert.equal(results.selectedResearchFrontCoverage.length,6);
@@ -727,6 +759,11 @@ try{
    photoSkirtRegistrationStatus:results.registrationTrials.map(x=>x.status),
    sourceSelectedOriginalPhotoFrontCoverage:results.selectedResearchFrontCoverage.map(x=>x.status),
    selectedRegistrationTrueFivePoseNativeChecks:results.selectedResearchPoseChecks.length,
+   sourceTrueWorldRadialGapCheckCount:results.selectedSourceBodyRadialGapAudits.length,
+   sourceWorldRadialGapStatuses:results.selectedSourceBodyRadialGapAudits.map(x=>x.status),
+   sourceRadialInwardSectorCounts:results.selectedSourceBodyRadialGapAudits.map(x=>x.sampledInwardBodyGapAngularSectors),
+   sourceRadialUnknownSectorCounts:results.selectedSourceBodyRadialGapAudits.map(x=>x.sampledUnknownBodyGapAngularSectors),
+   sourceRadialMinimumObservedGaps:results.selectedSourceBodyRadialGapAudits.map(x=>x.minimumObservedRadialGapMeters),
    selectedRegistrationRealCameraScreenshots:results.selectedResearchNativeScreenshots.length,
    selectedRegistrationFrontBodyOcclusionFractions:results.selectedResearchFrontCoverage.map(x=>x.rigid45mmCenterFrontalVisibleMannequinFraction),
    sourceWaistBoneAuditStatus:results.waistAnchorLandmarkReports.map(x=>x.status),
