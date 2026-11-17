@@ -701,6 +701,10 @@ try{
 
    assert.equal(proof.compatibleOriginalRestAndSkinBoundaryEdges,
     proof.compatibleOriginalRestAndSkinTwinEdgePairs*2);
+   assert.equal(proof.compatibleOriginalRestAndSkinTwinEdgePairs,
+    proof.compatibleOriginalTwinPairsSharingOneIndexedEndpoint+
+    proof.compatibleOriginalTwinPairsWithBothEndpointsSplit);
+   assert.equal(proof.originalSourceTwinsMayShareOneRealIndexedEndpoint,true);
    assert.equal(proof.unresolvedOriginalBoundaryEdges+
     proof.compatibleOriginalRestAndSkinBoundaryEdges,
     topology.sourceOpenBoundaryEdgeCount);
@@ -902,6 +906,8 @@ try{
    originalSourceVirtualSeamAmbiguousMultiEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.geometricAmbiguousMultiCandidateBoundaryEdges),
    originalSourceVirtualSeamUnmatchedEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.sourceUnmatchedBoundaryEdges),
    originalSourceVirtualSeamDifferentMeshEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.geometryTwinsDifferentOriginalSourceMeshEdges),
+   originalSourceVirtualSeamSharedOneOriginalIndexPairs:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.compatibleOriginalTwinPairsSharingOneIndexedEndpoint),
+   originalSourceVirtualSeamBothSplitIndexPairs:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.compatibleOriginalTwinPairsWithBothEndpointsSplit),
    originalSourceVirtualSeamDifferentRestEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.geometryTwinsDifferentOriginalRestPoseEdges),
    originalSourceVirtualSeamDifferentSkinEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.geometryTwinsDifferentOriginalSkinInfluenceEdges),
    originalSourceVirtualSeamDifferentPosedEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.geometryTwinsDifferentOriginalSkinnedWorldEdges),
