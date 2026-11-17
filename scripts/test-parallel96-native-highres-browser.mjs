@@ -259,6 +259,26 @@ try{
  assert.equal(actualWorkerPaths94.filter(p=>p.includes('/.m57-exact-p88-donor/')).length,0,
   'scratch donor unexpectedly served as P94 native integration Worker');
  assert.equal(state.debug.working,false);
+ // M159: expose only source-safe *terminal state classification* if the
+ // genuine WebKit model returns no proposal. A RED stays RED, no auto retries.
+ if(!(state.cards>0&&state.cards<=12)){
+  const statusText=String(state.status||'');
+  const statusClass=/Automatic extraction unavailable/i.test(statusText)?'worker-error':
+   /0 unverified regions/i.test(statusText)?'worker-done-zero-regions':
+   /timed out/i.test(statusText)?'worker-timeout':
+   /could not start|failed/i.test(statusText)?'worker-start-error':
+   /unverified region/i.test(statusText)?'worker-done-regions-but-dom-empty':'other';
+  console.error('M159_MODEL_ZERO_PROPOSAL_DIAGNOSTIC',JSON.stringify({
+   engine,width,statusClass,cardCount:state.cards,
+   sourceProofCurrent:state.debug.sourceSHA256===sha,
+   derivativePresent:!!state.debug.inference96,
+   workerPaths:actualWorkerPaths94.map(p=>p.includes('outfit-worker-p94.mjs')?'installed-p94':'other'),
+   modelHttpStatusCounts:Object.fromEntries([...new Set(modelResponses.map(r=>r.status))]
+    .map(code=>[String(code),modelResponses.filter(r=>r.status===code).length])),
+   pageErrorCount:issues.length,unexpectedOutboundCount:rejected.length,
+   elapsedMs:Math.round(performance.now()-started)
+  }));
+ }
  assert.ok(state.cards>0&&state.cards<=12,
   'Genuine P88 browser worker did not produce a bounded actual model proposal');
  assert.ok(/unverified region/.test(state.status),'Never call the proposals confirmed');
