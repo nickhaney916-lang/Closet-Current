@@ -116,46 +116,6 @@ source=one(source,
   "       files:[{size:payload.length,text:async()=>payload}],value:'p93-selected-backup'}});",
   "     }finally{IDBDatabase.prototype.transaction=p100OriginalTx;}",
   "     const after=await readRows();"].join('\n'));
-// Deterministic owner-safe RED→GREEN control for a genuine, nonempty pending
-// Outfit Builder draft. This proves the native import guard refuses rather
-// than commits, and real "Load latest" clears the draft before the signed
-// original restore. Critically, assert that no unsaved draft existed BEFORE
-// introducing the control, so it cannot silently mask an original failure.
-source=one(source,
- "     try{\n      await document.getElementById('import').onchange({target:{",
- [
-  "     if(p100BeforeIdle.boardHasUnsavedDraft)",
-  "      throw Error('P100 unexpected outstanding draft before control; do not hide original intermittency');",
-  "     const p100BoardName=document.getElementById('boardName');",
-  "     if(!p100BoardName)throw Error('P100 native outfit field not mounted');",
-  "     p100BoardName.value+=' P100 unsaved control';",
-  "     p100BoardName.dispatchEvent(new Event('input',{bubbles:true}));",
-  "     const p100Pending=boardHasUnsavedDraft();",
-  "     await document.getElementById('import').onchange({target:{",
-  "      files:[{size:payload.length,text:async()=>payload}],value:'p100-refusal-control'}});",
-  "     const p100RefusedRows=await readRows();",
-  "     const p100RefusalText=document.getElementById('message')?.textContent||'';",
-  "     const p100Negative={",
-  "      pending:p100Pending,",
-  "      refused:p100RefusalText.includes('Finish saving your photos and outfit changes'),",
-  "      noRows:p100RefusedRows.items.length===0,",
-  "      noTransaction:p100Tx.started===0,",
-  "      ownerStillCurrent:db===p100Connection&&window.closetAuth===p100Auth,",
-  "      explicitIdleGate:window.__p100IdleFailureGate==='first',",
-  "      pendingBoardFlag:window.__p100IdleFailureFlags?.boardHasUnsavedDraft===true",
-  "     };",
-  "     if(Object.values(p100Negative).some(v=>v!==true))",
-  "      throw Error('P100 strict fail-closed control failed (no private source logged)');",
-  "     // The real, existing owner UI Load latest action explicitly discards",
-  "     // unsaved board edits. Never set native private state or bypass idle().",
-  "     await loadLatestBoardDraft();",
-  "     if(boardHasUnsavedDraft())throw Error('P100 owner Load latest did not clear draft');",
-  "     window.__p100Phases=[];",
-  "     window.__p100IdleFailureGate=null;window.__p100IdleFailureFlags=null;",
-  "     try{",
-  "      await document.getElementById('import').onchange({target:{"
- ].join('\n'));
-
 source=one(source,'const state=Object.fromEntries(after.state.map(x=>[x.id,x]));',
  ['const state=Object.fromEntries(after.state.map(x=>[x.id,x]));',
  '     const p100MessageCodes=[',
@@ -178,7 +138,7 @@ source=one(source,'const state=Object.fromEntries(after.state.map(x=>[x.id,x]));
  '     const p100Phase={',
  '      beforeIdle:p100BeforeIdle,afterIdle:p100Idle(),messageCode:p100MessageCode,',
  '      stages:Array.isArray(window.__p100Phases)?window.__p100Phases.slice(0,24):[],',
- '      unsavedDraftRefusalAndOwnerDismissal:p100Negative,',
+
  '      idleFailureGate:window.__p100IdleFailureGate||null,',
  '      idleFailureFlags:window.__p100IdleFailureFlags||null,',
  '      beforeCount:before.items.length,afterCount:after.items.length,',
@@ -207,6 +167,46 @@ source=one(source,'for(const [field,value] of Object.entries(result)){',
  "      console.log('P100_SAFE_NATIVE_IMPORT',JSON.stringify({engine,width,...value,familyAlpha:'HOLD'}));",
  '      continue;',
  '     }'].join('\n'));
+
+// Independent native negative control runs AFTER the original strict restore,
+// reload, and exact original-photo 2D checks. It cannot alter original cloud
+// marker/restore assertions or conceal a precommit original WebKit failure.
+source=one(source,
+ 'cases[cases.length-1].samePhotoTwoReviewedCutoutsV3Outfit2D=true;',
+ [
+  'const p100NativeDraftRefusal=await page.evaluate(async()=>{',
+  " const ownerDB=db,auth=window.closetAuth,epoch=captureOperationEpoch;",
+  " const before=await new Promise((resolve,reject)=>{",
+  "  const req=ownerDB.transaction('items').objectStore('items').getAll();",
+  "  req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);",
+  " });",
+  " const name=document.getElementById('boardName');",
+  " if(!name)throw Error('P100 native board field not available');",
+  " name.value+=' draft pending';name.dispatchEvent(new Event('input',{bubbles:true}));",
+  " const pending=boardHasUnsavedDraft();",
+  " const fileText=JSON.stringify({format:'closet-current',version:3,items:[]});",
+  " await document.getElementById('import').onchange({target:{",
+  "  files:[{size:fileText.length,text:async()=>fileText}],value:'p100-negative',",
+  " }});",
+  " const status=document.getElementById('message')?.textContent||'';",
+  " const after=await new Promise((resolve,reject)=>{",
+  "  const req=ownerDB.transaction('items').objectStore('items').getAll();",
+  "  req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);",
+  " });",
+  " return {pending,refusedBeforePrepare:status.includes(",
+  "  'Finish saving your photos and outfit changes before importing a backup.'),",
+  "  signedSessionUnchanged:db===ownerDB&&window.closetAuth===auth&&",
+  "   captureOperationEpoch===epoch,unchangedClothing:",
+  "  before.length===2&&after.length===2&&",
+  "   before.every((row,i)=>row.id===after[i].id&&",
+  "    row.originalPhoto?.image===after[i].originalPhoto?.image)};",
+  '});',
+  "for(const [field,value] of Object.entries(p100NativeDraftRefusal))",
+  " assert.equal(value,true,'P100 '+engine+' '+width+' expected guarded pending-draft refusal '+field);",
+  "console.log('P100_NATIVE_DRAFT_REFUSAL_SAFE',JSON.stringify({engine,width,...p100NativeDraftRefusal,familyAlpha:'HOLD'}));",
+  'cases[cases.length-1].samePhotoTwoReviewedCutoutsV3Outfit2D=true;'
+ ].join('\n'));
+
 assert.ok(source.includes('assert.equal(value,true,engine+'),'Strict M157 assertions missing');
 assert.ok(source.includes("await document.getElementById('import').onchange("),
  'Real native backup Import UI was bypassed');
