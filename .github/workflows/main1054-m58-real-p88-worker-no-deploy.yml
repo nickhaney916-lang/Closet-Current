@@ -259,6 +259,11 @@ jobs:
           git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/capture-navigation.js' ':(exclude)public/index.html' ':(exclude)public/native-2d-preview-p99.mjs' ':(exclude)public/native-outfit-source-plan-p99.mjs' ':(exclude)public/native-photo-3d-veto-p99.mjs' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-reviewed-shared-original-157.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ research/main-thread-integration-1054/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
       - name: Install pinned isolated application test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build real offline PWA before native P99 browser journey (no deploy)
+        run: |
+          node scripts/build.mjs
+          test -s dist/index.html
+          test -s dist/native-2d-preview-p99.mjs
       - name: M175 default app original-photo owner-review outfit from Home on 320/390/430
         shell: bash
         run: |
