@@ -11,7 +11,17 @@ test('confirmed indexing, original fallback and no research certificate promotio
 test('suggestions, stale confirmations, Unknown and manual category edits',async()=>{const s=setup([{...piece(),category:'Bottoms',itemType:'Shorts'}]);assert.equal((await s.api.item('a')).category,'Uncategorized');s.set([piece('a','Bottoms','Unknown')]);assert.equal((await s.api.item('a')).itemType,'Unknown');assert.deepEqual((await s.api.query({slot:'bottom'})).ids,['a']);});
 test('no guessed optional fields or photo-estimated color',async()=>{const s=setup([{...piece(),colorSource:'photo-estimate',brand:'Invented',name:'Secret prediction'}]);assert.equal((await s.api.item('a')).color,'Unknown');assert.equal((await s.api.query({search:'Invented'})).total,0);});
 test('shoe pair stays one item; duplicates and multi-photo references never merge',async()=>{const a={...piece('a','Shoes','Sneakers'),pairId:'pair',garmentId:'g',possibleDuplicate:'b',sourceReferences:['photo1','photo2']};const s=setup([a,{...a,id:'b',pairId:null}]);assert.equal((await s.api.query()).total,2);const r=await s.api.item('a');assert.equal(r.pairId,'pair');assert.deepEqual(r.sourceReferences,['photo1','photo2']);assert.equal(r.duplicateCandidate,'b');});
-test('multi-item source splits retain item and cutout identity',async()=>{const s=setup([{...piece('a'),singleGarmentVerified:false,segmentHint:{cutoutSHA256:'a'.repeat(64)}},{...piece('b'),singleGarmentVerified:false,segmentHint:{cutoutSHA256:'b'.repeat(64)}}]);assert.equal((await s.api.query()).total,2);assert.notEqual((await s.api.item('a')).cutout,(await s.api.item('b')).cutout);});
+test('only owner-proved source splits retain distinct cutout identity',async()=>{
+ const hint=c=>({cutoutSHA256:c.repeat(64),originalSHA256:sha,
+  verified:true,ownerReviewedInstance:true,clipped:false});
+ const a={...piece('a'),singleGarmentVerified:false,segmentHint:hint('a')};
+ const b={...piece('b'),singleGarmentVerified:false,segmentHint:hint('b')};
+ const s=setup([a,b]);
+ assert.equal((await s.api.query()).total,2);
+ assert.notEqual((await s.api.item('a')).cutout,(await s.api.item('b')).cutout);
+ s.set([a,{...b,segmentHint:{cutoutSHA256:'b'.repeat(64)}}]);
+ assert.equal((await s.api.item('b')).cutout,null,'unreviewed crop hash never proves another piece');
+});
 test('dress suppresses bottoms and layers; slot swap and layer order retain IDs',async()=>{const s=setup([piece('d','Dresses','Romper'),piece('b','Bottoms','Jeans'),piece('j','Outerwear','Jacket'),piece()]);assert.deepEqual((await s.api.board({slots:{top:'d',bottom:'b',layer2:'j'}})).slots,{top:'d'});assert.deepEqual(await s.api.board({slots:{top:'a',bottom:'b',layer2:'j',layer3:'j'}}),{slots:{top:'a',bottom:'b',layer2:'j'},layerCount:2});});
 test('every retrieval uses fresh deletion, source revoke, edit and restore snapshot',async()=>{const s=setup();await s.api.item('a');for(const flag of ['deleted','sourceRevoked']){s.set([{...piece(),[flag]:true}]);await assert.rejects(s.api.item('a'),/unavailable/);}s.set([piece('restored')]);s.change({revision:'2'});assert.deepEqual((await s.api.query()).ids,['restored']);});
 test('account switch, logout, foreign aliases and ownerless records fail closed',async()=>{for(const change of [{ownerId:'bob'},{ownerId:''}]){const s=setup();await s.api.query();s.change(change);await assert.rejects(s.api.query());}for(const record of [{...piece(),ownerId:undefined},{...piece(),userId:'bob'}])await assert.rejects(setup([record]).api.query());});
