@@ -224,7 +224,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = 63cc9da00eaecbeb2576482dcae1528b44ea8189
-          test "$(git rev-parse HEAD:scripts/test-parallel95-native-source-restore-reentry.mjs)" = eb6c66f8e18c27ad25e2ef01d6f50a4f17094f22
+          test "$(git rev-parse HEAD:scripts/test-parallel95-native-source-restore-reentry.mjs)" = afbb22bcfb4373b9ae2525703ab8dd04ddf0b800
           node --check scripts/test-parallel95-native-source-restore-reentry.mjs
           node scripts/test-parallel95-native-source-restore-reentry.mjs
       - name: M106 and M147 native Chromium/WebKit stale first-import + newer-click ownership regression
