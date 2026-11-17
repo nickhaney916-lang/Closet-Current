@@ -1,0 +1,94 @@
+name: MAIN185 sustained actual model lifecycle WebKit Chromium NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main185-repeated-real-webkit-model-lifecycle-HOLD]
+  pull_request:
+    branches: [research/main1054-m58-real-p88-browser-worker-HOLD]
+    paths:
+      - .github/workflows/main185-repeated-real-webkit-model-lifecycle-no-deploy.yml
+      - research/master-consolidation-1054/M185-REAL-WEBKIT-REPEAT-FAILURE-HOLD.md
+permissions:
+  contents: read
+jobs:
+  sustained-original-model:
+    name: original native P88 source no-retry ${{ matrix.mode }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: webkit-six-P94
+            engine: webkit
+          - mode: webkit-six-alternating
+            engine: webkit
+          - mode: chromium-four-P94-control
+            engine: chromium
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      M185_MODE: ${{ matrix.mode }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict exact M183 source, model and legal public photo only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          PARENT=f2befed4c776786dc11843b98fafec72f2d9c202
+          git merge-base --is-ancestor "$PARENT" HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:scripts/test-main58-actual-p88-wasm-browser.mjs)" = 96ba2f5ee2420de52f45911881fdcc139455c353
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:public/outfit-capture.js)" = 8d55715ef09e34086d3c401ec38340bfc25f5fe8
+          git diff --exit-code "$PARENT" HEAD -- public/ scripts/ tests/ supabase/ benchmark/ research/parallel96-highres/
+          git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
+            case "$path" in
+              .github/workflows/main185-repeated-real-webkit-model-lifecycle-no-deploy.yml|research/master-consolidation-1054/M185-REAL-WEBKIT-REPEAT-FAILURE-HOLD.md) ;;
+              *) echo "M185 unreviewed source $path"; exit 1 ;;
+            esac
+          done
+          node --check scripts/test-main58-actual-p88-wasm-browser.mjs
+          node --check scripts/test-parallel94-native-p88-browser.mjs
+      - name: Install exact same native browser and runtime as protected M58
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Six fresh real WASM WebKit processes and Chromium control; stop on FIRST red
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Each child starts a fresh real browser, loads original licensed
+          # public JPEG, runs unchanged model in the native signed-local app,
+          # verifies owner/source, and must produce 1..12 genuine proposals.
+          # Never retry, skip, forge proposals or turn a negative into success.
+          case "$M185_MODE" in
+            webkit-six-P94) total=6 ;;
+            webkit-six-alternating) total=6 ;;
+            chromium-four-P94-control) total=4 ;;
+            *) echo 'Invalid M185 matrix'; exit 2 ;;
+          esac
+          echo "M185_SOURCE_PINNED_BEGIN engine=$M58_ENGINE mode=$M185_MODE total=$total"
+          for i in $(seq 1 "$total"); do
+            if [ "$M185_MODE" = webkit-six-alternating ] && [ $((i%2)) -eq 1 ]; then
+              harness=scripts/test-main58-actual-p88-wasm-browser.mjs
+            else
+              harness=scripts/test-parallel94-native-p88-browser.mjs
+            fi
+            echo "M185_REAL_MODEL_ATTEMPT_BEGIN engine=$M58_ENGINE mode=$M185_MODE step=$i of=$total harness=$harness"
+            # IMPORTANT: unmodified original harness failure immediately RED
+            node "$harness"
+            mem=unavailable
+            if [ -r /sys/fs/cgroup/memory.current ]; then mem="$(cat /sys/fs/cgroup/memory.current)"; fi
+            peak=unavailable
+            if [ -r /sys/fs/cgroup/memory.peak ]; then peak="$(cat /sys/fs/cgroup/memory.peak)"; fi
+            echo "M185_REAL_MODEL_ATTEMPT_PASS engine=$M58_ENGINE mode=$M185_MODE step=$i cgroup_current_bytes=$mem cgroup_peak_bytes=$peak"
+          done
+          echo "M185_ALL_ACTUAL_MODEL_ATTEMPTS_PASSED engine=$M58_ENGINE mode=$M185_MODE total=$total noRetries=true noFakeMasks=true familyAlpha=HOLD"
