@@ -90,7 +90,6 @@ function normalizedRow(owner,record,position){
  if(record.deleted)reasons.push('deleted-record');
  if(record.sourceRevoked)reasons.push('source-revoked');
  const photo=identity(record);
- if(photo.kind==='unverified')reasons.push('original-source-unverified');
  if(photo.kind==='ambiguous-source')reasons.push('shared-source-needs-cutout-proof');
  const validSeasons=Array.isArray(record.seasons)?unique(record.seasons.filter(s=>seasons.has(s))):[];
  const normalizedSeasons=validSeasons.includes('All seasons')?['All seasons']:validSeasons;
