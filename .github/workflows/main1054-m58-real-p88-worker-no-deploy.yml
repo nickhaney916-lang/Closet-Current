@@ -74,7 +74,7 @@ jobs:
           node --check scripts/test-parallel94-native-p88-browser.mjs
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
-              scripts/test-main58-actual-p88-wasm-browser.mjs|scripts/lib/owner-item-mutation91.mjs|scripts/test-browser-owner-mutation91.mjs|research/master-consolidation-1054/MILESTONE58.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|public/outfit-board.js|research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|tests/detector-manual-recovery-65.test.mjs|tests/invalid-selection-race-71.test.mjs|tests/review-source-epoch-34.test.mjs|tests/mission3-outfit-card-picker-owner-lease.test.cjs|tests/mission3-outfit-suggestion-owner-lease.test.cjs|public/app.js|scripts/test-main1054-duplicate-fence-browser.mjs|tests/main1054-saved-photo-duplicate-fence.test.mjs|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/automatic-indexing.test.cjs|public/native-default-atomic-import-m3.mjs|tests/mission3-default-atomic-backup-source-guard.test.mjs|scripts/test-main51-real-app-owner-original-2d.mjs|scripts/test-mission3-default-atomic-import-browser.mjs|public/native-default-verified-backup-export-m3.mjs|tests/main1054-m104-large-original-export-receipts.test.mjs|scripts/test-main1054-m106-preview-terminal-browser.mjs|scripts/test-main1054-m123-photo119-restore-2d-browser.mjs|public/native-reviewed-private-save-167.mjs|tests/main1054-m132-photo119-large-display-preview.test.mjs|tests/main1054-m148-preview-click-ownership.test.mjs|public/outfit-worker-p94.mjs|public/outfit-instance-review-840.mjs|research/multi-garment-capture-01/review-ui.mjs|scripts/test-parallel94-native-p88-browser.mjs|public/native-reviewed-shared-original-157.mjs|scripts/test-main157-same-photo-native-outfit-browser.mjs|tests/main157-reviewed-shared-source-v3.test.mjs|.github/workflows/main157-reviewed-shared-original-no-deploy.yml) ;;
+              scripts/test-main58-actual-p88-wasm-browser.mjs|scripts/lib/owner-item-mutation91.mjs|scripts/test-browser-owner-mutation91.mjs|research/master-consolidation-1054/MILESTONE58.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|public/outfit-board.js|research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|tests/detector-manual-recovery-65.test.mjs|tests/invalid-selection-race-71.test.mjs|tests/review-source-epoch-34.test.mjs|tests/mission3-outfit-card-picker-owner-lease.test.cjs|tests/mission3-outfit-suggestion-owner-lease.test.cjs|public/app.js|scripts/test-main1054-duplicate-fence-browser.mjs|tests/main1054-saved-photo-duplicate-fence.test.mjs|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/automatic-indexing.test.cjs|public/native-default-atomic-import-m3.mjs|tests/mission3-default-atomic-backup-source-guard.test.mjs|scripts/test-main51-real-app-owner-original-2d.mjs|scripts/test-mission3-default-atomic-import-browser.mjs|public/native-default-verified-backup-export-m3.mjs|tests/main1054-m104-large-original-export-receipts.test.mjs|scripts/test-main1054-m106-preview-terminal-browser.mjs|scripts/test-main1054-m123-photo119-restore-2d-browser.mjs|public/native-reviewed-private-save-167.mjs|tests/main1054-m132-photo119-large-display-preview.test.mjs|tests/main1054-m148-preview-click-ownership.test.mjs|public/outfit-worker-p94.mjs|public/outfit-instance-review-840.mjs|research/multi-garment-capture-01/review-ui.mjs|scripts/test-parallel94-native-p88-browser.mjs|public/native-reviewed-shared-original-157.mjs|scripts/test-main157-same-photo-native-outfit-browser.mjs|tests/main157-reviewed-shared-source-v3.test.mjs|.github/workflows/main157-reviewed-shared-original-no-deploy.yml|scripts/test-parallel95-native-source-restore-reentry.mjs|tests/p95-exact-current-original-dom.test.mjs) ;;
               *) echo "MAIN58 blocked unexpected change: $path"; exit 1;;
             esac
           done
@@ -225,7 +225,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD:public/outfit-board.js)" = 03c83b79e076ed3b7f67353cd3cd69f13529ccab
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = 5668a4bc6da2e94fc13d23392cd7fb4981d0bc2d
           test "$(git rev-parse HEAD:scripts/test-main1054-m106-preview-terminal-browser.mjs)" = 333b5bfd05b9e164edce95ea595ced4c898a4c53
           node --check public/outfit-board.js
           node --check scripts/test-main1054-m106-preview-terminal-browser.mjs
@@ -243,6 +243,15 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD:scripts/test-main157-same-photo-native-outfit-browser.mjs)" = c65c47091156c8996a1f463bff80b1c690b9fd90
           M123_ENGINE=${{ matrix.engine }} node scripts/test-main157-same-photo-native-outfit-browser.mjs
+      - name: M167 P95 native source-accurate selected JPEG preview and signed WebKit reentry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = 5668a4bc6da2e94fc13d23392cd7fb4981d0bc2d
+          test "$(git rev-parse HEAD:scripts/test-parallel95-native-source-restore-reentry.mjs)" = 51ca53e77573f916bfe06539f1be9687f2eded09
+          node --check public/outfit-board.js
+          node --check scripts/test-parallel95-native-source-restore-reentry.mjs
+          M51_ENGINE=${{ matrix.engine }} node scripts/test-parallel95-native-source-restore-reentry.mjs
       - name: Assert actual app three widths and no unjustified 3D or release
         shell: bash
         run: |
@@ -372,6 +381,13 @@ jobs:
       # previously 2776/2777 passed but PWA failed on ENOENT (no dist build).
       - name: Offline application source build before PWA regression (no deploy)
         run: node scripts/build.mjs
+      - name: M167 source-exact current original/slot DOM proof and negative cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = 5668a4bc6da2e94fc13d23392cd7fb4981d0bc2d
+          test "$(git rev-parse HEAD:tests/p95-exact-current-original-dom.test.mjs)" = 7923b70f2d5272286c3250842fd4ac9fcfa38b03
+          node --test tests/p95-exact-current-original-dom.test.mjs
       - name: Run exact-head all inherited application and recognition tests
         run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - name: Final protected source and branch boundaries
