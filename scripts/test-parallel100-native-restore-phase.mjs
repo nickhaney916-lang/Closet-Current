@@ -40,6 +40,22 @@ const phaseEdits=[
  ["  const reason=String(err?.message||'');",
   "  const reason=String(err?.message||'');\n  const p100IdleErrors=['Finish saving your photos and outfit changes before importing a backup.','Your photo or outfit changed during backup validation. Retry when it is saved.','A photo or outfit changed during backup confirmation. Retry when it is saved.'];\n  window.__p100Phases?.push(p100IdleErrors.includes(reason)?'refused:idle':/^LEGACY_ATOMIC_[A-Z0-9_]{1,90}$/.test(reason)?'refused:'+reason:'refused:other');"]
 ];
+
+// Capture only fixed boolean/count guard flags at the instant a precommit
+// idle check refuses. No original JPEGs, owner IDs, errors or token contents.
+// This code executes only on refusal, never on the green import path.
+const idleFlagSource="({busy:!!busy,saving:!!saving,captureProofTaking:!!captureProofTaking,cameraOpening:!!cameraOpening,photoImportActive:!!photoImportActive,videoImportActive:!!videoImportActive,automaticRunning:!!automaticRunning,queuedAutomatic:automaticQueue.length,localPending:localPending.size,failedDraftCaptures:failedDraftCaptures.size,streamActive:!!stream,openDialog:!!document.querySelector('dialog[open]'),boardHasUnsavedDraft:typeof boardHasUnsavedDraft==='function'&&boardHasUnsavedDraft()})";
+for(const edit of phaseEdits.filter(([needle])=>needle.includes('if(!idle())throw Error('))){
+ const [needle] = edit;
+ const gate=needle.includes('Finish saving your photos')?'first':
+  needle.includes('during backup validation')?'after-prepare':'queued-commit';
+ const start=needle.indexOf("throw Error(");
+ const thrown=needle.slice(start,needle.length-1);
+ edit[1]="  window.__p100Phases?.push('idle-gate:"+gate+"');\n"+
+  needle.slice(0,start)+"{window.__p100IdleFailureGate='"+gate+"';"+
+  "window.__p100IdleFailureFlags="+idleFlagSource+";"+thrown+"}";
+}
+
 const servedCode=[
  "let bytes=await readFile(absolute);",
  "  if(absolute===resolve(pub,'app.js')){",
@@ -54,6 +70,14 @@ const servedCode=[
  "  }"
 ].join('\n');
 source=one(source,'const bytes=await readFile(absolute);',servedCode);
+
+// Repeat the original WebKit 390px user journey in independently launched
+// browser processes, with identical strict checks and no sleep/retry bypass.
+// The original M157 source in the repo remains byte-for-byte pinned.
+source=one(source,'for(const width of [320,390,430]){',
+ 'for(const width of [320,390,390,390,390,430]){');
+source=one(source,'assert.equal(cases.length,3);','assert.equal(cases.length,6);');
+source=one(source,'PASS 3/3 per engine','PASS 6/6 per engine');
 
 source=one(source,'const payload=exported.json;',
  ['const payload=exported.json;',
@@ -114,6 +138,8 @@ source=one(source,'const state=Object.fromEntries(after.state.map(x=>[x.id,x]));
  '     const p100Phase={',
  '      beforeIdle:p100BeforeIdle,afterIdle:p100Idle(),messageCode:p100MessageCode,',
  '      stages:Array.isArray(window.__p100Phases)?window.__p100Phases.slice(0,24):[],',
+ '      idleFailureGate:window.__p100IdleFailureGate||null,',
+ '      idleFailureFlags:window.__p100IdleFailureFlags||null,',
  '      beforeCount:before.items.length,afterCount:after.items.length,',
  "      topPresent:after.items.some(x=>x.id==='p93-original'),",
  "      bottomPresent:after.items.some(x=>x.id==='m127-bottom'),",
