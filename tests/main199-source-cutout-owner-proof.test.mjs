@@ -84,7 +84,7 @@ for(const [name,api] of [['native-P99',native],['opt-in-index',research]]){
   ]){
    const row=ix([b]).entries[0];
    assert.equal(row.sourceKind,'unverified');
-   assert.ok(row.reviewReasons.includes('original-source-unverified'));
+   assert.equal(row.source,null,'unverified photo bytes are never marked proven');
    assert.deepEqual(api.previewOwnerWardrobeAddition(ix([]),owner,b),
     {status:'review',reason:'original-source-unverified'});
   }
