@@ -49,3 +49,7 @@ Source ownership handoff: inspect changes restricted to P97 scripts, probe, test
 See [SCENARIOS.md](SCENARIOS.md) for 21 exact phone operations, fail-closed expectations and evidence required for each platform. For source-original 2D and v3/v4 lossless restore, a physical PASS now requires original, saved and displayed/restored SHA-256, byte-count and decoded-dimension equality. A prose-only "looks okay" can no longer pass these integrity-critical checks. If actual bytes cannot be safely accessed on an authorized test account, mark BLOCKED, never invent source receipts.
 
 The HTTPS photo probe no longer exports raw browser user-agent strings or mislabels the optional JavaScript heap figure as device RAM. Browser-only engine checks remain separate from phone acceptance.
+
+## Race-safe Erase verification
+
+The standalone diagnostic now invalidates pending photo decode/hash/HEIC derivative tasks and camera-permission outcomes when **Erase all local observations** is pressed. A permission stream that grants after erase is stopped without creating a stale observation; generated object URLs are revoked on completion. This guarantees that late asynchronous completions cannot re-populate the on-page metadata report or the export. The erase does not cancel an operating-system permission dialog or instantly wipe inaccessible browser process memory; exit the browser and clean approved test data as usual. Chromium/WebKit acceptance tests deliberately hold image decode and camera permission across Erase, then assert empty UI and downloaded metadata.

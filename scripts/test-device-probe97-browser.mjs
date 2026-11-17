@@ -64,10 +64,56 @@ try{
  assert.deepEqual(violations,[]);
  await page.locator('#clear').click();
  assert.match(await page.locator('#output').textContent(),/"observations": \[\]/);
+
+ // Force an actual browser decode promise to remain pending while the user erases results.
+ // Old probe code appended a stale source digest when the decode eventually resolved.
+ await page.evaluate(()=>{
+  const native=HTMLImageElement.prototype.decode;
+  window.__p97DecodeStarted=false;window.__p97DecodeFinished=false;
+  const gate=new Promise(resolve=>{window.__p97ReleaseDecode=resolve;});
+  HTMLImageElement.prototype.decode=function(...args){
+   window.__p97DecodeStarted=true;
+   return gate.then(()=>native.apply(this,args)).finally(()=>{window.__p97DecodeFinished=true;});
+  };
+ });
+ await page.locator('#gallery').setInputFiles({name:'disposable-race.jpg',mimeType:'image/jpeg',buffer:fixture});
+ await page.waitForFunction(()=>window.__p97DecodeStarted,{},{timeout:15000});
+ await page.locator('#clear').click();
+ await page.evaluate(()=>window.__p97ReleaseDecode());
+ await page.waitForFunction(()=>window.__p97DecodeFinished,{},{timeout:15000});
+ await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+ assert.deepEqual(JSON.parse(await page.locator('#output').textContent()).observations,[],
+  'Erase must invalidate an in-flight decoded photo source');
+
+ // Force a permission grant after Erase. The stream must still be closed, and its
+ // stale permission event must not appear in the redacted export.
+ await page.evaluate(()=>{
+  window.__p97PermissionRequested=false;
+  window.__p97TrackStopped=false;
+  const gate=new Promise(resolve=>{window.__p97ReleasePermission=resolve;});
+  Object.defineProperty(navigator,'mediaDevices',{configurable:true,
+   value:{getUserMedia:()=>{window.__p97PermissionRequested=true;return gate;}}});
+ });
+ await page.locator('#permission').click();
+ await page.waitForFunction(()=>window.__p97PermissionRequested,{},{timeout:15000});
+ await page.locator('#clear').click();
+ await page.evaluate(()=>window.__p97ReleasePermission({
+  getTracks:()=>[{stop:()=>{window.__p97TrackStopped=true;}}]
+ }));
+ await page.waitForFunction(()=>window.__p97TrackStopped,{},{timeout:15000});
+ await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+ assert.deepEqual(JSON.parse(await page.locator('#output').textContent()).observations,[],
+  'Erase must suppress a late camera grant even after stream was stopped');
+ const finalExport=page.waitForEvent('download');
+ await page.locator('#export').click();
+ const exportedAfterErase=JSON.parse(await readFile(await (await finalExport).path(),'utf8'));
+ assert.deepEqual(exportedAfterErase.observations,[],
+  'Late work must not re-populate the downloaded metadata report');
  console.log('P97_PROBE_BROWSER_PASS',JSON.stringify({engine,width,actualEngine:true,
   physicalPhone:false,sha256Verified:true,sourceBytes:fixture.length,
   decodedDimensionsVerified:true,permissionResult:permission.permission,
-  redactedExport:true,externalRequests:0,storedImage:false,release:'HOLD'}));
+  redactedExport:true,eraseInFlightDecode:true,eraseInFlightPermission:true,
+  externalRequests:0,storedImage:false,release:'HOLD'}));
  await ctx.close();
 }finally{
  await browser?.close();

@@ -18,6 +18,8 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const observations=[];
+// A clear invalidates work begun before it, including pending decodes and permissions.
+let observationGeneration=0;
 const allowed=/^[a-f0-9]{40}$/;
 const head=new URLSearchParams(location.search).get('head')||'';
 const record={schema:'closet-current-device97-probe/v1',sourceHead:allowed.test(head)?head:'UNPINNED',
@@ -34,6 +36,7 @@ const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('
  x=>x.toString(16).padStart(2,'0')).join('');
 const safeError=()=> 'unavailable-or-denied';
 const measure=async(file,origin)=>{
+ const born=observationGeneration;
  const kind=/^image\/(jpeg|png|heic|heif)$/.test(file.type.toLowerCase())?file.type.toLowerCase():'unknown';
  const result={phase:origin,kind,originalByteCount:file.size,sourceSha256:null,decodedWidth:null,decodedHeight:null,
  decode:'NOT_TESTED',convertedSha256:null,conversion:'NOT_TESTED',orientation:'UNVERIFIED',
@@ -43,10 +46,14 @@ const measure=async(file,origin)=>{
  let url=null,img=null;
  try{
   const start=performance.now(),buffer=await file.arrayBuffer();
-  result.sourceSha256=await digest(buffer);result.shaMs=Math.round(performance.now()-start);
+  if(born!==observationGeneration)return;
+  result.sourceSha256=await digest(buffer);
+  if(born!==observationGeneration)return;
+  result.shaMs=Math.round(performance.now()-start);
   const decodeStart=performance.now();
   url=URL.createObjectURL(file);
   img=new Image();img.decoding='async';img.src=url;await img.decode();
+  if(born!==observationGeneration)return;
   result.decodedWidth=img.naturalWidth;result.decodedHeight=img.naturalHeight;
   if(!img.naturalWidth||!img.naturalHeight)throw Error('zero-dimension');
   result.decode='PASS';result.decodeMs=Math.round(performance.now()-decodeStart);
@@ -56,25 +63,36 @@ const measure=async(file,origin)=>{
     const canvas=document.createElement('canvas');canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
     canvas.getContext('2d',{alpha:false}).drawImage(img,0,0);
     const converted=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.9));
+    if(born!==observationGeneration){canvas.width=0;canvas.height=0;return;}
     if(converted?.type==='image/jpeg'){
-     result.convertedSha256=await digest(await converted.arrayBuffer());result.conversion='DERIVATIVE_ONLY';
+     const derivativeBytes=await converted.arrayBuffer();
+     if(born!==observationGeneration){canvas.width=0;canvas.height=0;return;}
+     result.convertedSha256=await digest(derivativeBytes);
+     if(born!==observationGeneration){canvas.width=0;canvas.height=0;return;}
+     result.conversion='DERIVATIVE_ONLY';
     }else result.conversion='UNSUPPORTED';
     canvas.width=0;canvas.height=0;
    }
   }
  }catch{result.decode='FAIL_OR_UNSUPPORTED';result.conversion=kind.includes('hei')?'UNSUPPORTED':'NOT_APPLICABLE';}
- finally{if(url)URL.revokeObjectURL(url);img=null;observations.push(result);output();}
+ finally{if(url)URL.revokeObjectURL(url);img=null;
+  if(born===observationGeneration){observations.push(result);output();}}
 };
 for(const id of ['camera','gallery'])$(id).addEventListener('change',async e=>{
  const f=e.target.files?.[0];e.target.value='';if(f)await measure(f,id);
 });
 $('permission').addEventListener('click',async()=>{
+ const born=observationGeneration;
  const result={phase:'camera-permission',permission:'NOT_TESTED'};
  try{
   if(!isSecureContext||!navigator.mediaDevices?.getUserMedia)throw Error('unavailable');
   const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
-  result.permission='GRANTED_STREAM_STOPPED';stream.getTracks().forEach(t=>t.stop());
- }catch{result.permission=safeError();}observations.push(result);output();
+  stream.getTracks().forEach(t=>t.stop());
+  if(born!==observationGeneration)return;
+  result.permission='GRANTED_STREAM_STOPPED';
+ }catch{result.permission=safeError();}
+ if(born!==observationGeneration)return;
+ observations.push(result);output();
 });
 for(const name of ['visibilitychange','pagehide','pageshow','online','offline'])
  window.addEventListener(name,()=>{observations.push({phase:'lifecycle',event:name,
@@ -84,7 +102,7 @@ $('export').addEventListener('click',()=>{
  const a=document.createElement('a');a.href=url;a.download='p97-device-probe-redacted.json';a.click();
  setTimeout(()=>URL.revokeObjectURL(url),1000);
 });
-$('clear').addEventListener('click',()=>{observations.length=0;for(const id of ['camera','gallery'])$(id).value='';output();});
+$('clear').addEventListener('click',()=>{observationGeneration++;observations.length=0;for(const id of ['camera','gallery'])$(id).value='';output();});
 output();
 })();
 </script></body></html>
