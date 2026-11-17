@@ -71,8 +71,10 @@ for(const flag of ['deleted','sourceRevoked']){
   let reads=0;
   await assert.rejects(
    preflight(getSession,async()=>{reads++;return snapshot(stale);}),
-   /MAIN1054 (selected garment|saved garment)/);
-  assert.ok(reads>=1);
+   /MAIN1054 (?:selected garment|saved garment|missing or incompatible owned garment)/);
+  // M190 intentionally drops retired rows from live slot eligibility before
+  // confirmed() is reached; this is still a fail-closed source refusal.
+  assert.equal(reads,1,'retired source is rejected on the first authenticated snapshot');
  });
  test('M188 '+flag+' changed after owner photo SHA is detected before 2D proof',async()=>{
   const getSession=session();
