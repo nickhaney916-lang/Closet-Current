@@ -300,9 +300,10 @@ source=one(source,
   " }finally{IDBDatabase.prototype.transaction=original;}",
   "});",
   "console.log('P100_EMPTY_DEVICE_PHASE_SAFE',JSON.stringify({engine,width,...p100EmptyDevice.phaseInfo,familyAlpha:'HOLD'}));",
-  "for(const [field,value] of Object.entries(p100EmptyDevice))",
+  "for(const [field,value] of Object.entries(p100EmptyDevice)){",
   " if(field==='phaseInfo')continue;",
   " assert.equal(value,true,'P100 '+engine+' '+width+' empty-device precommit refusal/recovery '+field);",
+  "}",
   "console.log('P100_NATIVE_EMPTY_DEVICE_RESTORE_SAFE',JSON.stringify({engine,width,...p100EmptyDevice,familyAlpha:'HOLD'}));",
   'cases[cases.length-1].samePhotoTwoReviewedCutoutsV3Outfit2D=true;'
  ].join('\n'));
