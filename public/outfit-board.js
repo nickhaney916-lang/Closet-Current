@@ -1,7 +1,9 @@
 'use strict';
 const nativeLossless04Active=typeof URLSearchParams==='function'&&typeof location!=='undefined'&&new URLSearchParams(location.search).get('nativeLossless04')==='research';
 let nativeLossless04=null;
-const mission4Preview1054Active=typeof URLSearchParams==='function'&&typeof location!=='undefined'&&new URLSearchParams(location.search).get('mission4Preview')==='research';
+// P99 isolated HOLD: signed-source photo-only viewer is a normal Outfit Builder action.
+// No unreviewed admission, research gallery, 3D fitting or release authority.
+const mission4Preview1054Active=true;
 let mission4Preview1054Viewer=null;
 let mission4Preview1054ClickSerial=0,mission4Preview1054Pinned=null;
 // M95 research-only: compare the selected owner's exact JPEG strings by
@@ -972,13 +974,13 @@ if(mission4Preview1054Active){
    if(!builder)return;
    const section=document.createElement('section');
    section.id='mission4Preview1054Section';
-   section.dataset.researchOnly='true';
+   section.dataset.sourceVerifiedOnly='true';
    const button=document.createElement('button');
    button.type='button';button.className='secondary';
-   button.textContent='Verify original clothing photos for this outfit (research)';
+   button.textContent='View verified original clothing photos (2D)';
    const status=document.createElement('p');
    status.id='mission4Preview1054Status';status.setAttribute('role','status');
-   status.textContent='Private original-photo verification is off until requested.';
+   status.textContent='Select saved clothing, then verify its original photos. Only reviewed originals can open.';
    const photos=document.createElement('div');
    photos.id='mission4Preview1054Photos';
    section.append(button,status,photos);builder.append(section);
@@ -1006,7 +1008,7 @@ if(mission4Preview1054Active){
         typeof signedOwnerSavedRows167!=='function')
       throw Error('Native signed photo source unavailable');
      const {mountOwnerOutfitPhotoPreview1054}=await import(
-      '../research/main-thread-integration-1054/native-2d-preview.mjs');
+      './native-2d-preview-p99.mjs');
      if(!live())return;
      if(!mission4Preview1054Viewer)
       mission4Preview1054Viewer=mountOwnerOutfitPhotoPreview1054({
@@ -1031,7 +1033,7 @@ if(mission4Preview1054Active){
      }
      if(viewer.status.phase!=='visible'||
         !mission4Preview1054DisplayedExactSource(pinned,photos,result.slotCount))
-      throw Error('Research source-bound photo presentation was revoked');
+      throw Error('Source-bound original photo presentation was revoked');
      status.textContent=result.slotCount+
       ' owner-confirmed original photo(s) verified. 2D only; realistic 3D fit is not established.';
     }catch{
