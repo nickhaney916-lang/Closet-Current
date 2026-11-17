@@ -44,7 +44,7 @@ function mission4Preview1054SameSource(left,right){
 // The native viewer remains the authority for owner, DB lease and SHA receipts.
 function mission4Preview1054DisplayedExactSource(pinned,photos,count){
  const rendered=Array.from(photos?.querySelectorAll?.('img')||[]);
- if(!Array.isArray(pinned?.selected)||!Number.isSafeInteger(count)||
+ if(!Array.isArray(pinned?.selected)||!Number.isSafeInteger(count)||count<1||
     rendered.length!==count||pinned.selected.length!==count)return false;
  const bySlot=new Map(rendered.map(img=>
   [img.getAttribute('alt'),img.getAttribute('src')]));
