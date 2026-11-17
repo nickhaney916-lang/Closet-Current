@@ -66,6 +66,16 @@ test('missing source-body angular sectors never become inferred safe garment cle
  assert.ok(x.sampledUnknownBodyGapAngularSectors>0);
  assert.equal(x.releaseAuthorized,false);
 });
+test('inward anatomical body evidence AND unknown angular sectors must both be disclosed, not hidden by one generic status',()=>{
+ const x=audit(fixture({radius:.12,core:'half'}));
+ assert.equal(x.status,'SAMPLED_SOURCE_RADIAL_INWARD_AND_MISSING_BODY_SECTORS_NOT_WEARABLE');
+ assert.equal(x.actualModelBasedRadialInwardWitness,true);
+ assert.equal(x.originalBodyAngularSectorEvidenceMissing,true);
+ assert.ok(x.sampledInwardBodyGapAngularSectors>0);
+ assert.ok(x.sampledUnknownBodyGapAngularSectors>0);
+ assert.equal(x.consumer3DAdmitted,false);
+ assert.equal(x.releaseAuthorized,false);
+});
 test('wrong provenance, private person, invalid index, NaN geometry and forged scene gates refuse original-source radial receipt',()=>{
  const f=fixture();
  for(const k of [
