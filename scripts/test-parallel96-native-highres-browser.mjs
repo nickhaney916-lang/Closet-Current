@@ -32,66 +32,32 @@ const nativeCameraOriginal96=process.env.P96_NATIVE_4K==='true';
 const nativeLicense96='CC BY-SA 4.0';
 const nativeSourceURL96='https://upload.wikimedia.org/wikipedia/commons/b/b3/Artist_in_cowrie_attire.jpg';
 const nativeOriginalSHA1='e5f7490c833b9141f68180a1cd7f015b9f7016c2';
-// M166 uses only a PUBLIC licensed original, cached AFTER immutable byte+SHA1
-// validation. Never cache family/private owner photographs or model proposals.
-const publicOriginalCache96='benchmark/fixtures/commons-original-artist-cowrie-4000x6000-public-cache.jpg';
 let upscaled;
 if(nativeCameraOriginal96){
- let pinnedCachedBytes=null;
- try{pinnedCachedBytes=await readFile(publicOriginalCache96);}
- catch(error){if(error?.code!=='ENOENT')throw error;}
- if(pinnedCachedBytes){
-  assert.equal(pinnedCachedBytes.length,352936,
-   'M166 cached public camera original has wrong byte count');
-  assert.equal(createHash('sha1').update(pinnedCachedBytes).digest('hex'),nativeOriginalSHA1,
-   'M166 cached public camera original differs from immutable Commons SHA1');
-  assert.equal(pinnedCachedBytes[0],255);
-  assert.equal(pinnedCachedBytes[1],216);
-  console.log('M166_PUBLIC_ORIGINAL_VERIFIED_CACHE',JSON.stringify({
-   source:'verified-public-cache',sha1Matched:true,byteLengthMatched:true,
-   originalCamera4k:true,notCustomerPhoto:true
-  }));
- }
- if(!pinnedCachedBytes){
- // M163 test-fixture transport only: Commons sometimes returns 429 for
- // simultaneous independent CI jobs. Retry ONLY status 429/502/503/504,
- // never browser events, owner/session actions, source assertions or model.
- // Every accepted byte STILL must match the immutable Commons SHA-1 + length.
- let response;
- const transient=new Set([429,502,503,504]);
- for(let attempt=1;attempt<=4;attempt++){
-  response=await fetch(nativeSourceURL96,{
-   headers:{'User-Agent':'ClosetCurrent-Parallel96/1.0 (public licensed research original)'},
-   signal:AbortSignal.timeout(25000)
-  });
-  if(response.status===200)break;
-  if(!transient.has(response.status)||attempt===4)
-   assert.equal(response.status,200,'pinned Commons 4K source unavailable; no surrogate used');
-  const seconds=Number(response.headers.get('retry-after'));
-  const delay=Number.isFinite(seconds)&&seconds>0?
-   Math.min(15000,Math.ceil(seconds*1000)):Math.min(12000,2000*attempt);
-  console.error('M163_PUBLIC_FIXTURE_RETRY',JSON.stringify({
-   reason:'immutable Commons source throttled',status:response.status,
-   attempt,delayMs:delay,retriesRemaining:4-attempt
-  }));
-  try{await response.body?.cancel();}catch{}
-  await new Promise(resolve=>setTimeout(resolve,delay));
- }
- const original=Buffer.from(await response.arrayBuffer());
- assert.equal(original.length,352936,'Commons original file byte count changed');
+ // M168 offline, genuine, UNMODIFIED 4000x6000 Canon EOS 80D public photo:
+ // byte-identical Commons CC BY-SA 4.0, source/credit in repository fixture.
+ // Do not use a surrogate, resized JPEG, network fetch or cache hit as truth.
+ const original=await readFile(
+  'benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg');
+ assert.equal(original.length,352936,'M168 public original JPEG byte count differs');
  assert.equal(createHash('sha1').update(original).digest('hex'),nativeOriginalSHA1,
-  'actual 4K original no longer matches Commons immutable SHA-1');
- assert.ok(original[0]===255&&original[1]===216,'native source was not JPEG');
- // Save ONLY byte-identical, rights-attributed PUBLIC Commons test fixture.
- // Never allow failed downloads, invalid SHA, or any private photo into cache.
- await writeFile(publicOriginalCache96,original,{flag:'w'});
- pinnedCachedBytes=original;
- console.log('M166_PUBLIC_ORIGINAL_VERIFIED_CACHE',JSON.stringify({
-  source:'verified-public-download',sha1Matched:true,byteLengthMatched:true,
-  originalCamera4k:true,notCustomerPhoto:true
+  'M168 public 24MP original SHA-1 does not match Commons provenance');
+ assert.equal(createHash('sha256').update(original).digest('hex'),
+  'fb4d5441c03ec709a01303a42c750b6ebc03dc5519b6961d9db403cf8533ec1a',
+  'M168 public 24MP original SHA-256 mismatch');
+ assert.ok(original[0]===255&&original[1]===216&&
+  original.at(-2)===255&&original.at(-1)===217,'M168 original is not JPEG');
+ const metadata=await sharp(original).metadata();
+ assert.equal(metadata.width,4000,'M168 photo is not native 4000px wide');
+ assert.equal(metadata.height,6000,'M168 photo is not native 6000px high');
+ console.log('M168_OFFLINE_UNMODIFIED_24MP_PUBLIC_SOURCE_PIN',JSON.stringify({
+  originalCamera4k:true,width:metadata.width,height:metadata.height,
+  byteLength:original.length,sha1Matched:true,sha256Matched:true,
+  licensedPublicFixture:true,hostedDownloadRequired:false,
+  independentLabelAccuracyTested:false,privatePhotoUsed:false
  }));
- }
- upscaled={width:4000,height:6000,jpeg:'data:image/jpeg;base64,'+pinnedCachedBytes.toString('base64')};
+ upscaled={width:metadata.width,height:metadata.height,
+  jpeg:'data:image/jpeg;base64,'+original.toString('base64')};
 }else{
 const rasterBrowser=await chromium.launch({headless:true,args:['--no-sandbox']});
 try{
