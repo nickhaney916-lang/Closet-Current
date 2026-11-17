@@ -261,6 +261,11 @@ export function auditSelectedOriginalSkirtRadialGap89({
   // Independent exact horizontal face/plane-ray signals are kept separate
   // from older approximate dilated angular bins. No exact ray intersections
   // is a negative evidence gap, NOT proof that the ray exits the body.
+  exactRaySourceFitDisposition:rayInward>0&&rayUnknown>0?
+   'EXACT_ORIGINAL_BODY_RAY_INWARD_AND_UNOBSERVED_BLOCKED':
+   rayInward>0?'EXACT_ORIGINAL_BODY_RAY_INWARD_BLOCKED':
+   rayUnknown>0?'EXACT_ORIGINAL_BODY_RAY_UNOBSERVED_BLOCKED':
+   'EXACT_ORIGINAL_BODY_RADIAL_GAP_SAMPLED_NOT_WEARABLE',
   exactRayBodyContourSourceTopology:'ORIGINAL_INDEXED_FACE_HORIZONTAL_PLANE_RAY_INTERSECTION',
   exactRaySampledAngularPositions:RINGS*SECTORS,
   exactRayOriginalBodyContourSegments:rayContours,
