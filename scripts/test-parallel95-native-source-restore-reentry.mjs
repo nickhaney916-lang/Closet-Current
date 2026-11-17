@@ -194,7 +194,48 @@ const instrumentation=[
 const secondMarker="  stage='real-app-owner-session-and-board-revocation';";
 assert.equal(original.split(secondMarker).length,2,'P95 second native owner slot insertion moved');
 const secondFixture="  stage='p95-two-distinct-licensed-photos-private-native-board';\n  const accessoryBytes=await readFile('benchmark/fixtures/commons-0001.jpg');\n  const accessoryJPEG='data:image/jpeg;base64,'+accessoryBytes.toString('base64');\n  const accessorySHA=hash(accessoryBytes);\n  const accessoryId='m51-A-second-confirmed-shoe';\n  await page.evaluate(async({image,sourceSHA,itemId})=>{\n   const owner='m51-A',auth=window.closetAuth,ownerDB=db,epoch=captureOperationEpoch;\n   if(auth?.user?.id!==owner||ownerDB?.name!=='closet-current-user-'+owner)\n    throw Error('P95 private owner account not active');\n   const record={id:itemId,ownerId:owner,category:'Uncategorized',\n    itemType:'Unknown',color:'Unknown',singleGarmentVerified:false,\n    sourceSHA256:sourceSHA,sourceHashVerified:true,\n    originalPhoto:{image,sha256:sourceSHA},image};\n   // Synthetic, explicitly labelled owner review fixture, not recognition accuracy.\n   const review={confirmed:true,recordId:itemId,originalSHA256:sourceSHA,\n    category:'Shoes',itemType:'Sneakers',color:'Gray',singleGarmentConfirmed:true};\n   // Normal PHOTO119 requires this item in the authenticated account draft.\n   await new Promise((resolve,reject)=>{\n    const tx=ownerDB.transaction('state','readwrite');\n    tx.objectStore('state').put({id:'draft',batch:[structuredClone(record)]});\n    tx.oncomplete=resolve;tx.onabort=tx.onerror=()=>reject(tx.error);\n   });\n   const {commitHumanReviewedPhoto119}=await import(\n    '/public/native-reviewed-private-save-167.mjs');\n   const receipt=await commitHumanReviewedPhoto119({\n    db:ownerDB,ownerId:owner,currentOwner:()=>window.closetAuth?.user?.id,\n    record,review,cryptoProvider:crypto,\n    assertLease:()=>window.closetAuth===auth&&db===ownerDB&&\n     captureOperationEpoch===epoch&&auth.user?.id===owner\n   });\n   if(receipt.saved!==true||receipt.releaseAuthorized!==false)\n    throw Error('P95 second private source not atomically saved');\n   const row=await new Promise((resolve,reject)=>{\n    const r=ownerDB.transaction('items','readonly').objectStore('items').get(itemId);\n    r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);\n   });\n   if(row?.ownerReviewed!==true||row.originalPhoto?.image!==image||\n      row?.sourceSHA256!==sourceSHA)throw Error('P95 owner receipt lost second source');\n   items.push(row);\n   currentBoard=cleanOutfitBoard({...currentBoard,\n    slots:{...currentBoard.slots,shoes:itemId}},items);\n   if(currentBoard.slots?.shoes!==itemId||\n      currentBoard.slots?.top!=='m51-A-licensed-dress')\n    throw Error('P95 owner outfit normalization rejected second slot');\n   renderOutfitBoard();\n  },{image:accessoryJPEG,sourceSHA:accessorySHA,itemId:accessoryId});\n  await clickPreview(page);\n  assert.equal(await count(page),2,'P95 two approved original garment previews expected');\n  const two=await page.locator('#mission4Preview1054Photos img').evaluateAll(async imgs=>{\n   const samples=[];\n   for(const img of imgs){await img.decode();\n    samples.push({slot:img.getAttribute('alt'),\n     src:img.getAttribute('src'),ready:img.complete&&img.naturalWidth>0});}\n   return samples;\n  });\n  assert.equal(two.length,2);\n  assert.ok(two.some(r=>r.slot==='Original saved clothing photograph: top'&&\n   r.src===originalJPEG&&r.ready),'P95 first owner original not exact');\n  assert.ok(two.some(r=>r.slot==='Original saved clothing photograph: shoes'&&\n   r.src===accessoryJPEG&&r.ready),'P95 second owner original not exact');\n  await page.evaluate(itemId=>{\n   const row=items.find(x=>x.id===itemId);\n   row.originalPhoto.image='data:image/jpeg;base64,/9j/2Q==';\n   renderOutfitBoard();\n  },accessoryId);\n  await blank(page,'P95 second selected source mutation must revoke both owner JPEGs');\n  const mismatch=await page.evaluate(async()=>{\n   const button=document.querySelector('#mission4Preview1054Section button');\n   if(!button||button.disabled)throw Error('P95 in-memory 2-slot mismatch control unavailable');\n   await button.onclick();\n   const msg=document.getElementById('mission4Preview1054Status')?.textContent||'';\n   const state=mission4Preview1054Viewer?.status;\n   return {refused:msg.includes('Preview refused'),\n    verified:msg.includes('original photo(s) verified'),\n    images:document.querySelectorAll('#mission4Preview1054Photos img').length,\n    signedLease:!!beginOwnerBoardUiLease()?.current(),\n    renderAuthorized3D:state?.renderAuthorized3D===true,\n    releaseAuthorized:state?.releaseAuthorized===true};\n  });\n  assert.deepEqual(mismatch,{refused:true,verified:false,images:0,\n   signedLease:true,renderAuthorized3D:false,releaseAuthorized:false},\n   'P95 one changed selected shoe photo reauthorized entire 2-photo outfit');\n  await page.evaluate(original=>{\n   const row=items.find(x=>x.id==='m51-A-second-confirmed-shoe');\n   row.originalPhoto.image=original;renderOutfitBoard();\n  },accessoryJPEG);\n  await clickPreview(page);\n  assert.equal(await count(page),2,\n   'P95 both exact signed original photos must reenter after restoring one');\n  // Same owner ID is NOT sufficient: a different auth provider reference\n  // invalidates BOTH photographed sources until new signed re-attestation.\n  await page.evaluate(()=>{\n   const original=window.closetAuth;\n   window.closetAuth={...original,user:original.user,assertCurrent:()=>{}};\n   try{window.dispatchEvent(new Event('focus'));}\n   finally{window.closetAuth=original;}\n  });\n  await blank(page,'P95 two originals must revoke on same-owner auth-reference replacement');\n  await clickPreview(page);\n  assert.equal(await count(page),2,'P95 two JPEGs cannot remain blocked after valid auth reference restoration');\n  // A same-named but distinct private IndexedDB handle cannot retain\n  // previously verified photos. Existing M51 checks this with one slot;\n  // independently cover the two-photo owner-private board.\n  await page.evaluate(()=>{\n   const original=db;db={name:original.name};\n   try{window.dispatchEvent(new Event('focus'));}\n   finally{db=original;}\n  });\n  await blank(page,'P95 two originals must revoke on private DB reference replacement');\n  await clickPreview(page);\n  assert.equal(await count(page),2,'P95 two exact original JPEGs must reverify on same DB restoration');\n  console.log('P95_TWO_ACTUAL_OWNER_SOURCE_SLOTS_PASS',\n   JSON.stringify({engine,width,slotCount:2,uniqueSourceSHAs:true,\n    secondLocalMutationRevokedBoth:true,restoredReentry:true,\n    reviewLabelsSynthetic:true,consumer3D:false}));\n  await page.evaluate(()=>{\n   currentBoard=cleanOutfitBoard({...currentBoard,\n    slots:{top:'m51-A-licensed-dress'}},items);\n   renderOutfitBoard();\n  });\n  await clickPreview(page);\n  assert.equal(await count(page),1);\n  stage='real-app-owner-session-and-board-revocation';";
-const modified=original.replace(marker,instrumentation).replace(secondMarker,secondFixture);
+// M167 integration: run unchanged M51 assertions through one real gesture
+// only after a bounded stable WebKit hit-target/scroll preflight. Historical
+// WebKit pointerdown and click may hit different elements immediately after
+// switchView; this is test-input ownership, not owner/SHA authorization.
+// Keep exact pinned M51 source unchanged; never retry any failed gesture.
+const m167ClickOriginal=[
+ "  await page.locator('#mission4Preview1054Section button').waitFor({timeout:20000});",
+ "  await page.locator('#mission4Preview1054Section button').click();"
+].join('\\n');
+const m167ClickStable=[
+ "  const m167Button=page.locator('#mission4Preview1054Section button');",
+ "  await m167Button.waitFor({timeout:20000});",
+ "  await m167Button.scrollIntoViewIfNeeded();",
+ "  const m167Ready=await page.evaluate(async()=>{",
+ "   const b=document.querySelector('#mission4Preview1054Section button');",
+ "   if(!b||b.disabled||!b.isConnected)return false;",
+ "   let previous='',stable=0;",
+ "   for(let frame=0;frame<20;frame++){",
+ "    await new Promise(resolve=>requestAnimationFrame(resolve));",
+ "    if(!b.isConnected||b.disabled)return false;",
+ "    const r=b.getBoundingClientRect();",
+ "    const x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;",
+ "    const hit=document.elementFromPoint(x,y);",
+ "    const visible=r.width>0&&r.height>0&&x>=0&&y>=0&&",
+ "     x<innerWidth&&y<innerHeight&&(hit===b||b.contains(hit))&&",
+ "     getComputedStyle(b).pointerEvents!=='none';",
+ "    const now=[r.left,r.top,r.width,r.height,scrollX,scrollY]",
+ "     .map(v=>Math.round(v*2)).join(':');",
+ "    stable=visible&&previous===now?stable+1:0;",
+ "    if(stable>=2)return true;",
+ "    previous=now;",
+ "   }",
+ "   return false;",
+ "  });",
+ "  assert.equal(m167Ready,true,'M167 input target not stable before one real preview click');",
+ "  await m167Button.click();"
+].join('\\n');
+assert.equal(original.split(m167ClickOriginal).length,2,
+ 'M167 inherited M51 click source changed: re-audit required');
+const modified=original.replace(marker,instrumentation)
+ .replace(secondMarker,secondFixture)
+ .replace(m167ClickOriginal,m167ClickStable);
 const temp='scripts/.p95-m51-instrumented-'+process.pid+'.mjs';
 try{
  writeFileSync(temp,modified,{flag:'wx'});
