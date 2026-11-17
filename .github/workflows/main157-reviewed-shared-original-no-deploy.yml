@@ -34,7 +34,7 @@ jobs:
           test "$(git rev-parse "$BASE:public/native-default-verified-backup-export-m3.mjs")" = e70fdc392c2652dc969b7d7c4b807f3cafd81e03
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
-              public/native-reviewed-shared-original-157.mjs|public/native-default-atomic-import-m3.mjs|public/native-default-verified-backup-export-m3.mjs|tests/main157-reviewed-shared-source-v3.test.mjs|scripts/test-main157-same-photo-native-outfit-browser.mjs|.github/workflows/main157-reviewed-shared-original-no-deploy.yml) ;;
+              public/native-reviewed-shared-original-157.mjs|public/native-default-atomic-import-m3.mjs|public/native-default-verified-backup-export-m3.mjs|tests/main157-reviewed-shared-source-v3.test.mjs|scripts/test-main157-same-photo-native-outfit-browser.mjs|.github/workflows/main157-reviewed-shared-original-no-deploy.yml|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml) ;;
               *) echo "M157 unexpectedly changes $path"; exit 1;;
             esac
           done
