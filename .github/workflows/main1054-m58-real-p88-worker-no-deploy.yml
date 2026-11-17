@@ -53,7 +53,7 @@ jobs:
           # M105: admit only the already-reviewed P93 M101 exporter correction.
           test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = 741e736ca107169c9e9861d803a49c2e6166e20b
           test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
-          git diff --exit-code "$BASE" HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-reviewed-shared-original-157.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ benchmark/ research/multi-garment-capture-01/ ':(exclude)research/multi-garment-capture-01/review-ui.mjs' research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
+          git diff --exit-code "$BASE" HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-reviewed-shared-original-157.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ benchmark/ ':(exclude)benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg' research/multi-garment-capture-01/ ':(exclude)research/multi-garment-capture-01/review-ui.mjs' research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
           # M78: only byte-verified donor application is permitted beyond
           # the existing M58 native board; no other protected app edits.
           DONOR=055f7a6569059c3845c0d8dc5960767fc944c6ac
@@ -66,15 +66,24 @@ jobs:
           # Normal model, PHOTO119 owner save, private v3 and 3D gates unchanged.
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
           test "$(git rev-parse HEAD:public/outfit-instance-review-840.mjs)" = 6324d8eda33024f166311f424392ed83363e4942
-          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 77471549396d89336dc9e5ec8ea92a322b5ffa93
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = d478fcf6e4e8889a23b1620b444667ac949da7a9
           test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
           node --check public/outfit-worker-p94.mjs
           node --check public/outfit-instance-review-840.mjs
           node --check research/multi-garment-capture-01/review-ui.mjs
           node --check scripts/test-parallel94-native-p88-browser.mjs
+          # M171: M169 6/6 green exact public P96 research donor only.
+          # Original JPEG is public licensed test input; NO owner/cloud/3D scope change.
+          test "$(git rev-parse HEAD:benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg)" = 27864552c036f9bf089be147531c4da8ccdcb7d7
+          test "$(git rev-parse HEAD:research/parallel96-highres/LICENSED_CAMERA_ORIGINAL_FIXTURE.md)" = 9d9fda3b897aa624bff11e1f32d3bf6e447f16a7
+          test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 4f8fe91ec1974ff936fa90d33874db7df0782e48
+          test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 58194c1bbcfca7b46f1c71b1ee0cc00c3dbc88c7
+          test "$(git rev-parse HEAD:tests/parallel96-highres-source-derivative.test.mjs)" = fcbad9d8744bd5fee68b72d1b3b235340d61883c
+          node --check research/parallel96-highres/source-derivative-intake96.mjs
+          node --check scripts/test-parallel96-native-highres-browser.mjs
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
-              scripts/test-main58-actual-p88-wasm-browser.mjs|scripts/lib/owner-item-mutation91.mjs|scripts/test-browser-owner-mutation91.mjs|research/master-consolidation-1054/MILESTONE58.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|public/outfit-board.js|research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|tests/detector-manual-recovery-65.test.mjs|tests/invalid-selection-race-71.test.mjs|tests/review-source-epoch-34.test.mjs|tests/mission3-outfit-card-picker-owner-lease.test.cjs|tests/mission3-outfit-suggestion-owner-lease.test.cjs|public/app.js|scripts/test-main1054-duplicate-fence-browser.mjs|tests/main1054-saved-photo-duplicate-fence.test.mjs|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/automatic-indexing.test.cjs|public/native-default-atomic-import-m3.mjs|tests/mission3-default-atomic-backup-source-guard.test.mjs|scripts/test-main51-real-app-owner-original-2d.mjs|scripts/test-mission3-default-atomic-import-browser.mjs|public/native-default-verified-backup-export-m3.mjs|tests/main1054-m104-large-original-export-receipts.test.mjs|scripts/test-main1054-m106-preview-terminal-browser.mjs|scripts/test-main1054-m123-photo119-restore-2d-browser.mjs|public/native-reviewed-private-save-167.mjs|tests/main1054-m132-photo119-large-display-preview.test.mjs|tests/main1054-m148-preview-click-ownership.test.mjs|public/outfit-worker-p94.mjs|public/outfit-instance-review-840.mjs|research/multi-garment-capture-01/review-ui.mjs|scripts/test-parallel94-native-p88-browser.mjs|public/native-reviewed-shared-original-157.mjs|scripts/test-main157-same-photo-native-outfit-browser.mjs|tests/main157-reviewed-shared-source-v3.test.mjs|.github/workflows/main157-reviewed-shared-original-no-deploy.yml|scripts/test-parallel95-native-source-restore-reentry.mjs|tests/p95-exact-current-original-dom.test.mjs) ;;
+              scripts/test-main58-actual-p88-wasm-browser.mjs|scripts/lib/owner-item-mutation91.mjs|scripts/test-browser-owner-mutation91.mjs|research/master-consolidation-1054/MILESTONE58.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|public/outfit-board.js|research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|tests/detector-manual-recovery-65.test.mjs|tests/invalid-selection-race-71.test.mjs|tests/review-source-epoch-34.test.mjs|tests/mission3-outfit-card-picker-owner-lease.test.cjs|tests/mission3-outfit-suggestion-owner-lease.test.cjs|public/app.js|scripts/test-main1054-duplicate-fence-browser.mjs|tests/main1054-saved-photo-duplicate-fence.test.mjs|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/automatic-indexing.test.cjs|public/native-default-atomic-import-m3.mjs|tests/mission3-default-atomic-backup-source-guard.test.mjs|scripts/test-main51-real-app-owner-original-2d.mjs|scripts/test-mission3-default-atomic-import-browser.mjs|public/native-default-verified-backup-export-m3.mjs|tests/main1054-m104-large-original-export-receipts.test.mjs|scripts/test-main1054-m106-preview-terminal-browser.mjs|scripts/test-main1054-m123-photo119-restore-2d-browser.mjs|public/native-reviewed-private-save-167.mjs|tests/main1054-m132-photo119-large-display-preview.test.mjs|tests/main1054-m148-preview-click-ownership.test.mjs|public/outfit-worker-p94.mjs|public/outfit-instance-review-840.mjs|research/multi-garment-capture-01/review-ui.mjs|scripts/test-parallel94-native-p88-browser.mjs|public/native-reviewed-shared-original-157.mjs|scripts/test-main157-same-photo-native-outfit-browser.mjs|tests/main157-reviewed-shared-source-v3.test.mjs|.github/workflows/main157-reviewed-shared-original-no-deploy.yml|scripts/test-parallel95-native-source-restore-reentry.mjs|tests/p95-exact-current-original-dom.test.mjs|benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg|research/parallel96-highres/LICENSED_CAMERA_ORIGINAL_FIXTURE.md|research/parallel96-highres/source-derivative-intake96.mjs|scripts/test-parallel96-native-highres-browser.mjs|tests/parallel96-highres-source-derivative.test.mjs) ;;
               *) echo "MAIN58 blocked unexpected change: $path"; exit 1;;
             esac
           done
@@ -145,6 +154,17 @@ jobs:
           for width in 320 390 430; do
             P94_WIDTH="$width" node scripts/test-parallel94-native-p88-browser.mjs
           done
+      - name: M171 native high-res P96 derived and unmodified 24MP public original in actual Chromium/WebKit
+        shell: bash
+        env:
+          P94_WIDTH: '390'
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = 5668a4bc6da2e94fc13d23392cd7fb4981d0bc2d
+          # Same installed P88/WASM native app, signed SYNTHETIC review, private 2D,
+          # exact original SHA, v3/v4 restore, and fitted 3D DENIAL.
+          node scripts/test-parallel96-native-highres-browser.mjs
+          P96_NATIVE_4K=true node scripts/test-parallel96-native-highres-browser.mjs
       - name: Verify source-safe actual worker receipt, zero private saves and immutable donor
         shell: bash
         run: |
@@ -168,7 +188,7 @@ jobs:
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
           test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
           test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
-          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-reviewed-shared-original-157.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ benchmark/ research/multi-garment-capture-01/ ':(exclude)research/multi-garment-capture-01/review-ui.mjs' research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
+          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-reviewed-shared-original-157.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ benchmark/ ':(exclude)benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg' research/multi-garment-capture-01/ ':(exclude)research/multi-garment-capture-01/review-ui.mjs' research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
       - name: Archive metrics ONLY (NO private photos, masked crops, model weights)
         if: always()
         uses: actions/upload-artifact@v4
@@ -385,6 +405,12 @@ jobs:
           test "$(git rev-parse HEAD:public/outfit-board.js)" = 5668a4bc6da2e94fc13d23392cd7fb4981d0bc2d
           test "$(git rev-parse HEAD:tests/p95-exact-current-original-dom.test.mjs)" = 7923b70f2d5272286c3250842fd4ac9fcfa38b03
           node --test tests/p95-exact-current-original-dom.test.mjs
+      - name: M171 P96 geometry source identity and owner lease fail-closed contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:tests/parallel96-highres-source-derivative.test.mjs)" = fcbad9d8744bd5fee68b72d1b3b235340d61883c
+          node --test tests/parallel96-highres-source-derivative.test.mjs
       - name: Run exact-head all inherited application and recognition tests
         run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - name: Final protected source and branch boundaries
