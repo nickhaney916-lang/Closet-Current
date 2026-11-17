@@ -1,7 +1,7 @@
 name: MAIN180 genuine unmodified WebKit first-load reliability NO DEPLOY HOLD
 on:
   push:
-    branches: [research/main1054-m180-unmodified-webkit-firstload-gate-HOLD]
+    branches: [research/main1054-m180-unmodified-webkit-firstload-gate-HOLD, research/main1054-m58-real-p88-browser-worker-HOLD]
   pull_request:
     branches: [research/main1054-m58-real-p88-browser-worker-HOLD]
     paths:
