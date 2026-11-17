@@ -41,9 +41,15 @@ jobs:
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
           test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = 741e736ca107169c9e9861d803a49c2e6166e20b
+          # M189 exact reviewed source-only scope repins (topologically ordered).
+          test "$(git rev-parse HEAD:.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml)" = 14b0f9e09b28068d9d12f829ce5ecad8b3cfc662
+          test "$(git rev-parse HEAD:.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml)" = d442beaa482cb11dae1f5b103d32f1204b132a2b
+          test "$(git rev-parse HEAD:.github/workflows/main181-zero-proposal-native-no-deploy.yml)" = cf7731ed4c55bb5e9f96c47f5a13390b4c44ecf2
+          test "$(git rev-parse HEAD:.github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml)" = 3d435ee3c6fd7a26b4a854fa3af3141a72cbca0d
+          test "$(git rev-parse HEAD:.github/workflows/main183-outfit-session-epoch-no-deploy.yml)" = e1abe452c39eef25387ec0f1f16d4138aa696872
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
-              public/native-outfit-source-plan-p99.mjs|public/native-2d-preview-p99.mjs|tests/main187-required-owner-assert-current.test.mjs|tests/main188-owner-revoked-outfit-preview.test.mjs|.github/workflows/main187-required-owner-lease-no-deploy.yml|.github/workflows/main188-owner-revoked-original-preview-no-deploy.yml|.github/workflows/main189-lease-revocation-crossmission-no-deploy.yml|research/master-consolidation-1054/M189-OWNER-REVOCATION-ADMISSION-HOLD.md) ;;
+              public/native-outfit-source-plan-p99.mjs|public/native-2d-preview-p99.mjs|tests/main187-required-owner-assert-current.test.mjs|tests/main188-owner-revoked-outfit-preview.test.mjs|.github/workflows/main187-required-owner-lease-no-deploy.yml|.github/workflows/main188-owner-revoked-original-preview-no-deploy.yml|.github/workflows/main189-lease-revocation-crossmission-no-deploy.yml|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml|.github/workflows/main181-zero-proposal-native-no-deploy.yml|.github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml|.github/workflows/main183-outfit-session-epoch-no-deploy.yml|research/master-consolidation-1054/M189-OWNER-REVOCATION-ADMISSION-HOLD.md) ;;
               *) echo "M189 refused unrelated code: $path"; exit 1 ;;
             esac
           done
