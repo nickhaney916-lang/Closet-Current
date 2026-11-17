@@ -11,6 +11,11 @@ import {serve} from './serve-device97.mjs';
 const exec=promisify(execFile);
 const engine=process.env.P97_ENGINE||'chromium',width=Number(process.env.P97_WIDTH||390);
 assert(['chromium','webkit'].includes(engine));assert([320,390,430].includes(width));
+const {stdout:gitHeadStdout}=await exec('git',['rev-parse','HEAD']);
+const sourceHead=gitHeadStdout.trim();
+assert.match(sourceHead,/^[0-9a-f]{40}$/,'the actual checked-out source commit is required');
+if(process.env.GITHUB_EVENT_NAME==='push'&&process.env.GITHUB_SHA)
+ assert.equal(sourceHead,process.env.GITHUB_SHA,'CI push must test its own exact source HEAD');
 const fixture=await readFile('benchmark/fixtures/commons-0003.jpg');
 const fixtureSha=createHash('sha256').update(fixture).digest('hex');
 const locked=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
@@ -33,7 +38,7 @@ try{
  });
  const page=await ctx.newPage();
  page.on('pageerror',error=>violations.push(error.name));
- await page.goto(local+'/probe?head='+'a'.repeat(40),{waitUntil:'domcontentloaded'});
+ await page.goto(local+'/probe?head='+sourceHead,{waitUntil:'domcontentloaded'});
  await page.locator('#secure').waitFor();
  assert.match(await page.locator('#secure').textContent(),/Secure context active/);
  await page.locator('#gallery').setInputFiles({name:'disposable-fixture.jpg',mimeType:'image/jpeg',buffer:fixture});
@@ -49,7 +54,7 @@ try{
  const photo=report.observations.find(row=>row.phase==='gallery');
  const permission=report.observations.find(row=>row.phase==='camera-permission');
  assert.ok(photo&&permission,'real gallery and permission observations required');
- assert.equal(report.sourceHead,'a'.repeat(40));
+ assert.equal(report.sourceHead,sourceHead,'probe export must be pinned to the checked-out commit');
  assert.equal(report.environment.deviceKind,'UNVERIFIED');
  assert.equal(report.environment.browser,undefined,'raw user agent must not be exported');
  assert.equal(report.environment.memoryMiB,undefined,'JS heap must not be presented as whole-device memory');
@@ -109,7 +114,7 @@ try{
  const exportedAfterErase=JSON.parse(await readFile(await (await finalExport).path(),'utf8'));
  assert.deepEqual(exportedAfterErase.observations,[],
   'Late work must not re-populate the downloaded metadata report');
- console.log('P97_PROBE_BROWSER_PASS',JSON.stringify({engine,width,actualEngine:true,
+ console.log('P97_PROBE_BROWSER_PASS',JSON.stringify({engine,width,sourceHead,actualEngine:true,
   physicalPhone:false,sha256Verified:true,sourceBytes:fixture.length,
   decodedDimensionsVerified:true,permissionResult:permission.permission,
   redactedExport:true,eraseInFlightDecode:true,eraseInFlightPermission:true,
