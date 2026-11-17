@@ -4,7 +4,7 @@
  * model input only. P88 is UNMODIFIED and its mask digest is a worker claim,
  * not a verified original-resolution mask or physical garment identity.
  */
-import {verifyStoredCanonical,jpegBytes,digestBytes} from '../capture-proof-01/source-proof.mjs';
+import {verifyStoredCanonical,jpegBytes,digestBytes,jpegOrientation} from '../capture-proof-01/source-proof.mjs';
 import {intakeProposal58,MAX_WORKER_PROPOSALS58} from '../multi-garment-capture-01/detection-intake-58.mjs';
 
 const SHA96=/^[a-f0-9]{64}$/;
@@ -17,11 +17,14 @@ const dimension=n=>Number.isSafeInteger(n)&&n>0;
 const safeSize=(w,h)=>dimension(w)&&dimension(h)&&
  w<=MAX_SOURCE_SIDE96&&h<=MAX_SOURCE_SIDE96&&w*h<=MAX_SOURCE_PIXELS96;
 function allowedOrientation(proof){
- // Browser-decoded non-JPEG sources have already been flattened into the
- // original canonical JPEG; EXIF-rotated/mirrored JPEGs need an independently
- // validated coordinate-transform contract and remain manual-only.
+ // The proof's orientation field is metadata, not an independent observation.
+ // A direct camera proof can report 1 while its byte-verified JPEG still
+ // contains a mirrored/rotated EXIF tag. Without a source-to-display rotation
+ // mapping, P88 normalized crop coordinates cannot be trusted on that source.
+ // Reinspect the immutable JPEG bytes; retain manual owner review on mismatch.
  const v=proof?.originalPhoto?.orientation;
- return v===1||v==='browser-decoded'||v===undefined;
+ if(!(v===1||v==='browser-decoded'||v===undefined))return false;
+ return jpegOrientation(jpegBytes(proof.image))===1;
 }
 function validGeometry96(g){
  return g&&safeSize(g.sourceWidth,g.sourceHeight)&&
