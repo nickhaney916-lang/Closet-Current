@@ -15,6 +15,7 @@ import {resolve,join,extname} from 'node:path';
 import {performance} from 'node:perf_hooks';
 import {chromium,webkit} from 'playwright';
 import {mutateOwnerItem91} from './lib/owner-item-mutation91.mjs';
+import sharp from 'sharp';
 // P96: Genuine model on a 4K-sized JPEG rendered from a legally licensed
 // public donor; upscaling is NOT equivalent to captured native 4K detail.
 const donor=await readFile('benchmark/fixtures/commons-0003.jpg');
@@ -990,6 +991,162 @@ try{
    physicalDeviceTested:false,physicalNative4k:false,
   familyAlpha:'HOLD',releaseAllowed:false
  }));
+
+ // M161 — TRUE SAME-SESSION CROSS-FEATURE CONTRACT.
+ // Start from the actual M159 installed-WASM P88 4K source above. Reuse
+ // that identical canonical original and SAME signed local-A browser session;
+ // create TWO distinct PHOTO119 owner-confirmed SHA-attested region receipts.
+ // These are synthetic test-owner labels/crops, NOT independent mask truth.
+ // Discard the earlier unverified MULTI24 research item ONLY in this disposable
+ // test database: never promote an ambiguous proposal to a reviewed item.
+ stage='m161-same-actual-4k-worker-original-two-distinct-photo119-reviews';
+ const m161Original='data:image/jpeg;base64,'+file.toString('base64');
+ const bounds=await sharp(file).metadata();
+ assert.equal(bounds.width,upscaled.width);
+ assert.equal(bounds.height,upscaled.height);
+ const halfW=Math.floor(bounds.width/2),halfH=Math.floor(bounds.height/2);
+ const cropTop=await sharp(file).extract({
+  left:0,top:0,width:halfW,height:halfH
+ }).jpeg({quality:75}).toBuffer();
+ const cropBottom=await sharp(file).extract({
+  left:halfW,top:halfH,width:bounds.width-halfW,height:bounds.height-halfH
+ }).jpeg({quality:75}).toBuffer();
+ const cutoutA='data:image/jpeg;base64,'+cropTop.toString('base64');
+ const cutoutB='data:image/jpeg;base64,'+cropBottom.toString('base64');
+ const cutoutSHA_A=createHash('sha256').update(cropTop).digest('hex');
+ const cutoutSHA_B=createHash('sha256').update(cropBottom).digest('hex');
+ assert.notEqual(cutoutSHA_A,cutoutSHA_B,'M161 two regions not distinct');
+ for(const digest of [cutoutSHA_A,cutoutSHA_B])assert.notEqual(digest,sha);
+ const cross=await page.evaluate(async payload=>{
+  const {original,sourceSHA,cutA,cutB,hashA,hashB}=payload;
+  const owner='m58-A';
+  const {commitHumanReviewedPhoto119}=await import('./native-reviewed-private-save-167.mjs');
+  const {exportDurableOwnerBackupM3}=await import('./native-default-verified-backup-export-m3.mjs');
+  const lease=()=>window.closetAuth?.user?.id===owner&&
+   db?.name==='closet-current-user-'+owner;
+  if(!lease())throw Error('M161 signed synthetic owner session changed');
+  const read=()=>new Promise((resolve,reject)=>{
+   const tx=db.transaction(['items','state'],'readonly');
+   const a=tx.objectStore('items').getAll(),b=tx.objectStore('state').getAll();
+   tx.oncomplete=()=>resolve({items:a.result,state:b.result});
+   tx.onerror=tx.onabort=()=>reject(tx.error);
+  });
+  const write=fn=>new Promise((resolve,reject)=>{
+   const tx=db.transaction(['items','state'],'readwrite');
+   fn(tx.objectStore('items'),tx.objectStore('state'));
+   tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(tx.error);
+  });
+  const first=await read();
+  if(first.items.length!==1||first.items[0].ownerReviewed!==false||
+     first.items[0].sourceSHA256!==sourceSHA)
+   throw Error('M161 expected unverified real-model source row before independent reviews');
+  mission4Preview1054Viewer?.clear();
+  await write((items,state)=>{items.clear();state.clear();});
+  const make=(id,category,itemType,color,cutout,cutoutSHA)=>({
+   record:{
+    id,ownerId:owner,image:original,sourceSHA256:sourceSHA,
+    sourceHashVerified:true,singleGarmentVerified:false,
+    originalPhoto:{ownerId:owner,image:original,sha256:sourceSHA},
+    outfitSourceId:sourceSHA,
+    segmentHint:{verified:true,ownerReviewedInstance:true,clipped:false,
+     originalSHA256:sourceSHA,cutoutSHA256:cutoutSHA,cutoutImage:cutout}
+   },
+   review:{confirmed:true,recordId:id,originalSHA256:sourceSHA,
+    category,itemType,color,instanceConfirmed:true,cutoutSHA256:cutoutSHA}
+  });
+  const pieces=[
+   make('m161-fourk-top','Tops','T-shirt','Blue',cutA,hashA),
+   make('m161-fourk-bottom','Bottoms','Jeans','Black',cutB,hashB)
+  ];
+  for(const piece of pieces){
+   await write((_items,state)=>state.put({id:'draft',batch:[structuredClone(piece.record)]}));
+   const result=await commitHumanReviewedPhoto119({
+    db,ownerId:owner,currentOwner:()=>window.closetAuth?.user?.id,
+    record:piece.record,review:piece.review,cryptoProvider:crypto,assertLease:lease
+   });
+   if(result.saved!==true||result.releaseAuthorized!==false)
+    throw Error('M161 separate PHOTO119 source/cutout not confirmed');
+  }
+  await write((_items,state)=>state.put({
+   id:'outfit-board',
+   current:{name:'M161 actual 4K source',occasion:'Casual',
+    slots:{top:'m161-fourk-top',bottom:'m161-fourk-bottom'}},
+   saved:[{name:'M161 two synthetic garment choices',occasion:'Casual',
+    slots:{top:'m161-fourk-top',bottom:'m161-fourk-bottom'}}]
+  }));
+  const verified=await read();
+  if(verified.items.length!==2||!verified.items.every(x=>x.ownerReviewed===true))
+   throw Error('M161 actual PHOTO119 two owner reviewed rows not saved');
+  const v3=await exportDurableOwnerBackupM3({
+   ownerDB:db,ownerId:owner,
+   assertLease:()=>{if(!lease())throw Error('M161 owner revoked');},assertIdle:()=>{}
+  });
+  if(v3.data?.version!==3||v3.data?.items?.length!==2)
+   throw Error('M161 two-region signed native v3 export refused');
+  // Native importer must atomically replace disposable state, not append.
+  await write((items,state)=>{items.clear();state.clear();});
+  window.confirm=()=>true;
+  await document.getElementById('import').onchange({target:{
+   files:[{size:v3.json.length,text:async()=>v3.json}],value:'m161-source-v3'
+  }});
+  const restored=await read(),byId=new Map(restored.items.map(x=>[x.id,x]));
+  const board=restored.state.find(x=>x.id==='outfit-board');
+  const msg=document.getElementById('message')?.textContent||'';
+  return {
+   actualModelRanBeforeReviews:true,
+   sameSyntheticOwnerSession:lease(),
+   separateReviewedPieces:verified.items.length===2,
+   same4kOriginalBoth:restored.items.length===2&&restored.items.every(x=>
+    x.originalPhoto?.image===original&&x.originalPhoto?.sha256===sourceSHA&&
+    x.sourceSHA256===sourceSHA&&x.ownerId===owner),
+   distinctSourceBoundCutouts:byId.get('m161-fourk-top')?.cutoutSHA256===hashA&&
+    byId.get('m161-fourk-bottom')?.cutoutSHA256===hashB,
+   nativeAtomicV3:msg.includes('imported atomically'),
+   boardBothRecovered:board?.current?.slots?.top==='m161-fourk-top'&&
+    board?.current?.slots?.bottom==='m161-fourk-bottom'&&
+    board?.saved?.[0]?.slots?.bottom==='m161-fourk-bottom',
+   noFitted3D:restored.items.every(x=>x.threeDReady!==true)
+  };
+ },{original:m161Original,sourceSHA:sha,
+    cutA:cutoutA,cutB:cutoutB,hashA:cutoutSHA_A,hashB:cutoutSHA_B});
+ for(const [key,passed] of Object.entries(cross))
+  assert.equal(passed,true,'M161 same 4K source integration '+key);
+ stage='m161-same-photo-v3-restored-owned-native-2d-without-fitted-3d';
+ // A real reload checks persisted native owner/Outfit Builder boot, not only
+ // an in-memory export promise or an injected gallery DOM.
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>window.closetAuth?.user?.id==='m58-A'&&
+  db?.name==='closet-current-user-m58-A',null,{timeout:30000});
+ await page.waitForFunction(()=>currentBoard?.slots?.top==='m161-fourk-top'&&
+  currentBoard?.slots?.bottom==='m161-fourk-bottom',null,{timeout:30000});
+ await page.evaluate(()=>switchView('builder'));
+ await page.locator('#mission4Preview1054Section button').click();
+ await page.waitForFunction(()=>/original photo\(s\) verified.*2D only/.test(
+  document.getElementById('mission4Preview1054Status')?.textContent||''
+ ),null,{timeout:30000});
+ const m161Imgs=page.locator('#mission4Preview1054Photos img');
+ assert.equal(await m161Imgs.count(),2,'M161 shared 4K photo restored as two 2D slots');
+ const m161Displayed=await m161Imgs.evaluateAll(async imgs=>Promise.all(
+  imgs.map(async img=>{await img.decode();return {
+   src:img.getAttribute('src'),decoded:img.naturalWidth>0};})
+ ));
+ assert.ok(m161Displayed.every(x=>x.src===m161Original&&x.decoded),
+  'M161 viewer displayed derivative/thumbnail rather than original 4K JPEG');
+ assert.equal(await page.locator('#outfit3D01Canvas').count(),0,
+  'M161 source-only two-cutout outfit must not imply fitted garment 3D');
+ assert.equal(await countRows(page),2,'M161 source-to-restored-2D should retain exactly two pieces');
+ assert.deepEqual(rejected,[],'M161 accidentally sent original to unexpected network');
+ assert.deepEqual(issues,[],'M161 native browser app errors');
+ console.log('M161_SAME_REAL_4K_P88_SOURCE_TWO_OWNER_REVIEWS_V3_2D_PASS',JSON.stringify({
+  engine,width,sourceSHA256:sha,
+  sameInstalledRealWorkerFirst:true,sourceWidth:upscaled.width,
+  sourceHeight:upscaled.height,sourceWasOriginalCamera4k:nativeCameraOriginal96,
+  ownerReviewedSyntheticCutouts:2,distinctCutoutHashes:true,
+  nativeV3AtomicallyRestored:true,realApp2DOriginals:2,
+  sourceFitGarment3D:false,independentHumanLabels:false,
+  physicalPhone:false,hostedRLS:false,familyAlpha:'HOLD'
+ }));
+
  const lifecycle91={engine,browserVersion:browser.version(),elapsedMs:Math.round(performance.now()-started),
   uninterruptedSourceExportRestore:true,writeRetries:0,extraTamperReloads:0,ownerRecovery:true,
   originalPhotoByteTamperRefused:true,familyAlpha:'HOLD',releaseAuthorized:false,
