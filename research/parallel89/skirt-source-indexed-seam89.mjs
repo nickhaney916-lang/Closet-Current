@@ -118,7 +118,8 @@ export function summarizeOriginalBodyIndexedSeams89({
  };
  let sameSourceProvenancePairs=0,geometryTwinPairs=0,
   provenanceDisagrees=0,windingConflicts=0,ambiguousMulti=0,
-  unmatchedOriginalEdges=0;
+  unmatchedOriginalEdges=0,
+  twinPairsSharingOneOriginalVertex=0,twinPairsBothSplitVertices=0;
  const mismatch=Object.seal({
   'original-mesh-id':0,'original-rest-position':0,
   'original-posed-position':0,'original-skin-influence':0,
@@ -142,19 +143,28 @@ export function summarizeOriginalBodyIndexedSeams89({
   geometryTwinPairs++;
   const reasons=[skinProvenanceMismatch(p,s),skinProvenanceMismatch(q,t)];
   // Conservative reason priority: cross-mesh surfaces are not one source seam.
-  const reason=p===s||q===t?'not-distinct-original-indices':
+  // Legitimate source UV/normal edge splits can SHARE one original vertex
+  // index while the other side duplicates the opposite vertex. Only reject
+  // identical original edges (raw incidence would already be 2).
+  const sharedOriginalEndpoints=Number(p===s)+Number(q===t);
+  const reason=sharedOriginalEndpoints===2?'not-distinct-original-indices':
    reasons.includes('original-mesh-id')?'original-mesh-id':
    reasons.includes('original-rest-position')?'original-rest-position':
    reasons.includes('original-posed-position')?'original-posed-position':
    reasons.includes('original-skin-influence')?'original-skin-influence':null;
-  if(reason===null)sameSourceProvenancePairs++;
-  else{provenanceDisagrees+=2;mismatch[reason]+=2;}
+  if(reason===null){
+   sameSourceProvenancePairs++;
+   if(sharedOriginalEndpoints===1)twinPairsSharingOneOriginalVertex++;
+   else twinPairsBothSplitVertices++;
+  }else{provenanceDisagrees+=2;mismatch[reason]+=2;}
  }
  const pairedEdges=sameSourceProvenancePairs*2;
  const classified=unmatchedOriginalEdges+windingConflicts+
   ambiguousMulti+provenanceDisagrees+pairedEdges+collapsed;
  if(classified!==rawBoundary||
-  Object.values(mismatch).reduce((n,v)=>n+v,0)!==provenanceDisagrees)
+  Object.values(mismatch).reduce((n,v)=>n+v,0)!==provenanceDisagrees||
+  twinPairsSharingOneOriginalVertex+twinPairsBothSplitVertices!==
+   sameSourceProvenancePairs)
   throw Error('original-source-seam-incidence-not-conserved');
  return Object.freeze({
   schema:'P89-pure-original-source-virtual-boundary-seam-evidence/v1',
@@ -163,6 +173,11 @@ export function summarizeOriginalBodyIndexedSeams89({
   rawOriginalSourceSingleFaceBoundaryEdges:rawBoundary,
   originalSourceGeometryTwinPairs:geometryTwinPairs,
   compatibleOriginalRestAndSkinTwinEdgePairs:sameSourceProvenancePairs,
+  compatibleOriginalTwinPairsSharingOneIndexedEndpoint:
+   twinPairsSharingOneOriginalVertex,
+  compatibleOriginalTwinPairsWithBothEndpointsSplit:
+   twinPairsBothSplitVertices,
+  originalSourceTwinsMayShareOneRealIndexedEndpoint:true,
   compatibleOriginalRestAndSkinBoundaryEdges:pairedEdges,
   geometryTwinsWithConflictingOriginalProvenanceEdges:provenanceDisagrees,
   geometryTwinsDifferentOriginalSourceMeshEdges:mismatch['original-mesh-id'],
