@@ -26,14 +26,14 @@ jobs:
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
-              public/outfit-capture.js|tests/outfit-capture.test.cjs|scripts/test-main181-zero-proposal-native-browser.mjs|.github/workflows/main181-zero-proposal-native-no-deploy.yml|research/master-consolidation-1054/M181-ZERO-PROPOSAL-NATIVE-FAILCLOSED-HOLD.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml|.github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml|research/master-consolidation-1054/M180-WEBKIT-FIRSTLOAD-RELIABILITY-HOLD.md|.github/workflows/main183-outfit-session-epoch-no-deploy.yml) ;;
+              public/outfit-capture.js|tests/outfit-capture.test.cjs|scripts/test-main181-zero-proposal-native-browser.mjs|.github/workflows/main181-zero-proposal-native-no-deploy.yml|research/master-consolidation-1054/M181-ZERO-PROPOSAL-NATIVE-FAILCLOSED-HOLD.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml|.github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml|research/master-consolidation-1054/M180-WEBKIT-FIRSTLOAD-RELIABILITY-HOLD.md|.github/workflows/main183-outfit-session-epoch-no-deploy.yml|public/native-outfit-source-plan-p99.mjs|public/native-2d-preview-p99.mjs|tests/main187-required-owner-assert-current.test.mjs|tests/main188-owner-revoked-outfit-preview.test.mjs|.github/workflows/main187-required-owner-lease-no-deploy.yml|.github/workflows/main188-owner-revoked-original-preview-no-deploy.yml|.github/workflows/main189-lease-revocation-crossmission-no-deploy.yml|research/master-consolidation-1054/M189-OWNER-REVOCATION-ADMISSION-HOLD.md) ;;
               *) echo "M181 blocked unreviewed change: $path"; exit 1 ;;
             esac
           done
           # M182 reviewed protected M180 integration workflow-only compatibility.
           # M180 itself pins this exact M181 workflow blob to prevent cycles.
-          test "$(git rev-parse HEAD:.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml)" = 9cda77f35a8cfbede447e43d3824afa315e8c606
-          test "$(git rev-parse HEAD:.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml)" = 10cb88c8915521edf2cb847d716709304182a8a4
+          test "$(git rev-parse HEAD:.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml)" = 14b0f9e09b28068d9d12f829ce5ecad8b3cfc662
+          test "$(git rev-parse HEAD:.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml)" = d442beaa482cb11dae1f5b103d32f1204b132a2b
           test "$(git rev-parse HEAD:research/master-consolidation-1054/M180-WEBKIT-FIRSTLOAD-RELIABILITY-HOLD.md)" = 080c07dcb3e091d9f2a7e219b5750bf068c83252
           test "$(git rev-parse HEAD:public/outfit-capture.js)" = 8d55715ef09e34086d3c401ec38340bfc25f5fe8
           test "$(git rev-parse HEAD:tests/outfit-capture.test.cjs)" = b254c78302136761e1edf336056f8b949832c0ec
