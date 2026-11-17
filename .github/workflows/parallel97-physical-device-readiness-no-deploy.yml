@@ -1,0 +1,93 @@
+name: PARALLEL97 source-pinned physical-device readiness native browsers NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/parallel97-physical-mobile-readiness-HOLD]
+  pull_request:
+    branches: [research/parallel94-actual-four-mission-assembly-HOLD]
+permissions:
+  contents: read
+jobs:
+  p97-source-node-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin P94 ancestor and protected native source, deny unrelated edits
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=ef8ce4cc5beab3793b88e7ceaf1fe4964c26da17
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = 03c83b79e076ed3b7f67353cd3cd69f13529ccab
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          git diff --name-only "$BASE" HEAD | while IFS= read -r p; do
+            case "$p" in
+              scripts/device-acceptance97.mjs|scripts/serve-device97.mjs|scripts/test-device-probe97-browser.mjs|tests/device-acceptance97.test.mjs|tests/device-server97.test.mjs|research/parallel97-device-kit/README.md|research/parallel97-device-kit/probe.html|.github/workflows/parallel97-physical-device-readiness-no-deploy.yml) ;;
+              *) echo "P97 forbidden modified path: $p"; exit 1;;
+            esac
+          done
+          node --check scripts/device-acceptance97.mjs
+          node --check scripts/serve-device97.mjs
+          node --check scripts/test-device-probe97-browser.mjs
+          node --test tests/device-acceptance97.test.mjs tests/device-server97.test.mjs
+      - name: Install pinned research test dependencies, no deployment
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build actual native app offline
+        run: node scripts/build.mjs
+      - name: Full inherited strict Node and privacy suite
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  p97-app-engine-and-probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+        width: [320, 390, 430]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P97_ENGINE: ${{ matrix.engine }}
+      P97_WIDTH: ${{ matrix.width }}
+      M58_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: ${{ matrix.width }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable P94 source guards and P97 syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor ef8ce4cc5beab3793b88e7ceaf1fe4964c26da17 HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          node --check scripts/test-device-probe97-browser.mjs
+      - name: Install pinned actual app browser and model tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Actual desktop Chromium or WebKit HTTPS probe security, SHA and redaction
+        run: node scripts/test-device-probe97-browser.mjs
+      - name: Native P94 actual Worker to simulated owner review, 2D and v4 atomic restore
+        run: node scripts/test-parallel94-native-p88-browser.mjs
+      - name: Native two-original PHOTO119 to v3 lossless 2D, all three widths per engine
+        if: matrix.width == 390
+        run: M123_ENGINE="$M58_ENGINE" node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs benchmark/parallel97-native-v3-${{ matrix.engine }}
+      - name: Mobile interruption and privacy negative controls across six widths
+        if: matrix.engine == 'chromium' && matrix.width == 390
+        run: node scripts/test-mission3-mobile-media-interruption-browser.mjs benchmark/parallel97-mobile-interruption
