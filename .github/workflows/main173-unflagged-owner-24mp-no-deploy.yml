@@ -42,6 +42,11 @@ jobs:
               research/master-consolidation-1054/M179-ADOPT-M173-EXIF-ON-M175-HOLD.md) ;;
               .github/workflows/main173-unflagged-owner-24mp-no-deploy.yml) ;;
               .github/workflows/main1054-m58-real-p88-worker-no-deploy.yml) ;;
+              .github/workflows/main181-zero-proposal-native-no-deploy.yml) ;;
+              public/outfit-capture.js) ;;
+              research/master-consolidation-1054/M181-ZERO-PROPOSAL-NATIVE-FAILCLOSED-HOLD.md) ;;
+              scripts/test-main181-zero-proposal-native-browser.mjs) ;;
+              tests/outfit-capture.test.cjs) ;;
               .github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml) ;;
               research/master-consolidation-1054/M180-WEBKIT-FIRSTLOAD-RELIABILITY-HOLD.md) ;;
               *) echo "M173 unexpected protected change: $path"; exit 1 ;;
@@ -52,6 +57,10 @@ jobs:
           test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 52d2b6d8834f27d9114e022fe8574947eda85206
           test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 58a2a1a81ad19e2341cebcdee83005296cd1d3a8
           test "$(git rev-parse HEAD:public/native-photo-3d-veto-p99.mjs)" = 82b93d12d2fbcba146a190f5dce87a6ac5fc44af
+          # M182 exact-source M181 native failure-only compatibility, no change to model.
+          test "$(git rev-parse HEAD:public/outfit-capture.js)" = b85242b7856c3b83ed4c38afcb4b409f7292933e
+          test "$(git rev-parse HEAD:tests/outfit-capture.test.cjs)" = ab60c5d45b60f5f8daf994898bcd2146f1a97f45
+          test "$(git rev-parse HEAD:scripts/test-main181-zero-proposal-native-browser.mjs)" = ea1a5bdb7f0617c71695f9b0382afd6ff7d5f089
           test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
           test "$(git rev-parse HEAD:research/parallel99-normal-journey-HOLD/NORMAL-MODE-CONTRACT.md)" = 56e96d56adf063754112534cc6d6817ceb054f1c
           test "$(git rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 9b8c3b37d1d8116e4bf9bc6dbf7ea82e2752433d
@@ -110,6 +119,10 @@ jobs:
           test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 52d2b6d8834f27d9114e022fe8574947eda85206
           test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 58a2a1a81ad19e2341cebcdee83005296cd1d3a8
           test "$(git rev-parse HEAD:public/native-photo-3d-veto-p99.mjs)" = 82b93d12d2fbcba146a190f5dce87a6ac5fc44af
+          # M182 exact-source M181 native failure-only compatibility, no change to model.
+          test "$(git rev-parse HEAD:public/outfit-capture.js)" = b85242b7856c3b83ed4c38afcb4b409f7292933e
+          test "$(git rev-parse HEAD:tests/outfit-capture.test.cjs)" = ab60c5d45b60f5f8daf994898bcd2146f1a97f45
+          test "$(git rev-parse HEAD:scripts/test-main181-zero-proposal-native-browser.mjs)" = ea1a5bdb7f0617c71695f9b0382afd6ff7d5f089
           test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
           test "$(git rev-parse HEAD:research/parallel99-normal-journey-HOLD/NORMAL-MODE-CONTRACT.md)" = 56e96d56adf063754112534cc6d6817ceb054f1c
           test "$(git rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 9b8c3b37d1d8116e4bf9bc6dbf7ea82e2752433d
