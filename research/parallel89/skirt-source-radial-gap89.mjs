@@ -62,6 +62,11 @@ export function auditSelectedOriginalSkirtRadialGap89({
   return fail('out-of-range-original-skirt-face-index');
  let candidateRadialInward=0,observedSectors=0,unknownSectors=0,
   bodyPlaneSegmentsTotal=0,mostInward=null,smallestObservedGap=null;
+ // Exact original indexed-face segment/ray cross-sections are a separate
+ // conservative source-contour measurement. They do not inherit the adjacent
+ // angular-bin dilation used in the older quick radial guard.
+ let rayInward=0,rayNear=0,rayOutward=0,rayUnknown=0,
+  rayAmbiguous=0,rayMinGap=null,rayMaxInward=0,rayContours=0;
  const rows=[];
  const faceCount=idx.length/3;
  for(let row=0;row<RINGS;row++){
@@ -75,6 +80,7 @@ export function auditSelectedOriginalSkirtRadialGap89({
   const rimR=Math.hypot(cloth[off]-x,cloth[off+2]-z);
   if(rimR<.075||rimR>.95)return fail('original-photo-rim-radius-not-anatomically-bounded');
   const maxRadius=new Float64Array(SECTORS),witness=new Uint8Array(SECTORS);
+  const trueBodyContourSegments=[];
   let cutSegments=0,observedPoints=0;
   const push=(wx,wz)=>{
    const dx=wx-x,dz=wz-z,r=Math.hypot(dx,dz);
@@ -109,6 +115,12 @@ export function auditSelectedOriginalSkirtRadialGap89({
    const length=Math.hypot(cuts[0][0]-cuts[1][0],cuts[0][1]-cuts[1][1]);
    if(length<1e-7)continue;
    cutSegments++;
+   // Do not use the widened angular-bin approximation as evidence for
+   // an exact spoke crossing. Keep only the genuine source triangle-plane
+   // intersection endpoints; body vertices are never serialized.
+   trueBodyContourSegments.push([
+    cuts[0][0],cuts[0][1],cuts[1][0],cuts[1][1]
+   ]);
    const steps=Math.max(2,Math.min(32,Math.ceil(length/.005)));
    for(let j=0;j<=steps;j++){
     const t=j/steps;
@@ -118,11 +130,47 @@ export function auditSelectedOriginalSkirtRadialGap89({
   }
   let visible=0,unknown=0,negative=0,near=0,positive=0,
    minGap=null,maximumInward=0;
+  let rayRowInward=0,rayRowNear=0,rayRowOutward=0,rayRowUnknown=0,
+   rayRowAmbiguous=0,rayRowMinimum=null,rayRowMaximumInward=0;
   for(let j=0;j<SECTORS;j++){
    const k=(row*(SECTORS+1)+j)*3,dx=cloth[k]-x,dz=cloth[k+2]-z,
     radius=Math.hypot(dx,dz);
    if(!finite(radius)||radius<.075||radius>.95)
     return fail('nonphysical-skinned-photographed-garment-ring');
+
+   // A ray in X/Z from the observed skirt ring center to its original
+   // photographed garment vertex. Compare with genuine body-face plane
+   // segments at the SAME original skinned rig height. This avoids the
+   // coarse ±one-bin dilation overstating neighbor-body clearance.
+   // It is not raycast volume/inside classification or a watertight body.
+   let rayMax=-1,ambiguous=false;
+   const ux=dx/radius,uz=dz/radius;
+   for(const segment of trueBodyContourSegments){
+    const [ax,az,bx,bz]=segment,ex=bx-ax,ez=bz-az,
+     px=ax-x,pz=az-z,det=ux*ez-uz*ex;
+    if(Math.abs(det)<1e-11){
+     // Source contour edge exactly along this radial ray is geometrically
+     // ambiguous for an exteriorness decision; do not invent clearance.
+     if(Math.abs(px*uz-pz*ux)<1e-9)ambiguous=true;
+     continue;
+    }
+    const t=(px*ez-pz*ex)/det,u=(px*uz-pz*ux)/det;
+    if(t>=0&&u>=-1e-9&&u<=1+1e-9&&t<=.75)
+     rayMax=Math.max(rayMax,t);
+   }
+   if(cutSegments<2||ambiguous||rayMax<0){
+    rayRowUnknown++;if(ambiguous)rayRowAmbiguous++;
+   }else{
+    const signedRadialGap=radius-rayMax;
+    rayRowMinimum=rayRowMinimum===null?signedRadialGap:
+     Math.min(rayRowMinimum,signedRadialGap);
+    if(signedRadialGap<-.002){
+     rayRowInward++;
+     rayRowMaximumInward=Math.max(rayRowMaximumInward,-signedRadialGap);
+    }else if(signedRadialGap<=.002)rayRowNear++;
+    else rayRowOutward++;
+   }
+
    const angle=(Math.atan2(dx,dz)+2*Math.PI)%(2*Math.PI);
    const bin=Math.round(angle*SECTORS/(2*Math.PI))%SECTORS;
    if(!witness[bin]){unknown++;continue;}
@@ -149,19 +197,40 @@ export function auditSelectedOriginalSkirtRadialGap89({
    sampledRadialGapOutwardOver2mm:positive,
    minimumObservedSkirtMinusBodyRadialGapMeters:minGap===null?null:round(minGap),
    maximumObservedRadialInwardDistanceMeters:round(maximumInward),
+   exactOriginalIndexedBodyFaceRayContours:true,
+   exactRayObservedOutwardSectors:rayRowOutward,
+   exactRayObservedNearZeroSectors:rayRowNear,
+   exactRayObservedInwardSectors:rayRowInward,
+   exactRayUnknownSectors:rayRowUnknown,
+   exactRayCollinearAmbiguousSectors:rayRowAmbiguous,
+   exactRayMinimumObservedRadialGapMeters:
+    rayRowMinimum===null?null:round(rayRowMinimum),
+   exactRayMaximumObservedInwardMeters:round(rayRowMaximumInward),
    waistOrHemGarmentPhysicalSizeCalibrated:false
   });
   rows.push(stat);
   candidateRadialInward+=negative;
   observedSectors+=visible;unknownSectors+=unknown;
   bodyPlaneSegmentsTotal+=cutSegments;
+  rayInward+=rayRowInward;rayNear+=rayRowNear;
+  rayOutward+=rayRowOutward;rayUnknown+=rayRowUnknown;
+  rayAmbiguous+=rayRowAmbiguous;rayContours+=trueBodyContourSegments.length;
+  if(rayRowMinimum!==null){
+   rayMinGap=rayMinGap===null?rayRowMinimum:
+    Math.min(rayMinGap,rayRowMinimum);
+   rayMaxInward=Math.max(rayMaxInward,rayRowMaximumInward);
+  }
   if(minGap!==null){
    smallestObservedGap=smallestObservedGap===null?minGap:Math.min(smallestObservedGap,minGap);
    mostInward=Math.max(mostInward??0,maximumInward);
   }
  }
  if(rows.length!==7||rows.some(x=>
-  x.observedAngularSectors+x.unknownAngularSectors!==SECTORS))
+  x.observedAngularSectors+x.unknownAngularSectors!==SECTORS||
+  x.exactRayObservedOutwardSectors+x.exactRayObservedNearZeroSectors+
+   x.exactRayObservedInwardSectors+x.exactRayUnknownSectors!==SECTORS)||
+  rayInward+rayNear+rayOutward+rayUnknown!==RINGS*SECTORS||
+  rayAmbiguous>rayUnknown)
   return fail('original-photographed-source-coverage-bookkeeping-invalid');
  return Object.freeze({
   schema:'P89-actual-original-163bone-source-radial-body-gap/v1',
@@ -189,6 +258,23 @@ export function auditSelectedOriginalSkirtRadialGap89({
   minimumObservedRadialGapMeters:smallestObservedGap===null?null:round(smallestObservedGap),
   largestObservedRadialInwardDistanceMeters:mostInward===null?null:round(mostInward),
   sevenOriginalSourceSkirtBands:rows,
+  // Independent exact horizontal face/plane-ray signals are kept separate
+  // from older approximate dilated angular bins. No exact ray intersections
+  // is a negative evidence gap, NOT proof that the ray exits the body.
+  exactRayBodyContourSourceTopology:'ORIGINAL_INDEXED_FACE_HORIZONTAL_PLANE_RAY_INTERSECTION',
+  exactRaySampledAngularPositions:RINGS*SECTORS,
+  exactRayOriginalBodyContourSegments:rayContours,
+  exactRayOutwardSourceSectors:rayOutward,
+  exactRayNearSourceSectors:rayNear,
+  exactRayInwardSourceSectors:rayInward,
+  exactRayUnknownSourceSectors:rayUnknown,
+  exactRayCollinearAmbiguousSourceSectors:rayAmbiguous,
+  exactRayMinimumObservedSkirtMinusBodyMeters:
+   rayMinGap===null?null:round(rayMinGap),
+  exactRayMaximumObservedInwardMeters:round(rayMaxInward),
+  originalDilationBasedRadialOverlapIsNotExactIntersection:true,
+  exactRayWithoutOriginalBodyContourIsUnknownNotSafe:true,
+  exactRayCannotCertifyWatertightVolume:true,
   radialWitnessIsNotSignedClosedMeshContainment:true,
   photographicOriginalFrontRGBAndUVUnmodified:true,
   garmentSourceAbsoluteSizeInferredNotMeasured:true,
