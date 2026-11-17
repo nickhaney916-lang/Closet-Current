@@ -63,6 +63,10 @@ jobs:
     timeout-minutes: 70
     strategy:
       fail-fast: false
+      # M165 diagnostic: retain EVERY real browser assertion, serialize
+      # memory-heavy WASM processes and Commons fetches in this workflow.
+      # A model error remains a failing job, NEVER an automated retry.
+      max-parallel: 1
       matrix:
         engine: [chromium, webkit]
         width: [320,390,430]
@@ -115,6 +119,10 @@ jobs:
     timeout-minutes: 70
     strategy:
       fail-fast: false
+      # M165 diagnostic: retain EVERY real browser assertion, serialize
+      # memory-heavy WASM processes and Commons fetches in this workflow.
+      # A model error remains a failing job, NEVER an automated retry.
+      max-parallel: 1
       matrix:
         engine: [chromium, webkit]
     container:
