@@ -198,6 +198,8 @@ try{
  assert.match(await page.locator('#mission4Preview1054Status').innerText(),/2D only/);
  assert.equal(await page.locator('#outfit3D01Canvas').count(),0);
  advance('normal-v3-private-export');
+ await page.locator('nav.main-nav button.tab[data-view="closet"]').click();
+ await page.locator('details.closet-backup summary').click();
  const downloadPromise=page.waitForEvent('download',{timeout:25000});
  await page.locator('#export').click();
  const downloaded=await downloadPromise;
@@ -215,12 +217,13 @@ try{
   t.includes('P99 Unflagged Saved Outfit')));
  // Genuine file input + browser confirmation; never write IndexedDB directly.
  page.on('dialog',dialog=>dialog.accept());
+ await page.locator('nav.main-nav button.tab[data-view="closet"]').click();
  await page.locator('#import').setInputFiles({
   name:'p99-native-v3-backup.json',mimeType:'application/json',buffer:backup
  });
  await page.waitForFunction(()=>/restored|imported/i.test(
   document.querySelector('#message')?.textContent||''),null,{timeout:30000});
- await page.locator('#moreMenu summary').click();
+ if(!await page.locator('#moreMenu').evaluate(e=>e.open))await page.locator('#moreMenu summary').click();
  await page.locator('#moreMenu button.tab[data-view="builder"]').click();
  await page.locator('#savedBoards button').filter({hasText:'P99 Unflagged Saved Outfit'}).first().click();
  await page.locator('#mission4Preview1054Section button').click();
