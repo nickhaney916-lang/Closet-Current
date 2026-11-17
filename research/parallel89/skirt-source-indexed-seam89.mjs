@@ -96,10 +96,10 @@ export function summarizeOriginalBodyIndexedSeams89({
   if(!groups.has(key))groups.set(key,[]);
   groups.get(key).push({a:edge.a,b:edge.b,dir});
  }
- const skinCompatible=(i,j)=>{
-  if(sourceMeshIds[i]!==sourceMeshIds[j]||
-   distance(restPositions,i,j)>1e-6||
-   distance(posedPositions,i,j)>1e-5)return false;
+ const skinProvenanceMismatch=(i,j)=>{
+  if(sourceMeshIds[i]!==sourceMeshIds[j])return 'original-mesh-id';
+  if(distance(restPositions,i,j)>1e-6)return 'original-rest-position';
+  if(distance(posedPositions,i,j)>1e-5)return 'original-posed-position';
   // Compare normalized bone-index/weight pairs independent of four-slot
   // ordering, but disallow different bone influence even with same position.
   const influences=idx=>{
@@ -112,12 +112,18 @@ export function summarizeOriginalBodyIndexedSeams89({
    return a;
   };
   const a=influences(i),b=influences(j);
-  if(a.length!==b.length)return false;
-  return a.every((x,k)=>x[0]===b[k][0]&&Math.abs(x[1]-b[k][1])<=1e-6);
+  if(a.length!==b.length)return 'original-skin-influence';
+  return a.every((x,k)=>x[0]===b[k][0]&&Math.abs(x[1]-b[k][1])<=1e-6)?
+   null:'original-skin-influence';
  };
  let sameSourceProvenancePairs=0,geometryTwinPairs=0,
   provenanceDisagrees=0,windingConflicts=0,ambiguousMulti=0,
   unmatchedOriginalEdges=0;
+ const mismatch=Object.seal({
+  'original-mesh-id':0,'original-rest-position':0,
+  'original-posed-position':0,'original-skin-influence':0,
+  'not-distinct-original-indices':0
+ });
  for(const list of groups.values()){
   if(list.length===1){unmatchedOriginalEdges++;continue;}
   if(list.length!==2){ambiguousMulti+=list.length;continue;}
@@ -134,14 +140,21 @@ export function summarizeOriginalBodyIndexedSeams89({
    ambiguousMulti+=2;continue;
   }
   geometryTwinPairs++;
-  if(p!==s&&q!==t&&skinCompatible(p,s)&&skinCompatible(q,t))
-   sameSourceProvenancePairs++;
-  else provenanceDisagrees+=2;
+  const reasons=[skinProvenanceMismatch(p,s),skinProvenanceMismatch(q,t)];
+  // Conservative reason priority: cross-mesh surfaces are not one source seam.
+  const reason=p===s||q===t?'not-distinct-original-indices':
+   reasons.includes('original-mesh-id')?'original-mesh-id':
+   reasons.includes('original-rest-position')?'original-rest-position':
+   reasons.includes('original-posed-position')?'original-posed-position':
+   reasons.includes('original-skin-influence')?'original-skin-influence':null;
+  if(reason===null)sameSourceProvenancePairs++;
+  else{provenanceDisagrees+=2;mismatch[reason]+=2;}
  }
  const pairedEdges=sameSourceProvenancePairs*2;
  const classified=unmatchedOriginalEdges+windingConflicts+
   ambiguousMulti+provenanceDisagrees+pairedEdges+collapsed;
- if(classified!==rawBoundary)
+ if(classified!==rawBoundary||
+  Object.values(mismatch).reduce((n,v)=>n+v,0)!==provenanceDisagrees)
   throw Error('original-source-seam-incidence-not-conserved');
  return Object.freeze({
   schema:'P89-pure-original-source-virtual-boundary-seam-evidence/v1',
@@ -152,6 +165,12 @@ export function summarizeOriginalBodyIndexedSeams89({
   compatibleOriginalRestAndSkinTwinEdgePairs:sameSourceProvenancePairs,
   compatibleOriginalRestAndSkinBoundaryEdges:pairedEdges,
   geometryTwinsWithConflictingOriginalProvenanceEdges:provenanceDisagrees,
+  geometryTwinsDifferentOriginalSourceMeshEdges:mismatch['original-mesh-id'],
+  geometryTwinsDifferentOriginalRestPoseEdges:mismatch['original-rest-position'],
+  geometryTwinsDifferentOriginalSkinInfluenceEdges:mismatch['original-skin-influence'],
+  geometryTwinsDifferentOriginalSkinnedWorldEdges:mismatch['original-posed-position'],
+  geometryTwinsNonDistinctOriginalVertexIndexEdges:mismatch['not-distinct-original-indices'],
+  originalGeometryTwinMismatchReasonsExhaustive:true,
   geometricTwinWindingConflictEdges:windingConflicts,
   geometricAmbiguousMultiCandidateBoundaryEdges:ambiguousMulti,
   sourceUnmatchedBoundaryEdges:unmatchedOriginalEdges,
