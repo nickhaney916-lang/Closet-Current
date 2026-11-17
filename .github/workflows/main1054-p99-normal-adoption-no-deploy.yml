@@ -1,0 +1,119 @@
+name: MAIN1054 M174 P99 normal user UI plus M172 source-state rehearsal NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-p99-normal-adoption-rehearsal-HOLD]
+  pull_request:
+    branches: [research/main1054-m58-real-p88-browser-worker-HOLD]
+    paths: [public/**, scripts/test-parallel99-normal-app-browser.mjs, research/main1054-p99-normal-adoption-rehearsal-HOLD/**, .github/workflows/main1054-p99-normal-adoption-no-deploy.yml]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  inherited-node-and-offline-app:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Isolate P99 and prove protected source has not been modified
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=5b8e149a3eaa61aabeb3696bb9642209eaa765ce
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --exit-code "$BASE" HEAD -- public/app.js public/auth.js public/native-default-atomic-import-m3.mjs public/native-default-verified-backup-export-m3.mjs public/native-reviewed-private-save-167.mjs public/outfit-worker.mjs public/outfit-worker-p94.mjs public/outfit-instance-review-840.mjs supabase/
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:public/native-canonical-photo-source-167.mjs)" = 526d6d984bdb27cf775497132d2cf581ea2d3195
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
+          test "$(git rev-parse HEAD:public/index.html)" = abd56ec794b44a447c9aac88129d6f6516180bd0
+          test "$(git rev-parse HEAD:public/capture-navigation.js)" = f3404f6fd325a1ea805d04d8a84e9761a780ece3
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 52d2b6d8834f27d9114e022fe8574947eda85206
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 58a2a1a81ad19e2341cebcdee83005296cd1d3a8
+          test "$(git rev-parse HEAD:public/native-photo-3d-veto-p99.mjs)" = 82b93d12d2fbcba146a190f5dce87a6ac5fc44af
+          test "$(git rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 9b8c3b37d1d8116e4bf9bc6dbf7ea82e2752433d
+          test "$(git rev-parse HEAD:scripts/test-main172-24mp-private-state-invariance.mjs)" = ad4cb6bfee719b6083b9abc6d11ade2551e77c58
+          while IFS= read -r path; do
+            case "$path" in
+              public/outfit-board.js|public/index.html|public/capture-navigation.js|public/native-2d-preview-p99.mjs|public/native-photo-3d-veto-p99.mjs|public/native-outfit-source-plan-p99.mjs|scripts/test-parallel99-normal-app-browser.mjs|.github/workflows/main1054-p99-normal-adoption-no-deploy.yml|research/main1054-p99-normal-adoption-rehearsal-HOLD/HANDOFF.md) ;;
+              *) echo "Unexpected change outside isolated adoption scope: $path"; exit 1 ;;
+            esac
+          done < <(git diff --name-only "$BASE" HEAD)
+          git diff --name-only "$BASE" HEAD
+      - name: Install pinned research-only test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Check syntax, default built imports and offline PWA
+        run: |
+          set -euo pipefail
+          for file in public/native-outfit-source-plan-p99.mjs public/native-photo-3d-veto-p99.mjs public/native-2d-preview-p99.mjs public/outfit-board.js scripts/test-parallel99-normal-app-browser.mjs; do node --check "$file"; done
+          node scripts/build.mjs
+          for file in native-outfit-source-plan-p99.mjs native-photo-3d-veto-p99.mjs native-2d-preview-p99.mjs; do test -s "dist/$file"; done
+          grep -Fq "const mission4Preview1054Active=true;" dist/outfit-board.js
+          grep -Fq "'./native-2d-preview-p99.mjs'" dist/outfit-board.js
+          if grep -Eq "from.*\.\./research/|import.*\.\./research/" public/native-*-p99.mjs; then echo "research import in native source"; exit 1; fi
+      - name: Run full inherited native and source owner regression suite
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  genuine-normal-app-browsers:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P99_ENGINE: ${{ matrix.engine }}
+      M51_ENGINE: ${{ matrix.engine }}
+      M58_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned no-deploy browser test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build real offline native PWA (no deploy)
+        run: |
+          node scripts/build.mjs
+          node --check scripts/test-parallel99-normal-app-browser.mjs
+      - name: Genuine unflagged Home to chooser to reviewed owner outfit and v3 restore
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+          done
+      - name: Inherited native signed-owner original-source 2D and revocation acceptance
+        run: node scripts/test-main51-real-app-owner-original-2d.mjs
+      - name: M172 authentic 24MP original rejection and recovery leave ALL owner private items and state intact
+        env:
+          P94_WIDTH: '390'
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The Playwright Docker workspace is mounted with an independent UID.
+          # Register only this checkout, not all Git directories or any source bypass.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:scripts/test-main172-24mp-private-state-invariance.mjs)" = ad4cb6bfee719b6083b9abc6d11ade2551e77c58
+          test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 58194c1bbcfca7b46f1c71b1ee0cc00c3dbc88c7
+          P96_NATIVE_4K=true node scripts/test-main172-24mp-private-state-invariance.mjs
+      - name: Preserve evidence receipts and synthetic privacy boundaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-p99-m172-${{ matrix.engine }}-no-deploy-HOLD
+          path: benchmark/parallel99-normal-journey/${{ matrix.engine }}/
+          retention-days: 14
+          if-no-files-found: ignore
