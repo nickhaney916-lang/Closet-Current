@@ -856,6 +856,88 @@ try{
   originalPhotoOnly:true,fitted3D:false,syntheticAuthOnly:true,
   hostedRLS:false,physicalPhone:false,familyAlpha:'HOLD'
  }));
+ // P96: v4 recovery is not a substitute for legacy native v3 atomic
+ // ownership verification. This next phase deliberately selects the
+ // EXISTING default v3 importer at call-time on the SAME signed-A document;
+ // the initialized native owner session and JPEG/2D/gallery remain intact.
+ // No new Worker, synthetic re-seed, board or source replacement is allowed.
+ stage='same-owner-genuine-4k-p88-v3-native-saved-only-export';
+ await page.evaluate(()=>{
+  const params=new URLSearchParams(location.search);
+  params.delete('restoreAtomic01');
+  params.delete('losslessV4M3');
+  params.delete('nativeLossless04');
+  history.replaceState(null,'',location.pathname+'?'+params.toString());
+ });
+ const v3Event=page.waitForEvent('download',{timeout:30000});
+ const v3ExportNotice=await page.evaluate(async()=>{
+  await document.getElementById('export').onclick();
+  return document.getElementById('message')?.textContent||'';
+ });
+ assert.match(v3ExportNotice,/saved clothing.*outfits downloaded|v3 backup/i,
+  'native v3 owner export failed on 4K P88-derived review');
+ const v3Download=await v3Event;
+ assert.match(v3Download.suggestedFilename(),/closet-current-backup\.json/);
+ const v3=JSON.parse(await readFile(await v3Download.path(),'utf8'));
+ assert.equal(v3.version,3,'v3 export substituted a v4 or research-only payload');
+ assert.equal(v3.items.length,1);
+ assert.equal(v3.items[0].id,handoff.savedItemId);
+ assert.equal(v3.items[0].sourceSHA256,sha);
+ assert.equal(v3.items[0].originalPhoto?.sha256,sha);
+ assert.equal(v3.items[0].originalPhoto?.image,
+  'data:image/jpeg;base64,'+file.toString('base64'));
+ assert.equal(v3.items[0].singleGarmentVerified,false);
+ assert.equal(v3.items[0].threeDReady,false);
+ assert.ok(v3.outfitBoard?.saved?.some(b=>b.slots?.top===handoff.savedItemId),
+  'v3 did not include signed-A native saved outfit');
+ const beforeV3=await ownerSnapshot();
+ const badV3=structuredClone(v3);
+ badV3.items[0].originalPhoto.sha256='f'.repeat(64);
+ const badV3Notice=await submitBackup(badV3,true);
+ assert.match(badV3Notice,/source|sha|jpeg|mismatch|invalid/i,
+  'tampered v3 source did not fail at native importer');
+ assert.deepEqual(await ownerSnapshot(),beforeV3,
+  'rejected v3 import changed the private 4K source or outfit');
+ const declineV3=await submitBackup(v3,false);
+ assert.match(declineV3,/cancel/i);
+ assert.deepEqual(await ownerSnapshot(),beforeV3,
+  'v3 no-consent path changed original photo or outfit');
+ stage='same-owner-genuine-4k-p88-native-v3-atomic-source-recovery';
+ await mutateOwnerItem91(page,{id:handoff.savedItemId,ownerId:'m58-A',operation:'color'});
+ assert.equal((await ownerSnapshot()).items[0].color,'Disposable synthetic edit');
+ const restoreV3Notice=await submitBackup(v3,true);
+ assert.match(restoreV3Notice,/Backup imported atomically/i,
+  'native default v3 recovery did not atomically commit 4K source');
+ const afterV3=await ownerSnapshot();
+ assert.equal(afterV3.owner,'m58-A');
+ assert.equal(afterV3.items.length,1);
+ assert.equal(afterV3.items[0].sourceSHA256,sha);
+ assert.equal(afterV3.items[0].originalSHA,sha);
+ assert.equal(afterV3.items[0].color,savedPhoto.color);
+ assert.equal(afterV3.items[0].photoOnly,true);
+ assert.equal(afterV3.items[0].singleGarmentVerified,false);
+ assert.equal(afterV3.items[0].threeDReady,false);
+ assert.equal(afterV3.savedOutfitCount,1);
+ assert.equal(afterV3.top,handoff.savedItemId);
+ const v3RecoveredBytes=await page.evaluate(id=>new Promise((resolve,reject)=>{
+  const request=db.transaction('items','readonly').objectStore('items').get(id);
+  request.onsuccess=()=>resolve(request.result?.originalPhoto?.image||'');
+  request.onerror=()=>reject(request.error);
+ }),handoff.savedItemId);
+ assert.equal(v3RecoveredBytes,'data:image/jpeg;base64,'+file.toString('base64'),
+  'v3 importer replaced the original 4K photo with model derivative');
+ assert.equal(await page.locator('#outfit3D01Canvas').count(),0,
+  'v3 restored unproven fitted 3D eligibility');
+ console.log('P96_GENUINE_4K_SOURCE_NATIVE_V3_AND_V4_ATOMIC_RESTORED',JSON.stringify({
+  engine,sourceSHA256:sha,actualWasmP88:true,source4kWidth:upscaled.width,
+  source4kHeight:upscaled.height,originalJpegExactlyRecovered:true,
+  ownerPrivateItemCount:1,savedOutfitCount:1,
+  nativeV3Atomic:true,nativeV4Atomic:true,
+  tamperedV3Denied:true,v3CancelPreserved:true,
+  fitted3DAuthorized:false,fullMaskTruthUnmeasured:true,
+  sourceWasUpscaledLicensedPublicPhoto:true,physicalNative4k:false,
+  familyAlpha:'HOLD',releaseAllowed:false
+ }));
  const lifecycle91={engine,browserVersion:browser.version(),elapsedMs:Math.round(performance.now()-started),
   uninterruptedSourceExportRestore:true,writeRetries:0,extraTamperReloads:0,ownerRecovery:true,
   originalPhotoByteTamperRefused:true,familyAlpha:'HOLD',releaseAuthorized:false,
