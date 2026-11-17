@@ -1037,9 +1037,15 @@ try{
    tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(tx.error);
   });
   const first=await read();
-  if(first.items.length!==1||first.items[0].ownerReviewed!==false||
-     first.items[0].sourceSHA256!==sourceSHA)
-   throw Error('M161 expected unverified real-model source row before independent reviews');
+  // v3 may omit a historical FALSE boolean on a research-only MULTI24 row.
+  // Safety means NO positive human-review, physical-instance or 3D grant;
+  // absence of those claims is not approval and must never be promoted.
+  const prior=first.items[0];
+  if(first.items.length!==1||prior?.sourceSHA256!==sourceSHA||
+     prior?.originalPhoto?.sha256!==sourceSHA||
+     prior?.ownerReviewed===true||prior?.singleGarmentVerified===true||
+     prior?.threeDReady===true||prior?.photoOnly!==true)
+   throw Error('M161 expected source-locked unverified research row; security grant/source mismatch');
   mission4Preview1054Viewer?.clear();
   await write((items,state)=>{items.clear();state.clear();});
   const make=(id,category,itemType,color,cutout,cutoutSHA)=>({
