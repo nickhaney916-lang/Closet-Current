@@ -9,6 +9,7 @@ import {detectFlatlayFromImage29} from './flatlay-contrast-29.mjs';
 import {sceneReviewDefaults32,canConfirmScene32} from './scene-class-guard-32.mjs';
 import {intakeProposal58,MAX_TOTAL_REGIONS58} from './detection-intake-58.mjs';
 import {openP88SourceIntake55} from '../master-consolidation-1054/p88-source-key-adapter-55.mjs';
+import {createInferenceDerivative96,openHighResP88Intake96} from '../parallel96-highres/source-derivative-intake96.mjs';
 import {snapshotConfirmations34,saveReceipt34} from './review-save-finality-34.mjs';
 import {shouldAskBeforePhotoSwitch68,DISCARD_PROMPT68} from '../photo-switch-guard-68/source-discard-guard.mjs';
 import {validReplacementFile70,sourcePreflightStillCurrent70} from '../verified-photo-switch-70/source-preflight.mjs';
@@ -70,6 +71,10 @@ export function mountMultiGarmentCapture24({
   new URLSearchParams(window.location.search).get('parallel94Assembly')==='research';
  const p88Transport57=['127.0.0.1','localhost'].includes(window.location.hostname)&&
   (parallel94Native||new URLSearchParams(window.location.search).get('p88Transport57')==='research');
+ // P96 is explicitly local research and uses ONLY installed P94 native worker.
+ // The default worker, live app and standalone M57 donor are untouched.
+ const parallel96HiRes=parallel94Native&&
+  new URLSearchParams(window.location.search).get('parallel96HiRes')==='research';
  const style=el('style');style.textContent=`
  .multi24{margin-top:1rem;display:grid;gap:.85rem;min-width:0}
  .multi24 .multi24-source{max-width:100%;max-height:260px;object-fit:contain;border-radius:9px}
@@ -483,12 +488,19 @@ export function mountMultiGarmentCapture24({
    if(!pending())return;
    const decoded=await ensureImage(proof.image);
    if(!pending())return;
-   let inference=proof.image;
+   let inference=proof.image,derivative96=null,manualOnly96=false;
    if(Math.max(decoded.naturalWidth,decoded.naturalHeight)>3072){
-    const scale=3072/Math.max(decoded.naturalWidth,decoded.naturalHeight);
-    const c=el('canvas');c.width=Math.round(decoded.naturalWidth*scale);c.height=Math.round(decoded.naturalHeight*scale);
-    c.getContext('2d').drawImage(decoded,0,0,c.width,c.height);
-    inference=c.toDataURL('image/jpeg',.9);
+    if(parallel96HiRes){
+     // P96 never replaces proof.image. Its separate model JPEG and SHA are
+     // transient; unsupported EXIF/pixel budgets stay in manual Unknown review.
+     try{derivative96=await createInferenceDerivative96({proof,decoded});}
+     catch{manualOnly96=true;}
+    }else{
+     const scale=3072/Math.max(decoded.naturalWidth,decoded.naturalHeight);
+     const c=el('canvas');c.width=Math.round(decoded.naturalWidth*scale);c.height=Math.round(decoded.naturalHeight*scale);
+     c.getContext('2d').drawImage(decoded,0,0,c.width,c.height);
+     inference=c.toDataURL('image/jpeg',.9);
+    }
    }
    if(!pending())return;
    // SOURCE72: repeated selection of the byte-identical verified original
@@ -528,7 +540,7 @@ export function mountMultiGarmentCapture24({
    // owner-private wardrobe rows are never touched by a source switch.
    revoke();canceled=false;
    const committedEpoch=renderVersion;
-   state={owner,proof,decoded,pieces:[]};
+   state={owner,proof,decoded,pieces:[],inference96:derivative96?.geometry||null};
    original.src=proof.image;original.hidden=false;redraw();
    if(!currentLoading(committedEpoch,owner))return;
    const next={id:crypto.randomUUID(),worker:null,p88Intake57:null,pending:[],timeout:null,received:0,ignored:0,terminal:false};job=next;
@@ -536,15 +548,22 @@ export function mountMultiGarmentCapture24({
    // accelerate this timer only in an isolated test page.
    next.timeout=setTimeout(()=>{if(job===next&&!submitting)detectorFallback65(next,'Local segmentation timed out.');},300000);
    try{
+    if(manualOnly96){
+     detectorFallback65(next,'This full-resolution JPEG exceeds the safe local model/orientation budget. Keep the verified original, add pieces manually and review Unknown; nothing was saved.');
+     return;
+    }
     if(p88Transport57){
-     // Verify original JPEG bytes and owner lease BEFORE starting the P88 worker.
-     // Recheck after asynchronous WebCrypto: source, review and auth may change.
-     next.p88Intake57=await openP88SourceIntake55({
+     // P96 source/derivative are verified separately under the SAME live
+     // owner/source/request/epoch/DB lease. P88's original worker stays intact.
+     const intakeArgs={
       proof,ownerId:owner,requestId:next.id,reviewEpoch:committedEpoch,
       getOwner,getSourceSHA256:()=>state?.proof?.sourceSHA256,
       getReviewEpoch:()=>renderVersion,getActiveRequestId:()=>job?.id,
       getDbName:()=>getDb()?.name
-     });
+     };
+     next.p88Intake57=derivative96?
+      await openHighResP88Intake96({...intakeArgs,derivative:derivative96}):
+      await openP88SourceIntake55(intakeArgs);
      if(job!==next||!currentLoading(committedEpoch,owner)){
       next.p88Intake57.close();return;
      }
@@ -715,5 +734,6 @@ export function mountMultiGarmentCapture24({
  window.addEventListener('closet:session-locked',()=>reset('Authenticated account session ended; unconfirmed photo and crops cleared.'));
  window.addEventListener('pagehide',()=>revoke());
  save.disabled=true;add.disabled=true;suggest.disabled=true;
- return {active:true,startFile,reset,debug:()=>({owner:state?.owner,sourceSHA256:state?.proof?.sourceSHA256,pieces:state?.pieces.map(x=>({id:x.id,instanceKey:x.instanceKey,category:x.category,color:x.color,confirmed:x.confirmed}))||[],working:!!job,p88Transport57})};
+ return {active:true,startFile,reset,debug:()=>({owner:state?.owner,sourceSHA256:state?.proof?.sourceSHA256,pieces:state?.pieces.map(x=>({id:x.id,instanceKey:x.instanceKey,category:x.category,color:x.color,confirmed:x.confirmed}))||[],working:!!job,p88Transport57,parallel96HiRes,
+  inference96:state?.inference96?{...state.inference96}:null})};
 }
