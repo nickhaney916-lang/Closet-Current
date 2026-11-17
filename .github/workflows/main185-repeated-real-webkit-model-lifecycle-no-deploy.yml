@@ -50,6 +50,7 @@ jobs:
           test "$(git rev-parse HEAD:scripts/test-main58-actual-p88-wasm-browser.mjs)" = 96ba2f5ee2420de52f45911881fdcc139455c353
           test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
           test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 58194c1bbcfca7b46f1c71b1ee0cc00c3dbc88c7
+          test "$(git rev-parse HEAD:scripts/test-main172-24mp-private-state-invariance.mjs)" = ad4cb6bfee719b6083b9abc6d11ade2551e77c58
           test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 1840c4496aefc28941f4c3de24a29bac1cb5e792
           test "$(git rev-parse HEAD:public/outfit-capture.js)" = 8d55715ef09e34086d3c401ec38340bfc25f5fe8
           git diff --exit-code "$PARENT" HEAD -- public/ scripts/ tests/ supabase/ benchmark/ research/parallel96-highres/
@@ -62,6 +63,7 @@ jobs:
           node --check scripts/test-main58-actual-p88-wasm-browser.mjs
           node --check scripts/test-parallel94-native-p88-browser.mjs
           node --check scripts/test-parallel96-native-highres-browser.mjs
+          node --check scripts/test-main172-24mp-private-state-invariance.mjs
       - name: Extract original immutable P88 donor that M58 genuinely requires (NO public app change)
         shell: bash
         run: |
@@ -90,16 +92,18 @@ jobs:
           # Never retry, skip, forge proposals or turn a negative into success.
           case "$M185_MODE" in
             webkit-six-P94) total=6 ;;
-            webkit-protected-M58-P96) total=6 ;;
+            webkit-protected-M58-P96) total=7 ;;
             chromium-four-P94-control) total=4 ;;
             *) echo 'Invalid M185 matrix'; exit 2 ;;
           esac
           echo "M185_SOURCE_PINNED_BEGIN engine=$M58_ENGINE mode=$M185_MODE total=$total"
           for i in $(seq 1 "$total"); do
             # M185 exact-source protected M58 regression order:
-            # first real M58, P94 320/390/430, THEN the two P96
-            # standard/high-resolution source derivatives. The original red
-            # happened in the transition to the P96 high-resolution stage.
+            # exact protected failing job: M58, P94 320/390/430, then
+            # P96 upscaled 4K, P96 actual original 24MP, THEN unchanged
+            # M172 independently protects all private items/state at 24MP.
+            # The historical genuine zero-proposal worker error happened
+            # INSIDE M172 (the seventh source-model run), not in P96 #5/#6.
             unset P96_NATIVE_4K || true
             if [ "$M185_MODE" = webkit-protected-M58-P96 ]; then
               case "$i" in
@@ -109,6 +113,7 @@ jobs:
                 4) harness=scripts/test-parallel94-native-p88-browser.mjs; export P94_WIDTH=430 ;;
                 5) harness=scripts/test-parallel96-native-highres-browser.mjs; export P94_WIDTH=390 ;;
                 6) harness=scripts/test-parallel96-native-highres-browser.mjs; export P94_WIDTH=390; export P96_NATIVE_4K=true ;;
+                7) harness=scripts/test-main172-24mp-private-state-invariance.mjs; export P94_WIDTH=390; export P96_NATIVE_4K=true ;;
               esac
             else
               harness=scripts/test-parallel94-native-p88-browser.mjs
