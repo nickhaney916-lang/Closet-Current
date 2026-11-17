@@ -1,0 +1,58 @@
+name: MAIN184 exact native WebKit M157 owner restore phase diagnosis NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main184-webkit-original-restore-cause-HOLD]
+  pull_request:
+    branches: [research/main1054-m58-real-p88-browser-worker-HOLD]
+    paths:
+      - scripts/test-main184-webkit-m157-restoration-diagnostic.mjs
+      - .github/workflows/main184-webkit-original-restore-diagnostic-no-deploy.yml
+permissions:
+  contents: read
+jobs:
+  genuine-native-webkit-restore:
+    name: original M157 WebKit source/owner restore independent ${{ matrix.independent }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        independent: [1, 2, 3]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M184_ENGINE: webkit
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact M183 base and unchanged original M157 source / app / owner scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=f2befed4c776786dc11843b98fafec72f2d9c202
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse HEAD:scripts/test-main157-same-photo-native-outfit-browser.mjs)" = c65c47091156c8996a1f463bff80b1c690b9fd90
+          test "$(git rev-parse HEAD:scripts/test-main184-webkit-m157-restoration-diagnostic.mjs)" = cfcee8a35bb0f575d422c7adb1ff9d451d25cf65
+          test "$(git rev-parse HEAD:public/outfit-capture.js)" = 8d55715ef09e34086d3c401ec38340bfc25f5fe8
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
+          git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
+            case "$path" in
+              scripts/test-main184-webkit-m157-restoration-diagnostic.mjs|.github/workflows/main184-webkit-original-restore-diagnostic-no-deploy.yml) ;;
+              *) echo "M184 refused unrelated change $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ tests/ benchmark/ scripts/ ':(exclude)scripts/test-main184-webkit-m157-restoration-diagnostic.mjs'
+          node --check scripts/test-main184-webkit-m157-restoration-diagnostic.mjs
+          node --check scripts/test-main157-same-photo-native-outfit-browser.mjs
+      - name: Pinned offline native app tooling only; no hosted data
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Actual WebKit original M157 restore assertions plus sanitized preassert state
+        run: node scripts/test-main184-webkit-m157-restoration-diagnostic.mjs
