@@ -81,7 +81,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
- selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
+ selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -611,6 +611,60 @@ try{
    assert.equal(radial.originalPhoto2DFallbackRequired,true);
    assert.equal(radial.consumer3DAdmitted,false);
    assert.equal(radial.releaseAuthorized,false);
+   // Mandatory original-body topology precondition for any future signed
+   // 3D garment containment. An open, nonmanifold or edge-inconsistent
+   // source anatomical shell vetoes parity irrespective of 0 BVH contacts.
+   const closure=await page.evaluate(()=>
+    window.nativeP89Skirt.auditSelectedOriginalSourceBodyClosure89());
+   assert.equal(closure.schema,
+    'P89-source-locked-original-body-indexed-closure/v1');
+   assert.ok(['ORIGINAL_BODY_OPEN_OR_NONMANIFOLD_CANNOT_PROVE_SIGNED_INSIDE_OUTSIDE',
+    'INDEXED_EDGE_PAIR_CANDIDATE_NOT_SIGNED_VOLUME_OR_WEARABLE'].includes(
+     closure.status),'genuine original source anatomical closure unavailable');
+   assert.equal(closure.avatar,avatar);
+   assert.equal(closure.pose,selectedPose);
+   assert.equal(closure.originalSourcePhotoSHA256,required.skirt);
+   assert.equal(closure.original163BoneGLBSHA256,required[avatar]);
+   assert.equal(closure.originalBodyWholeMeshFacesNotCoreFiltered,true);
+   assert.equal(closure.sourceWeightedCoreFaceMaskOnlyUsedForProvenance,true);
+   assert.equal(closure.clothMayStillBeInsideBodyDespiteNoTransverseBVHPairs,true);
+   const topology=closure.anatomicalSourceTopology;
+   assert.equal(topology.schema,'P89-pure-indexed-source-shell-edge-incidence/v1');
+   assert.ok(topology.originalIndexedTriangleCount>=100);
+   assert.ok(topology.originalIndexedVertexCount>=300);
+   assert.ok(topology.actualSourceIndexDistinctEdges>=100);
+   assert.ok(topology.sourceOpenBoundaryEdgeCount>=0);
+   assert.ok(topology.sourceNonmanifoldOverTwoFaceEdgeCount>=0);
+   assert.ok(topology.sourceSameDirectionPairEdgeCount>=0);
+   assert.equal(topology.originalSourceIndicesNeverWelded,true);
+   assert.equal(topology.selfIntersectionFreeEmbeddedVolumeProven,false);
+   assert.equal(closure.indexedPairCandidateForSeparateParityResearch,
+    topology.originalIndexedEdgePairCandidateOnly);
+   assert.equal(closure.closedVolumeCertified,false);
+   assert.equal(closure.signedInsideOutsideVerified,false);
+   assert.equal(closure.originalPhoto2DFallbackRequired,true);
+   assert.equal(closure.consumer3DAdmitted,false);
+   assert.equal(closure.releaseAuthorized,false);
+   // Indexed original skinned body triangle TOPOLOGY must be invariant
+   // across the same genuine avatar's five pose samples. Actual positions
+   // can move, but original face identities may never be silently changed.
+   const prior=results.selectedSourceWholeBodyClosureAudits.find(
+    x=>x.avatar===avatar);
+   if(prior){
+    const previous=prior.anatomicalSourceTopology;
+    for(const key of ['originalIndexedTriangleCount',
+     'originalIndexedVertexCount','actualSourceIndexDistinctEdges',
+     'sourceOpenBoundaryEdgeCount',
+     'sourceNonmanifoldOverTwoFaceEdgeCount',
+     'sourceSameDirectionPairEdgeCount',
+     'sourceOppositeDirectionPairEdgeCount',
+     'sourceDisconnectedVertexIndexedIslands',
+     'independentlyCoincidentButIndexSplitVertices']){
+     assert.equal(topology[key],previous[key],
+      'immutable original 163-bone GLB indexed topology changed across poses: '+key);
+    }
+   }
+   results.selectedSourceWholeBodyClosureAudits.push(closure);
    results.selectedSourceBodyRadialGapAudits.push(radial);
    results.selectedResearchPoseChecks.push({
     avatar,pose:selectedPose,selectedName:selected.name,
@@ -719,6 +773,7 @@ try{
   }
  }
  assert.equal(results.selectedSourceBodyRadialGapAudits.length,10);
+ assert.equal(results.selectedSourceWholeBodyClosureAudits.length,10);
  assert.equal(results.selectedResearchPoseChecks.length,10);
  assert.equal(results.selectedResearchNativeScreenshots.length,18);
  assert.equal(results.selectedResearchFrontCoverage.length,6);
@@ -786,6 +841,13 @@ try{
    sourceSelectedOriginalPhotoFrontCoverage:results.selectedResearchFrontCoverage.map(x=>x.status),
    selectedRegistrationTrueFivePoseNativeChecks:results.selectedResearchPoseChecks.length,
    sourceTrueWorldRadialGapCheckCount:results.selectedSourceBodyRadialGapAudits.length,
+   sourceOriginalWholeBodyClosureCheckCount:results.selectedSourceWholeBodyClosureAudits.length,
+   sourceOriginalBodyTopologyStatuses:results.selectedSourceWholeBodyClosureAudits.map(x=>x.status),
+   sourceOriginalBodyTopologyIndexedTriangleCount:results.selectedSourceWholeBodyClosureAudits.map(x=>x.anatomicalSourceTopology.originalIndexedTriangleCount),
+   sourceOriginalBodyBoundaryEdges:results.selectedSourceWholeBodyClosureAudits.map(x=>x.anatomicalSourceTopology.sourceOpenBoundaryEdgeCount),
+   sourceOriginalBodyNonmanifoldEdges:results.selectedSourceWholeBodyClosureAudits.map(x=>x.anatomicalSourceTopology.sourceNonmanifoldOverTwoFaceEdgeCount),
+   sourceOriginalBodyWindingConflicts:results.selectedSourceWholeBodyClosureAudits.map(x=>x.anatomicalSourceTopology.sourceSameDirectionPairEdgeCount),
+   sourceOriginalBodyCoincidentSplitVertices:results.selectedSourceWholeBodyClosureAudits.map(x=>x.anatomicalSourceTopology.independentlyCoincidentButIndexSplitVertices),
    sourceWorldRadialGapStatuses:results.selectedSourceBodyRadialGapAudits.map(x=>x.status),
    sourceRadialInwardSectorCounts:results.selectedSourceBodyRadialGapAudits.map(x=>x.sampledInwardBodyGapAngularSectors),
    sourceRadialUnknownSectorCounts:results.selectedSourceBodyRadialGapAudits.map(x=>x.sampledUnknownBodyGapAngularSectors),
