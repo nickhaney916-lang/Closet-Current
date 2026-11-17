@@ -1,0 +1,77 @@
+name: MAIN157 same-original two reviewed garments v3 restore NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main157-source-reviewed-multi-v3-restore-HOLD]
+  pull_request:
+    branches: [research/main1054-m58-real-p88-browser-worker-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  source-reviewed-v3-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin immutable main M156 and allow only M157 owned paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=03c995009827c591381c8fcc873edaec8133b28c
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse "$BASE:public/native-default-atomic-import-m3.mjs")" = e739f1533108d53961483d761a27f0525623af3d
+          test "$(git rev-parse "$BASE:public/native-default-verified-backup-export-m3.mjs")" = e70fdc392c2652dc969b7d7c4b807f3cafd81e03
+          git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
+            case "$path" in
+              public/native-reviewed-shared-original-157.mjs|public/native-default-atomic-import-m3.mjs|public/native-default-verified-backup-export-m3.mjs|tests/main157-reviewed-shared-source-v3.test.mjs|.github/workflows/main157-reviewed-shared-original-no-deploy.yml) ;;
+              *) echo "M157 unexpectedly changes $path"; exit 1;;
+            esac
+          done
+          node --check public/native-reviewed-shared-original-157.mjs
+          node --check public/native-default-atomic-import-m3.mjs
+          node --check public/native-default-verified-backup-export-m3.mjs
+          node --check tests/main157-reviewed-shared-source-v3.test.mjs
+      - name: Install no-deploy test-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Run source-reviewed shared-photo v3 roundtrip and negative gates
+        run: node --test tests/main157-reviewed-shared-source-v3.test.mjs
+      - name: Run inherited full suite with NO skips
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Build offline actual app without deployment
+        run: node scripts/build.mjs
+  actual-native-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M123_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated native browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build original app
+        run: node scripts/build.mjs
+      - name: Actual PHOTO119 two-independent-source v3 outfit recovery at 320/390/430
+        run: node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs
+      - name: Browser native default v3/v4 private atomic import, 6-viewports
+        if: matrix.engine == 'chromium'
+        run: node scripts/test-mission3-default-atomic-import-browser.mjs
