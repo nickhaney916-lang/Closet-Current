@@ -54,12 +54,16 @@ jobs:
           test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 52d2b6d8834f27d9114e022fe8574947eda85206
           test "$(git rev-parse HEAD:public/native-photo-3d-veto-p99.mjs)" = 82b93d12d2fbcba146a190f5dce87a6ac5fc44af
           test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 1840c4496aefc28941f4c3de24a29bac1cb5e792
+          # Two strict inherited CI allowlists: only known M180 filename additions.
+          # Blob-pinned end to end; no product/model/assertion/receipt relaxation.
+          test "$(git rev-parse HEAD:.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml)" = 04705da387b22c5a2ee88f2ba8ba4111f2f57063
+          test "$(git rev-parse HEAD:.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml)" = fcc91363bc82fe0b48641dd88c4e0b7483d545d2
           test "$(git rev-parse "$P88:public/outfit-worker.mjs")" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
           test "$(git rev-parse "$P88:public/outfit-segmentation.mjs")" = d357955dd8fdab7c0cb727ea597c270edd9309ac
           git diff --exit-code "$PARENT" HEAD -- public/ scripts/ tests/ supabase/ benchmark/ research/multi-garment-capture-01/ research/parallel96-highres/
           git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
             case "$path" in
-              .github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml|research/master-consolidation-1054/M180-WEBKIT-FIRSTLOAD-RELIABILITY-HOLD.md) ;;
+              .github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml|research/master-consolidation-1054/M180-WEBKIT-FIRSTLOAD-RELIABILITY-HOLD.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml) ;;
               *) echo "M180 unexpected modified source path: $path"; exit 1 ;;
             esac
           done
