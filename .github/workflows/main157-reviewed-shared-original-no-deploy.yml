@@ -29,7 +29,7 @@ jobs:
           test "$(git rev-parse "$BASE:public/native-default-verified-backup-export-m3.mjs")" = e70fdc392c2652dc969b7d7c4b807f3cafd81e03
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
-              public/native-reviewed-shared-original-157.mjs|public/native-default-atomic-import-m3.mjs|public/native-default-verified-backup-export-m3.mjs|tests/main157-reviewed-shared-source-v3.test.mjs|.github/workflows/main157-reviewed-shared-original-no-deploy.yml) ;;
+              public/native-reviewed-shared-original-157.mjs|public/native-default-atomic-import-m3.mjs|public/native-default-verified-backup-export-m3.mjs|tests/main157-reviewed-shared-source-v3.test.mjs|scripts/test-main157-same-photo-native-outfit-browser.mjs|.github/workflows/main157-reviewed-shared-original-no-deploy.yml) ;;
               *) echo "M157 unexpectedly changes $path"; exit 1;;
             esac
           done
@@ -37,6 +37,7 @@ jobs:
           node --check public/native-default-atomic-import-m3.mjs
           node --check public/native-default-verified-backup-export-m3.mjs
           node --check tests/main157-reviewed-shared-source-v3.test.mjs
+          node --check scripts/test-main157-same-photo-native-outfit-browser.mjs
       - name: Install no-deploy test-only dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Run source-reviewed shared-photo v3 roundtrip and negative gates
@@ -72,6 +73,8 @@ jobs:
         run: node scripts/build.mjs
       - name: Actual PHOTO119 two-independent-source v3 outfit recovery at 320/390/430
         run: node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs
+      - name: M157 actual native same JPEG two PHOTO119 reviewed cutouts -> v3 UI restore -> source-only 2D
+        run: node scripts/test-main157-same-photo-native-outfit-browser.mjs
       - name: Browser native default v3/v4 private atomic import, 6-viewports
         if: matrix.engine == 'chromium'
         run: node scripts/test-mission3-default-atomic-import-browser.mjs
