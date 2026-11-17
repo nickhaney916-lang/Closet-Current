@@ -24,8 +24,8 @@ let worker=readFileSync('public/outfit-worker-p94.mjs','utf8');
 let ui=readFileSync('research/multi-garment-capture-01/review-ui.mjs','utf8');
 let native=readFileSync('scripts/test-parallel94-native-p88-browser.mjs','utf8');
 worker=replaceOnly(worker,
- 'chain=chain.then(async()=>{\n  try{',
- "chain=chain.then(async()=>{\n  let m178Stage='verify-input';\n  try{",
+ 'chain=chain.then(async()=>{\n try{',
+ "chain=chain.then(async()=>{\n let m178Stage='verify-input';\n try{",
  'error-stage');
 worker=replaceOnly(worker,
  'const {model,processor,RawImage}=await load(request.id);self.postMessage',
@@ -54,8 +54,8 @@ const newError=[
 ].join('\n');
 worker=replaceOnly(worker,oldError,newError,'hidden worker exception');
 ui=replaceOnly(ui,
- "if(data.type==='done'||data.type==='error'){\n       next.terminal=true;",
- "if(data.type==='done'||data.type==='error'){\n       status.dataset.m178Diagnostic=JSON.stringify(data.m178Diagnostic||{stage:'no-detail'});\n       next.terminal=true;",
+ "if(data.type==='done'||data.type==='error'){\n      next.terminal=true;",
+ "if(data.type==='done'||data.type==='error'){\n      status.dataset.m178Diagnostic=JSON.stringify(data.m178Diagnostic||{stage:'no-detail'});\n      next.terminal=true;",
  'owner-interface evidence slot');
 const base='scripts/.m178-'+process.pid;
 const workerFile=base+'-worker.mjs',uiFile=base+'-ui.mjs',testFile=base+'-p94.mjs';
@@ -70,10 +70,10 @@ try{
  "   modelActuallyRun:true,licensedOriginal:true,proposals:state.cards,",
  "   status:state.status.slice(0,150),outcome:m178Diagnostic,",
  "   responseCodes:modelResponses.map(x=>x.status),unexpectedOutbound:rejected.length}));",
- "  assert.ok(external.some(x=>x.type==='pinned-browser-library'),"
+ " assert.ok(external.some(x=>x.type==='pinned-browser-library'),"
  ].join('\n');
  native=replaceOnly(native,
- "  assert.ok(external.some(x=>x.type==='pinned-browser-library'),",
+ " assert.ok(external.some(x=>x.type==='pinned-browser-library'),",
  receipt,'observed WebKit diagnostic before ORIGINAL assert');
  writeFileSync(testFile,native,{flag:'wx'});
  for(const path of [workerFile,uiFile,testFile]){
