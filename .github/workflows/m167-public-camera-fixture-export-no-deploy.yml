@@ -1,0 +1,37 @@
+name: M167 public 4K verified fixture transfer NO DEPLOY HOLD
+on:
+  pull_request:
+    branches: [research/main157-source-reviewed-multi-v3-restore-HOLD]
+permissions:
+  contents: read
+jobs:
+  one-time-verified-public-fixture:
+    if: github.head_ref == 'research/main159-m157-4k-source-integrated-HOLD'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Restore ONLY immutable public licensed 4K Commons cache
+        uses: actions/cache/restore@v4
+        with:
+          path: benchmark/fixtures/commons-original-artist-cowrie-4000x6000-public-cache.jpg
+          key: p96-public-commons-original-e5f7490c833b9141f68180a1cd7f015b9f7016c2-v1
+          fail-on-cache-miss: true
+      - name: Export exact public verified JPEG as bounded source-data blocks for offline fixture pinning
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'JS'
+          const fs=require('node:fs');
+          const crypto=require('node:crypto');
+          const source='benchmark/fixtures/commons-original-artist-cowrie-4000x6000-public-cache.jpg';
+          const b=fs.readFileSync(source);
+          if(b.length!==352936||crypto.createHash('sha1').update(b).digest('hex')!=='e5f7490c833b9141f68180a1cd7f015b9f7016c2'||
+            b[0]!==0xff||b[1]!==0xd8||b.at(-2)!==0xff||b.at(-1)!==0xd9)
+            throw Error('M167 public original byte-identical SHA1 proof failed');
+          const s=b.toString('base64'),size=3000;
+          console.log('M167_PUBLIC_SOURCE_PROVENANCE CC-BY-SA-4.0 Wikimedia Commons Artist in cowrie attire.jpg 4000x6000 exact bytes verified');
+          console.log('M167_PUBLIC_SOURCE_SEGMENTS '+Math.ceil(s.length/size)+' SHA1=e5f7490c833b9141f68180a1cd7f015b9f7016c2 bytes=352936');
+          for(let i=0;i<s.length;i+=size)
+            console.log('M167_PUBLIC_B64_CHUNK_'+String(i/size).padStart(4,'0')+'='+s.slice(i,i+size));
+          console.log('M167_PUBLIC_SOURCE_COMPLETE no private photos, no owner data, no credentials, no deploy');
+          JS
