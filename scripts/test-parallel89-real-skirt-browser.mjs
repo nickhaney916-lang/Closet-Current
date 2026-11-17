@@ -78,9 +78,10 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  garmentFitNotHumanApproved:true,
  fullContinuousMeshContactNotCertified:true,
  originalPhoto2DShown:true,
- screenCaptureCountExpected:36,figurePoseSamplesExpected:6,
+ screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
- captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
+ captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
+ selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -519,6 +520,111 @@ try{
     humanVisualFitApproved:false,consumer3DAdmitted:false,releaseAuthorized:false
    });
   }
+
+  // The source-contact winner differs by *actual avatar*. The older fixed
+  // 45mm proof cannot be substituted for the genuinely five-pose-selected
+  // 40mm female / 35mm male candidate. Render and verify the actual selected
+  // candidate at all five original skinned poses, and independently inspect
+  // its real photographed front pixels at the original camera viewport.
+  const selected=registration.bestResearchOnly;
+  assert.ok(selected?.researchOnlyNonworseningReduction,
+   'no selected BVH original-source result; unverified 3D must stay 2D');
+  assert.equal(selected.consumer3DAdmitted,false);
+  assert.equal(selected.releaseAuthorized,false);
+  const selectedPoses=['source','blend-25','blend-50','blend-75','relaxed'];
+  for(const selectedPose of selectedPoses){
+   await page.evaluate(()=>window.nativeP89Skirt.setView(0));
+   const originalPose=await page.evaluate(p=>
+    window.nativeP89Skirt.setPose(p),selectedPose);
+   const enabled=await page.evaluate(()=>
+    window.nativeP89Skirt.showOnlySelectedRegistration89(true));
+   assert.equal(enabled.status,
+    'SELECTED_FIVE_POSE_ORIGINAL_PHOTO_REGISTRATION_RESEARCH_PREVIEW_ONLY');
+   assert.equal(enabled.selectedPreviewActive,true);
+   assert.equal(enabled.selectedResearchRegistrationName,selected.name);
+   assert.equal(enabled.selectedResearchRegistrationMeters,
+    selected.localCameraFacingRegistrationMeters[2]);
+   assert.equal(enabled.consumer3DAdmitted,false);
+   assert.equal(enabled.releaseAuthorized,false);
+   const live=await page.evaluate(p=>
+    window.nativeP89Skirt.setPose(p),selectedPose);
+   const index=['source','blend-50','relaxed'].indexOf(selectedPose);
+   const qindex=['blend-25','blend-75'].indexOf(selectedPose);
+   const expected=index<0?
+    selected.intermediatePoseContactChecks[qindex].trialStrictTransversePairs:
+    selected.perPoseContacts[index].trialStrictTransversePairs;
+   assert.equal(live.strictTransverseSourceBodyTriangleCrossings,expected,
+    'ACTUAL rendered true selected-original-photo source/BVH trial differs from measured five-pose best');
+   results.selectedResearchPoseChecks.push({
+    avatar,pose:selectedPose,selectedName:selected.name,
+    selectedOriginalSourceTrialPairs:expected,
+    selectedNativeSourceBodyPairs:live.strictTransverseSourceBodyTriangleCrossings,
+    originalSourceBodyPairs:originalPose.strictTransverseSourceBodyTriangleCrossings,
+    originalSource163BoneRig:true,originalPhoto2DFallbackRequired:true,
+    sourceRealWorldScaleUnmeasured:true,sourceRearMaterialUnphotographed:true,
+    humanAppearanceApproved:false,consumer3DAdmitted:false,releaseAuthorized:false
+   });
+   if(index>=0){
+    for(const cameraAngle of [0,90,180]){
+     await page.evaluate(deg=>window.nativeP89Skirt.setView(deg),cameraAngle);
+     const file=['selected-five-pose-source-skirt',engine,avatar,selectedPose,cameraAngle].join('-')+'.png';
+     const shot=await screenshot(page,file);
+     const sourceOriginalName=['source-skirt',engine,avatar,selectedPose,cameraAngle].join('-')+'.png';
+     const actualSource=await readFile(join(out,sourceOriginalName));
+     const change=await changed(shot,actualSource);
+     if(cameraAngle===90)assert.ok(change>100,
+      'genuinely selected original-source registration must render changed side-view pixels');
+     results.selectedResearchNativeScreenshots.push({
+      avatar,pose:selectedPose,angle:cameraAngle,selectedName:selected.name,
+      selectedOriginalSourceJPEG:required.skirt,sourceTextureUVAndSkinRestUnchanged:true,
+      originalPhoto2DFallbackRequired:true,physicalGarmentSizeUnknown:true,
+      humanPhotographicFitUnapproved:true,unobservedBackNotSourceVerified:true,
+      consumer3DAdmitted:false,releaseAuthorized:false,
+      changedRGBChannelsAbove12:change
+     });
+     if(cameraAngle===0){
+      const [before,after]=await Promise.all([
+       sharp(actualSource).removeAlpha().raw().toBuffer({resolveWithObject:true}),
+       sharp(shot).removeAlpha().raw().toBuffer({resolveWithObject:true})
+      ]);
+      assert.equal(before.info.width,390);assert.equal(before.info.height,690);
+      assert.equal(after.info.width,390);assert.equal(after.info.height,690);
+      const visibility=auditOriginalSkirtResearchFrontCoverage89({
+       originalRGB:new Uint8Array(before.data),candidateRGB:new Uint8Array(after.data),
+       width:390,height:690,avatar,pose:selectedPose,sourceSHA256:required.skirt
+      });
+      // This is MEASURED photo evidence. A selected zero-contact result
+      // may still FAIL visible coverage; never silently promote it to fit.
+      assert.ok(['ORIGINAL_PHOTOGRAPH_CENTER_FRONT_COVERAGE_IMPROVED_RESEARCH_ONLY',
+       'ORIGINAL_PHOTO_CENTER_FRONT_COVERAGE_NOT_YET_VERIFIED'].includes(visibility.status),
+       'selected front photograph RGB audit unavailable: '+JSON.stringify(visibility));
+      assert.equal(visibility.originalPhoto2DFallbackRequired,true);
+      assert.equal(visibility.consumer3DAdmitted,false);
+      assert.equal(visibility.releaseAuthorized,false);
+      results.selectedResearchFrontCoverage.push({
+       ...visibility,selectedName:selected.name,
+       actualSelectedResearchShiftMeters:selected.displacementMeters,
+       selectedFitApproved:false,physicalSkirtScaleMeasured:false
+      });
+     }
+    }
+   }
+   const disabled=await page.evaluate(()=>
+    window.nativeP89Skirt.showOnlySelectedRegistration89(false));
+   assert.equal(disabled.status,'ORIGINAL_LICENSED_PHOTO_SKIRT_FULLY_RESTORED');
+   assert.equal(disabled.selectedPreviewActive,false);
+   assert.equal(disabled.originalSourcePositionUVSkinAndRestPreserved,true);
+   const restoredPose=await page.evaluate(p=>
+    window.nativeP89Skirt.setPose(p),selectedPose);
+   assert.equal(restoredPose.strictTransverseSourceBodyTriangleCrossings,
+    originalPose.strictTransverseSourceBodyTriangleCrossings,
+    'selected-source candidate failed to restore original photographed garment');
+   const state=await page.evaluate(()=>window.nativeP89Skirt.getState());
+   assert.equal(state.researchOnlySourceSelectedPreviewActive,false);
+   assert.equal(state.originalSourceSHA256,required.skirt);
+   assert.equal(state.bones,163);
+   assert.equal(state.consumer3DAdmission,false);
+  }
   // Fixed original+45mm source garment is also checked at two ORIGINAL
   // P541/3D43 quarter-step static arm-pose interpolations, not continuously.
   // A motion interpolant is NOT swept collision / cloth physics clearance.
@@ -555,6 +661,13 @@ try{
    });
   }
  }
+ assert.equal(results.selectedResearchPoseChecks.length,10);
+ assert.equal(results.selectedResearchNativeScreenshots.length,18);
+ assert.equal(results.selectedResearchFrontCoverage.length,6);
+ assert.equal(results.selectedResearchFrontCoverage.filter(
+  x=>x.status==='ORIGINAL_PHOTOGRAPH_CENTER_FRONT_COVERAGE_IMPROVED_RESEARCH_ONLY'
+ ).length,results.selectedResearchFrontCoverage.length,
+  'selected source registration fails authentic photographed front visible coverage: 3D remains BLOCKED');
  assert.equal(results.research45OnlyQuarterPoseChecks.length,4);
  assert.equal(results.research45OnlyPreviewScreenshots.length,18);
  assert.equal(results.originalPhoto45FrontVisibilityReports.length,6);
@@ -580,7 +693,10 @@ try{
  assert.equal(results.registrationTrials.length,2);
  assert.equal(results.measuredBodyFitTrials.length,2);
  assert.equal(results.neutralRearTrials.length,2);
- assert.equal(results.captures.length,36);
+ assert.equal(results.captures.length,54);
+ assert.equal(results.captures.filter(x=>
+  x.name?.startsWith('selected-five-pose-source-skirt-')).length,18,
+  'selected original source screenshots must not be silently missing');
  assert.equal(results.poseSamples.length,6);
  assert.equal(results.diffs.length,18);
  assert.equal(results.errors.length,0,'real original source shader/crash problem');
@@ -609,6 +725,10 @@ try{
    provisionalContactReduction:results.neutralRearTrials.map(x=>x.bestProvisional?.originalSourcePoseCrossingSum-x.bestProvisional?.trialSourcePoseCrossingSum||0),
    measuredBodyFitTrialStatus:results.measuredBodyFitTrials.map(x=>x.status),
    photoSkirtRegistrationStatus:results.registrationTrials.map(x=>x.status),
+   sourceSelectedOriginalPhotoFrontCoverage:results.selectedResearchFrontCoverage.map(x=>x.status),
+   selectedRegistrationTrueFivePoseNativeChecks:results.selectedResearchPoseChecks.length,
+   selectedRegistrationRealCameraScreenshots:results.selectedResearchNativeScreenshots.length,
+   selectedRegistrationFrontBodyOcclusionFractions:results.selectedResearchFrontCoverage.map(x=>x.rigid45mmCenterFrontalVisibleMannequinFraction),
    sourceWaistBoneAuditStatus:results.waistAnchorLandmarkReports.map(x=>x.status),
    researchOnly45mm3DPoseBVHMatches:results.research45OnlyPoseBVHChecks.length,
    researchOnly45mmQuarterStepStaticPoseBVHChecks:results.research45OnlyQuarterPoseChecks.length,
