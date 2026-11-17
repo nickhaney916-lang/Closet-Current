@@ -83,6 +83,7 @@ function mission4Preview1054ReconcileRedraw(){
 // M62: explicit DOUBLE opt-in. The ordinary consumer never imports M59 or
 // mounts any physical-unit-unverified research gallery.
 const mission4PhotoOnly59Active=mission4Preview1054Active&&
+ typeof URLSearchParams==='function'&&typeof location!=='undefined'&&
  new URLSearchParams(location.search).get('reviewedPhotoGallery59')==='research';
 let mission4PhotoOnly59Viewer=null;
 let currentBoard=cleanOutfitBoard({},[]),savedOutfitBoards=[],boardInitialized=false,choosingSlot='shoes';
