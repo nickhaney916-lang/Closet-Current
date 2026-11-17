@@ -1,0 +1,93 @@
+name: MAIN186 held WebKit seventh M172 actual worker phase evidence NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main186-held-webkit-m172-phase-diagnostic-HOLD]
+  pull_request:
+    branches: [research/main1054-m58-real-p88-browser-worker-HOLD]
+    paths:
+      - scripts/test-main186-webkit-m172-worker-phase.mjs
+      - .github/workflows/main186-held-webkit-m172-phase-no-deploy.yml
+      - research/master-consolidation-1054/M186-HELD-WEBKIT-M172-WORKER-STAGE-HOLD.md
+permissions:
+  contents: read
+jobs:
+  real-webkit-seventh-stage:
+    name: genuine WebKit after six unmodified model passes independent #${{ matrix.independent }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    strategy:
+      fail-fast: false
+      matrix:
+        independent: [1, 2]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: webkit
+      P94_WIDTH: '390'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: SHA exact source and restrict to three research-only files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=f2befed4c776786dc11843b98fafec72f2d9c202
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse HEAD:scripts/test-main186-webkit-m172-worker-phase.mjs)" = ef8bb625878f6246af162ffcc9ba09c026bb3b6a
+          test "$(git rev-parse HEAD:scripts/test-main172-24mp-private-state-invariance.mjs)" = ad4cb6bfee719b6083b9abc6d11ade2551e77c58
+          test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 58194c1bbcfca7b46f1c71b1ee0cc3dbc88c7
+          test "$(git rev-parse HEAD:scripts/test-main58-actual-p88-wasm-browser.mjs)" = 96ba2f5ee2420de52f45911881fdcc139455c353
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = d478fcf6e4e8889a23b1620b444667ac949da7a9
+          git diff --exit-code "$BASE" HEAD -- public/ scripts/ ':(exclude)scripts/test-main186-webkit-m172-worker-phase.mjs' tests/ supabase/ benchmark/ research/parallel96-highres/ research/multi-garment-capture-01/
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              scripts/test-main186-webkit-m172-worker-phase.mjs|.github/workflows/main186-held-webkit-m172-phase-no-deploy.yml|research/master-consolidation-1054/M186-HELD-WEBKIT-M172-WORKER-STAGE-HOLD.md) ;;
+              *) echo "M186 blocked product or unrelated source change: $file"; exit 1 ;;
+            esac
+          done
+          node --check scripts/test-main186-webkit-m172-worker-phase.mjs
+          M186_SELF_CHECK=true node scripts/test-main186-webkit-m172-worker-phase.mjs
+      - name: Prepare exact immutable original M58 P88 donor files
+        shell: bash
+        run: |
+          set -euo pipefail
+          P88=cc4554ef0104506a72bf0a28423fee52b6e4fff2
+          git cat-file -e "$P88^{commit}"
+          mkdir -p .m57-exact-p88-donor/public
+          for file in outfit-worker.mjs outfit-segmentation.mjs outfit-instance-review-840.mjs photo-color.js; do
+            git show "$P88:public/$file" > ".m57-exact-p88-donor/public/$file"
+            test "$(git hash-object ".m57-exact-p88-donor/public/$file")" = "$(git rev-parse "$P88:public/$file")"
+          done
+          test "$(git hash-object .m57-exact-p88-donor/public/outfit-worker.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Install pinned original browser, WASM and private local runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Exact six unmodified real-model WebKit prelude then instrumented M172 strict source
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in 1 2 3 4 5 6 7; do
+            unset P96_NATIVE_4K || true
+            case "$i" in
+              1) script=scripts/test-main58-actual-p88-wasm-browser.mjs; export P94_WIDTH=390 ;;
+              2) script=scripts/test-parallel94-native-p88-browser.mjs; export P94_WIDTH=320 ;;
+              3) script=scripts/test-parallel94-native-p88-browser.mjs; export P94_WIDTH=390 ;;
+              4) script=scripts/test-parallel94-native-p88-browser.mjs; export P94_WIDTH=430 ;;
+              5) script=scripts/test-parallel96-native-highres-browser.mjs; export P94_WIDTH=390 ;;
+              6) script=scripts/test-parallel96-native-highres-browser.mjs; export P94_WIDTH=390; export P96_NATIVE_4K=true ;;
+              7) script=scripts/test-main186-webkit-m172-worker-phase.mjs; export P94_WIDTH=390; export P96_NATIVE_4K=true ;;
+            esac
+            echo "M186_REAL_MODEL_SOURCE_STEP_BEGIN step=$i of=7 diagnosticOnly=$([ "$i" = 7 ] && echo true || echo false) originalAssertionsEnforced=true"
+            node "$script"
+            echo "M186_REAL_MODEL_SOURCE_STEP_PASS step=$i of=7"
+          done
+          echo "M186_WEBKIT_SEVEN_STEP_SOURCE_SAFE_PASS noRetries=true noFakeModel=true originalM172Assertions=true familyAlpha=HOLD"
