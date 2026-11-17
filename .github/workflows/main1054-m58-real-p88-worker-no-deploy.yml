@@ -90,9 +90,9 @@ jobs:
           # Original JPEG is public licensed test input; NO owner/cloud/3D scope change.
           test "$(git rev-parse HEAD:benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg)" = 27864552c036f9bf089be147531c4da8ccdcb7d7
           test "$(git rev-parse HEAD:research/parallel96-highres/LICENSED_CAMERA_ORIGINAL_FIXTURE.md)" = 9d9fda3b897aa624bff11e1f32d3bf6e447f16a7
-          test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 4f8fe91ec1974ff936fa90d33874db7df0782e48
+          test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 1840c4496aefc28941f4c3de24a29bac1cb5e792
           test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 58194c1bbcfca7b46f1c71b1ee0cc00c3dbc88c7
-          test "$(git rev-parse HEAD:tests/parallel96-highres-source-derivative.test.mjs)" = fcbad9d8744bd5fee68b72d1b3b235340d61883c
+          test "$(git rev-parse HEAD:tests/parallel96-highres-source-derivative.test.mjs)" = 2d913221968d4c09d9be33068efa80ef45b9de9b
           node --check research/parallel96-highres/source-derivative-intake96.mjs
           node --check scripts/test-parallel96-native-highres-browser.mjs
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
@@ -473,7 +473,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD:tests/parallel96-highres-source-derivative.test.mjs)" = fcbad9d8744bd5fee68b72d1b3b235340d61883c
+          test "$(git rev-parse HEAD:tests/parallel96-highres-source-derivative.test.mjs)" = 2d913221968d4c09d9be33068efa80ef45b9de9b
           node --test tests/parallel96-highres-source-derivative.test.mjs
       - name: Run exact-head all inherited application and recognition tests
         run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
