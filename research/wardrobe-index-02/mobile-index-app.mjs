@@ -36,10 +36,11 @@ function fillSelect(doc,element,items,previous){
 function validCategory(c){return c===''||INDEX01_CATEGORIES.includes(c);}
 
 export function createMobileWardrobeIndex02({
- document:doc,closetElement,authenticatedOwner,readSavedItems,onRerender=()=>{}
+ document:doc,closetElement,authenticatedOwner,getOwnerSession,readSavedItems,onRerender=()=>{}
 }={}){
  if(!doc?.createElement||!closetElement?.querySelector||
     typeof authenticatedOwner!=='function'||typeof readSavedItems!=='function'||
+    (getOwnerSession!==undefined&&typeof getOwnerSession!=='function')||
     typeof onRerender!=='function')
   throw Error('INDEX-02 requires signed-in closet DOM and owner-bound saved-item reader');
  const existing=closetElement.querySelector('#closetIndex02');
@@ -93,9 +94,32 @@ export function createMobileWardrobeIndex02({
  doc.head?.append(style);
 
  let filters=initial(),allowed=null,summary=null,owner=null,disposed=false;
- let serial=Promise.resolve(),version=0,ready=false,lastError=null;
+ let serial=Promise.resolve(),version=0,ready=false,lastError=null,activeLease=null;
+ // M192: owner ID alone survives logout+relogin and DB replacement. The real
+ // native opt-in adapter supplies the actual auth/DB references and generation.
+ // Only transient references live in this closure: no token, photo or account
+ // is serialized, stored in an index response, or logged.
+ const currentLease=()=>{
+  if(typeof getOwnerSession!=='function')return null;
+  try{
+   const session=getOwnerSession(),id=authenticatedOwner();
+   if(typeof id!=='string'||!id||!session||
+      session.authRef?.user?.id!==id||
+      typeof session.authRef?.assertCurrent!=='function'||
+      session.privateDbRef?.name!=='closet-current-user-'+id||
+      !Number.isSafeInteger(session.operationEpoch)||session.operationEpoch<0)
+    return null;
+   session.authRef.assertCurrent();
+   return {ownerId:id,authRef:session.authRef,
+    privateDbRef:session.privateDbRef,operationEpoch:session.operationEpoch};
+  }catch{return null;}
+ };
+ const sameLease=(a,b)=>!!a&&!!b&&a.ownerId===b.ownerId&&
+  a.authRef===b.authRef&&a.privateDbRef===b.privateDbRef&&
+  a.operationEpoch===b.operationEpoch;
  const ownerValid=()=>typeof authenticatedOwner()==='string'&&authenticatedOwner().length>0;
- const guard=()=>ready&&ownerValid()&&authenticatedOwner()===owner&&!disposed;
+ const guard=()=>ready&&ownerValid()&&authenticatedOwner()===owner&&!disposed&&
+  (typeof getOwnerSession!=='function'||sameLease(activeLease,currentLease()));
  function needsFilter(){return filters.category!==''||filters.itemType!==''||filters.color!==''||
   filters.search.trim()!==''||filters.review;}
  function ensureVisible(){
@@ -183,15 +207,19 @@ export function createMobileWardrobeIndex02({
     try{
      const claimed=authenticatedOwner();
      if(typeof claimed!=='string'||!claimed)throw Error('signed in owner required');
+     const capturedLease=currentLease();
+     if(typeof getOwnerSession==='function'&&!capturedLease)
+      throw Error('signed in owner lease unavailable');
      const next=await bridge.refresh();
-     if(disposed||request!==version||authenticatedOwner()!==claimed)
+     if(disposed||request!==version||authenticatedOwner()!==claimed||
+        typeof getOwnerSession==='function'&&!sameLease(capturedLease,currentLease()))
       throw Error('stale owner snapshot');
-     owner=claimed;summary=next;ready=true;lastError=null;
+     owner=claimed;activeLease=capturedLease;summary=next;ready=true;lastError=null;
      syncFacets();updated();
      return Object.freeze({...summary});
     }catch(error){
      // No stale contents or count from an old owner may remain displayed.
-     allowed=new Set();ready=false;owner=null;summary=null;
+     allowed=new Set();ready=false;owner=null;summary=null;activeLease=null;
      bridge.clear();lastError=error instanceof Error?error.message:'refresh failure';
      root.setAttribute('aria-busy','false');renderCounts();onRerender();
      return null;
@@ -212,7 +240,7 @@ export function createMobileWardrobeIndex02({
   },
   clear(){
    // Opt-in stops cleanly at logout/navigation. Underlying records untouched.
-   version++;filters=initial();allowed=null;summary=null;ready=false;owner=null;
+   version++;filters=initial();allowed=null;summary=null;ready=false;owner=null;activeLease=null;
    bridge.clear();lastError=null;
    category.value=type.value=color.value=search.value='';review.checked=false;
    root.setAttribute('aria-busy','false');renderCounts();onRerender();
