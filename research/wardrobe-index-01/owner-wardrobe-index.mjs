@@ -32,10 +32,24 @@ function ownerCheck(owner,record){
 }
 function identity(record){
  const source=record.sourceSHA256||record.originalPhoto?.sha256||record.originalPhotoSHA256||'';
- const cutout=record.cutoutSHA256||record.segmentHint?.cutoutSHA256||'';
+ const hint=record.segmentHint;
+ const cutout=record.cutoutSHA256||hint?.cutoutSHA256||'';
  const single=record.singleGarmentVerified===true;
- if(record.sourceHashVerified!==true||!validSHA(source))return {source:null,cutout:null,kind:'unverified'};
- if(validSHA(cutout))return {source,cutout,kind:'verified-cutout'};
+ // A claimed source digest is not verified if the original receipt disagrees.
+ if(record.sourceHashVerified!==true||!validSHA(source)||
+    (record.originalPhoto?.sha256&&record.originalPhoto.sha256!==source)||
+    (record.originalPhotoSHA256&&record.originalPhotoSHA256!==source))
+  return {source:null,cutout:null,kind:'unverified'};
+ // Different hashes alone do NOT prove independently reviewed garment crops.
+ // An unverified, clipped or unbound crop must remain an ambiguous shared
+ // original, even when singleGarmentVerified is also incorrectly asserted.
+ if(cutout){
+  if(validSHA(cutout)&&hint?.cutoutSHA256===cutout&&
+     hint?.originalSHA256===source&&hint?.verified===true&&
+     hint?.ownerReviewedInstance===true&&hint?.clipped!==true)
+   return {source,cutout,kind:'verified-cutout'};
+  return {source,cutout:null,kind:'ambiguous-source'};
+ }
  if(single)return {source,cutout:null,kind:'verified-single'};
  return {source,cutout:null,kind:'ambiguous-source'};
 }
@@ -69,6 +83,7 @@ function normalizedRow(owner,record,position){
  if(record.requiresOwnershipConfirmation)reasons.push('ownership-unconfirmed');
  if(record.segmentHint?.clipped)reasons.push('clipped-source');
  const photo=identity(record);
+ if(photo.kind==='unverified')reasons.push('original-source-unverified');
  if(photo.kind==='ambiguous-source')reasons.push('shared-source-needs-cutout-proof');
  const validSeasons=Array.isArray(record.seasons)?unique(record.seasons.filter(s=>seasons.has(s))):[];
  const normalizedSeasons=validSeasons.includes('All seasons')?['All seasons']:validSeasons;
@@ -167,8 +182,10 @@ export function previewOwnerWardrobeAddition(index,ownerId,candidate){
   if(match==='duplicate')return Object.freeze({status:'reject',reason:'verified-source-and-segment-duplicate',existingId:previous.id});
   if(match==='ambiguous')ambiguous=true;
  }
- if(ambiguous||row.reviewReasons.includes('possible-duplicate'))
+ if(ambiguous||row.sourceKind==='ambiguous-source'||row.reviewReasons.includes('possible-duplicate'))
   return Object.freeze({status:'review',reason:'potential-same-source-ambiguous'});
+ if(row.sourceKind==='unverified')
+  return Object.freeze({status:'review',reason:'original-source-unverified'});
  if(row.reviewReasons.includes('ownership-unconfirmed'))
   return Object.freeze({status:'review',reason:'ownership-unconfirmed'});
  return Object.freeze({status:'allow',reason:'no-proven-duplicate'});
