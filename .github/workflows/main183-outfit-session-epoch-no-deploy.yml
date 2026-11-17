@@ -32,9 +32,15 @@ jobs:
           test "$(git rev-parse HEAD:tests/outfit-capture.test.cjs)" = b254c78302136761e1edf336056f8b949832c0ec
           test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          # M183: inherited protected CI changes are scoped only to exact
+          # donor source/test SHA repins and this named workflow allowlist.
+          test "$(git rev-parse HEAD:.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml)" = 9cda77f35a8cfbede447e43d3824afa315e8c606
+          test "$(git rev-parse HEAD:.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml)" = 10cb88c8915521edf2cb847d716709304182a8a4
+          test "$(git rev-parse HEAD:.github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml)" = 1dc421e71cb726b5884da4df39950b9e0c234cf4
+          test "$(git rev-parse HEAD:.github/workflows/main181-zero-proposal-native-no-deploy.yml)" = 3cd39fb4fa69b859f182f746fa2993f8f09317ee
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
-              public/outfit-capture.js|tests/outfit-capture.test.cjs|.github/workflows/main183-outfit-session-epoch-no-deploy.yml) ;;
+              public/outfit-capture.js|tests/outfit-capture.test.cjs|.github/workflows/main183-outfit-session-epoch-no-deploy.yml|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml|.github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml|.github/workflows/main181-zero-proposal-native-no-deploy.yml) ;;
               *) echo "M183 unreviewed change: $path"; exit 1 ;;
             esac
           done
