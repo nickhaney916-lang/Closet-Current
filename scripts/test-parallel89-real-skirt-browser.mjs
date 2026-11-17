@@ -81,7 +81,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
- selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
+ selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -717,6 +717,75 @@ try{
    assert.equal(seams.sourcePhoto2DFallbackRequired,true);
    assert.equal(seams.consumer3DAdmitted,false);
    assert.equal(seams.releaseAuthorized,false);
+   // Independent anatomical localization: original indexed public source
+   // body edge positions → aggregate original source mesh, bone regions and
+   // normalized vertical bands only. This must fully agree with the prior
+   // genuine-indexed and original-rest/skin seam evidence, not "repair" it.
+   const mapped=await page.evaluate(()=>
+    window.nativeP89Skirt.auditSelectedOriginalBodyBoundaryRegions89());
+   assert.equal(mapped.schema,'P89-original-public-anatomy-unresolved-boundary-regions/v1');
+   assert.equal(mapped.status,
+    'SOURCE_ANATOMICAL_GAPS_AND_FOREIGN_MESH_CONTACTS_NOT_SIGNED_VOLUME');
+   assert.equal(mapped.avatar,avatar);
+   assert.equal(mapped.pose,selectedPose);
+   assert.equal(mapped.sourcePhotoSHA256,required.skirt);
+   assert.equal(mapped.sourceAnatomyGLBSHA256,required[avatar]);
+   assert.equal(mapped.originalFullIndexedSourceBodyAnd163BoneRigUsed,true);
+   assert.equal(mapped.genuineSourceBoneNamesAndMeshIdentityUsed,true);
+   assert.equal(mapped.unresolvedForeignMeshEdgesNeverVirtuallyWelded,true);
+   const regions=mapped.sourceAnatomicalRegionEvidence;
+   assert.equal(regions.schema,'P89-pure-unmodified-anatomical-body-boundary-regions/v1');
+   assert.equal(regions.originalBodyIndexedTriangleCount,
+    topology.originalIndexedTriangleCount);
+   assert.equal(regions.originalBodyIndexedBoundaryEdgeCount,
+    topology.sourceOpenBoundaryEdgeCount);
+   assert.equal(regions.sourceCompatibleGeometricTwinBoundaryEdges,
+    proof.compatibleOriginalRestAndSkinBoundaryEdges);
+   assert.equal(regions.sourceForeignMeshCoincidentTwinBoundaryEdges,
+    proof.geometryTwinsDifferentOriginalSourceMeshEdges);
+   assert.equal(regions.sourceNoGeometricTwinBoundaryEdges,
+    proof.sourceUnmatchedBoundaryEdges);
+   assert.equal(regions.ambiguousBoundaryEdges,0);
+   assert.equal(regions.sourceCompatibleGeometricTwinBoundaryEdges+
+    regions.sourceForeignMeshCoincidentTwinBoundaryEdges+
+    regions.sourceNoGeometricTwinBoundaryEdges+regions.ambiguousBoundaryEdges,
+    topology.sourceOpenBoundaryEdgeCount);
+   // The immutable P541 original licensed source models have exactly
+   // 80 one-face edges without original-world-position twins and 1,632
+   // edges with coincident geometry across DIFFERENT source meshes.
+   assert.equal(regions.sourceNoGeometricTwinBoundaryEdges,80);
+   assert.equal(regions.sourceForeignMeshCoincidentTwinBoundaryEdges,1632);
+   assert.equal(regions.sourceCompatibleGeometricTwinBoundaryEdges,42998);
+   for(const [name,agg,total] of [
+    ['unmatched',regions.unmatchedSourceAnatomicalRegions,80],
+    ['cross-mesh',regions.foreignSourceMeshAnatomicalRegions,1632]
+   ]){
+    assert.equal(agg.originalIndexedBoundaryEdgeCount,total);
+    for(const group of ['originalSourceMeshBreakdown',
+     'originalSourceDominantBoneNameBreakdown',
+     'originalSourceBoneRegionBreakdown',
+     'originalBodyRelativeHeightBreakdown']){
+     assert.ok(Array.isArray(agg[group])&&agg[group].length>0,
+      'source '+name+' anatomical evidence missing '+group);
+     // The source original mesh and body-region bins are exhaustive;
+     // the top source bone-name list can intentionally be truncated.
+     if(group!=='originalSourceDominantBoneNameBreakdown')
+      assert.equal(agg[group].reduce((n,x)=>n+x.edges,0),total,
+       'source '+name+' position classification lost original indexed edges');
+    }
+    assert.equal(agg.originalBodyHeightBandsNormalizedNotMeasuredCentimeters,true);
+    assert.equal(agg.onlyAggregateOriginalPublicBodyRegions,true);
+   }
+   assert.equal(regions.exactSourceMeshIdentityNeverCombined,true);
+   assert.equal(regions.originalSourceBoneSkinProvenanceReadOnly,true);
+   assert.equal(regions.realBodySignedExteriorContainmentNotCertified,true);
+   assert.equal(mapped.originalBodyIndexedGeometryUnchanged,true);
+   assert.equal(mapped.closedBodyVolumeCertified,false);
+   assert.equal(mapped.signedExteriorContainmentCertified,false);
+   assert.equal(mapped.originalPhoto2DFallbackRequired,true);
+   assert.equal(mapped.consumer3DAdmitted,false);
+   assert.equal(mapped.releaseAuthorized,false);
+   results.selectedOriginalSourceBodyBoundaryRegionAudits.push(mapped);
    results.selectedOriginalSourceBodySeamAudits.push(seams);
    results.selectedSourceWholeBodyClosureAudits.push(closure);
    results.selectedSourceBodyRadialGapAudits.push(radial);
@@ -829,6 +898,7 @@ try{
  assert.equal(results.selectedSourceBodyRadialGapAudits.length,10);
  assert.equal(results.selectedSourceWholeBodyClosureAudits.length,10);
  assert.equal(results.selectedOriginalSourceBodySeamAudits.length,10);
+ assert.equal(results.selectedOriginalSourceBodyBoundaryRegionAudits.length,10);
  assert.equal(results.selectedResearchPoseChecks.length,10);
  assert.equal(results.selectedResearchNativeScreenshots.length,18);
  assert.equal(results.selectedResearchFrontCoverage.length,6);
@@ -897,6 +967,19 @@ try{
    selectedRegistrationTrueFivePoseNativeChecks:results.selectedResearchPoseChecks.length,
    sourceTrueWorldRadialGapCheckCount:results.selectedSourceBodyRadialGapAudits.length,
    sourceOriginalWholeBodyClosureCheckCount:results.selectedSourceWholeBodyClosureAudits.length,
+   originalSourceUnresolvedBoneRegionProofCount:results.selectedOriginalSourceBodyBoundaryRegionAudits.length,
+   originalSourceUnresolvedByAvatarSourcePose:results.selectedOriginalSourceBodyBoundaryRegionAudits.filter(x=>x.pose==='source').map(x=>({
+    avatar:x.avatar,pose:x.pose,
+    unmatched:x.sourceAnatomicalRegionEvidence.sourceNoGeometricTwinBoundaryEdges,
+    foreign:x.sourceAnatomicalRegionEvidence.sourceForeignMeshCoincidentTwinBoundaryEdges,
+    unmatchedSourceMeshes:x.sourceAnatomicalRegionEvidence.unmatchedSourceAnatomicalRegions.originalSourceMeshBreakdown,
+    unmatchedSourceBoneLabels:x.sourceAnatomicalRegionEvidence.unmatchedSourceAnatomicalRegions.originalSourceDominantBoneNameBreakdown,
+    unmatchedSourceRegion:x.sourceAnatomicalRegionEvidence.unmatchedSourceAnatomicalRegions.originalSourceBoneRegionBreakdown,
+    unmatchedHeightBands:x.sourceAnatomicalRegionEvidence.unmatchedSourceAnatomicalRegions.originalBodyRelativeHeightBreakdown,
+    foreignSourceMeshPairs:x.sourceAnatomicalRegionEvidence.foreignSourceMeshAnatomicalRegions.sourceMeshPairBreakdown,
+    foreignSourceRegions:x.sourceAnatomicalRegionEvidence.foreignSourceMeshAnatomicalRegions.originalSourceBoneRegionBreakdown,
+    foreignHeightBands:x.sourceAnatomicalRegionEvidence.foreignSourceMeshAnatomicalRegions.originalBodyRelativeHeightBreakdown
+   })),
    originalSourceVirtualSeamProofCount:results.selectedOriginalSourceBodySeamAudits.length,
    originalSourceVirtualSeamStatuses:results.selectedOriginalSourceBodySeamAudits.map(x=>x.status),
    originalSourceVirtualSeamMatchedEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.compatibleOriginalRestAndSkinBoundaryEdges),
