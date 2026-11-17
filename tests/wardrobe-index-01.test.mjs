@@ -7,6 +7,7 @@ import {
 
 const A='owner-private-A',B='owner-private-B';
 const h=c=>c.repeat(64);
+const ownerVerifiedCutout=c=>({cutoutSHA256:h(c),originalSHA256:h('b'),verified:true,ownerReviewedInstance:true});
 const piece=(id,category,itemType,color,extra={})=>({
  id,category,itemType,color,name:color+' '+itemType,sourceHashVerified:false,
  seasons:['Fall'],...extra
@@ -87,11 +88,11 @@ test('INDEX-01 two-account isolation always requires signed-in owner and blocks 
  assert.throws(()=>buildOwnerWardrobeIndex(A,[{category:'Tops'}]),/missing-id/);
 });
 
-test('INDEX-01 exact verified single source is rejected and shared multigarment source retains separately cut garments',()=>{
+test('INDEX-01 exact verified single source rejects duplicate and only owner-proved multigarment cutouts remain separate',()=>{
  const photos=[
   piece('dress','Dresses','Casual dress','Blue',{sourceSHA256:h('a'),sourceHashVerified:true,singleGarmentVerified:true}),
-  piece('shirt','Tops','T-shirt','White',{sourceSHA256:h('b'),cutoutSHA256:h('c'),sourceHashVerified:true}),
-  piece('jeans','Bottoms','Jeans','Blue',{sourceSHA256:h('b'),cutoutSHA256:h('d'),sourceHashVerified:true})
+  piece('shirt','Tops','T-shirt','White',{sourceSHA256:h('b'),cutoutSHA256:h('c'),segmentHint:ownerVerifiedCutout('c'),sourceHashVerified:true}),
+  piece('jeans','Bottoms','Jeans','Blue',{sourceSHA256:h('b'),cutoutSHA256:h('d'),segmentHint:ownerVerifiedCutout('d'),sourceHashVerified:true})
  ];
  const ix=buildOwnerWardrobeIndex(A,photos);
  assert.equal(ix.summary.sourcePairs.length,0);
@@ -99,16 +100,16 @@ test('INDEX-01 exact verified single source is rejected and shared multigarment 
   sourceSHA256:h('a'),sourceHashVerified:true,singleGarmentVerified:true
  })).status,'reject');
  assert.equal(previewOwnerWardrobeAddition(ix,A,piece('shirt-copy','Tops','T-shirt','White',{
-  sourceSHA256:h('b'),cutoutSHA256:h('c'),sourceHashVerified:true
+  sourceSHA256:h('b'),cutoutSHA256:h('c'),segmentHint:ownerVerifiedCutout('c'),sourceHashVerified:true
  })).status,'reject');
  assert.equal(previewOwnerWardrobeAddition(ix,A,piece('pants-copy','Bottoms','Shorts','Blue',{
-  sourceSHA256:h('b'),cutoutSHA256:h('e'),sourceHashVerified:true
+  sourceSHA256:h('b'),cutoutSHA256:h('e'),segmentHint:ownerVerifiedCutout('e'),sourceHashVerified:true
  })).status,'allow');
  assert.equal(previewOwnerWardrobeAddition(ix,A,piece('ambiguous','Tops','T-shirt','White',{
   sourceSHA256:h('b'),sourceHashVerified:true
  })).status,'review');
  const ix2=buildOwnerWardrobeIndex(A,[...photos,
-  piece('second-shirt','Tops','T-shirt','White',{sourceSHA256:h('b'),cutoutSHA256:h('c'),sourceHashVerified:true})]);
+  piece('second-shirt','Tops','T-shirt','White',{sourceSHA256:h('b'),cutoutSHA256:h('c'),segmentHint:ownerVerifiedCutout('c'),sourceHashVerified:true})]);
  assert.equal(ix2.summary.sourcePairs[0].status,'duplicate');
  assert.deepEqual(ix2.summary.sourcePairs[0].ids,['shirt','second-shirt']);
  assert.equal(ix2.summary.total,4,'never silently drop already saved garments');
