@@ -26,17 +26,17 @@ jobs:
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
-              public/outfit-capture.js|tests/outfit-capture.test.cjs|scripts/test-main181-zero-proposal-native-browser.mjs|.github/workflows/main181-zero-proposal-native-no-deploy.yml|research/master-consolidation-1054/M181-ZERO-PROPOSAL-NATIVE-FAILCLOSED-HOLD.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml|.github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml|research/master-consolidation-1054/M180-WEBKIT-FIRSTLOAD-RELIABILITY-HOLD.md) ;;
+              public/outfit-capture.js|tests/outfit-capture.test.cjs|scripts/test-main181-zero-proposal-native-browser.mjs|.github/workflows/main181-zero-proposal-native-no-deploy.yml|research/master-consolidation-1054/M181-ZERO-PROPOSAL-NATIVE-FAILCLOSED-HOLD.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml|.github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml|research/master-consolidation-1054/M180-WEBKIT-FIRSTLOAD-RELIABILITY-HOLD.md|.github/workflows/main183-outfit-session-epoch-no-deploy.yml) ;;
               *) echo "M181 blocked unreviewed change: $path"; exit 1 ;;
             esac
           done
           # M182 reviewed protected M180 integration workflow-only compatibility.
           # M180 itself pins this exact M181 workflow blob to prevent cycles.
-          test "$(git rev-parse HEAD:.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml)" = 7268fc9466099e57c5eb7e048581bce53650ebc7
-          test "$(git rev-parse HEAD:.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml)" = 20b3fbc9ea5e3b449ed1381b77cc5f1354d81495
+          test "$(git rev-parse HEAD:.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml)" = 9cda77f35a8cfbede447e43d3824afa315e8c606
+          test "$(git rev-parse HEAD:.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml)" = 10cb88c8915521edf2cb847d716709304182a8a4
           test "$(git rev-parse HEAD:research/master-consolidation-1054/M180-WEBKIT-FIRSTLOAD-RELIABILITY-HOLD.md)" = 080c07dcb3e091d9f2a7e219b5750bf068c83252
-          test "$(git rev-parse HEAD:public/outfit-capture.js)" = b85242b7856c3b83ed4c38afcb4b409f7292933e
-          test "$(git rev-parse HEAD:tests/outfit-capture.test.cjs)" = ab60c5d45b60f5f8daf994898bcd2146f1a97f45
+          test "$(git rev-parse HEAD:public/outfit-capture.js)" = 8d55715ef09e34086d3c401ec38340bfc25f5fe8
+          test "$(git rev-parse HEAD:tests/outfit-capture.test.cjs)" = b254c78302136761e1edf336056f8b949832c0ec
           test "$(git rev-parse HEAD:scripts/test-main181-zero-proposal-native-browser.mjs)" = ea1a5bdb7f0617c71695f9b0382afd6ff7d5f089
           test "$(git rev-parse HEAD:research/master-consolidation-1054/M181-ZERO-PROPOSAL-NATIVE-FAILCLOSED-HOLD.md)" = b408db8aeb16750b87a18f940d40d7bf4d05497b
           git diff --exit-code "$BASE" HEAD -- public/app.js public/outfit-worker.mjs public/outfit-worker-p94.mjs public/outfit-board.js public/auth.js public/native-default-atomic-import-m3.mjs public/native-default-verified-backup-export-m3.mjs supabase/ benchmark/fixtures/
@@ -77,7 +77,7 @@ jobs:
         run: |
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          test "$(git rev-parse HEAD:public/outfit-capture.js)" = b85242b7856c3b83ed4c38afcb4b409f7292933e
+          test "$(git rev-parse HEAD:public/outfit-capture.js)" = 8d55715ef09e34086d3c401ec38340bfc25f5fe8
           test "$(git rev-parse HEAD:scripts/test-main181-zero-proposal-native-browser.mjs)" = ea1a5bdb7f0617c71695f9b0382afd6ff7d5f089
       - name: Install pinned Playwright and browser tools
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
