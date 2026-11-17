@@ -226,7 +226,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD:public/outfit-board.js)" = 5668a4bc6da2e94fc13d23392cd7fb4981d0bc2d
-          test "$(git rev-parse HEAD:scripts/test-main1054-m106-preview-terminal-browser.mjs)" = 333b5bfd05b9e164edce95ea595ced4c898a4c53
+          test "$(git rev-parse HEAD:scripts/test-main1054-m106-preview-terminal-browser.mjs)" = 016a266af467fea93a61315ad7738a2caec2da7d
           node --check public/outfit-board.js
           node --check scripts/test-main1054-m106-preview-terminal-browser.mjs
           node scripts/test-main1054-m106-preview-terminal-browser.mjs
