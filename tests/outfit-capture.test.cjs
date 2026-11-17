@@ -11,6 +11,57 @@ test('automatically cropped pieces enter indexing separately with original photo
 test('partial failure keeps emitted photos, offers retry and does not invent owned clothing',()=>{
  const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',hint:{categories:['Bottoms'],types:[],clipped:false}}});h.emit({type:'error'});assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);assert.equal(h.el('outfitRetry').hidden,false);assert.equal(h.c.busy,false);assert.equal(h.timers.size,0);
 });
+test('zero-proposal success is a recoverable failure, never a completed photo save',()=>{
+ const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');
+ const worker=h.c.worker;h.emit({type:'done',count:0});
+ assert.equal(h.c.busy,false);assert.equal(h.c.controlsDisabled,false);
+ assert.equal(worker.stopped,true);assert.equal(h.timers.size,0);
+ assert.equal(h.el('outfitRetry').hidden,false);
+ assert.match(h.el('outfitSplitStatus').textContent,/No new clothing pieces were added/);
+ assert.match(h.el('outfitSplitStatus').textContent,/Single item/);
+ assert.match(h.el('outfitSplitStatus').textContent,/Nothing was saved/);
+ assert.equal(h.c.items.length,0);assert.equal(h.c.batch.length,0);
+ assert.equal(h.el('useCapturedOutfit').disabled,true);
+});
+test('forged count and rejected worker pieces cannot hide zero-result recovery',()=>{
+ const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');
+ h.emit({type:'piece',piece:{image:'data:image/png;base64,NOTJPEG',hint:{categories:['Tops'],types:[]}}});
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,BBBB',hint:{categories:['InventedCategory'],types:[]}}});
+ h.emit({type:'done',count:999});
+ assert.equal(h.c.batch.length,0);assert.equal(h.c.items.length,0);
+ assert.equal(h.el('outfitRetry').hidden,false);
+ assert.equal(h.c.busy,false);
+});
+test('zero-result retry retains original and accepts later REVIEW-only piece, never an automatic save',()=>{
+ const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA','source1');
+ const stale=h.c.worker;h.emit({type:'done',count:0});
+ assert.equal(h.el('outfitRetry').hidden,false);
+ h.el('outfitRetry').onclick();
+ assert.notEqual(h.c.worker,stale);assert.equal(h.el('outfitRetry').hidden,true);
+ assert.equal(h.c.worker.request.image,'data:image/jpeg;base64,AAAA');
+ const hint={categories:['Tops'],types:[],clipped:false};
+ stale.onmessage({data:{id:stale.request.id,type:'piece',
+  piece:{image:'data:image/jpeg;base64,STALE',hint}}});
+ assert.equal(h.c.batch.length,0,'stale terminated worker cannot write photo results');
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,VALID',hint}});
+ h.emit({type:'done',count:1});
+ assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);
+ assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,AAAA');
+ assert.equal(h.el('outfitRetry').hidden,true);
+});
+test('duplicate-only scan keeps the previously pending private photo and enables retry',()=>{
+ const h=setup();const source='data:image/jpeg;base64,AAAA';
+ const hint={categories:['Tops'],types:[],clipped:false};
+ h.c.startOutfitSplit(source,'same-owner-source');
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,EXISTING',hint}});
+ h.emit({type:'done',count:1});
+ assert.equal(h.c.batch.length,1);
+ h.c.startOutfitSplit(source,'same-owner-source');
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,EXISTING',hint}});
+ h.emit({type:'done',count:1});
+ assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);
+ assert.equal(h.el('outfitRetry').hidden,false);
+});
 test('worker constructor failure restores controls rather than trapping capture',()=>{
  const h=setup({workerFails:true});h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');assert.equal(h.c.busy,false);assert.equal(h.c.controlsDisabled,false);assert.equal(h.el('outfitRetry').hidden,false);assert.equal(h.timers.size,0);
 });

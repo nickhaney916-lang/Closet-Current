@@ -70,7 +70,15 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID(),proof=null){
     if(p.recognitionPhoto&&(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.recognitionPhoto.image)||p.recognitionPhoto.image.length>8000000))return;
     if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:p.hint,recognitionPhoto:p.recognitionPhoto,originalPhoto:{image},originalSourceProof:guarded?job.proof:null,cropBounds:p.cropBounds,colorEstimate:p.colorEstimate}))job.added++;renderOutfitCapture();return;
    }
-   if(data.type==='done')finishOutfitSplit(job,job.added?job.added+' individual clothing photos cropped. Categories are being checked.':'No new clothing pieces could be located. Try a clearer full-body photo; exact duplicates may already be in Photo results.',false);
+   if(data.type==='done'){
+    // A Worker terminal 'done' with zero ACCEPTED crops is not a successful
+    // scan. Do not trust its claimed count; invalid/duplicate piece packets
+    // cannot become owned garments. Retain the source and show a usable retry.
+    const accepted=job.added>0;
+    finishOutfitSplit(job,accepted?
+     job.added+' individual clothing photos cropped. Categories are being checked.':
+     'No new clothing pieces were added. Nothing was saved. Try separating again, or choose Single item above to review an individual clothing photo. Your existing wardrobe remains unchanged.',!accepted);
+   }
    else if(data.type==='error')finishOutfitSplit(job,job.added?'Some pieces are kept; the rest could not be separated. Try again.':'This outfit could not be separated. Try another clear photo of one person, head to toe.',true);
   };
   job.worker.onerror=()=>finishOutfitSplit(job,'Outfit separation could not start. Your existing photos are kept. Try again.',true);
