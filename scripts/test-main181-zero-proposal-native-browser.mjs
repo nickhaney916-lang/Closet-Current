@@ -39,7 +39,7 @@ const server=createServer(async(req,res)=>{
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const origin='http://127.0.0.1:'+server.address().port;
 const auth='https://hlkgymugtfbirlpunsra.supabase.co';
-const unexpected=[],errors=[],stages=[];
+const unexpected=[],blockedStaticGET=[],errors=[],stages=[];
 let browser,context,page,stage='startup';
 const tick=name=>{stage=name;stages.push(name);};
 const count=()=>page.evaluate(()=>new Promise((ok,no)=>{
@@ -72,6 +72,14 @@ try{
       body:JSON.stringify({user:{id:'m181-A',email:'m181-A@example.test'},
        access_token:'synthetic-m181',refresh_token:'m181-refresh',expires_in:3600})});
    }
+  }
+  // The app may ask for public fonts/source-pinned JS. Blocking these GETs
+  // is intentional; none contains or transmits the original JPEG. An
+  // unrecognized host or ANY attempted POST still fails the egress assertion.
+  if(route.request().method()==='GET'&&
+     ['fonts.googleapis.com','fonts.gstatic.com',
+      'raw.githubusercontent.com','cdn.jsdelivr.net'].includes(u.hostname)){
+   blockedStaticGET.push(u.hostname);return route.abort();
   }
   unexpected.push({host:u.hostname,method:route.request().method()});
   return route.abort();
@@ -176,6 +184,7 @@ try{
  assert.deepEqual(errors,[]);
  const receipt={engine,width,stage:'PASS',stages,originalSHA256:sha,
   negativeWorkerInjectionOnly:true,genuineModelAccuracyTested:false,
+  blockedStaticAssetRequests:blockedStaticGET.length,unapprovedOutboundRequests:unexpected.length,
   actualNormalAppDOMAndIDB:true,actualInstalledBrowser:true,
   syntheticAuth:true,syntheticOwnerLabels:true,hostedRLS:false,
   realPhone:false,garmentFitted3D:false,noSilentSave:true,familyAlpha:'HOLD'};
