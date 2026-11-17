@@ -1,0 +1,6 @@
+# M182 integrated genuine P88 and M181 fail-closed recovery acceptance (HOLD)
+Source parent M180 exact `3ba517c386629d14eabcfa6a8137563f58cfa70b` PR #1251; M181 donor exact `e6591af24b39ae734bb40f4071a47864429d2ce2` PR #1252.
+Four byte-identical M181 files (public/outfit-capture.js; tests/outfit-capture.test.cjs; scripts/test-main181-zero-proposal-native-browser.mjs; research M181 handoff) adopted ONLY into an isolated child of M180. All WebKit worker/model, private owner photo, 3D, cloud, protected original workflows remain unchanged.
+Source locked 6-job workflow: 1 full inherited Node, actual Chromium+WebKit native unflagged built PWA negative-only zero-piece/fake-count/duplicate retry to owner-confirmed private original, and 3 separately spawned original unmodified WebKit genuine SegFormer WASM M58 and P94 processes.
+Never conflate a negative-only browser Worker with a real-model accuracy or stability test. No actual human blind labels, physical phones, signed hosted JWT/RLS, or source-fitted 3D proof. Prior M177 2x WebKit red remains meaningful. M180 original 3/3 and M181 independent browser jobs were green, integrated acceptance on this exact candidate pending.
+No merge/deploy/default branch edits. Family Alpha #255 OPEN/HOLD.
