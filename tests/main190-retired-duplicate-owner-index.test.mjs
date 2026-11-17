@@ -51,7 +51,7 @@ for(const flag of ['deleted','sourceRevoked']){
   assert.equal(index.summary.sourcePairs.length,0);
   assert.deepEqual(queryOwnerWardrobeIndex(index,OWNER,{slot:'top'}).ids,['current-top']);
   const retired=index.entries.find(x=>x.id==='old-top');
-  assert.deepEqual(retired.slotIds,[]);
+  assert.ok(retired.slotIds.includes('top'),'retired metadata remains auditable, but slot query excludes it');
   assert.ok(retired.reviewReasons.includes(flag==='deleted'?'deleted-record':'source-revoked'));
   assert.equal(index.summary.ready,1,'revoked row cannot be counted as ready');
  });
