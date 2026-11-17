@@ -39,6 +39,19 @@ function mission4Preview1054SameSource(left,right){
     one.image===two.image&&one.original===two.original;
   });
 }
+// P95: a persisted original may be valid while the native in-memory selected
+// JPEG has changed. Never describe persisted pixels as the *current* selection.
+// The native viewer remains the authority for owner, DB lease and SHA receipts.
+function mission4Preview1054DisplayedExactSource(pinned,photos,count){
+ const rendered=Array.from(photos?.querySelectorAll?.('img')||[]);
+ if(!Array.isArray(pinned?.selected)||!Number.isSafeInteger(count)||count<1||
+    rendered.length!==count||pinned.selected.length!==count)return false;
+ const bySlot=new Map(rendered.map(img=>
+  [img.getAttribute('alt'),img.getAttribute('src')]));
+ return bySlot.size===count&&pinned.selected.every(one=>
+  typeof one.original==='string'&&
+  bySlot.get('Original saved clothing photograph: '+one.slot)===one.original);
+}
 function mission4Preview1054ReconcileRedraw(){
  if(!mission4Preview1054Active)return;
  const viewer=mission4Preview1054Viewer;
@@ -1017,7 +1030,7 @@ if(mission4Preview1054Active){
       return;
      }
      if(viewer.status.phase!=='visible'||
-        photos.querySelectorAll('img').length!==result.slotCount)
+        !mission4Preview1054DisplayedExactSource(pinned,photos,result.slotCount))
       throw Error('Research source-bound photo presentation was revoked');
      status.textContent=result.slotCount+
       ' owner-confirmed original photo(s) verified. 2D only; realistic 3D fit is not established.';
