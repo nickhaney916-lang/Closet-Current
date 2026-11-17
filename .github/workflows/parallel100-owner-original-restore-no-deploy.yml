@@ -1,0 +1,117 @@
+name: P100 exact native original restore WebKit and Chromium HOLD no deploy
+on:
+  push:
+    branches: [fix/parallel100-webkit-owner-original-restore-HOLD]
+  pull_request:
+    branches: [research/main1054-m58-real-p88-browser-worker-HOLD]
+    paths:
+      - scripts/test-parallel100-native-restore-phase.mjs
+      - .github/workflows/parallel100-owner-original-restore-no-deploy.yml
+permissions:
+  contents: read
+jobs:
+  original-native-restore:
+    name: P100 native ${{ matrix.engine }} original restore independent ${{ matrix.independent }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {engine: webkit, independent: 1}
+          - {engine: webkit, independent: 2}
+          - {engine: webkit, independent: 3}
+          - {engine: webkit, independent: 4}
+          - {engine: chromium, independent: 1}
+          - {engine: chromium, independent: 2}
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P100_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source-locked original M157 and owner/DB/transaction contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=f2befed4c776786dc11843b98fafec72f2d9c202
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse HEAD:scripts/test-main157-same-photo-native-outfit-browser.mjs)" = c65c47091156c8996a1f463bff80b1c690b9fd90
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
+          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = 741e736ca107169c9e9861d803a49c2e6166e20b
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:public/outfit-capture.js)" = 8d55715ef09e34086d3c401ec38340bfc25f5fe8
+          git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
+            case "$path" in
+              scripts/test-parallel100-native-restore-phase.mjs|.github/workflows/parallel100-owner-original-restore-no-deploy.yml) ;;
+              *) echo "P100 forbidden source modification $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ tests/ benchmark/
+          node --check scripts/test-parallel100-native-restore-phase.mjs
+          node --check scripts/test-main157-same-photo-native-outfit-browser.mjs
+      - name: Install pinned native browser tooling
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Genuine native UI M157 exact source acceptance 320 390 430
+        run: node scripts/test-parallel100-native-restore-phase.mjs
+  inherited-negative-suite:
+    name: P100 full inherited Node/atomic-security suite
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: No consumer/hosted modifications and pinned diagnostic syntax
+        run: |
+          git merge-base --is-ancestor f2befed4c776786dc11843b98fafec72f2d9c202 HEAD
+          git diff --exit-code f2befed4c776786dc11843b98fafec72f2d9c202 HEAD -- public/ supabase/ tests/ benchmark/
+          node --check scripts/test-parallel100-native-restore-phase.mjs
+      - name: Install inherited no-deploy test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Offline PWA build (never deploy)
+        run: node scripts/build.mjs
+      - name: Inherited owner/source/abort/conflict/privacy/duplicate tests
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  native-negative-browser:
+    name: P100 existing real Chromium and WebKit import refusal checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable actual browser native legacy import negative source
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:scripts/test-mission3-default-atomic-import-browser.mjs)" = 375ff22b8c69bd6f7ddb19fc59cb6c4460eb7ba8
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
+      - name: Install pinned native Chromium and WebKit
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Negative native owner-lease/abort/duplicate/conflict journey
+        run: node scripts/test-mission3-default-atomic-import-browser.mjs benchmark/parallel100-existing-native-negatives
