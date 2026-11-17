@@ -680,7 +680,7 @@ function auditSelectedOriginalBodyBoundaryRegions89(){
   body=posedSource84(bodies);
   const posedPositions=body.g.getAttribute('position').array,
    restSkin=originalBodySourceSeamProvenance89(posedPositions.length/3);
-  const sourceLabel=x=>String(x||'').replace(/[^\\x20-\\x7e]/g,'_').slice(0,96);
+  const sourceLabel=x=>String(x||'').replace(/[^\x20-\x7e]/g,'_').slice(0,96);
   const sourceMeshNames=bodies.map((m,i)=>
    sourceLabel(m.name)||'SOURCE_BODY_MESH_'+i);
   const sourceBoneNamesByMesh=bodies.map(mesh=>{
