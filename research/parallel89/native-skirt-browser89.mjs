@@ -16,6 +16,7 @@ import {compareActualNeutralSkirtRear89} from './skirt-neutral-contact-trial89.m
 import {compareActualMeasuredSkirtFit89} from './skirt-body-measured-fit89.mjs';
 import {compareActualOriginalPhotoSkirtRegistration89} from './skirt-rigid-registration89.mjs';
 import {auditOriginalSkirtWaistBoneAttachment89} from './skirt-waist-bone-landmarks89.mjs';
+import {auditSelectedOriginalSkirtRadialGap89} from './skirt-source-radial-gap89.mjs';
 if(!['localhost','127.0.0.1','[::1]'].includes(location.hostname))
  throw Error('Original skirt research is localhost-only');
 const MODELS=Object.freeze({
@@ -495,6 +496,47 @@ function showOnlySelectedRegistration89(active,{draw=true}={}){
  });
 }
 
+/**
+ * Genuine original licensed source: independently check selected-camera
+ * registration against the original BODY triangle-plane radial boundary,
+ * not merely zero transverse BVH crossings. The original-public model's
+ * inferred scale and neutral/unphotographed back remain disqualifying for
+ * real-garment fit approval, regardless of measured radial signs.
+ */
+function auditSelectedSourceRadialGap89(){
+ check(phase==='ready'&&source?.status==='SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED'&&
+  selectedPreview&&root&&candidate?.mesh?.skeleton?.bones?.length===163&&
+  lastRegistration?.avatar===current&&
+  selectedPreview.name===lastRegistration?.bestResearchOnly?.name&&
+  lastRegistration?.bestResearchOnly?.researchOnlyNonworseningReduction===true,
+  'genuine original-license selected static BVH reduction must precede radial anatomy audit');
+ let skirt,body;
+ try{
+  skirt=posedSource84(candidate.meshes);
+  body=posedSource84(bodies);
+  const mask=originalTorsoLegSourceFaceMask89();
+  check(mask.length===body.g.index.count/3,
+   'original 163-bone body skin indices do not match source BVH');
+  const report=auditSelectedOriginalSkirtRadialGap89({
+   skirtPositions:skirt.g.getAttribute('position').array,
+   skirtIndices:skirt.g.index.array,
+   bodyPositions:body.g.getAttribute('position').array,
+   bodyIndices:body.g.index.array,
+   coreBodyFaceMask:mask,
+   avatar:current,pose,sourcePhotoSHA256:source.originalSHA256,
+   originalRig163Bones:true,selectedMeasuredFivePoseBvh:true,
+   selectedActualWebGLPreview:true
+  });
+  check(report?.releaseAuthorized===false&&
+   report?.originalPhoto2DFallbackRequired===true,
+   'source radial geometry evidence cannot authorize wardrobe 3D');
+  return report;
+ }finally{
+  skirt?.g.dispose();body?.g.dispose();
+  originalBodyPositions();
+ }
+}
+
 function auditWaistBoneAnchors(){
  check(phase==='ready'&&root&&candidate?.mesh?.isSkinnedMesh,
   'original license/source avatar and skirt rig must be verified');
@@ -637,7 +679,7 @@ function close(){if(selectedPreview)showOnlySelectedRegistration89(false,{draw:f
  if(rigid45Preview)showOnlySourceRigidRegistration45(false,{draw:false});
  lastRegistration=null;candidate?.dispose();candidate=null;scene.remove(root);root=null;
  renderer.dispose();renderer.forceContextLoss();phase='disposed';return true;}
-window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,showOnlySelectedRegistration89,auditOnlyUnobservedRearRenderedPixels,close});
+window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,showOnlySelectedRegistration89,auditSelectedSourceRadialGap89,auditOnlyUnobservedRearRenderedPixels,close});
 try{await verifySource();await load('female');}catch(e){
  phase='error';const msg=String(e?.message||e).slice(0,250);
  errors.push(msg);status.textContent='Original-photo 2D fallback: '+msg+' · HOLD';
