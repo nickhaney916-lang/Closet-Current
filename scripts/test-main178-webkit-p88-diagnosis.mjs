@@ -86,6 +86,17 @@ try{
    originalNativeAssertionsUnchanged:true,sourcePhotoLogged:false,
    ownerAccountLogged:false,productionSourceModified:false}));
  }else{
+  // Run an ORIGINAL unmodified P94 source/model/owner journey before the
+  // instrumented probes to reveal sequence-dependent WebKit model failures.
+  // Keep failures red, but run diagnostic probes afterward to classify them.
+  let originalPrelude=null;
+  if(process.env.M178_ORIGINAL_P94_PRELUDE==='true'){
+   const p=spawnSync(process.execPath,['scripts/test-parallel94-native-p88-browser.mjs'],{
+    env:{...process.env,M58_ENGINE:'webkit',P94_WIDTH:'390'},
+    stdio:'inherit',timeout:12*60*1000});
+   originalPrelude={exitCode:p.status,error:p.error?.code||null,originalUnmodified:true};
+   console.log('M178_ORIGINAL_P94_WEBKIT_PRELUDE',JSON.stringify(originalPrelude));
+  }
   const widths=[390,320,430,390];
   const count=Number(process.env.M178_PROBE_COUNT||2);
   assert.ok(Number.isInteger(count)&&count>=1&&count<=4);
@@ -98,9 +109,10 @@ try{
    results.push({attempt:i+1,width:widths[i],code:p.status,error:p.error?.code||null});
   }
   console.log('M178_EXACT_MODEL_PROBE_RESULTS',JSON.stringify({
-   attempts:results,inferenceMocked:false,diagnosticCopiesOnly:true,
+   originalPrelude,attempts:results,inferenceMocked:false,diagnosticCopiesOnly:true,
    hostedSecurityTested:false,physicalPhone:false,familyAlpha:'HOLD'}));
-  if(results.some(x=>x.code!==0||x.error))process.exitCode=1;
+  if((originalPrelude&&(originalPrelude.exitCode!==0||originalPrelude.error))||
+     results.some(x=>x.code!==0||x.error))process.exitCode=1;
  }
 }finally{
  for(const file of [testFile,uiFile,workerFile])rmSync(file,{force:true});

@@ -14,7 +14,8 @@ jobs:
       options: --shm-size=1gb
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
-      M178_PROBE_COUNT: '4'
+      M178_PROBE_COUNT: '2'
+      M178_ORIGINAL_P94_PRELUDE: 'true'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -40,7 +41,7 @@ jobs:
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Exact-source diagnostic copy syntax without image leaks
         run: M178_SELF_CHECK=true node scripts/test-main178-webkit-p88-diagnosis.mjs
-      - name: Run two real WebKit native P88 originals preserving all proposal assertions
+      - name: First run unmodified native P94 then instrumented WebKit twice with all assertions intact
         shell: bash
         run: |
           set -euo pipefail
