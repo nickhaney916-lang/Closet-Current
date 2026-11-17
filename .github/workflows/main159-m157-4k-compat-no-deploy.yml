@@ -46,7 +46,7 @@ jobs:
           done < /tmp/p96-paths
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = d478fcf6e4e8889a23b1620b444667ac949da7a9
           test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 4f8fe91ec1974ff936fa90d33874db7df0782e48
-          test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 4001604e9eed4f8c5a8db65b319acc17151d635b
+          test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 3e3e9a30a2f51c998a30e233d65799b35b6a9e4b
           test "$(git rev-parse HEAD:tests/parallel96-highres-source-derivative.test.mjs)" = fcbad9d8744bd5fee68b72d1b3b235340d61883c
           node --check research/parallel96-highres/source-derivative-intake96.mjs
           node --check research/multi-garment-capture-01/review-ui.mjs

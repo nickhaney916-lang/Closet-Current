@@ -34,11 +34,30 @@ const nativeSourceURL96='https://upload.wikimedia.org/wikipedia/commons/b/b3/Art
 const nativeOriginalSHA1='e5f7490c833b9141f68180a1cd7f015b9f7016c2';
 let upscaled;
 if(nativeCameraOriginal96){
- const response=await fetch(nativeSourceURL96,{
-  headers:{'User-Agent':'ClosetCurrent-Parallel96/1.0 (public licensed research original)'},
-  signal:AbortSignal.timeout(25000)
- });
- assert.equal(response.status,200,'true camera original not accessible at pinned Commons URL');
+ // M163 test-fixture transport only: Commons sometimes returns 429 for
+ // simultaneous independent CI jobs. Retry ONLY status 429/502/503/504,
+ // never browser events, owner/session actions, source assertions or model.
+ // Every accepted byte STILL must match the immutable Commons SHA-1 + length.
+ let response;
+ const transient=new Set([429,502,503,504]);
+ for(let attempt=1;attempt<=4;attempt++){
+  response=await fetch(nativeSourceURL96,{
+   headers:{'User-Agent':'ClosetCurrent-Parallel96/1.0 (public licensed research original)'},
+   signal:AbortSignal.timeout(25000)
+  });
+  if(response.status===200)break;
+  if(!transient.has(response.status)||attempt===4)
+   assert.equal(response.status,200,'pinned Commons 4K source unavailable; no surrogate used');
+  const seconds=Number(response.headers.get('retry-after'));
+  const delay=Number.isFinite(seconds)&&seconds>0?
+   Math.min(15000,Math.ceil(seconds*1000)):Math.min(12000,2000*attempt);
+  console.error('M163_PUBLIC_FIXTURE_RETRY',JSON.stringify({
+   reason:'immutable Commons source throttled',status:response.status,
+   attempt,delayMs:delay,retriesRemaining:4-attempt
+  }));
+  try{await response.body?.cancel();}catch{}
+  await new Promise(resolve=>setTimeout(resolve,delay));
+ }
  const original=Buffer.from(await response.arrayBuffer());
  assert.equal(original.length,352936,'Commons original file byte count changed');
  assert.equal(createHash('sha1').update(original).digest('hex'),nativeOriginalSHA1,
