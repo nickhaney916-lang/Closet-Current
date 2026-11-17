@@ -103,9 +103,9 @@ export async function exportDurableOwnerBackupM3({
   fail('UNFINISHED_PHOTOS_NOT_IN_V3');
  const items=[];
  const ids=new Set();
- // Preserve the importer's canonical photo identity fence. Only two
- // independently PHOTO119-reviewed cutouts may share their source original.
- const priorPictures=[];
+ // Maintain O(1) expected canonical photo/source lookup even with large
+ // wardrobes. Rehash cutout only for exact image/source collisions.
+ const priorByPicture=new Map(),priorByReceipt=new Map();
  if(snap.items.length>1000)fail('TOO_MANY_GARMENTS');
  for(const row of snap.items){
   if(!row||typeof row.id!=='string'||!row.id||row.id.length>100||
@@ -132,15 +132,25 @@ export async function exportDurableOwnerBackupM3({
    .filter(image=>typeof image==='string'&&image.length)
    .map(canonicalJPEG));
   const canonicalReceipt=row.originalPhoto?.sha256||row.sourceSHA256||null;
-  for(const prev of priorPictures){
-   const collision=[...pictures].some(image=>prev.pictures.has(image))||
-    (canonicalReceipt&&prev.receipt===canonicalReceipt);
-   if(collision&&
-      !await distinctReviewedSharedOriginal157(prev.row,row,ownerId))
+  const conflicts=new Set();
+  for(const image of pictures)
+   for(const previous of priorByPicture.get(image)||[])conflicts.add(previous);
+  if(canonicalReceipt)
+   for(const previous of priorByReceipt.get(canonicalReceipt)||[])
+    conflicts.add(previous);
+  for(const previous of conflicts){
+   if(!await distinctReviewedSharedOriginal157(previous,row,ownerId))
     fail('SHARED_ORIGINAL_RESTORE_UNSUPPORTED');
    check();
   }
-  priorPictures.push({row,pictures,receipt:canonicalReceipt});
+  for(const image of pictures){
+   const rows=priorByPicture.get(image)||[];
+   rows.push(row);priorByPicture.set(image,rows);
+  }
+  if(canonicalReceipt){
+   const rows=priorByReceipt.get(canonicalReceipt)||[];
+   rows.push(row);priorByReceipt.set(canonicalReceipt,rows);
+  }
   check();
   // Older v1-v3 rows legitimately lacked an owner ID; stamp only the
   // exported copy. Never modify real on-device originals to do this.
