@@ -81,7 +81,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
- selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
+ selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -785,6 +785,67 @@ try{
    assert.equal(mapped.originalPhoto2DFallbackRequired,true);
    assert.equal(mapped.consumer3DAdmitted,false);
    assert.equal(mapped.releaseAuthorized,false);
+   // The TRUE photographed original skirt is interrogated against actual
+   // original torso/hip/leg skinned face subsets, not arms/head, and ONLY
+   // within its actual seven source photo mesh rings. A clipped source-body
+   // ROI creates artificial borders even if underlying source was closed;
+   // never call those genuine holes or approve a ray gap as closed volume.
+   const core=await page.evaluate(()=>
+    window.nativeP89Skirt.auditSelectedOriginalSkirtCoreSpan89());
+   assert.equal(core.schema,'P89-authentic-source-skirt-span-core-body-contour/v1');
+   assert.equal(core.avatar,avatar);
+   assert.equal(core.pose,selectedPose);
+   assert.equal(core.originalSourcePhotoSHA256,required.skirt);
+   assert.equal(core.sourceOriginalRigGLBSHA256,required[avatar]);
+   assert.equal(core.original163BoneSourceFaceProvenanceUsed,true);
+   assert.equal(core.fullOriginalBodyIndexedTopologyIndependentlyVerified,true);
+   assert.equal(core.originalSeamOpenEdgesIndependentlyVerified,
+    topology.sourceOpenBoundaryEdgeCount);
+   assert.ok(['ACTUAL_SKIRT_CORE_FACES_UNOBSERVED_NOT_WEARABLE',
+    'ACTUAL_SKIRT_CORE_INWARD_WITNESS_BLOCKED',
+    'ACTUAL_SKIRT_CORE_CLEARANCE_UNCERTAIN_NOT_WEARABLE'].includes(core.status));
+   const slice=core.originalSkirtCoreEvidence;
+   assert.equal(slice.schema,'P89-pure-original-skirt-specific-anatomical-core-shell-roi/v1');
+   assert.equal(slice.originalBodyFullIndexedTriangleCount,
+    topology.originalIndexedTriangleCount);
+   assert.equal(slice.originalSourceSkirtFaceVertexCount,343);
+   assert.equal(slice.originalSourceSkirtIndexedTriangleCount,576);
+   assert.equal(slice.originalSourceSkirtSevenBands,7);
+   assert.equal(slice.originalSourceSkirtCoreTrueRayTests,336);
+   assert.equal(slice.sourceSkirtPhysicalWaistOrHemSizeCalibrated,false);
+   assert.ok(slice.originalTorsoHipLegCoreFacesInSkirtSpan>0,
+    'real source original model body has no verified torso/hip/leg triangles under photographed skirt');
+   assert.equal(slice.bodyFacesOutsideOriginalSkirtSpan+
+    slice.sourceBodyFacesIntersectingActualSkirtHeight,
+    topology.originalIndexedTriangleCount);
+   assert.equal(slice.originalTorsoHipLegCoreFacesInSkirtSpan+
+    slice.excludedHeadArmCoreRegionFaces+
+    slice.unknownDominantBoneSourceFaces+
+    slice.coarseSourceFaceMaskExcludedCoreCandidates+
+    slice.originalCrossMeshFaceIdentityViolations,
+    slice.sourceBodyFacesIntersectingActualSkirtHeight);
+   assert.equal(slice.originalSourceCoreFaceByImmutableMesh.reduce(
+    (n,x)=>n+x.faces,0),slice.originalTorsoHipLegCoreFacesInSkirtSpan);
+   assert.equal(slice.originalSourceSkirtCoreInwardRays+
+    slice.originalSourceSkirtCoreOutwardRays+
+    slice.originalSourceSkirtCoreNearZeroRays+
+    slice.originalSourceSkirtCoreUnobservedRays,336);
+   assert.equal(slice.sourceSkirtCoreSevenBandReceipts.length,7);
+   assert.equal(slice.roiOriginalSubsetBoundaryEdges,
+    slice.roiArtificialSelectionCutEdges+
+    slice.roiUnderlyingOriginalIndexedOneFaceEdges+
+    slice.roiNonmanifoldSelectionBoundaryEdges);
+   assert.equal(slice.cropBoundaryIsNotAnOriginalBodyHole,true);
+   assert.equal(slice.originalGLBIndexedUVSeamsNotAutomaticallyWelded,true);
+   assert.equal(slice.originalCoreBodyFaceSetIsNotWatertightClosedVolume,true);
+   assert.equal(slice.coreRayGapIsNotFullSignedBodyVolumeContainment,true);
+   assert.equal(slice.originalSourceRearPhotoAbsent,true);
+   assert.equal(core.closedBodyVolumeCertified,false);
+   assert.equal(core.signedExteriorContainmentCertified,false);
+   assert.equal(core.originalPhoto2DFallbackRequired,true);
+   assert.equal(core.consumer3DAdmitted,false);
+   assert.equal(core.releaseAuthorized,false);
+   results.selectedOriginalSkirtCoreSpanAudits.push(core);
    results.selectedOriginalSourceBodyBoundaryRegionAudits.push(mapped);
    results.selectedOriginalSourceBodySeamAudits.push(seams);
    results.selectedSourceWholeBodyClosureAudits.push(closure);
@@ -899,6 +960,7 @@ try{
  assert.equal(results.selectedSourceWholeBodyClosureAudits.length,10);
  assert.equal(results.selectedOriginalSourceBodySeamAudits.length,10);
  assert.equal(results.selectedOriginalSourceBodyBoundaryRegionAudits.length,10);
+ assert.equal(results.selectedOriginalSkirtCoreSpanAudits.length,10);
  assert.equal(results.selectedResearchPoseChecks.length,10);
  assert.equal(results.selectedResearchNativeScreenshots.length,18);
  assert.equal(results.selectedResearchFrontCoverage.length,6);
@@ -967,6 +1029,16 @@ try{
    selectedRegistrationTrueFivePoseNativeChecks:results.selectedResearchPoseChecks.length,
    sourceTrueWorldRadialGapCheckCount:results.selectedSourceBodyRadialGapAudits.length,
    sourceOriginalWholeBodyClosureCheckCount:results.selectedSourceWholeBodyClosureAudits.length,
+   originalSourceSkirtCoreSpanNativeCheckCount:results.selectedOriginalSkirtCoreSpanAudits.length,
+   sourceSkirtActualCoreStatuses:results.selectedOriginalSkirtCoreSpanAudits.map(x=>x.status),
+   sourceSkirtActualCoreOriginalTriangleCounts:results.selectedOriginalSkirtCoreSpanAudits.map(x=>x.originalSkirtCoreEvidence.originalTorsoHipLegCoreFacesInSkirtSpan),
+   sourceSkirtActualCoreFaceRegions:results.selectedOriginalSkirtCoreSpanAudits.filter(x=>x.pose==='source').map(x=>({avatar:x.avatar,sourceOriginalBodyCore:x.originalSkirtCoreEvidence.originalSourceCoreFaceRegions,originalSourceMeshes:x.originalSkirtCoreEvidence.originalSourceCoreFaceByImmutableMesh})),
+   sourceSkirtActualCoreArtificialCropEdges:results.selectedOriginalSkirtCoreSpanAudits.map(x=>x.originalSkirtCoreEvidence.roiArtificialSelectionCutEdges),
+   sourceSkirtActualCoreOriginalIndexedBoundaryEdges:results.selectedOriginalSkirtCoreSpanAudits.map(x=>x.originalSkirtCoreEvidence.roiUnderlyingOriginalIndexedOneFaceEdges),
+   sourceSkirtActualCoreInwardRays:results.selectedOriginalSkirtCoreSpanAudits.map(x=>x.originalSkirtCoreEvidence.originalSourceSkirtCoreInwardRays),
+   sourceSkirtActualCoreUnknownRays:results.selectedOriginalSkirtCoreSpanAudits.map(x=>x.originalSkirtCoreEvidence.originalSourceSkirtCoreUnobservedRays),
+   sourceSkirtActualCoreOutwardRays:results.selectedOriginalSkirtCoreSpanAudits.map(x=>x.originalSkirtCoreEvidence.originalSourceSkirtCoreOutwardRays),
+   sourceSkirtActualCoreModelGap:results.selectedOriginalSkirtCoreSpanAudits.map(x=>x.originalSkirtCoreEvidence.originalSourceSkirtCoreMinimumObservedRadiusGap),
    originalSourceUnresolvedBoneRegionProofCount:results.selectedOriginalSourceBodyBoundaryRegionAudits.length,
    originalSourceUnresolvedByAvatarSourcePose:results.selectedOriginalSourceBodyBoundaryRegionAudits.filter(x=>x.pose==='source').map(x=>({
     avatar:x.avatar,pose:x.pose,
