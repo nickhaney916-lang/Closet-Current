@@ -202,7 +202,7 @@ try{
  assert.equal(await page.locator('#builder').isVisible(),true);
  assert.equal(await page.locator('#mission4Preview1054Section button').isVisible(),true,
   'P99 verified original 2D control missing in standard app');
- for(const [slot,name] of [['top','P99 Test Top'],['bottom','P99 Test Bottom']]){
+ for(const [slot,name] of [['top','P99 Black Shirt'],['bottom','P99 Blue Jeans']]){
   await page.locator('#boardSlots .board-slot-'+slot).click();
   await page.locator('#boardPicker').waitFor({state:'visible'});
   await page.locator('#boardPickerItems button.board-pick').filter({hasText:name}).click();
