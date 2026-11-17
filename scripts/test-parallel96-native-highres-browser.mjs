@@ -1160,7 +1160,20 @@ try{
  assert.equal(await page.locator('#outfit3D01Canvas').count(),0,
   'M161 source-only two-cutout outfit must not imply fitted garment 3D');
  assert.equal(await countRows(page),2,'M161 source-to-restored-2D should retain exactly two pieces');
- assert.deepEqual(rejected,[],'M161 accidentally sent original to unexpected network');
+ // A lazy OPTIONAL FashionCLIP metadata GET can attempt initialization after
+ // reload. The strict route above ABORTS it: no FashionCLIP network transfer,
+ // photo upload, authenticated remote call or model permission is granted.
+ // Classify ONLY this exact pinned static configuration request as
+ // intentionally denied, fail on every other unexpected external attempt.
+ const blockedOptionalConfig=rejected.filter(request=>
+  request.method==='GET'&&request.host==='huggingface.co'&&
+  request.path==='/ff13/fashion-clip/resolve/0f99955d944c39bfd9d035a02ac273c7a44a406b/preprocessor_config.json');
+ assert.deepEqual(rejected.filter(request=>!blockedOptionalConfig.includes(request)),[],
+  'M161 forbidden external request outside the one blocked static optional config');
+ console.log('M164_OPTIONAL_MODEL_REQUEST_BLOCKED',JSON.stringify({
+  engine,width,blockedExactStaticFashionClipConfigGET:blockedOptionalConfig.length,
+  blockedAllOtherOutbound:0,noNonlocalSourceUpload:true
+ }));
  assert.deepEqual(issues,[],'M161 native browser app errors');
  console.log('M161_SAME_REAL_4K_P88_SOURCE_TWO_OWNER_REVIEWS_V3_2D_PASS',JSON.stringify({
   engine,width,sourceSHA256:sha,
