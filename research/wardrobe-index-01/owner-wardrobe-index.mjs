@@ -83,7 +83,6 @@ function normalizedRow(owner,record,position){
  if(record.requiresOwnershipConfirmation)reasons.push('ownership-unconfirmed');
  if(record.segmentHint?.clipped)reasons.push('clipped-source');
  const photo=identity(record);
- if(photo.kind==='unverified')reasons.push('original-source-unverified');
  if(photo.kind==='ambiguous-source')reasons.push('shared-source-needs-cutout-proof');
  const validSeasons=Array.isArray(record.seasons)?unique(record.seasons.filter(s=>seasons.has(s))):[];
  const normalizedSeasons=validSeasons.includes('All seasons')?['All seasons']:validSeasons;
