@@ -46,13 +46,16 @@ try{
  await page.locator('#export').click();
  const download=await downloaded;
  const report=JSON.parse(await readFile(await download.path(),'utf8'));
+ const photo=report.observations.find(row=>row.phase==='gallery');
+ const permission=report.observations.find(row=>row.phase==='camera-permission');
+ assert.ok(photo&&permission,'real gallery and permission observations required');
  assert.equal(report.sourceHead,'a'.repeat(40));
  assert.equal(report.environment.deviceKind,'UNVERIFIED');
- assert.equal(report.observations[0].sourceSha256,fixtureSha);
- assert.equal(report.observations[0].originalByteCount,fixture.length);
- assert.equal(report.observations[0].decode,'PASS');
- assert.ok(report.observations[0].decodedWidth>0&&report.observations[0].decodedHeight>0);
- assert.equal(report.observations[0].orientation,'UNVERIFIED');
+ assert.equal(photo.sourceSha256,fixtureSha);
+ assert.equal(photo.originalByteCount,fixture.length);
+ assert.equal(photo.decode,'PASS');
+ assert.ok(photo.decodedWidth>0&&photo.decodedHeight>0);
+ assert.equal(photo.orientation,'UNVERIFIED');
  assert(!JSON.stringify(report).includes('disposable-fixture'));
  assert(!JSON.stringify(report).includes('data:image'));
  assert.deepEqual(violations,[]);
@@ -60,7 +63,7 @@ try{
  assert.match(await page.locator('#output').textContent(),/"observations": \[\]/);
  console.log('P97_PROBE_BROWSER_PASS',JSON.stringify({engine,width,actualEngine:true,
   physicalPhone:false,sha256Verified:true,sourceBytes:fixture.length,
-  decodedDimensionsVerified:true,permissionResult:report.observations[1].permission,
+  decodedDimensionsVerified:true,permissionResult:permission.permission,
   redactedExport:true,externalRequests:0,storedImage:false,release:'HOLD'}));
  await ctx.close();
 }finally{
