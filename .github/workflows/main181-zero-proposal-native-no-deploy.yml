@@ -1,7 +1,7 @@
 name: MAIN181 zero-proposal native fail-closed recovery NO DEPLOY HOLD
 on:
   push:
-    branches: [research/main1054-m181-zero-proposal-native-fallback-HOLD]
+    branches: [research/main1054-m181-zero-proposal-native-fallback-HOLD, research/main182-m180-m181-native-recovery-integration-HOLD, research/main1054-m58-real-p88-browser-worker-HOLD]
   pull_request:
     branches: [research/main1054-m58-real-p88-browser-worker-HOLD]
 permissions:
@@ -26,10 +26,15 @@ jobs:
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
-              public/outfit-capture.js|tests/outfit-capture.test.cjs|scripts/test-main181-zero-proposal-native-browser.mjs|.github/workflows/main181-zero-proposal-native-no-deploy.yml|research/master-consolidation-1054/M181-ZERO-PROPOSAL-NATIVE-FAILCLOSED-HOLD.md) ;;
+              public/outfit-capture.js|tests/outfit-capture.test.cjs|scripts/test-main181-zero-proposal-native-browser.mjs|.github/workflows/main181-zero-proposal-native-no-deploy.yml|research/master-consolidation-1054/M181-ZERO-PROPOSAL-NATIVE-FAILCLOSED-HOLD.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml|.github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml|research/master-consolidation-1054/M180-WEBKIT-FIRSTLOAD-RELIABILITY-HOLD.md) ;;
               *) echo "M181 blocked unreviewed change: $path"; exit 1 ;;
             esac
           done
+          # M182 reviewed protected M180 integration workflow-only compatibility.
+          # M180 itself pins this exact M181 workflow blob to prevent cycles.
+          test "$(git rev-parse HEAD:.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml)" = 7268fc9466099e57c5eb7e048581bce53650ebc7
+          test "$(git rev-parse HEAD:.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml)" = 20b3fbc9ea5e3b449ed1381b77cc5f1354d81495
+          test "$(git rev-parse HEAD:research/master-consolidation-1054/M180-WEBKIT-FIRSTLOAD-RELIABILITY-HOLD.md)" = 080c07dcb3e091d9f2a7e219b5750bf068c83252
           test "$(git rev-parse HEAD:public/outfit-capture.js)" = b85242b7856c3b83ed4c38afcb4b409f7292933e
           test "$(git rev-parse HEAD:tests/outfit-capture.test.cjs)" = ab60c5d45b60f5f8daf994898bcd2146f1a97f45
           test "$(git rev-parse HEAD:scripts/test-main181-zero-proposal-native-browser.mjs)" = ea1a5bdb7f0617c71695f9b0382afd6ff7d5f089
