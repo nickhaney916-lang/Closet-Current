@@ -1,0 +1,23 @@
+# M186 — exact held WebKit M172 seventh-stage Worker phase diagnostic (no deploy / HOLD)
+
+## Why this separate current-held-source diagnostic is needed
+
+**Read-only protected source parent:** `f2befed4c776786dc11843b98fafec72f2d9c202`, [Mission Control #1054](https://github.com/nickhaney916-lang/Closet-Current/issues/1054), [held integration DRAFT #1210](https://github.com/nickhaney916-lang/Closet-Current/pull/1210). Family Alpha [#255](https://github.com/nickhaney916-lang/Closet-Current/issues/255) **OPEN/HOLD**, no main/default merge or deploy.
+
+Historical [protected WebKit run #44128523563 attempt 1](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/44128523563) passed six genuine installed P88 SegFormer/WASM source/model/private-original/2D tests in sequence, then failed in seventh M172 source-exact 24MP whole-private-state test: `M159_MODEL_ZERO_PROPOSAL_DIAGNOSTIC statusClass=worker-error, cardCount=0, sourceProofCurrent=true, derivativePresent=true, workerPaths=['installed-p94']`, HTTP model assets 200/302/307, zero outbound/page errors. Worker `public/outfit-worker-p94.mjs` has unconditional generic `catch{}` that conceals the failure phase/type. No evidence yet supports an application fix or automatic retry. A successful rerun of M58 is not proof of permanent reliability.
+
+**M185** independent source-exact run at `b6ad58d62cf82a7acb1fe8cc3323e15d9fd393a8` [push #44159884628](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/44159884628) **3/3 PASS** and [PR #44159897937](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/44159897937) **3/3 PASS**, total 34 authentic model executions across both events, including 2 independent genuine complete seventh M172 passes; still no failure-category witness. [M178 PR #1250](https://github.com/nickhaney916-lang/Closet-Current/pull/1250) diagnosed earlier M177 first/P94 WebKit model and is the owner of permanent Worker-model exception taxonomy; M186 is a **separate integration-only seventh M172 source probe**, not an application/model replacement or a change to M178's branch. [Parallel #100 #1258](https://github.com/nickhaney916-lang/Closet-Current/issues/1258) independently owns original-photo v3 precommit restore refusal and is unrelated.
+
+## Actual M186 engineering boundaries
+
+All changes on one isolated branch, **exactly three research/test paths**:
+
+1. `scripts/test-main186-webkit-m172-worker-phase.mjs`: assert exact SHA of unchanged original M172 generated-P96 test, P96 source and derivative, original installed P94 Worker, native UI, original app/consumer. Create **disposable** exact-source copies of worker and UI, replacing only generic hidden Worker catch with bounded, non-identifying `stage`, `exceptionType` and categorical error reason (memory/wasm/tensor/shape/network/abort/bounds/other), and success mask booleans/count. Real SegFormer/WASM import, original JPEG, owner checks, mask/proposals, private restore and assertions are NOT mocked or bypassed. The temporary driver executes original M172 generated 24MP source test, preserves original P96/M172 strict assertions verbatim, with only HTTP interception of local worker/UI resources and sanitized terminal console receipt. All scratch files deleted, never committed. No raw exception text, personal image, token, user ID, private source hash, model weights or hosted data logged.
+2. `.github/workflows/main186-held-webkit-m172-phase-no-deploy.yml`: strict source hash + 3-path allowlist, original immutable four-file P88 donor setup, same pinned Playwright/WASM runtime; two independent real WebKit jobs each run SIX unmodified full original M58/P94×3/P96×2 processes and instrumented real M172 seventh (total **14 genuine model operations** across two jobs). Any original no-proposal, wrong-owner/save/backup/3D denial assertion remains a hard **RED**, never retried or promoted.
+3. This scope and result ledger, updated only after exact-head accepted CI.
+
+### Correct evidence claim
+
+A successful M186 2/2 CI proves only the original seven source/owner tests and instrumentation remained compatible on a finite sample, not permanent WebKit reliability or model accuracy. A genuine RED with `M186_NATIVE_WEBKIT_WORKER_TERMINAL` shall classify the phase/error and be handed to M178 for a separately justified fail-closed product correction and repeat exact-HEAD 7-job M58/WebKit acceptance. An instrumented probe may alter timing and cannot replace **unmodified** original M185 acceptance. No changes to hosted RLS, actual physical iOS/Android, human scored labels or 3D source-fitted garments; all are still NOT TESTED as release gates.
+
+**M186 source-only: INCOMPLETE pending real CI; overall Mission 4 INCOMPLETE; #255 HOLD.**
