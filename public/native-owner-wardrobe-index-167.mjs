@@ -69,6 +69,12 @@ function normalizedRow(owner,record,position){
  if(record.possibleDuplicate)reasons.push('possible-duplicate');
  if(record.requiresOwnershipConfirmation)reasons.push('ownership-unconfirmed');
  if(record.segmentHint?.clipped)reasons.push('clipped-source');
+ // Retired/explicitly revoked rows may remain in a restored private
+ // snapshot for conflict/audit resolution. They cannot participate in
+ // live source matching, outfit slots, or new-garment admission.
+ const inactive=Boolean(record.deleted)||Boolean(record.sourceRevoked);
+ if(record.deleted)reasons.push('deleted-record');
+ if(record.sourceRevoked)reasons.push('source-revoked');
  const photo=identity(record);
  if(photo.kind==='ambiguous-source')reasons.push('shared-source-needs-cutout-proof');
  const validSeasons=Array.isArray(record.seasons)?unique(record.seasons.filter(s=>seasons.has(s))):[];
@@ -79,13 +85,15 @@ function normalizedRow(owner,record,position){
  return Object.freeze({
   id,position,category,itemType,color:color&&canonical(color)!=='unknown'?color:'Unknown',
   seasons:Object.freeze(normalizedSeasons),sleeveLength:safeText(record.sleeveLength)||'Unknown',
-  slotIds:Object.freeze(slotsFor(category,itemType)),
+  slotIds:Object.freeze(inactive?[]:slotsFor(category,itemType)),
+  inactive,
   searchTokens:Object.freeze(unique(text)),
   reviewReasons:Object.freeze(unique(reasons)),
   source:photo.source,cutout:photo.cutout,sourceKind:photo.kind
  });
 }
 function sameIdentity(a,b){
+ if(a.inactive||b.inactive)return 'none';
  if(!a.source||a.source!==b.source)return 'none';
  if(a.sourceKind==='verified-cutout'&&b.sourceKind==='verified-cutout')
   return a.cutout===b.cutout?'duplicate':'different-segments';
@@ -160,6 +168,7 @@ export function previewOwnerWardrobeAddition(index,ownerId,candidate){
  if(!index||index.version!==1||ownerId!==index.ownerId||!allowedOwner(ownerId))
   throw new WardrobeIndexError('owner-mismatch');
  const row=normalizedRow(ownerId,candidate,index.entries.length);
+ if(row.inactive)return Object.freeze({status:'reject',reason:'retired-or-revoked-candidate'});
  if(index.entries.some(x=>x.id===row.id))
   return Object.freeze({status:'reject',reason:'duplicate-item-id'});
  let ambiguous=false;
