@@ -202,7 +202,7 @@ const secondFixture="  stage='p95-two-distinct-licensed-photos-private-native-bo
 const m167ClickOriginal=[
  "  await page.locator('#mission4Preview1054Section button').waitFor({timeout:20000});",
  "  await page.locator('#mission4Preview1054Section button').click();"
-].join('\\n');
+].join('\n');
 const m167ClickStable=[
  "  const m167Button=page.locator('#mission4Preview1054Section button');",
  "  await m167Button.waitFor({timeout:20000});",
@@ -230,7 +230,7 @@ const m167ClickStable=[
  "  });",
  "  assert.equal(m167Ready,true,'M167 input target not stable before one real preview click');",
  "  await m167Button.click();"
-].join('\\n');
+].join('\n');
 assert.equal(original.split(m167ClickOriginal).length,2,
  'M167 inherited M51 click source changed: re-audit required');
 const modified=original.replace(marker,instrumentation)
