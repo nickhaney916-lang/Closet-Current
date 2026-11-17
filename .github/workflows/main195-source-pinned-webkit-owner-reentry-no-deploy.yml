@@ -51,5 +51,14 @@ jobs:
           for width in 320 390 430; do
             P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
           done
-      - name: Genuine original-photo session/board reentry at 320 390 430
-        run: node scripts/test-main195-webkit-owner-session-stage.mjs
+      - name: Repeat original-photo reentry without forgiving a WebKit timeout
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$M51_ENGINE" = "webkit" ]; then cycles=6; else cycles=3; fi
+          for round in $(seq 1 "$cycles"); do
+            echo "M195_REAL_REENTRY_START engine=$M51_ENGINE round=$round of=$cycles"
+            node scripts/test-main195-webkit-owner-session-stage.mjs
+            echo "M195_REAL_REENTRY_PASS engine=$M51_ENGINE round=$round"
+          done
+          echo "M195_REAL_REENTRY_ALL_PASS engine=$M51_ENGINE runs=$cycles noRetries=true"
