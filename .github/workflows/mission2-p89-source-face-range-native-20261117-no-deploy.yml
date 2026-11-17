@@ -39,6 +39,8 @@ jobs:
           node --check tests/parallel89-skirt-rigid-registration.test.mjs
       - name: Focused adversarial pooled and out-of-range source triangle checks
         run: node --test tests/parallel89-source-contact-snapshot.test.mjs tests/parallel89-skirt-rigid-registration.test.mjs
+      - name: Build disposable PWA required by inherited PWA tests (no deployment)
+        run: node scripts/build.mjs
       - name: Entire inherited no-deploy Node regression
         run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - name: Confirm protected consumer and photo paths untouched
