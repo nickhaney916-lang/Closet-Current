@@ -165,11 +165,13 @@ export function auditSelectedOriginalSkirtRadialGap89({
   return fail('original-photographed-source-coverage-bookkeeping-invalid');
  return Object.freeze({
   schema:'P89-actual-original-163bone-source-radial-body-gap/v1',
-  status:unknownSectors>0?
-   'SAMPLED_SOURCE_RADIAL_BODY_COVERAGE_INCOMPLETE_NOT_WEARABLE':
-   candidateRadialInward>0?
-    'SAMPLED_SOURCE_RADIAL_INWARD_BODY_OVERLAP_WITNESSED_NOT_WEARABLE':
-    'SAMPLED_SOURCE_RADIAL_GAP_OBSERVED_NOT_CLOSED_VOLUME_FIT',
+  status:unknownSectors>0&&candidateRadialInward>0?
+   'SAMPLED_SOURCE_RADIAL_INWARD_AND_MISSING_BODY_SECTORS_NOT_WEARABLE':
+   unknownSectors>0?
+    'SAMPLED_SOURCE_RADIAL_BODY_COVERAGE_INCOMPLETE_NOT_WEARABLE':
+    candidateRadialInward>0?
+     'SAMPLED_SOURCE_RADIAL_INWARD_BODY_OVERLAP_WITNESSED_NOT_WEARABLE':
+     'SAMPLED_SOURCE_RADIAL_GAP_OBSERVED_NOT_CLOSED_VOLUME_FIT',
   avatar,pose,sourceId:'commons-0043',originalPhotoSHA256:sourcePhotoSHA256,
   genuineSourceSkinnedPublicModel:true,source163BoneRig:true,
   actualIndexedOriginalBodyFaceCutUsed:true,
@@ -180,6 +182,8 @@ export function auditSelectedOriginalSkirtRadialGap89({
   sampledOutwardBodyGapAngularSectors:observedSectors-candidateRadialInward-
    rows.reduce((n,x)=>n+x.sampledRadialGapWithin2mm,0),
   sampledInwardBodyGapAngularSectors:candidateRadialInward,
+  actualModelBasedRadialInwardWitness: candidateRadialInward>0,
+  originalBodyAngularSectorEvidenceMissing:unknownSectors>0,
   sampledUnknownBodyGapAngularSectors:unknownSectors,
   originalBodySourcePlaneCutSegmentCount:bodyPlaneSegmentsTotal,
   minimumObservedRadialGapMeters:smallestObservedGap===null?null:round(smallestObservedGap),
