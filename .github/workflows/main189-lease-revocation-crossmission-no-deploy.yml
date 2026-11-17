@@ -34,7 +34,7 @@ jobs:
           test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 62bad171a97030846b0f1bb3bab740dec20ac5e7
           test "$(git rev-parse HEAD:tests/main187-required-owner-assert-current.test.mjs)" = 392e8457c833a02ee4987cb4a302737a2c87d049
           test "$(git rev-parse HEAD:tests/main188-owner-revoked-outfit-preview.test.mjs)" = b071964576659869bf11319aa335fb64a2bfe7a1
-          test "$(git rev-parse HEAD:.github/workflows/main187-required-owner-lease-no-deploy.yml)" = 4544ba509783183fb4acfee260a3d65681f196d3
+          test "$(git rev-parse HEAD:.github/workflows/main187-required-owner-lease-no-deploy.yml)" = ed2d2e61b913e01f12c11506d90627c5629bd187
           test "$(git rev-parse HEAD:.github/workflows/main188-owner-revoked-original-preview-no-deploy.yml)" = 3c0ea89a190afe20f8cdfa0d820ea685740ac994
           test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
           test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
