@@ -587,6 +587,24 @@ try{
    assert.equal(radial.status,
     'SAMPLED_SOURCE_RADIAL_INWARD_AND_MISSING_BODY_SECTORS_NOT_WEARABLE',
     'immutable original public photo model must disclose the independently witnessed radial inward AND missing source body sectors rather than calling zero BVH wearable');
+   assert.equal(radial.exactRayBodyContourSourceTopology,
+    'ORIGINAL_INDEXED_FACE_HORIZONTAL_PLANE_RAY_INTERSECTION');
+   assert.equal(radial.exactRaySampledAngularPositions,336);
+   assert.equal(radial.exactRayOutwardSourceSectors+radial.exactRayNearSourceSectors+
+    radial.exactRayInwardSourceSectors+radial.exactRayUnknownSourceSectors,336,
+    'every original photographed source ring ray must have exact contour evidence or be unknown');
+   assert.ok(radial.exactRayOriginalBodyContourSegments>=0);
+   assert.ok(radial.exactRayCollinearAmbiguousSourceSectors<=
+    radial.exactRayUnknownSourceSectors);
+   assert.ok(['EXACT_ORIGINAL_BODY_RAY_INWARD_AND_UNOBSERVED_BLOCKED',
+    'EXACT_ORIGINAL_BODY_RAY_INWARD_BLOCKED',
+    'EXACT_ORIGINAL_BODY_RAY_UNOBSERVED_BLOCKED',
+    'EXACT_ORIGINAL_BODY_RADIAL_GAP_SAMPLED_NOT_WEARABLE'
+   ].includes(radial.exactRaySourceFitDisposition),
+    'cannot claim genuine body-ray fit from empty/forged source contour');
+   assert.equal(radial.originalDilationBasedRadialOverlapIsNotExactIntersection,true);
+   assert.equal(radial.exactRayWithoutOriginalBodyContourIsUnknownNotSafe,true);
+   assert.equal(radial.exactRayCannotCertifyWatertightVolume,true);
    assert.equal(radial.garmentSourceAbsoluteSizeInferredNotMeasured,true);
    assert.equal(radial.radialWitnessIsNotSignedClosedMeshContainment,true);
    assert.equal(radial.originalPhotographedRearAbsent,true);
@@ -772,6 +790,11 @@ try{
    sourceRadialInwardSectorCounts:results.selectedSourceBodyRadialGapAudits.map(x=>x.sampledInwardBodyGapAngularSectors),
    sourceRadialUnknownSectorCounts:results.selectedSourceBodyRadialGapAudits.map(x=>x.sampledUnknownBodyGapAngularSectors),
    sourceRadialMinimumObservedGaps:results.selectedSourceBodyRadialGapAudits.map(x=>x.minimumObservedRadialGapMeters),
+   sourceExactBodyRayDispositions:results.selectedSourceBodyRadialGapAudits.map(x=>x.exactRaySourceFitDisposition),
+   sourceExactBodyRayInwardPositions:results.selectedSourceBodyRadialGapAudits.map(x=>x.exactRayInwardSourceSectors),
+   sourceExactBodyRayUnknownPositions:results.selectedSourceBodyRadialGapAudits.map(x=>x.exactRayUnknownSourceSectors),
+   sourceExactBodyRayGapMeters:results.selectedSourceBodyRadialGapAudits.map(x=>x.exactRayMinimumObservedSkirtMinusBodyMeters),
+   exactRayContoursNotSignedClosedBodyOrSizeApproval:true,
    selectedRegistrationRealCameraScreenshots:results.selectedResearchNativeScreenshots.length,
    selectedRegistrationFrontBodyOcclusionFractions:results.selectedResearchFrontCoverage.map(x=>x.rigid45mmCenterFrontalVisibleMannequinFraction),
    sourceWaistBoneAuditStatus:results.waistAnchorLandmarkReports.map(x=>x.status),
