@@ -89,12 +89,14 @@ function fingerprint(item){
   item?.originalPhoto?.image,item?.segmentHint?.cutoutSHA256,
   item?.segmentHint?.originalSHA256,item?.segmentHint?.clipped,
   item?.segmentHint?.ownerReviewedInstance,item?.segmentHint?.verified,
-  item?.outfitSourceId,item?.possibleDuplicate,item?.requiresOwnershipConfirmation
+  item?.outfitSourceId,item?.possibleDuplicate,item?.requiresOwnershipConfirmation,
+  item?.deleted,item?.sourceRevoked
  ]);
 }
 function confirmed(row,item,ownerId){
  if(item.ownerId!==ownerId||item.ownerReviewed!==true||item.userAdjusted!==true||
    item.sourcePhotoOriginal!==true||item.sourceHashVerified!==true||
+   Boolean(item.deleted)||Boolean(item.sourceRevoked)||
    !SHA.test(item.sourceSHA256||'')||
    item.originalPhoto?.sha256!==item.sourceSHA256||
    typeof item.originalPhoto?.image!=='string'||
