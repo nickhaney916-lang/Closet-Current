@@ -46,6 +46,18 @@ test('separate source avatar radial plane measurement sees outward surface witho
  assert.equal(x.originalSourceGarmentRingAngularSamples,336);
  assert.equal(x.sampledInwardBodyGapAngularSectors,0);
  assert.ok(x.sampledOutwardBodyGapAngularSectors>0);
+ assert.equal(x.exactRaySampledAngularPositions,336);
+ assert.ok(x.exactRayOutwardSourceSectors>0);
+ assert.equal(x.exactRayInwardSourceSectors,0);
+ assert.equal(x.exactRayCannotCertifyWatertightVolume,true);
+ assert.equal(x.exactRayWithoutOriginalBodyContourIsUnknownNotSafe,true);
+ assert.equal(x.exactRayBodyContourSourceTopology,
+  'ORIGINAL_INDEXED_FACE_HORIZONTAL_PLANE_RAY_INTERSECTION');
+ assert.equal(x.exactRayOutwardSourceSectors+x.exactRayNearSourceSectors+
+  x.exactRayInwardSourceSectors+x.exactRayUnknownSourceSectors,336);
+ assert.equal(x.exactRaySourceFitDisposition,
+  x.exactRayUnknownSourceSectors>0?'EXACT_ORIGINAL_BODY_RAY_UNOBSERVED_BLOCKED':
+  'EXACT_ORIGINAL_BODY_RADIAL_GAP_SAMPLED_NOT_WEARABLE');
  assert.ok(x.originalBodySourcePlaneCutSegmentCount>20);
  assert.ok(x.minimumObservedRadialGapMeters>.05);
  assert.equal(x.radialWitnessIsNotSignedClosedMeshContainment,true);
@@ -58,12 +70,19 @@ test('genuine radial negative gap remains an outward-body overlap even when a ca
  assert.equal(x.status,'SAMPLED_SOURCE_RADIAL_INWARD_BODY_OVERLAP_WITNESSED_NOT_WEARABLE');
  assert.ok(x.sampledInwardBodyGapAngularSectors>0);
  assert.ok(x.largestObservedRadialInwardDistanceMeters>.04);
+ assert.ok(x.exactRayInwardSourceSectors>0);
+ assert.ok(x.exactRayMaximumObservedInwardMeters>.04);
+ assert.ok(['EXACT_ORIGINAL_BODY_RAY_INWARD_BLOCKED',
+  'EXACT_ORIGINAL_BODY_RAY_INWARD_AND_UNOBSERVED_BLOCKED']
+  .includes(x.exactRaySourceFitDisposition));
  assert.equal(x.consumer3DAdmitted,false);
 });
 test('missing source-body angular sectors never become inferred safe garment clearance',()=>{
  const x=audit(fixture({core:'half'}));
  assert.equal(x.status,'SAMPLED_SOURCE_RADIAL_BODY_COVERAGE_INCOMPLETE_NOT_WEARABLE');
  assert.ok(x.sampledUnknownBodyGapAngularSectors>0);
+ assert.ok(x.exactRayUnknownSourceSectors>0);
+ assert.equal(x.exactRayWithoutOriginalBodyContourIsUnknownNotSafe,true);
  assert.equal(x.releaseAuthorized,false);
 });
 test('inward anatomical body evidence AND unknown angular sectors must both be disclosed, not hidden by one generic status',()=>{
@@ -71,10 +90,37 @@ test('inward anatomical body evidence AND unknown angular sectors must both be d
  assert.equal(x.status,'SAMPLED_SOURCE_RADIAL_INWARD_AND_MISSING_BODY_SECTORS_NOT_WEARABLE');
  assert.equal(x.actualModelBasedRadialInwardWitness,true);
  assert.equal(x.originalBodyAngularSectorEvidenceMissing,true);
+ assert.ok(x.exactRayInwardSourceSectors>0);
+ assert.ok(x.exactRayUnknownSourceSectors>0);
+ assert.equal(x.exactRaySourceFitDisposition,
+  'EXACT_ORIGINAL_BODY_RAY_INWARD_AND_UNOBSERVED_BLOCKED');
  assert.ok(x.sampledInwardBodyGapAngularSectors>0);
  assert.ok(x.sampledUnknownBodyGapAngularSectors>0);
  assert.equal(x.consumer3DAdmitted,false);
  assert.equal(x.releaseAuthorized,false);
+});
+test('when no original anatomical body faces cross the skirt plane, all exact rays stay UNKNOWN, never fabricated as safe',()=>{
+ const f=fixture();
+ const translated=Float32Array.from(f.bodyPositions,(v,i)=>i%3===1?v+5:v);
+ const x=audit({...f,bodyPositions:translated});
+ assert.equal(x.exactRaySampledAngularPositions,336);
+ assert.equal(x.exactRayUnknownSourceSectors,336);
+ assert.equal(x.exactRayOutwardSourceSectors,0);
+ assert.equal(x.exactRayInwardSourceSectors,0);
+ assert.equal(x.exactRaySourceFitDisposition,'EXACT_ORIGINAL_BODY_RAY_UNOBSERVED_BLOCKED');
+ assert.equal(x.consumer3DAdmitted,false);
+ assert.equal(x.originalPhoto2DFallbackRequired,true);
+});
+test('source contour exact rays are repeatable and do not mutate anatomical original indexed face data',()=>{
+ const f=fixture(),copy=f.bodyIndices.slice(),weights=f.coreBodyFaceMask.slice();
+ const one=audit(f),two=audit(f);
+ assert.equal(one.exactRayOutwardSourceSectors,two.exactRayOutwardSourceSectors);
+ assert.equal(one.exactRayUnknownSourceSectors,two.exactRayUnknownSourceSectors);
+ assert.equal(one.exactRayMinimumObservedSkirtMinusBodyMeters,
+  two.exactRayMinimumObservedSkirtMinusBodyMeters);
+ assert.deepEqual(f.bodyIndices,copy);
+ assert.deepEqual(f.coreBodyFaceMask,weights);
+ assert.equal(one.releaseAuthorized,false);
 });
 test('wrong provenance, private person, invalid index, NaN geometry and forged scene gates refuse original-source radial receipt',()=>{
  const f=fixture();
