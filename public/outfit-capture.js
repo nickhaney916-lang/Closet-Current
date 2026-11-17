@@ -100,18 +100,23 @@ async function readOutfitPhoto(file){
  if(!file||busy||outfitSplitJob)return;
  if(file.size>10*1024*1024)return $('outfitSplitStatus').textContent='Choose an outfit photo smaller than 10 MB.';
  if(!file.type?.startsWith('image/')&&!/\.(jpe?g|png|webp|avif|heic|heif)$/i.test(file.name||''))return $('outfitSplitStatus').textContent='Choose a clothing photo.';
+ // M183: account ID alone is not a session lease. The same signed owner may
+ // log out and back in while a photo decodes; never resume its old import.
+ const leaseEpoch=typeof captureOperationEpoch==='number'?captureOperationEpoch:null;
+ const revoked=()=>leaseEpoch!==null&&captureOperationEpoch!==leaseEpoch;
  stopCamera();busy=true;controls(true);let timer;
  const guarded=typeof captureProof01Active!=='undefined'&&captureProof01Active,owner=guarded?captureProofOwner():null;
  try{
   if(guarded&&!owner)throw Error('Sign in before selecting an outfit photo');
   const loader=guarded?captureProofFromFile(file,owner):photoToJPEG(file,{maxDimension:3072,quality:.94});
   const decoded=await Promise.race([loader,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('decode timeout')),15000);})]);
+  if(revoked())return; // Do not create a Worker or requeue the previous owner's JPEG.
   if(guarded&&captureProofOwner()!==owner)throw Error('Outfit photo account changed');
   const image=guarded?decoded.image:decoded;
   busy=false;controls(false);session=0;startOutfitSplit(image,crypto.randomUUID(),guarded?decoded:null);
  }
- catch{$('outfitSplitStatus').textContent='Could not open that outfit photo. Try JPEG or PNG.';}
- finally{clearTimeout(timer);if(!outfitSplitJob){busy=false;controls(false);}}
+ catch{if(!revoked())$('outfitSplitStatus').textContent='Could not open that outfit photo. Try JPEG or PNG.';}
+ finally{clearTimeout(timer);if(!revoked()&&!outfitSplitJob){busy=false;controls(false);}}
 }
 for(const id of ['outfitCamera','outfitUpload']){$(id).onclick=()=>{if(!busy)stopCamera();};$(id).onchange=event=>{const file=event.target.files?.[0];event.target.value='';readOutfitPhoto(file);};}
 $('outfitRetry').onclick=()=>{if(lastOutfitPhoto)startOutfitSplit(lastOutfitPhoto,outfitActiveId,lastOutfitSourceProof);};
@@ -141,6 +146,10 @@ if(typeof window!=='undefined'&&typeof window.addEventListener==='function')
   outfitSplitJob.worker?.terminate();outfitSplitJob=null;
  }
  lastOutfitPhoto='';lastOutfitSourceProof=null;outfitActiveId=null;
+ // Do not retain prior-owner scan text or offer a stale retry after re-login.
+ $('outfitRetry').hidden=true;$('outfitSplitStatus').textContent='';
+ $('outfitSaveStatus').textContent='';$('outfitPieceActions').hidden=true;
+ $('useCapturedOutfit').disabled=true;
  for(const id of ['outfitCamera','outfitUpload']){
   const field=$(id);if(field)field.value='';
  }
