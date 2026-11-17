@@ -50,13 +50,19 @@ jobs:
               tests/outfit-capture.test.cjs) ;;
               .github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml) ;;
               research/master-consolidation-1054/M180-WEBKIT-FIRSTLOAD-RELIABILITY-HOLD.md) ;;
+              tests/main187-required-owner-assert-current.test.mjs) ;;
+              tests/main188-owner-revoked-outfit-preview.test.mjs) ;;
+              .github/workflows/main187-required-owner-lease-no-deploy.yml) ;;
+              .github/workflows/main188-owner-revoked-original-preview-no-deploy.yml) ;;
+              .github/workflows/main189-lease-revocation-crossmission-no-deploy.yml) ;;
+              research/master-consolidation-1054/M189-OWNER-REVOCATION-ADMISSION-HOLD.md) ;;
               *) echo "M173 unexpected protected change: $path"; exit 1 ;;
             esac
           done
           test "$(git rev-parse HEAD:public/capture-navigation.js)" = 31223cd114984a72edf1cb0771122f320dc80ef9
           test "$(git rev-parse HEAD:public/index.html)" = abd56ec794b44a447c9aac88129d6f6516180bd0
-          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 52d2b6d8834f27d9114e022fe8574947eda85206
-          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 58a2a1a81ad19e2341cebcdee83005296cd1d3a8
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 62bad171a97030846b0f1bb3bab740dec20ac5e7
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
           test "$(git rev-parse HEAD:public/native-photo-3d-veto-p99.mjs)" = 82b93d12d2fbcba146a190f5dce87a6ac5fc44af
           # M182 exact-source M181 native failure-only compatibility, no change to model.
           test "$(git rev-parse HEAD:public/outfit-capture.js)" = 8d55715ef09e34086d3c401ec38340bfc25f5fe8
@@ -117,8 +123,8 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD:public/capture-navigation.js)" = 31223cd114984a72edf1cb0771122f320dc80ef9
           test "$(git rev-parse HEAD:public/index.html)" = abd56ec794b44a447c9aac88129d6f6516180bd0
-          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 52d2b6d8834f27d9114e022fe8574947eda85206
-          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 58a2a1a81ad19e2341cebcdee83005296cd1d3a8
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 62bad171a97030846b0f1bb3bab740dec20ac5e7
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
           test "$(git rev-parse HEAD:public/native-photo-3d-veto-p99.mjs)" = 82b93d12d2fbcba146a190f5dce87a6ac5fc44af
           # M182 exact-source M181 native failure-only compatibility, no change to model.
           test "$(git rev-parse HEAD:public/outfit-capture.js)" = 8d55715ef09e34086d3c401ec38340bfc25f5fe8
@@ -160,7 +166,7 @@ jobs:
            ["research/main-thread-integration-1054/native-2d-preview.mjs",
             "public/native-2d-preview-p99.mjs"],
            ["0af20d49d87436683630d587ec0284c611cd3414",
-            "52d2b6d8834f27d9114e022fe8574947eda85206"]
+            "62bad171a97030846b0f1bb3bab740dec20ac5e7"]
           ];
           let adapted=src;
           for(const [old,newValue] of replacements){

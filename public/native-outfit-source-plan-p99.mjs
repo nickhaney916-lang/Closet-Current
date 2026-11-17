@@ -61,9 +61,10 @@ function active(getSession){
    !reference(s.authRef)||!reference(s.privateDbRef)||
    s.authRef.user?.id!==s.ownerId||
    s.privateDbRef.name!==s.privateDbName||
+   typeof s.authRef.assertCurrent!=='function'||
    !generation(s.operationEpoch))
   issue('signed owner session and private database required');
- try{s.authRef.assertCurrent?.();}catch{
+ try{s.authRef.assertCurrent();}catch{
   issue('signed owner session and private database required');
  }
  // Return object references only in ephemeral local lease; never in result,
@@ -88,12 +89,14 @@ function fingerprint(item){
   item?.originalPhoto?.image,item?.segmentHint?.cutoutSHA256,
   item?.segmentHint?.originalSHA256,item?.segmentHint?.clipped,
   item?.segmentHint?.ownerReviewedInstance,item?.segmentHint?.verified,
-  item?.outfitSourceId,item?.possibleDuplicate,item?.requiresOwnershipConfirmation
+  item?.outfitSourceId,item?.possibleDuplicate,item?.requiresOwnershipConfirmation,
+  item?.deleted,item?.sourceRevoked
  ]);
 }
 function confirmed(row,item,ownerId){
  if(item.ownerId!==ownerId||item.ownerReviewed!==true||item.userAdjusted!==true||
    item.sourcePhotoOriginal!==true||item.sourceHashVerified!==true||
+   Boolean(item.deleted)||Boolean(item.sourceRevoked)||
    !SHA.test(item.sourceSHA256||'')||
    item.originalPhoto?.sha256!==item.sourceSHA256||
    typeof item.originalPhoto?.image!=='string'||

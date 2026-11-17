@@ -34,17 +34,17 @@ jobs:
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
           # M183: inherited protected CI changes are scoped only to exact
           # donor source/test SHA repins and this named workflow allowlist.
-          test "$(git rev-parse HEAD:.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml)" = 9cda77f35a8cfbede447e43d3824afa315e8c606
-          test "$(git rev-parse HEAD:.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml)" = 10cb88c8915521edf2cb847d716709304182a8a4
-          test "$(git rev-parse HEAD:.github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml)" = 1dc421e71cb726b5884da4df39950b9e0c234cf4
-          test "$(git rev-parse HEAD:.github/workflows/main181-zero-proposal-native-no-deploy.yml)" = 3cd39fb4fa69b859f182f746fa2993f8f09317ee
+          test "$(git rev-parse HEAD:.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml)" = 14b0f9e09b28068d9d12f829ce5ecad8b3cfc662
+          test "$(git rev-parse HEAD:.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml)" = d442beaa482cb11dae1f5b103d32f1204b132a2b
+          test "$(git rev-parse HEAD:.github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml)" = 3d435ee3c6fd7a26b4a854fa3af3141a72cbca0d
+          test "$(git rev-parse HEAD:.github/workflows/main181-zero-proposal-native-no-deploy.yml)" = cf7731ed4c55bb5e9f96c47f5a13390b4c44ecf2
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
-              public/outfit-capture.js|tests/outfit-capture.test.cjs|.github/workflows/main183-outfit-session-epoch-no-deploy.yml|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml|.github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml|.github/workflows/main181-zero-proposal-native-no-deploy.yml) ;;
+              public/outfit-capture.js|tests/outfit-capture.test.cjs|.github/workflows/main183-outfit-session-epoch-no-deploy.yml|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml|.github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml|.github/workflows/main181-zero-proposal-native-no-deploy.yml|public/native-outfit-source-plan-p99.mjs|public/native-2d-preview-p99.mjs|tests/main187-required-owner-assert-current.test.mjs|tests/main188-owner-revoked-outfit-preview.test.mjs|.github/workflows/main187-required-owner-lease-no-deploy.yml|.github/workflows/main188-owner-revoked-original-preview-no-deploy.yml|.github/workflows/main189-lease-revocation-crossmission-no-deploy.yml|research/master-consolidation-1054/M189-OWNER-REVOCATION-ADMISSION-HOLD.md) ;;
               *) echo "M183 unreviewed change: $path"; exit 1 ;;
             esac
           done
-          git diff --exit-code "$BASE" HEAD -- public/ ':(exclude)public/outfit-capture.js' scripts/ supabase/ benchmark/ tests/ ':(exclude)tests/outfit-capture.test.cjs'
+          git diff --exit-code "$BASE" HEAD -- public/ ':(exclude)public/outfit-capture.js' ':(exclude)public/native-outfit-source-plan-p99.mjs' ':(exclude)public/native-2d-preview-p99.mjs' scripts/ supabase/ benchmark/ tests/ ':(exclude)tests/outfit-capture.test.cjs' ':(exclude)tests/main187-required-owner-assert-current.test.mjs' ':(exclude)tests/main188-owner-revoked-outfit-preview.test.mjs'
           node --check public/outfit-capture.js
           node --check tests/outfit-capture.test.cjs
       - name: Independent session lease and negative Worker Node cases
