@@ -172,3 +172,37 @@ test('P96 mismatched/resized/tampered model bytes and two separate originals can
  assert.equal(one.intake.intake(proposal(one)).reason,'stale-source-or-owner-lease');
  one.intake.close();
 });
+
+function exifOriginalWithOrientation96(originalJPEG,orientation){
+ // Legitimate JPEG APP1 EXIF/TIFF IFD0 orientation entry, inserted just after SOI.
+ // The test uses byte-derived source proof, never a fabricated digest receipt.
+ const src=Buffer.from(originalJPEG.split(',')[1],'base64');
+ assert.equal(src[0],255);assert.equal(src[1],216);
+ const tiff=Buffer.from([
+  0x49,0x49,0x2a,0,8,0,0,0, // little-endian TIFF, IFD0 at byte 8
+  1,0,0x12,1,3,0,1,0,0,0,orientation,0,0,0, // one SHORT orientation value
+  0,0,0,0 // next IFD offset
+ ]);
+ const payload=Buffer.concat([Buffer.from('Exif\\0\\0','latin1'),tiff]);
+ const length=payload.length+2;
+ return 'data:image/jpeg;base64,'+Buffer.concat([
+  src.subarray(0,2),Buffer.from([255,225,length>>8,length&255]),
+  payload,src.subarray(2)
+ ]).toString('base64');
+}
+test('P96 forged upright metadata cannot bypass EXIF rotation/mirror in verified original JPEG',async()=>{
+ // Authentic original JPEG data are byte-preserved other than legal APP1 metadata.
+ // The proof SHA is correctly recomputed, so this specifically checks EXIF
+ // crop coordinate safety rather than tamper rejection.
+ for(const orientation of [2,3,4,5,6,7,8,9]){
+  const exif=exifOriginalWithOrientation96(original,orientation);
+  const p=fixture(exif,4096,2731,1); // hostile or stale "upright" receipt
+  assert.notEqual(p.sourceSHA256,sourceSHA256);
+  await assert.rejects(derivative(p,fakeDecoded()),/EXIF orientation requires manual crop review/,
+   'orientation '+orientation+' must not enter model crop mapping');
+ }
+ const upright=exifOriginalWithOrientation96(original,1);
+ const accepted=await derivative(fixture(upright,4096,2731,1),fakeDecoded());
+ assert.equal(accepted.geometry.sourceSHA256,sha(upright));
+ assert.equal(accepted.geometry.physicalGarmentVerified,false);
+});
