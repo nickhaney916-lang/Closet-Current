@@ -32,8 +32,27 @@ const nativeCameraOriginal96=process.env.P96_NATIVE_4K==='true';
 const nativeLicense96='CC BY-SA 4.0';
 const nativeSourceURL96='https://upload.wikimedia.org/wikipedia/commons/b/b3/Artist_in_cowrie_attire.jpg';
 const nativeOriginalSHA1='e5f7490c833b9141f68180a1cd7f015b9f7016c2';
+// M166 uses only a PUBLIC licensed original, cached AFTER immutable byte+SHA1
+// validation. Never cache family/private owner photographs or model proposals.
+const publicOriginalCache96='benchmark/fixtures/commons-original-artist-cowrie-4000x6000-public-cache.jpg';
 let upscaled;
 if(nativeCameraOriginal96){
+ let pinnedCachedBytes=null;
+ try{pinnedCachedBytes=await readFile(publicOriginalCache96);}
+ catch(error){if(error?.code!=='ENOENT')throw error;}
+ if(pinnedCachedBytes){
+  assert.equal(pinnedCachedBytes.length,352936,
+   'M166 cached public camera original has wrong byte count');
+  assert.equal(createHash('sha1').update(pinnedCachedBytes).digest('hex'),nativeOriginalSHA1,
+   'M166 cached public camera original differs from immutable Commons SHA1');
+  assert.equal(pinnedCachedBytes[0],255);
+  assert.equal(pinnedCachedBytes[1],216);
+  console.log('M166_PUBLIC_ORIGINAL_VERIFIED_CACHE',JSON.stringify({
+   source:'verified-public-cache',sha1Matched:true,byteLengthMatched:true,
+   originalCamera4k:true,notCustomerPhoto:true
+  }));
+ }
+ if(!pinnedCachedBytes){
  // M163 test-fixture transport only: Commons sometimes returns 429 for
  // simultaneous independent CI jobs. Retry ONLY status 429/502/503/504,
  // never browser events, owner/session actions, source assertions or model.
@@ -63,7 +82,16 @@ if(nativeCameraOriginal96){
  assert.equal(createHash('sha1').update(original).digest('hex'),nativeOriginalSHA1,
   'actual 4K original no longer matches Commons immutable SHA-1');
  assert.ok(original[0]===255&&original[1]===216,'native source was not JPEG');
- upscaled={width:4000,height:6000,jpeg:'data:image/jpeg;base64,'+original.toString('base64')};
+ // Save ONLY byte-identical, rights-attributed PUBLIC Commons test fixture.
+ // Never allow failed downloads, invalid SHA, or any private photo into cache.
+ await writeFile(publicOriginalCache96,original,{flag:'w'});
+ pinnedCachedBytes=original;
+ console.log('M166_PUBLIC_ORIGINAL_VERIFIED_CACHE',JSON.stringify({
+  source:'verified-public-download',sha1Matched:true,byteLengthMatched:true,
+  originalCamera4k:true,notCustomerPhoto:true
+ }));
+ }
+ upscaled={width:4000,height:6000,jpeg:'data:image/jpeg;base64,'+pinnedCachedBytes.toString('base64')};
 }else{
 const rasterBrowser=await chromium.launch({headless:true,args:['--no-sandbox']});
 try{

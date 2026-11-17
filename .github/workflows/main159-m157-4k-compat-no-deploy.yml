@@ -46,7 +46,7 @@ jobs:
           done < /tmp/p96-paths
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = d478fcf6e4e8889a23b1620b444667ac949da7a9
           test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 4f8fe91ec1974ff936fa90d33874db7df0782e48
-          test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = c46cb41c09ce7798817e14ff39fbf83a5d57fcbf
+          test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 9328084dad7d60d03b8390f4b48725c43acf69ff
           test "$(git rev-parse HEAD:tests/parallel96-highres-source-derivative.test.mjs)" = fcbad9d8744bd5fee68b72d1b3b235340d61883c
           node --check research/parallel96-highres/source-derivative-intake96.mjs
           node --check research/multi-garment-capture-01/review-ui.mjs
@@ -150,6 +150,14 @@ jobs:
           git merge-base --is-ancestor 5dee8b7115c45a167b914b9609eb31867bd933ac HEAD
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
           node --check scripts/test-parallel96-native-highres-browser.mjs
+      # M166 GitHub Actions cache holds ONLY the verified PUBLIC Commons JPEG.
+      # The JS harness checks exact SHA-1 and length on every hit; misses
+      # still fetch exact pinned bytes, and 429 exhaustion remains RED.
+      - name: Restore exact verified public Commons 4000x6000 fixture cache
+        uses: actions/cache@v4
+        with:
+          path: benchmark/fixtures/commons-original-artist-cowrie-4000x6000-public-cache.jpg
+          key: p96-public-commons-original-e5f7490c833b9141f68180a1cd7f015b9f7016c2-v1
       - name: Install pinned native browser/ONNX test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Offline application build, no deployment
