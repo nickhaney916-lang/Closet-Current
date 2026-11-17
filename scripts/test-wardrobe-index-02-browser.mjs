@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {extname,resolve} from 'node:path';
-import {chromium} from 'playwright';
+import {chromium,webkit} from 'playwright';
 
 const root=resolve('.');
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript',
@@ -53,7 +53,7 @@ const sample=[
  item('bag','Accessories','Bag','Black',1)
 ];
 const fakeAuth=[
- 'window.closetAuth={ready:Promise.resolve(),user:{id:"index02-private-test-A",email:"fixture@example.invalid"},getAccessToken:async()=>{throw Error("No external requests allowed");}};',
+ 'window.closetAuth={ready:Promise.resolve(),user:{id:"index02-private-test-A",email:"fixture@example.invalid"},assertCurrent(){if(this.revoked)throw Error("revoked");},getAccessToken:async()=>{throw Error("No external requests allowed");}};',
  'document.getElementById("authGate").hidden=true;',
  'document.getElementById("appShell").hidden=false;',
  'document.getElementById("accountLabel").textContent="Offline research fixture";'
@@ -61,7 +61,9 @@ const fakeAuth=[
 const fakeBackup='window.closetCloud={beforeWrite:async()=>{},changed:()=>{},start:async()=>{},stop:async()=>{}};';
 let browser;const evidence=[],errors=[],outbound=[];
 try{
- browser=await chromium.launch({headless:true,args:['--disable-dev-shm-usage']});
+ const engine=process.env.INDEX02_ENGINE||'chromium';
+ assert.ok(['chromium','webkit'].includes(engine));
+ browser=await (engine==='webkit'?webkit:chromium).launch({headless:true,args:['--disable-dev-shm-usage']});
  for(const width of [320,390,430]){
   const ctx=await browser.newContext({viewport:{width,height:900},
    deviceScaleFactor:1,isMobile:true,hasTouch:true,serviceWorkers:'block'});
@@ -125,6 +127,21 @@ try{
    await page.waitForFunction(()=>window.closetIndex02?.state()?.matched===2);
    assert.equal(await page.locator('#closetGrid article.card').count(),2);
    await panel.screenshot({path:output+'/'+width+'-corrected-index.png'});
+   // Same owner ID re-login changes auth object, not the owner identifier.
+   // Old index must be hidden before any explicit index refresh or logout.
+   await page.evaluate(()=>{
+    const old=window.closetAuth;
+    window.closetAuth={...old,user:{...old.user},assertCurrent(){if(this.revoked)throw Error('revoked');}};
+    render();
+   });
+   assert.equal(await page.evaluate(()=>window.closetIndex02.state().ready),false,
+    'same owner auth object replacement must revoke old index immediately');
+   assert.equal(await page.locator('#closetGrid article.card').count(),0,
+    'same-owner re-login must hide stale filtered cards until refreshed');
+   await page.evaluate(async()=>{await window.closetIndex02.refresh();render();});
+   assert.equal(await page.evaluate(()=>window.closetIndex02.state().ready),true);
+   assert.equal(await page.locator('#closetGrid article.card').count(),2,
+    'fresh same-owner signed lease may use newly read saved index');
    // A signed-out or switched account CANNOT view previous owner's index.
    await page.evaluate(async()=>{window.closetAuth.user=null;await window.closetIndex02.refresh();});
    assert.equal(await page.locator('#closetGrid article.card').count(),0);
