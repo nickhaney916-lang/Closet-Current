@@ -161,8 +161,10 @@ test('M157 v3 preflight rejects forged second instance and leaves existing close
   await seed(f);
   const backup=(await exported(f)).data;
   backup.items[1].segmentHint.cutoutSHA256='f'.repeat(64);
+  await transact(f.db,(items,state)=>{items.clear();state.clear();});
+  const before=await snapshot(f.db);
   await assert.rejects(prepare(f,backup),/DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW/);
-  assert.equal((await snapshot(f.db)).items.length,2);
+  assert.deepEqual(await snapshot(f.db),before);
  }finally{f.close();}
 });
 
