@@ -41,6 +41,9 @@ test('source original index-split closed cube yields opposite-wound proven virtu
  assert.equal(r.compatibleOriginalRestAndSkinBoundaryEdges,36);
  assert.equal(r.unresolvedOriginalBoundaryEdges,0);
  assert.equal(r.originalSourceBoundaryEdgeConservationVerified,true);
+ assert.equal(r.geometryTwinsDifferentOriginalSourceMeshEdges,0);
+ assert.equal(r.geometryTwinsDifferentOriginalRestPoseEdges,0);
+ assert.equal(r.geometryTwinsDifferentOriginalSkinInfluenceEdges,0);
  assert.equal(r.virtualTwinsNeverProofOfSealedPhysicalAnatomy,true);
  assert.equal(r.releaseAuthorized,false);
  assert.deepEqual(a.posedPositions,snap.position);
@@ -63,6 +66,8 @@ test('spatially coincident rest vertices with different source skin indices cann
  const r=measure(a);
  assert.ok(r.originalSourceGeometryTwinPairs>=10);
  assert.ok(r.geometryTwinsWithConflictingOriginalProvenanceEdges>0);
+ assert.ok(r.geometryTwinsDifferentOriginalSkinInfluenceEdges>0);
+ assert.equal(r.originalGeometryTwinMismatchReasonsExhaustive,true);
  assert.ok(r.unresolvedOriginalBoundaryEdges>0);
 });
 test('same posed positions but changed real source rest positions reject claimed original seam equivalence',()=>{
@@ -70,6 +75,7 @@ test('same posed positions but changed real source rest positions reject claimed
  a.restPositions[0]+=.004;
  const r=measure(a);
  assert.ok(r.geometryTwinsWithConflictingOriginalProvenanceEdges>0);
+ assert.ok(r.geometryTwinsDifferentOriginalRestPoseEdges>0);
  assert.ok(r.unresolvedOriginalBoundaryEdges>0);
 });
 test('matching world positions across different source anatomical mesh IDs are never automatically stitched',()=>{
@@ -77,6 +83,7 @@ test('matching world positions across different source anatomical mesh IDs are n
  a.sourceMeshIds[0]=1;
  const r=measure(a);
  assert.ok(r.geometryTwinsWithConflictingOriginalProvenanceEdges>0);
+ assert.ok(r.geometryTwinsDifferentOriginalSourceMeshEdges>0);
  assert.ok(r.unresolvedOriginalBoundaryEdges>0);
 });
 test('ambiguous geometric overlaid source face and duplicate edge occupancy cannot qualify as unique topological seam',()=>{
