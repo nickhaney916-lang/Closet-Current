@@ -1,3 +1,4 @@
+import {distinctReviewedSharedOriginal157} from './native-reviewed-shared-original-157.mjs';
 /**
  * Mission 3 — unflagged v3 backup export from ONE signed-owner durable
  * IndexedDB snapshot. Saved pieces, looks and outfits only.
@@ -102,9 +103,9 @@ export async function exportDurableOwnerBackupM3({
   fail('UNFINISHED_PHOTOS_NOT_IN_V3');
  const items=[];
  const ids=new Set();
- // M116: match the v3 importer's cross-item photo identity fence, not just
- // the canonical original: repeated previews also cause no-write refusal.
- const seenPictures=new Set(),originalReceipts=new Set();
+ // Maintain O(1) expected canonical photo/source lookup even with large
+ // wardrobes. Rehash cutout only for exact image/source collisions.
+ const priorByPicture=new Map(),priorByReceipt=new Map();
  if(snap.items.length>1000)fail('TOO_MANY_GARMENTS');
  for(const row of snap.items){
   if(!row||typeof row.id!=='string'||!row.id||row.id.length>100||
@@ -127,18 +128,29 @@ export async function exportDurableOwnerBackupM3({
     {maxEncoded:11_200_000,maxBytes:8*1024*1024});
   }else if(row.originalPhoto?.sha256||row.sourceHashVerified===true)
    fail('MISSING_VERIFIED_ORIGINAL');
-  // A shared original can represent two legitimately different garments,
-  // but current v3 cannot attest their separate mask/crop instances on
-  // restore. Refuse export without deleting either private saved garment.
   const pictures=new Set([row.image,row.originalPhoto?.image]
    .filter(image=>typeof image==='string'&&image.length)
    .map(canonicalJPEG));
   const canonicalReceipt=row.originalPhoto?.sha256||row.sourceSHA256||null;
-  if([...pictures].some(image=>seenPictures.has(image))||
-     (canonicalReceipt&&originalReceipts.has(canonicalReceipt)))
-   fail('SHARED_ORIGINAL_RESTORE_UNSUPPORTED');
-  for(const image of pictures)seenPictures.add(image);
-  if(canonicalReceipt)originalReceipts.add(canonicalReceipt);
+  const conflicts=new Set();
+  for(const image of pictures)
+   for(const previous of priorByPicture.get(image)||[])conflicts.add(previous);
+  if(canonicalReceipt)
+   for(const previous of priorByReceipt.get(canonicalReceipt)||[])
+    conflicts.add(previous);
+  for(const previous of conflicts){
+   if(!await distinctReviewedSharedOriginal157(previous,row,ownerId))
+    fail('SHARED_ORIGINAL_RESTORE_UNSUPPORTED');
+   check();
+  }
+  for(const image of pictures){
+   const rows=priorByPicture.get(image)||[];
+   rows.push(row);priorByPicture.set(image,rows);
+  }
+  if(canonicalReceipt){
+   const rows=priorByReceipt.get(canonicalReceipt)||[];
+   rows.push(row);priorByReceipt.set(canonicalReceipt,rows);
+  }
   check();
   // Older v1-v3 rows legitimately lacked an owner ID; stamp only the
   // exported copy. Never modify real on-device originals to do this.

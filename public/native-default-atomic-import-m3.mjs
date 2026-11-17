@@ -1,3 +1,4 @@
+import {distinctReviewedSharedOriginal157} from './native-reviewed-shared-original-157.mjs';
 /**
  * MISSION3-DEFAULT-ATOMIC-IMPORT — DRAFT/HOLD release candidate.
  * Safely import v1-v3 wardrobe backups in ONE private IndexedDB transaction.
@@ -168,8 +169,14 @@ export async function prepareDefaultAtomicM3({
  };
  for(const row of incoming){
   const prior=allItems.get(row.id);
-  if(!prior&&[...allItems.values()].some(saved=>samePinnedOriginal(saved,row)))
-   throw Error('LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW');
+  if(!prior){
+   for(const saved of allItems.values()){
+    if(samePinnedOriginal(saved,row)&&
+       !await distinctReviewedSharedOriginal157(saved,row,ownerId))
+     throw Error('LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW');
+    assertLease();
+   }
+  }
   if(prior){
    // Normalization stamps a new legacy record into the signed DB. For an
    // existing same-ID row, that stamp must NOT turn a missing legacy owner
@@ -182,6 +189,19 @@ export async function prepareDefaultAtomicM3({
    // independently recorded source-instance review provenance.
    if((prior.sourceHashVerified===true&&row.sourceHashVerified!==true)||
       (prior.sourcePieceKey&&prior.sourcePieceKey!==row.sourcePieceKey)||
+       // v3 must not mint new cutout, owner review or PHOTO119 label
+       // authority by replacing an already saved same-ID original.
+       (prior.cutoutSHA256||null)!==(row.cutoutSHA256||null)||
+       JSON.stringify(prior.segmentHint||null)!==
+        JSON.stringify(row.segmentHint||null)||
+       (prior.singleGarmentVerified??null)!==(row.singleGarmentVerified??null)||
+       JSON.stringify(prior.confirmedDetailsSource31||null)!==
+        JSON.stringify(row.confirmedDetailsSource31||null)||
+       JSON.stringify(prior.confirmedDetails||null)!==
+        JSON.stringify(row.confirmedDetails||null)||
+       (prior.ownerReviewed??null)!==(row.ownerReviewed??null)||
+       (prior.humanReviewedSource??null)!==(row.humanReviewedSource??null)||
+       (prior.reviewProvenance||null)!==(row.reviewProvenance||null)||
       (prior.ownerSourceReview88&&
        JSON.stringify(prior.ownerSourceReview88)!==
        JSON.stringify(row.ownerSourceReview88)))
