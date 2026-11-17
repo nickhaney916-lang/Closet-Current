@@ -1,0 +1,169 @@
+name: MAIN159 M157 reviewed-source v3 + 4K P88 native integration NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main159-m157-4k-source-integrated-HOLD]
+  pull_request:
+    branches: [research/main157-source-reviewed-multi-v3-restore-HOLD]
+permissions:
+  contents: read
+jobs:
+  p96-build-full-node-and-privacy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact parent, immutable owner originals, unchanged worker and narrow source
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=5dee8b7115c45a167b914b9609eb31867bd933ac
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = 03c83b79e076ed3b7f67353cd3cd69f13529ccab
+          test "$(git rev-parse HEAD:public/outfit-worker.mjs)" = 03f4f354f8ad28ed764bf2601d31b0577e6ca8f9
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg)" = 27864552c036f9bf089be147531c4da8ccdcb7d7
+          test "$(git rev-parse HEAD:public/outfit-segmentation.mjs)" = d357955dd8fdab7c0cb727ea597c270edd9309ac
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
+          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = 741e736ca107169c9e9861d803a49c2e6166e20b
+          test "$(git rev-parse HEAD:research/master-consolidation-1054/p88-source-key-adapter-55.mjs)" = b602ccb053deb05244bf40f4f3c8b9c33a115f42
+          # Exact M157 signed-v3 contract stays byte identical while installing P96.
+          test "$(git rev-parse HEAD:public/native-reviewed-shared-original-157.mjs)" = bae0d09e5f990f8c88a6c7d2d3b9d28a84604f6a
+          test "$(git rev-parse HEAD:tests/main157-reviewed-shared-source-v3.test.mjs)" = c4d88f4a4beaadc8b4589f3d80fd955139ebd26e
+          test "$(git rev-parse HEAD:scripts/test-main157-same-photo-native-outfit-browser.mjs)" = c65c47091156c8996a1f463bff80b1c690b9fd90
+          git diff --name-only "$BASE" HEAD > /tmp/p96-paths
+          while IFS= read -r path; do
+            case "$path" in
+              research/parallel96-highres/*|benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg|research/multi-garment-capture-01/review-ui.mjs|tests/parallel96-highres-source-derivative.test.mjs|scripts/test-parallel96-native-highres-browser.mjs|.github/workflows/main159-m157-4k-compat-no-deploy.yml) ;;
+              *) echo "Unexpected protected source: $path"; exit 1 ;;
+            esac
+          done < /tmp/p96-paths
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = d478fcf6e4e8889a23b1620b444667ac949da7a9
+          test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 4f8fe91ec1974ff936fa90d33874db7df0782e48
+          test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 58194c1bbcfca7b46f1c71b1ee0cc00c3dbc88c7
+          test "$(git rev-parse HEAD:tests/parallel96-highres-source-derivative.test.mjs)" = fcbad9d8744bd5fee68b72d1b3b235340d61883c
+          node --check research/parallel96-highres/source-derivative-intake96.mjs
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node --check tests/parallel96-highres-source-derivative.test.mjs
+          node --check scripts/test-parallel96-native-highres-browser.mjs
+      - name: Install exact no-deploy test tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Offline build only, no deployment
+        run: node scripts/build.mjs
+      - name: Full inherited Node suite plus P96 privacy and mask checks
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  p96-real-4k-browser-source-review-private-outfit-restore:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      # M165 diagnostic: retain EVERY real browser assertion, serialize
+      # memory-heavy WASM processes and Commons fetches in this workflow.
+      # A model error remains a failing job, NEVER an automated retry.
+      max-parallel: 1
+      matrix:
+        engine: [chromium, webkit]
+        width: [320,390,430]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: ${{ matrix.width }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable worker/native/photo source invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 5dee8b7115c45a167b914b9609eb31867bd933ac HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg)" = 27864552c036f9bf089be147531c4da8ccdcb7d7
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = 03c83b79e076ed3b7f67353cd3cd69f13529ccab
+          node --check scripts/test-parallel96-native-highres-browser.mjs
+      - name: Install pinned real-browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Offline build before actual native owner/2D/restore test
+        run: node scripts/build.mjs
+      - name: Genuine installed P88 on 4K-sized licensed-derived source, explicit synthetic review, private source SHA, 2D, v4 restore
+        run: node scripts/test-parallel96-native-highres-browser.mjs
+      - name: M159 same-HEAD reviewed two-cutout original -> native v3 restore -> verified 2D compatibility
+        if: matrix.width == 390
+        run: |
+          M123_ENGINE=${{ matrix.engine }} node scripts/test-main157-same-photo-native-outfit-browser.mjs
+      - name: Archive NONPRIVATE numeric/source hash ledger only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p96-${{ matrix.engine }}-${{ matrix.width }}-HOLD
+          path: benchmark/parallel96-highres-p88-browser/${{ matrix.engine }}/${{ matrix.width }}/P96-4K-SOURCE-LOCKED-BROWSER.json
+          retention-days: 14
+          if-no-files-found: ignore
+  p96-unmodified-licensed-native-4000x6000-camera-jpeg:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      # M165 diagnostic: retain EVERY real browser assertion, serialize
+      # memory-heavy WASM processes and Commons fetches in this workflow.
+      # A model error remains a failing job, NEVER an automated retry.
+      max-parallel: 1
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: '390'
+      P96_NATIVE_4K: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify immutable parent and native P88 worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 5dee8b7115c45a167b914b9609eb31867bd933ac HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg)" = 27864552c036f9bf089be147531c4da8ccdcb7d7
+          node --check scripts/test-parallel96-native-highres-browser.mjs
+      - name: Install pinned native browser/ONNX test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Offline application build, no deployment
+        run: node scripts/build.mjs
+      - name: Real SHA-1-pinned Wikimedia 4000x6000 full original through live WASM P88 and native v3/v4 owner restore
+        run: node scripts/test-parallel96-native-highres-browser.mjs
+      - name: Archive source-identity ledger only (no JPEG or private owner data)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p96-unmodified-native-${{ matrix.engine }}-390-HOLD
+          path: benchmark/parallel96-native-original-4k-browser/${{ matrix.engine }}/390/P96-4K-SOURCE-LOCKED-BROWSER.json
+          retention-days: 14
+          if-no-files-found: ignore
