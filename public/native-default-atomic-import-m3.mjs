@@ -189,10 +189,19 @@ export async function prepareDefaultAtomicM3({
    // independently recorded source-instance review provenance.
    if((prior.sourceHashVerified===true&&row.sourceHashVerified!==true)||
       (prior.sourcePieceKey&&prior.sourcePieceKey!==row.sourcePieceKey)||
-       (prior.cutoutSHA256&&prior.cutoutSHA256!==row.cutoutSHA256)||
-       (prior.segmentHint?.cutoutSHA256&&
-        JSON.stringify(prior.segmentHint)!==JSON.stringify(row.segmentHint))||
-       (prior.singleGarmentVerified===true&&row.singleGarmentVerified===false)||
+       // v3 must not mint new cutout, owner review or PHOTO119 label
+       // authority by replacing an already saved same-ID original.
+       (prior.cutoutSHA256||null)!==(row.cutoutSHA256||null)||
+       JSON.stringify(prior.segmentHint||null)!==
+        JSON.stringify(row.segmentHint||null)||
+       (prior.singleGarmentVerified??null)!==(row.singleGarmentVerified??null)||
+       JSON.stringify(prior.confirmedDetailsSource31||null)!==
+        JSON.stringify(row.confirmedDetailsSource31||null)||
+       JSON.stringify(prior.confirmedDetails||null)!==
+        JSON.stringify(row.confirmedDetails||null)||
+       (prior.ownerReviewed??null)!==(row.ownerReviewed??null)||
+       (prior.humanReviewedSource??null)!==(row.humanReviewedSource??null)||
+       (prior.reviewProvenance||null)!==(row.reviewProvenance||null)||
       (prior.ownerSourceReview88&&
        JSON.stringify(prior.ownerSourceReview88)!==
        JSON.stringify(row.ownerSourceReview88)))
