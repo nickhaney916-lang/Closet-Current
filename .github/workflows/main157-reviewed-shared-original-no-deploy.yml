@@ -42,10 +42,10 @@ jobs:
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Run source-reviewed shared-photo v3 roundtrip and negative gates
         run: node --test tests/main157-reviewed-shared-source-v3.test.mjs
-      - name: Run inherited full suite with NO skips
-        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - name: Build offline actual app without deployment
         run: node scripts/build.mjs
+      - name: Run inherited full suite with NO skips
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
   actual-native-browser:
     runs-on: ubuntu-24.04
     timeout-minutes: 65
