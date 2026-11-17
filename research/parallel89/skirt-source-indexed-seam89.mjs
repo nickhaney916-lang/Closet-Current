@@ -46,7 +46,7 @@ export function summarizeOriginalBodyIndexedSeams89({
   posedPositions.length>2_100_000||
   !(restPositions instanceof Float32Array)||
   restPositions.length!==posedPositions.length||
-  !validIndex(indices)||indices.length<12||indices.length%3!==0||
+  !validIndex(indices)||indices.length<6||indices.length%3!==0||
   indices.length>3_000_000||
   !(skinIndices instanceof Uint16Array)||
   skinIndices.length!==posedPositions.length/3*4||
