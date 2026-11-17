@@ -7,11 +7,8 @@ on:
   workflow_dispatch: {}
 permissions:
   contents: read
-# Keep only the newest exact source acceptance; older queued source heads
-# are not certification for a changed M157 proof or browser assertion.
-concurrency:
-  group: main157-verified-shared-original-${{ github.ref }}
-  cancel-in-progress: true
+# Exact HEAD is pinned by checkout and the strict source guard. Do not
+# cancel independent verification reruns, including inherited full Node.
 jobs:
   source-reviewed-v3-node:
     runs-on: ubuntu-24.04
