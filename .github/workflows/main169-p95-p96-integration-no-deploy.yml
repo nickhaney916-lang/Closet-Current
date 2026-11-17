@@ -27,7 +27,7 @@ jobs:
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
-              .github/workflows/main169-p95-p96-integration-no-deploy.yml|benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg|research/multi-garment-capture-01/review-ui.mjs|research/parallel96-highres/LICENSED_CAMERA_ORIGINAL_FIXTURE.md|research/parallel96-highres/source-derivative-intake96.mjs|scripts/test-parallel96-native-highres-browser.mjs|tests/parallel96-highres-source-derivative.test.mjs) ;;
+              .github/workflows/main169-p95-p96-integration-no-deploy.yml|benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg|research/multi-garment-capture-01/review-ui.mjs|research/parallel96-highres/LICENSED_CAMERA_ORIGINAL_FIXTURE.md|research/parallel96-highres/source-derivative-intake96.mjs|scripts/test-parallel96-native-highres-browser.mjs|scripts/test-main169-exact-highres-preview-reentry.mjs|tests/parallel96-highres-source-derivative.test.mjs) ;;
               *) echo "M169 unexpected changed path: $path"; exit 1 ;;
             esac
           done
@@ -46,6 +46,8 @@ jobs:
           node --check research/multi-garment-capture-01/review-ui.mjs
           node --check research/parallel96-highres/source-derivative-intake96.mjs
           node --check scripts/test-parallel96-native-highres-browser.mjs
+          test "$(git rev-parse HEAD:scripts/test-main169-exact-highres-preview-reentry.mjs)" = 81a5bf42e74cb2df0fa5ab0bc180e151662c3232
+          node --check scripts/test-main169-exact-highres-preview-reentry.mjs
           node --check scripts/test-parallel95-native-source-restore-reentry.mjs
           node --check tests/parallel96-highres-source-derivative.test.mjs
       - name: Install pinned no-deploy test dependencies
@@ -90,12 +92,13 @@ jobs:
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = d478fcf6e4e8889a23b1620b444667ac949da7a9
           test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 4f8fe91ec1974ff936fa90d33874db7df0782e48
           test "$(git rev-parse HEAD:benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg)" = 27864552c036f9bf089be147531c4da8ccdcb7d7
+          test "$(git rev-parse HEAD:scripts/test-main169-exact-highres-preview-reentry.mjs)" = 81a5bf42e74cb2df0fa5ab0bc180e151662c3232
       - name: Install pinned browser dependencies (NO PAID API)
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Local build only, no hosted API or deployment
         run: node scripts/build.mjs
       - name: Exact original 4000x6000 licensed public JPEG, genuine installed P88 inference and native private 2D/v3/v4
-        run: P96_NATIVE_4K=true node scripts/test-parallel96-native-highres-browser.mjs
+        run: P96_NATIVE_4K=true node scripts/test-main169-exact-highres-preview-reentry.mjs
       - name: Original-hash-carrying derivative 4K source, real P88, private 2D and restore
         run: node scripts/test-parallel96-native-highres-browser.mjs
       - name: P95 real touch and photo-source mutation/reentry at 320 390 and 430
