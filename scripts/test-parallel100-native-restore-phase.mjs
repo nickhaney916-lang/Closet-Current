@@ -72,7 +72,7 @@ source=one(source,'const state=Object.fromEntries(after.state.map(x=>[x.id,x]));
  "     const p100MessageCode=p100MessageCodes.find(code=>status.includes(code))||",
  "      (status.includes('imported atomically')?'committed':'unclassified');",
  '     const p100Phase={',
- '      beforeIdle:p100BeforeIdle,afterIdle:p100Idle(),messageCode:p100MessageCode,'
+ '      beforeIdle:p100BeforeIdle,afterIdle:p100Idle(),messageCode:p100MessageCode,',
  '      beforeCount:before.items.length,afterCount:after.items.length,',
  "      topPresent:after.items.some(x=>x.id==='p93-original'),",
  "      bottomPresent:after.items.some(x=>x.id==='m127-bottom'),",
