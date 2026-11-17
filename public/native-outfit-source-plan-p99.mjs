@@ -61,9 +61,10 @@ function active(getSession){
    !reference(s.authRef)||!reference(s.privateDbRef)||
    s.authRef.user?.id!==s.ownerId||
    s.privateDbRef.name!==s.privateDbName||
+   typeof s.authRef.assertCurrent!=='function'||
    !generation(s.operationEpoch))
   issue('signed owner session and private database required');
- try{s.authRef.assertCurrent?.();}catch{
+ try{s.authRef.assertCurrent();}catch{
   issue('signed owner session and private database required');
  }
  // Return object references only in ephemeral local lease; never in result,
