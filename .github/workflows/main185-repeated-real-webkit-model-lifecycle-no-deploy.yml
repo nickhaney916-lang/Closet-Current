@@ -50,7 +50,7 @@ jobs:
           test "$(git rev-parse HEAD:scripts/test-main58-actual-p88-wasm-browser.mjs)" = 96ba2f5ee2420de52f45911881fdcc139455c353
           test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
           test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 58194c1bbcfca7b46f1c71b1ee0cc00c3dbc88c7
-          test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 1840c4496aefc28941f4c3de24a29bac1cb5e792c
+          test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 1840c4496aefc28941f4c3de24a29bac1cb5e792
           test "$(git rev-parse HEAD:public/outfit-capture.js)" = 8d55715ef09e34086d3c401ec38340bfc25f5fe8
           git diff --exit-code "$PARENT" HEAD -- public/ scripts/ tests/ supabase/ benchmark/ research/parallel96-highres/
           git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
