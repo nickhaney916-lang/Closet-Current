@@ -2311,12 +2311,22 @@ if(new URLSearchParams(location.search).get('index02')==='after'){
   const bridge=createMobileWardrobeIndex02({
    document,closetElement:$('closet'),
    authenticatedOwner:()=>window.closetAuth?.user?.id||null,
+   // Optional INDEX-02 research UI: pin the actual signed auth object,
+   // private DB connection and operation epoch, not only the owner ID.
+   getOwnerSession:()=>({authRef:window.closetAuth,privateDbRef:db,
+    operationEpoch:captureOperationEpoch}),
    async readSavedItems(){
-    const owner=window.closetAuth?.user?.id;
-    if(!owner||db?.name!=='closet-current-user-'+owner)throw Error('INDEX-02 owner-bound storage unavailable');
+    const authRef=window.closetAuth,privateDbRef=db,epoch=captureOperationEpoch;
+    const owner=authRef?.user?.id;
+    const current=()=>!!owner&&window.closetAuth===authRef&&db===privateDbRef&&
+     captureOperationEpoch===epoch&&authRef?.user?.id===owner&&
+     privateDbRef?.name==='closet-current-user-'+owner&&
+     typeof authRef?.assertCurrent==='function';
+    if(!current())throw Error('INDEX-02 owner-bound storage unavailable');
+    try{authRef.assertCurrent();}catch{throw Error('INDEX-02 signed owner lease revoked');}
     const rows=await readAll();
-    if(!owner||db?.name!=='closet-current-user-'+owner||window.closetAuth?.user?.id!==owner)
-     throw Error('INDEX-02 changed account while indexing');
+    if(!current())throw Error('INDEX-02 signed owner session changed while indexing');
+    try{authRef.assertCurrent();}catch{throw Error('INDEX-02 signed owner lease revoked');}
     return rows;
    },
    onRerender:render
