@@ -695,7 +695,7 @@ try{
  assert.equal(results.neutralRearTrials.length,2);
  assert.equal(results.captures.length,54);
  assert.equal(results.captures.filter(x=>
-  x.file?.startsWith('selected-five-pose-source-skirt-')).length,18,
+  x.name?.startsWith('selected-five-pose-source-skirt-')).length,18,
   'selected original source screenshots must not be silently missing');
  assert.equal(results.poseSamples.length,6);
  assert.equal(results.diffs.length,18);
