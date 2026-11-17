@@ -22,8 +22,30 @@ const donorSHA=createHash('sha256').update(donor).digest('hex');
 const locked=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'))
  .find(x=>x.id==='commons-0003');
 assert.ok(locked?.verified&&locked.sha256===donorSHA);
-const rasterBrowser=await chromium.launch({headless:true,args:['--no-sandbox']});
+// Wikimedia Commons' unmodified, native 4000x6000 Canon EOS 80D original:
+ // "Artist in cowrie attire.jpg", Kofiarkohbaidoo, Ghana, 25 Jan 2026.
+ // CC BY-SA 4.0 https://commons.wikimedia.org/wiki/File:Artist_in_cowrie_attire.jpg
+ // Original SHA-1 from Commons file metadata, file bytes MUST match exactly.
+ // No privately owned images, credentials, external uploads or paid services.
+const nativeCameraOriginal96=process.env.P96_NATIVE_4K==='true';
+const nativeLicense96='CC BY-SA 4.0';
+const nativeSourceURL96='https://upload.wikimedia.org/wikipedia/commons/b/b3/Artist_in_cowrie_attire.jpg';
+const nativeOriginalSHA1='e5f7490c833b9141f68180a1cd7f015b9f7016c2';
 let upscaled;
+if(nativeCameraOriginal96){
+ const response=await fetch(nativeSourceURL96,{
+  headers:{'User-Agent':'ClosetCurrent-Parallel96/1.0 (public licensed research original)'},
+  signal:AbortSignal.timeout(25000)
+ });
+ assert.equal(response.status,200,'true camera original not accessible at pinned Commons URL');
+ const original=Buffer.from(await response.arrayBuffer());
+ assert.equal(original.length,352936,'Commons original file byte count changed');
+ assert.equal(createHash('sha1').update(original).digest('hex'),nativeOriginalSHA1,
+  'actual 4K original no longer matches Commons immutable SHA-1');
+ assert.ok(original[0]===255&&original[1]===216,'native source was not JPEG');
+ upscaled={width:4000,height:6000,jpeg:'data:image/jpeg;base64,'+original.toString('base64')};
+}else{
+const rasterBrowser=await chromium.launch({headless:true,args:['--no-sandbox']});
 try{
  const rasterPage=await rasterBrowser.newPage();
  upscaled=await rasterPage.evaluate(async data=>{
@@ -38,9 +60,10 @@ try{
   return {width,height,jpeg:canvas.toDataURL('image/jpeg',.89)};
  },'data:image/jpeg;base64,'+donor.toString('base64'));
 }finally{await rasterBrowser.close();}
+}
 const file=Buffer.from(upscaled.jpeg.split(',')[1],'base64');
 const sha=createHash('sha256').update(file).digest('hex');
-assert.ok(Math.max(upscaled.width,upscaled.height)===4096);
+assert.ok(Math.max(upscaled.width,upscaled.height)===(nativeCameraOriginal96?6000:4096));
 assert.ok(upscaled.width*upscaled.height<=24_000_000);
 assert.ok(file.length>=128&&file.length<=8*1024*1024);
 assert.notEqual(sha,donorSHA,'4K source must have its own SHA');
@@ -50,7 +73,8 @@ assert.ok(['chromium','webkit'].includes(engine),'Only the two pinned browser en
 const width=Number(process.env.P94_WIDTH||390);
 assert.ok([320,390,430].includes(width),'P94 requires the pinned mobile viewport widths');
 const browserType=engine==='webkit'?webkit:chromium;
-const out=resolve('benchmark/parallel96-highres-p88-browser',engine,String(width));
+const out=resolve(nativeCameraOriginal96?'benchmark/parallel96-native-original-4k-browser':
+ 'benchmark/parallel96-highres-p88-browser',engine,String(width));
 await mkdir(out,{recursive:true});
 const root=resolve('.');
 const mime={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html',
@@ -244,7 +268,12 @@ try{
  assert.deepEqual(issues,[],'actual native browser errors');
  const receipt={
   schema:'PARALLEL96_4K_DERIVATIVE_REAL_P88_SOURCE_LOCKED_REVIEW/v1',
-  source:'commons-0003-licensed-upscaled-4k',sourceSHA256:sha,originalJPEGBytes:file.length,
+  source:nativeCameraOriginal96?'commons-original-artist-in-cowrie-attire-4000x6000':
+    'commons-0003-licensed-upscaled-4k',sourceSHA256:sha,originalJPEGBytes:file.length,
+   unmodifiedNativeResolutionPhoto:nativeCameraOriginal96,
+   pinnedNativeOriginalSHA1:nativeCameraOriginal96?nativeOriginalSHA1:null,
+   nativeSourceURL:nativeCameraOriginal96?nativeSourceURL96:null,
+   nativeSourceAuthor:nativeCameraOriginal96?'Kofiarkohbaidoo':null,
    licensedDonorSHA256:donorSHA,sourceWidth:upscaled.width,sourceHeight:upscaled.height,
    modelRasterWidth:state.debug.inference96.modelWidth,
    modelRasterHeight:state.debug.inference96.modelHeight,
@@ -252,7 +281,8 @@ try{
    physicalNativeCamera4kTested:false,actualIndependent4kDetails:false,
    startupMs:'UNMEASURED',inferenceOnlyMs:'UNMEASURED',peakMemory:'UNMEASURED',
    fullSourceVsMaskPixelIoU:'UNMEASURED',
-  sourceLicense:locked.attribution?.license,sourceVerified:true,
+  sourceLicense:nativeCameraOriginal96?nativeLicense96:locked.attribution?.license,
+   sourceVerified:true,
   actualBrowser:engine,viewportWidth:width,actualNativeApp:true,
   installedNativeP88Worker94:true,
   actualP88ModuleWorkerExecuted:true,noSyntheticWorker:true,
@@ -935,7 +965,9 @@ try{
   nativeV3Atomic:true,nativeV4Atomic:true,
   tamperedV3Denied:true,v3CancelPreserved:true,
   fitted3DAuthorized:false,fullMaskTruthUnmeasured:true,
-  sourceWasUpscaledLicensedPublicPhoto:true,physicalNative4k:false,
+  sourceWasUpscaledLicensedPublicPhoto:!nativeCameraOriginal96,
+   unmodifiedPublicNativeCameraOriginal:nativeCameraOriginal96,
+   physicalDeviceTested:false,physicalNative4k:false,
   familyAlpha:'HOLD',releaseAllowed:false
  }));
  const lifecycle91={engine,browserVersion:browser.version(),elapsedMs:Math.round(performance.now()-started),
