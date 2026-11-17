@@ -20,6 +20,7 @@ jobs:
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       M51_ENGINE: ${{ matrix.engine }}
+      P99_ENGINE: ${{ matrix.engine }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,5 +44,12 @@ jobs:
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Build protected native app for acceptance
         run: node scripts/build.mjs
+      - name: Exact M194 prior workload - three genuine normal Home to restored outfit journeys
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+          done
       - name: Genuine original-photo session/board reentry at 320 390 430
         run: node scripts/test-main195-webkit-owner-session-stage.mjs
