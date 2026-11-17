@@ -51,7 +51,8 @@ jobs:
           test "$(git rev-parse HEAD:scripts/test-main58-actual-p88-wasm-browser.mjs)" = 96ba2f5ee2420de52f45911881fdcc139455c353
           test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
           test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
-          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 52d2b6d8834f27d9114e022fe8574947eda85206
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 62bad171a97030846b0f1bb3bab740dec20ac5e7
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
           test "$(git rev-parse HEAD:public/native-photo-3d-veto-p99.mjs)" = 82b93d12d2fbcba146a190f5dce87a6ac5fc44af
           test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 1840c4496aefc28941f4c3de24a29bac1cb5e792
           # M182 accepts ONLY the SHA-reviewed M181 no-proposal user fallback;
@@ -60,17 +61,17 @@ jobs:
           test "$(git rev-parse HEAD:tests/outfit-capture.test.cjs)" = b254c78302136761e1edf336056f8b949832c0ec
           test "$(git rev-parse HEAD:scripts/test-main181-zero-proposal-native-browser.mjs)" = ea1a5bdb7f0617c71695f9b0382afd6ff7d5f089
           test "$(git rev-parse HEAD:research/master-consolidation-1054/M181-ZERO-PROPOSAL-NATIVE-FAILCLOSED-HOLD.md)" = b408db8aeb16750b87a18f940d40d7bf4d05497b
-          test "$(git rev-parse HEAD:.github/workflows/main181-zero-proposal-native-no-deploy.yml)" = 3cd39fb4fa69b859f182f746fa2993f8f09317ee
+          test "$(git rev-parse HEAD:.github/workflows/main181-zero-proposal-native-no-deploy.yml)" = cf7731ed4c55bb5e9f96c47f5a13390b4c44ecf2
           # Two strict inherited CI allowlists: only known M180 filename additions.
           # Blob-pinned end to end; no product/model/assertion/receipt relaxation.
-          test "$(git rev-parse HEAD:.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml)" = 9cda77f35a8cfbede447e43d3824afa315e8c606
-          test "$(git rev-parse HEAD:.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml)" = 10cb88c8915521edf2cb847d716709304182a8a4
+          test "$(git rev-parse HEAD:.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml)" = 14b0f9e09b28068d9d12f829ce5ecad8b3cfc662
+          test "$(git rev-parse HEAD:.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml)" = d442beaa482cb11dae1f5b103d32f1204b132a2b
           test "$(git rev-parse "$P88:public/outfit-worker.mjs")" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
           test "$(git rev-parse "$P88:public/outfit-segmentation.mjs")" = d357955dd8fdab7c0cb727ea597c270edd9309ac
-          git diff --exit-code "$PARENT" HEAD -- public/ ':(exclude)public/outfit-capture.js' scripts/ ':(exclude)scripts/test-main181-zero-proposal-native-browser.mjs' tests/ ':(exclude)tests/outfit-capture.test.cjs' supabase/ benchmark/ research/multi-garment-capture-01/ research/parallel96-highres/
+          git diff --exit-code "$PARENT" HEAD -- public/ ':(exclude)public/outfit-capture.js' ':(exclude)public/native-2d-preview-p99.mjs' ':(exclude)public/native-outfit-source-plan-p99.mjs' scripts/ ':(exclude)scripts/test-main181-zero-proposal-native-browser.mjs' tests/ ':(exclude)tests/outfit-capture.test.cjs' ':(exclude)tests/main187-required-owner-assert-current.test.mjs' ':(exclude)tests/main188-owner-revoked-outfit-preview.test.mjs' supabase/ benchmark/ research/multi-garment-capture-01/ research/parallel96-highres/
           git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
             case "$path" in
-              .github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml|research/master-consolidation-1054/M180-WEBKIT-FIRSTLOAD-RELIABILITY-HOLD.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml|.github/workflows/main181-zero-proposal-native-no-deploy.yml|public/outfit-capture.js|research/master-consolidation-1054/M181-ZERO-PROPOSAL-NATIVE-FAILCLOSED-HOLD.md|scripts/test-main181-zero-proposal-native-browser.mjs|tests/outfit-capture.test.cjs|.github/workflows/main183-outfit-session-epoch-no-deploy.yml) ;;
+              .github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml|research/master-consolidation-1054/M180-WEBKIT-FIRSTLOAD-RELIABILITY-HOLD.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml|.github/workflows/main181-zero-proposal-native-no-deploy.yml|public/outfit-capture.js|research/master-consolidation-1054/M181-ZERO-PROPOSAL-NATIVE-FAILCLOSED-HOLD.md|scripts/test-main181-zero-proposal-native-browser.mjs|tests/outfit-capture.test.cjs|.github/workflows/main183-outfit-session-epoch-no-deploy.yml|public/native-outfit-source-plan-p99.mjs|public/native-2d-preview-p99.mjs|tests/main187-required-owner-assert-current.test.mjs|tests/main188-owner-revoked-outfit-preview.test.mjs|.github/workflows/main187-required-owner-lease-no-deploy.yml|.github/workflows/main188-owner-revoked-original-preview-no-deploy.yml|.github/workflows/main189-lease-revocation-crossmission-no-deploy.yml|research/master-consolidation-1054/M189-OWNER-REVOCATION-ADMISSION-HOLD.md) ;;
               *) echo "M180 unexpected modified source path: $path"; exit 1 ;;
             esac
           done
