@@ -12,6 +12,7 @@
  * owner, garment fit, swept-collision, or visual-quality acceptance.
  */
 import {summarizeOriginalPhotoSkirtContactTopology89} from './skirt-contact-topology89.mjs';
+import {snapshotOriginalSkirtBvhContact89} from './source-contact-snapshot89.mjs';
 const POSES=Object.freeze(['source','blend-50','relaxed']);
 // Research candidate safety also depends on actual intermediate skinned poses.
 // Static quarter poses do NOT establish continuously swept body/cloth clearance.
@@ -63,6 +64,9 @@ export function compareActualOriginalPhotoSkirtRegistration89({
   !['female','male'].includes(avatar)||
   typeof applyPose!=='function'||typeof sampleContact!=='function')
   return fail('genuine-original-163-bone-source-geometry-and-BVH-required');
+ // A callback may pool/overwrite pose-contact Sets or the caller's mask.
+ // Keep the original source classification and each BVH sample by value.
+ const immutableBodyFaceMask=originalBodyFaceMask.slice();
  const original=mesh.geometry,p=original?.getAttribute('position'),
   index=original?.index,uv=original?.getAttribute('uv'),
   skin=original?.getAttribute('skinIndex'),
@@ -80,13 +84,13 @@ export function compareActualOriginalPhotoSkirtRegistration89({
  try{
   for(const pose of POSES){
    applyPose(pose);
-   const evidence=sampleContact(pose);
+   const evidence=snapshotOriginalSkirtBvhContact89(sampleContact(pose));
    if(!validContact(evidence))throw Error('original three-pose whole-body BVH pairs missing');
    baseline.push(evidence);
   }
   for(const pose of QUARTERS){
    applyPose(pose);
-   const evidence=sampleContact(pose);
+   const evidence=snapshotOriginalSkirtBvhContact89(sampleContact(pose));
    if(!validContact(evidence))
     throw Error('intermediate-original-source-BVH-pairs-missing');
    quarterBaseline.push(evidence);
@@ -114,7 +118,7 @@ export function compareActualOriginalPhotoSkirtRegistration89({
    const contact=[],sourceBVHAfter=[];
    for(let i=0;i<POSES.length;i++){
     applyPose(POSES[i]);
-    const after=sampleContact(POSES[i]);
+    const after=snapshotOriginalSkirtBvhContact89(sampleContact(POSES[i]));
     if(!validContact(after))
      throw Error('real-original-rig-posed-BVH-contact-pairs-unavailable');
     sourceBVHAfter.push(after);
@@ -126,7 +130,7 @@ export function compareActualOriginalPhotoSkirtRegistration89({
     depthIncreased=contact.some(x=>x.planeDepthIncreased);
    // Compare complete P84 original-body BVH identifiers, not count alone.
    const topology=summarizeOriginalPhotoSkirtContactTopology89({
-    baseline,trial:sourceBVHAfter,bodyFaceMask:originalBodyFaceMask,
+    baseline,trial:sourceBVHAfter,bodyFaceMask:immutableBodyFaceMask,
     bodyFaceCount:originalBodyFaceMask.length,avatar,trialName:t.name
    });
    if(topology.status!=='GENUINE_ORIGINAL_FULL_BODY_SOURCE_CONTACT_TURNOVER_MEASURED_NOT_CLEARANCE'||
@@ -141,7 +145,7 @@ export function compareActualOriginalPhotoSkirtRegistration89({
    const quarterPoseContacts=[];
    for(let i=0;i<QUARTERS.length;i++){
     applyPose(QUARTERS[i]);
-    const after=sampleContact(QUARTERS[i]);
+    const after=snapshotOriginalSkirtBvhContact89(sampleContact(QUARTERS[i]));
     if(!validContact(after))
      throw Error('intermediate-candidate-source-BVH-pairs-missing');
     quarterPoseContacts.push(Object.freeze({
