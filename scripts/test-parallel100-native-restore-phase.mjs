@@ -16,8 +16,42 @@ const one=(source,needle,replacement)=>{
  return source.replace(needle,replacement);
 };
 let source=readFileSync(donor,'utf8');
+
+// Diagnostic-only HTTP derivative of immutable consumer app.js.
+// Add bounded phase markers, not timing delays, exception text, private data,
+// or modified consent / owner / atomic behavior.
+source=one(source,'const bytes=await readFile(absolute);',
+ ["let bytes=await readFile(absolute);",
+  "  if(absolute===resolve(pub,'app.js')){",
+  "   let app=bytes.toString('utf8');",
+  "   const inject=(needle,replacement)=>{",
+  "    if(app.split(needle).length!==2)throw Error('P100 consumer phase anchor changed');",
+  "    app=app.replace(needle,replacement);",
+  "   };",
+  "   inject(\\\"$('import').onchange=async e=>{const file=e.target.files[0];\\\",",
+  "    \\\"$('import').onchange=async e=>{window.__p100Phases?.push('entered');const file=e.target.files[0];\\\");",
+  "   inject('  // Default owner-private v1-v3 import must never partially write clothing,',",
+  "    \\\"  window.__p100Phases?.push('default-v3-path');\\\\n  // Default owner-private v1-v3 import must never partially write clothing,\\\");",
+  "   inject(\\\"  if(!idle())throw Error('Finish saving your photos and outfit changes before importing a backup.');\\\",",
+  "    \\\"  window.__p100Phases?.push('before-idle-check');\\\\n  if(!idle())throw Error('Finish saving your photos and outfit changes before importing a backup.');\\\");",
+  "   inject('  const prepared=await prepareDefaultAtomicM3({',",
+  "    \\\"  window.__p100Phases?.push('prepare-start');\\\\n  const prepared=await prepareDefaultAtomicM3({\\\");",
+  "   inject(\\\"  if(!idle())throw Error('Your photo or outfit changed during backup validation. Retry when it is saved.');\\\",",
+  "    \\\"  window.__p100Phases?.push('prepare-done');\\\\n  if(!idle())throw Error('Your photo or outfit changed during backup validation. Retry when it is saved.');\\\");",
+  "   inject(\\\"  if(!confirm('Import '+prepared.counts.garments+' clothes, '+\\\",",
+  "    \\\"  window.__p100Phases?.push('confirm-prompt');\\\\n  if(!confirm('Import '+prepared.counts.garments+' clothes, '+\\\");",
+  "   inject(\\\"   if(!idle())throw Error('A photo or outfit changed during backup confirmation. Retry when it is saved.');\\\",",
+  "    \\\"   window.__p100Phases?.push('scheduled-operation');\\\\n   if(!idle())throw Error('A photo or outfit changed during backup confirmation. Retry when it is saved.');\\\");",
+  "   inject('   return commitDefaultAtomicM3({',",
+  "    \\\"   window.__p100Phases?.push('commit-enter');\\\\n   return commitDefaultAtomicM3({\\\");",
+  "   inject(\\\"  const reason=String(err?.message||'');\\\",",
+  "    \\\"  const reason=String(err?.message||'');\\\\n  const p100Allow=['Finish saving your photos and outfit changes before importing a backup.','Your photo or outfit changed during backup validation. Retry when it is saved.','A photo or outfit changed during backup confirmation. Retry when it is saved.'];\\\\n  window.__p100Phases?.push(p100Allow.includes(reason)?'refused:idle':/^LEGACY_ATOMIC_[A-Z0-9_]{1,90}$/.test(reason)?'refused:'+reason:'refused:other');\\\");",
+  "   bytes=Buffer.from(app,'utf8');",
+  "  }"].join('\n'));
+
 source=one(source,'const payload=exported.json;',
  ['const payload=exported.json;',
+  '     window.__p100Phases=[];',
   '     const p100Connection=db,p100Auth=window.closetAuth;',
   '     const p100Owner=p100Auth?.user?.id;',
   '     const p100Epoch=captureOperationEpoch,p100Writes=writes;',
@@ -73,6 +107,7 @@ source=one(source,'const state=Object.fromEntries(after.state.map(x=>[x.id,x]));
  "      (status.includes('imported atomically')?'committed':'unclassified');",
  '     const p100Phase={',
  '      beforeIdle:p100BeforeIdle,afterIdle:p100Idle(),messageCode:p100MessageCode,',
+ '      stages:Array.isArray(window.__p100Phases)?window.__p100Phases.slice(0,24):[],',
  '      beforeCount:before.items.length,afterCount:after.items.length,',
  "      topPresent:after.items.some(x=>x.id==='p93-original'),",
  "      bottomPresent:after.items.some(x=>x.id==='m127-bottom'),",
