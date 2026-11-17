@@ -13,7 +13,7 @@ import {chromium,webkit} from 'playwright';
 const engine=process.env.P99_ENGINE||'chromium';
 const width=Number(process.env.P99_WIDTH||390);
 assert(['chromium','webkit'].includes(engine)&&[320,390,430].includes(width));
-const originals=await Promise.all(['commons-0003','commons-0002'].map(async name=>{
+const originals=await Promise.all(['commons-0003','commons-0023'].map(async name=>{
  const bytes=await readFile('benchmark/fixtures/'+name+'.jpg');
  assert.equal(bytes[0],255);assert.equal(bytes[1],216);
  return {name,bytes,sha:createHash('sha256').update(bytes).digest('hex'),
@@ -21,7 +21,7 @@ const originals=await Promise.all(['commons-0003','commons-0002'].map(async name
 }));
 assert.notEqual(originals[0].sha,originals[1].sha);
 const locked=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
-assert.equal(locked.find(x=>x.id===originals[0].name)?.sha256,originals[0].sha);
+for(const source of originals)assert.equal(locked.find(x=>x.id===source.name)?.sha256,source.sha);
 const out=resolve('benchmark/parallel99-normal-journey',engine,String(width));
 await mkdir(out,{recursive:true});
 const root=resolve('dist');
@@ -145,8 +145,16 @@ try{
  assert.equal(new URL(page.url()).search,'','normal app must not require query flags');
  await signIn('p99-A');
  assert.equal(await page.locator('#home').isVisible(),true);
- await addFromNormalChooser(originals[0],'P99 Test Top','Tops','T-shirt','Blue');
- await addFromNormalChooser(originals[1],'P99 Test Bottom','Bottoms','Jeans','Black');
+ advance('default-unreviewed-source-preview-refuses');
+ await page.locator('#moreMenu summary').click();
+ await page.locator('#moreMenu button.tab[data-view="builder"]').click();
+ await page.locator('#mission4Preview1054Section button').click();
+ await page.waitForFunction(()=>/Preview refused|Choose a signed-owner saved outfit/i.test(
+  document.querySelector('#mission4Preview1054Status')?.textContent||''),null,{timeout:15000});
+ assert.equal(await page.locator('#mission4Preview1054Photos img').count(),0);
+ await page.locator('nav.main-nav button.tab[data-view="home"]').click();
+ await addFromNormalChooser(originals[0],'P99 Black Shirt','Tops','T-shirt','Black');
+ await addFromNormalChooser(originals[1],'P99 Blue Jeans','Bottoms','Jeans','Blue');
  advance('owner-private-closet-and-source-check');
  await page.locator('nav.main-nav button.tab[data-view="closet"]').click();
  assert.equal(await page.locator('#closetCount').innerText(),'2');
@@ -165,12 +173,29 @@ try{
     colorSource:x.colorSource,ready3D:x.threeDReady===true};
   }));
  });
- for(const [name,source] of [['P99 Test Top',originals[0]],['P99 Test Bottom',originals[1]]]){
+ for(const [name,source] of [['P99 Black Shirt',originals[0]],['P99 Blue Jeans',originals[1]]]){
   const row=sourceAudit.find(r=>r.name===name);assert(row,'reviewed normal row absent');
   assert.equal(row.sha,source.sha);assert.equal(row.receipt,source.sha);
   assert.equal(row.ownerPrivate,true);assert.equal(row.ownerReviewed,true);
   assert.equal(row.colorSource,'user');assert.equal(row.ready3D,false);
  }
+ advance('normal-chooser-cancel-duplicate-and-oversize-no-write');
+ await page.locator('nav.main-nav button.tab[data-view="home"]').click();
+ await page.locator('#home button.home-action[data-go-view="scan"]').click();
+ await page.locator('#clothingPhotos').setInputFiles([]);
+ assert.equal(await rowCount(),2,'cancelled chooser changed saved closet');
+ await page.locator('#clothingPhotos').setInputFiles({
+  name:'duplicate-original.jpg',mimeType:'image/jpeg',buffer:originals[0].bytes
+ });
+ await page.waitForFunction(()=>!photoImportActive,null,{timeout:20000});
+ assert.equal(await rowCount(),2,'duplicate saved the same source twice');
+ assert.equal(await page.evaluate(()=>window.__lastPhotoImportResult?.results?.[0]?.status),'duplicate');
+ await page.locator('#clothingPhotos').setInputFiles({
+  name:'oversized.jpg',mimeType:'image/jpeg',buffer:Buffer.alloc(10*1024*1024+1)
+ });
+ await page.waitForFunction(()=>!photoImportActive,null,{timeout:20000});
+ assert.equal(await rowCount(),2,'oversized file changed saved closet');
+ assert.equal(await page.evaluate(()=>window.__lastPhotoImportResult?.results?.[0]?.status),'rejected');
  advance('native-outfit-builder-via-more-menu');
  await page.locator('#moreMenu summary').click();
  await page.locator('#moreMenu button.tab[data-view="builder"]').click();
@@ -229,6 +254,13 @@ try{
  await page.locator('#mission4Preview1054Section button').click();
  await page.waitForFunction(()=>document.querySelectorAll(
   '#mission4Preview1054Photos img').length===2,null,{timeout:30000});
+ advance('offline-warm-session-original-preview');
+ await context.setOffline(true);
+ try{
+  await page.locator('#mission4Preview1054Section button').click();
+  await page.waitForFunction(()=>document.querySelectorAll('#mission4Preview1054Photos img').length===2,
+   null,{timeout:20000});
+ }finally{await context.setOffline(false);}
  advance('source-mutation-revokes-current-original-pixels');
  await page.evaluate(()=>{
   const selected=items.find(x=>x.id===currentBoard.slots.top);
@@ -238,12 +270,28 @@ try{
  assert.equal(await page.locator('#mission4Preview1054Photos img').count(),0);
  await page.locator('#mission4Preview1054Section button').click();
  assert.equal(await page.locator('#mission4Preview1054Photos img').count(),0);
+ advance('logout-and-other-owner-no-original-pixels');
+ await page.locator('.account-menu summary').click();
+ await page.locator('#logout').click();
+ await page.waitForFunction(()=>document.querySelector('#authGate')?.hidden===false,
+  null,{timeout:30000});
+ assert.equal(await page.locator('#mission4Preview1054Photos img').count(),0);
+ await signIn('p99-B');
+ assert.equal(await page.locator('#closetCount').innerText(),'0',
+  'different owner received saved first-owner clothes');
+ await page.locator('#moreMenu summary').click();
+ await page.locator('#moreMenu button.tab[data-view="builder"]').click();
+ assert.equal(await page.locator('#mission4Preview1054Photos img').count(),0);
+ await page.locator('#mission4Preview1054Section button').click();
+ assert.equal(await page.locator('#mission4Preview1054Photos img').count(),0);
  advance('final-success');
  assert.deepEqual(errors,[],'native browser page exception');
  await writeFile(join(out,'P99-NORMAL-APP.json'),JSON.stringify({
   ...receipt(),normalPhotoCapture:true,explicitReviewCount:2,reviewedPrivateItems:2,
   normalBuilderSaved:true,attested2DOriginals:2,v3Restore:true,
-  changedSourceRevocation:true,threeDDenied:true
+  changedSourceRevocation:true,threeDDenied:true,
+  cancelledChooserNoWrite:true,duplicateNoWrite:true,oversizeNoWrite:true,
+  warmOfflinePreview:true,ownerSwapNoDisclosure:true,unreviewedPreviewRefused:true
  },null,2)+'\n');
  console.log('P99_NORMAL_APP_PASS',JSON.stringify({engine,width,
   reviewedItems:2,attested2D:2,v3Restore:true,sourceRevoked:true,hold:true}));

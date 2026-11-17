@@ -2,6 +2,9 @@ name: P99 normal application photo-to-private-outfit journey NO DEPLOY HOLD
 on:
   push:
     branches: [research/parallel99-normal-journey-HOLD]
+  pull_request:
+    branches: [research/main1054-m58-real-p88-browser-worker-HOLD]
+    paths: [public/**, scripts/test-parallel99-normal-app-browser.mjs, research/parallel99-normal-journey-HOLD/**, .github/workflows/parallel99-normal-app-no-deploy.yml]
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -12,6 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -58,6 +62,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@v4
