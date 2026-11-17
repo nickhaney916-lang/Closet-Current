@@ -42,6 +42,8 @@ jobs:
               research/master-consolidation-1054/M179-ADOPT-M173-EXIF-ON-M175-HOLD.md) ;;
               .github/workflows/main173-unflagged-owner-24mp-no-deploy.yml) ;;
               .github/workflows/main1054-m58-real-p88-worker-no-deploy.yml) ;;
+              .github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml) ;;
+              research/master-consolidation-1054/M180-WEBKIT-FIRSTLOAD-RELIABILITY-HOLD.md) ;;
               *) echo "M173 unexpected protected change: $path"; exit 1 ;;
             esac
           done
