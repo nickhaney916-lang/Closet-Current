@@ -18,6 +18,7 @@ import {compareActualOriginalPhotoSkirtRegistration89} from './skirt-rigid-regis
 import {auditOriginalSkirtWaistBoneAttachment89} from './skirt-waist-bone-landmarks89.mjs';
 import {auditSelectedOriginalSkirtRadialGap89} from './skirt-source-radial-gap89.mjs';
 import {auditActualOriginalBodyClosure89} from './skirt-source-body-manifold89.mjs';
+import {auditRealOriginalBodySeams89} from './skirt-source-indexed-seam89.mjs';
 if(!['localhost','127.0.0.1','[::1]'].includes(location.hostname))
  throw Error('Original skirt research is localhost-only');
 const MODELS=Object.freeze({
@@ -580,6 +581,80 @@ function auditSelectedOriginalSourceBodyClosure89(){
  }
 }
 
+/**
+ * Read ORIGINAL anatomical GLB rest+skin source in exactly the same mesh and
+ * vertex packing order used by the genuine P84 posedSource84 original-body
+ * conversion. This metadata is used in-process, never exported or welded.
+ */
+function originalBodySourceSeamProvenance89(expectedVertices){
+ const rest=[],index=[],weight=[],meshIDs=[];
+ for(let meshId=0;meshId<bodies.length;meshId++){
+  const mesh=bodies[meshId],g=mesh?.geometry,
+   p=g?.getAttribute('position'),skin=g?.getAttribute('skinIndex'),
+   w=g?.getAttribute('skinWeight');
+  check(mesh?.isSkinnedMesh&&mesh.skeleton?.bones.length===163&&
+   p?.count>0&&skin?.count===p.count&&w?.count===p.count,
+   'genuine original 163-bone GLB exact skinned rest/weight provenance required');
+  for(let i=0;i<p.count;i++){
+   rest.push(p.getX(i),p.getY(i),p.getZ(i));
+   meshIDs.push(meshId);
+   for(let j=0;j<4;j++){
+    const bone=skin.getComponent(i,j),val=w.getComponent(i,j);
+    check(Number.isSafeInteger(bone)&&bone>=0&&bone<163&&
+     Number.isFinite(val)&&val>=0&&val<=1,
+     'original source skin bone or weight invalid');
+    index.push(bone);weight.push(val);
+   }
+  }
+ }
+ check(rest.length===expectedVertices*3&&index.length===expectedVertices*4&&
+  meshIDs.length===expectedVertices,
+  'original source rest/skin order does not match authentic posed GLB face packing');
+ return {restPositions:new Float32Array(rest),
+  skinIndices:new Uint16Array(index),skinWeights:new Float32Array(weight),
+  sourceMeshIds:new Uint16Array(meshIDs)};
+}
+/**
+ * Independently validate genuine original indexed boundary "twins"
+ * against both source world-position coincidence and exact original
+ * rest/skin/mesh provenance. A positive virtual match DOES NOT
+ * authorize a watertight body, signed garment fit or 3D consumer display.
+ */
+function auditSelectedOriginalBodySeams89(){
+ check(phase==='ready'&&source?.status==='SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED'&&
+  selectedPreview&&root&&candidate?.mesh?.skeleton?.bones?.length===163&&
+  lastRegistration?.avatar===current&&
+  selectedPreview.name===lastRegistration?.bestResearchOnly?.name&&
+  lastRegistration?.bestResearchOnly?.researchOnlyNonworseningReduction===true,
+  'authentic selected original photographed skirt and public body required');
+ const prior=auditSelectedOriginalSourceBodyClosure89();
+ check(prior.status==='ORIGINAL_BODY_OPEN_OR_NONMANIFOLD_CANNOT_PROVE_SIGNED_INSIDE_OUTSIDE'&&
+  prior.anatomicalSourceTopology?.sourceOpenBoundaryEdgeCount>0,
+  'original indexed body open boundary source witness missing');
+ let body;
+ try{
+  body=posedSource84(bodies);
+  const positions=body.g.getAttribute('position').array;
+  const restSkin=originalBodySourceSeamProvenance89(positions.length/3);
+  const report=auditRealOriginalBodySeams89({
+   posedPositions:positions,indices:body.g.index.array,
+   ...restSkin,avatar:current,pose,
+   sourcePhotoSHA256:source.originalSHA256,
+   sourceAnatomyGLBSHA256:MODELS[current].sha,
+   originalRig163Bones:true,selectedMeasuredFivePoseBvh:true,
+   selectedActualWebGLPreview:true,
+   originalBodyTopologyBoundaryEdges:
+    prior.anatomicalSourceTopology.sourceOpenBoundaryEdgeCount
+  });
+  check(report?.releaseAuthorized===false&&
+   report?.sourcePhoto2DFallbackRequired===true,
+   'original body virtual skin/rest seam matches cannot authorize wearable');
+  return report;
+ }finally{
+  body?.g.dispose();originalBodyPositions();
+ }
+}
+
 function auditWaistBoneAnchors(){
  check(phase==='ready'&&root&&candidate?.mesh?.isSkinnedMesh,
   'original license/source avatar and skirt rig must be verified');
@@ -722,7 +797,7 @@ function close(){if(selectedPreview)showOnlySelectedRegistration89(false,{draw:f
  if(rigid45Preview)showOnlySourceRigidRegistration45(false,{draw:false});
  lastRegistration=null;candidate?.dispose();candidate=null;scene.remove(root);root=null;
  renderer.dispose();renderer.forceContextLoss();phase='disposed';return true;}
-window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,showOnlySelectedRegistration89,auditSelectedSourceRadialGap89,auditSelectedOriginalSourceBodyClosure89,auditOnlyUnobservedRearRenderedPixels,close});
+window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,showOnlySelectedRegistration89,auditSelectedSourceRadialGap89,auditSelectedOriginalSourceBodyClosure89,auditSelectedOriginalBodySeams89,auditOnlyUnobservedRearRenderedPixels,close});
 try{await verifySource();await load('female');}catch(e){
  phase='error';const msg=String(e?.message||e).slice(0,250);
  errors.push(msg);status.textContent='Original-photo 2D fallback: '+msg+' · HOLD';

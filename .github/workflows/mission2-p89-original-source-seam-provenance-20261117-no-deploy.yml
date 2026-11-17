@@ -1,0 +1,115 @@
+name: "Mission 2 P89 original indexed source seam provenance closure disambiguation NO DEPLOY"
+on:
+  push:
+    branches: [research/mission2-p89-source-boundary-seam-provenance-20261117-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  inherited-node-and-negative:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict immutable P89 donor parent / research-only scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 384d413a9c324fc89bb1f99b8764bcf7e8123540 HEAD
+          git diff --exit-code 384d413a9c324fc89bb1f99b8764bcf7e8123540 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          while IFS= read -r p; do
+            case "$p" in
+              research/parallel89/skirt-source-indexed-seam89.mjs|research/parallel89/native-skirt-browser89.mjs|scripts/test-parallel89-real-skirt-browser.mjs|tests/parallel89-skirt-source-indexed-seam.test.mjs|.github/workflows/mission2-p89-original-source-seam-provenance-20261117-no-deploy.yml) ;;
+              *) echo "Unauthorized non-M2 code change: $p"; exit 1 ;;
+            esac
+          done < <(git diff --name-only 384d413a9c324fc89bb1f99b8764bcf7e8123540 HEAD)
+      - name: Install pinned disposable Node research packages
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Parse original-source and receipt modules
+        run: |
+          node --check research/parallel89/skirt-source-indexed-seam89.mjs
+          node --check research/parallel89/skirt-source-body-manifold89.mjs
+          node --check research/parallel89/skirt-source-radial-gap89.mjs
+          node --check research/parallel89/source-contact-snapshot89.mjs
+          node --check research/parallel89/skirt-rigid-registration89.mjs
+          node --check tests/parallel89-source-contact-snapshot.test.mjs
+          node --check tests/parallel89-skirt-rigid-registration.test.mjs
+      - name: Focused adversarial pooled and out-of-range source triangle checks
+        run: node --test tests/parallel89-source-contact-snapshot.test.mjs tests/parallel89-skirt-rigid-registration.test.mjs tests/parallel89-skirt-source-radial-gap.test.mjs tests/parallel89-skirt-source-body-manifold.test.mjs tests/parallel89-skirt-source-indexed-seam.test.mjs
+      - name: Build disposable PWA required by inherited PWA tests (no deployment)
+        run: node scripts/build.mjs
+      - name: Entire inherited no-deploy Node regression
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Confirm protected consumer and photo paths untouched
+        run: git diff --exit-code 384d413a9c324fc89bb1f99b8764bcf7e8123540 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+
+  actual-licensed-skirt-163-bone-bvh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P89_BROWSER: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source lock and no-deploy guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 384d413a9c324fc89bb1f99b8764bcf7e8123540 HEAD
+          git diff --exit-code 384d413a9c324fc89bb1f99b8764bcf7e8123540 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          node --check research/parallel89/source-contact-snapshot89.mjs
+          node --check research/parallel89/skirt-rigid-registration89.mjs
+          node --check tests/parallel89-skirt-source-indexed-seam.test.mjs
+          node --check tests/parallel89-skirt-source-body-manifold.test.mjs
+          node --check tests/parallel89-skirt-source-radial-gap.test.mjs
+          node --check scripts/test-parallel89-real-skirt-browser.mjs
+      - name: Install exact browser, THREE, photographic decode and real BVH packages
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Read-only original licensed P541 and verified P84 BVH donor worktrees
+        shell: bash
+        run: |
+          set -euo pipefail
+          git worktree add --detach .p89-disposable-p541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .p89-readonly-p84 8385c308df215bcf80eb95b8c37660307dc80536
+          for dir in .p89-disposable-p541 .p89-readonly-p84; do
+            git config --global --add safe.directory "$GITHUB_WORKSPACE/$dir"
+            ln -s ../node_modules "$dir/node_modules"
+          done
+          cd .p89-disposable-p541
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Original indexed 163bone source rest and skin seam evidence across five poses and photo RGB
+        run: node scripts/test-parallel89-real-skirt-browser.mjs .p89-disposable-p541 .p89-readonly-p84
+      - name: Confirm real source donors and held consumer remain immutable
+        shell: bash
+        run: |
+          git diff --exit-code 384d413a9c324fc89bb1f99b8764bcf7e8123540 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          test "$(git -C .p89-disposable-p541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          test "$(git -C .p89-readonly-p84 rev-parse HEAD)" = 8385c308df215bcf80eb95b8c37660307dc80536
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M2-original-source-seam-identity-163bone-${{ matrix.engine }}-HOLD
+          path: benchmark/parallel89-native-original-skirt/${{ matrix.engine }}/
+          retention-days: 14
+          if-no-files-found: warn
