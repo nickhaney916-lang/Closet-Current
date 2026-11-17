@@ -63,7 +63,7 @@ let browser;const evidence=[],errors=[],outbound=[];
 try{
  const engine=process.env.INDEX02_ENGINE||'chromium';
  assert.ok(['chromium','webkit'].includes(engine));
- browser=await (engine==='webkit'?webkit:chromium).launch({headless:true,args:['--disable-dev-shm-usage']});
+ browser=await (engine==='webkit'?webkit:chromium).launch({headless:true,...(engine==='chromium'?{args:['--disable-dev-shm-usage']}: {})});
  for(const width of [320,390,430]){
   const ctx=await browser.newContext({viewport:{width,height:900},
    deviceScaleFactor:1,isMobile:true,hasTouch:true,serviceWorkers:'block'});
