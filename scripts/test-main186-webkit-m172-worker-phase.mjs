@@ -8,6 +8,8 @@
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,rmSync} from 'node:fs';
 import {execFileSync,spawnSync} from 'node:child_process';
+import {pathToFileURL} from 'node:url';
+import {resolve} from 'node:path';
 
 const pins={
  'scripts/test-main172-24mp-private-state-invariance.mjs':'ad4cb6bfee719b6083b9abc6d11ade2551e77c58',
@@ -117,6 +119,36 @@ try{
   const checked=spawnSync(process.execPath,['--check',file],{encoding:'utf8',timeout:60000});
   if(checked.error)throw checked.error;
   assert.equal(checked.status,0,'M186 scratch syntax '+file+': '+String(checked.stderr).slice(0,350));
+ }
+ // Separate deterministic NEGATIVE-only diagnostic contract: an invalid
+ // synthetic JPEG must expose only bounded error phase/category, never fake
+ // a genuine garment, issue network requests, or start actual inference.
+ // The two WebKit seven-stage CI journeys below remain the REAL model proof.
+ const selfTestMessages=[];
+ const previousSelf=globalThis.self;
+ try{
+  globalThis.self={postMessage:message=>selfTestMessages.push(message)};
+  await import(pathToFileURL(resolve(workerPath)).href+'?m186-negative-selfcheck');
+  globalThis.self.onmessage({data:{id:'m186-invalid-fixture',image:'not-jpeg'}});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(selfTestMessages.length,1,'invalid JPEG did not terminate once');
+  const result=selfTestMessages[0];
+  assert.equal(result.type,'error');
+  assert.equal(result.m186Diagnostic?.stage,'verify-source');
+  assert.equal(result.m186Diagnostic?.category,'other');
+  assert.equal(result.m186Diagnostic?.exceptionType,'Error');
+  assert.equal(result.piece,undefined);
+  assert.equal(result.count,undefined);
+  assert.ok(!JSON.stringify(result.m186Diagnostic).includes('not-jpeg'),
+   'M186 negative telemetry exposed invalid photo source');
+  console.log('M186_NEGATIVE_ONLY_ERROR_STAGE_PASS',JSON.stringify({
+   noModelLoaded:true,noNetwork:true,noAcceptedGarment:true,
+   stage:result.m186Diagnostic.stage,category:result.m186Diagnostic.category,
+   familyAlpha:'HOLD'
+  }));
+ }finally{
+  if(previousSelf===undefined)delete globalThis.self;
+  else globalThis.self=previousSelf;
  }
  console.log('M186_SOURCE_PINNED_DIAGNOSTIC_CHECK',JSON.stringify({
   originalSourcePins:Object.keys(pins).length,
