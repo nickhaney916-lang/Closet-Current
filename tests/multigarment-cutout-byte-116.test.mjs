@@ -67,7 +67,9 @@ test('PHOTO116 two distinct verified cutouts of ONE original are not duplicate; 
  const previous={
   id:'already-saved-cutout',ownerId:owner,category:'Bottoms',itemType:'Jeans',
   color:'Blue',sourceSHA256:originalSHA,sourceHashVerified:true,
-  cutoutSHA256:sha(cut1),singleGarmentVerified:false
+  cutoutSHA256:sha(cut1),singleGarmentVerified:false,
+  segmentHint:{verified:true,ownerReviewedInstance:true,originalSHA256:originalSHA,
+   cutoutSHA256:sha(cut1),clipped:false}
  };
  const distinct=await evaluate(make(cut2),[previous]);
  assert.equal(distinct.sourceKind,'verified-cutout');

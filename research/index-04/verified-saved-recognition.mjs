@@ -192,7 +192,15 @@ export async function evaluateOwnerSavedRecognition04({
   sourceSHA256:source.verified?src.expected:'',
   cutoutSHA256:segment.verified?segment.cutoutSHA256:'',
   singleGarmentVerified:source.verified&&singleGarmentVerified,
-  segmentHint:record.segmentHint?.clipped?{clipped:true}:undefined
+  // PHOTO116 already independently hashed both source and instance JPEGs.
+  // Carry only the verified RECEIPT to the private duplicate index; the
+  // prior bridge discarded it and falsely changed valid cutouts to review.
+  // Never pass original/crop pixel data to the metadata index.
+  segmentHint:segment.verified?{
+   verified:true,ownerReviewedInstance:true,
+   originalSHA256:src.expected,cutoutSHA256:segment.cutoutSHA256,
+   clipped:false
+  }:record.segmentHint?.clipped?{clipped:true}:undefined
  };
  const duplicate=previewOwnerWardrobeAddition(savedIndex,ownerId,candidate);
  if(currentOwner()!==ownerId)throw Error('INDEX-04 owner changed during index comparison');
