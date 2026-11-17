@@ -85,7 +85,7 @@ function normalizedRow(owner,record,position){
  return Object.freeze({
   id,position,category,itemType,color:color&&canonical(color)!=='unknown'?color:'Unknown',
   seasons:Object.freeze(normalizedSeasons),sleeveLength:safeText(record.sleeveLength)||'Unknown',
-  slotIds:Object.freeze(inactive?[]:slotsFor(category,itemType)),
+  slotIds:Object.freeze(slotsFor(category,itemType)),
   inactive,
   searchTokens:Object.freeze(unique(text)),
   reviewReasons:Object.freeze(unique(reasons)),
@@ -141,7 +141,10 @@ export function queryOwnerWardrobeIndex(index,ownerId,filters={}){
  const review=filters.review;
  if(cat&&!INDEX01_CATEGORIES.includes(cat))throw new WardrobeIndexError('invalid-category');
  if(slot&&!INDEX01_SLOTS.includes(slot))throw new WardrobeIndexError('invalid-slot');
- const all=index.entries.filter(row=>(!cat||row.category===cat)&&(!type||row.itemType===type)&&
+ // A retired row remains visible in the owner's review list, but must never
+ // appear in the actionable slot picker. Keep its type/category slot metadata
+ // so the existing source-finalization veto reports the original M188 reason.
+ const all=index.entries.filter(row=>(!slot||!row.inactive)&&(!cat||row.category===cat)&&(!type||row.itemType===type)&&
   (!color||canonical(row.color)===color)&&(!season||row.seasons.includes('All seasons')||row.seasons.includes(season))&&
   (!sleeve||row.sleeveLength===sleeve)&&(!slot||row.slotIds.includes(slot))&&
   (review===undefined||Boolean(row.reviewReasons.length)===Boolean(review))&&
