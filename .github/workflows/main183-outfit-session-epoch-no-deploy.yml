@@ -1,0 +1,92 @@
+name: MAIN183 same-owner session-epoch outfit import NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main183-outfit-session-epoch-no-reentry-HOLD]
+  pull_request:
+    branches: [research/main1054-m58-real-p88-browser-worker-HOLD]
+    paths:
+      - public/outfit-capture.js
+      - tests/outfit-capture.test.cjs
+      - .github/workflows/main183-outfit-session-epoch-no-deploy.yml
+permissions:
+  contents: read
+jobs:
+  inherited-node-and-lease:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: SHA-pin scoped M183 source and refuse unrelated product/hosted edits
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=921cb4d40f6920520f498972c26a6763ccfabc27
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse HEAD:public/outfit-capture.js)" = 8d55715ef09e34086d3c401ec38340bfc25f5fe8
+          test "$(git rev-parse HEAD:tests/outfit-capture.test.cjs)" = b254c78302136761e1edf336056f8b949832c0ec
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
+            case "$path" in
+              public/outfit-capture.js|tests/outfit-capture.test.cjs|.github/workflows/main183-outfit-session-epoch-no-deploy.yml) ;;
+              *) echo "M183 unreviewed change: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$BASE" HEAD -- public/ ':(exclude)public/outfit-capture.js' scripts/ supabase/ benchmark/ tests/ ':(exclude)tests/outfit-capture.test.cjs'
+          node --check public/outfit-capture.js
+          node --check tests/outfit-capture.test.cjs
+      - name: Independent session lease and negative Worker Node cases
+        run: node --test tests/outfit-capture.test.cjs
+      - name: Install pinned isolated original PWA/test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Offline packaged native PWA and all inherited source tests
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  native-recovery:
+    name: actual unflagged PWA original owner recovery (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M181_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assert original app session controller and exact M183 native source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:public/outfit-capture.js)" = 8d55715ef09e34086d3c401ec38340bfc25f5fe8
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:scripts/test-main181-zero-proposal-native-browser.mjs)" = ea1a5bdb7f0617c71695f9b0382afd6ff7d5f089
+      - name: Install pinned browser and application runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build actual signed local user normal PWA without deploy
+        run: node scripts/build.mjs
+      - name: Genuine Chromium/WebKit built PWA negative recovery at 320 390 430
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            M181_WIDTH="$width" node scripts/test-main181-zero-proposal-native-browser.mjs
+          done
