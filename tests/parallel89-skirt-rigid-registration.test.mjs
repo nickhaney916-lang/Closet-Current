@@ -197,3 +197,49 @@ test('pooled BVH callback cannot hide source triangle IDs introduced by a trial'
  assert.equal(row.originalPhoto2DFallbackRequired,true);
  assert.equal(x.mesh.geometry,x.original);
 });
+
+
+test('out-of-range intermediate original-body or skirt faces veto entire fit receipt',()=>{
+ for(const forged of ['576|45','0|1100','9007199254740993|45']){
+  const x=fixture();
+  let pose='source';
+  const row=run(x,'reduce',{
+   applyPose: p=>{pose=p;},
+   sampleContact:()=>{
+    const altered=x.mesh.geometry!==x.original;
+    const pairs=new Set(['0|45',altered?'1|58':'2|72']);
+    if(pose==='blend-25')pairs.add(forged);
+    return {count:pairs.size,pairs,maxDepth:.001,
+     trueOriginalSkirtTriangleIndexStable:true,
+     trueOriginalBodyTriangleIndexStable:true,
+     originalFaceSourceResolution:'BVH_INDIRECT_RESOLVED_ORIGINAL_TRIANGLE_INDICES'};
+   }
+  });
+  assert.equal(row.status,'REAL_PHOTOGRAPHED_SKIRT_REGISTRATION_NOT_VERIFIED');
+  assert.match(row.reason,/intermediate-original-source-BVH-pairs-missing/);
+  assert.equal(row.originalPhoto2DFallbackRequired,true);
+  assert.equal(row.consumer3DAdmitted,false);
+  assert.equal(x.mesh.geometry,x.original);
+  assert.deepEqual(x.mesh.geometry.getAttribute('position').array,x.photoPositions);
+ }
+});
+test('out-of-range candidate-only quarter-pose pair cannot yield research reduction',()=>{
+ const x=fixture();let pose='source';
+ const row=run(x,'reduce',{
+  applyPose:p=>{pose=p;},
+  sampleContact:()=>{
+   const altered=x.mesh.geometry!==x.original;
+   const pairs=new Set(['0|45',altered?'1|58':'2|72']);
+   if(altered&&pose==='blend-75')pairs.add('576|45');
+   return {count:pairs.size,pairs,maxDepth:.001,
+    trueOriginalSkirtTriangleIndexStable:true,
+    trueOriginalBodyTriangleIndexStable:true,
+    originalFaceSourceResolution:'BVH_INDIRECT_RESOLVED_ORIGINAL_TRIANGLE_INDICES'};
+  }
+ });
+ assert.equal(row.status,'REAL_PHOTOGRAPHED_SKIRT_REGISTRATION_NOT_VERIFIED');
+ assert.equal(row.reason,'intermediate-candidate-source-BVH-pairs-missing');
+ assert.equal(row.consumer3DAdmitted,false);
+ assert.equal(row.originalPhoto2DFallbackRequired,true);
+ assert.equal(x.mesh.geometry,x.original);
+});
