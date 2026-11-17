@@ -32,13 +32,13 @@ const instrumentation=[
  "    const css=b?getComputedStyle(b):null;",
  "    const inView=!!rect&&rect.width>0&&rect.height>0&&",
  "     cx>=0&&cy>=0&&cx<innerWidth&&cy<innerHeight;",
- "    return {centerHitsButton:!!b&&(hit===b||b.contains(hit)),",
+ "    const geometry={centerHitsButton:!!b&&(hit===b||b.contains(hit)),",
  "     centerInsideViewport:inView,",
  "     pointerEventsEnabled:!!css&&css.pointerEvents!=='none',",
  "     computedVisibilityVisible:css?.visibility==='visible',",
  "     documentHidden:document.hidden,",
- "     activeElementIsPreview:document.activeElement===b,",
- "    return {leaseCurrent,phase,buttonDisabled:b?.disabled===true,",
+ "     activeElementIsPreview:document.activeElement===b};",
+ "    return {...geometry,leaseCurrent,phase,buttonDisabled:b?.disabled===true,",
  "     buttonConnected:b?.isConnected===true,",
  "     count:document.querySelectorAll('#mission4Preview1054Photos img').length,",
  "     boardSelected:!!currentBoard?.slots?.top,",
@@ -173,6 +173,10 @@ const modified=original.replace(marker,instrumentation).replace(secondMarker,sec
 const temp='scripts/.p95-m51-instrumented-'+process.pid+'.mjs';
 try{
  writeFileSync(temp,modified,{flag:'wx'});
+ const syntax=spawnSync(process.execPath,['--check',temp],{encoding:'utf8',timeout:60000});
+ if(syntax.error)throw syntax.error;
+ assert.equal(syntax.status,0,'P95 instrumented test module syntax invalid: '+
+  String(syntax.stderr||'').split('\n').slice(0,5).join(' '));
  const result=spawnSync(process.execPath,[temp],{env:process.env,stdio:'inherit',timeout:12*60*1000});
  if(result.error)throw result.error;
  assert.equal(result.status,0,'P95 actual M51 browser reentry failed');
