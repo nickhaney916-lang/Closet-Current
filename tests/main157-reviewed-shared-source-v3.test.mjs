@@ -199,3 +199,20 @@ test('M157 owner lease revocation between preflight and commit causes zero atomi
   assert.deepEqual(await snapshot(f.db),before);
  }finally{f.close();}
 });
+
+test('M157 legacy same-ID import cannot mint owner-reviewed cutout proof onto formerly ambiguous saved original',async()=>{
+ const f=await openFixture();
+ try{
+  await seed(f);
+  const valid=(await exported(f)).data;
+  const before=await snapshot(f.db);
+  const prior={...before.items.find(x=>x.id==='reviewed-top')};
+  for(const key of ['segmentHint','cutoutSHA256','confirmedDetailsSource31',
+   'confirmedDetails','reviewProvenance'])delete prior[key];
+  prior.ownerReviewed=false;prior.humanReviewedSource=false;
+  await transact(f.db,(items,state)=>items.put(prior));
+  const current=await snapshot(f.db);
+  await assert.rejects(prepare(f,valid),/LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),current);
+ }finally{f.close();}
+});
