@@ -81,7 +81,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
- selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
+ selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -664,6 +664,47 @@ try{
       'immutable original 163-bone GLB indexed topology changed across poses: '+key);
     }
    }
+   // Independent original source seam classification: a virtual positional
+   // match only counts as source-compatible when the original GLB rest and
+   // 163bone skin influences and original mesh membership also match.
+   // Never turn virtual twins into a sealed or wearer-approved body mesh.
+   const seams=await page.evaluate(()=>
+    window.nativeP89Skirt.auditSelectedOriginalBodySeams89());
+   assert.equal(seams.schema,'P89-original-163bone-source-indexed-boundary-seam-v1');
+   assert.ok(['ALL_ORIGINAL_BOUNDARIES_VIRTUALLY_PAIRED_NOT_WATERTIGHT_PROOF',
+    'ORIGINAL_INDEXED_BODY_BOUNDARY_REMAINS_UNRESOLVED_FOR_SIGNED_FIT'].includes(
+     seams.status),'genuine source seam evidence refused: '+JSON.stringify(seams));
+   assert.equal(seams.avatar,avatar);
+   assert.equal(seams.pose,selectedPose);
+   assert.equal(seams.sourcePhotoOriginalSHA256,required.skirt);
+   assert.equal(seams.sourceOriginalRigGLBSHA256,required[avatar]);
+   assert.equal(seams.originalBodyCompleteSourceFaceTopologyChecked,true);
+   assert.equal(seams.independentOriginalGLBIndexedFaceBoundaryCountVerified,true);
+   assert.equal(seams.noSourceGeometryWeldOrRepair,true);
+   const proof=seams.virtualSeamEvidence;
+   assert.equal(proof.schema,'P89-pure-original-source-virtual-boundary-seam-evidence/v1');
+   assert.equal(proof.originalSourceBodyTriangleCount,
+    topology.originalIndexedTriangleCount);
+   assert.equal(proof.originalSourceBodyIndexedVertices,
+    topology.originalIndexedVertexCount);
+   assert.equal(proof.rawOriginalSourceSingleFaceBoundaryEdges,
+    topology.sourceOpenBoundaryEdgeCount);
+   assert.equal(proof.originalSourceBoundaryEdgeConservationVerified,true);
+   assert.equal(proof.compatibleOriginalRestAndSkinBoundaryEdges,
+    proof.compatibleOriginalRestAndSkinTwinEdgePairs*2);
+   assert.equal(proof.unresolvedOriginalBoundaryEdges+
+    proof.compatibleOriginalRestAndSkinBoundaryEdges,
+    topology.sourceOpenBoundaryEdgeCount);
+   assert.equal(proof.noVirtualRestOrSkinnedMeshMutation,true);
+   assert.equal(proof.virtualTwinsNeverProofOfSealedPhysicalAnatomy,true);
+   assert.equal(proof.sourceBodyInsideOutsideNotProven,true);
+   assert.equal(seams.originalSourceIndexedSurfaceStillOpen,true);
+   assert.equal(seams.trueClosedBodyVolumeCertified,false);
+   assert.equal(seams.signedExteriorContainmentCertified,false);
+   assert.equal(seams.sourcePhoto2DFallbackRequired,true);
+   assert.equal(seams.consumer3DAdmitted,false);
+   assert.equal(seams.releaseAuthorized,false);
+   results.selectedOriginalSourceBodySeamAudits.push(seams);
    results.selectedSourceWholeBodyClosureAudits.push(closure);
    results.selectedSourceBodyRadialGapAudits.push(radial);
    results.selectedResearchPoseChecks.push({
@@ -774,6 +815,7 @@ try{
  }
  assert.equal(results.selectedSourceBodyRadialGapAudits.length,10);
  assert.equal(results.selectedSourceWholeBodyClosureAudits.length,10);
+ assert.equal(results.selectedOriginalSourceBodySeamAudits.length,10);
  assert.equal(results.selectedResearchPoseChecks.length,10);
  assert.equal(results.selectedResearchNativeScreenshots.length,18);
  assert.equal(results.selectedResearchFrontCoverage.length,6);
@@ -842,6 +884,14 @@ try{
    selectedRegistrationTrueFivePoseNativeChecks:results.selectedResearchPoseChecks.length,
    sourceTrueWorldRadialGapCheckCount:results.selectedSourceBodyRadialGapAudits.length,
    sourceOriginalWholeBodyClosureCheckCount:results.selectedSourceWholeBodyClosureAudits.length,
+   originalSourceVirtualSeamProofCount:results.selectedOriginalSourceBodySeamAudits.length,
+   originalSourceVirtualSeamStatuses:results.selectedOriginalSourceBodySeamAudits.map(x=>x.status),
+   originalSourceVirtualSeamMatchedEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.compatibleOriginalRestAndSkinBoundaryEdges),
+   originalSourceVirtualSeamUnresolvedEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.unresolvedOriginalBoundaryEdges),
+   originalSourceVirtualSeamGeometryTwinPairs:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.originalSourceGeometryTwinPairs),
+   originalSourceVirtualSeamProvenanceConflictEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.geometryTwinsWithConflictingOriginalProvenanceEdges),
+   originalSourceVirtualSeamAmbiguousMultiEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.geometricAmbiguousMultiCandidateBoundaryEdges),
+   originalSourceVirtualSeamUnmatchedEdges:results.selectedOriginalSourceBodySeamAudits.map(x=>x.virtualSeamEvidence.sourceUnmatchedBoundaryEdges),
    sourceOriginalBodyTopologyStatuses:results.selectedSourceWholeBodyClosureAudits.map(x=>x.status),
    sourceOriginalBodyTopologyIndexedTriangleCount:results.selectedSourceWholeBodyClosureAudits.map(x=>x.anatomicalSourceTopology.originalIndexedTriangleCount),
    sourceOriginalBodyBoundaryEdges:results.selectedSourceWholeBodyClosureAudits.map(x=>x.anatomicalSourceTopology.sourceOpenBoundaryEdgeCount),
