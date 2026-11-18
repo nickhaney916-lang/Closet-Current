@@ -197,8 +197,27 @@ export function summarizeOriginalMissingRayBoneNames89({
    count:relevant.filter(v=>v===n).length})).sort((x,y)=>
     y.count-x.count||x.name.localeCompare(y.name))[0]?.name||
    'ORIGINAL_UNRESOLVED_FACE_SOURCE_NAME';
+  // Where no original joint exceeds 50% at the contributing vertices,
+  // retain the TOP ORIGINAL SKIN INFLUENCE NAMES as evidence. Do NOT
+  // reclassify a blended vertex as abdomen/legs merely because one of
+  // its source bones has a familiar anatomical name.
+  const uncertainVertices=ids.filter(i=>
+   vertexKind[i]==='UNKNOWN_ORIGINAL_BONE');
+  const originalInfluence=Object.create(null);
+  for(const i of uncertainVertices){
+   const faceMesh=sourceMeshIds[i];
+   for(let k=0;k<4;k++){
+    const weight=skinWeights[i*4+k];
+    if(weight<=1e-7)continue;
+    const sourceName=sourceBoneNamesByMesh[faceMesh][skinIndices[i*4+k]];
+    originalInfluence[sourceName]=(originalInfluence[sourceName]||0)+weight;
+   }
+  }
+  const sourceBlendTop3=Object.entries(originalInfluence)
+   .sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))
+   .slice(0,3).map(x=>x[0]).join(' + ');
   faces.push({a,b,c,kind,meshName:mesh+':'+sourceMeshNames[mesh],
-   originalBoneName:dominant,
+   originalBoneName:dominant,originalBlendInfluenceTop3Names:sourceBlendTop3,
    minY:Math.min(bodyPositions[a*3+1],bodyPositions[b*3+1],
     bodyPositions[c*3+1]),
    maxY:Math.max(bodyPositions[a*3+1],bodyPositions[b*3+1],
@@ -207,7 +226,9 @@ export function summarizeOriginalMissingRayBoneNames89({
  let unknown=0,withOther=0,noHit=0,inward=0,outward=0,near=0,
   unknownBone=0,headArm=0,maskExcluded=0,crossMesh=0;
  const byMesh=Object.create(null),byBone=Object.create(null),
-  byBoneMesh=Object.create(null),noHitAxis=emptyAxis(),
+  byBoneMesh=Object.create(null),
+  byUnresolvedBlendJointNames=Object.create(null),
+  noHitAxis=emptyAxis(),
   noHitAngle=emptyAngle(),noHitBands=Array(7).fill(0),
   excludedByBand=Array(7).fill(0),perBand=[];
  const aggregate=(hist,key)=>{hist[key]=(hist[key]||0)+1;};
@@ -271,6 +292,12 @@ export function summarizeOriginalMissingRayBoneNames89({
     aggregate(byMesh,chosen.meshName);
     aggregate(byBone,chosen.originalBoneName);
     aggregate(byBoneMesh,chosen.meshName+' | '+chosen.originalBoneName);
+    if(chosen.originalBoneName==='ORIGINAL_UNRESOLVED_DOMINANT_WEIGHT'){
+     if(!chosen.originalBlendInfluenceTop3Names)
+      throw Error('original-source-blended-influence-bone-names-missing');
+     aggregate(byUnresolvedBlendJointNames,
+      chosen.originalBlendInfluenceTop3Names);
+    }
     excludedByBand[row]++;
    }else{
     noHit++;rowNoHit++;noHitBands[row]++;
@@ -289,6 +316,8 @@ export function summarizeOriginalMissingRayBoneNames89({
   sum(Object.values(byMesh))!==withOther||
   sum(Object.values(byBone))!==withOther||
   sum(Object.values(byBoneMesh))!==withOther||
+  sum(Object.values(byUnresolvedBlendJointNames))!==
+   (byBone.ORIGINAL_UNRESOLVED_DOMINANT_WEIGHT||0)||
   sum(Object.values(noHitAxis))!==noHit||
   sum(Object.values(noHitAngle))!==noHit||
   sum(noHitBands)!==noHit||
@@ -306,6 +335,11 @@ export function summarizeOriginalMissingRayBoneNames89({
   originalUnknownCoreRaySourcePrimaryMeshNames:sorted(byMesh,256),
   originalUnknownCoreRaySourcePrimaryBoneNames:sorted(byBone,163),
   originalUnknownCoreRaySourcePrimaryMeshBonePairs:sorted(byBoneMesh,256),
+  originalUnknownCoreLowDominanceSourceSkinTop3JointNames:
+   sorted(byUnresolvedBlendJointNames,163),
+  originalUnknownCoreLowDominanceSourceSkinRayCount:
+   byBone.ORIGINAL_UNRESOLVED_DOMINANT_WEIGHT||0,
+  unverifiedJointBlendNamesAreSourceEvidenceNotTrustedCoreLabel:true,
   originalUnknownCoreExcludedUnclassifiedBoneHitSpokes:unknownBone,
   originalUnknownCoreExcludedHeadArmHitSpokes:headArm,
   originalUnknownCoreExcludedOriginalMaskHitSpokes:maskExcluded,
