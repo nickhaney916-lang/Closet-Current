@@ -80,7 +80,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  originalPhoto2DShown:true,
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
- captures:[],poseSamples:[],photoFrontCenterlineNativeAudits:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
+ captures:[],poseSamples:[],photoFrontCenterlineNativeAudits:[],originalFrontLockedFivePoseSourceAudits:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
  selectedResearchPoseChecks:[],selectedDenseOriginalRigTransitionAudits:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedWholeVsCoreRayCauseAudits:[],selectedUpperInwardOriginalSourceWitnesses:[],sourceOriginalCoreUpperLimbVetoAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
@@ -147,6 +147,45 @@ try{
   assert.equal(photoCenterline.consumer3DAdmitted,false);
   assert.equal(photoCenterline.releaseAuthorized,false);
   results.photoFrontCenterlineNativeAudits.push({avatar,...photoCenterline});
+  const frontFloor=await page.evaluate(()=>
+   window.nativeP89Skirt.auditLockedOriginalSourceFrontCollisionFloor89());
+  assert.equal(frontFloor.schema,
+   'P89-original-photographed-front-locked-anatomy-contact-floor/v1');
+  assert.equal(frontFloor.avatar,avatar);
+  assert.equal(frontFloor.sourceId,'commons-0043');
+  assert.equal(frontFloor.originalSource163BoneRig,true);
+  assert.equal(frontFloor.exactOriginalBodyAllFacesRetainedInBVH,true);
+  assert.equal(frontFloor.measuredPhotographFrontCenterlineKeptFixed,true);
+  assert.equal(frontFloor.originalSkirtTriangleCount,576);
+  assert.equal(frontFloor.photographFrontLockedIndexedFaces,288);
+  assert.equal(frontFloor.neutralUnphotographedRearIndexedFaces,264);
+  assert.equal(frontFloor.frontRearBoundaryTransitionIndexedFaces,24);
+  assert.deepEqual(frontFloor.originalFivePoseNames,
+   ['source','blend-25','blend-50','blend-75','relaxed']);
+  assert.equal(frontFloor.staticOriginalPoseSamples.length,5);
+  assert.ok(Number.isSafeInteger(frontFloor.originalWholeBodyStrictCrossingsAcrossFivePoses));
+  assert.ok(Number.isSafeInteger(frontFloor.immutablePhotographFrontCollisionFloorAcrossFivePoses));
+  assert.equal(frontFloor.originalWholeBodyStrictCrossingsAcrossFivePoses,
+   frontFloor.immutablePhotographFrontCollisionFloorAcrossFivePoses+
+   frontFloor.originalNeutralRearHypothesisCrossingsAcrossFivePoses+
+   frontFloor.originalSourceTransitionCrossingsAcrossFivePoses);
+  assert.equal(frontFloor.rearOnlyFitCannotEliminatePhotographFrontContact,
+   frontFloor.immutablePhotographFrontCollisionFloorAcrossFivePoses>0);
+  if(frontFloor.rearOnlyFitCannotEliminatePhotographFrontContact)
+   assert.equal(frontFloor.status,
+    'ORIGINAL_PHOTO_FRONT_LOCKED_COLLISIONS_PREVENT_REAR_ONLY_CLEARANCE');
+  else assert.equal(frontFloor.status,
+   'NO_LOCKED_SOURCE_FRONT_COLLISIONS_WITNESSED_NOT_SIGNED_FIT');
+  assert.equal(frontFloor.sourceMaskAndOriginalRGBUntouched,true);
+  assert.equal(frontFloor.originalSourceSkirtAndRigBuffersRestored,true);
+  assert.equal(frontFloor.sourceBodyAndSkirtCoordinatesNotExported,true);
+  assert.equal(frontFloor.originalBodySignedExteriorProven,false);
+  assert.equal(frontFloor.rearStillProvisionalNotPhotographed,true);
+  assert.equal(frontFloor.originalPhoto2DFallbackRequired,true);
+  assert.equal(frontFloor.consumer3DAdmitted,false);
+  assert.equal(frontFloor.releaseAuthorized,false);
+  assert.equal(frontFloor.familyAlpha,'HOLD');
+  results.originalFrontLockedFivePoseSourceAudits.push(frontFloor);
   for(const pose of ['source','blend-50','relaxed']){
    const witness=await page.evaluate(name=>window.nativeP89Skirt.setPose(name),pose);
    const state=await page.evaluate(()=>window.nativeP89Skirt.getState());
@@ -1801,6 +1840,7 @@ try{
   x.name?.startsWith('selected-five-pose-source-skirt-')).length,18,
   'selected original source screenshots must not be silently missing');
  assert.equal(results.photoFrontCenterlineNativeAudits.length,2);
+ assert.equal(results.originalFrontLockedFivePoseSourceAudits.length,2);
  assert.equal(results.poseSamples.length,6);
  assert.equal(results.diffs.length,18);
  assert.equal(results.errors.length,0,'real original source shader/crash problem');
