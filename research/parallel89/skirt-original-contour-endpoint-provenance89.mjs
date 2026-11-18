@@ -6,6 +6,7 @@
  * a candidate "source-provenance compatible", NOT physically sewn.
  * All original source models, photo, skin, faces remain read-only.
  */
+import {auditVirtualContourPlanarity89} from './skirt-virtual-loop-planarity89.mjs';
 const PHOTO='c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344';
 const RIG=Object.freeze({
  female:'a571a5872a5f9d75c013ce6d88b3484436cf2109bf133fbc31e42c41f52389f1',
@@ -86,6 +87,24 @@ function counterpart(nodes,me){
  }
  return others;
 }
+/** Non-mutating original graph walk with counterfactual zero-length seam links. */
+function traceVirtualContourCycle(nodes,links,seed,size){
+ const seen=new Set(),points=[];
+ let current=seed,previous=null;
+ for(let i=0;i<size;i++){
+  if(seen.has(current))return null;
+  const node=nodes.get(current);if(!node)return null;
+  const adj=node.neighbors.slice();
+  if(links.has(current))adj.push(links.get(current));
+  if(adj.length!==2||adj[0]===adj[1])return null;
+  const next=previous===null?adj[0]:
+   adj[0]===previous?adj[1]:adj[1]===previous?adj[0]:null;
+  if(next===null||!nodes.has(next))return null;
+  seen.add(current);points.push([node.x,node.z]);
+  previous=current;current=next;
+ }
+ return current===seed&&seen.size===size?points:null;
+}
 /** Independent, non-mutating graph COUNTERFACTUAL only.
  * A same-rest/skin UV seam candidate does not join source GLB vertices,
  * imply continuous physical material, signed containment, or fitted cloth. */
@@ -129,7 +148,8 @@ function virtualSeamLoopHypothesis(nodes,open,buckets,excluded){
  for(const [a,b] of pairs){validLinks.set(a,b);validLinks.set(b,a);}
  const seen=new Set();
  let graphComponents=0,hypotheticalClosedCycles=0,
-  oppositeTangentHypotheticalCycles=0,branchedOrOpenComponents=0;
+  oppositeTangentHypotheticalCycles=0,branchedOrOpenComponents=0,
+  planarSimple=0,planarSelfCrossing=0,planarDegenerate=0,planarUntraversable=0;
  for(const seed of nodes.keys()){
   if(seen.has(seed))continue;
   graphComponents++;const queue=[seed];seen.add(seed);
@@ -153,13 +173,23 @@ function virtualSeamLoopHypothesis(nodes,open,buckets,excluded){
    virtualPairsInComponent>=2){
    hypotheticalClosedCycles++;
    if(allJoinedTangentsOpposing)oppositeTangentHypotheticalCycles++;
+   const traced=traceVirtualContourCycle(nodes,validLinks,seed,queue.length);
+   if(!traced)planarUntraversable++;
+   else{
+    const plane=auditVirtualContourPlanarity89(traced);
+    if(plane.classification==='SIMPLE_NONZERO_AREA')planarSimple++;
+    else if(plane.classification==='SELF_CROSSING_OR_TOUCHING')planarSelfCrossing++;
+    else planarDegenerate++;
+   }
   }else branchedOrOpenComponents++;
  }
  if(pairs.length*2>open.length||
   opposingTangentCandidates+nonOpposingTangentCandidates+
    indeterminateTangentCandidates!==pairs.length||
   hypotheticalClosedCycles+branchedOrOpenComponents!==graphComponents||
-  oppositeTangentHypotheticalCycles>hypotheticalClosedCycles)
+  oppositeTangentHypotheticalCycles>hypotheticalClosedCycles||
+  planarSimple+planarSelfCrossing+planarDegenerate+planarUntraversable!==
+   hypotheticalClosedCycles)
   throw Error('counterfactual-original-index-virtual-loop-accounting-invalid');
  return Object.freeze({
   possibleMutuallyUniqueRestSkinSeamPairs:pairs.length,
@@ -172,6 +202,11 @@ function virtualSeamLoopHypothesis(nodes,open,buckets,excluded){
   originalIndexedGraphComponentsAfterVirtualLinks:graphComponents,
   hypotheticalTopologicalCyclesAfterVirtualLinks:hypotheticalClosedCycles,
   hypotheticalCyclesWithOpposingTangentCandidates:oppositeTangentHypotheticalCycles,
+  hypotheticalSimplePlanarCycles:planarSimple,
+  hypotheticalSelfCrossingOrTouchingCycles:planarSelfCrossing,
+  hypotheticalDegenerateAreaCycles:planarDegenerate,
+  hypotheticalUntraversableCycles:planarUntraversable,
+  only2DCounterfactualPlanarityNotSignedBody:true,
   otherOpenOrBranchedCounterfactualComponents:branchedOrOpenComponents,
   virtualGraphOnlyNoOriginalIndexWeld:true,
   originalBodyWatertightAndGarmentFitUnproved:true

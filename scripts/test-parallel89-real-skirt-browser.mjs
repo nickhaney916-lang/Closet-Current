@@ -1249,6 +1249,12 @@ try{
       loop.otherOpenOrBranchedCounterfactualComponents);
     assert.ok(loop.hypotheticalCyclesWithOpposingTangentCandidates<=
      loop.hypotheticalTopologicalCyclesAfterVirtualLinks);
+    assert.equal(loop.hypotheticalSimplePlanarCycles+
+     loop.hypotheticalSelfCrossingOrTouchingCycles+
+     loop.hypotheticalDegenerateAreaCycles+
+     loop.hypotheticalUntraversableCycles,
+     loop.hypotheticalTopologicalCyclesAfterVirtualLinks);
+    assert.equal(loop.only2DCounterfactualPlanarityNotSignedBody,true);
    }
    assert.equal(eproof.sourceOriginalFaceMaskExclusionsNeverPromoted,true);
    assert.equal(eproof.originalOnlyWorldCoordinateMatchNotStitchable,true);
