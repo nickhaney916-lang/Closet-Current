@@ -28,7 +28,7 @@ test('genuine-identity-shaped research original 343x3 shell with no actual tape 
  assert.equal(r.originalPhoto2DFallbackRequired,true);
  assert.equal(r.sourceRingCount,7);
  assert.equal(r.ringSamples,49);
- assert.ok(r.uncalibratedSourceWaistPerimeterModelUnits>1);
+ assert.ok(r.uncalibratedVirtualClosedShellWaistPerimeterModelUnits>1);
  assert.ok(r.uncalibratedSourceTopToHemDropModelUnits>.5);
  assert.equal(r.hypotheticalUniformScale,null);
  assert.ok(r.missingIndependentEvidence.length>=4);
@@ -42,17 +42,22 @@ test('actual research positions are not mutated by measurement or missing-eviden
   waistCircumferenceMm:waist,waistToHemLengthMm:480}});
  assert.deepEqual(pos,before);
  assert.equal(r.originalSourceRestGeometryUnchanged,true);
- assert.equal(r.status,'UNREVIEWED_EXTERNAL_TAPE_UNIFORM_SCALE_HYPOTHESIS_ONLY');
- assert.ok(Math.abs(r.hypotheticalUniformScale-.8)<.001);
- assert.ok(r.fractionalTwoMeasureScaleDisagreement<.01);
+ assert.equal(r.status,'WRAP_SKIRT_OVERLAP_AND_CLOSURE_UNVERIFIED_NO_WAIST_SCALE');
+ assert.equal(r.hypotheticalUniformScale,null);
+ assert.equal(r.independentWaistScaleCandidate,null);
+ assert.ok(Math.abs(r.provisionalVerticalOnlyScaleHypothesis-.8)<.001);
+ assert.equal(r.modelWaistPerimeterAsPhysicalGarmentCircumferenceAllowed,false);
  assert.equal(r.independentHumanTapePhotoReviewed,false);
  assert.equal(r.originalGarmentPhysicalDimensionsVerified,false);
  assert.equal(r.actualSignedBodyContainmentCertified,false);
  assert.equal(r.releaseAuthorized,false);
 });
-test('two plausible but physically inconsistent measurements reject scaling',()=>{
- assert.match(sample({physicalTape:{waistCircumferenceMm:1000,
-  waistToHemLengthMm:1100}}).reason,/inconsistent/);
+test('even two plausible inconsistent tape numbers can NEVER set a circular waist scale',()=>{
+ const r=sample({physicalTape:{waistCircumferenceMm:1000,waistToHemLengthMm:1100}});
+ assert.equal(r.status,'WRAP_SKIRT_OVERLAP_AND_CLOSURE_UNVERIFIED_NO_WAIST_SCALE');
+ assert.equal(r.hypotheticalUniformScale,null);
+ assert.equal(r.independentWaistScaleCandidate,null);
+ assert.equal(r.consumer3DAdmitted,false);
 });
 test('missing, impossible, fabricated or malformed measurements cannot pass',()=>{
  for(const physicalTape of [
@@ -100,7 +105,8 @@ test('no simulated reviewer, photo SHA, or photo metadata upgrades a research es
   verified:true,independentHumanApproved:true,measurementPhotoSHA256:SHA,
   cameraCalibrated:true,consumer3DAdmitted:true
  }});
- assert.equal(r.status,'UNREVIEWED_EXTERNAL_TAPE_UNIFORM_SCALE_HYPOTHESIS_ONLY');
+ assert.equal(r.status,'WRAP_SKIRT_OVERLAP_AND_CLOSURE_UNVERIFIED_NO_WAIST_SCALE');
+ assert.equal(r.hypotheticalUniformScale,null);
  assert.equal(r.independentHumanTapePhotoReviewed,false);
  assert.equal(r.consumer3DAdmitted,false);
  assert.equal(r.releaseAuthorized,false);
@@ -114,4 +120,64 @@ test('all genuine named research poses and both avatar source labels remain rese
    assert.equal(r.status,'ORIGINAL_PHYSICAL_GARMENT_DIMENSIONS_MISSING');
    assert.equal(r.familyAlpha,'HOLD');
   }
+});
+
+test('public source classification is not proof of this specific object physical closure',()=>{
+ const r=sample();
+ assert.equal(r.sourceConstruction.accession,'5152.1');
+ assert.equal(r.sourceConstruction.publicCategory,'QING_MAMIANQUN_CLASSIFICATION');
+ assert.equal(r.sourceConstruction.exactSpecimenPanelConstructionVerified,false);
+ assert.equal(r.sourceConstruction.exactSpecimenWaistClosureAndOverlapVerified,false);
+ assert.equal(r.actualSourceOverlapAndFasteningUnobserved,true);
+ assert.equal(r.modelWaistPerimeterAsPhysicalGarmentCircumferenceAllowed,false);
+ assert.equal(r.physicalClothWaistbandLengthAndClosedWearerWaistAreNotInterchangeable,true);
+ assert.ok(r.missingIndependentEvidence.some(x=>x.includes('overlap-topology')));
+});
+test('flat waistband, tied waist and nominal closed waist must NEVER be treated as same measurement',()=>{
+ for(const kind of ['FLAT_WAISTBAND_LENGTH','TIED_ON_BODY_WAIST_CIRCUMFERENCE',
+  'CLAIMED_CLOSED_WAIST_PERIMETER','UNSPECIFIED']){
+  const r=sample({physicalTape:{waistCircumferenceMm:1100,
+   waistToHemLengthMm:480,waistMeasurementKind:kind}});
+  assert.equal(r.status,'WRAP_SKIRT_OVERLAP_AND_CLOSURE_UNVERIFIED_NO_WAIST_SCALE');
+  assert.equal(r.externalWaistMeasurementMeaningUnreviewed,kind);
+  assert.equal(r.independentWaistScaleCandidate,null);
+  assert.equal(r.hypotheticalUniformScale,null);
+  assert.equal(r.originalGarmentClosureAndOverlapVerified,false);
+ }
+});
+test('spoofed museum records, two-piece/topology flags and approvals do not override the hold',()=>{
+ const r=sample({physicalTape:{
+  waistCircumferenceMm:1055,waistToHemLengthMm:480,
+  waistMeasurementKind:'TIED_ON_BODY_WAIST_CIRCUMFERENCE',
+  museumAccession:'5152.1',actualPanelCount:2,frontAndBackOverlapVerified:true,
+  independentlyMeasured:true,independentReviewerSigned:true,
+  realHumanApproved:true,consumer3DAdmitted:true,
+  sourceRearPhotoAttested:true,physicallyAccurate3D:true
+ }});
+ assert.equal(r.status,'WRAP_SKIRT_OVERLAP_AND_CLOSURE_UNVERIFIED_NO_WAIST_SCALE');
+ assert.equal(r.actualSourceOverlapAndFasteningUnobserved,true);
+ assert.equal(r.sourceBacksideObserved,false);
+ assert.equal(r.independentHumanTapePhotoReviewed,false);
+ assert.equal(r.consumer3DAdmitted,false);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('unknown measurement conventions and physically impossible length hypotheses fail closed',()=>{
+ for(const physicalTape of [
+  {waistCircumferenceMm:800,waistToHemLengthMm:480,waistMeasurementKind:'SYNTHETIC_APPROVED'},
+  {waistCircumferenceMm:900,waistToHemLengthMm:1990},
+  {waistCircumferenceMm:1000,waistToHemLengthMm:110,waistMeasurementKind:'FLAT_WAISTBAND_LENGTH'}
+ ]){
+  const r=sample({physicalTape});
+  assert.equal(r.status,'PHYSICAL_SOURCE_SKIRT_REGISTRATION_UNVERIFIABLE');
+  assert.equal(r.consumer3DAdmitted,false);
+ }
+});
+test('malicious photo metadata cannot mutate photo source or source 163bone arrays',()=>{
+ const p=shell(),immutable=p.slice();
+ sample({originalSkirtRestPositions:p,physicalTape:{
+  waistCircumferenceMm:999,waistToHemLengthMm:600,
+  waistMeasurementKind:'TIED_ON_BODY_WAIST_CIRCUMFERENCE',
+  originalSkirtRestPositions:new Float32Array(343*3),sourceSHA256:'a'.repeat(64)
+ }});
+ assert.deepEqual(p,immutable);
 });
