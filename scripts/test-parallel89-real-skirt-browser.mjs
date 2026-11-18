@@ -136,7 +136,8 @@ try{
   assert.equal(photoCenterline.originalSourceSKIRTSHA256,required.skirt);
   assert.equal(photoCenterline.exactSourceMaskRowCount,7);
   assert.equal(photoCenterline.photoFrontCenterlineShiftsMeters.length,7);
-  assert.equal(photoCenterline.photoFrontCenterlineShiftsMeters[0],0);
+  assert.ok(Math.abs(photoCenterline.photoFrontCenterlineShiftsMeters[0])<1e-8,
+   'original photo source waist-center offset must be numerically zero');
   assert.ok(photoCenterline.photoFrontCenterlineShiftsMeters.every(x=>
    Number.isFinite(x)&&Math.abs(x)<=.15));
   assert.equal(photoCenterline.originalSourcePixelsAndUVUnchanged,true);
