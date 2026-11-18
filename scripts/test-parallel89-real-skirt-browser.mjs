@@ -81,7 +81,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
- selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
+ selectedResearchPoseChecks:[],selectedDenseOriginalRigTransitionAudits:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -555,6 +555,56 @@ try{
     selected.perPoseContacts[index].trialStrictTransversePairs;
    assert.equal(live.strictTransverseSourceBodyTriangleCrossings,expected,
     'ACTUAL rendered true selected-original-photo source/BVH trial differs from measured five-pose best');
+
+   // Test the original licensed photograph on BOTH original 163bone
+   // avatars, including twelve previously UNTESTED sixteenth-step poses.
+   // The anchored five measurements must reproduce exactly; this does
+   // not establish continuous swept contact or human garment fit.
+   if(selectedPose==='source'){
+    const dense=await page.evaluate(()=>
+     window.nativeP89Skirt.auditSelectedDenseOriginalRigTransition89());
+    assert.equal(dense.schema,'P89-original-rig-dense-finite-pose-BVH-gate/v1');
+    assert.ok([
+     'NO_TRANSVERSE_CROSSINGS_AT_SEVENTEEN_STATIC_POSES_NOT_SWEPT_FIT',
+     'DENSE_SOURCE_COLLISIONS_OR_NEW_FACE_PAIRS_WITNESSED_BLOCKED'
+    ].includes(dense.status),'real original dense rig source not verified: '+JSON.stringify(dense));
+    assert.equal(dense.avatar,avatar);
+    assert.equal(dense.sourcePhotoSHA256,required.skirt);
+    assert.equal(dense.originalRigSHA256,required[avatar]);
+    assert.equal(dense.originalNativeSkinnedAnatomicalBoneCount,163);
+    assert.equal(dense.selectedRegistrationName,selected.name);
+    assert.equal(dense.selectedRegistrationMeters,selected.displacementMeters);
+    assert.equal(dense.originalAndRegisteredSeparateAuthenticIndexedBVHSamples,34);
+    assert.equal(dense.newIntermediatePoseSamplesPerAvatar,12);
+    assert.equal(dense.previouslyTestedQuarterAnchorFractionsReproducedExactly,true);
+    assert.equal(dense.perPoseSampleCounts.length,17);
+    assert.deepEqual(dense.testedStaticPoseFractions,
+     Array.from({length:17},(_,i)=>i/16));
+    assert.equal(dense.sumOriginalStrictFacePairs,
+     dense.perPoseSampleCounts.reduce((n,x)=>n+x.originalStrictFacePairs,0));
+    assert.equal(dense.sumRegisteredStrictFacePairs,
+     dense.perPoseSampleCounts.reduce((n,x)=>n+x.registeredStrictFacePairs,0));
+    assert.equal(dense.sumNewlyIntroducedOriginalSourceFacePairs,
+     dense.perPoseSampleCounts.reduce((n,x)=>n+
+      x.newlyIntroducedOriginalSourceFacePairs,0));
+    assert.equal(dense.perPoseSampleCounts.every(x=>
+     x.originalSourceFaceIdsAndBVHIndirectIndicesVerified===true),true);
+    assert.equal(dense.noOriginalAnatomicalSignedInsideOutsideOrClearanceCertified,true);
+    assert.equal(dense.sixteenUnverifiedBetweenSampleIntervalsRemain,true);
+    assert.equal(dense.staticFractionalSamplingCannotProveSweptContact,true);
+    assert.equal(dense.sourcesAndOriginalRigRestored,true);
+    assert.equal(dense.originalPhoto2DFallbackRequired,true);
+    assert.equal(dense.consumer3DAdmitted,false);
+    assert.equal(dense.releaseAuthorized,false);
+    assert.equal(dense.familyAlpha,'HOLD');
+    results.selectedDenseOriginalRigTransitionAudits.push(dense);
+    // The prior original SOURCE photo specimen must still be attached
+    // after 34 BVH samples; do not trust a zero count from a stale pose.
+    const restored=await page.evaluate(()=>
+     window.nativeP89Skirt.setPose('source'));
+    assert.equal(restored.strictTransverseSourceBodyTriangleCrossings,expected,
+     'original licensed selected source or rig not restored after dense sampling');
+   }
    // Independent geometric body radial witness. Zero crossing pairs are NOT
    // sufficient to prove the cloth is outside the body or physically sized.
    const radial=await page.evaluate(()=>
@@ -1530,6 +1580,7 @@ try{
    });
   }
  }
+ assert.equal(results.selectedDenseOriginalRigTransitionAudits.length,2);
  assert.equal(results.selectedSourceBodyRadialGapAudits.length,10);
  assert.equal(results.selectedSourceWholeBodyClosureAudits.length,10);
  assert.equal(results.selectedOriginalSourceBodySeamAudits.length,10);
@@ -1610,6 +1661,7 @@ try{
    sourceTrueWorldRadialGapCheckCount:results.selectedSourceBodyRadialGapAudits.length,
    sourceOriginalWholeBodyClosureCheckCount:results.selectedSourceWholeBodyClosureAudits.length,
    originalSourceEndpointProvenanceNativeChecks:results.selectedOriginalSkirtEndpointSourceProvenanceAudits.length,
+   originalDenseRigSixteenthStaticChecks:results.selectedDenseOriginalRigTransitionAudits.map(x=>({avatar:x.avatar,status:x.status,original:x.sumOriginalStrictFacePairs,selected:x.sumRegisteredStrictFacePairs,newPairs:x.sumNewlyIntroducedOriginalSourceFacePairs})),
    originalSourceEndpointProvenanceByAvatar:results.selectedOriginalSkirtEndpointSourceProvenanceAudits.filter(x=>x.pose==='source').map(x=>({
     avatar:x.avatar,
     originalIndexedOpenEndpointTotal:x.sourceEndpointProvenanceProof.originalSourceIndexedOpenEndpointTotal,
