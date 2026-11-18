@@ -22,7 +22,7 @@ const box=input([
  -.2,.2,-.2,.2,.2,-.2,.2,1.8,-.2,-.2,1.8,-.2,
  -.2,.2,.2,.2,.2,.2,.2,1.8,.2,-.2,1.8,.2
  ],[0,2,1,0,3,2,4,5,6,4,6,7,
- 0,1,5,0,5,4,3,7,6,3,0,4,7,0,7,3,1,2,6,1,6,5]);
+ 0,1,5,0,5,4,3,7,6,3,6,2,0,4,7,0,7,3,1,2,6,1,6,5]);
 function verified(x){
  const copy=Object.fromEntries(Object.entries(x).map(([k,v])=>[k,v.slice()]));
  const receipt=audit(x);
@@ -99,7 +99,7 @@ test('two faces with a genuine horizontal original indexed edge at a skirt ring 
  ],[0,1,2,1,2,3]));
  assert.equal(r.sourceComponentsCrossingAllSevenHeightPlanes,1);
  assert.ok(r.originalIndexedHorizontalPlaneEdgeLinks>0);
- assert.equal(r.authenticOriginalSameFaceCrossPlaneLinks>0);
+ assert.ok(r.authenticOriginalSameFaceCrossPlaneLinks>0);
 });
 test('two original triangles meeting ONLY at a single exact vertex on original ring plane are disconnected',()=>{
  const plane=skirt()[3*(3*49)+1];
