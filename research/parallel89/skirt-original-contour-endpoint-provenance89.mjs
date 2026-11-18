@@ -8,7 +8,7 @@
  */
 const PHOTO='c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344';
 const RIG=Object.freeze({
- female:'a571a5872a5f9d75c013ce6d88b3484436cf2109bf133fbcc31e42c41f52389f1',
+ female:'a571a5872a5f9d75c013ce6d88b3484436cf2109bf133fbc31e42c41f52389f1',
  male:'d15a07e2b4cf1d08a3b91cb212a9a06a91438077f05a3f2a62f45351e8a71eb8'
 });
 const POSES=new Set(['source','blend-25','blend-50','blend-75','relaxed']);
