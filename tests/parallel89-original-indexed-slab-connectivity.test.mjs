@@ -178,12 +178,14 @@ test('source shared edge physically spanning open slab is a genuine local edge b
  }
 });
 test('zero-length source-index edge never authorizes geometric continuity',()=>{
- const x=input([0,.2,0,0,.2,0,1,1.8,0,-1,1.8,0],
+ const x=input([0,.9,0,0,.9,0,1,1.8,0,-1,.2,0],
   [0,1,2,1,0,3]);
  const v=check(x);
- for(const part of v.originalAdjacentSlabSourceEdgeConnectivity){
-  assert.equal(part.originalIndexedSharedEdgesWithOpenSlabInterior,0);
-  assert.equal(part.originalIndexedZeroLengthSourceEdgesRejected,0);
-  assert.equal(part.originalIndexedSharedEdgesOutsideOrOnSlabBoundary,1);
- }
+ const middle=v.originalAdjacentSlabSourceEdgeConnectivity[2];
+ assert.equal(middle.originalIndexedSharedEdgeAdjacencies,1);
+ assert.equal(middle.originalIndexedSharedEdgesWithOpenSlabInterior,0);
+ assert.equal(middle.originalIndexedZeroLengthSourceEdgesRejected,1);
+ assert.equal(middle.originalIndexedSharedEdgesOutsideOrOnSlabBoundary,0);
+ assert.equal(middle.sourceIndexedEdgeConnectedBothPlanes,0,
+  'zero-length original indexed contact cannot join upper/lower-only faces');
 });
