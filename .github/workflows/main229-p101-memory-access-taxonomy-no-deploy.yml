@@ -3,7 +3,7 @@ on:
   push:
     branches: [research/main229-p101-wasm-memory-access-classification-HOLD]
   pull_request:
-    branches: [fix/parallel101-webkit-p94-model-initialization-HOLD]
+    branches: [research/main229-webkit-memory-access-review-base-HOLD]
 permissions:
   contents: read
 jobs:
