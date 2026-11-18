@@ -80,7 +80,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  originalPhoto2DShown:true,
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
- captures:[],poseSamples:[],photoFrontCenterlineNativeAudits:[],originalFrontLockedFivePoseSourceAudits:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
+ captures:[],poseSamples:[],photoFrontCenterlineNativeAudits:[],originalFrontLockedFivePoseSourceAudits:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],originalPhysicalCameraEvidenceAudits:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
  selectedResearchPoseChecks:[],selectedDenseOriginalRigTransitionAudits:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedWholeVsCoreRayCauseAudits:[],selectedUpperInwardOriginalSourceWitnesses:[],sourceOriginalCoreUpperLimbVetoAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
@@ -484,6 +484,56 @@ try{
   assert.equal(restoredAfterRegistration.bones,163);
   assert.equal(restoredAfterRegistration.releaseAuthorized,false);
   results.registrationTrials.push(registration);
+  // The earlier source-only physical-size gate is now checked against
+  // THIS exact original photo, real 163bone rig and five-pose selected
+  // registration receipt, not an isolated plausible ruler-number fixture.
+  const metricBaseline=await page.evaluate(()=>
+   window.nativeP89Skirt.auditSelectedRegistrationPhysicalCameraEvidence89());
+  assert.equal(metricBaseline.schema,
+   'P89-163bone-selected-photo-rigid-registration-physical-camera-gate/v1');
+  assert.equal(metricBaseline.status,
+   'ORIGINAL_PHOTO_CAMERA_AND_PHYSICAL_SIZE_UNCALIBRATED_3D_BLOCKED');
+  assert.equal(metricBaseline.avatar,avatar);
+  assert.equal(metricBaseline.sourceId,'commons-0043');
+  assert.equal(metricBaseline.originalPhotoSHA256,required.skirt);
+  assert.equal(metricBaseline.originalSourceRig163Bones,true);
+  assert.equal(metricBaseline.selectedRigidRegistrationPreviewActive,false);
+  assert.equal(metricBaseline.selectedCandidateSourceRestAndUVPreserved,true);
+  assert.equal(metricBaseline.verifiedResearchCandidateName,
+   registration.bestResearchOnly?.name);
+  assert.equal(metricBaseline.originalPhotographContainsVerifiedMetricScale,false);
+  assert.equal(metricBaseline.originalPhotoCameraIntrinsicsExtrinsicsValidated,false);
+  assert.equal(metricBaseline.independentSameGarmentTapeMeasurementAbsent,true);
+  assert.equal(metricBaseline.zeroFrontBVHContactPairsDoesNotProveSourceFit,true);
+  assert.equal(metricBaseline.allSourceCameraScaleAndRealFabricDepthStillUnknown,true);
+  assert.equal(metricBaseline.originalPhoto2DFallbackRequired,true);
+  assert.equal(metricBaseline.consumer3DAdmitted,false);
+  assert.equal(metricBaseline.releaseAuthorized,false);
+  const realPhysical=metricBaseline.originalSourcePhysicalSizeEvidence;
+  assert.equal(realPhysical.status,'ORIGINAL_PHYSICAL_GARMENT_DIMENSIONS_MISSING');
+  assert.equal(realPhysical.avatar,avatar);
+  assert.equal(realPhysical.originalPhotoSHA256,required.skirt);
+  assert.equal(realPhysical.sourceRingCount,7);
+  assert.equal(realPhysical.originalSourceRestVertexCount,343);
+  assert.equal(realPhysical.originalRigBoneCount,163);
+  assert.equal(realPhysical.hypotheticalUniformScale,null);
+  assert.ok(realPhysical.missingIndependentEvidence.includes(
+   'actual-same-garment-measured-waist-circumference'));
+  assert.ok(realPhysical.missingIndependentEvidence.includes(
+   'camera-calibration-and-same-garment-side-rear-coverage'));
+  assert.equal(realPhysical.originalGarmentPhysicalDimensionsVerified,false);
+  assert.equal(realPhysical.actualPhotoCameraScaleVerified,false);
+  assert.equal(realPhysical.originalSourceRestGeometryUnchanged,true);
+  assert.equal(realPhysical.originalPhoto2DFallbackRequired,true);
+  assert.equal(realPhysical.consumer3DAdmitted,false);
+  assert.equal(realPhysical.releaseAuthorized,false);
+  results.originalPhysicalCameraEvidenceAudits.push({
+   avatar,stage:'original-registered-baseline',status:metricBaseline.status,
+   sourceBody163Bone:true,originalPublicPhotoSHA256:required.skirt,
+   independentSameGarmentMeasurementsPresent:false,
+   sourceCameraCalibrated:false,consumer3DAdmitted:false,
+   originalPhoto2DFallbackRequired:true
+  });
   const waistAnchors=await page.evaluate(()=>window.nativeP89Skirt.auditWaistBoneAnchors());
   assert.equal(waistAnchors.schema,'P89-public-anatomical-waist-bone-attachment-audit/v1');
   assert.equal(waistAnchors.status,
@@ -664,6 +714,42 @@ try{
     selected.localCameraFacingRegistrationMeters[2]);
    assert.equal(enabled.consumer3DAdmitted,false);
    assert.equal(enabled.releaseAuthorized,false);
+   const selectedMetric=await page.evaluate(()=>
+    window.nativeP89Skirt.auditSelectedRegistrationPhysicalCameraEvidence89());
+   assert.equal(selectedMetric.schema,metricBaseline.schema);
+   assert.equal(selectedMetric.status,metricBaseline.status);
+   assert.equal(selectedMetric.avatar,avatar);
+   assert.equal(selectedMetric.pose,selectedPose);
+   assert.equal(selectedMetric.selectedRigidRegistrationPreviewActive,true);
+   assert.equal(selectedMetric.verifiedResearchCandidateName,selected.name);
+   assert.equal(selectedMetric.selectedExperimentalDisplacementMeters,
+    selected.displacementMeters);
+   assert.equal(selectedMetric.originalPhotographContainsVerifiedMetricScale,false);
+   assert.equal(selectedMetric.originalPhotoCameraIntrinsicsExtrinsicsValidated,false);
+   assert.equal(selectedMetric.selectedCandidateSourceRestAndUVPreserved,true);
+   assert.equal(selectedMetric.zeroFrontBVHContactPairsDoesNotProveSourceFit,true);
+   assert.equal(selectedMetric.originalPhoto2DFallbackRequired,true);
+   assert.equal(selectedMetric.consumer3DAdmitted,false);
+   assert.equal(selectedMetric.releaseAuthorized,false);
+   const selectedPhysical=selectedMetric.originalSourcePhysicalSizeEvidence;
+   assert.equal(selectedPhysical.status,'ORIGINAL_PHYSICAL_GARMENT_DIMENSIONS_MISSING');
+   assert.equal(selectedPhysical.originalGarmentPhysicalDimensionsVerified,false);
+   assert.equal(selectedPhysical.originalSourceRestGeometryUnchanged,true);
+   assert.equal(selectedPhysical.actualPhotoCameraScaleVerified,false);
+   assert.equal(selectedPhysical.hypotheticalUniformScale,null);
+   for(const key of ['uncalibratedSourceWaistPerimeterModelUnits',
+     'uncalibratedSourceHemPerimeterModelUnits',
+     'uncalibratedSourceTopToHemDropModelUnits']){
+    assert.equal(selectedPhysical[key],realPhysical[key],
+     'selected rigid offset created a fake physical garment measurement');
+   }
+   results.originalPhysicalCameraEvidenceAudits.push({
+    avatar,pose:selectedPose,stage:'selected-rigid-photo-offset',
+    selectedResearchOnlyDisplacementMeters:selected.displacementMeters,
+    status:selectedMetric.status,
+    realTapeScaleMeasured:false,sourceCameraCalibrated:false,
+    originalPhoto2DFallbackRequired:true,consumer3DAdmitted:false
+   });
    const live=await page.evaluate(p=>
     window.nativeP89Skirt.setPose(p),selectedPose);
    const index=['source','blend-50','relaxed'].indexOf(selectedPose);
@@ -1870,6 +1956,15 @@ try{
   x=>x.status==='ORIGINAL_PHOTOGRAPH_CENTER_FRONT_COVERAGE_IMPROVED_RESEARCH_ONLY'
  ).length,results.selectedResearchFrontCoverage.length,
   'selected source registration fails authentic photographed front visible coverage: 3D remains BLOCKED');
+ assert.equal(results.originalPhysicalCameraEvidenceAudits.length,12,
+  'two original licensed avatar baselines plus ten selected original source poses must fail closed');
+ assert.equal(results.originalPhysicalCameraEvidenceAudits.filter(x=>
+  x.stage==='original-registered-baseline').length,2);
+ assert.equal(results.originalPhysicalCameraEvidenceAudits.filter(x=>
+  x.stage==='selected-rigid-photo-offset').length,10);
+ assert.ok(results.originalPhysicalCameraEvidenceAudits.every(x=>
+  x.status==='ORIGINAL_PHOTO_CAMERA_AND_PHYSICAL_SIZE_UNCALIBRATED_3D_BLOCKED'&&
+  x.originalPhoto2DFallbackRequired===true&&x.consumer3DAdmitted===false));
  assert.equal(results.research45OnlyQuarterPoseChecks.length,4);
  assert.equal(results.research45OnlyPreviewScreenshots.length,18);
  assert.equal(results.originalPhoto45FrontVisibilityReports.length,6);
@@ -1931,6 +2026,12 @@ try{
    provisionalContactReduction:results.neutralRearTrials.map(x=>x.bestProvisional?.originalSourcePoseCrossingSum-x.bestProvisional?.trialSourcePoseCrossingSum||0),
    measuredBodyFitTrialStatus:results.measuredBodyFitTrials.map(x=>x.status),
    photoSkirtRegistrationStatus:results.registrationTrials.map(x=>x.status),
+   originalPhysicalCameraEvidence:results.originalPhysicalCameraEvidenceAudits.map(x=>({
+    avatar:x.avatar,pose:x.pose??'source',stage:x.stage,
+    status:x.status,sourceCameraCalibrated:false,
+    metricSameGarmentMeasurementsPresent:false,
+    selectedResearchOnlyDisplacementMeters:x.selectedResearchOnlyDisplacementMeters??null
+   })),
    originalPhotoFrontRigidRegistrationAB:results.registrationTrials.map(x=>({
     avatar:x.avatar,originalFrontPhotoStrips:x.trials[0]?.genuinePhotoFrontSourceStripRegistrationEvidence?.originalFrontPairsBySixSourceAlphaStrips,
     bestResearchTrial:x.bestResearchOnly?.name??null,
