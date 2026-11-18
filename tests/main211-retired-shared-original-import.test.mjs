@@ -117,9 +117,10 @@ test('M211 unrelated original remains separately importable after source retirem
   const next={...verified('incoming',b),image:other,originalPhoto:{
    ownerId:owner,image:other,sha256:digest(c)},
    sourceSHA256:digest(c),singleGarmentVerified:true,
-   cutoutSHA256:undefined,segmentHint:undefined,
    confirmedDetailsSource31:{basis:'PHOTO119-explicit-owner-confirmation',
     ownerId:owner,itemId:'incoming',sourceSHA256:digest(c)}};
+  delete next.cutoutSHA256;
+  delete next.segmentHint;
   const plan=await prepare(db,next);
   assert.equal(plan.counts.garments,1);
  }finally{db.close();}
