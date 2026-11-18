@@ -18,7 +18,7 @@ function frames({bodyX=.08,firstY=1,lastY=-1}={}){
   a.set([x,firstY-r*.06,z],i*3);
   b.set([x,lastY-r*.06,z],i*3);
  }
- body.set([bodyX,0,.19,bodyX+.05,0,.20,bodyX+.02,.09,.23]);
+ body.set([bodyX,0,.12,bodyX+.05,0,.14,bodyX+.02,.09,.20]);
  for(let i=0;i<bodyIndices.length;i+=3)bodyIndices.set([0,1,2],i);
  const make=(s)=>({
   skirt:{positions:s,indices:skirtIndices.slice()},
