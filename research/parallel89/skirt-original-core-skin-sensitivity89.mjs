@@ -65,6 +65,44 @@ function cast(lines,cx,cz,ux,uz){
  }
  return {hasHit:far>=0,farthest:far,collinear};
 }
+/** This geometry witness is measured ONLY on the rays declared NO-HIT
+ * by the previously verified strict-core source ray pass. No candidate
+ * original body faces are reclassified and no source geometry is repaired.
+ */
+function describeOriginalNoHitSourceLine(lines,cx,cz,ux,uz){
+ let beyond=false,behind=false,collinear=false,withinOriginalRay=false;
+ for(const [ax,az,bx,bz] of lines){
+  const ex=bx-ax,ez=bz-az,px=ax-cx,pz=az-cz,det=ux*ez-uz*ex;
+  if(Math.abs(det)<1e-11){
+   if(Math.abs(px*uz-pz*ux)<1e-9)collinear=true;
+   continue;
+  }
+  const t=(px*ez-pz*ex)/det,v=(px*uz-pz*ux)/det;
+  if(v < -1e-9||v >1+1e-9)continue;
+  if(t>3)beyond=true;
+  else if(t<0)behind=true;
+  else withinOriginalRay=true;
+ }
+ return {beyond,behind,collinear,withinOriginalRay};
+}
+const NOHIT_LINE_REASON_NAMES=Object.freeze([
+ 'SOURCE_FORWARD_BEYOND_RAY_CAP',
+ 'SOURCE_BEHIND_ORIGINAL_SKIRT_CENTER',
+ 'SOURCE_COLLINEAR_OR_DEGENERATE_LINE',
+ 'NO_ORIGINAL_SOURCE_PLANE_LINE_INTERSECTION'
+]);
+const zeroOriginalNoHitReasons=()=>Object.fromEntries(
+ NOHIT_LINE_REASON_NAMES.map(name=>[name,0]));
+const sourceNoHitReason=(line,strictCoreCollinear=false)=>{
+ // An apparent no-hit with a collinear strict-core face is non-certifiable
+ // even if a different source segment is observed in 0..3 meters.
+ if(line.withinOriginalRay)return strictCoreCollinear?
+  'SOURCE_COLLINEAR_OR_DEGENERATE_LINE':null;
+ if(line.beyond)return 'SOURCE_FORWARD_BEYOND_RAY_CAP';
+ if(line.behind)return 'SOURCE_BEHIND_ORIGINAL_SKIRT_CENTER';
+ if(line.collinear)return 'SOURCE_COLLINEAR_OR_DEGENERATE_LINE';
+ return 'NO_ORIGINAL_SOURCE_PLANE_LINE_INTERSECTION';
+};
 function validate(a){
  const {bodyPositions:p,bodyIndices:idx,skirtPositions:s,skirtIndices:si,
   coreBodyFaceMask:mask,skinIndices:bi,skinWeights:bw,
@@ -161,18 +199,27 @@ export function summarizeOriginalCoreSkinSensitivity89(a={}){
  }));
  let strictIn=0,strictOut=0,strictNear=0,strictUnknown=0,
   originalCoreExcludedHit=0,originalNoSourceFaceHit=0;
+ const originalNoHitReasons=zeroOriginalNoHitReasons(),
+  noHitLineRows=[],behindSourceMeshes=new Map();
+ let zeroOriginalBodyContourRows=0,collinearNoHitRays=0;
  for(let row=0;row<7;row++){
   let cx=0,cz=0,y=0;
   for(let j=0;j<48;j++){
    const i=(row*49+j)*3;cx+=s[i];cz+=s[i+2];y+=s[i+1];
   }
   cx/=48;cz/=48;y/=48;
-  const strictLines=[],excludedOriginalLines=[],candidateLines=THRESHOLDS.map(()=>[]),
+  const strictLines=[],excludedOriginalLines=[],allOriginalLines=[],
+   originalLinesByMesh=new Map(),candidateLines=THRESHOLDS.map(()=>[]),
    contaminatedLines=THRESHOLDS.map(()=>[]);
   for(let f=0;f<faces;f++){
    const a0=idx[f*3],a1=idx[f*3+1],a2=idx[f*3+2];
    const xy=cut(p,a0,a1,a2,y);
    if(!xy)continue;
+   allOriginalLines.push(xy);
+   const mesh=mi[a0]===mi[a1]&&mi[a1]===mi[a2]?
+    mn[mi[a0]]:'CROSS_ORIGINAL_MESH';
+   if(!originalLinesByMesh.has(mesh))originalLinesByMesh.set(mesh,[]);
+   originalLinesByMesh.get(mesh).push(xy);
    if(eligibleStrict[f])strictLines.push(xy);
    else excludedOriginalLines.push(xy);
    for(let t=0;t<THRESHOLDS.length;t++){
@@ -182,12 +229,28 @@ export function summarizeOriginalCoreSkinSensitivity89(a={}){
     }
    }
   }
+  if(!allOriginalLines.length)zeroOriginalBodyContourRows++;
   let rowUnknown=0,rowExcluded=0,rowNoHit=0,rowIn=0,rowOut=0,rowNear=0;
+  const rowNoHitReasons=zeroOriginalNoHitReasons(),rowNoHitSectors=[];
+  const noteRayMiss=(i,reason,ux=null,uz=null)=>{
+   if(!Object.hasOwn(rowNoHitReasons,reason))
+    throw Error('invalid-original-nohit-line-reason');
+   rowNoHitReasons[reason]++;originalNoHitReasons[reason]++;
+   rowNoHitSectors.push(i);
+   if(reason==='SOURCE_COLLINEAR_OR_DEGENERATE_LINE')collinearNoHitRays++;
+   if(reason==='SOURCE_BEHIND_ORIGINAL_SKIRT_CENTER'&&ux!==null){
+    for(const [name,lines] of originalLinesByMesh){
+     if(describeOriginalNoHitSourceLine(lines,cx,cz,ux,uz).behind)
+      behindSourceMeshes.set(name,(behindSourceMeshes.get(name)||0)+1);
+    }
+   }
+  };
   for(let j=0;j<48;j++){
    const i=(row*49+j)*3,dx=s[i]-cx,dz=s[i+2]-cz,
     radius=Math.hypot(dx,dz);
    if(!(radius>.005&&radius<3)){
     strictUnknown++;rowUnknown++;originalNoSourceFaceHit++;rowNoHit++;
+    noteRayMiss(j,'NO_ORIGINAL_SOURCE_PLANE_LINE_INTERSECTION');
     for(const t of hypothetical){
      t.sourceNoFaceRayHitDirectionsRemainingUnknown++;
      t.originalCoreUnknownRaysWithoutCandidateIntersection++;
@@ -206,7 +269,15 @@ export function summarizeOriginalCoreSkinSensitivity89(a={}){
    strictUnknown++;rowUnknown++;
    const any=cast(excludedOriginalLines,cx,cz,ux,uz).hasHit;
    if(any){originalCoreExcludedHit++;rowExcluded++;}
-   else{originalNoSourceFaceHit++;rowNoHit++;}
+   else{
+    originalNoSourceFaceHit++;rowNoHit++;
+    const sourceLine=describeOriginalNoHitSourceLine(
+     allOriginalLines,cx,cz,ux,uz),
+     reason=sourceNoHitReason(sourceLine,c.collinear);
+    if(reason===null)
+     throw Error('source-original-nohit-line-forward-replay-mismatch');
+    noteRayMiss(j,reason,ux,uz);
+   }
    for(let t=0;t<THRESHOLDS.length;t++){
     const report=hypothetical[t];
     const candidate=cast(candidateLines[t],cx,cz,ux,uz).hasHit;
@@ -222,13 +293,27 @@ export function summarizeOriginalCoreSkinSensitivity89(a={}){
      throw Error('counterfactual-source-without-original-face-ray-hit');
    }
   }
-  if(rowIn+rowOut+rowNear+rowUnknown!==48||rowExcluded+rowNoHit!==rowUnknown)
+  if(rowIn+rowOut+rowNear+rowUnknown!==48||rowExcluded+rowNoHit!==rowUnknown||
+   Object.values(rowNoHitReasons).reduce((n,v)=>n+v,0)!==rowNoHit||
+   rowNoHitSectors.length!==rowNoHit)
    throw Error('original-skirt-source-ring-sensitivity-reconciliation-failed');
+  noHitLineRows.push({
+   originalPhotoSkirtBand:row,originalBodyPlaneSegments:allOriginalLines.length,
+   originalStrictInward:rowIn,originalStrictOutward:rowOut,
+   originalStrictNear:rowNear,originalStrictUnknown:rowUnknown,
+   originalExcludedBodySourceHit:rowExcluded,
+   originalNoForwardBodySourceRayHit:rowNoHit,
+   noHitLineGeometryReasons:rowNoHitReasons,
+   noHitSourceAngularSectors:rowNoHitSectors
+  });
   byBand.push({originalSkirtBand:row,strictCoreInward:rowIn,strictCoreOutward:rowOut,
    strictCoreNear:rowNear,strictCoreUnknown:rowUnknown,
    originalExcludedFaceIntersection:rowExcluded,
    noObservedOriginalFaceIntersection:rowNoHit});
  }
+ if(Object.values(originalNoHitReasons).reduce((n,v)=>n+v,0)!==
+  originalNoSourceFaceHit||noHitLineRows.length!==7)
+  throw Error('original-source-nohit-line-reason-conservation-failed');
  if(strictIn+strictOut+strictNear+strictUnknown!==336||
   originalCoreExcludedHit+originalNoSourceFaceHit!==strictUnknown||
   hypothetical.some((v,i)=>v.originalCoreUnknownRaysWithHypotheticalCandidateIntersection+
@@ -252,6 +337,23 @@ export function summarizeOriginalCoreSkinSensitivity89(a={}){
   baselineUnknownExcludedOriginalFaceRayHits:originalCoreExcludedHit,
   baselineUnknownNoOriginalFaceRayHits:originalNoSourceFaceHit,
   originalStrictCoreSourceBandReceipts:byBand,
+  // NOTE: these are SOURCE BODY plane lines through true photographed
+  // skirt rings, never physical clearance, signed volume or clothing fit.
+  originalNoHitLineGeometryFromVerifiedStrictSourceRays:Object.freeze({
+   originalSourceIndexedBodyFaceCount:faces,
+   originalPhotoSkirtSourceRayCount:336,
+   originalStrictCoreInward:strictIn,originalStrictCoreOutward:strictOut,
+   originalStrictCoreNear:strictNear,originalStrictCoreUnknown:strictUnknown,
+   originalSourceExcludedFaceRayHits:originalCoreExcludedHit,
+   originalSourceNoForwardFaceRayHits:originalNoSourceFaceHit,
+   exclusiveNoHitLineGeometryReasons:originalNoHitReasons,
+   sevenOriginalSkirtBandLineReasons:noHitLineRows,
+   originalSourceMeshBehindCenterRayWitnesses:[...behindSourceMeshes.entries()]
+    .sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))
+    .map(([sourceMeshName,sourceRayCount])=>({sourceMeshName,sourceRayCount})),
+   sourceAnatomyPlaneRowsWithZeroFaces:zeroOriginalBodyContourRows,
+   sourceNoHitCollinearPossibleDirections:collinearNoHitRays
+  }),
   hypotheticalSourceNamedCoreWeightSensitivity:hypothetical,
   thresholdsArePredeclaredNotLearnedOrPhysicallyValidated:true,
   allCandidateFacesAreOriginalIndexedNotCreatedGeometry:true,
