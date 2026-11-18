@@ -19,6 +19,7 @@ import {auditDenseOriginalPhotoSkirtTransition89} from './skirt-original-dense-m
 import {auditOriginalSkirtWaistBoneAttachment89} from './skirt-waist-bone-landmarks89.mjs';
 import {auditSelectedOriginalSkirtRadialGap89} from './skirt-source-radial-gap89.mjs';
 import {auditOriginalWholeBodyCoreRayCauses89} from './skirt-original-ray-coverage-causes89.mjs';
+import {auditOriginalUpperSkirtInwardSourceWitness89} from './skirt-original-upper-inward-witness89.mjs';
 import {auditActualOriginalBodyClosure89} from './skirt-source-body-manifold89.mjs';
 import {auditRealOriginalBodySeams89} from './skirt-source-indexed-seam89.mjs';
 import {auditActualOriginalBodyBoundaryRegions89} from './skirt-original-source-boundary-regions89.mjs';
@@ -700,6 +701,63 @@ function auditSelectedOriginalWholeVsCoreRayCauses89(prior){
     (report?.reason||report?.status));
   return report;
  }finally{cloth?.g.dispose();body?.g.dispose();originalBodyPositions();}
+}
+
+/**
+ * Original photograph + original P541 CC0 face-indexed top-band inward
+ * ray witness, with original source mesh and dominant 163bone names.
+ * No coordinates, original face IDs, fake anatomy, garments or signed
+ * body volume; the selected front registration remains unapproved.
+ */
+function auditSelectedOriginalUpperInwardSource89(radial,wholeCoverage){
+ check(phase==='ready'&&source?.status==='SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED'&&
+  selectedPreview&&root&&candidate?.mesh?.skeleton?.bones?.length===163&&
+  lastRegistration?.avatar===current&&
+  selectedPreview.name===lastRegistration?.bestResearchOnly?.name&&
+  lastRegistration?.bestResearchOnly?.researchOnlyNonworseningReduction===true&&
+  radial?.schema==='P89-actual-original-163bone-source-radial-body-gap/v1'&&
+  radial.avatar===current&&radial.pose===pose&&
+  wholeCoverage?.schema==='P89-original-163bone-whole-vs-core-ray-missing-cause/v1'&&
+  wholeCoverage.avatar===current&&wholeCoverage.pose===pose,
+  'real original 163bone source top-band inward proof must follow independent exact source audits');
+ let skirt,body;
+ try{
+  skirt=posedSource84(candidate.meshes);
+  body=posedSource84(bodies);
+  const bp=body.g.getAttribute('position').array,
+   metadata=originalBodySourceSeamProvenance89(bp.length/3),
+   safe=x=>String(x||'').replace(/[^\x20-\x7e]/g,'_').slice(0,96),
+   sourceMeshNames=bodies.map((m,i)=>safe(m.name)||'ORIGINAL_GLBSKIN_MESH_'+i),
+   sourceBoneNamesByMesh=bodies.map(mesh=>{
+    check(mesh.isSkinnedMesh&&mesh.skeleton?.bones?.length===163,
+     'original source 163bone metadata missing');
+    return mesh.skeleton.bones.map((bone,i)=>
+     safe(bone.name)||'ORIGINAL_BONE_'+i);
+   }),
+   mask=originalTorsoLegSourceFaceMask89();
+  check(mask.length===body.g.index.count/3,
+   'original selected source and whole body face indices not synchronized');
+  const report=auditOriginalUpperSkirtInwardSourceWitness89({
+   skirtPositions:skirt.g.getAttribute('position').array,
+   skirtIndices:skirt.g.index.array,
+   bodyPositions:bp,bodyIndices:body.g.index.array,
+   coreBodyFaceMask:mask,...metadata,
+   sourceMeshNames,sourceBoneNamesByMesh,
+   avatar:current,pose,sourcePhotoSHA256:source.originalSHA256,
+   sourceAnatomyGLBSHA256:MODELS[current].sha,
+   originalRig163Bones:true,selectedActualWebGLPreview:true,
+   selectedFivePoseBvhVerified:true,
+   priorExactRadialReceipt:radial,priorWholeVsCoreReceipt:wholeCoverage
+  });
+  check(report?.status==='ORIGINAL_UPPER_INWARD_SOURCE_RAY_BONE_MESH_WITNESSED_NOT_WEARABLE'&&
+   report.originalPhoto2DFallbackRequired===true&&
+   report.releaseAuthorized===false&&report.consumer3DAdmitted===false,
+   'genuine licensed original upper band inward source witness invalid: '+
+    (report?.reason||report?.status));
+  return report;
+ }finally{
+  skirt?.g.dispose();body?.g.dispose();originalBodyPositions();
+ }
 }
 
 function auditSelectedOriginalSourceBodyClosure89(){
@@ -1434,7 +1492,7 @@ function close(){if(selectedPreview)showOnlySelectedRegistration89(false,{draw:f
  if(rigid45Preview)showOnlySourceRigidRegistration45(false,{draw:false});
  lastRegistration=null;candidate?.dispose();candidate=null;scene.remove(root);root=null;
  renderer.dispose();renderer.forceContextLoss();phase='disposed';return true;}
-window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,showOnlySelectedRegistration89,auditSelectedDenseOriginalRigTransition89,auditSelectedSourceRadialGap89,auditSelectedOriginalWholeVsCoreRayCauses89,auditSelectedOriginalSourceBodyClosure89,auditSelectedOriginalBodySeams89,auditSelectedOriginalBodyBoundaryRegions89,auditSelectedOriginalSkirtCoreSpan89,auditSelectedOriginalSkirtCoreRayUnknownCauses89,auditSelectedOriginalSkirtSourceBoneNamesNoHits89,auditSelectedOriginalSkirtCoreWeightSensitivity89,auditSelectedOriginalSkirtCoreNoHitGeometry89,auditSelectedOriginalSkirtSourceContourConnectivity89,auditSelectedOriginalSkirtEndpointSourceProvenance89,auditOnlyUnobservedRearRenderedPixels,close});
+window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,showOnlySelectedRegistration89,auditSelectedDenseOriginalRigTransition89,auditSelectedSourceRadialGap89,auditSelectedOriginalWholeVsCoreRayCauses89,auditSelectedOriginalUpperInwardSource89,auditSelectedOriginalSourceBodyClosure89,auditSelectedOriginalBodySeams89,auditSelectedOriginalBodyBoundaryRegions89,auditSelectedOriginalSkirtCoreSpan89,auditSelectedOriginalSkirtCoreRayUnknownCauses89,auditSelectedOriginalSkirtSourceBoneNamesNoHits89,auditSelectedOriginalSkirtCoreWeightSensitivity89,auditSelectedOriginalSkirtCoreNoHitGeometry89,auditSelectedOriginalSkirtSourceContourConnectivity89,auditSelectedOriginalSkirtEndpointSourceProvenance89,auditOnlyUnobservedRearRenderedPixels,close});
 try{await verifySource();await load('female');}catch(e){
  phase='error';const msg=String(e?.message||e).slice(0,250);
  errors.push(msg);status.textContent='Original-photo 2D fallback: '+msg+' · HOLD';
