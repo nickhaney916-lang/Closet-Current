@@ -117,8 +117,9 @@ for(const where of ['current','saved']){
     ownerDB:f.db,ownerId:f.owner,assertLease:f.assertLease});
    assert.equal(result.data.items.length,1);
    assert.equal(result.data.items[0].originalPhoto.image,jpeg);
-   assert.equal(result.data.state['outfit-board'][where==='current'?'current':'saved']
-    [where==='current'?'slots':0][where==='current'?'top':'slots']?.top??'owned-top','owned-top');
+   const exportedBoard=where==='current'?result.data.state['outfit-board'].current:
+    result.data.state['outfit-board'].saved[0];
+   assert.equal(exportedBoard.slots.top,'owned-top');
    assert.equal(result.releaseAuthorized,false);
   }finally{f.close();}
  });
@@ -134,8 +135,9 @@ for(const where of ['current','saved']){
    const after=await snapshot(f.db);
    assert.equal(after.items.length,1);
    assert.equal(after.items[0].originalPhoto.image,jpeg);
-   assert.equal(after.state.find(x=>x.id==='outfit-board')[where==='current'?'current':'saved']
-    [where==='current'?'slots':0][where==='current'?'top':'slots']?.top??'owned-top','owned-top');
+   const restoredBoard=after.state.find(x=>x.id==='outfit-board');
+   assert.equal((where==='current'?restoredBoard.current:restoredBoard.saved[0]).slots.top,
+    'owned-top');
    assert.equal(result.releaseAuthorized,false);
   }finally{f.close();}
  });
