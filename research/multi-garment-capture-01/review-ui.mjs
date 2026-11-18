@@ -588,16 +588,24 @@ export function mountMultiGarmentCapture24({
       const accepted=next.p88Intake57?
        next.p88Intake57.intake(data,state?.pieces||[]):
        intakeProposal58(data.piece,state?.pieces||[],next.received);
-      if(accepted.accepted)next.pending.push(addDetected(accepted.piece,next));
+      if(accepted.accepted){
+       // Attach both completion handlers in the same Worker event task.
+       // Waiting until 'done' can expose crop/canvas failures as unhandled
+       // rejections, even when the original source and other pieces survive.
+       next.pending.push(addDetected(accepted.piece,next).then(
+        ()=>({prepared:true}),()=>({prepared:false})
+       ));
+      }
       else next.ignored++;
      }
      if(data.type==='progress')status.textContent=data.phase==='separating'?'Locating visible garment regions locally…':'Preparing local segmentation model…';
      if(data.type==='done'||data.type==='error'){
       next.terminal=true;
       next.p88Intake57?.close();
-      Promise.all(next.pending).finally(()=>{
+      Promise.allSettled(next.pending).then(outcomes=>{
        if(job!==next)return;
        const failed=data.type==='error';
+       const failedCrops=outcomes.filter(x=>x.status!=='fulfilled'||x.value?.prepared!==true).length;
        clearTimeout(next.timeout);next.worker.terminate();job=null;
        redraw();
        // A Worker 'done' packet can report a nonzero count without a single
@@ -605,6 +613,11 @@ export function mountMultiGarmentCapture24({
        // accepted review cards a successful extraction or suggest invisible cards.
        // Keep the original JPEG and the explicit manual-review path available.
        status.textContent=failed?'Automatic extraction unavailable. Add and crop pieces manually; no items saved.':
+        failedCrops?
+         state.pieces.length+' unverified region'+(state.pieces.length===1?'':'s')+' available; '+
+         failedCrops+' region'+(failedCrops===1?'':'s')+' could not be prepared for review. '+
+         'Your verified original photo is retained. Use Add missed piece, adjust the crop and confirm details manually. '+
+         'Nothing was automatically saved.':
         state.pieces.length===0?
          'No unverified garment regions were detected. Your verified original photo is retained. '+
          'Choose Add missed piece, adjust the crop, and confirm category, subtype and color. '+
