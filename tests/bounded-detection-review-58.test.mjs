@@ -71,7 +71,13 @@ test('BOUNDS58 only bounded valid palette data and recognized taxonomy survive w
 test('BOUNDS58 native review handler caps worker messages before crop JPEG and preserves user fallback',()=>{
  const text=readFileSync('research/multi-garment-capture-01/review-ui.mjs','utf8');
  assert.match(text,/intakeProposal58\(data\.piece,state\?\.pieces\|\|\[\],next\.received\)/);
- assert.match(text,/if\(accepted\.accepted\)next\.pending\.push\(addDetected\(accepted\.piece,next\)\)/);
+ assert.match(text,/if\(accepted\.accepted\)\s*\{/);
+ assert.match(text,/next\.pending\.push\(addDetected\(accepted\.piece,next\)\.then\(/);
+ assert.match(text,/\(\)=>\(\{prepared:true\}\),\(\)=>\(\{prepared:false\}\)/);
+ assert.match(text,/Promise\.allSettled\(next\.pending\)/,
+  'all proposal outcomes must settle even when one source crop fails');
+ assert.match(text,/failedCrops/,
+  'rejected source crops must not be called a fully successful review');
  assert.match(text,/state\.pieces\.length>=MAX_TOTAL_REGIONS58/);
  assert.match(text,/ignored for mobile reliability/);
  assert.match(text,/cropReviewed:false/);
