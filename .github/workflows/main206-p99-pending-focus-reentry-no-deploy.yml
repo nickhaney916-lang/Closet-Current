@@ -30,10 +30,67 @@ jobs:
               *) echo "M206 unauthorized changed path $path"; exit 1 ;;
             esac
           done
-          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 62bad171a97030846b0f1bb3bab740dec20ac5e7
+          test "$(git rev-parse 8993da21fd5d103f25dbcb5eab36ed9498047cd7:public/native-2d-preview-p99.mjs)" = 62bad171a97030846b0f1bb3bab740dec20ac5e7
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
           test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
           test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
           test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
           node --check tests/main206-pending-owner-focus-reentry.test.mjs
       - name: Actual in-flight owner focus event and original-photo stale read acceptance
         run: node --test tests/main206-pending-owner-focus-reentry.test.mjs
+      - name: Install pinned no-deploy inherited app dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Full inherited signed-owner/photo/backup/recognition Node suite
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  genuine-native-owner-outfit-2d:
+    name: actual native photo owner preview and v3 restore (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P99_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict M199 donor and only one native viewer focus lease edit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=8993da21fd5d103f25dbcb5eab36ed9498047cd7
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              public/native-2d-preview-p99.mjs|tests/main206-pending-owner-focus-reentry.test.mjs|.github/workflows/main206-p99-pending-focus-reentry-no-deploy.yml) ;;
+              *) echo "M206 unauthorized code: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
+          test "$(git rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 9b8c3b37d1d8116e4bf9bc6dbf7ea82e2752433d
+      - name: Install pinned no-deploy normal app dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build real native application from exact-source review candidate
+        run: node scripts/build.mjs
+      - name: Native owner-reviewed saved original to 2D and private v3 restore 320 390 430
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+          done
