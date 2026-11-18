@@ -28,6 +28,7 @@ jobs:
           M201=f6f7206f7bda1198958bdce06a7b51bc61a9c431
           git merge-base --is-ancestor "$M201" HEAD
           M209=0a0fe5e4355ec9857915da3b6d8d0964cca57b3a
+          M205R=f90767e8a775b18722c55afea4a0dec875063fa9
           git merge-base --is-ancestor "$M209" HEAD
           changed="$(git diff --name-only "$M209" HEAD)"
           expected="$(printf '%s\n' '.github/workflows/main213-m209-retired-original-restore-source-no-deploy.yml' 'public/native-reviewed-shared-original-157.mjs' 'tests/main211-retired-shared-original-import.test.mjs')"
@@ -189,6 +190,7 @@ jobs:
           M201=f6f7206f7bda1198958bdce06a7b51bc61a9c431
           git merge-base --is-ancestor "$M201" HEAD
           M209=0a0fe5e4355ec9857915da3b6d8d0964cca57b3a
+          M205R=f90767e8a775b18722c55afea4a0dec875063fa9
           git merge-base --is-ancestor "$M209" HEAD
           changed="$(git diff --name-only "$M209" HEAD)"
           expected="$(printf '%s\n' '.github/workflows/main213-m209-retired-original-restore-source-no-deploy.yml' 'public/native-reviewed-shared-original-157.mjs' 'tests/main211-retired-shared-original-import.test.mjs')"
