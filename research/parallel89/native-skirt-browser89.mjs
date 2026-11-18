@@ -12,6 +12,7 @@ import {SKIRT_SOURCE89,attestActualSkirt89,sourceSkirtOutline89,
  buildOriginalPhotoSkirtProposal89,sourceSkirtMeasuredPhotoCenterline89} from './skirt-source3d89.mjs';
 import {posedSource84} from '/p84/research/parallel84-real-photo-layers/source-bone-yoke-trial84.mjs';
 import {countStableOriginalBodyContacts89} from './skirt-stable-source-contacts89.mjs';
+import {auditOriginalPhotoFrontLockedCollisionFloor89} from './skirt-original-photo-front-locked-floor89.mjs';
 import {compareActualNeutralSkirtRear89} from './skirt-neutral-contact-trial89.mjs';
 import {compareActualMeasuredSkirtFit89} from './skirt-body-measured-fit89.mjs';
 import {compareActualOriginalPhotoSkirtRegistration89} from './skirt-rigid-registration89.mjs';
@@ -1561,6 +1562,41 @@ function auditPhotoFrontCenterline89(){
   releaseAuthorized:false,familyAlpha:'HOLD'
  });
 }
+/** Exact-source five-pose bound on contacts that rear-only changes cannot
+ * remove: all three source photographed FRONT vertices remain unchanged.
+ * This read-only proof does not move cloth or grant wearable 3D.
+ */
+function auditLockedOriginalSourceFrontCollisionFloor89(){
+ check(phase==='ready'&&candidate?.mesh?.isSkinnedMesh&&
+  candidate.receipt?.genuinePhotoFrontCenterlineAppliedToProvisionalMesh===true,
+  'verified photo-aligned original skirt and 163-bone body needed');
+ const coreMask=originalTorsoLegSourceFaceMask89();
+ const result=auditOriginalPhotoFrontLockedCollisionFloor89({
+  mesh:candidate.mesh,avatar:current,
+  sourcePhotoSHA256:source.originalSHA256,
+  sourceAnatomyGLBSHA256:MODELS[current].sha,
+  sourcePhotoCenterlineVerified:
+   candidate.receipt.genuinePhotoFrontCenterlineAppliedToProvisionalMesh,
+  originalBodyFaceCount:coreMask.length,
+  applyPose:name=>setResearchPose(root,name),
+  sampleContact:()=>{
+   let skirt,body;
+   try{
+    skirt=posedSource84(candidate.meshes);body=posedSource84(bodies);
+    check(body.g.index.count/3===coreMask.length,
+     'genuine whole body skinned BVH indexed face count mismatch');
+    return countStableOriginalBodyContacts89(skirt.g,body.g);
+   }finally{skirt?.g.dispose();body?.g.dispose();}
+  }
+ });
+ check(result?.schema==='P89-original-photographed-front-locked-anatomy-contact-floor/v1'&&
+  result.status!=='SOURCE_FRONT_LOCKED_ORIGINAL_CONTACT_PROOF_UNVERIFIABLE'&&
+  result.originalPhoto2DFallbackRequired===true&&
+  result.consumer3DAdmitted===false&&result.releaseAuthorized===false,
+  'original-source front-locked body-contact witness unavailable');
+ originalBodyPositions();inspectPose('source');render();
+ return result;
+}
 function getState(){return Object.freeze({
  phase,avatar:current,sourceId:SKIRT_SOURCE89.id,originalSourceSHA256:source?.originalSHA256??null,
  originalCutoutSHA256:source?.cutoutSHA256??null,originalSkirtUnapproved:true,
@@ -1584,7 +1620,7 @@ function close(){if(selectedPreview)showOnlySelectedRegistration89(false,{draw:f
  if(rigid45Preview)showOnlySourceRigidRegistration45(false,{draw:false});
  lastRegistration=null;candidate?.dispose();candidate=null;scene.remove(root);root=null;
  renderer.dispose();renderer.forceContextLoss();phase='disposed';return true;}
-window.nativeP89Skirt=Object.freeze({getState,load,auditPhotoFrontCenterline89,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,showOnlySelectedRegistration89,auditSelectedDenseOriginalRigTransition89,auditSelectedSourceRadialGap89,auditSelectedOriginalCoreUpperLimbVeto89,auditSelectedOriginalWholeVsCoreRayCauses89,auditSelectedOriginalUpperInwardSource89,auditSelectedOriginalSourceBodyClosure89,auditSelectedOriginalBodySeams89,auditSelectedOriginalBodyBoundaryRegions89,auditSelectedOriginalSkirtCoreSpan89,auditSelectedOriginalSkirtCoreRayUnknownCauses89,auditSelectedOriginalSkirtSourceBoneNamesNoHits89,auditSelectedOriginalSkirtCoreWeightSensitivity89,auditSelectedOriginalSkirtCoreNoHitGeometry89,auditSelectedOriginalSkirtSourceContourConnectivity89,auditSelectedOriginalSkirtEndpointSourceProvenance89,auditOnlyUnobservedRearRenderedPixels,close});
+window.nativeP89Skirt=Object.freeze({getState,load,auditPhotoFrontCenterline89,auditLockedOriginalSourceFrontCollisionFloor89,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,showOnlySelectedRegistration89,auditSelectedDenseOriginalRigTransition89,auditSelectedSourceRadialGap89,auditSelectedOriginalCoreUpperLimbVeto89,auditSelectedOriginalWholeVsCoreRayCauses89,auditSelectedOriginalUpperInwardSource89,auditSelectedOriginalSourceBodyClosure89,auditSelectedOriginalBodySeams89,auditSelectedOriginalBodyBoundaryRegions89,auditSelectedOriginalSkirtCoreSpan89,auditSelectedOriginalSkirtCoreRayUnknownCauses89,auditSelectedOriginalSkirtSourceBoneNamesNoHits89,auditSelectedOriginalSkirtCoreWeightSensitivity89,auditSelectedOriginalSkirtCoreNoHitGeometry89,auditSelectedOriginalSkirtSourceContourConnectivity89,auditSelectedOriginalSkirtEndpointSourceProvenance89,auditOnlyUnobservedRearRenderedPixels,close});
 try{await verifySource();await load('female');}catch(e){
  phase='error';const msg=String(e?.message||e).slice(0,250);
  errors.push(msg);status.textContent='Original-photo 2D fallback: '+msg+' · HOLD';
