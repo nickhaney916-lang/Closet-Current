@@ -128,7 +128,8 @@ export function summarizeOriginalSkirtCoreUnknownCauses89({
  for(const i of skirtIndices)if(i>=343)throw Error('original-skirt-index-invalid');
  if(coreBodyFaceMask.some(x=>x!==0&&x!==1))
   throw Error('original-anatomy-core-face-mask-invalid');
- const regions=new Array(vertices);
+ const regions=new Array(vertices),dominantNames=new Array(vertices),
+  dominantBoneIndices=new Array(vertices);
  for(let v=0;v<vertices;v++){
   const mesh=sourceMeshIds[v];if(mesh>=sourceMeshNames.length)
    throw Error('original-body-mesh-id-out-of-range');
@@ -141,8 +142,11 @@ export function summarizeOriginalSkirtCoreUnknownCauses89({
   }
   if(Math.abs(total-1)>.003)
    throw Error('original-bone-weight-sum-not-normalized');
+  dominantBoneIndices[v]=dominant;
+  dominantNames[v]=max<.5?'AMBIGUOUS_ORIGINAL_SKIN_WEIGHTS':
+   sourceBoneNamesByMesh[mesh][dominant];
   regions[v]=max<.5?'UNKNOWN_ORIGINAL_BONE':
-   nameRegion(sourceBoneNamesByMesh[mesh][dominant]);
+   nameRegion(dominantNames[v]);
  }
  const sourceFacets=[];
  for(let f=0;f<faces;f++){
@@ -159,10 +163,16 @@ export function summarizeOriginalSkirtCoreUnknownCauses89({
    bodyPositions[c*3+1]),
    ymax=Math.max(bodyPositions[a*3+1],bodyPositions[b*3+1],
     bodyPositions[c*3+1]);
-  sourceFacets.push({a,b,c,kind,ymin,ymax});
+  sourceFacets.push({a,b,c,kind,ymin,ymax,
+   sourceMeshIds:[sourceMeshIds[a],sourceMeshIds[b],sourceMeshIds[c]],
+   sourceDominantBoneNames:[dominantNames[a],dominantNames[b],dominantNames[c]],
+   sourceDominantBoneIndices:[dominantBoneIndices[a],
+    dominantBoneIndices[b],dominantBoneIndices[c]]});
  }
  const allRows=[],totals=emptyReasons(),axes=emptyAxis(),
-  allExcludedHits=emptyCategories();
+  allExcludedHits=emptyCategories(),noSourceHitAxes=emptyAxis(),
+  excludedMeshRayWitnesses=new Map(),excludedBoneRayWitnesses=new Map(),
+  noSourceHitRuns=[];
  let inward=0,outward=0,near=0,unknown=0,
   unknownWithAnyExcludedBodyHit=0,unknownWithoutAnyBodyContourHit=0,
   totalSourceFaceSegments=0,sourceCoreFaceSegments=0,
@@ -181,15 +191,16 @@ export function summarizeOriginalSkirtCoreUnknownCauses89({
   }
   cx/=48;cz/=48;y/=48;
   const byKind=Object.fromEntries(categories.map(t=>[t,[]]));
+  const byKindIndexed=Object.fromEntries(categories.map(t=>[t,[]]));
   for(const f of sourceFacets){
    if(f.ymin>y||f.ymax<y)continue;
    const cut=planeCuts(bodyPositions,f.a,f.b,f.c,y);
-   if(cut)byKind[f.kind].push(cut);
+   if(cut){byKind[f.kind].push(cut);byKindIndexed[f.kind].push({cut,facet:f});}
   }
   let bandIn=0,bandOut=0,bandNear=0,bandUnknown=0,
    bandAnyExcluded=0,bandNone=0;
   const bandReasons=emptyReasons(),bandAxes=emptyAxis(),
-   bandExcluded=emptyCategories();
+   bandExcluded=emptyCategories(),noHitFlags=new Array(48).fill(false);
   const core=byKind.CORE_TORSO_HIPS_LEGS;
   const observedByKind=Object.fromEntries(categories.map(x=>[x,byKind[x].length]));
   sourceCoreFaceSegments+=core.length;
@@ -216,15 +227,49 @@ export function summarizeOriginalSkirtCoreUnknownCauses89({
     // Other anatomical planes can be observed only as independently
     // excluded source triangles; they CANNOT "repair" a missing CORE ray.
     let anyExcluded=false;
+    const rayMeshes=new Map(),rayBones=new Map();
     if(radius>.005&&radius<3){
      for(const kind of categories.slice(1)){
       if(cast(byKind[kind],cx,cz,ux,uz).hasHit){
        bandExcluded[kind]++;allExcludedHits[kind]++;anyExcluded=true;
+       // Count each exact public mesh/bone label ONCE per ray direction,
+       // not once per repeated indexed triangle or UV seam.
+       for(const {cut,facet} of byKindIndexed[kind]){
+        if(!cast([cut],cx,cz,ux,uz).hasHit)continue;
+        for(let v=0;v<3;v++){
+         const sourceMeshId=facet.sourceMeshIds[v],
+          sourceMeshName=sourceMeshNames[sourceMeshId],
+          sourceBoneName=facet.sourceDominantBoneNames[v],
+          sourceBoneIndex=facet.sourceDominantBoneIndices[v];
+         rayMeshes.set(kind+'|'+sourceMeshId,
+          {kind,sourceMeshId,sourceMeshName});
+         rayBones.set(kind+'|'+sourceMeshId+'|'+sourceBoneIndex+'|'+sourceBoneName,
+          {kind,sourceMeshId,sourceMeshName,sourceBoneIndex,
+           sourceBoneName,
+           // Original native loader substitutes SOURCE_BONE_n if blank;
+           // that is not an independently verified actual GLB bone name.
+           sourceNameRequiresReview:/^SOURCE_BONE_[0-9]+$/.test(sourceBoneName)||
+            sourceBoneName==='AMBIGUOUS_ORIGINAL_SKIN_WEIGHTS'});
+        }
+       }
       }
      }
     }
+    for(const [key,entry] of rayMeshes){
+     const prior=excludedMeshRayWitnesses.get(key);
+     excludedMeshRayWitnesses.set(key,{...entry,
+      unknownRayDirections:(prior?.unknownRayDirections||0)+1});
+    }
+    for(const [key,entry] of rayBones){
+     const prior=excludedBoneRayWitnesses.get(key);
+     excludedBoneRayWitnesses.set(key,{...entry,
+      unknownRayDirections:(prior?.unknownRayDirections||0)+1});
+    }
     if(anyExcluded){bandAnyExcluded++;unknownWithAnyExcludedBodyHit++;}
-    else{bandNone++;unknownWithoutAnyBodyContourHit++;}
+    else{
+     bandNone++;unknownWithoutAnyBodyContourHit++;
+     noHitFlags[j]=true;noSourceHitAxes[axis(dx,dz)]++;
+    }
     continue;
    }
    const gap=radius-castCore.farthest;
@@ -237,6 +282,17 @@ export function summarizeOriginalSkirtCoreUnknownCauses89({
    Object.values(bandAxes).reduce((n,x)=>n+x,0)!==bandUnknown||
    bandAnyExcluded+bandNone!==bandUnknown)
    throw Error('skirt-source-band-unknown-cause-accounting-failed');
+  // Angular gaps are source-model sectors, not photographed front/back.
+  let longestNoHit=0,run=0;
+  const noHitCount=noHitFlags.filter(Boolean).length;
+  for(let j=0;j<(noHitCount===48?48:96);j++){
+   run=noHitFlags[j%48]?Math.min(48,run+1):0;
+   longestNoHit=Math.max(longestNoHit,run);
+  }
+  noSourceHitRuns.push(Object.freeze({
+   originalSkirtBand:row,noOriginalIndexedBodyFaceHitRays:noHitCount,
+   longestCircularConsecutiveNoHitSectors:longestNoHit
+  }));
   allRows.push(Object.freeze({
    originalSkirtBand:row,originalOriginalBodyCoreSegments:core.length,
    originalSourceAllAnatomyCutSegments:sum(Object.values(observedByKind)),
@@ -255,6 +311,11 @@ export function summarizeOriginalSkirtCoreUnknownCauses89({
  if(inward+outward+near+unknown!==336||allRows.length!==7||
   sum(Object.values(totals))!==unknown||
   sum(Object.values(axes))!==unknown||
+  sum(Object.values(noSourceHitAxes))!==unknownWithoutAnyBodyContourHit||
+  noSourceHitRuns.reduce((n,x)=>n+x.noOriginalIndexedBodyFaceHitRays,0)!==
+   unknownWithoutAnyBodyContourHit||
+  [...excludedMeshRayWitnesses.values()].some(x=>
+   x.unknownRayDirections>unknownWithAnyExcludedBodyHit)||
   unknownWithAnyExcludedBodyHit+unknownWithoutAnyBodyContourHit!==unknown)
   throw Error('skirt-core-unknown-causes-not-conserved');
  return Object.freeze({
@@ -272,6 +333,18 @@ export function summarizeOriginalSkirtCoreUnknownCauses89({
   allOriginalAnatomyPlaneCutSegments:totalSourceFaceSegments,
   unknownRaysWithExcludedSourceFaceWitness:unknownWithAnyExcludedBodyHit,
   unknownRaysWithNoObservedOriginalBodyFaceWitness:unknownWithoutAnyBodyContourHit,
+  unknownWithNoOriginalIndexedFaceByModelAxes:noSourceHitAxes,
+  unknownWithNoOriginalIndexedFaceCircularRunsByBand:noSourceHitRuns,
+  // Original public source GLB names only. Multiple bones/meshes may be
+  // witnessed on ONE direction: individual name tallies do NOT add up to
+  // the 69/75 rays, nor certify anatomy, garment clearance or fitted 3D.
+  originalExcludedSourceMeshRayNames:[...excludedMeshRayWitnesses.values()].sort(
+   (a,b)=>b.unknownRayDirections-a.unknownRayDirections||
+    a.kind.localeCompare(b.kind)||a.sourceMeshId-b.sourceMeshId),
+  originalExcludedSourceBoneRayNames:[...excludedBoneRayWitnesses.values()].sort(
+   (a,b)=>b.unknownRayDirections-a.unknownRayDirections||
+    a.kind.localeCompare(b.kind)||a.sourceBoneName.localeCompare(b.sourceBoneName)),
+  sourceDominantBoneNamesAreHeuristicNotVerifiedAnatomicalRegions:true,
   sourceSevenSkirtBandCauseBreakdown:allRows,
   independentRayCauseCountsReconcile:true,
   originalAnatomyExclusionIsNotAValidCoreFitRepair:true,

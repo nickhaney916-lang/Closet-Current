@@ -894,6 +894,41 @@ try{
    assert.equal(witness.independentRayCauseCountsReconcile,true);
    assert.equal(witness.originalAnatomyExclusionIsNotAValidCoreFitRepair,true);
    assert.equal(witness.sourceBodyAllIndexedFacesNeverModified,true);
+
+   // Source-name identification must be on the ACTUAL immutable indexed
+   // P541 male/female body, not a synthetic garment or estimated anatomy.
+   const excluded=avatar==='female'?69:75,
+    noHit=avatar==='female'?122:120;
+   assert.equal(witness.unknownRaysWithExcludedSourceFaceWitness,excluded);
+   assert.equal(witness.unknownRaysWithNoObservedOriginalBodyFaceWitness,noHit);
+   assert.equal(witness.sourceDominantBoneNamesAreHeuristicNotVerifiedAnatomicalRegions,true);
+   assert.equal(Object.values(witness.unknownWithNoOriginalIndexedFaceByModelAxes)
+    .reduce((n,v)=>n+v,0),noHit);
+   assert.equal(witness.unknownWithNoOriginalIndexedFaceCircularRunsByBand.length,7);
+   assert.equal(witness.unknownWithNoOriginalIndexedFaceCircularRunsByBand.reduce(
+    (n,v)=>n+v.noOriginalIndexedBodyFaceHitRays,0),noHit);
+   assert.ok(witness.unknownWithNoOriginalIndexedFaceCircularRunsByBand.every(x=>
+    x.longestCircularConsecutiveNoHitSectors>=0&&
+    x.longestCircularConsecutiveNoHitSectors<=48));
+   assert.ok(witness.originalExcludedSourceMeshRayNames.length>0);
+   assert.ok(witness.originalExcludedSourceBoneRayNames.length>0);
+   assert.ok(witness.originalExcludedSourceBoneRayNames.some(x=>
+    x.kind==='UNKNOWN_ORIGINAL_DOMINANT_BONE'));
+   for(const sourceName of witness.originalExcludedSourceBoneRayNames){
+    assert.ok(typeof sourceName.sourceBoneName==='string'&&
+     sourceName.sourceBoneName.length>0&&sourceName.sourceBoneName.length<=96);
+    assert.ok(sourceName.sourceMeshId>=0&&
+     Number.isSafeInteger(sourceName.sourceMeshId));
+    assert.ok(Number.isSafeInteger(sourceName.sourceBoneIndex)&&
+     sourceName.sourceBoneIndex>=0&&sourceName.sourceBoneIndex<163);
+    assert.equal(typeof sourceName.sourceNameRequiresReview,'boolean');
+    assert.ok(sourceName.sourceMeshName.length>0);
+    assert.ok(sourceName.unknownRayDirections>=1&&
+     sourceName.unknownRayDirections<=excluded);
+   }
+   assert.equal(witness.originalExcludedSourceBoneRayNames.some(x=>
+    x.kind==='CORE_TORSO_HIPS_LEGS'),false,
+    'excluded named witnesses may not be silently remapped to source core');
    assert.equal(witness.sourceBodyNotProvenClosedSignedVolume,true);
    assert.equal(witness.originalGarmentPhysicalSizeNotMeasured,true);
    assert.equal(witness.sourceGarmentRearPhotoUnobserved,true);
