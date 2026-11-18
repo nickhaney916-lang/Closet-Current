@@ -224,6 +224,11 @@ async function load(avatar){
  candidate=buildOriginalPhotoSkirtProposal89({root,receipt:source,outline,cutoutImage:image});
  check(candidate?.receipt?.status==='ACTUAL_SOURCE_SKIRT_VISIBLE_FRONT_PROPOSAL_NOT_FITTED_OR_ACCEPTED',
   'independent source skirt unavailable on actual human rig '+candidate?.reason);
+ check(candidate.receipt.sourcePhotoUVSeamNormalReport?.inspectedUVSeamVertexPairs===7&&
+  candidate.receipt.sourcePhotoUVSeamNormalReport?.maximumPostSmoothingSeamNormalMismatch===0&&
+  candidate.receipt.sourcePhotoUVSeamLightingContinuous===true&&
+  candidate.receipt.sourcePhotoUVSeamNormalReport?.consumer3DAdmitted===false,
+  'original licensed source skirt UV seam has unverified render normals');
  check(candidate.receipt.sourceRestWindingReport?.outwardRestTriangleCount===576&&
   candidate.receipt.sourceRestTriangleNormalsExteriorFacing===true&&
   candidate.receipt.sourceRestWindingReport?.consumer3DAdmitted===false,
@@ -1286,6 +1291,9 @@ function getState(){return Object.freeze({
  skirtTriangleCount:candidate?.receipt?.triangleCount??0,
  skirtOriginalRestOutwardNormalFaces:candidate?.receipt?.sourceRestWindingReport?.outwardRestTriangleCount??0,
  skirtOriginalRestSourceWindingVerified:candidate?.receipt?.sourceRestTriangleNormalsExteriorFacing===true,
+ originalPhotoSkirtUVSeamNormalPairs:candidate?.receipt?.sourcePhotoUVSeamNormalReport?.inspectedUVSeamVertexPairs??0,
+ originalPhotoSkirtUVSeamMaxPreCorrectionDifference:candidate?.receipt?.sourcePhotoUVSeamNormalReport?.maximumOriginalSeamNormalMismatch??null,
+ originalPhotoSkirtUVSeamLightingContinuous:candidate?.receipt?.sourcePhotoUVSeamLightingContinuous===true,
  originalAnatomicalRigReal:true,bones:candidate?.mesh?.skeleton?.bones?.length??0,
  attachedSkinnedMesh:!!candidate?.mesh?.isSkinnedMesh,
  sourcePhotoInferredBack:true,realWorldScaleMeasured:false,pose,angle,frames,

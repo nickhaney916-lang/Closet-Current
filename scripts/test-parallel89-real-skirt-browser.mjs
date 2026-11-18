@@ -134,6 +134,10 @@ try{
   assert.equal(originalWinding.skirtOriginalRestOutwardNormalFaces,576);
   assert.equal(originalWinding.skirtOriginalRestSourceWindingVerified,true);
   assert.equal(originalWinding.consumer3DAdmission,false);
+  assert.equal(originalWinding.originalPhotoSkirtUVSeamNormalPairs,7);
+  assert.equal(originalWinding.originalPhotoSkirtUVSeamLightingContinuous,true);
+  assert.ok(originalWinding.originalPhotoSkirtUVSeamMaxPreCorrectionDifference>0.001,
+   'actual source mesh must reproduce distinct pre-fix UV seam lighting normals');
   // Genuine source JPEG + original source mesh + real 163bone male/female in
   // BOTH native engines and ALL five source poses. This intentionally has NO
   // actual photographed-garment tape measurements; it MUST not verify fit.
