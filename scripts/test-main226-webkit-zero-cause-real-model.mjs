@@ -115,7 +115,7 @@ const scalarProbe=[
  "  self.postMessage({type:'diagnostic',id:request.id,personDetected:map.personDetected,",
  "   candidateCount:m226Candidates.length,rawClassCounts:Array.from(m226Counts),",
  "   confidentGarmentPixels:map.labels.reduce((n,v)=>n+(v!==0),0),outputArea:m226Area});"
-].join('\\n')+'\\n';
+].join('\n')+'\n';
 const diagWorker=workerSource.replace(groupsMarker,scalarProbe+groupsMarker);
 const overrideRead="  const body=path==='/public/outfit-worker-p94.mjs'?Buffer.from("+JSON.stringify(diagWorker)+",'utf8'):await readFile(absolute);";
 const adapted=original.replace(originalRead,overrideRead)
