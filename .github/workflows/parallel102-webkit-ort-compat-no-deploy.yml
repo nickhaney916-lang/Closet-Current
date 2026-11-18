@@ -2,8 +2,10 @@ name: P102 genuine ORT WebKit and Chromium runtime A/B NO DEPLOY HOLD
 on:
   push:
     branches: [fix/parallel102-webkit-ort-runtime-compat-HOLD]
+    paths: [.github/workflows/parallel102-webkit-ort-compat-no-deploy.yml]
   pull_request:
     branches: [fix/parallel101-webkit-p94-model-initialization-HOLD]
+    paths: [.github/workflows/parallel102-webkit-ort-compat-no-deploy.yml]
 permissions:
   contents: read
 jobs:
