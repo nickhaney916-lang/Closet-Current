@@ -18,7 +18,7 @@ const THRESHOLDS=Object.freeze([.50,.65,.80,.90,.95]);
 const finite=x=>typeof x==='number'&&Number.isFinite(x);
 const isIndex=x=>x instanceof Uint16Array||x instanceof Uint32Array;
 const safeName=x=>typeof x==='string'&&x.length>0&&x.length<=96&&
- /^[\\x20-\\x7e]+$/.test(x);
+ /^[\x20-\x7e]+$/.test(x);
 const sum=xs=>xs.reduce((a,b)=>a+b,0);
 const fail=reason=>Object.freeze({
  schema:'P89-source-locked-skirt-core-skin-sensitivity/v1',
