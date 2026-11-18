@@ -25,12 +25,19 @@ async function sourceSha256For70(dataURI){
 }
 let chain=Promise.resolve();
 self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
+ let diagnosticStage='validate';
  try{
   if(typeof request.image!=='string'||!/^data:image\/jpeg;base64,/.test(request.image)||request.image.length>12000000)throw Error('Invalid outfit photo.');
+  diagnosticStage='model_load';
   const {model,processor,RawImage}=await load(request.id);self.postMessage({type:'progress',id:request.id,phase:'separating'});
+  diagnosticStage='source_decode';
   const image=await RawImage.read(request.image);if(!image.width||!image.height||Math.max(image.width,image.height)>3072)throw Error('Invalid outfit photo dimensions.');
-  const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
+  diagnosticStage='model_inference';
+  const output=await model(await processor(image));
+  diagnosticStage='mask_module_load';
+  const {clothingLabelMap,clothingMaskGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
   await import('./photo-color.js'+new URL(import.meta.url).search);
+  diagnosticStage='mask_postprocess';
   const map=clothingLabelMap(output.logits.data,output.logits.dims);
   // P840 opt-in ONLY. Parallel #68's evaluated connected-footwear proposal
   // is a private review draft, not new automatic wardrobe admission.
@@ -44,6 +51,7 @@ const color76=request.color76===true&&request.instanceReview70===true&&
  typeof request.ownerId==='string'&&request.ownerId.length>0?
  await import('./garment-color-76.mjs'):null;
   let count=0;
+  diagnosticStage='piece_encoding';
   for(const group of groups){
    const isolated=isolateClothingPixels(image,map,group),raw=cropClothingPhotoPixels(image,map,group),sample=clothingColorSample(image,map,group),b=raw.bounds;
    const piece={image:await jpegData(new RawImage(isolated.data,isolated.width,isolated.height,3)),recognitionPhoto:{image:await jpegData(new RawImage(raw.data,raw.width,raw.height,3))},cropBounds:{x:b.left/image.width,y:b.top/image.height,width:b.width/image.width,height:b.height/image.height},colorEstimate:(()=>{const palette=PhotoColor.maskedPalette(sample.data,sample.width,sample.height);return palette&&!palette.needsConfirmation?{color:palette.primary,source:'photo-estimate',support:palette.colors[0]?.share||0,secondaryColor:palette.secondary}:null;})(),label:group.label,instanceMethod:group.instanceMethod||'native_semantic_group',requiresReview:request.instanceReview840===true,hint:{categories:group.categories,types:group.types||[],clipped:group.clipped,confidence:group.confidence}};
@@ -67,6 +75,6 @@ const color76=request.color76===true&&request.instanceReview70===true&&
    }
    self.postMessage({type:'piece',id:request.id,piece});count++;
   }
-  self.postMessage({type:'done',id:request.id,count});
- }catch{self.postMessage({type:'error',id:request.id,text:'This outfit could not be separated on this device. Your existing photos are kept. Try another clear photo of one person, head to toe.'});}
+  self.postMessage({type:'done',id:request.id,count,personDetected:map.personDetected===true,segmentationGroups:groups.length});
+ }catch{self.postMessage({type:'error',id:request.id,reason:'P94_'+diagnosticStage,text:'This outfit could not be separated on this device. Your existing photos are kept. Try another clear photo of one person, head to toe.'});}
  }).catch(()=>self.postMessage({type:'error',id:request.id,text:'Outfit separation stopped. Try the photo again.'}));};
