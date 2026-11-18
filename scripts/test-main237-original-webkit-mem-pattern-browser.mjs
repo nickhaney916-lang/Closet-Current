@@ -35,7 +35,7 @@ assert.equal(original.split(allow).length,2,'P101 permitted session-mode branch 
 assert.equal(original.split(session).length,2,'Original P94 from_pretrained session source changed');
 assert.ok(original.includes('Genuine P88 browser worker did not produce a bounded actual model proposal'),
  'Original fail-closed original proposal assertion moved');
-assert.ok(original.includes('const p101SessionMode='+ ',
+assert.ok(original.includes('const p101SessionMode='),
  'Session mode no longer forwarded to disposable original Worker');
 const derived=mode==='mem_pattern_off'?
  original.replace(allow,upgradedAllow).replace(session,memPattern):original;
