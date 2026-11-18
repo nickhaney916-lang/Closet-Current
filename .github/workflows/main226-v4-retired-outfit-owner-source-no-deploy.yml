@@ -1,0 +1,42 @@
+name: MAIN226 v4 lossless retired original in outfit source protection HOLD
+on:
+  push:
+    branches: [research/main226-v4-retired-outfit-source-fence-HOLD]
+  pull_request:
+    branches: [research/main224-m223-source-crop-and-v3-retired-outfit-joined-HOLD]
+permissions:
+  contents: read
+jobs:
+  v4-retired-source-lifecycle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve exact immutable M224 source and tiny change boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              public/native-lossless-v4-owner-acceptance-m3.mjs|tests/main226-v4-retired-outfit-source-lifecycle.test.mjs|.github/workflows/main226-v4-retired-outfit-owner-source-no-deploy.yml) ;;
+              *) echo "M226 forbidden owner/model/source modification: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
+          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = af15a9c08a81aa4064d1e5d1c4f0af0d855582c9
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
+          node --check public/native-lossless-v4-owner-acceptance-m3.mjs
+          node --check tests/main226-v4-retired-outfit-source-lifecycle.test.mjs
+      - name: Install original Node fixture dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4
+      - name: Genuine private v4 lossless source/outfit regression (should be RED on old source)
+        run: node --test tests/main226-v4-retired-outfit-source-lifecycle.test.mjs
