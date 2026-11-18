@@ -66,7 +66,7 @@ if(mode==='cpu-rebundle'){
  [
   'const negativeRouteAllowed=originalModelAllowed+',
   " (process.env.P102_MODE==='cpu-rebundle' ?",
-  "  \"\\n    if(lib&&url.pathname.endsWith('/transformers.min.js')){return readFile('research/.parallel102-wasm-only-transformers.mjs').then(body=>route.fulfill({status:200,contentType:'text/javascript',body}));}\" : '')+"
+  "  \"\\n    if(lib&&url.pathname.endsWith('/transformers.min.js')){external.push({host:h,type:'pinned-browser-library',servedResearchBundle:true});return readFile('research/.parallel102-wasm-only-transformers.mjs').then(body=>route.fulfill({status:200,contentType:'text/javascript',body}));}\" : '')+"
  ].join('\n'));
 }
 
