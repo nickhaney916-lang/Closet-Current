@@ -214,7 +214,7 @@ test('skirt index strip must reject reversed winding and cross-height shortcuts 
    const t=f.skirtIndices[at];f.skirtIndices[at]=f.skirtIndices[at+1];
    f.skirtIndices[at+1]=t;
   }else{
-   f.skirtIndices[at+2]=f.skirtIndices[at+2]+49;
+   f.skirtIndices[at+2]=f.skirtIndices[at+2]-49;
   }
   const x=evaluate(f);
   assert.equal(x.status,'ORIGINAL_WHOLE_VS_SELECTED_CORE_RAY_EVIDENCE_UNVERIFIABLE');
