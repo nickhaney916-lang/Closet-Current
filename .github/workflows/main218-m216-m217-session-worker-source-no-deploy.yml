@@ -3,7 +3,7 @@ on:
   push:
     branches: [research/main218-m216-m217-owner-save-worker-joint-HOLD]
   pull_request:
-    branches: [research/main215-m210-m213-retired-photo-owner-lease-24mp-HOLD]
+    branches: [research/main216-m215-adopt-m214-worker-outcome-HOLD]
 permissions:
   contents: read
 jobs:
