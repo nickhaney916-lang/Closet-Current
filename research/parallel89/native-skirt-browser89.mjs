@@ -15,6 +15,7 @@ import {countStableOriginalBodyContacts89} from './skirt-stable-source-contacts8
 import {compareActualNeutralSkirtRear89} from './skirt-neutral-contact-trial89.mjs';
 import {compareActualMeasuredSkirtFit89} from './skirt-body-measured-fit89.mjs';
 import {compareActualOriginalPhotoSkirtRegistration89} from './skirt-rigid-registration89.mjs';
+import {auditDenseOriginalPhotoSkirtTransition89} from './skirt-original-dense-motion-contact89.mjs';
 import {auditOriginalSkirtWaistBoneAttachment89} from './skirt-waist-bone-landmarks89.mjs';
 import {auditSelectedOriginalSkirtRadialGap89} from './skirt-source-radial-gap89.mjs';
 import {auditActualOriginalBodyClosure89} from './skirt-source-body-manifold89.mjs';
@@ -513,6 +514,110 @@ function showOnlySelectedRegistration89(active,{draw=true}={}){
  * inferred scale and neutral/unphotographed back remain disqualifying for
  * real-garment fit approval, regardless of measured radial signs.
  */
+
+/**
+ * Genuine original 163bone / P84 original full-body indexed BVH motion
+ * RESEARCH audit. Static sixteenths only; each interval is not CCD.
+ * The selected source-photo clone is NOT installed into the consumer.
+ */
+function auditSelectedDenseOriginalRigTransition89(){
+ check(phase==='ready'&&selectedPreview&&root&&candidate?.mesh?.isSkinnedMesh&&
+  source?.status==='SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED'&&
+  lastRegistration?.avatar===current&&
+  lastRegistration?.bestResearchOnly?.name===selectedPreview.name&&
+  lastRegistration.bestResearchOnly.researchOnlyNonworseningReduction===true&&
+  bodies.length>0&&bodies.every(x=>x.skeleton?.bones.length===163),
+  'genuine original selected-source BVH before dense motion required');
+ const selected=lastRegistration.bestResearchOnly,
+  savedGeometry=candidate.mesh.geometry,savedPose=pose;
+ check(savedGeometry===selectedPreview.copy&&
+  selectedPreview.original.getAttribute('position')?.count===343&&
+  selectedPreview.original.index?.count===1728,
+  'genuine original photograph selection copy not installed');
+ const joints=[];root.traverse(x=>{if(x.isBone)joints.push(x);});
+ check(joints.length>=163,'original 163bone skeleton missing from body root');
+ let restoreFailed=false;
+ try{
+  setResearchPose(root,'source');const start=joints.map(j=>j.quaternion.clone());
+  setResearchPose(root,'relaxed');const end=joints.map(j=>j.quaternion.clone());
+  const five=['source','blend-25','blend-50','blend-75','relaxed'];
+  const originalCounts=five.map((_,i)=>i===0?
+   selected.perPoseContacts[0].originalStrictTransversePairs:
+   i===1?selected.intermediatePoseContactChecks[0].originalStrictTransversePairs:
+   i===2?selected.perPoseContacts[1].originalStrictTransversePairs:
+   i===3?selected.intermediatePoseContactChecks[1].originalStrictTransversePairs:
+    selected.perPoseContacts[2].originalStrictTransversePairs);
+  const chosenCounts=five.map((_,i)=>i===0?
+   selected.perPoseContacts[0].trialStrictTransversePairs:
+   i===1?selected.intermediatePoseContactChecks[0].trialStrictTransversePairs:
+   i===2?selected.perPoseContacts[1].trialStrictTransversePairs:
+   i===3?selected.intermediatePoseContactChecks[1].trialStrictTransversePairs:
+    selected.perPoseContacts[2].trialStrictTransversePairs);
+  const setFraction=t=>{
+   if(t===0)setResearchPose(root,'source');
+   else if(t===1)setResearchPose(root,'relaxed');
+   else{
+    // The immutable P541/3D43 donor's exact source/relaxed quaternion
+    // slerp, independently repeated at all 1/16 fractions; .25/.5/.75
+    // MUST reproduce donor anchor BVH pair counts, or fail closed.
+    setResearchPose(root,'source');
+    for(let i=0;i<joints.length;i++)
+     joints[i].quaternion.copy(start[i]).slerp(end[i],t);
+    root.updateMatrixWorld(true);
+    root.traverse(x=>{if(x.isSkinnedMesh)x.skeleton.update();});
+   }
+  };
+  let actualBodyTriangles=null;
+  const sampleAtFraction=(fraction,which)=>{
+   setFraction(fraction);
+   candidate.mesh.geometry=which==='original'?
+    selectedPreview.original:selectedPreview.copy;
+   let cloth=null,body=null;
+   try{
+    cloth=posedSource84(candidate.meshes);
+    body=posedSource84(bodies);
+    check(body.g.index?.count%3===0,
+     'authentic indexed anatomical source unavailable');
+    const n=body.g.index.count/3;
+    if(actualBodyTriangles===null)actualBodyTriangles=n;
+    check(n===actualBodyTriangles,'true source body face identity changed');
+    return countStableOriginalBodyContacts89(cloth.g,body.g);
+   }finally{
+    cloth?.g.dispose();body?.g.dispose();
+    candidate.mesh.geometry=savedGeometry;
+   }
+  };
+  // Read source original anatomical triangle count independently,
+  // before the first source-indexed witness and after restores.
+  let baseBody=null;
+  try{
+   baseBody=posedSource84(bodies);
+   actualBodyTriangles=baseBody.g.index.count/3;
+  }finally{baseBody?.g.dispose();}
+  return auditDenseOriginalPhotoSkirtTransition89({
+   avatar:current,sourcePhotoSHA256:source.originalSHA256,
+   originalRigSHA256:MODELS[current].sha,
+   sourceBodyTriangleCount:actualBodyTriangles,
+   selectedRegistrationName:selected.name,
+   selectedRegistrationMeters:selected.displacementMeters,
+   baselineFivePoseCounts:originalCounts,trialFivePoseCounts:chosenCounts,
+   actualRigBoneCount:163,photoBackObserved:false,
+   physicalGarmentScaleKnown:false,
+   sampleAtFraction,
+   restore:()=>{
+    candidate.mesh.geometry=savedGeometry;
+    setResearchPose(root,savedPose);
+    originalBodyPositions();
+   }
+  });
+ }finally{
+  candidate.mesh.geometry=savedGeometry;
+  try{setResearchPose(root,savedPose);originalBodyPositions();}
+  catch{restoreFailed=true;}
+  if(restoreFailed)throw Error('original source pose or geometry failed conservative restore');
+ }
+}
+
 function auditSelectedSourceRadialGap89(){
  check(phase==='ready'&&source?.status==='SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED'&&
   selectedPreview&&root&&candidate?.mesh?.skeleton?.bones?.length===163&&
@@ -1286,7 +1391,7 @@ function close(){if(selectedPreview)showOnlySelectedRegistration89(false,{draw:f
  if(rigid45Preview)showOnlySourceRigidRegistration45(false,{draw:false});
  lastRegistration=null;candidate?.dispose();candidate=null;scene.remove(root);root=null;
  renderer.dispose();renderer.forceContextLoss();phase='disposed';return true;}
-window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,showOnlySelectedRegistration89,auditSelectedSourceRadialGap89,auditSelectedOriginalSourceBodyClosure89,auditSelectedOriginalBodySeams89,auditSelectedOriginalBodyBoundaryRegions89,auditSelectedOriginalSkirtCoreSpan89,auditSelectedOriginalSkirtCoreRayUnknownCauses89,auditSelectedOriginalSkirtSourceBoneNamesNoHits89,auditSelectedOriginalSkirtCoreWeightSensitivity89,auditSelectedOriginalSkirtCoreNoHitGeometry89,auditSelectedOriginalSkirtSourceContourConnectivity89,auditSelectedOriginalSkirtEndpointSourceProvenance89,auditOnlyUnobservedRearRenderedPixels,close});
+window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,showOnlySelectedRegistration89,auditSelectedDenseOriginalRigTransition89,auditSelectedSourceRadialGap89,auditSelectedOriginalSourceBodyClosure89,auditSelectedOriginalBodySeams89,auditSelectedOriginalBodyBoundaryRegions89,auditSelectedOriginalSkirtCoreSpan89,auditSelectedOriginalSkirtCoreRayUnknownCauses89,auditSelectedOriginalSkirtSourceBoneNamesNoHits89,auditSelectedOriginalSkirtCoreWeightSensitivity89,auditSelectedOriginalSkirtCoreNoHitGeometry89,auditSelectedOriginalSkirtSourceContourConnectivity89,auditSelectedOriginalSkirtEndpointSourceProvenance89,auditOnlyUnobservedRearRenderedPixels,close});
 try{await verifySource();await load('female');}catch(e){
  phase='error';const msg=String(e?.message||e).slice(0,250);
  errors.push(msg);status.textContent='Original-photo 2D fallback: '+msg+' · HOLD';
