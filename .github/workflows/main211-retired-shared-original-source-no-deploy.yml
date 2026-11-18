@@ -1,0 +1,41 @@
+name: MAIN211 owner-retired original new-ID crop fence NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main211-m208-retired-shared-original-import-guard-HOLD]
+  pull_request:
+    branches: [research/main208-m205r-m183-m187-joint-owner-lease-HOLD]
+permissions:
+  contents: read
+jobs:
+  source-guard-negative-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify strict signed-owner source and only these research changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=be8b5ea53f1e30bb1e9b5937588c0934405def78
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              public/native-reviewed-shared-original-157.mjs|tests/main211-retired-shared-original-import.test.mjs|.github/workflows/main211-retired-shared-original-source-no-deploy.yml) ;;
+              *) echo "M211 unexpected product/test path: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/native-reviewed-shared-original-157.mjs)" = bae0d09e5f990f8c88a6c7d2d3b9d28a84604f6a
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 62bad171a97030846b0f1bb3bab740dec20ac5e7
+          node --check tests/main211-retired-shared-original-import.test.mjs
+      - name: Install isolated synthetic private IndexedDB test dependency
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4
+      - name: M211 original retired sibling must not be used as import authority
+        run: node --test tests/main211-retired-shared-original-import.test.mjs
