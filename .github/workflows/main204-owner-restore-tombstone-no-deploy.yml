@@ -1,0 +1,45 @@
+name: MAIN204 v3 same-ID source revocation no-deploy gate HOLD
+on:
+  push:
+    branches: [research/main204-m199-v3-restore-revocation-fence-HOLD]
+  pull_request:
+    branches: [research/main199-verified-cutout-owner-source-gate-HOLD]
+    paths:
+      - public/native-default-atomic-import-m3.mjs
+      - tests/main204-restore-source-revocation.test.mjs
+      - .github/workflows/main204-owner-restore-tombstone-no-deploy.yml
+permissions:
+  contents: read
+jobs:
+  signed-owner-restore-source-guard:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source-pin M199 and require only isolated M204 test paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          PARENT=8993da21fd5d103f25dbcb5eab36ed9498047cd7
+          git merge-base --is-ancestor "$PARENT" HEAD
+          git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
+            case "$path" in
+              public/native-default-atomic-import-m3.mjs|tests/main204-restore-source-revocation.test.mjs|.github/workflows/main204-owner-restore-tombstone-no-deploy.yml) ;;
+              *) echo "M204 unexpected path $path"; exit 1 ;;
+            esac
+          done
+          # Baseline immutable M3 importer: proves red-before genuine app defect.
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
+          node --check tests/main204-restore-source-revocation.test.mjs
+      - name: Install isolated test dependencies; no hosted owner access
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4
+      - name: M204 original true source flags must never silently be removed by v3
+        run: node --test tests/main204-restore-source-revocation.test.mjs
