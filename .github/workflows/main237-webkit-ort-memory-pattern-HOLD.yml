@@ -102,8 +102,15 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           failures=0
           for attempt in 1 2 3 4 5 6; do
-            if [ "$attempt" -le 3 ]; then mode=baseline; else mode=mem_pattern_off; fi
-            case "$attempt" in 1|4) width=320;; 2|5) width=390;; *) width=430;; esac
+            # M237 balanced paired A/B: each width is tested consecutively.
+            # Odd shards do baseline then memory-pattern-off; even reverse.
+            # This removes the baseline-always-first time/order confound.
+            if [ $((SHARD % 2)) -eq 1 ]; then
+              if [ $((attempt % 2)) -eq 1 ]; then mode=baseline; else mode=mem_pattern_off; fi
+            else
+              if [ $((attempt % 2)) -eq 1 ]; then mode=mem_pattern_off; else mode=baseline; fi
+            fi
+            case "$attempt" in 1|2) width=320;; 3|4) width=390;; *) width=430;; esac
             echo "::group::M237 native=$M58_ENGINE shard=$SHARD attempt=$attempt mode=$mode width=$width"
             if M237_SESSION_MODE="$mode" P94_WIDTH="$width" M214_ATTEMPT="M237-${M58_ENGINE}-${SHARD}-${attempt}-${mode}" node scripts/test-main237-original-webkit-mem-pattern-browser.mjs; then
               echo "M237_TRUE_MODEL_PASS engine=$M58_ENGINE shard=$SHARD attempt=$attempt mode=$mode width=$width"
