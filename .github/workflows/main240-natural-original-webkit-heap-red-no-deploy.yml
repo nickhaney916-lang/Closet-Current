@@ -20,6 +20,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           BASE=c107f72863cdff0e6c831dc7ea950ed3749390ca
           git merge-base --is-ancestor "$BASE" HEAD
           test "$(git diff --name-only "$BASE" HEAD)" = ".github/workflows/main240-natural-original-webkit-heap-red-no-deploy.yml"
@@ -72,6 +73,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           BASE=c107f72863cdff0e6c831dc7ea950ed3749390ca
           git merge-base --is-ancestor "$BASE" HEAD
           test "$(git diff --name-only "$BASE" HEAD)" = ".github/workflows/main240-natural-original-webkit-heap-red-no-deploy.yml"
