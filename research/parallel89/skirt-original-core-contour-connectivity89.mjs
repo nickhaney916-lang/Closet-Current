@@ -309,7 +309,7 @@ export function summarizeOriginalContourConnectivity89({
    original95NoHitRayDirectionsCount:unknownSectors.length,
    original95NoHitSectorSequenceRunLengths:groupCircularRuns(unknownSectors,48),
    noOriginalSourceContoursEverBridged:true,
-   noSignedVolumeOrRealSkirtMeasurements:false
+   cannotCertifySignedBodyVolumeOrRealGarmentMeasurements:true
   });
  }
  if(rows.length!==7||
@@ -377,6 +377,9 @@ export function auditActualOriginalContourConnectivity89(args={}){
     previous.original95PercentHypotheticalAddedFaces||
    Object.entries(v.hypothetical95SourceRayCounts).some(([k,n])=>
     n!==previous.original95PercentHypotheticalObservedRays[k])||
+   v.hypothetical95NoHitOriginalSkirtRays!==
+    previous.original95PercentHypotheticalUnknownRays||
+   previous.originalSourceSevenSkirtRingNoHitGeometry?.length!==7||
    v.originalSourceSevenRingContourConnectivity.some((ring,i)=>
     ring.original95NamedSourceContourSegments!==
      previous.originalSourceSevenSkirtRingNoHitGeometry[i]?.originalSource95CorePlaneCutSegments||
