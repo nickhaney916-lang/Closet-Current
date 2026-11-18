@@ -24,7 +24,7 @@ const freshLines=["stage='M235 owner A original model request active and deliber
 // Preserve M231 native try/catch/finally cleanup when replacing its tail.
 // The first M235 draft accidentally omitted these closing braces and failed
 // at generated-script parsing BEFORE any real browser test began.
-const footerAnchor='" }catch(error){",';
+const footerAnchor='"}catch(error){",';
 assert.equal(donor.split(footerAnchor).length,2,
  'original native M231 try/catch/finally footer changed');
 assert.ok(donor.includes('" await browser?.close();await new Promise(resolve=>server.close(resolve));",'),
