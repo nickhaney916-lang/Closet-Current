@@ -33,7 +33,7 @@ jobs:
           test "$(git rev-parse HEAD:scripts/test-main234-native-wasm-mime-preflight.mjs)" = d4ab5bfdd84eb91fbf8ef12e079848a38cc66260
           node --check scripts/test-main234-native-wasm-mime-preflight.mjs
       - name: Install pinned exact CPU ORT and original security suite
-        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4
       - name: Full inherited owner/privacy/security Node suite and offline app build
         shell: bash
         run: |
@@ -77,7 +77,7 @@ jobs:
           test "$(git rev-parse HEAD:scripts/test-main234-native-wasm-mime-preflight.mjs)" = d4ab5bfdd84eb91fbf8ef12e079848a38cc66260
           node --check scripts/test-main234-native-wasm-mime-preflight.mjs
       - name: Install exact same-build ORT non-JSEP binary and native browser
-        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4
       - name: Genuine installed browser Streaming MIME good versus octet negative
         shell: bash
         run: |
