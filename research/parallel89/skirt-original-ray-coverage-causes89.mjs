@@ -87,6 +87,26 @@ export function auditOriginalWholeBodyCoreRayCauses89({
  for(const v of body)if(!finite(v))return no('nonfinite-original-163bone-source-body-geometry');
  for(const v of si)if(v>=343)return no('invalid-original-photographed-skirt-index');
  for(const v of ix)if(v>=body.length/3)return no('invalid-original-163bone-source-body-index');
+ // This *particular* licensed P89 seven-band photo geometry is an
+ // ordered 48-quad source strip, NOT any arbitrary 576-triangle surface.
+ // Radial measurements are meaningless if the indices silently bridge a
+ // different band, reverse winding or duplicate/drop a source face.
+ // The source skirt builder emits the six ordered indices below per quad.
+ for(let row=0;row<6;row++)for(let spoke=0;spoke<48;spoke++){
+  const top=row*49+spoke,bottom=top+49,k=(row*48+spoke)*6;
+  if(si[k]!==top||si[k+1]!==top+1||si[k+2]!==bottom||
+   si[k+3]!==top+1||si[k+4]!==bottom+1||si[k+5]!==bottom)
+   return no('original-photo-skirt-indexed-triangle-topology-mismatch');
+ }
+ // Two indexed vertices per ring occupy the same physical seam. A torn
+ // open seam is not a connected source wrap, even if each radial sample
+ // j=0..47 still appears clear. Use a 0.1 mm original-source tolerance.
+ for(let row=0;row<7;row++){
+  const first=row*49*3,last=(row*49+48)*3;
+  if(Math.hypot(cloth[first]-cloth[last],
+   cloth[first+1]-cloth[last+1],cloth[first+2]-cloth[last+2])>1e-4)
+   return no('original-photo-skirt-source-seam-disconnected');
+ }
  const totals=countMap(),rows=[];
  let sumCoreIn=0,sumCoreNear=0,sumCoreOut=0,sumCoreUnknown=0,
   sumWholeKnown=0,sumWholeUnknown=0,wholeInward=0;
