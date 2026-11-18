@@ -19,9 +19,9 @@ function fixture({type='closed',blend=false}={}){
   3,7,6,3,6,2,0,4,7,0,7,3,1,2,6,1,6,5];
  if(type==='wall')all.splice(6);
  if(['uvsplit','skinchange','restchange','meshchange'].includes(type)){
-  // UV split of the ACTUAL right wall: preserve original positions and shape.
-  // Duplicating the left wall here would instead fabricate overlapping faces.
-  const dup=[1,2,6,5];
+  // Source triangle block at index 24 is the LEFT wall (right wall begins at 30).
+  // Duplicate those same original left-wall corners, not a different face.
+  const dup=[0,4,7,3];
   for(const i of dup)pos.push(...pos.slice(i*3,i*3+3));
   all.splice(24,6,8,9,10,8,10,11);
  }
