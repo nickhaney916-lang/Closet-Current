@@ -33,7 +33,7 @@ derived=derived.replace(emission,
  " 'p237Install=function(id){p239OriginalInstall(id);p239Attach(id);};\\n'+\n"+
  " 'const p239OriginalEmit=p237Emit;\\n'+\n"+
  " 'p237Emit=function(id){p239OriginalEmit(id);p239Emit(id);};\\n';");
-const fieldStart='const fields=[';
+const fieldStart='const fields=[\n';
 one(fieldStart,'M238 bounded diagnostic schema');
 const fields=[
  " ' \"       targetHookInstalled:safe.targetHookInstalled===true,\",',",
