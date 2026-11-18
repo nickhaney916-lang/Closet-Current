@@ -15,6 +15,8 @@ import {resolve} from 'node:path';
 const originalPath='scripts/test-parallel94-native-p88-browser.mjs';
 const original=await readFile(originalPath,'utf8');
 const expectedSource='4f75a40cf153fa4b4d139d782b202dbe7bc55e41';
+const cacheMode=process.env.P101_CACHE_MODE||'baseline';
+assert.ok(['baseline','browser_off','wasm_off','both_off'].includes(cacheMode),'P101 only four explicit cache modes');
 // M216: original test script's static M58 receipt names the OLD P94 worker.
 // Assert exact real source Git blobs and correct only that diagnostic receipt in
 // a disposable copy. All original substantive assertions remain unchanged.
@@ -57,6 +59,9 @@ const init=[
  "       outcome:['start','ok','error'].includes(safe.outcome)?safe.outcome:null,",
  "       elapsedMs:Number.isFinite(safe.elapsedMs)?Math.max(0,Math.min(600000,Math.round(safe.elapsedMs))):null,",
  "       errorCategory:['abort','network','memory','wasm_or_session','type','other'].includes(safe.errorCategory)?safe.errorCategory:null,",
+ "       errorName:['Error','TypeError','RangeError','RuntimeError','AbortError','NetworkError','CompileError','LinkError','AggregateError','other'].includes(safe.errorName)?safe.errorName:null,",
+ "       messageCode:['memory_allocation','wasm_compile','wasm_link','ort_session','cache_storage','network_stream','wasm_runtime','model_graph','resource','other'].includes(safe.messageCode)?safe.messageCode:null,",
+ "       hasCause:safe.hasCause===true,",
  "       stageOnly:true,",
  "      });",
  "     };",
@@ -95,7 +100,7 @@ const output=[
  "  };",
  "  await writeFile(join(out,'M214-P94-BOUNDED-WORKER-OUTCOME-'+(process.env.M214_ATTEMPT||'one')+'.json'),",
  "   JSON.stringify(evidence,null,2)+'\\n');",
- "  console.log('M214_REAL_P94_WORKER_OUTCOME',JSON.stringify({...evidence,probeOnly:true,modelOriginal:true,workerInitializationInstrumented:true}));",
+ "  console.log('M214_REAL_P94_WORKER_OUTCOME',JSON.stringify({...evidence,probeOnly:true,modelOriginal:true,workerInitializationInstrumented:true,cacheMode:process.env.P101_CACHE_MODE||'baseline'}));",
  "  assert.ok(evidence.workerEvents.some(e=>e.type==='diagnostic'),'P101 missing genuine Worker model-init stage messages; no genuine model evidence');",
 ].join('\n')+'\n';
 // #101 only: instrument real pinned ONNX pipeline in local disposable Worker.
@@ -103,12 +108,21 @@ const output=[
 const originalRead="  const body=await readFile(absolute);";
 assert.equal(original.split(originalRead).length,2,'original fixture route moved');
 const workerSource=workerBytes.toString('utf8');
-let diagWorker="const p101Classify=error=>{\n const name=typeof error?.name==='string'?error.name:'';\n const msg=typeof error?.message==='string'?error.message.toLowerCase():'';\n if(name==='AbortError'||/abort|cancelled/.test(msg))return 'abort';\n if(/out of memory|memory access|allocation failed/.test(msg))return 'memory';\n if(/webassembly|wasm|onnx|execution provider|session/.test(msg))return 'wasm_or_session';\n if(name==='NetworkError'||/fetch|network|timeout|failed to load/.test(msg))return 'network';\n if(name==='TypeError')return 'type';\n return 'other';\n};"+'\n'+workerSource;
+let diagWorker="const p101Classify=error=>{\n const name=typeof error?.name==='string'?error.name:'';\n const msg=typeof error?.message==='string'?error.message.toLowerCase():'';\n if(name==='AbortError'||/abort|cancelled/.test(msg))return 'abort';\n if(/out of memory|memory access|allocation failed/.test(msg))return 'memory';\n if(/webassembly|wasm|onnx|execution provider|session/.test(msg))return 'wasm_or_session';\n if(name==='NetworkError'||/fetch|network|timeout|failed to load/.test(msg))return 'network';\n if(name==='TypeError')return 'type';\n return 'other';\n};\nconst p101ErrorName=error=>{\n const name=typeof error?.name==='string'?error.name:'';\n return ['Error','TypeError','RangeError','RuntimeError','AbortError','NetworkError','CompileError','LinkError','AggregateError'].includes(name)?name:'other';\n};\nconst p101ErrorCode=error=>{\n const msg=typeof error?.message==='string'?error.message.toLowerCase():'';\n if(/out of memory|allocat|memory limit/.test(msg))return 'memory_allocation';\n if(/compile|compilation|unexpected section/.test(msg))return 'wasm_compile';\n if(/linkerror|linking|imported function/.test(msg))return 'wasm_link';\n if(/session|execution provider|ep init|inference session/.test(msg))return 'ort_session';\n if(/cache|quota|indexeddb|storage/.test(msg))return 'cache_storage';\n if(/stream|fetch|network|body|unexpected end|eof/.test(msg))return 'network_stream';\n if(/webassembly|wasm|runtimeerror/.test(msg))return 'wasm_runtime';\n if(/onnx|model graph|tensor|node/.test(msg))return 'model_graph';\n if(/resource|worker|initialize|unavailable|failed to load/.test(msg))return 'resource';\n return 'other';\n};"+'\n'+`const p101CacheMode=${JSON.stringify(cacheMode)};`+'\n'+workerSource;
 const p101Patches=[["  const {AutoModelForSemanticSegmentation,AutoProcessor,RawImage,env}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js');","  let imported;\n  {const at=performance.now();\n   self.postMessage({type:'diagnostic',id:requestId,phase:'module_import',outcome:'start'});\n   try { imported=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js'); self.postMessage({type:'diagnostic',id:requestId,phase:'module_import',outcome:'ok',elapsedMs:Math.max(0,Math.min(600000,Math.round(performance.now()-at)))}); }\n   catch(error) { self.postMessage({type:'diagnostic',id:requestId,phase:'module_import',outcome:'error',elapsedMs:Math.max(0,Math.min(600000,Math.round(performance.now()-at))),errorCategory:p101Classify(error)}); throw error; }\n  }\n  const {AutoModelForSemanticSegmentation,AutoProcessor,RawImage,env}=imported;"],["  const processor=await AutoProcessor.from_pretrained(modelId,{revision});","  let processor;\n  { const at=performance.now();\n   self.postMessage({type:'diagnostic',id:requestId,phase:'processor_load',outcome:'start'});\n   try {   processor=await AutoProcessor.from_pretrained(modelId,{revision}); self.postMessage({type:'diagnostic',id:requestId,phase:'processor_load',outcome:'ok',elapsedMs:Math.max(0,Math.min(600000,Math.round(performance.now()-at)))}); }\n   catch(error) { self.postMessage({type:'diagnostic',id:requestId,phase:'processor_load',outcome:'error',elapsedMs:Math.max(0,Math.min(600000,Math.round(performance.now()-at))),errorCategory:p101Classify(error)}); throw error; }\n  }"],["  const model=await AutoModelForSemanticSegmentation.from_pretrained(modelId,{revision,device:'wasm',dtype:'fp32',progress_callback:event=>self.postMessage({type:'progress',id:requestId,phase:'loading',percent:String(event.file||'').endsWith('.onnx')&&Number.isFinite(event.progress)?Math.round(event.progress):null})});","  let model;\n  { const at=performance.now();\n   self.postMessage({type:'diagnostic',id:requestId,phase:'model_session_load',outcome:'start'});\n   try {   model=await AutoModelForSemanticSegmentation.from_pretrained(modelId,{revision,device:'wasm',dtype:'fp32',progress_callback:event=>self.postMessage({type:'progress',id:requestId,phase:'loading',percent:String(event.file||'').endsWith('.onnx')&&Number.isFinite(event.progress)?Math.round(event.progress):null})}); self.postMessage({type:'diagnostic',id:requestId,phase:'model_session_load',outcome:'ok',elapsedMs:Math.max(0,Math.min(600000,Math.round(performance.now()-at)))}); }\n   catch(error) { self.postMessage({type:'diagnostic',id:requestId,phase:'model_session_load',outcome:'error',elapsedMs:Math.max(0,Math.min(600000,Math.round(performance.now()-at))),errorCategory:p101Classify(error)}); throw error; }\n  }"],["  const output=await model(await processor(image));","  let output;\n  { const at=performance.now();\n   self.postMessage({type:'diagnostic',id:request.id,phase:'first_inference',outcome:'start'});\n   try {   output=await model(await processor(image)); self.postMessage({type:'diagnostic',id:request.id,phase:'first_inference',outcome:'ok',elapsedMs:Math.max(0,Math.min(600000,Math.round(performance.now()-at)))}); }\n   catch(error) { self.postMessage({type:'diagnostic',id:request.id,phase:'first_inference',outcome:'error',elapsedMs:Math.max(0,Math.min(600000,Math.round(performance.now()-at))),errorCategory:p101Classify(error)}); throw error; }\n  }"]];
+// Cache controls alter only the disposable worker setup, not the model/source/owner journey.
+const cacheConfig="env.allowLocalModels=false;env.useBrowserCache=true;env.backends.onnx.wasm.numThreads=1;env.backends.onnx.wasm.proxy=false;";
+assert.equal(diagWorker.split(cacheConfig).length,2,'original cache/worker setup moved');
+diagWorker=diagWorker.replace(cacheConfig,"env.allowLocalModels=false;env.useBrowserCache=!['browser_off','both_off'].includes(p101CacheMode);env.useWasmCache=!['wasm_off','both_off'].includes(p101CacheMode);env.backends.onnx.wasm.numThreads=1;env.backends.onnx.wasm.proxy=false;");
 for(const [needle,replacement] of p101Patches){
  assert.equal(diagWorker.split(needle).length,2,'P101 pinned model stage source moved');
  diagWorker=diagWorker.replace(needle,replacement);
 }
+// Error diagnostics are allowlisted scalar classes only, never exception text or source paths.
+const originalErrorSnippet='errorCategory:p101Classify(error)';
+assert.equal(diagWorker.split(originalErrorSnippet).length,5,'four native stage catches moved');
+diagWorker=diagWorker.replaceAll(originalErrorSnippet,
+ 'errorCategory:p101Classify(error),errorName:p101ErrorName(error),messageCode:p101ErrorCode(error),hasCause:!!error?.cause');
 const overrideRead="  const body=path==='/public/outfit-worker-p94.mjs'?Buffer.from("+JSON.stringify(diagWorker)+",'utf8'):await readFile(absolute);";
 const originalZero='(/unverified region|Automatic extraction unavailable|could not start|timed out/i.test(';
 assert.equal(original.split(originalZero).length,2,'original wait moved');
