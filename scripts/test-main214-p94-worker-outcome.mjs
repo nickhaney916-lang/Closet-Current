@@ -14,6 +14,18 @@ import {resolve} from 'node:path';
 const originalPath='scripts/test-parallel94-native-p88-browser.mjs';
 const original=await readFile(originalPath,'utf8');
 const expectedSource='4f75a40cf153fa4b4d139d782b202dbe7bc55e41';
+// M216: original test script's static M58 receipt names the OLD P94 worker.
+// Assert exact real source Git blobs and correct only that diagnostic receipt in
+// a disposable copy. All original substantive assertions remain unchanged.
+const gitBlobSHA=bytes=>createHash('sha1').update('blob '+bytes.length+'\\0').update(bytes).digest('hex');
+const originalBytes=Buffer.from(original,'utf8');
+const workerBytes=await readFile('public/outfit-worker-p94.mjs');
+assert.equal(gitBlobSHA(originalBytes),expectedSource,'original P94 browser test changed');
+const testedWorkerSHA='d66651b616de54c51eb7ef986324b30f1580888f';
+assert.equal(gitBlobSHA(workerBytes),testedWorkerSHA,'M216 tested P94 worker source changed');
+const oldWorkerLabel="actualWorkerSourceBlob:'ab7d3837139c5b7d693383f9d6617e199ec8de4f'";
+const currentWorkerLabel="actualWorkerSourceBlob:'"+testedWorkerSHA+"'";
+assert.equal(original.split(oldWorkerLabel).length,2,'original source receipt changed');
 const stageInstall=" await context.route('**/*',route=>{";
 const probeBefore=" assert.ok(state.cards>0&&state.cards<=12,\n";
 assert.equal(original.split(stageInstall).length,2,'original browser route prelude changed');
@@ -80,7 +92,7 @@ const output=[
  "   JSON.stringify(evidence,null,2)+'\\n');",
  "  console.log('M214_REAL_P94_WORKER_OUTCOME',JSON.stringify(evidence));",
 ].join('\n')+'\n';
-const adapted=original.replace(stageInstall,init+stageInstall).replace(probeBefore,output+probeBefore);
+const adapted=original.replace(stageInstall,init+stageInstall).replace(probeBefore,output+probeBefore).replace(oldWorkerLabel,currentWorkerLabel);
 assert.ok(adapted.includes('Genuine P88 browser worker did not produce a bounded actual model proposal'));
 assert.equal(adapted.split('M214_REAL_P94_WORKER_OUTCOME').length,2);
 const temp=resolve('scripts/.main214-real-p94-source-probe.mjs');
