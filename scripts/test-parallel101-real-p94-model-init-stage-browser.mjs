@@ -17,6 +17,8 @@ const original=await readFile(originalPath,'utf8');
 const expectedSource='4f75a40cf153fa4b4d139d782b202dbe7bc55e41';
 const cacheMode=process.env.P101_CACHE_MODE||'baseline';
 assert.ok(['baseline','browser_off'].includes(cacheMode),'P101 only two v3.8.1-supported browser-cache modes');
+const faultMode=process.env.P101_TEST_FAULT||'none';
+assert.ok(['none','model_weights_abort'].includes(faultMode),'P101 fail-closed controlled model negative mode');
 // M216: original test script's static M58 receipt names the OLD P94 worker.
 // Assert exact real source Git blobs and correct only that diagnostic receipt in
 // a disposable copy. All original substantive assertions remain unchanged.
@@ -105,10 +107,35 @@ const output=[
  "   JSON.stringify(evidence,null,2)+'\\n');",
  "  console.log('M214_REAL_P94_WORKER_OUTCOME',JSON.stringify({...evidence,probeOnly:true,modelOriginal:true,workerInitializationInstrumented:true,cacheMode:process.env.P101_CACHE_MODE||'baseline'}));",
  "  assert.ok(evidence.workerEvents.some(e=>e.type==='diagnostic'),'P101 missing genuine Worker model-init stage messages; no genuine model evidence');",
+"  // DETERMINISTIC NEGATIVE ONLY: real public ONNX download is actively aborted.",
+"  // This is NEVER counted as a positive model/owner success or a product fix.",
+"  if(process.env.P101_TEST_FAULT==='model_weights_abort'){",
+"   assert.ok(p101BlockedModelWeightRequests>=1&&p101BlockedModelWeightRequests<=3,'P101 public ONNX abort was never exercised');",
+"   assert.equal(state.cards,0,'P101 negative must not invent positive review cards');",
+"   assert.equal(state.debug.sourceSHA256,sha,'P101 abort must preserve original owner photo proof');",
+"   assert.equal(state.debug.working,false,'P101 aborted model did not settle');",
+"   assert.match(state.status,/Automatic extraction unavailable/,'P101 must show explicit manual fallback');",
+"   assert.ok(evidence.workerEvents.some(e=>e.type==='error'&&e.reason==='P94_model_load'),'P101 aborted model did not fail in genuine model load');",
+"   assert.equal(await countRows(page),0,'P101 aborted model silently saved a garment');",
+"   assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isDisabled(),true,'P101 abort must disable confirmation save');",
+"   assert.ok(evidence.actualWorkerSeen,'P101 negative bypassed the real P94 native Worker');",
+"   console.log('P101_CONTROLLED_PUBLIC_ONNX_ABORT_FALLBACK_PASS',JSON.stringify({engine,width,abortCount:p101BlockedModelWeightRequests,cards:state.cards,modelFailed:true,originalSHAUnchanged:true,manualOnly:true,privateSaved:0,notPositiveAcceptance:true}));",
+"   await context.close();await browser.close();await new Promise(resolve=>server.close(resolve));process.exit(0);",
+"  }",
 ].join('\n')+'\n';
 // #101 only: instrument real pinned ONNX pipeline in local disposable Worker.
 // No model, mask, source, owner, auth or saved data is substituted.
 const originalRead="  const body=await readFile(absolute);";
+const originalNetworkCounters="const external=[],rejected=[],issues=[],modelResponses=[];";
+assert.equal(original.split(originalNetworkCounters).length,2,'original network counter prelude moved');
+const negativeNetworkCounters=originalNetworkCounters+'\\nlet p101BlockedModelWeightRequests=0;';
+const originalModelAllowed="   if(req.method()==='GET'&&(lib||hub||weights)){";
+assert.equal(original.split(originalModelAllowed).length,2,'pinned original model asset policy moved');
+const negativeRouteAllowed=originalModelAllowed+
+ "\\n    if(process.env.P101_TEST_FAULT==='model_weights_abort'&&hub&&url.pathname.endsWith('.onnx')){"+
+ "\\n     p101BlockedModelWeightRequests++;return route.abort();"+
+ "\\n    }";
+
 assert.equal(original.split(originalRead).length,2,'original fixture route moved');
 const workerSource=workerBytes.toString('utf8');
 let diagWorker="const p101Classify=error=>{\n const name=typeof error?.name==='string'?error.name:'';\n const msg=p101ExceptionText(error).toLowerCase();\n if(name==='AbortError'||/abort|cancelled/.test(msg))return 'abort';\n if(/out of memory|memory access|allocation failed/.test(msg))return 'memory';\n if(/webassembly|wasm|onnx|execution provider|session/.test(msg))return 'wasm_or_session';\n if(name==='NetworkError'||/fetch|network|timeout|failed to load/.test(msg))return 'network';\n if(name==='TypeError')return 'type';\n return 'other';\n};\nconst p101ErrorName=error=>{\n const name=typeof error?.name==='string'?error.name:'';\n return ['Error','TypeError','RangeError','RuntimeError','AbortError','NetworkError','CompileError','LinkError','AggregateError'].includes(name)?name:'other';\n};\nconst p101ErrorCode=error=>{\n const msg=p101ExceptionText(error).toLowerCase();\n if(/out of memory|allocat|memory limit/.test(msg))return 'memory_allocation';\n if(/compile|compilation|unexpected section/.test(msg))return 'wasm_compile';\n if(/linkerror|linking|imported function/.test(msg))return 'wasm_link';\n if(/session|execution provider|ep init|inference session/.test(msg))return 'ort_session';\n if(/cache|quota|indexeddb|storage/.test(msg))return 'cache_storage';\n if(/stream|fetch|network|body|unexpected end|eof/.test(msg))return 'network_stream';\n if(/webassembly|wasm|runtimeerror/.test(msg))return 'wasm_runtime';\n if(/onnx|model graph|tensor|node/.test(msg))return 'model_graph';\n if(/resource|worker|initialize|unavailable|failed to load/.test(msg))return 'resource';\n return 'other';\n};"+'\n'+`const p101CacheMode=${JSON.stringify(cacheMode)};`+'\n'+"const p101ExceptionText=e=>typeof e==='string'?e:(typeof e?.message==='string'?e.message:'');\nconst p101ErrorType=e=>e===null?'null':(['string','object','undefined','number','boolean'].includes(typeof e)?typeof e:'other');\nconst p101ErrorTag=e=>{const t=Object.prototype.toString.call(e);return ['[object Error]','[object DOMException]','[object TypeError]','[object Event]','[object String]','[object Object]','[object Undefined]','[object Null]'].includes(t)?t.slice(8,-1):'other';};\nconst p101WasmProbe=(id)=>{\n const phases=['compile','compileStreaming','instantiate','instantiateStreaming'];\n let installed=0;\n for(const method of phases){\n  const original=WebAssembly[method];\n  if(typeof original!=='function')continue;\n  const phase='wasm_'+method;\n  try{WebAssembly[method]=function(...args){\n   const at=performance.now();\n   const send=(outcome,error)=>self.postMessage({type:'diagnostic',id,phase,outcome,elapsedMs:outcome==='start'?null:Math.max(0,Math.min(600000,Math.round(performance.now()-at))),\n    ...(error?{errorCategory:(p101Classify(error)),errorName:p101ErrorName(error),messageCode:p101ErrorCode(error),errorType:p101ErrorType(error),errorTag:p101ErrorTag(error)}:{})});\n   send('start');\n   try{const result=Reflect.apply(original,WebAssembly,args);\n    if(result&&typeof result.then==='function'){result.then(()=>{send('ok');},error=>{send('error',error);});return result;}\n    send('ok');return result;\n   }catch(error){send('error',error);throw error;}\n  };installed++;}catch{}\n }\n self.postMessage({type:'diagnostic',id,phase:'wasm_hook_install',outcome:'ok',hookCount:installed});\n};"+'\n'+workerSource;
@@ -135,7 +162,9 @@ const overrideRead="  const body=path==='/public/outfit-worker-p94.mjs'?Buffer.f
 const originalZero='(/unverified region|Automatic extraction unavailable|could not start|timed out/i.test(';
 assert.equal(original.split(originalZero).length,2,'original wait moved');
 const zeroAwareOriginal=original.replace(originalZero,'(/unverified (?:garment )?region|Automatic extraction unavailable|could not start|timed out/i.test(');
-const adapted=zeroAwareOriginal.replace(originalRead,overrideRead)
+const originalWithNegative=zeroAwareOriginal.replace(originalNetworkCounters,negativeNetworkCounters)
+ .replace(originalModelAllowed,negativeRouteAllowed);
+const adapted=originalWithNegative.replace(originalRead,overrideRead)
  .replace(stageInstall,init+stageInstall).replace(probeBefore,output+probeBefore)
  .replace(oldWorkerLabel,currentWorkerLabel);
 assert.ok(adapted.includes('Genuine P88 browser worker did not produce a bounded actual model proposal'));
