@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {SKIRT_SOURCE89,attestActualSkirt89,sourceSkirtOutline89,
  buildOriginalPhotoSkirtProposal89,sourceSkirtBandTextureV89,
- sourceSkirtMeasuredPhotoCenterline89} from '../research/parallel89/skirt-source3d89.mjs';
+ sourceSkirtMeasuredPhotoCenterline89,sourceSkirtMeasuredFrontWidths89} from '../research/parallel89/skirt-source3d89.mjs';
 
 const file=readFileSync(new URL('../benchmark/fixtures/commons-0043.jpg',import.meta.url));
 const dress=readFileSync(new URL('../benchmark/fixtures/commons-0053.jpg',import.meta.url));
@@ -164,4 +164,60 @@ test('symmetric original photographed skirt stays neutral; source front shift ne
  assert.ok(p.sourceRelativeWorldXOffsetsMeters.every(x=>x===0));
  assert.equal(p.rearCenterlineInferredNotPhotographed,true);
  assert.equal(p.familyAlpha,'HOLD');
+});
+
+test('the photo mask selects ONE actual row for each measured width, center and UV Y',()=>{
+ const sample=sourceAlpha(),{alpha,width,height}=sample;
+ // Width and center ranks differ across the five genuinely observed center-band
+ // alpha rows. Independent medians fabricate a center/width pair in no row.
+ for(const [y,half,center] of [
+  [45,9,54],[46,12,44],[47,15,52],[48,18,48],[49,21,42]
+ ]){
+  alpha.fill(0,y*width,(y+1)*width);
+  for(let x=center-half;x<=center+half;x++)alpha[y*width+x]=255;
+ }
+ const proof=sourceSkirtOutline89(sample);
+ const band=proof.sourceRowWidths[3];
+ assert.notDeepEqual([band.widthPixels,band.centerPixels],[31,48],
+  'the separately sorted old medians described NO actual photograph row');
+ const top=10,bottom=84,span=bottom-top+1;
+ for(const b of proof.sourceRowWidths){
+  assert.ok(Number.isSafeInteger(b.sourcePixelRow));
+  assert.ok(b.sourcePixelRow>=top&&b.sourcePixelRow<=bottom);
+  const xs=[];
+  for(let x=0;x<width;x++)if(alpha[b.sourcePixelRow*width+x]>=128)xs.push(x);
+  assert.ok(xs.length>0);
+  assert.equal(b.widthPixels,xs.at(-1)-xs[0]+1);
+  assert.equal(b.centerPixels,(xs[0]+xs.at(-1))/2);
+  assert.ok(Math.abs(b.p-(b.sourcePixelRow-top)/span)<1e-12);
+  const sourceImageV=sourceSkirtBandTextureV89(proof,
+   proof.sourceRowWidths.indexOf(b));
+  assert.ok(Math.abs(sourceImageV-(1-b.sourcePixelRow/height))<1e-12,
+   'source UV must trace the selected ORIGINAL pixel row exactly');
+ }
+ assert.equal(proof.releaseAuthorized,false);
+ assert.equal(proof.maskHumanApproved,false);
+});
+test('research skirt refuses silent original-photo hem width clamping',()=>{
+ const outline=sourceSkirtOutline89(sourceAlpha());
+ const normal=sourceSkirtMeasuredFrontWidths89(outline,.23);
+ assert.equal(normal.sourceHalfWidthsMeters.length,7);
+ assert.ok(Math.abs(normal.sourceHalfWidthsMeters[0]-.23)<1e-12);
+ assert.ok(normal.sourceHalfWidthsMeters.every(x=>x>=.12&&x<=.70));
+ assert.equal(normal.allSevenFrontPhotographicWidthsPreservedWithoutClamping,true);
+ assert.equal(normal.physicalScaleInferredNotCalibrated,true);
+ assert.equal(normal.consumer3DAdmitted,false);
+ assert.equal(normal.originalPhoto2DFallbackRequired,true);
+ // A plausible 60px alpha hem in a 64px source can exceed the current
+ // provisional shell's 70cm half-width; silently shrinking it destroys
+ // photographed proportions even when every source row was correctly read.
+ const wide={...outline,sourceRowWidths:outline.sourceRowWidths.map((b,i)=>
+  i===6?{...b,widthPixels:60,centerPixels:32}:b)};
+ assert.throws(()=>sourceSkirtMeasuredFrontWidths89(wide,.32),
+  /photographic-skirt-front-width-requires-unverified-clamping/);
+ assert.throws(()=>sourceSkirtMeasuredFrontWidths89(
+  {...outline,pixelDimensions:[NaN,96]},.23),
+  /source-proportional-photo-band-width-evidence-missing/);
+ assert.throws(()=>sourceSkirtMeasuredFrontWidths89(outline,.91),
+  /source-proportional-photo-band-width-evidence-missing/);
 });
