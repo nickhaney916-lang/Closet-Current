@@ -164,7 +164,7 @@ export function summarizeSourceContourEndpointProvenance89({
   const nodes=new Map(),excluded=new Map(),meshHist=Object.create(null);
   let selectedSegments=0,excludedSegments=0;
   for(const f of faces){
-   const v=cutSource(bodyPositions,restPositions,skinIndices,skinWeights,
+   const v=sourceCut(bodyPositions,restPositions,skinIndices,skinWeights,
     f.mesh,f.a,f.b,f.c,y);
    if(!v)continue;
    if(f.selected){
