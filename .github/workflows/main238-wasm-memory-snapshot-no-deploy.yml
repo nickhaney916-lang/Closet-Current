@@ -31,7 +31,7 @@ jobs:
           test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = ad8ab0eb33322a34f8cc3f45a1fe26feff87b2ab
           test "$(git rev-parse HEAD:scripts/test-main237-native-p101-wasm-memory-probe.mjs)" = e281589a2f482791875ba2b9b51d0f215bc1af77
           test "$(git rev-parse HEAD:scripts/main238-wasm-memory-observer-fixture.mjs)" = 2d3a927a760af39918b0204880a715523426e713
-          test "$(git rev-parse HEAD:scripts/test-main238-original-wasm-memory-snapshot-browser.mjs)" = 1b2b998478aadb6239cec7b94301b23ab64f7da7
+          test "$(git rev-parse HEAD:scripts/test-main238-original-wasm-memory-snapshot-browser.mjs)" = 69f6817634ecc89ea4b1c6b1ebe5a4cff1a3c20b
           test "$(git rev-parse HEAD:tests/main238-wasm-internal-memory-snapshot.test.mjs)" = 294dc3a10c619ac2cc0e9966e5bf8f53bc64e432
           node --check scripts/main238-wasm-memory-observer-fixture.mjs
           node --check scripts/test-main238-original-wasm-memory-snapshot-browser.mjs
@@ -80,7 +80,7 @@ jobs:
           test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' '.github/workflows/main238-wasm-memory-snapshot-no-deploy.yml' 'scripts/main238-wasm-memory-observer-fixture.mjs' 'scripts/test-main238-original-wasm-memory-snapshot-browser.mjs' 'tests/main238-wasm-internal-memory-snapshot.test.mjs')"
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           test "$(git rev-parse HEAD:scripts/main238-wasm-memory-observer-fixture.mjs)" = 2d3a927a760af39918b0204880a715523426e713
-          test "$(git rev-parse HEAD:scripts/test-main238-original-wasm-memory-snapshot-browser.mjs)" = 1b2b998478aadb6239cec7b94301b23ab64f7da7
+          test "$(git rev-parse HEAD:scripts/test-main238-original-wasm-memory-snapshot-browser.mjs)" = 69f6817634ecc89ea4b1c6b1ebe5a4cff1a3c20b
           node --test tests/main238-wasm-internal-memory-snapshot.test.mjs
           M238_SOURCE_ONLY=1 node scripts/test-main238-original-wasm-memory-snapshot-browser.mjs
       - name: Original pinned model/Playwright native dependencies
