@@ -18,7 +18,7 @@ assert.ok(initial.includes("const p101ErrorCode=error=>"),'missing shared runtim
 
 const evaluate=runInNewContext(initial+
   "\nconst p101ExceptionText=e=>typeof e==='string'?e:(typeof e?.message==='string'?e.message:'');"+
-  "\\n({run(error){return {category:p101Classify(error),code:p101ErrorCode(error),name:p101ErrorName(error)};}})",
+  "\n({run(error){return {category:p101Classify(error),code:p101ErrorCode(error),name:p101ErrorName(error)};}})",
   Object.create(null),{timeout:1000});
 
 test('actual WebKit RuntimeError memory access is distinguished from out-of-memory',()=>{
