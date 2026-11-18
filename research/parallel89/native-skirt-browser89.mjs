@@ -1264,7 +1264,7 @@ function setPose(mode){const out=inspectPose(mode);render();return out;}
 function setView(deg){check([0,90,180].includes(deg),'only research original photo views');angle=deg;render();return getState();}
 function toggleSkirt(show){check(phase==='ready','actual photographed skirt not loaded');
  candidate.mesh.visible=!!show;render();return getState();}
-function auditOriginalSkirtMeasurementCalibration89(){
+function auditOriginalSkirtMeasurementCalibration89(physicalTape=null){
  check(phase==='ready'&&candidate?.mesh?.isSkinnedMesh,
   'actual original 163bone source skirt required');
  const rest=candidate.mesh.geometry?.getAttribute('sourceSkirt89Rest');
@@ -1272,7 +1272,7 @@ function auditOriginalSkirtMeasurementCalibration89(){
   sourceId:SKIRT_SOURCE89.id,sourceSHA256:source?.originalSHA256,
   originalSourceAttested:source?.status==='SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED',
   avatar:current,pose,rigBoneCount:candidate.mesh.skeleton?.bones.length,
-  originalSkirtRestPositions:rest?.array
+  originalSkirtRestPositions:rest?.array,physicalTape
  });
 }
 function getState(){return Object.freeze({
