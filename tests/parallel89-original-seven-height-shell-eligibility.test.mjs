@@ -160,3 +160,94 @@ test('original source arrays, face indices, sample-height ordering and selected 
   {...make(vertices,boxFaces),bodyIndices:Uint16Array.from([0,0,2])}
  ])assert.throws(()=>audit(x));
 });
+
+
+const withOriginalProof=x=>{
+ x.restPositions=x.bodyPositions.slice();
+ const n=x.bodyPositions.length/3;
+ x.skinIndices=new Uint16Array(n*4);
+ x.skinWeights=new Float32Array(n*4);
+ x.sourceMeshIds=new Uint16Array(n);
+ for(let v=0;v<n;v++)x.skinWeights[4*v]=1;
+ return x;
+};
+const cause=x=>{
+ const input=withOriginalProof(x),saved=Object.fromEntries(
+  Object.entries(input).map(([k,v])=>[k,v.slice()]));
+ const sh=audit(input),c=sh.originalSevenHeightBoundaryCauseAudit;
+ for(const [k,v] of Object.entries(saved))assert.deepEqual(input[k],v);
+ assert.equal(c.schema,'P89-original-sevenheight-source-boundary-causes/v1');
+ assert.equal(c.originalSelectedIndexedOpenEdges,
+  sh.sourceAllSevenHeightComponentBoundaryEdges);
+ assert.equal(c.originalMaskExcludedSameIndexedEdge+
+  c.originalDegenerateSelectedNeighborEdge+
+  c.originalNoIndexedNeighborEdges,c.originalSelectedIndexedOpenEdges);
+ assert.equal(c.exactRestPoseSkinMeshUVTwinCandidateEdges+
+  c.ambiguousExactRestPoseSkinMeshCandidateEdges+
+  c.noExactRestPoseSkinMeshTwinEdges,c.originalNoIndexedNeighborEdges);
+ assert.equal(c.candidateUVTwinsAreNotSewnOrSignedBody,true);
+ assert.equal(c.originalPhoto2DFallbackRequired,true);
+ assert.equal(c.consumer3DAdmitted,false);
+ assert.equal(c.releaseAuthorized,false);
+ return c;
+};
+const wallVertices=[0,.2,0,1,1.8,0,0,1.8,1,1,.2,1];
+const wallFaces=[0,1,2,0,2,3];
+const repeatedWalls=(copies=2)=>make(
+ Array.from({length:copies},()=>wallVertices).flat(),
+ Array.from({length:copies},(_,i)=>wallFaces.map(x=>x+4*i)).flat());
+test('original closed indexed face shell has zero all-seven boundary causes',()=>{
+ const c=cause(make(vertices,boxFaces));
+ assert.equal(c.originalSelectedIndexedOpenEdges,0);
+});
+test('mask-excluded original indexed source face is a source selection cut, not glTF repair',()=>{
+ const x=make(vertices,boxFaces);x.selectedSourceFaceMask[0]=0;
+ const c=cause(x);
+ assert.ok(c.originalMaskExcludedSameIndexedEdge>=3);
+ assert.equal(c.exactRestPoseSkinMeshUVTwinCandidateEdges,0);
+});
+test('truly missing original face has no original indexed neighbor',()=>{
+ const c=cause(make(vertices,boxFaces.slice(3)));
+ assert.ok(c.originalNoIndexedNeighborEdges>=3);
+ assert.equal(c.originalMaskExcludedSameIndexedEdge,0);
+});
+test('split original rest+pose+skin+mesh twins are potential UV only and do not seal an open wall',()=>{
+ const c=cause(repeatedWalls());
+ assert.equal(c.originalNoIndexedNeighborEdges,8);
+ assert.equal(c.exactRestPoseSkinMeshUVTwinCandidateEdges,8);
+ assert.equal(c.originalSelectedIndexedOpenEdges,8);
+});
+test('three coincident source sheets are ambiguous multi-candidates never automatically joined',()=>{
+ const c=cause(repeatedWalls(3));
+ assert.equal(c.ambiguousExactRestPoseSkinMeshCandidateEdges,12);
+ assert.equal(c.exactRestPoseSkinMeshUVTwinCandidateEdges,0);
+});
+test('same posed sheets with different original rest points cannot claim a UV split',()=>{
+ const x=withOriginalProof(repeatedWalls());
+ for(let i=4;i<8;i++)x.restPositions[3*i]+=.05;
+ const c=audit(x).originalSevenHeightBoundaryCauseAudit;
+ assert.equal(c.exactRestPoseSkinMeshUVTwinCandidateEdges,0);
+ assert.equal(c.noExactRestPoseSkinMeshTwinEdges,8);
+});
+test('same rest sheet but different original bone weights cannot claim a UV split',()=>{
+ const x=withOriginalProof(repeatedWalls());
+ for(let i=4;i<8;i++){x.skinWeights[4*i]=.75;x.skinWeights[4*i+1]=.25;x.skinIndices[4*i+1]=1;}
+ const c=audit(x).originalSevenHeightBoundaryCauseAudit;
+ assert.equal(c.exactRestPoseSkinMeshUVTwinCandidateEdges,0);
+});
+test('coincident different original source mesh is never an attested seam',()=>{
+ const x=withOriginalProof(repeatedWalls());
+ x.sourceMeshIds.fill(2,4);
+ const c=audit(x).originalSevenHeightBoundaryCauseAudit;
+ assert.equal(c.exactRestPoseSkinMeshUVTwinCandidateEdges,0);
+});
+test('missing or malformed original skin/rest/mesh proof fails closed, not as a known source edge',()=>{
+ const x=withOriginalProof(repeatedWalls());
+ for(const bad of [
+  {...x,restPositions:new Float32Array(3)},
+  {...x,sourceMeshIds:new Uint16Array(1)},
+  {...x,skinWeights:new Float32Array(2)},
+  {...x,restPositions:Float32Array.from(x.restPositions,(v,i)=>i===1?NaN:v)},
+  {...x,skinWeights:Float32Array.from(x.skinWeights,(v,i)=>i===0?2:v)}
+ ])assert.throws(()=>audit(bad));
+});

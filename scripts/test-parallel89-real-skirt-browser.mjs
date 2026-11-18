@@ -1336,6 +1336,21 @@ try{
     assert.equal(b.pointOnlyCutDoesNotCountAsSourceSegment,true);
    }
    const sh=eproof.originalSevenHeightSourceIndexedShellEligibility;
+   const cause=sh.originalSevenHeightBoundaryCauseAudit;
+   assert.equal(cause.schema,'P89-original-sevenheight-source-boundary-causes/v1');
+   assert.equal(cause.originalSelectedIndexedOpenEdges,
+    sh.sourceAllSevenHeightComponentBoundaryEdges);
+   assert.equal(cause.originalMaskExcludedSameIndexedEdge+
+    cause.originalDegenerateSelectedNeighborEdge+
+    cause.originalNoIndexedNeighborEdges,cause.originalSelectedIndexedOpenEdges);
+   assert.equal(cause.exactRestPoseSkinMeshUVTwinCandidateEdges+
+    cause.ambiguousExactRestPoseSkinMeshCandidateEdges+
+    cause.noExactRestPoseSkinMeshTwinEdges,cause.originalNoIndexedNeighborEdges);
+   assert.equal(cause.exactFloat32RestPoseSkinMeshEvidenceOnly,true);
+   assert.equal(cause.candidateUVTwinsAreNotSewnOrSignedBody,true);
+   assert.equal(cause.consumer3DAdmitted,false);
+   assert.equal(cause.originalPhoto2DFallbackRequired,true);
+   assert.equal(cause.releaseAuthorized,false);
    assert.equal(sh.schema,'P89-original-163bone-sevenheight-component-shell-eligibility/v1');
    assert.equal(sh.originalSkirtSampleHeightPlanes,7);
    assert.equal(sh.selectedOriginalSourceTriangleCount,global.selectedOriginalIndexedFaceCount);
