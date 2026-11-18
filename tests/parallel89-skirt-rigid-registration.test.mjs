@@ -171,3 +171,29 @@ test('forged source anatomy/crossing receipts cannot create a 3D outfit',()=>{
   assert.equal(x.mesh.geometry,x.original);
  }
 });
+
+test('pooled BVH callback cannot hide source triangle IDs introduced by a trial',()=>{
+ const x=fixture(),pooled=new Set();
+ const row=run(x,'reduce',{
+  sampleContact:()=>{
+   pooled.clear();
+   pooled.add('0|45');
+   // The same mutable Set is deliberately recycled across every genuine
+   // pose and every candidate. Only an independent value snapshot exposes
+   // the trial's new original-source pair ID.
+   pooled.add(x.mesh.geometry===x.original?'1|58':'5|108');
+   return {count:2,pairs:pooled,maxDepth:.001,
+    trueOriginalSkirtTriangleIndexStable:true,
+    trueOriginalBodyTriangleIndexStable:true,
+    originalFaceSourceResolution:'BVH_INDIRECT_RESOLVED_ORIGINAL_TRIANGLE_INDICES'};
+  }
+ });
+ assert.equal(row.status,'NO_SAFE_REDUCING_ORIGINAL_SKIRT_REGISTRATION_WITNESSED');
+ assert.equal(row.trials.length,11);
+ assert.ok(row.trials.every(t=>t.introducedOriginalSourceFacePairIDs===3));
+ assert.ok(row.trials.every(t=>t.introducedFivePoseSourceFacePairIDs===5));
+ assert.ok(row.trials.every(t=>t.researchOnlyNonworseningReduction===false));
+ assert.equal(row.consumer3DAdmitted,false);
+ assert.equal(row.originalPhoto2DFallbackRequired,true);
+ assert.equal(x.mesh.geometry,x.original);
+});
