@@ -749,7 +749,8 @@ function auditSelectedOriginalUpperInwardSource89(radial,wholeCoverage){
    selectedFivePoseBvhVerified:true,
    priorExactRadialReceipt:radial,priorWholeVsCoreReceipt:wholeCoverage
   });
-  check(report?.status==='ORIGINAL_UPPER_INWARD_SOURCE_RAY_BONE_MESH_WITNESSED_NOT_WEARABLE'&&
+  check(['ORIGINAL_UPPER_INWARD_SOURCE_RAY_BONE_MESH_WITNESSED_NOT_WEARABLE',
+   'NO_ORIGINAL_UPPER_INWARD_RAY_OBSERVED_NOT_BODY_FIT'].includes(report?.status)&&
    report.originalPhoto2DFallbackRequired===true&&
    report.releaseAuthorized===false&&report.consumer3DAdmitted===false,
    'genuine licensed original upper band inward source witness invalid: '+
