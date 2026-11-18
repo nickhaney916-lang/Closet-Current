@@ -81,7 +81,8 @@ export function auditVirtualContourArrangement89(contours,sourceSkirtCenter){
    throw Error('counterfactual-source-loop-impossible-mutual-containment');
   if(bInA||aInB)nested++;else disjoint++;
  }
- const n=loops.length,pairs=n*(n-1)/2;
+ // n=0 must yield +0: -0 violates strict conservative source receipts.
+ const n=loops.length,pairs=n<2?0:n*(n-1)/2;
  if(center.INSIDE+center.OUTSIDE+center.ON_EDGE!==n||
   intersects+nested+disjoint!==pairs||cw+ccw!==n)
   throw Error('counterfactual-source-loop-arrangement-nonconservative');
