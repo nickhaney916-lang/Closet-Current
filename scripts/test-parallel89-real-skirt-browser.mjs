@@ -1865,6 +1865,8 @@ try{
  await writeFile(join(out,'results.json'),JSON.stringify(results,null,2)+'\n');
  console.log('P89_REAL_SKIRT_NATIVE_WEBGL_BODY_INTERSECTIONS_NOT_RELEASE',
   JSON.stringify({engine,status:results.status,frames:results.captures.length,
+   originalSourceFrontLockedFivePoseAudits:results.originalFrontLockedFivePoseSourceAudits.length,
+   originalSourceFrontLockedCollisionFloors:results.originalFrontLockedFivePoseSourceAudits.map(x=>({avatar:x.avatar,status:x.status,all:x.originalWholeBodyStrictCrossingsAcrossFivePoses,front:x.immutablePhotographFrontCollisionFloorAcrossFivePoses,rear:x.originalNeutralRearHypothesisCrossingsAcrossFivePoses,transitions:x.originalSourceTransitionCrossingsAcrossFivePoses})),
    poseSamples:results.poseSamples.length,neutralRearTrialStatus:results.neutralRearTrials.map(x=>x.status),
    provisionalContactReduction:results.neutralRearTrials.map(x=>x.bestProvisional?.originalSourcePoseCrossingSum-x.bestProvisional?.trialSourcePoseCrossingSum||0),
    measuredBodyFitTrialStatus:results.measuredBodyFitTrials.map(x=>x.status),
