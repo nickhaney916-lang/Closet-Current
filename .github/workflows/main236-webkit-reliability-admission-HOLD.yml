@@ -29,8 +29,8 @@ jobs:
           actual="$(git diff --name-only f5874c6efb1d3d0f5462439e3f9df024980595ad HEAD)"
           expected="$(printf '%s\n' '.github/workflows/main236-webkit-reliability-admission-HOLD.yml' 'research/main236-webkit-runtime-reliability-evidence.json' 'scripts/lib/main236-webkit-reliability-admission.mjs' 'tests/main236-webkit-reliability-admission.test.mjs')"
           test "$actual" = "$expected"
-          test "$(git rev-parse HEAD:scripts/lib/main236-webkit-reliability-admission.mjs)" = 8a4f17a82d02d0b6d2c48b4bba34a85d83e6f585
-          test "$(git rev-parse HEAD:tests/main236-webkit-reliability-admission.test.mjs)" = 2a558c09051f4bdae52c84e38a68958a3c501203
+          test "$(git rev-parse HEAD:scripts/lib/main236-webkit-reliability-admission.mjs)" = 75d5e5201f7b113f129862b267c3d4d5a7477030
+          test "$(git rev-parse HEAD:tests/main236-webkit-reliability-admission.test.mjs)" = 2da36deec92663702c997022bff2e277f03bf66b
           test "$(git rev-parse HEAD:research/main236-webkit-runtime-reliability-evidence.json)" = 1e532383eae0508311f945601530811edb48b88e
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           node --check scripts/lib/main236-webkit-reliability-admission.mjs
@@ -71,8 +71,8 @@ jobs:
           actual="$(git diff --name-only f5874c6efb1d3d0f5462439e3f9df024980595ad HEAD)"
           expected="$(printf '%s\n' '.github/workflows/main236-webkit-reliability-admission-HOLD.yml' 'research/main236-webkit-runtime-reliability-evidence.json' 'scripts/lib/main236-webkit-reliability-admission.mjs' 'tests/main236-webkit-reliability-admission.test.mjs')"
           test "$actual" = "$expected"
-          test "$(git rev-parse HEAD:scripts/lib/main236-webkit-reliability-admission.mjs)" = 8a4f17a82d02d0b6d2c48b4bba34a85d83e6f585
-          test "$(git rev-parse HEAD:tests/main236-webkit-reliability-admission.test.mjs)" = 2a558c09051f4bdae52c84e38a68958a3c501203
+          test "$(git rev-parse HEAD:scripts/lib/main236-webkit-reliability-admission.mjs)" = 75d5e5201f7b113f129862b267c3d4d5a7477030
+          test "$(git rev-parse HEAD:tests/main236-webkit-reliability-admission.test.mjs)" = 2da36deec92663702c997022bff2e277f03bf66b
           test "$(git rev-parse HEAD:research/main236-webkit-runtime-reliability-evidence.json)" = 1e532383eae0508311f945601530811edb48b88e
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           node --check scripts/lib/main236-webkit-reliability-admission.mjs
