@@ -1,0 +1,86 @@
+name: MAIN231 native model-stall manual owner recovery and positive original HOLD
+on:
+  push:
+    branches: [research/main231-p94-stalled-native-manual-owner-HOLD]
+  pull_request:
+    branches: [research/main228-repeatable-source-owner-native-HOLD]
+permissions:
+  contents: read
+jobs:
+  inherited-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable M228 signed original, model and exact test paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=c492a65207605f49887fa72756cd55ef65b6eb69
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' '.github/workflows/main231-native-p94-stall-no-deploy.yml' 'scripts/test-main231-stalled-p94-native-owner-manual-browser.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:scripts/test-main231-stalled-p94-native-owner-manual-browser.mjs)" = e853f1bc693e0359fd079a0017f5279911ecfc9d
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
+          test "$(git rev-parse HEAD:public/native-lossless-v4-owner-acceptance-m3.mjs)" = 988918ee194b04c4764ac32ac3124cc633863165
+          node --check scripts/test-main231-stalled-p94-native-owner-manual-browser.mjs
+      - name: Install pinned inherited test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Normal offline PWA build and all inherited owner privacy tests
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  native-owner-stall:
+    name: M231 actual owner manual recovery + original source-positive (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [webkit, chromium]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source lock actual installed P94 Worker and owner review
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor c492a65207605f49887fa72756cd55ef65b6eb69 HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:scripts/test-main231-stalled-p94-native-owner-manual-browser.mjs)" = e853f1bc693e0359fd079a0017f5279911ecfc9d
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
+      - name: Install genuine original browsers and local app dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original app/offline bundle
+        run: node scripts/build.mjs
+      - name: Real 320px and 430px intentionally stalled ONNX manual owner restore negative
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 430; do
+            P94_WIDTH="$width" node scripts/test-main231-stalled-p94-native-owner-manual-browser.mjs
+          done
+      - name: Unmodified real pinned positive SegFormer/ONNX owner and v4 at 430
+        run: P94_WIDTH=430 node scripts/test-parallel94-native-p88-browser.mjs
