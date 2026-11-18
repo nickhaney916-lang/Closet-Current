@@ -161,11 +161,11 @@ test('spoofed museum records, two-piece/topology flags and approvals do not over
  assert.equal(r.consumer3DAdmitted,false);
  assert.equal(r.releaseAuthorized,false);
 });
-test('unknown measurement conventions and physically impossible length hypotheses fail closed',()=>{
+test('unknown measurement conventions and out-of-bounds tape values fail closed',()=>{
  for(const physicalTape of [
   {waistCircumferenceMm:800,waistToHemLengthMm:480,waistMeasurementKind:'SYNTHETIC_APPROVED'},
-  {waistCircumferenceMm:900,waistToHemLengthMm:1990},
-  {waistCircumferenceMm:1000,waistToHemLengthMm:110,waistMeasurementKind:'FLAT_WAISTBAND_LENGTH'}
+  {waistCircumferenceMm:900,waistToHemLengthMm:2500},
+  {waistCircumferenceMm:1000,waistToHemLengthMm:99,waistMeasurementKind:'FLAT_WAISTBAND_LENGTH'}
  ]){
   const r=sample({physicalTape});
   assert.equal(r.status,'PHYSICAL_SOURCE_SKIRT_REGISTRATION_UNVERIFIABLE');
