@@ -7,6 +7,8 @@
 import * as THREE from 'three';
 import {outwardSkirtQuadTriangles89,auditOutwardSkirtRestWinding89}
  from './skirt-outward-winding89.mjs';
+import {smoothOriginalPhotoSkirtUVSeamNormals89}
+ from './skirt-photo-uv-seam-normals89.mjs';
 export const SKIRT_SOURCE89=Object.freeze({
  id:'commons-0043',category:'skirt',slot:'bottom',
  originalSHA256:'c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344',
@@ -324,6 +326,15 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
   geo.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(bone,4));
   geo.setAttribute('skinWeight',new THREE.Float32BufferAttribute(weights,4));
   geo.setIndex(tris);geo.computeVertexNormals();
+  const seamNormals=smoothOriginalPhotoSkirtUVSeamNormals89({
+   positions:geo.getAttribute('position').array,
+   sourceRest:geo.getAttribute('sourceSkirt89Rest').array,
+   uv:geo.getAttribute('uv').array,
+   skinIndex:geo.getAttribute('skinIndex').array,
+   skinWeight:geo.getAttribute('skinWeight').array,
+   normals:geo.getAttribute('normal').array
+  });
+  geo.getAttribute('normal').needsUpdate=true;
   for(const group of seams)geo.addGroup(group.start,group.count,group.materialIndex);
   texture=new THREE.DataTexture(trustedRaster.data.slice(),trustedRaster.width,trustedRaster.height,THREE.RGBAFormat);
   texture.colorSpace=THREE.SRGBColorSpace;texture.flipY=true;texture.needsUpdate=true;
@@ -361,6 +372,8 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
    genuinePhotoShaderWebGLNotYetMeasured:true,triangleCount:tris.length/3,
    sourceRestWindingReport:outwardWinding,
    sourceRestTriangleNormalsExteriorFacing:true,
+   sourcePhotoUVSeamNormalReport:seamNormals,
+   sourcePhotoUVSeamLightingContinuous:true,
    originalHumanVisualRealismAccepted:false,consumer3DAdmitted:false,
    originalPhoto2DFallbackRequired:true,releaseAuthorized:false,familyAlpha:'HOLD'
   });
