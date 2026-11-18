@@ -37,7 +37,7 @@ const passive=[
  "   }",
  "  };",
  " });",
-].join('\\n')+'\\n';
+].join('\n')+'\n';
 derived=derived.replace(originalPage,passive+originalPage);
 const tail=[
  " stage='owner-original P94 synthetic post-WASM memory-access fault';",
@@ -82,10 +82,11 @@ const tail=[
  " assert.equal(saved[0].threeDReady,false);assert.equal(saved[0].photoOnly,true);",
  " assert.equal(await page.locator('#outfit3D01Canvas').count(),0);",
  " assert.deepEqual(rejected,[],'unexpected third-party request');",
- " assert.deepEqual(issues,[],'native browser error on stalled model owner fallback');",
- " console.log('M232_POST_WASM_MEMORY_TRAP_OWNER_MANUAL_RECOVERY_PASS',JSON.stringify({engine,width,testOnlyInjectedMemoryAccess:true,afterNativeWasm:true,originalSourcePreserved:true,ownerExplicitManualSave:true,privateSaved:1,noAutoSave:true,noFitted3D:true,realInstalledWorker:true,originalModelPositive:false,webKitRootRepair:false,physicalPhone:false,hostedRLS:false,hold:true}));",
+ " assert.deepEqual(issues,[],'native browser error after synthetic post-WASM memory failure');",
+ " console.log('M232_POST_WASM_MEMORY_TRAP_OWNER_MANUAL_RECOVERY_PASS',JSON.stringify({engine,width,testOnlyInjectedMemoryAccess:true,afterNativeWasm:true,originalSourcePreserved:true,ownerExplicitManualSave:true,privateSaved:1,noAutoSave:true,noFitted3D:true,originalWorkerUnmodifiedOnDisk:true,instrumentedWorker:true,originalModelPositive:false,webKitRootRepair:false,physicalPhone:false,hostedRLS:false,hold:true}));",
  " await context.close();",
  "}catch(error){",
+ " console.error('M232_TEST_NEGATIVE_FAIL',JSON.stringify({stage,error:String(error?.message||error).slice(0,280),issues:issues.slice(0,4)}));",
  " process.exitCode=1;",
  "}finally{",
  " await browser?.close();await new Promise(resolve=>server.close(resolve));",
