@@ -67,6 +67,9 @@ const init=[
  "       errorType:['string','object','undefined','number','boolean','null','other'].includes(safe.errorType)?safe.errorType:null,",
  "       errorTag:['Error','DOMException','TypeError','Event','String','Object','Undefined','Null','other'].includes(safe.errorTag)?safe.errorTag:null,",
  "       hookCount:Number.isInteger(safe.hookCount)&&safe.hookCount>=0&&safe.hookCount<=4?safe.hookCount:null,",
+ "       growCalls:Number.isSafeInteger(safe.growCalls)&&safe.growCalls>=0&&safe.growCalls<=1000000?safe.growCalls:null,",
+ "       growErrors:Number.isSafeInteger(safe.growErrors)&&safe.growErrors>=0&&safe.growErrors<=1000000?safe.growErrors:null,",
+ "       maxDeltaPages:Number.isSafeInteger(safe.maxDeltaPages)&&safe.maxDeltaPages>=0&&safe.maxDeltaPages<=1000000?safe.maxDeltaPages:null,",
  "       stageOnly:true,",
  "      });",
  "     };",
@@ -107,6 +110,7 @@ const output=[
  "   JSON.stringify(evidence,null,2)+'\\n');",
  "  console.log('M214_REAL_P94_WORKER_OUTCOME',JSON.stringify({...evidence,probeOnly:true,modelOriginal:true,workerInitializationInstrumented:true,cacheMode:process.env.P101_CACHE_MODE||'baseline'}));",
  "  assert.ok(evidence.workerEvents.some(e=>e.type==='diagnostic'),'P101 missing genuine Worker model-init stage messages; no genuine model evidence');",
+"  assert.ok(evidence.workerEvents.some(e=>e.phase===\'wasm_js_memory_grow_summary\'&&e.growCalls!==null&&e.growErrors!==null),\'M230 missing pass-through JS WebAssembly.Memory.grow receipt\');",
 "  // DETERMINISTIC NEGATIVE ONLY: real public ONNX download is actively aborted.",
 "  // This is NEVER counted as a positive model/owner success or a product fix.",
 "  if(process.env.P101_TEST_FAULT==='model_weights_abort'){",
@@ -138,7 +142,33 @@ const negativeRouteAllowed=originalModelAllowed+
 
 assert.equal(original.split(originalRead).length,2,'original fixture route moved');
 const workerSource=workerBytes.toString('utf8');
+const p101MemoryProbeSource=String.raw`const p101MemoryProbe=(id)=>{
+ const stats={growCalls:0,growErrors:0,maxDeltaPages:0};
+ const memory=WebAssembly?.Memory;
+ const original=memory?.prototype?.grow;
+ let installed=false;
+ if(typeof original==='function'){
+  try{
+   memory.prototype.grow=function(...args){
+    stats.growCalls=Math.min(1000000,stats.growCalls+1);
+    const delta=args[0];
+    if(Number.isSafeInteger(delta)&&delta>=0)
+     stats.maxDeltaPages=Math.max(stats.maxDeltaPages,Math.min(1000000,delta));
+    try{return Reflect.apply(original,this,args);}
+    catch(error){stats.growErrors=Math.min(1000000,stats.growErrors+1);throw error;}
+   };
+   installed=memory.prototype.grow!==original;
+  }catch{}
+ }
+ return ()=>self.postMessage({type:'diagnostic',id,
+  phase:'wasm_js_memory_grow_summary',
+  outcome:installed&&stats.growErrors===0?'ok':'error',
+  growCalls:stats.growCalls,growErrors:stats.growErrors,
+  maxDeltaPages:stats.maxDeltaPages
+ });
+};`;
 let diagWorker="const p101Classify=error=>{\n const name=typeof error?.name==='string'?error.name:'';\n const msg=p101ExceptionText(error).toLowerCase();\n if(name==='AbortError'||/abort|cancelled/.test(msg))return 'abort';\n if(/out of memory|memory access|out of bounds|allocation failed/.test(msg))return 'memory';\n if(/webassembly|wasm|onnx|execution provider|session/.test(msg))return 'wasm_or_session';\n if(name==='NetworkError'||/fetch|network|timeout|failed to load/.test(msg))return 'network';\n if(name==='TypeError')return 'type';\n return 'other';\n};\nconst p101ErrorName=error=>{\n const name=typeof error?.name==='string'?error.name:'';\n return ['Error','TypeError','RangeError','RuntimeError','AbortError','NetworkError','CompileError','LinkError','AggregateError'].includes(name)?name:'other';\n};\nconst p101ErrorCode=error=>{\n const msg=p101ExceptionText(error).toLowerCase();\n if(/memory access|out of bounds/.test(msg))return 'wasm_memory_access';\n if(/out of memory|allocat|memory limit/.test(msg))return 'memory_allocation';\n if(/compile|compilation|unexpected section/.test(msg))return 'wasm_compile';\n if(/linkerror|linking|imported function/.test(msg))return 'wasm_link';\n if(/session|execution provider|ep init|inference session/.test(msg))return 'ort_session';\n if(/cache|quota|indexeddb|storage/.test(msg))return 'cache_storage';\n if(/stream|fetch|network|body|unexpected end|eof/.test(msg))return 'network_stream';\n if(/webassembly|wasm|runtimeerror/.test(msg))return 'wasm_runtime';\n if(/onnx|model graph|tensor|node/.test(msg))return 'model_graph';\n if(/resource|worker|initialize|unavailable|failed to load/.test(msg))return 'resource';\n return 'other';\n};"+'\n'+`const p101CacheMode=${JSON.stringify(cacheMode)};`+'\n'+"const p101ExceptionText=e=>typeof e==='string'?e:(typeof e?.message==='string'?e.message:'');\nconst p101ErrorType=e=>e===null?'null':(['string','object','undefined','number','boolean'].includes(typeof e)?typeof e:'other');\nconst p101ErrorTag=e=>{const t=Object.prototype.toString.call(e);return ['[object Error]','[object DOMException]','[object TypeError]','[object Event]','[object String]','[object Object]','[object Undefined]','[object Null]'].includes(t)?t.slice(8,-1):'other';};\nconst p101WasmProbe=(id)=>{\n const phases=['compile','compileStreaming','instantiate','instantiateStreaming'];\n let installed=0;\n for(const method of phases){\n  const original=WebAssembly[method];\n  if(typeof original!=='function')continue;\n  const phase='wasm_'+method;\n  try{WebAssembly[method]=function(...args){\n   const at=performance.now();\n   const send=(outcome,error)=>self.postMessage({type:'diagnostic',id,phase,outcome,elapsedMs:outcome==='start'?null:Math.max(0,Math.min(600000,Math.round(performance.now()-at))),\n    ...(error?{errorCategory:(p101Classify(error)),errorName:p101ErrorName(error),messageCode:p101ErrorCode(error),errorType:p101ErrorType(error),errorTag:p101ErrorTag(error)}:{})});\n   send('start');\n   try{const result=Reflect.apply(original,WebAssembly,args);\n    if(result&&typeof result.then==='function'){result.then(()=>{send('ok');},error=>{send('error',error);});return result;}\n    send('ok');return result;\n   }catch(error){send('error',error);throw error;}\n  };installed++;}catch{}\n }\n self.postMessage({type:'diagnostic',id,phase:'wasm_hook_install',outcome:'ok',hookCount:installed});\n};"+'\n'+workerSource;
+diagWorker=diagWorker.replace(workerSource,p101MemoryProbeSource+'\n'+workerSource);
 const p101Patches=[["  const {AutoModelForSemanticSegmentation,AutoProcessor,RawImage,env}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js');","  let imported;\n  {const at=performance.now();\n   self.postMessage({type:'diagnostic',id:requestId,phase:'module_import',outcome:'start'});\n   try { imported=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js'); self.postMessage({type:'diagnostic',id:requestId,phase:'module_import',outcome:'ok',elapsedMs:Math.max(0,Math.min(600000,Math.round(performance.now()-at)))}); }\n   catch(error) { self.postMessage({type:'diagnostic',id:requestId,phase:'module_import',outcome:'error',elapsedMs:Math.max(0,Math.min(600000,Math.round(performance.now()-at))),errorCategory:p101Classify(error)}); throw error; }\n  }\n  const {AutoModelForSemanticSegmentation,AutoProcessor,RawImage,env}=imported;"],["  const processor=await AutoProcessor.from_pretrained(modelId,{revision});","  let processor;\n  { const at=performance.now();\n   self.postMessage({type:'diagnostic',id:requestId,phase:'processor_load',outcome:'start'});\n   try {   processor=await AutoProcessor.from_pretrained(modelId,{revision}); self.postMessage({type:'diagnostic',id:requestId,phase:'processor_load',outcome:'ok',elapsedMs:Math.max(0,Math.min(600000,Math.round(performance.now()-at)))}); }\n   catch(error) { self.postMessage({type:'diagnostic',id:requestId,phase:'processor_load',outcome:'error',elapsedMs:Math.max(0,Math.min(600000,Math.round(performance.now()-at))),errorCategory:p101Classify(error)}); throw error; }\n  }"],["  const model=await AutoModelForSemanticSegmentation.from_pretrained(modelId,{revision,device:'wasm',dtype:'fp32',progress_callback:event=>self.postMessage({type:'progress',id:requestId,phase:'loading',percent:String(event.file||'').endsWith('.onnx')&&Number.isFinite(event.progress)?Math.round(event.progress):null})});","  let model;\n  { const at=performance.now();\n   self.postMessage({type:'diagnostic',id:requestId,phase:'model_session_load',outcome:'start'});\n   try {   model=await AutoModelForSemanticSegmentation.from_pretrained(modelId,{revision,device:'wasm',dtype:'fp32',progress_callback:event=>self.postMessage({type:'progress',id:requestId,phase:'loading',percent:String(event.file||'').endsWith('.onnx')&&Number.isFinite(event.progress)?Math.round(event.progress):null})}); self.postMessage({type:'diagnostic',id:requestId,phase:'model_session_load',outcome:'ok',elapsedMs:Math.max(0,Math.min(600000,Math.round(performance.now()-at)))}); }\n   catch(error) { self.postMessage({type:'diagnostic',id:requestId,phase:'model_session_load',outcome:'error',elapsedMs:Math.max(0,Math.min(600000,Math.round(performance.now()-at))),errorCategory:p101Classify(error)}); throw error; }\n  }"],["  const output=await model(await processor(image));","  let output;\n  { const at=performance.now();\n   self.postMessage({type:'diagnostic',id:request.id,phase:'first_inference',outcome:'start'});\n   try {   output=await model(await processor(image)); self.postMessage({type:'diagnostic',id:request.id,phase:'first_inference',outcome:'ok',elapsedMs:Math.max(0,Math.min(600000,Math.round(performance.now()-at)))}); }\n   catch(error) { self.postMessage({type:'diagnostic',id:request.id,phase:'first_inference',outcome:'error',elapsedMs:Math.max(0,Math.min(600000,Math.round(performance.now()-at))),errorCategory:p101Classify(error)}); throw error; }\n  }"]];
 // Cache controls alter only the disposable worker setup, not the model/source/owner journey.
 const cacheConfig="env.allowLocalModels=false;env.useBrowserCache=true;env.backends.onnx.wasm.numThreads=1;env.backends.onnx.wasm.proxy=false;";
@@ -152,7 +182,13 @@ for(const [needle,replacement] of p101Patches){
 // underlying model/session creation. Never read WASM buffers or ONNX weights.
 const p101ModelAnchor="  { const at=performance.now();\n   self.postMessage({type:'diagnostic',id:requestId,phase:'model_session_load',outcome:'start'});";
 assert.equal(diagWorker.split(p101ModelAnchor).length,2,'model start stage moved');
-diagWorker=diagWorker.replace(p101ModelAnchor, '  p101WasmProbe(requestId);\n'+p101ModelAnchor);
+diagWorker=diagWorker.replace(p101ModelAnchor, '  p101WasmProbe(requestId);\n  const p101MemorySummary=p101MemoryProbe(requestId);\n'+p101ModelAnchor);
+// Scoped passive low-level JS grow receipt at true model session exit only.
+const modelSessionOk="self.postMessage({type:'diagnostic',id:requestId,phase:'model_session_load',outcome:'ok'";
+const modelSessionFail="catch(error) { self.postMessage({type:'diagnostic',id:requestId,phase:'model_session_load',outcome:'error'";
+assert.equal(diagWorker.split(modelSessionOk).length,2,'true model session success anchor moved');
+assert.equal(diagWorker.split(modelSessionFail).length,2,'true model session failure anchor moved');
+diagWorker=diagWorker.replace(modelSessionOk,'p101MemorySummary(); '+modelSessionOk).replace(modelSessionFail,"catch(error) { p101MemorySummary(); self.postMessage({type:'diagnostic',id:requestId,phase:'model_session_load',outcome:'error'");
 // Error diagnostics are allowlisted scalar classes only, never exception text or source paths.
 const originalErrorSnippet='errorCategory:p101Classify(error)';
 assert.equal(diagWorker.split(originalErrorSnippet).length,5,'four native stage catches moved');
