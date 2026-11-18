@@ -958,6 +958,13 @@ try{
     (n,x)=>n+x.rays,0),identity.unknownSpokesWithAnyExcludedSourceFaceHit);
    assert.equal(identity.originalUnknownCoreRaySourcePrimaryMeshBonePairs.reduce(
     (n,x)=>n+x.rays,0),identity.unknownSpokesWithAnyExcludedSourceFaceHit);
+   assert.equal(identity.originalUnknownCoreLowDominanceSourceSkinTop3JointNames.reduce(
+    (n,x)=>n+x.rays,0),
+    identity.originalUnknownCoreLowDominanceSourceSkinRayCount);
+   assert.equal(identity.originalUnknownCoreLowDominanceSourceSkinRayCount,
+    identity.originalUnknownCoreRaySourcePrimaryBoneNames.find(x=>
+     x.label==='ORIGINAL_UNRESOLVED_DOMINANT_WEIGHT')?.rays||0);
+   assert.equal(identity.unverifiedJointBlendNamesAreSourceEvidenceNotTrustedCoreLabel,true);
    assert.equal(identity.noOriginalBodyFaceHitByOriginalSkirtBand.reduce(
     (n,x)=>n+x,0),identity.unknownSpokesWithNoActualSourceFaceRayHit);
    assert.equal(Object.values(identity.noOriginalBodyFaceHitAxisGroups)
@@ -1172,6 +1179,10 @@ try{
     noObservedOriginalSourceFaceHit:x.originalPhotoSkirtSourceBoneNoHitEvidence.unknownSpokesWithNoActualSourceFaceRayHit,
     originalSourceMeshLabels:x.originalPhotoSkirtSourceBoneNoHitEvidence.originalUnknownCoreRaySourcePrimaryMeshNames,
     originalSourceBoneNames:x.originalPhotoSkirtSourceBoneNoHitEvidence.originalUnknownCoreRaySourcePrimaryBoneNames,
+    lowDominanceTrueSourceSkinTop3JointNames:
+     x.originalPhotoSkirtSourceBoneNoHitEvidence.originalUnknownCoreLowDominanceSourceSkinTop3JointNames,
+    lowDominanceTrueSourceSkinRayCount:
+     x.originalPhotoSkirtSourceBoneNoHitEvidence.originalUnknownCoreLowDominanceSourceSkinRayCount,
     originalSourceMeshBoneLabels:x.originalPhotoSkirtSourceBoneNoHitEvidence.originalUnknownCoreRaySourcePrimaryMeshBonePairs,
     excludedUnclassifiedSourceBoneHitSpokes:x.originalPhotoSkirtSourceBoneNoHitEvidence.originalUnknownCoreExcludedUnclassifiedBoneHitSpokes,
     noHitAxis:x.originalPhotoSkirtSourceBoneNoHitEvidence.noOriginalBodyFaceHitAxisGroups,
