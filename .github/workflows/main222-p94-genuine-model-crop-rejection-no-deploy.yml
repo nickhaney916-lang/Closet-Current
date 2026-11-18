@@ -27,11 +27,12 @@ jobs:
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
             case "$file" in
-              research/multi-garment-capture-01/review-ui.mjs|scripts/test-main222-genuine-p94-crop-prepare-rejection-browser.mjs|.github/workflows/main222-p94-genuine-model-crop-rejection-no-deploy.yml) ;;
+              research/multi-garment-capture-01/review-ui.mjs|scripts/test-main222-genuine-p94-crop-prepare-rejection-browser.mjs|.github/workflows/main222-p94-genuine-model-crop-rejection-no-deploy.yml|tests/bounded-detection-review-58.test.mjs) ;;
               *) echo "M222 forbidden model/photo/owner/integration source change: $file"; exit 1 ;;
             esac
           done
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = e770cd0b2968439f6f9ed108479c967cf25cfe7a
+          test "$(git rev-parse HEAD:tests/bounded-detection-review-58.test.mjs)" = 2f90d83b2b162a11e68d08e4d0ad3c38d470671a
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
           test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
@@ -76,11 +77,12 @@ jobs:
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
             case "$file" in
-              research/multi-garment-capture-01/review-ui.mjs|scripts/test-main222-genuine-p94-crop-prepare-rejection-browser.mjs|.github/workflows/main222-p94-genuine-model-crop-rejection-no-deploy.yml) ;;
+              research/multi-garment-capture-01/review-ui.mjs|scripts/test-main222-genuine-p94-crop-prepare-rejection-browser.mjs|.github/workflows/main222-p94-genuine-model-crop-rejection-no-deploy.yml|tests/bounded-detection-review-58.test.mjs) ;;
               *) echo "M222 forbidden source mutation: $file"; exit 1 ;;
             esac
           done
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = e770cd0b2968439f6f9ed108479c967cf25cfe7a
+          test "$(git rev-parse HEAD:tests/bounded-detection-review-58.test.mjs)" = 2f90d83b2b162a11e68d08e4d0ad3c38d470671a
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
           node --check scripts/test-main222-genuine-p94-crop-prepare-rejection-browser.mjs
@@ -90,5 +92,7 @@ jobs:
         run: node scripts/test-main222-genuine-p94-crop-prepare-rejection-browser.mjs
       - name: Unmodified genuine model positive 430, original proposal threshold unchanged
         run: M214_ATTEMPT=main222-post-crop-positive node scripts/test-main214-p94-worker-outcome.mjs
+      - name: Build normal native PWA before unflagged original owner test
+        run: node scripts/build.mjs
       - name: Original private owner native saved photo to 2D/v3 source restore at 430
         run: P99_ENGINE=${{ matrix.engine }} P99_WIDTH=430 node scripts/test-parallel99-normal-app-browser.mjs
