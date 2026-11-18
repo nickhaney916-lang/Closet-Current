@@ -171,6 +171,30 @@ try{
    frontFloor.originalSourceTransitionCrossingsAcrossFivePoses);
   assert.equal(frontFloor.rearOnlyFitCannotEliminatePhotographFrontContact,
    frontFloor.immutablePhotographFrontCollisionFloorAcrossFivePoses>0);
+  assert.equal(frontFloor.originalAlphaStripsDoNotProvePhysicalHeightOrAnatomicalFit,true);
+  assert.equal(frontFloor.originalPhotoFrontContactBySixMeasuredAlphaStrips.length,6);
+  const contactByStrip=frontFloor.originalPhotoFrontContactBySixMeasuredAlphaStrips;
+  assert.deepEqual(contactByStrip.map(v=>v.alphaStripIndex),[0,1,2,3,4,5]);
+  assert.equal(contactByStrip.reduce((n,v)=>n+v.originalFrontContactPairWitnessesAcrossFivePoses,0),
+   frontFloor.immutablePhotographFrontCollisionFloorAcrossFivePoses);
+  for(const row of frontFloor.staticOriginalPoseSamples){
+   const byStrip=row.photographedFrontContactPairsByOriginalAlphaStrip;
+   assert.equal(byStrip.length,6);
+   assert.ok(byStrip.every(v=>Number.isSafeInteger(v)&&v>=0));
+   assert.equal(byStrip.reduce((a,b)=>a+b,0),row.photographFrontLockedTriangleCrossings);
+  }
+  for(const strip of contactByStrip){
+   assert.ok(Number.isSafeInteger(strip.originalFrontContactPairWitnessesAcrossFivePoses));
+   assert.ok(Number.isSafeInteger(strip.distinctOriginalFrontSourceTrianglesContacted));
+   assert.ok(strip.distinctOriginalFrontSourceTrianglesContacted>=0&&
+    strip.distinctOriginalFrontSourceTrianglesContacted<=48);
+   assert.equal(strip.originalFrontContactPairWitnessesAcrossFivePoses,
+    frontFloor.staticOriginalPoseSamples.reduce((a,row)=>
+     a+row.photographedFrontContactPairsByOriginalAlphaStrip[strip.alphaStripIndex],0));
+   assert.equal(strip.posesWithOriginalFrontContact,
+    frontFloor.staticOriginalPoseSamples.filter(row=>
+     row.photographedFrontContactPairsByOriginalAlphaStrip[strip.alphaStripIndex]>0).length);
+  }
   if(frontFloor.rearOnlyFitCannotEliminatePhotographFrontContact)
    assert.equal(frontFloor.status,
     'ORIGINAL_PHOTO_FRONT_LOCKED_COLLISIONS_PREVENT_REAR_ONLY_CLEARANCE');
@@ -1866,7 +1890,7 @@ try{
  console.log('P89_REAL_SKIRT_NATIVE_WEBGL_BODY_INTERSECTIONS_NOT_RELEASE',
   JSON.stringify({engine,status:results.status,frames:results.captures.length,
    originalSourceFrontLockedFivePoseAudits:results.originalFrontLockedFivePoseSourceAudits.length,
-   originalSourceFrontLockedCollisionFloors:results.originalFrontLockedFivePoseSourceAudits.map(x=>({avatar:x.avatar,status:x.status,all:x.originalWholeBodyStrictCrossingsAcrossFivePoses,front:x.immutablePhotographFrontCollisionFloorAcrossFivePoses,rear:x.originalNeutralRearHypothesisCrossingsAcrossFivePoses,transitions:x.originalSourceTransitionCrossingsAcrossFivePoses})),
+   originalSourceFrontLockedCollisionFloors:results.originalFrontLockedFivePoseSourceAudits.map(x=>({avatar:x.avatar,status:x.status,all:x.originalWholeBodyStrictCrossingsAcrossFivePoses,front:x.immutablePhotographFrontCollisionFloorAcrossFivePoses,rear:x.originalNeutralRearHypothesisCrossingsAcrossFivePoses,transitions:x.originalSourceTransitionCrossingsAcrossFivePoses,alphaStripFrontPairs:x.originalPhotoFrontContactBySixMeasuredAlphaStrips.map(row=>row.originalFrontContactPairWitnessesAcrossFivePoses),alphaStripPoseCount:x.originalPhotoFrontContactBySixMeasuredAlphaStrips.map(row=>row.posesWithOriginalFrontContact)})),
    poseSamples:results.poseSamples.length,neutralRearTrialStatus:results.neutralRearTrials.map(x=>x.status),
    provisionalContactReduction:results.neutralRearTrials.map(x=>x.bestProvisional?.originalSourcePoseCrossingSum-x.bestProvisional?.trialSourcePoseCrossingSum||0),
    measuredBodyFitTrialStatus:results.measuredBodyFitTrials.map(x=>x.status),

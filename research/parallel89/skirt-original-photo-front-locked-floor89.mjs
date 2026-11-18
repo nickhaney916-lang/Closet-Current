@@ -102,6 +102,9 @@ export function auditOriginalPhotoFrontLockedCollisionFloor89({
    throw Error('original-photo-front-index-partition-mismatched');
   const rows=[];
   let front=0,rear=0,transition=0,all=0;
+  // Six ORIGINAL adjacent seven-photo-row strips, never inferred anatomical
+  // regions. Keep raw BVH face IDs and physical coordinates private.
+  const sourceStrips=Array.from({length:6},()=>({pairs:0,faces:new Set()}));
   for(const pose of POSES){
    applyPose(pose);
    const snapshot=snapshotOriginalSkirtBvhContact89(sampleContact(pose),
@@ -110,14 +113,21 @@ export function auditOriginalPhotoFrontLockedCollisionFloor89({
     snapshot.trueOriginalSkirtTriangleIndexStable!==true)
     throw Error('true-original-source-body-indexed-pair-receipt-missing');
    let f=0,r=0,t=0;
+   const poseFrontStrips=new Array(6).fill(0);
    for(const key of snapshot.pairs){
     const skirtFace=Number(key.split('|')[0]);
     const zone=classifySourcePhotoSkirtIndexedFace89(skirtFace).photoRegion;
-    if(zone==='PHOTOGRAPH_FRONT_LOCKED')f++;
-    else if(zone==='UNPHOTOGRAPHED_REAR_PROVISIONAL')r++;
+    if(zone==='PHOTOGRAPH_FRONT_LOCKED'){
+     f++;
+     const strip=Math.floor(skirtFace/96);
+     poseFrontStrips[strip]++;
+     sourceStrips[strip].pairs++;
+     sourceStrips[strip].faces.add(skirtFace);
+    }else if(zone==='UNPHOTOGRAPHED_REAR_PROVISIONAL')r++;
     else t++;
    }
-   if(f+r+t!==snapshot.count)throw Error('real-original-contact-pair-zone-count-mismatch');
+   if(f+r+t!==snapshot.count||poseFrontStrips.reduce((a,b)=>a+b,0)!==f)
+    throw Error('real-original-contact-pair-zone-count-mismatch');
    for(const [attr,copy] of watched)if(!same(attr.array,copy))
     throw Error('original-source-photo-UV-face-or-rig-buffer-mutated');
    if(mesh.geometry!==original)throw Error('original-source-skirt-geometry-replaced');
@@ -127,10 +137,20 @@ export function auditOriginalPhotoFrontLockedCollisionFloor89({
     unphotographedNeutralRearHypothesisCrossings:r,
     sourceFrontRearTransitionTriangleCrossings:t,
     minimalCrossingsFromUnmodifiedPhotographFront:f,
+    photographedFrontContactPairsByOriginalAlphaStrip:Object.freeze(poseFrontStrips),
     sourcePoseBVHIndexedFaceIDsValidated:true
    }));
    front+=f;rear+=r;transition+=t;all+=snapshot.count;
   }
+  const stripRows=Object.freeze(sourceStrips.map((x,strip)=>Object.freeze({
+   alphaStripIndex:strip,
+   originalFrontContactPairWitnessesAcrossFivePoses:x.pairs,
+   distinctOriginalFrontSourceTrianglesContacted:x.faces.size,
+   posesWithOriginalFrontContact:rows.filter(row=>
+    row.photographedFrontContactPairsByOriginalAlphaStrip[strip]>0).length
+  })));
+  if(stripRows.reduce((sum,x)=>sum+x.originalFrontContactPairWitnessesAcrossFivePoses,0)!==front)
+   throw Error('real-original-contact-pair-zone-count-mismatch');
   return Object.freeze({
    schema:'P89-original-photographed-front-locked-anatomy-contact-floor/v1',
    status:front>0?'ORIGINAL_PHOTO_FRONT_LOCKED_COLLISIONS_PREVENT_REAR_ONLY_CLEARANCE':
@@ -145,6 +165,8 @@ export function auditOriginalPhotoFrontLockedCollisionFloor89({
    originalFivePoseNames:POSES,
    originalWholeBodyStrictCrossingsAcrossFivePoses:all,
    immutablePhotographFrontCollisionFloorAcrossFivePoses:front,
+   originalPhotoFrontContactBySixMeasuredAlphaStrips:stripRows,
+   originalAlphaStripsDoNotProvePhysicalHeightOrAnatomicalFit:true,
    originalNeutralRearHypothesisCrossingsAcrossFivePoses:rear,
    originalSourceTransitionCrossingsAcrossFivePoses:transition,
    rearOnlyFitCannotEliminatePhotographFrontContact:front>0,
