@@ -44,6 +44,18 @@ function check(x){
   assert.equal(b.upperPlaneIndexedComponents,
    b.sourceIndexedEdgeConnectedBothPlanes+b.upperOnlyIndexedComponents);
   assert.equal(b.onlyOriginalVertexIndexSharedEdgesCountAsConnections,true);
+  assert.equal(b.originalSourceSharedEdgeMustIntersectOpenSlabInterior,true);
+  assert.equal(b.boundaryOnlyAndOutsideSharedEdgesNeverJoinSlabFaces,true);
+  assert.equal(b.originalSourceZeroLengthEdgesNeverJoinSlabFaces,true);
+  assert.equal(b.originalIndexedSharedEdgeAdjacencies,
+   b.originalIndexedSharedEdgesWithOpenSlabInterior+
+   b.originalIndexedSharedEdgesOutsideOrOnSlabBoundary+
+   b.originalIndexedZeroLengthSourceEdgesRejected);
+  assert.equal(b.eligibleOriginalSelectedSourceFaces,
+   b.selectedSourceFacesWithPositiveSlabInterior+
+   b.selectedSourceFacesOnlyTouchingSlabBoundary);
+  assert.ok(b.originalIndexedNonmanifoldEdgesWithinOpenSlab<=
+   b.originalIndexedNonmanifoldEdges);
   assert.equal(b.restSkinCompatibleVirtualUVSeamsNeverJoined,true);
  }
  return r;
@@ -118,4 +130,60 @@ test('fail closed on bad original index, malformed photo, nonfinite vertices, mi
   {...box,skirtPositions:new Float32Array(12)},
   {...box,bodyIndices:Uint16Array.from([0,0,2])}
  ])assert.throws(()=>audit(bad));
+});
+
+test('EXACT original index shared edge entirely ABOVE slab must not join two surfaces inside slab',()=>{
+ const x=input([
+  0,1.8,0, 1,1.8,0, 0,.2,1, 0,.2,-1
+ ],[0,1,2,1,0,3]);
+ const v=check(x);
+ for(const part of v.originalAdjacentSlabSourceEdgeConnectivity){
+  assert.equal(part.originalIndexedSharedEdgeAdjacencies,1);
+  assert.equal(part.originalIndexedSharedEdgesWithOpenSlabInterior,0);
+  assert.equal(part.originalIndexedSharedEdgesOutsideOrOnSlabBoundary,1);
+  assert.equal(part.sourceIndexedEdgeConnectedBothPlanes,2,
+   'two disconnected original surfaces must not be merged outside cropped slab');
+ }
+});
+test('EXACT original index shared edge entirely BELOW slab also cannot join clipped face interiors',()=>{
+ const x=input([0,.2,0,1,.2,0,0,1.8,1,0,1.8,-1],
+  [0,1,2,1,0,3]);
+ const v=check(x);
+ for(const part of v.originalAdjacentSlabSourceEdgeConnectivity){
+  assert.equal(part.originalIndexedSharedEdgeAdjacencies,1);
+  assert.equal(part.originalIndexedSharedEdgesWithOpenSlabInterior,0);
+  assert.equal(part.originalIndexedSharedEdgesOutsideOrOnSlabBoundary,1);
+  assert.equal(part.sourceIndexedEdgeConnectedBothPlanes,2);
+ }
+});
+test('shared edge ON photographed lower height boundary is not valid interior bridge',()=>{
+ const x=input([0,.6,0,1,.6,0,0,1.8,1,0,1.8,-1],
+  [0,1,2,1,0,3]);
+ const v=check(x);
+ const first=v.originalAdjacentSlabSourceEdgeConnectivity[0];
+ assert.equal(first.originalIndexedSharedEdgeAdjacencies,1);
+ assert.equal(first.originalIndexedSharedEdgesWithOpenSlabInterior,0);
+ assert.equal(first.originalIndexedSharedEdgesOutsideOrOnSlabBoundary,1);
+ assert.equal(first.sourceIndexedEdgeConnectedBothPlanes,2);
+});
+test('source shared edge physically spanning open slab is a genuine local edge bridge',()=>{
+ const x=input([0,.2,0,1,1.8,0,0,1.8,1,0,1.8,-1],
+  [0,1,2,1,0,3]);
+ const v=check(x);
+ for(const part of v.originalAdjacentSlabSourceEdgeConnectivity){
+  assert.equal(part.originalIndexedSharedEdgeAdjacencies,1);
+  assert.equal(part.originalIndexedSharedEdgesWithOpenSlabInterior,1);
+  assert.equal(part.originalIndexedSharedEdgesOutsideOrOnSlabBoundary,0);
+  assert.equal(part.sourceIndexedEdgeConnectedBothPlanes,1);
+ }
+});
+test('zero-length source-index edge never authorizes geometric continuity',()=>{
+ const x=input([0,.2,0,0,.2,0,1,1.8,0,-1,1.8,0],
+  [0,1,2,1,0,3]);
+ const v=check(x);
+ for(const part of v.originalAdjacentSlabSourceEdgeConnectivity){
+  assert.equal(part.originalIndexedSharedEdgesWithOpenSlabInterior,0);
+  assert.equal(part.originalIndexedZeroLengthSourceEdgesRejected,0);
+  assert.equal(part.originalIndexedSharedEdgesOutsideOrOnSlabBoundary,1);
+ }
 });
