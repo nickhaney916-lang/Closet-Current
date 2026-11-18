@@ -96,6 +96,17 @@ export function auditOriginalWholeBodyCoreRayCauses89({
    y=(cloth[k+1]+cloth[op+1])/2;
   if(!finite(y)||y<.15||y>2.6||Math.abs(cloth[k+1]-cloth[op+1])>.025)
    return no('source-photo-7height-plane-invalid');
+  // Two opposite source vertices alone do not establish that the other 47
+  // skinned skirt ring spokes share the body plane used by every ray.
+  // Reject samples exceeding the original 25 mm ring-level tolerance.
+  let minRingY=Infinity,maxRingY=-Infinity;
+  for(let spoke=0;spoke<=48;spoke++){
+   const height=cloth[(band*49+spoke)*3+1];
+   minRingY=Math.min(minRingY,height);
+   maxRingY=Math.max(maxRingY,height);
+  }
+  if(maxRingY-minRingY>.025)
+   return no('posed-photo-skirt-ring-slice-not-planar');
   const seg=[];
   let coreCuts=0,wholeCuts=0,excludedCuts=0;
   for(let f=0;f<ix.length/3;f++){
