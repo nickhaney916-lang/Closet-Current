@@ -1,0 +1,117 @@
+name: MAIN217 PHOTO119 post-commit signed session lease NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main217-photo119-transaction-terminal-session-lease-HOLD]
+  pull_request:
+    branches: [research/main215-m210-m213-retired-photo-owner-lease-24mp-HOLD]
+permissions:
+  contents: read
+jobs:
+  photo119-postcommit-lease:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin M215 accepted original exact source, strict three path mutation fence
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=f7534e0d1a9be48284d6be3eedd205420b7e1931
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              public/native-reviewed-private-save-167.mjs|tests/main217-photo119-postcommit-session-revoke.test.mjs|.github/workflows/main217-photo119-transaction-final-signed-session-no-deploy.yml) ;;
+              *) echo "M217 unexpected source change $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse f7534e0d1a9be48284d6be3eedd205420b7e1931:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
+          test "$(git rev-parse HEAD:public/native-reviewed-shared-original-157.mjs)" = 2108bdc2f0a67b8e356ea8c47d0042512ca618bf
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          node --check tests/main217-photo119-postcommit-session-revoke.test.mjs
+      - name: Install genuine private IndexedDB and reviewed source test dependency
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4
+      - name: M217 true IDB after-write before completion signed session revocation proof
+        run: node --test tests/main217-photo119-postcommit-session-revoke.test.mjs
+      - name: Install pinned actual PWA and inherited security regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original owner-reviewed private PHOTO119 atomic IndexedDB evidence
+        run: node --test tests/manual-reviewed-private-save-119.test.mjs
+      - name: Inherited full owner source photo privacy backup recognition suite and no deploy build
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  native-reviewed-owner-browser:
+    name: Original-photo reviewed owner source, v3, 24MP, 2D and no-write (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P99_ENGINE: ${{ matrix.engine }}
+      M51_ENGINE: ${{ matrix.engine }}
+      M58_ENGINE: ${{ matrix.engine }}
+      M123_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: '390'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require exact M215 source, one source finish-lease change and 2 test/CI files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=f7534e0d1a9be48284d6be3eedd205420b7e1931
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              public/native-reviewed-private-save-167.mjs|tests/main217-photo119-postcommit-session-revoke.test.mjs|.github/workflows/main217-photo119-transaction-final-signed-session-no-deploy.yml) ;;
+              *) echo "M217 forbidden changed source file $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
+          test "$(git rev-parse HEAD:public/native-reviewed-shared-original-157.mjs)" = 2108bdc2f0a67b8e356ea8c47d0042512ca618bf
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Pin genuine Chromium-WebKit and full 24MP original image runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build normal native PWA without deploy
+        run: node scripts/build.mjs
+      - name: Actual original owner photo to private saved outfit and v3 restore mobile 320 390 430
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+          done
+      - name: Actual signed owner private original JPEG reentry and owner B denial
+        run: node scripts/test-main51-real-app-owner-original-2d.mjs
+      - name: Two distinct synthetic owner reviewed cutouts same original to 2D v3 restore
+        run: node scripts/test-main157-same-photo-native-outfit-browser.mjs
+      - name: Genuine P88 WASM public licensed original camera 4000x6000 source
+        env:
+          P96_NATIVE_4K: 'true'
+        run: node scripts/test-parallel96-native-highres-browser.mjs
+      - name: Genuine full owner-private items and state no-write under 24MP source revocation
+        env:
+          P96_NATIVE_4K: 'true'
+        run: node scripts/test-main172-24mp-private-state-invariance.mjs
