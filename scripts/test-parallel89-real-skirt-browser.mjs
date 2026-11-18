@@ -1515,6 +1515,11 @@ try{
  assert.equal(results.registrationTrials.length,2);
  assert.equal(results.measuredBodyFitTrials.length,2);
  assert.equal(results.neutralRearTrials.length,2);
+ assert.equal(results.originalSkirtOpenPanelTopologyAudits.length,10,
+  'actual photographed skirt and source 163bone all five research poses missing');
+ assert.equal(results.originalSkirtOpenPanelNativePreviews.length,4,
+  'both hypothetical detachable panels on each real male and female rig required');
+ assert.equal(results.originalSkirtOpenPanelNativePreviews.every(x=>x.consumer3DAdmitted===false),true);
  assert.equal(results.captures.length,54);
  assert.equal(results.captures.filter(x=>
   x.name?.startsWith('selected-five-pose-source-skirt-')).length,18,
