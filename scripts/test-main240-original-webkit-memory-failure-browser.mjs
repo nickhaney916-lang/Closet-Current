@@ -69,7 +69,7 @@ const addon=[
  'const m240Start='+JSON.stringify('  p101WasmProbe(requestId);\n')+';',
  "assert.equal(diagWorker.split(m240Start).length,2,'M240 model start moved');",
  "diagWorker=diagWorker.replace(m240Start,'  p101WasmProbe(requestId);\\n  p237Install(requestId);\\n  p238Install(requestId);\\n  p239Attach(requestId);\\n  p240Start(requestId);\\n');",
- "diagWorker='const p240MemPatternArm='+JSON.stringify(arm)+';\\n'+diagWorker;",
+ "diagWorker='const p240MemPatternArm='+JSON.stringify("+JSON.stringify(arm)+")+';\\n'+diagWorker;",
  "const p240PatternNeedle="+JSON.stringify("...(p101SessionMode==='arena_off'?{session_options:{enableCpuMemArena:false}}:{})")+";",
  "assert.equal(diagWorker.split(p240PatternNeedle).length,2,'Original ONNX session-options source moved');",
  "diagWorker=diagWorker.replace(p240PatternNeedle,"+JSON.stringify("...(p101SessionMode==='arena_off'?{session_options:{enableCpuMemArena:false}}:p240MemPatternArm==='pattern_off'?{session_options:{enableMemPattern:false}}:{})")+");",
