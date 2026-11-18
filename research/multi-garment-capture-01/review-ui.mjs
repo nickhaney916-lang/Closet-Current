@@ -595,12 +595,22 @@ export function mountMultiGarmentCapture24({
      if(data.type==='done'||data.type==='error'){
       next.terminal=true;
       next.p88Intake57?.close();
-      Promise.all(next.pending).finally(()=>{
+      // MODEL222: a crop/render failure is not a rejected *whole* worker run.
+      // Drain every accepted proposal safely. Keep usable unverified crops,
+      // original JPEG and explicit manual review without a page-level
+      // unhandled rejection or silently implying all proposals succeeded.
+      Promise.allSettled(next.pending).then(outcomes=>{
        if(job!==next)return;
        const failed=data.type==='error';
+       const failedCrops=outcomes.filter(x=>x.status==='rejected').length;
        clearTimeout(next.timeout);next.worker.terminate();job=null;
        redraw();
        status.textContent=failed?'Automatic extraction unavailable. Add and crop pieces manually; no items saved.':
+        failedCrops?
+         state.pieces.length+' unverified region'+(state.pieces.length===1?'':'s')+' available; '+
+         failedCrops+' region'+(failedCrops===1?'':'s')+' could not be prepared for review. '+
+         'Your verified original photo is retained. Use Add missed piece, adjust the crop and confirm details manually. '+
+         'Nothing was automatically saved.':
         state.pieces.length+' unverified region'+(state.pieces.length===1?'':'s')+' found. '+
          (next.ignored?next.ignored+' extra, duplicate or invalid detector proposals were ignored for mobile reliability. ':'')+
          'Stronger suggestions appear first, other regions remain below. Inspect each crop or Add missed piece.';
