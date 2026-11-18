@@ -31,7 +31,7 @@ const replaceExactly=(source,anchor,insert,why)=>{
 // genuine model's accepted piece is converted to a candidate review crop.
 // The actual original Worker/SegFormer/real source and all owner-save code
 // run unchanged; no positive model response is mocked.
-const marker='  async function addDetected(raw,session){';
+const marker=' async function addDetected(raw,session){';
 let ui=replaceExactly(sourceUI.toString('utf8'),marker,
  marker+"\n   if(window.__main222InjectedCropFault!==true){window.__main222InjectedCropFault=true;throw Error('MAIN222 synthetic single crop-preparation rejection');}",
  'one accepted-crop fault');
