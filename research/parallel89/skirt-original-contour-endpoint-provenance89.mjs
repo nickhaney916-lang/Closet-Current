@@ -9,6 +9,7 @@
 import {auditVirtualContourPlanarity89} from './skirt-virtual-loop-planarity89.mjs';
 import {auditVirtualContourArrangement89} from './skirt-virtual-contour-arrangement89.mjs';
 import {auditOriginalIndexedSlabConnectivity89} from './skirt-original-indexed-slab-connectivity89.mjs';
+import {auditOriginalIndexedSevenHeightComponents89} from './skirt-original-seven-height-component89.mjs';
 const PHOTO='c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344';
 const RIG=Object.freeze({
  female:'a571a5872a5f9d75c013ce6d88b3484436cf2109bf133fbc31e42c41f52389f1',
@@ -389,6 +390,21 @@ export function summarizeSourceContourEndpointProvenance89({
    b.lowerPlaneCutSelectedFaces!==rings[i].sourceOriginal95ContourSegments||
    b.upperPlaneCutSelectedFaces!==rings[i+1].sourceOriginal95ContourSegments))
   throw Error('true-original-index-slab-planes-not-reconciled');
+ const originalSevenHeightIndexedComponentProof=auditOriginalIndexedSevenHeightComponents89({
+  bodyPositions,bodyIndices,
+  selectedSourceFaceMask:Uint8Array.from(faces,f=>f.selected?1:0),
+  skirtPositions
+ });
+ if(originalSevenHeightIndexedComponentProof.selectedOriginalIndexedFaceCount!==
+     originalIndexedSourceSlabs.selectedOriginalFaceCount||
+   originalSevenHeightIndexedComponentProof.originalSixClippedSourceSlabs.some((b,i)=>
+    b.originalActiveSourceTriangles>
+     originalIndexedSourceSlabs.originalAdjacentSlabSourceEdgeConnectivity[i]
+      .eligibleOriginalSelectedSourceFaces||
+    b.actualSourceOpenSlabIndexedEdgeLinks>
+     originalIndexedSourceSlabs.originalAdjacentSlabSourceEdgeConnectivity[i]
+      .originalIndexedSharedEdgesWithOpenSlabInterior))
+  throw Error('true-sevenheight-source-face-component-vs-slab-not-reconciled');
  if(sum(Object.values(totals))!==openTotal||
   supportTotal+poseCoincidentTotal+noneTotal!==openTotal)
   throw Error('original-source-ring-endpoint-provenance-nonconservative');
@@ -402,6 +418,7 @@ export function summarizeSourceContourEndpointProvenance89({
   originalSourceUniqueMutualVirtualPairCount:mutualSeamPairs,
   originalSourceCounterfactualClosedLoopCount:counterfactualCycles,
   originalIndexedSourceAdjacentSlabConnectivity:originalIndexedSourceSlabs,
+  originalSevenHeightSourceIndexedComponentProof:originalSevenHeightIndexedComponentProof,
   sourceIndexOrRestSkinCandidateEndpointTotal:supportTotal,
   posedOnlyCoincidenceUntrustedEndpointTotal:poseCoincidentTotal,
   originalNoMatchingEndpointTotal:noneTotal,
@@ -480,6 +497,16 @@ export function auditSourceContourEndpointProvenance89(args={}){
     'selected-original-source-degenerate-index-face',
     'original-source-slab-edge-component-conservation-failed',
     'true-original-index-slab-planes-not-reconciled',
+    'original-sevenheight-indexed-source-input-required',
+    'original-sevenheight-body-nonfinite',
+    'original-sevenheight-skirt-nonfinite',
+    'original-sevenheight-source-index-out-of-bounds',
+    'original-sevenheight-mask-not-binary',
+    'original-sevenheight-photographed-bands-not-strict',
+    'original-sevenheight-repeated-source-vertex-index',
+    'original-sevenheight-active-source-graph-unbounded',
+    'original-sevenheight-source-component-coverage-not-conservative',
+    'true-sevenheight-source-face-component-vs-slab-not-reconciled',
    'original-source-ring-endpoint-provenance-nonconservative'
   ]);
   return fail(whitelist.has(e.message)?e.message:'source-original-index-skin-rest-provenance-failed-closed');
