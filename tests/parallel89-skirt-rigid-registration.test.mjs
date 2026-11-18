@@ -86,6 +86,24 @@ test('test-only photo-skirt rigid registration can find a reduction but never au
  assert.equal(row.bestResearchOnly.introducedFivePoseSourceFacePairIDs,0);
  assert.ok(row.trials.every(t=>t.intermediatePoseContactChecks.length===2));
  assert.equal(row.bestResearchOnly.displacementMeters,.015);
+ const sourceFront=row.bestResearchOnly.genuinePhotoFrontSourceStripRegistrationEvidence;
+ assert.equal(sourceFront.schema,'P89-original-photo-front-rigid-registration-six-alpha-strips/v1');
+ assert.deepEqual(sourceFront.originalFrontPairsBySixSourceAlphaStrips,[20,0,0,0,0,0]);
+ assert.deepEqual(sourceFront.trialFrontPairsBySixSourceAlphaStrips,[10,0,0,0,0,0]);
+ assert.deepEqual(sourceFront.newlyIntroducedFrontPairsBySixSourceAlphaStrips,[0,0,0,0,0,0]);
+ assert.deepEqual(sourceFront.persistedFrontPairsBySixSourceAlphaStrips,[10,0,0,0,0,0]);
+ assert.deepEqual(sourceFront.posesWithOriginalFrontContactsBySourceStrip,[5,0,0,0,0,0]);
+ assert.deepEqual(sourceFront.posesWithTrialFrontContactsBySourceStrip,[5,0,0,0,0,0]);
+ assert.equal(sourceFront.originalFrontPairSum,20);
+ assert.equal(sourceFront.trialFrontPairSum,10);
+ assert.equal(sourceFront.introducedFrontPairSum,0);
+ assert.equal(sourceFront.noPhysicalSizeOrDepthCertifiableFromSinglePhoto,true);
+ assert.equal(sourceFront.physicalTapeWaistAndLengthMeasurementsAbsent,true);
+ assert.equal(sourceFront.photographCameraExtrinsicsAndPerspectiveUnverified,true);
+ assert.equal(sourceFront.sourceAlphaStripIsNotCalibratedAnatomicalHeight,true);
+ assert.equal(sourceFront.evenZeroFrontPairsWouldNotProveWearableFit,true);
+ assert.equal(sourceFront.originalPhoto2DFallbackRequired,true);
+ assert.equal(sourceFront.consumer3DAdmitted,false);
  assert.deepEqual(row.actualIntermediatePoseNamesChecked,['blend-25','blend-75']);
  assert.equal(row.originalIntermediatePoseStrictBodyCrossingPairs.length,2);
  assert.equal(row.bestResearchOnly.intermediatePoseContactChecks.length,2);
@@ -110,6 +128,45 @@ test('test-only photo-skirt rigid registration can find a reduction but never au
  assert.deepEqual(x.mesh.geometry.getAttribute('position').array,x.photoPositions);
  assert.deepEqual(x.mesh.geometry.getAttribute('uv').array,x.sourceUV);
  assert.deepEqual(x.mesh.geometry.getAttribute('skinWeight').array,x.weight);
+});
+test('a controlled front registration shows exactly which actual photo strip contacts are reduced without inventing camera calibration',()=>{
+ const x=fixture(),raw=x.photoPositions.slice();
+ const report=run(x,'reduce',{
+  sampleContact:()=>{
+   const changed=x.mesh.geometry!==x.original;
+   const geometry=x.mesh.geometry.getAttribute('position').array;
+   const forward=changed&&geometry[2]-raw[2]>.01;
+   const keys=forward?['0|45','575|72']:['0|45','192|58','575|72'];
+   return {count:keys.length,pairs:new Set(keys),maxDepth:.001,
+    trueOriginalSkirtTriangleIndexStable:true,
+    trueOriginalBodyTriangleIndexStable:true,
+    originalFaceSourceResolution:'BVH_INDIRECT_RESOLVED_ORIGINAL_TRIANGLE_INDICES'};
+  }
+ });
+ assert.equal(report.status,'RESEARCH_REGISTRATION_REDUCED_STATIC_PAIRS_NOT_WEARABLE');
+ const observed=report.bestResearchOnly.genuinePhotoFrontSourceStripRegistrationEvidence;
+ assert.deepEqual(observed.originalFrontPairsBySixSourceAlphaStrips,[5,0,5,0,0,5]);
+ assert.deepEqual(observed.trialFrontPairsBySixSourceAlphaStrips,[5,0,0,0,0,5]);
+ assert.deepEqual(observed.posesWithOriginalFrontContactsBySourceStrip,[5,0,5,0,0,5]);
+ assert.deepEqual(observed.posesWithTrialFrontContactsBySourceStrip,[5,0,0,0,0,5]);
+ assert.deepEqual(observed.newlyIntroducedFrontPairsBySixSourceAlphaStrips,[0,0,0,0,0,0]);
+ assert.equal(observed.trialFrontPairSum,10);
+ assert.equal(observed.sourceOriginalPhotographFrontOnly,true);
+ assert.equal(observed.noPhysicalSizeOrDepthCertifiableFromSinglePhoto,true);
+ assert.equal(report.consumer3DAdmitted,false);
+ assert.equal(x.mesh.geometry,x.original);
+ assert.deepEqual(x.mesh.geometry.getAttribute('position').array,raw);
+ assert.equal(JSON.stringify(observed).includes('575|72'),false);
+});
+test('an in-range source face reorder cannot be reported as genuine measured front alpha-strip fit',()=>{
+ const x=fixture(),original=x.original.index.array;
+ original[1]=original[2];
+ const report=run(x);
+ assert.equal(report.status,'REAL_PHOTOGRAPHED_SKIRT_REGISTRATION_NOT_VERIFIED');
+ assert.equal(report.reason,'original source skirt triangle index does not match photo strip topology');
+ assert.equal(report.consumer3DAdmitted,false);
+ assert.equal(report.releaseAuthorized,false);
+ assert.equal(x.mesh.geometry,x.original);
 });
 test('five original poses choose minimum displaced garment with best total BVH score',()=>{
  const x=fixture(),r=run(x,'quarter-rank');

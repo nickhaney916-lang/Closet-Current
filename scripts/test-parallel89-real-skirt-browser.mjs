@@ -353,6 +353,13 @@ try{
   assert.equal(registration.bestResearchCandidateSelectedByFivePosePairSumThenMinimumDisplacement,true);
   assert.equal(registration.candidateMustPassAllFiveSourcePoses,true);
   assert.ok(registration.originalFivePoseStrictCrossingPairSum>=before);
+  // Reconcile the existing original five-pose rigid A/B baseline with the
+  // independently true-original photographed front floor from this same
+  // Commons-0043 avatar, source SHA, 163-bone rig and P84 BVH.
+  const originalFrontByStrip=frontFloor.originalPhotoFrontContactBySixMeasuredAlphaStrips.map(
+   strip=>strip.originalFrontContactPairWitnessesAcrossFivePoses);
+  assert.deepEqual(originalFrontByStrip.length,6);
+  assert.ok(originalFrontByStrip.every(v=>Number.isSafeInteger(v)&&v>=0));
   assert.equal(registration.maximumExploratoryOriginalWaistForwardRegistrationMeters,.06);
   assert.equal(registration.photoRegistrationCandidatesRequireIndependentPhotoFidelityReview,true);
   assert.equal(registration.original3PoseStrictBodyCrossingPairs,before);
@@ -363,6 +370,35 @@ try{
   assert.equal(registration.consumer3DAdmitted,false);
   assert.equal(registration.releaseAuthorized,false);
   for(const t of registration.trials){
+   const fromOriginal=t.genuinePhotoFrontSourceStripRegistrationEvidence;
+   assert.equal(fromOriginal.schema,
+    'P89-original-photo-front-rigid-registration-six-alpha-strips/v1');
+   assert.equal(fromOriginal.sourceOriginalPhotographFrontOnly,true);
+   assert.equal(fromOriginal.allFiveOriginalBodyPoseComparisonsRetained,true);
+   assert.equal(fromOriginal.sourceAlphaStripIsNotCalibratedAnatomicalHeight,true);
+   assert.equal(fromOriginal.photographCameraExtrinsicsAndPerspectiveUnverified,true);
+   assert.equal(fromOriginal.physicalTapeWaistAndLengthMeasurementsAbsent,true);
+   assert.equal(fromOriginal.noPhysicalSizeOrDepthCertifiableFromSinglePhoto,true);
+   assert.equal(fromOriginal.evenZeroFrontPairsWouldNotProveWearableFit,true);
+   assert.equal(fromOriginal.originalPhoto2DFallbackRequired,true);
+   assert.equal(fromOriginal.consumer3DAdmitted,false);
+   assert.equal(fromOriginal.releaseAuthorized,false);
+   assert.deepEqual(fromOriginal.originalFrontPairsBySixSourceAlphaStrips,
+    originalFrontByStrip,'original true-photo front BVH strip counts changed across A/B');
+   assert.equal(fromOriginal.originalFrontPairSum,
+    frontFloor.immutablePhotographFrontCollisionFloorAcrossFivePoses);
+   assert.equal(fromOriginal.originalFrontPairSum,
+    fromOriginal.originalFrontPairsBySixSourceAlphaStrips.reduce((a,b)=>a+b,0));
+   assert.equal(fromOriginal.trialFrontPairSum,
+    fromOriginal.trialFrontPairsBySixSourceAlphaStrips.reduce((a,b)=>a+b,0));
+   assert.equal(fromOriginal.introducedFrontPairSum,
+    fromOriginal.newlyIntroducedFrontPairsBySixSourceAlphaStrips.reduce((a,b)=>a+b,0));
+   assert.ok(fromOriginal.trialFrontPairSum<=t.trialFivePoseStrictCrossingPairSum);
+   assert.ok(fromOriginal.introducedFrontPairSum<=t.introducedFivePoseSourceFacePairIDs);
+   assert.ok(fromOriginal.trialFrontPairsBySixSourceAlphaStrips.every(v=>
+    Number.isSafeInteger(v)&&v>=0));
+   assert.ok(fromOriginal.posesWithTrialFrontContactsBySourceStrip.every(v=>
+    Number.isSafeInteger(v)&&v>=0&&v<=5));
    assert.equal(t.actual163BoneBodyTriangleBVHAcrossThreePoses,true);
    assert.equal(t.identicalOriginalSourceFaceIDsAcrossRebuiltBVHs,true);
    assert.equal(t.useOfBVHIndirectIndexMappingVerified,true);
@@ -1895,6 +1931,13 @@ try{
    provisionalContactReduction:results.neutralRearTrials.map(x=>x.bestProvisional?.originalSourcePoseCrossingSum-x.bestProvisional?.trialSourcePoseCrossingSum||0),
    measuredBodyFitTrialStatus:results.measuredBodyFitTrials.map(x=>x.status),
    photoSkirtRegistrationStatus:results.registrationTrials.map(x=>x.status),
+   originalPhotoFrontRigidRegistrationAB:results.registrationTrials.map(x=>({
+    avatar:x.avatar,originalFrontPhotoStrips:x.trials[0]?.genuinePhotoFrontSourceStripRegistrationEvidence?.originalFrontPairsBySixSourceAlphaStrips,
+    bestResearchTrial:x.bestResearchOnly?.name??null,
+    bestTrialFrontPhotoStrips:x.bestResearchOnly?.genuinePhotoFrontSourceStripRegistrationEvidence?.trialFrontPairsBySixSourceAlphaStrips??null,
+    bestTrialFrontPairSum:x.bestResearchOnly?.genuinePhotoFrontSourceStripRegistrationEvidence?.trialFrontPairSum??null,
+    noPhysicalGarmentOrCameraCalibrationClaim:true
+   })),
    sourceSelectedOriginalPhotoFrontCoverage:results.selectedResearchFrontCoverage.map(x=>x.status),
    selectedRegistrationTrueFivePoseNativeChecks:results.selectedResearchPoseChecks.length,
    sourceTrueWorldRadialGapCheckCount:results.selectedSourceBodyRadialGapAudits.length,
