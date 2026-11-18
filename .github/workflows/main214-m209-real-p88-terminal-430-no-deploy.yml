@@ -1,0 +1,89 @@
+name: MAIN214 genuine P88 WebKit 430 terminal cause no deploy HOLD
+on:
+  push:
+    branches: [research/main214-m209-webkit-p94-terminal-cause-HOLD]
+  pull_request:
+    branches: [research/main209-m205r-m206-preview-focus-integration-HOLD]
+    paths:
+      - scripts/test-main214-native-p88-terminal-observer.mjs
+      - .github/workflows/main214-m209-real-p88-terminal-430-no-deploy.yml
+permissions:
+  contents: read
+jobs:
+  pinned-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0, persist-credentials: false}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Deny protected model, app, owner data or test assertion modification
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          PARENT=0a0fe5e4355ec9857915da3b6d8d0964cca57b3a
+          git merge-base --is-ancestor "$PARENT" HEAD
+          expected="$(printf '%s\n' '.github/workflows/main214-m209-real-p88-terminal-430-no-deploy.yml' 'scripts/test-main214-native-p88-terminal-observer.mjs')"
+          test "$(git diff --name-only "$PARENT" HEAD)" = "$expected"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:tests/main206-pending-owner-focus-reentry.test.mjs)" = 511c0f174c35ebae42ebd49f07ea9c3de6201f96
+          test "$(git rev-parse HEAD:tests/main204-restore-source-revocation.test.mjs)" = db61ee39f972b25f07a6579607e1213e2c6f6dbc
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          git diff --exit-code "$PARENT" HEAD -- public/ tests/ supabase/ benchmark/ research/
+          node --check scripts/test-main214-native-p88-terminal-observer.mjs
+          node --check scripts/test-parallel94-native-p88-browser.mjs
+          node --check public/outfit-worker-p94.mjs
+  real-browsers:
+    needs: pinned-source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0, persist-credentials: false}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Maintain exact source in BOTH genuine browser models
+        shell: bash
+        run: |
+          set -euo pipefail
+          PARENT=0a0fe5e4355ec9857915da3b6d8d0964cca57b3a
+          git merge-base --is-ancestor "$PARENT" HEAD
+          expected="$(printf '%s\n' '.github/workflows/main214-m209-real-p88-terminal-430-no-deploy.yml' 'scripts/test-main214-native-p88-terminal-observer.mjs')"
+          test "$(git diff --name-only "$PARENT" HEAD)" = "$expected"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          git diff --exit-code "$PARENT" HEAD -- public/ supabase/ benchmark/
+      - name: Install pinned original real P88 WASM browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Real original model across 320,390,430 and sustained 430 once more; NO RETRIES
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430 430; do
+            echo "M214_REAL_MODEL_ATTEMPT_BEGIN engine=${M58_ENGINE} width=$width noRetries=true"
+            P94_WIDTH="$width" node scripts/test-main214-native-p88-terminal-observer.mjs
+            echo "M214_REAL_MODEL_ATTEMPT_PASS engine=${M58_ENGINE} width=$width originalBoundedAssertion=true"
+          done
+          echo "M214_ALL_REAL_MODEL_ATTEMPTS_PASSED engine=${M58_ENGINE} total=4 noRetries=true noFakeMasks=true"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M214-${{ matrix.engine }}-P88-terminal-observer-HOLD
+          path: benchmark/parallel94-native-p88-browser/**/M214-P88-TERMINAL-TRACE.json
+          if-no-files-found: warn
+          retention-days: 7
