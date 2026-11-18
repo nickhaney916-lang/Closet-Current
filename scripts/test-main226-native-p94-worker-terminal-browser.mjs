@@ -61,8 +61,8 @@ replaceOnly(" await context.route('**/*',route=>{",
  listener+" await context.route('**/*',route=>{",'read-only real native Worker');
 const category=[
  "function m226Category226(status){",
- " if(/unverified region/i.test(status))return 'reviewable';",
  " if(/no unverified garment regions/i.test(status))return 'zero-regions';",
+ " if(/unverified region/i.test(status))return 'reviewable';",
  " if(/automatic extraction unavailable|could not start/i.test(status))return 'worker-unavailable';",
  " if(/timed out/i.test(status))return 'timeout';",
  " return status?'other-status':'no-status';",
