@@ -178,3 +178,68 @@ test('a skinned source-photo ring tilted at an unsampled spoke cannot be audited
   assert.equal(f.skirtPositions[(ring*49+24)*3+1],original[(ring*49+24)*3+1]);
  }
 });
+
+test('source-locked original 48-quad indexed strip remains valid for both rigs and Uint32 indices',()=>{
+ for(const avatar of ['female','male'])for(const type of [Uint16Array,Uint32Array]){
+  const f=fixture();
+  f.avatar=avatar;
+  if(avatar==='male')f.sourceAnatomyGLBSHA256=
+   'd15a07e2b4cf1d08a3b91cb212a9a06a91438077f05a3f2a62f45351e8a71eb8';
+  f.skirtIndices=new type(f.skirtIndices);
+  const before=f.skirtIndices.slice(),photo=f.skirtPositions.slice();
+  const x=safe(evaluate(f));
+  assert.equal(x.originalPhoto2DFallbackRequired,true);
+  assert.deepEqual(f.skirtIndices,before);
+  assert.deepEqual(f.skirtPositions,photo);
+ }
+});
+test('a dropped or duplicated source triangle cannot be laundered by unchanged radial body evidence',()=>{
+ const f=fixture(),source=f.skirtIndices.slice();
+ // Retain in-range 1,728 original indices but duplicate one vertex,
+ // making the first source face degenerate.
+ f.skirtIndices[2]=f.skirtIndices[0];
+ const prior=priorAudit({...f,selectedMeasuredFivePoseBvh:true});
+ assert.equal(prior.schema,'P89-actual-original-163bone-source-radial-body-gap/v1');
+ const x=evaluate(f);
+ assert.equal(x.status,'ORIGINAL_WHOLE_VS_SELECTED_CORE_RAY_EVIDENCE_UNVERIFIABLE');
+ assert.equal(x.reason,'original-photo-skirt-indexed-triangle-topology-mismatch');
+ assert.equal(x.consumer3DAdmitted,false);
+ assert.equal(x.originalPhoto2DFallbackRequired,true);
+ assert.notDeepEqual(f.skirtIndices,source);
+});
+test('skirt index strip must reject reversed winding and cross-height shortcuts at any original band',()=>{
+ for(const row of [0,3,5])for(const mode of ['reverse','bridge']){
+  const f=fixture(),at=(row*48+12)*6,old=f.skirtIndices.slice();
+  if(mode==='reverse'){
+   const t=f.skirtIndices[at];f.skirtIndices[at]=f.skirtIndices[at+1];
+   f.skirtIndices[at+1]=t;
+  }else{
+   f.skirtIndices[at+2]=f.skirtIndices[at+2]-49;
+  }
+  const x=evaluate(f);
+  assert.equal(x.status,'ORIGINAL_WHOLE_VS_SELECTED_CORE_RAY_EVIDENCE_UNVERIFIABLE');
+  assert.equal(x.reason,'original-photo-skirt-indexed-triangle-topology-mismatch');
+  assert.equal(x.releaseAuthorized,false);
+  assert.deepEqual(f.skirtIndices.slice(0,at),old.slice(0,at));
+ }
+});
+test('a split source seam cannot appear closed merely because j=0..47 body rays agree',()=>{
+ for(const row of [0,3,6]){
+  const f=fixture(),first=(row*49)*3,last=(row*49+48)*3;
+  const source=f.skirtPositions.slice();
+  f.skirtPositions[last]+=.004; // 4mm seam tear not sampled by 48 rays.
+  const x=evaluate(f);
+  assert.equal(x.status,'ORIGINAL_WHOLE_VS_SELECTED_CORE_RAY_EVIDENCE_UNVERIFIABLE');
+  assert.equal(x.reason,'original-photo-skirt-source-seam-disconnected');
+  assert.equal(x.originalPhoto2DFallbackRequired,true);
+  assert.equal(x.consumer3DAdmitted,false);
+  assert.deepEqual(f.skirtPositions.slice(0,first),source.slice(0,first));
+ }
+});
+test('original duplicated seam accepts sub-tolerance numeric skinning noise, no release promotion',()=>{
+ const f=fixture();
+ f.skirtPositions[48*3]+=.00002;
+ const x=safe(evaluate(f));
+ assert.equal(x.consumer3DAdmitted,false);
+ assert.equal(x.releaseAuthorized,false);
+});
