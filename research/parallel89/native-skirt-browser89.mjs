@@ -18,6 +18,8 @@ import {compareActualMeasuredSkirtFit89} from './skirt-body-measured-fit89.mjs';
 import {compareActualOriginalPhotoSkirtRegistration89} from './skirt-rigid-registration89.mjs';
 import {auditOriginalSkirtPhysicalRegistration89}
  from './skirt-physical-registration89.mjs';
+import {proveOriginalPhotoMetricNonIdentifiability89}
+ from './skirt-photo-scale-identifiability89.mjs';
 import {auditDenseOriginalPhotoSkirtTransition89} from './skirt-original-dense-motion-contact89.mjs';
 import {auditOriginalSkirtWaistBoneAttachment89} from './skirt-waist-bone-landmarks89.mjs';
 import {auditSelectedOriginalSkirtRadialGap89} from './skirt-source-radial-gap89.mjs';
@@ -1673,6 +1675,53 @@ function auditSelectedRegistrationPhysicalCameraEvidence89(){
   consumer3DAdmitted:false,releaseAuthorized:false,familyAlpha:'HOLD'
  });
 }
+
+/**
+ * True source-attested original alpha strips. This demonstrates WHY the
+ * existing original single front JPEG cannot authenticate a metric skirt
+ * fit: two distinct trial garment-size/camera-scale worlds project exactly
+ * the same seven actual observed source rows. Source geometry is untouched.
+ * No typed museum measurements, inferred original back or camera claims.
+ */
+function auditOriginalPhotoMetricIdentifiability89(){
+ check(phase==='ready'&&source?.status===
+  'SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED'&&
+  source?.originalSHA256===SKIRT_SOURCE89.originalSHA256&&
+  source?.sourceId===SKIRT_SOURCE89.id&&
+  outline?.schema==='P89-source-measured-skirt-silhouette/v1'&&
+  candidate?.mesh?.isSkinnedMesh&&
+  candidate.mesh.skeleton?.bones?.length===163,
+  'true original source PHOTO and CC0 163bone body must be authenticated');
+ if(selectedPreview)check(
+  selectedPreview.name===lastRegistration?.bestResearchOnly?.name&&
+  selectedPreview.original?.getAttribute('sourceSkirt89Rest')?.count===343&&
+  selectedPreview.copy===candidate.mesh.geometry&&
+  lastRegistration?.bestResearchOnly?.researchOnlyNonworseningReduction===true,
+  'only original photo selected five-pose clone may be inspected');
+ const original=JSON.stringify(outline);
+ const report=proveOriginalPhotoMetricNonIdentifiability89({
+  sourceId:SKIRT_SOURCE89.id,museumAccession:'5152.1',
+  originalPhotoSHA256:source.originalSHA256,
+  originalCutoutSHA256:source.cutoutSHA256,
+  originalSourcePhotoAndCutoutAttested:true,
+  avatar:current,original163BoneGLBSHA256:MODELS[current].sha,
+  rigBoneCount:candidate.mesh.skeleton.bones.length,
+  pose,outline
+ });
+ check(report?.status===
+   'TWO_DISTINCT_UNCALIBRATED_WORLDS_SAME_SEVEN_ORIGINAL_ALPHA_ROWS'&&
+  report?.sourceId===source.sourceId&&
+  report?.originalPhoto2DFallbackRequired===true&&
+  report?.consumer3DAdmitted===false&&
+  report?.releaseAuthorized===false&&
+  JSON.stringify(outline)===original,
+  'authentic licensed skirt metric camera uncertainty not established');
+ return Object.freeze({...report,
+  selectedResearchRigidPreviewActive:!!selectedPreview,
+  selectedResearchRigidPreviewName:selectedPreview?.name??null,
+  trueOriginalPhotoAlphaBytesUntouched:true,
+  sourcePhotoPhysicalSizeRemainsUncalibrated:true});
+}
 function getState(){return Object.freeze({
  phase,avatar:current,sourceId:SKIRT_SOURCE89.id,originalSourceSHA256:source?.originalSHA256??null,
  originalCutoutSHA256:source?.cutoutSHA256??null,originalSkirtUnapproved:true,
@@ -1696,7 +1745,7 @@ function close(){if(selectedPreview)showOnlySelectedRegistration89(false,{draw:f
  if(rigid45Preview)showOnlySourceRigidRegistration45(false,{draw:false});
  lastRegistration=null;candidate?.dispose();candidate=null;scene.remove(root);root=null;
  renderer.dispose();renderer.forceContextLoss();phase='disposed';return true;}
-window.nativeP89Skirt=Object.freeze({getState,load,auditPhotoFrontCenterline89,auditLockedOriginalSourceFrontCollisionFloor89,auditSelectedRegistrationPhysicalCameraEvidence89,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,showOnlySelectedRegistration89,auditSelectedDenseOriginalRigTransition89,auditSelectedSourceRadialGap89,auditSelectedOriginalCoreUpperLimbVeto89,auditSelectedOriginalWholeVsCoreRayCauses89,auditSelectedOriginalUpperInwardSource89,auditSelectedOriginalSourceBodyClosure89,auditSelectedOriginalBodySeams89,auditSelectedOriginalBodyBoundaryRegions89,auditSelectedOriginalSkirtCoreSpan89,auditSelectedOriginalSkirtCoreRayUnknownCauses89,auditSelectedOriginalSkirtSourceBoneNamesNoHits89,auditSelectedOriginalSkirtCoreWeightSensitivity89,auditSelectedOriginalSkirtCoreNoHitGeometry89,auditSelectedOriginalSkirtSourceContourConnectivity89,auditSelectedOriginalSkirtEndpointSourceProvenance89,auditOnlyUnobservedRearRenderedPixels,close});
+window.nativeP89Skirt=Object.freeze({getState,load,auditPhotoFrontCenterline89,auditLockedOriginalSourceFrontCollisionFloor89,auditSelectedRegistrationPhysicalCameraEvidence89,auditOriginalPhotoMetricIdentifiability89,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,showOnlySelectedRegistration89,auditSelectedDenseOriginalRigTransition89,auditSelectedSourceRadialGap89,auditSelectedOriginalCoreUpperLimbVeto89,auditSelectedOriginalWholeVsCoreRayCauses89,auditSelectedOriginalUpperInwardSource89,auditSelectedOriginalSourceBodyClosure89,auditSelectedOriginalBodySeams89,auditSelectedOriginalBodyBoundaryRegions89,auditSelectedOriginalSkirtCoreSpan89,auditSelectedOriginalSkirtCoreRayUnknownCauses89,auditSelectedOriginalSkirtSourceBoneNamesNoHits89,auditSelectedOriginalSkirtCoreWeightSensitivity89,auditSelectedOriginalSkirtCoreNoHitGeometry89,auditSelectedOriginalSkirtSourceContourConnectivity89,auditSelectedOriginalSkirtEndpointSourceProvenance89,auditOnlyUnobservedRearRenderedPixels,close});
 try{await verifySource();await load('female');}catch(e){
  phase='error';const msg=String(e?.message||e).slice(0,250);
  errors.push(msg);status.textContent='Original-photo 2D fallback: '+msg+' · HOLD';
