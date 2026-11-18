@@ -131,13 +131,27 @@ function validateShape(value,{ownerId,mode='file'}={}){
   if(item.sourceSHA256&&!item.originalPhoto?.image&&!item.image)
    throw Error('RESTORE01 missing original image for pinned source');
  }
+ // V4 lossless backups retain retired inventory for owner history. A garment
+ // that is PRESENT but deleted/source-revoked must not be resurrected in any
+ // current/saved outfit by export or atomic restore. A legitimately MISSING
+ // historical outfit ID is kept unchanged for explicit owner reattachment.
+ const itemById=new Map(value.items.map(item=>[item.id,item]));
  for(const [id,row] of Object.entries(value.state)){
   if(!object(row)||row.id!==id)throw Error('RESTORE01 inconsistent state row identity');
   if(id==='draft'&&(!Array.isArray(row.batch)||row.batch.length>60))
    throw Error('RESTORE01 invalid draft');
   if(id==='looks'&&(!Array.isArray(row.looks)||row.looks.length>100))
    throw Error('RESTORE01 invalid inspiration looks');
-  if(id==='outfit-board')validateBoard02(row,{ownerId});
+  if(id==='outfit-board'){
+   validateBoard02(row,{ownerId});
+   for(const outfit of [row.current,...row.saved]){
+    for(const garmentId of Object.values(outfit.slots)){
+     const garment=itemById.get(garmentId);
+     if(garment&&(Boolean(garment.deleted)||Boolean(garment.sourceRevoked)))
+      throw Error('RESTORE01_RETIRED_OUTFIT_SOURCE');
+    }
+   }
+  }
  }
  return value;
 }
