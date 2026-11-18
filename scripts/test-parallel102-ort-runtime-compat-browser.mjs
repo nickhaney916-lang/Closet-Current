@@ -61,6 +61,19 @@ const requestAssetProbe="  context.on('request',request=>{try{const u=new URL(re
 // URL/HTTP fixture, but fulfill ONLY the pinned transformers library GET with
 // a locally generated source-locked CPU-only bundle. No model/photo/owner
 // source or acceptance assertion is changed. No raw binary or URL telemetry.
+// M234 independently owns testing the fixture MIME issue. P102 must still
+// serve its local CPU-only WASM with the official streaming MIME type;
+// this ONLY changes the disposable P94 test-server copy, never the app.
+if(mode==='cpu-rebundle'){
+ replaceOnce('const adapted=originalWithNegative.replace(originalRead,overrideRead)',[
+  'const p102OriginalMime="const mime={\\\'.js\\\':\\\'text/javascript\\\',\\\'.mjs\\\':\\\'text/javascript\\\',\\\'.html\\\':\\\'text/html\\\',";',
+  "assert.equal(originalWithNegative.split(p102OriginalMime).length,2,'P102 original static-server MIME source changed');",
+  "const p102CpuMime=originalWithNegative.replace(p102OriginalMime,",
+  " p102OriginalMime.replace('const mime={',\"const mime={'.wasm':'application/wasm',\"));",
+  'const adapted=p102CpuMime.replace(originalRead,overrideRead)'
+ ].join('\n'));
+}
+
 if(mode==='cpu-rebundle'){
  replaceOnce('const negativeRouteAllowed=originalModelAllowed+',
  [
