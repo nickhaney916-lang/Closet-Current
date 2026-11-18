@@ -65,7 +65,7 @@ function transactSnapshot(ownerDB,assertLease){
   }catch(error){reject(error);}
  });
 }
-function assertRawBoard(board,ids){
+function assertRawBoard(board,ids,itemsById){
  if(!plain(board)||!Array.isArray(board.saved)||board.saved.length>50||
     (board.current!==undefined&&!plain(board.current)))
   throw Error('LEGACY_ATOMIC_INVALID_BOARD');
@@ -74,6 +74,11 @@ function assertRawBoard(board,ids){
    throw Error('LEGACY_ATOMIC_INVALID_OUTFIT');
   for(const id of Object.values(part.slots||{})){
    if(typeof id!=='string'||!ids.has(id))throw Error('LEGACY_ATOMIC_MISSING_OUTFIT_PIECE');
+   // Historic original photos remain in private inventory; a deleted or
+   // source-revoked piece must not re-enter current/saved outfit slots.
+   const selected=itemsById.get(id);
+   if(Boolean(selected?.deleted)||Boolean(selected?.sourceRevoked))
+    throw Error('LEGACY_ATOMIC_RETIRED_OUTFIT_SOURCE');
   }
  }
 }
@@ -233,7 +238,7 @@ export async function prepareDefaultAtomicM3({
  if(nextLooks&&nextLooks.length>100)throw Error('LEGACY_ATOMIC_INSPIRATION_LIMIT');
  let board=null;
  if(own(input,'outfitBoard')&&input.outfitBoard!==null&&input.outfitBoard!==undefined){
-  assertRawBoard(input.outfitBoard,ids);
+  assertRawBoard(input.outfitBoard,ids,allItems);
   const closet=[...allItems.values()].map(normalizeClothing);
   const cleanCurrent=cleanOutfitBoard(input.outfitBoard.current||{},closet);
   const cleanSaved=input.outfitBoard.saved.map(row=>cleanOutfitBoard(row,closet));
