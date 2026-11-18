@@ -63,6 +63,10 @@ function reconcile(input){
  assert.equal(x.originalSourceSevenBandProvenanceReceipts.length,7);
  assert.equal(x.sourceOriginalPhotoAndGLBBuffersReadOnly,true);
  assert.equal(x.angleToOriginalPlaneCutEndpointIsOnlyAProxyNotGapOrClearance,true);
+ assert.equal(x.originalUnknownCoreLowDominanceSourceSkinTop3JointNames.reduce(
+  (n,x)=>n+x.rays,0),x.originalUnknownCoreLowDominanceSourceSkinRayCount);
+ assert.equal(x.unverifiedJointBlendNamesAreSourceEvidenceNotTrustedCoreLabel,true);
+
  assert.equal(x.consumer3DAdmitted,false);
  assert.equal(x.releaseAuthorized,false);
  return x;
@@ -87,6 +91,23 @@ test('unknown original source bone NAME comes directly from source skeleton, nev
  assert.equal(r.originalUnknownCoreRaySourcePrimaryMeshNames[0].label,
   '0:OriginalPublicModelMesh');
  assert.equal(r.originalSourceBoneLabelsNeverAutomaticallyReclassified,true);
+});
+test('actual original low-dominance vertex weights preserve top three REAL joint names without declaring torso fit',()=>{
+ const a=fixture({bone:'spine'});
+ for(let i=0;i<8;i++){
+  a.skinIndices.set([0,1,2,0],i*4);
+  a.skinWeights.set([.4,.35,.25,0],i*4);
+ }
+ const result=reconcile(a);
+ assert.equal(result.originalCoreUnknown,336);
+ assert.ok(result.originalUnknownCoreLowDominanceSourceSkinRayCount>0);
+ assert.equal(result.originalUnknownCoreRaySourcePrimaryBoneNames[0].label,
+  'ORIGINAL_UNRESOLVED_DOMINANT_WEIGHT');
+ assert.deepEqual(result.originalUnknownCoreLowDominanceSourceSkinTop3JointNames,
+  [{label:'spine + OriginalSourceBone1 + OriginalSourceBone2',
+   rays:result.originalUnknownCoreLowDominanceSourceSkinRayCount}]);
+ assert.equal(result.originalSourceBoneLabelsNeverAutomaticallyReclassified,true);
+ assert.equal(result.consumer3DAdmitted,false);
 });
 test('excluded original HEAD eye bone stays visibly attributed to SOURCE name rather than counted as core',()=>{
  const r=reconcile(fixture({bone:'eyeL'}));
