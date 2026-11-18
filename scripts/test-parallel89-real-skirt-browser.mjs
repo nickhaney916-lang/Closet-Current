@@ -81,7 +81,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
- selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalSkirtPhysicalScaleSurveys:[],originalSkirtWrapClosureRefusalTests:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,originalSkirtSourcePoseTransitionMotionRisk:[],errors:[],offsite:[],
+ selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalSkirtPhysicalScaleSurveys:[],originalSkirtWrapClosureRefusalTests:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,originalSkirtSourcePoseTransitionMotionRisk:[],originalSkirtSourceSelfContactPoseReports:[],errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -270,6 +270,48 @@ try{
   results.originalSkirtSourcePoseTransitionMotionRisk.push(motion);
   assert.equal((await page.evaluate(()=>window.nativeP89Skirt.getState())).pose,'source',
    'source pose not restored after original motion audit');
+  // New independent failure mode: 3D photographed skirt can intersect
+  // ITSELF despite original body collision checks. Inspect actual source
+  // indexed 576 skirt triangles in five real P541 163bone poses, including
+  // exact UV-split phantom seam neighbor exclusions. Never approve clothing.
+  const selfContact=await page.evaluate(()=>
+   window.nativeP89Skirt.auditOriginalSkirtSourceSelfContact89());
+  assert.equal(selfContact.schema,'P89-authentic-original-photo-skirt-self-contact-five-pose/v1');
+  assert.equal(selfContact.sourceId,'commons-0043');
+  assert.equal(selfContact.avatar,avatar);
+  assert.equal(selfContact.originalRigBoneCount,163);
+  assert.equal(selfContact.sourcePoseSamples,5);
+  assert.equal(selfContact.originalSourceSelfCrossingPoseReports.length,5);
+  assert.equal(selfContact.originalPhotographicSourceAndRigNotAltered,true);
+  assert.equal(selfContact.originalPhoto2DFallbackRequired,true);
+  assert.equal(selfContact.consumer3DAdmitted,false);
+  assert.equal(selfContact.continuousSweptSelfCollisionCertified,false);
+  assert.equal(selfContact.releaseAuthorized,false);
+  const sourceSelfPoses=['source','blend-25','blend-50','blend-75','relaxed'];
+  for(let i=0;i<5;i++){
+   const report=selfContact.originalSourceSelfCrossingPoseReports[i];
+   assert.equal(report.avatar,avatar);
+   assert.equal(report.pose,sourceSelfPoses[i]);
+   assert.equal(report.sourceId,'commons-0043');
+   assert.equal(report.originalPhotoTriangleCount,576);
+   assert.equal(report.originalSourceUVSplitSeamPairs,7);
+   assert.ok(report.excludedOnlySourceLocalNeighborGridFacePairs>0);
+   assert.ok(report.originalSourceNonlocalTriangleAabbCandidatePairs>=0);
+   assert.ok(report.originalStrictNonlocalTriangleSelfCrossings>=0);
+   assert.equal(report.originalSourceIndexAndSkinnedPositionArraysUntouched,true);
+   assert.equal(report.originalPhotoAndSkinnedRigNotExported,true);
+   assert.equal(report.rawSourceTrianglePairIDsNotExported,true);
+   assert.equal(report.coplanarFoldsAndNearContactsNotResolved,true);
+   assert.equal(report.continuousNonlinearBoneMotionAndClothDrapeNotCertified,true);
+   assert.equal(report.originalPhoto2DFallbackRequired,true);
+   assert.equal(report.consumer3DAdmitted,false);
+   assert.equal(report.releaseAuthorized,false);
+   assert.equal(report.originalSelfCrossingFaceHitsBySixSourceBands.reduce(
+    (a,n)=>a+n,0),2*report.originalStrictNonlocalTriangleSelfCrossings);
+  }
+  results.originalSkirtSourceSelfContactPoseReports.push(selfContact);
+  assert.equal((await page.evaluate(()=>window.nativeP89Skirt.getState())).pose,'source',
+   'original photo skirt source pose not restored after cloth self-contact audit');
   const trial=await page.evaluate(()=>window.nativeP89Skirt.trialNeutralRear());
   assert.ok([
    'BOUNDED_NEUTRAL_REAR_CONTACT_REDUCTION_NOT_CLEARANCE',
