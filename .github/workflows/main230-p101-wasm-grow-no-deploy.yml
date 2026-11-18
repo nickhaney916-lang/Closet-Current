@@ -1,0 +1,97 @@
+name: MAIN230 genuine WebKit WASM JavaScript memory grow boundary HOLD
+on:
+  push:
+    branches: [research/main230-p101-wasm-grow-observer-HOLD]
+  pull_request:
+    branches: [research/main229-p101-wasm-memory-access-classification-HOLD]
+permissions:
+  contents: read
+jobs:
+  full-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Guard immutable real source and only three M230 paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=82c91875cdef80654a10500c7f560369febe0813
+          git merge-base --is-ancestor "$BASE" HEAD
+          diff="$(git diff --name-only "$BASE" HEAD)"
+          test "$diff" = "$(printf '%s\n' '.github/workflows/main230-p101-wasm-grow-no-deploy.yml' 'scripts/test-parallel101-real-p94-model-init-stage-browser.mjs' 'tests/main230-p101-wasm-js-grow-observer.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
+          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = af15a9c08a81aa4064d1e5d1c4f0af0d855582c9
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = 4273abb310d0cf0b0aa95e0620c38c447a74a867
+          test "$(git rev-parse HEAD:tests/main230-p101-wasm-js-grow-observer.test.mjs)" = 30feeb85c026c85379e93786582b31b1d20a1574
+          node --check scripts/test-parallel101-real-p94-model-init-stage-browser.mjs
+          node --check tests/main230-p101-wasm-js-grow-observer.test.mjs
+      - name: Deterministic API pass-through and exception identity
+        run: node --test tests/main230-p101-wasm-js-grow-observer.test.mjs
+      - name: Install pinned test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Offline build and full inherited private owner/regression tests
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  real-native:
+    name: M230 pinned P94 genuine original session (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [webkit, chromium]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Protect original native pinned model and owner v4
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 82c91875cdef80654a10500c7f560369febe0813 HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = 4273abb310d0cf0b0aa95e0620c38c447a74a867
+          test "$(git rev-parse HEAD:public/native-lossless-v4-owner-acceptance-m3.mjs)" = e20f2b4926671e6ede769c4598894881d4318de8
+      - name: Install pinned browser and model dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: True source-positive WebKit/Chromium 320/430 cache baseline/off no retries
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$M58_ENGINE" = webkit ]; then
+            cases="320:baseline 430:baseline 430:baseline 320:browser_off 430:browser_off 430:browser_off"
+          else
+            cases="320:baseline 430:baseline 430:browser_off"
+          fi
+          index=0
+          for entry in $cases; do
+            index=$((index+1))
+            width="$(printf '%s' "$entry" | cut -d: -f1)"
+            mode="$(printf '%s' "$entry" | cut -d: -f2)"
+            echo "M230 genuine fresh $M58_ENGINE $entry attempt $index"
+            M214_ATTEMPT="M230-$M58_ENGINE-$width-$mode-$index" P101_CACHE_MODE="$mode" P94_WIDTH="$width" node scripts/test-parallel101-real-p94-model-init-stage-browser.mjs
+          done
