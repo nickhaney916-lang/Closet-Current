@@ -1,0 +1,118 @@
+name: MAIN237 real original WebKit ONNX memory pattern session A/B HOLD NO DEPLOY
+on:
+  push:
+    branches: [research/main237-webkit-ort-session-memory-pattern-HOLD]
+  pull_request:
+    branches: [fix/parallel101-webkit-p94-model-initialization-HOLD]
+permissions:
+  contents: read
+jobs:
+  original-node-and-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable original P101 and strictly only three research files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=9972c8f6d560811180c3d21981989cdc10355840
+          git merge-base --is-ancestor "$BASE" HEAD
+          changed="$(git diff --name-only "$BASE" HEAD)"
+          expected="$(printf '%s\n' '.github/workflows/main237-webkit-ort-memory-pattern-HOLD.yml' 'scripts/test-main237-original-webkit-mem-pattern-browser.mjs' 'tests/main237-original-webkit-memory-pattern.test.mjs')"
+          test "$changed" = "$expected"
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = ad8ab0eb33322a34f8cc3f45a1fe26feff87b2ab
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:scripts/test-main237-original-webkit-mem-pattern-browser.mjs)" = 510d79398f09d63e36e880ad5add40151f4eef0a
+          test "$(git rev-parse HEAD:tests/main237-original-webkit-memory-pattern.test.mjs)" = f0f898589e6b6a06e8b9a6be81e178345e22de46
+          node --check scripts/test-main237-original-webkit-mem-pattern-browser.mjs
+          node --check tests/main237-original-webkit-memory-pattern.test.mjs
+      - name: Install original and full security test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Deterministic exact source, memory-pattern option, and fail-closed negatives
+        run: node --test tests/main237-original-webkit-memory-pattern.test.mjs
+      - name: Unmodified original offline app build and inherited owner/privacy/security Node suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  native-original-webkit-chromium:
+    name: Original P94 real model and owner memory pattern A/B (${{ matrix.engine }} shard ${{ matrix.shard }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {engine: webkit, shard: 1}
+          - {engine: webkit, shard: 2}
+          - {engine: webkit, shard: 3}
+          - {engine: webkit, shard: 4}
+          - {engine: chromium, shard: 1}
+          - {engine: chromium, shard: 2}
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      SHARD: ${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable original P94 Worker/source/owner and exact three-path scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=9972c8f6d560811180c3d21981989cdc10355840
+          git merge-base --is-ancestor "$BASE" HEAD
+          changed="$(git diff --name-only "$BASE" HEAD)"
+          expected="$(printf '%s\n' '.github/workflows/main237-webkit-ort-memory-pattern-HOLD.yml' 'scripts/test-main237-original-webkit-mem-pattern-browser.mjs' 'tests/main237-original-webkit-memory-pattern.test.mjs')"
+          test "$changed" = "$expected"
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = ad8ab0eb33322a34f8cc3f45a1fe26feff87b2ab
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:scripts/test-main237-original-webkit-mem-pattern-browser.mjs)" = 510d79398f09d63e36e880ad5add40151f4eef0a
+          test "$(git rev-parse HEAD:tests/main237-original-webkit-memory-pattern.test.mjs)" = f0f898589e6b6a06e8b9a6be81e178345e22de46
+          node --check scripts/test-main237-original-webkit-mem-pattern-browser.mjs
+          node --check tests/main237-original-webkit-memory-pattern.test.mjs
+      - name: Install genuine original model/owner browser acceptance dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Six independent genuine P94 source-positive browser processes baseline versus memory pattern OFF
+        shell: bash
+        run: |
+          set -uo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          failures=0
+          for attempt in 1 2 3 4 5 6; do
+            if [ "$attempt" -le 3 ]; then mode=baseline; else mode=mem_pattern_off; fi
+            case "$attempt" in 1|4) width=320;; 2|5) width=390;; *) width=430;; esac
+            echo "::group::M237 native=$M58_ENGINE shard=$SHARD attempt=$attempt mode=$mode width=$width"
+            if M237_SESSION_MODE="$mode" P94_WIDTH="$width" M214_ATTEMPT="M237-${M58_ENGINE}-${SHARD}-${attempt}-${mode}" node scripts/test-main237-original-webkit-mem-pattern-browser.mjs; then
+              echo "M237_TRUE_MODEL_PASS engine=$M58_ENGINE shard=$SHARD attempt=$attempt mode=$mode width=$width"
+            else
+              code=$?
+              echo "::error::M237_TRUE_MODEL_RED engine=$M58_ENGINE shard=$SHARD attempt=$attempt mode=$mode width=$width exit=$code"
+              failures=$((failures+1))
+            fi
+            echo "::endgroup::"
+          done
+          echo "M237_TRUE_MODEL_SHARD_FINAL engine=$M58_ENGINE shard=$SHARD total=6 failures=$failures"
+          test "$failures" -eq 0
