@@ -1338,6 +1338,32 @@ try{
    const sh=eproof.originalSevenHeightSourceIndexedShellEligibility;
    const cause=sh.originalSevenHeightBoundaryCauseAudit;
    assert.equal(cause.schema,'P89-original-sevenheight-source-boundary-causes/v1');
+   const named=cause.originalUnmatchedAndMaskedEdgeRegions;
+   assert.equal(named.schema,'P89-original-unmatched-masked-edge-region-proof/v1');
+   assert.equal(named.allSevenHeightActualUnpairedIndexedEdges,10);
+   assert.equal(named.allSevenHeightMaskedOriginalNeighbourEdges,41);
+   assert.equal(named.anonymousUnpairedEdgeRegions.length,10);
+   assert.equal(named.groupedOriginalExcludedFaceRegions.reduce(
+    (n,x)=>n+x.count,0),41);
+   assert.equal(named.anonymousUnpairedEdgeRegions.every(x=>
+    typeof x.originalSourceMesh==='string'&&x.originalSourceMesh.length>0&&
+    x.originalDominantSourceBoneNames.length>=1&&
+    x.originalDominantBoneRegions.length>=1&&
+    x.midpointSkirtPhotoHeightBand.length>0&&
+    x.originalExactRestPoseSkinMeshTwinAbsent===true),true);
+   assert.equal(named.groupedOriginalExcludedFaceRegions.every(x=>
+    Number.isSafeInteger(x.count)&&x.count>0&&
+    typeof x.originalExcludedReason==='string'&&
+    x.originalExcludedNeighbourBones.length>=1&&
+    x.originalExcludedNeighbourBoneRegions.length>=1),true);
+   assert.equal(named.noUVSeamWelding,true);
+   assert.equal(named.noSourceFaceVertexIndicesOrCoordinatesReleased,true);
+   assert.equal(named.sourceEdgeMidpointHeightBandOnlyNotFullEdge3DPosition,true);
+   assert.equal(named.originalPhoto2DFallbackRequired,true);
+   assert.equal(named.consumer3DAdmitted,false);
+   assert.equal(named.releaseAuthorized,false);
+   assert.equal(JSON.stringify(named).includes('bodyPositions'),false);
+
    assert.equal(cause.originalSelectedIndexedOpenEdges,
     sh.sourceAllSevenHeightComponentBoundaryEdges);
    assert.equal(cause.originalMaskExcludedSameIndexedEdge+
