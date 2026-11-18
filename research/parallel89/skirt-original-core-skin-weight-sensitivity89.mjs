@@ -30,7 +30,6 @@ const refuse=reason=>Object.freeze({
  schema:'P89-real-photo-source-core-skin-weight-counterfactual/v1',
  status:'SOURCE_SKIN_WEIGHT_COUNTERFACTUAL_UNVERIFIED',reason,
  originalPhoto2DFallbackRequired:true,
- neverAuthorized3D:false, // eligibility is never granted
  signedExteriorContainmentCertified:false,releaseAuthorized:false,
  consumer3DAdmitted:false,familyAlpha:'HOLD'
 });
@@ -237,7 +236,6 @@ export function summarizeOriginalCoreSkinWeightSensitivity89({
    additional80BoneAttestedFacePlaneCuts:extra80.length});
  }
  if(Object.values(results).some(x=>sum(Object.values(x))!==336)||
-  recovered.counterfactual95&&
   ['counterfactual95','counterfactual80'].some(k=>
    sum(Object.values(recovered[k]))!==results.strict.unknown))
   throw Error('original-source-336-ray-counterfactual-not-conserved');
@@ -310,7 +308,6 @@ export function auditOriginalCoreWeightSensitivity89(args={}){
    status:'ORIGINAL_BONE_BLEND_SENSITIVITY_RESEARCH_NOT_WEARABLE',
    avatar,pose,sourcePhotoSHA256,sourceAnatomyGLBSHA256,
    evidence:p,
-   336OriginalCoreRaysCrossChecked:false, // audit never upgrades consumer fit
    originalCoreRaysCrossChecked336:true,
    originalRigSkinWeightsAndAllOriginalFacesReadOnly:true,
    sourcePhoto2DFallbackRequired:true,originalPhoto2DFallbackRequired:true,
