@@ -16,7 +16,7 @@ const originalPath='scripts/test-parallel94-native-p88-browser.mjs';
 const original=await readFile(originalPath,'utf8');
 const expectedSource='4f75a40cf153fa4b4d139d782b202dbe7bc55e41';
 const cacheMode=process.env.P101_CACHE_MODE||'baseline';
-assert.ok(['baseline','browser_off','wasm_off','both_off'].includes(cacheMode),'P101 only four explicit cache modes');
+assert.ok(['baseline','browser_off'].includes(cacheMode),'P101 only two v3.8.1-supported browser-cache modes');
 // M216: original test script's static M58 receipt names the OLD P94 worker.
 // Assert exact real source Git blobs and correct only that diagnostic receipt in
 // a disposable copy. All original substantive assertions remain unchanged.
@@ -113,7 +113,7 @@ const p101Patches=[["  const {AutoModelForSemanticSegmentation,AutoProcessor,Raw
 // Cache controls alter only the disposable worker setup, not the model/source/owner journey.
 const cacheConfig="env.allowLocalModels=false;env.useBrowserCache=true;env.backends.onnx.wasm.numThreads=1;env.backends.onnx.wasm.proxy=false;";
 assert.equal(diagWorker.split(cacheConfig).length,2,'original cache/worker setup moved');
-diagWorker=diagWorker.replace(cacheConfig,"env.allowLocalModels=false;env.useBrowserCache=!['browser_off','both_off'].includes(p101CacheMode);env.useWasmCache=!['wasm_off','both_off'].includes(p101CacheMode);env.backends.onnx.wasm.numThreads=1;env.backends.onnx.wasm.proxy=false;");
+diagWorker=diagWorker.replace(cacheConfig,"env.allowLocalModels=false;env.useBrowserCache=p101CacheMode!=='browser_off';env.backends.onnx.wasm.numThreads=1;env.backends.onnx.wasm.proxy=false;");
 for(const [needle,replacement] of p101Patches){
  assert.equal(diagWorker.split(needle).length,2,'P101 pinned model stage source moved');
  diagWorker=diagWorker.replace(needle,replacement);
