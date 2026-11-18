@@ -33,7 +33,7 @@ jobs:
           test "$(git rev-parse "$BASE":public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = f3b1b5046f4abc55755c8b5d1e8b39d4aea46b2a
           test "$(git rev-parse HEAD:public/p94-worker-terminal-codes.mjs)" = 0cafa407408e78b7e8ac191e5542526387e1aa51
-          test "$(git rev-parse HEAD:tests/main226-p94-terminal-diagnostic.test.mjs)" = 6f5c1120780623bffda21461819f345787654920
+          test "$(git rev-parse HEAD:tests/main226-p94-terminal-diagnostic.test.mjs)" = 4a8b3e2a5e14d4e4bfa0c9d3a5fa6844eb615591
           test "$(git rev-parse HEAD:scripts/test-main226-genuine-p94-terminal-codes-browser.mjs)" = 809ea82961f5d37c6dc4ac60959ef21334f59a80
           test "$(git rev-parse HEAD:scripts/test-main226-p94-crop-positive-compat-browser.mjs)" =  1dd26c89edf64744bd51443992ad402c677a164c
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
