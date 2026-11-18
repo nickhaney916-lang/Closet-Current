@@ -1,0 +1,749 @@
+name: MAIN212 M206 focus and M204 restore through original protected M58 seven-job NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main212-m209-m207-protected-m58-focus-restore-HOLD]
+  pull_request:
+    branches: [research/main209-m205r-m206-preview-focus-integration-HOLD]
+    paths: [.github/workflows/main212-m209-m206-focus-m204-restore-protected-m58-no-deploy.yml]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  m58-real-browser-worker-and-mask-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: M201 pin independently verified M199 exact product and review-receipt test blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          M199=8993da21fd5d103f25dbcb5eab36ed9498047cd7
+          git merge-base --is-ancestor "$M199" HEAD
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
+          test "$(git rev-parse HEAD:research/wardrobe-index-01/owner-wardrobe-index.mjs)" = 60581e3b00f6877bbb424d0c090d9ab294890277
+          test "$(git rev-parse HEAD:research/index-04/verified-saved-recognition.mjs)" = b84a47731e8775ac8a8b8d520fcdefc56ea46ba9
+          test "$(git rev-parse HEAD:tests/wardrobe-index-01.test.mjs)" = dd8e412f6f20ef540f6b7340e23f86ec919ce3a9
+          test "$(git rev-parse HEAD:tests/index-04-saved-recognition.test.mjs)" = 5580cd8bac5d0ddc810644e50269805c45034b42
+          test "$(git rev-parse HEAD:tests/main199-source-cutout-owner-proof.test.mjs)" = 526f627375112ed261bd7651613eb76ed2131814
+          test "$(git rev-parse HEAD:tests/multigarment-cutout-byte-116.test.mjs)" = 47efa493b8f442c26487b2e1b6ddc25923ceac38
+          test "$(git rev-parse HEAD:tests/p87-catalog-crosswalk.test.mjs)" = 5bef21fc5898bdf7ab4fda6097e2cbc2cf298993
+          test "$(git rev-parse HEAD:.github/workflows/main199-source-cutout-owner-proof-no-deploy.yml)" = 6479230f776614f487b673228180a1a25083f8d9
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
+          M205R=f90767e8a775b18722c55afea4a0dec875063fa9
+          M209=0a0fe5e4355ec9857915da3b6d8d0964cca57b3a
+          git merge-base --is-ancestor "$M209" HEAD
+          test "$(git rev-parse HEAD:.github/workflows/main209-m205r-m206-focus-source-gate-no-deploy.yml)" = 5d26aae412ce3180ec4edbd1363240ccc6060903
+          test "$(git rev-parse HEAD:tests/main206-pending-owner-focus-reentry.test.mjs)" = 511c0f174c35ebae42ebd49f07ea9c3de6201f96
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          node --check tests/main206-pending-owner-focus-reentry.test.mjs
+          git merge-base --is-ancestor "f6f7206f7bda1198958bdce06a7b51bc61a9c431" HEAD
+          git merge-base --is-ancestor "24571ba087e4bc21bac5a07a18769a945aaaa096" HEAD
+          git merge-base --is-ancestor "$M205R" HEAD
+          test "$(git rev-parse "8993da21fd5d103f25dbcb5eab36ed9498047cd7:public/native-default-atomic-import-m3.mjs")" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:tests/main204-restore-source-revocation.test.mjs)" = db61ee39f972b25f07a6579607e1213e2c6f6dbc
+          test "$(git rev-parse HEAD:.github/workflows/main205-m203-m204-source-restore-native-no-deploy.yml)" = 84298f9d7963adf586e5995b791017b4ac57a0d0
+          changed="$(git diff --name-only "$M209" HEAD)"
+          test "$changed" = ".github/workflows/main212-m209-m206-focus-m204-restore-protected-m58-no-deploy.yml"
+          node --check public/native-owner-wardrobe-index-167.mjs
+          node --check research/index-04/verified-saved-recognition.mjs
+          node --check research/wardrobe-index-01/owner-wardrobe-index.mjs
+      - name: Pin EXACT M57 parent, immutable P88 source and strict no-merge path allowance
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=8eed18265db2191afdb553147330e2db7e412750
+          P88=cc4554ef0104506a72bf0a28423fee52b6e4fff2
+          git merge-base --is-ancestor "$BASE" HEAD
+          git cat-file -e "$P88^{commit}"
+          test "$(git rev-parse "$P88:public/outfit-worker.mjs")" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse "$P88:public/outfit-segmentation.mjs")" = d357955dd8fdab7c0cb727ea597c270edd9309ac
+          test "$(git rev-parse "$P88:public/outfit-instance-review-840.mjs")" = 6324d8eda33024f166311f424392ed83363e4942
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
+          # M158: source-pin narrow M157 shared-original v3 contract, no 3D proof.
+          test "$(git rev-parse HEAD:public/native-reviewed-shared-original-157.mjs)" = bae0d09e5f990f8c88a6c7d2d3b9d28a84604f6a
+          test "$(git rev-parse HEAD:scripts/test-main157-same-photo-native-outfit-browser.mjs)" = c65c47091156c8996a1f463bff80b1c690b9fd90
+          test "$(git rev-parse HEAD:tests/main157-reviewed-shared-source-v3.test.mjs)" = c4d88f4a4beaadc8b4589f3d80fd955139ebd26e
+          node --check public/native-reviewed-shared-original-157.mjs
+          # M105: admit only the already-reviewed P93 M101 exporter correction.
+          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = 741e736ca107169c9e9861d803a49c2e6166e20b
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
+          git diff --exit-code "$BASE" HEAD -- public/ ':(exclude)public/native-owner-wardrobe-index-167.mjs' ':(exclude)public/outfit-capture.js' ':(exclude)public/outfit-board.js' ':(exclude)public/capture-navigation.js' ':(exclude)public/index.html' ':(exclude)public/native-2d-preview-p99.mjs' ':(exclude)public/native-outfit-source-plan-p99.mjs' ':(exclude)public/native-photo-3d-veto-p99.mjs' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-reviewed-shared-original-157.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ benchmark/ ':(exclude)benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg' research/multi-garment-capture-01/ ':(exclude)research/multi-garment-capture-01/review-ui.mjs' research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
+          # M78: only byte-verified donor application is permitted beyond
+          # the existing M58 native board; no other protected app edits.
+          DONOR=055f7a6569059c3845c0d8dc5960767fc944c6ac
+          git cat-file -e "$DONOR^{commit}"
+          test "$(git rev-parse "$DONOR:public/app.js")" = ce16b3e219ec9596ffd396264d882ade99590490
+          # M83: strict reviewed extension of the exact saved-photo donor,
+          # only source identity comparisons and duplicate UX may differ.
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          # M156: exact product/test assets verified in P94 #43977095961.
+          # Normal model, PHOTO119 owner save, private v3 and 3D gates unchanged.
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:public/outfit-instance-review-840.mjs)" = 6324d8eda33024f166311f424392ed83363e4942
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = d478fcf6e4e8889a23b1620b444667ac949da7a9
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          node --check public/outfit-worker-p94.mjs
+          node --check public/outfit-instance-review-840.mjs
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node --check scripts/test-parallel94-native-p88-browser.mjs
+          # M175: approved P99 real-user consumer shell and read-only native photo-only fallback.
+          test "$(git rev-parse HEAD:public/capture-navigation.js)" = 31223cd114984a72edf1cb0771122f320dc80ef9
+          test "$(git rev-parse HEAD:public/index.html)" = abd56ec794b44a447c9aac88129d6f6516180bd0
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
+          # M193: source-exact verified M190 retired identity filtering;
+          # this changes the private index only, never the hosted/app/worker/original.
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
+          test "$(git rev-parse HEAD:tests/main190-retired-duplicate-owner-index.test.mjs)" = cf9fd805e3a257378ac658b23d50a9a9339daa0c
+          # M189 immutable exact tests for source revocation before/during private reads.
+          test "$(git rev-parse HEAD:tests/main187-required-owner-assert-current.test.mjs)" = 392e8457c833a02ee4987cb4a302737a2c87d049
+          test "$(git rev-parse HEAD:tests/main188-owner-revoked-outfit-preview.test.mjs)" = b071964576659869bf11319aa335fb64a2bfe7a1
+          test "$(git rev-parse HEAD:public/native-photo-3d-veto-p99.mjs)" = 82b93d12d2fbcba146a190f5dce87a6ac5fc44af
+          # M182: immutable M181 consumer fallback + negative witness only; model Worker unchanged.
+          test "$(git rev-parse HEAD:public/outfit-capture.js)" = 8d55715ef09e34086d3c401ec38340bfc25f5fe8
+          test "$(git rev-parse HEAD:tests/outfit-capture.test.cjs)" = b254c78302136761e1edf336056f8b949832c0ec
+          test "$(git rev-parse HEAD:scripts/test-main181-zero-proposal-native-browser.mjs)" = ea1a5bdb7f0617c71695f9b0382afd6ff7d5f089
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
+          test "$(git rev-parse HEAD:research/parallel99-normal-journey-HOLD/NORMAL-MODE-CONTRACT.md)" = 56e96d56adf063754112534cc6d6817ceb054f1c
+          test "$(git rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 9b8c3b37d1d8116e4bf9bc6dbf7ea82e2752433d
+          test "$(git rev-parse HEAD:tests/capture-navigation.test.cjs)" = 5e7b16c7b44cf6c258e79fcb1a92f0b7c2dea129
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
+          grep -Fq 'const mission4Preview1054Active=true;' public/outfit-board.js
+          grep -Fq "'./native-2d-preview-p99.mjs'" public/outfit-board.js
+          test "$(git rev-parse HEAD:research/master-consolidation-1054/M179-ADOPT-M173-EXIF-ON-M175-HOLD.md)" = 8c2849f538e4a54157363763e123f8b3a3dddf15
+          # M179: source-byte EXIF orientation guard independently reviewed in M173.
+          # JPEG bytes remain SHA-immutable, no source model or crop admission if
+          # embedded TIFF orientation is 2..8 or unsupported, even if proof says 1.
+          # This adoption changes ONLY the opt-in high-res source check and tests.
+          # Retain all P99, M172, P88, owner, 3D-denial and no-deploy requirements.
+          # M171: M169 6/6 green exact public P96 research donor only.
+          # Original JPEG is public licensed test input; NO owner/cloud/3D scope change.
+          test "$(git rev-parse HEAD:benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg)" = 27864552c036f9bf089be147531c4da8ccdcb7d7
+          test "$(git rev-parse HEAD:research/parallel96-highres/LICENSED_CAMERA_ORIGINAL_FIXTURE.md)" = 9d9fda3b897aa624bff11e1f32d3bf6e447f16a7
+          test "$(git rev-parse HEAD:research/parallel96-highres/source-derivative-intake96.mjs)" = 1840c4496aefc28941f4c3de24a29bac1cb5e792
+          test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 58194c1bbcfca7b46f1c71b1ee0cc00c3dbc88c7
+          test "$(git rev-parse HEAD:tests/parallel96-highres-source-derivative.test.mjs)" = 2d913221968d4c09d9be33068efa80ef45b9de9b
+          node --check research/parallel96-highres/source-derivative-intake96.mjs
+          node --check scripts/test-parallel96-native-highres-browser.mjs
+          git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
+            case "$path" in
+              scripts/test-main58-actual-p88-wasm-browser.mjs|scripts/lib/owner-item-mutation91.mjs|scripts/test-browser-owner-mutation91.mjs|research/master-consolidation-1054/MILESTONE58.md|research/master-consolidation-1054/M179-ADOPT-M173-EXIF-ON-M175-HOLD.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|public/outfit-board.js|research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|tests/detector-manual-recovery-65.test.mjs|tests/invalid-selection-race-71.test.mjs|tests/review-source-epoch-34.test.mjs|tests/mission3-outfit-card-picker-owner-lease.test.cjs|tests/mission3-outfit-suggestion-owner-lease.test.cjs|public/app.js|scripts/test-main1054-duplicate-fence-browser.mjs|tests/main1054-saved-photo-duplicate-fence.test.mjs|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/automatic-indexing.test.cjs|public/native-default-atomic-import-m3.mjs|tests/mission3-default-atomic-backup-source-guard.test.mjs|scripts/test-main51-real-app-owner-original-2d.mjs|scripts/test-mission3-default-atomic-import-browser.mjs|public/native-default-verified-backup-export-m3.mjs|tests/main1054-m104-large-original-export-receipts.test.mjs|scripts/test-main1054-m106-preview-terminal-browser.mjs|scripts/test-main1054-m123-photo119-restore-2d-browser.mjs|public/native-reviewed-private-save-167.mjs|tests/main1054-m132-photo119-large-display-preview.test.mjs|tests/main1054-m148-preview-click-ownership.test.mjs|public/outfit-worker-p94.mjs|public/outfit-instance-review-840.mjs|research/multi-garment-capture-01/review-ui.mjs|scripts/test-parallel94-native-p88-browser.mjs|public/native-reviewed-shared-original-157.mjs|scripts/test-main157-same-photo-native-outfit-browser.mjs|tests/main157-reviewed-shared-source-v3.test.mjs|.github/workflows/main157-reviewed-shared-original-no-deploy.yml|scripts/test-parallel95-native-source-restore-reentry.mjs|tests/p95-exact-current-original-dom.test.mjs|benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg|research/parallel96-highres/LICENSED_CAMERA_ORIGINAL_FIXTURE.md|research/parallel96-highres/source-derivative-intake96.mjs|scripts/test-parallel96-native-highres-browser.mjs|tests/parallel96-highres-source-derivative.test.mjs|scripts/test-main172-24mp-private-state-invariance.mjs|public/capture-navigation.js|public/index.html|public/native-2d-preview-p99.mjs|public/native-outfit-source-plan-p99.mjs|public/native-photo-3d-veto-p99.mjs|research/parallel99-normal-journey-HOLD/NORMAL-MODE-CONTRACT.md|scripts/test-parallel99-normal-app-browser.mjs|tests/capture-navigation.test.cjs|.github/workflows/main173-unflagged-owner-24mp-no-deploy.yml|.github/workflows/main180-unmodified-webkit-firstload-no-deploy.yml|research/master-consolidation-1054/M180-WEBKIT-FIRSTLOAD-RELIABILITY-HOLD.md|.github/workflows/main181-zero-proposal-native-no-deploy.yml|public/outfit-capture.js|research/master-consolidation-1054/M181-ZERO-PROPOSAL-NATIVE-FAILCLOSED-HOLD.md|scripts/test-main181-zero-proposal-native-browser.mjs|tests/outfit-capture.test.cjs|.github/workflows/main183-outfit-session-epoch-no-deploy.yml|.github/workflows/main187-required-owner-lease-no-deploy.yml|.github/workflows/main188-owner-revoked-original-preview-no-deploy.yml|.github/workflows/main189-lease-revocation-crossmission-no-deploy.yml|tests/main187-required-owner-assert-current.test.mjs|tests/main188-owner-revoked-outfit-preview.test.mjs|research/master-consolidation-1054/M189-OWNER-REVOCATION-ADMISSION-HOLD.md|public/native-owner-wardrobe-index-167.mjs|tests/main190-retired-duplicate-owner-index.test.mjs|.github/workflows/main192-m189-m190-source-convergence-no-deploy.yml|.github/workflows/main193-m192-protected-m58-candidate-no-deploy.yml|public/native-owner-wardrobe-index-167.mjs|research/wardrobe-index-01/owner-wardrobe-index.mjs|research/index-04/verified-saved-recognition.mjs|tests/wardrobe-index-01.test.mjs|tests/index-04-saved-recognition.test.mjs|tests/main199-source-cutout-owner-proof.test.mjs|tests/multigarment-cutout-byte-116.test.mjs|tests/p87-catalog-crosswalk.test.mjs|.github/workflows/main199-source-cutout-owner-proof-no-deploy.yml|.github/workflows/main201-m199-protected-m58-no-deploy.yml|.github/workflows/main203-m201-protected-m173-unflagged-24mp-no-deploy.yml|.github/workflows/main205-m203-m204-source-restore-native-no-deploy.yml|tests/main204-restore-source-revocation.test.mjs|.github/workflows/main212-m209-m206-focus-m204-restore-protected-m58-no-deploy.yml|.github/workflows/main209-m205r-m206-focus-source-gate-no-deploy.yml|tests/main206-pending-owner-focus-reentry.test.mjs) ;;
+              *) echo "MAIN58 blocked unexpected change: $path"; exit 1;;
+            esac
+          done
+          node --check scripts/test-main58-actual-p88-wasm-browser.mjs
+          # M79: preserve real getAll semantics in inherited private-save
+          # synthetic IDB fixture after adopting the donor JPEG fence.
+          grep -Fq "getAll(){" tests/mission3-saved-photo-insert-cas.test.cjs
+          # M86: all three inherited native synthetic IDB writers must
+          # exercise real asynchronous getAll before source duplicate CAS.
+          grep -Fq "getAll(){" tests/mission3-auto-index-source-cas.test.cjs
+          grep -Fq "getAll(){" tests/automatic-indexing.test.cjs
+      - name: Extract exact immutable P88 browser worker + import graph (NO default public change)
+        shell: bash
+        run: |
+          set -euo pipefail
+          P88=cc4554ef0104506a72bf0a28423fee52b6e4fff2
+          mkdir -p .m57-exact-p88-donor/public
+          for file in outfit-worker.mjs outfit-segmentation.mjs outfit-instance-review-840.mjs photo-color.js; do
+            git show "$P88:public/$file" > ".m57-exact-p88-donor/public/$file"
+            test "$(git hash-object ".m57-exact-p88-donor/public/$file")" = "$(git rev-parse "$P88:public/$file")"
+          done
+          test "$(git hash-object .m57-exact-p88-donor/public/outfit-worker.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Verify exact immutable M59 research gallery now opt-in wired to real native consumer
+        shell: bash
+        run: |
+          set -euo pipefail
+          M59=d3aa25c850d0a73e90a539c4e90595c378b86d11
+          git cat-file -e "$M59^{commit}"
+          # M193 M59 gallery source guard: the index was replaced with the verified
+          # M190 byte-exact retirement fix; all other M59 original source blobs stay pinned.
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
+          for path in public/native-canonical-photo-source-167.mjs public/outfit-board-engine.js research/main-thread-integration-1054/source-to-outfit.mjs; do
+            test "$(git rev-parse "HEAD:$path")" = "$(git rev-parse "$M59:$path")"
+          done
+          for name in reviewed-photo-only-handoff59.mjs reviewed-photo-only-gallery59.mjs; do
+            path="research/master-consolidation-1054/$name"
+            test "$(git rev-parse "HEAD:$path")" = "$(git rev-parse "$M59:$path")"
+          done
+          test "$(git rev-parse HEAD:research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs)" = 2c06fcae0e8fb6f5099d313644951c7ff25c774d
+          test "$(git rev-parse HEAD:research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs)" = b607a3df58d8c50c0f7c4bb7c255daab4692a1d5
+          grep -Fq "get('reviewedPhotoGallery59')==='research'" public/outfit-board.js
+          node --check public/outfit-board.js
+          node --check research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
+          git diff --exit-code -- public/ research/multi-garment-capture-01/ supabase/
+      - name: Install isolated native browser dependencies (NO paid API/deploy)
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: P91 classify underlying Chromium protocol failures without protocol payloads
+        run: |
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const path='node_modules/playwright-core/lib/server/chromium/crExecutionContext.js';
+          const source=fs.readFileSync(path,'utf8');
+          const marker='function rewriteError(error) {';
+          if(!source.includes(marker))throw Error('Pinned Playwright diagnostic hook changed');
+          fs.writeFileSync(path,source.replace(marker,marker+`
+            const category=['Promise was collected','Cannot find context','Execution context was destroyed','Target closed'].find(value=>error.message.includes(value))||'other-protocol-error';
+            console.error('P91_PROTOCOL_ERROR_CATEGORY',category);
+          `));
+          JS
+      - name: P91 real IndexedDB commit, abort, owner replacement and document lifecycle regression
+        run: P91_ENGINE=${{ matrix.engine }} node scripts/test-browser-owner-mutation91.mjs
+      - name: Live original JPEG, native owner WebCrypto, exact P88 Worker, browser SegFormer WASM, NO SAVE
+        run: node scripts/test-main58-actual-p88-wasm-browser.mjs
+      - name: M156 installed native P88 source -> signed private closet -> 2D and v4 restore (3 mobile widths)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            P94_WIDTH="$width" node scripts/test-parallel94-native-p88-browser.mjs
+          done
+      - name: M171 native high-res P96 derived and unmodified 24MP public original in actual Chromium/WebKit
+        shell: bash
+        env:
+          P94_WIDTH: '390'
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
+          # Same installed P88/WASM native app, signed SYNTHETIC review, private 2D,
+          # exact original SHA, v3/v4 restore, and fitted 3D DENIAL.
+          node scripts/test-parallel96-native-highres-browser.mjs
+          P96_NATIVE_4K=true node scripts/test-parallel96-native-highres-browser.mjs
+      - name: M172 authentic 24MP same-session owner original/photo refusal MUST NOT WRITE any wardrobe/state records
+        shell: bash
+        env:
+          P94_WIDTH: '390'
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:scripts/test-main172-24mp-private-state-invariance.mjs)" = ad4cb6bfee719b6083b9abc6d11ade2551e77c58
+          test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 58194c1bbcfca7b46f1c71b1ee0cc00c3dbc88c7
+          node --check scripts/test-main172-24mp-private-state-invariance.mjs
+          P96_NATIVE_4K=true node scripts/test-main172-24mp-private-state-invariance.mjs
+      - name: Verify source-safe actual worker receipt, zero private saves and immutable donor
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const engine=process.env.M58_ENGINE;
+          if(!['chromium','webkit'].includes(engine))throw Error('M58 unknown browser engine');
+          const p=`benchmark/main58-real-p88-browser-worker/${engine}/M58-ACTUAL-P88-BROWSER-NO-SILENT-SAVE.json`;
+          const r=JSON.parse(fs.readFileSync(p,'utf8'));
+          if(r.actualBrowser!==engine||r.actualP88ModuleWorkerExecuted!==true||r.noSyntheticWorker!==true||
+             r.sourceVerified!==true||r.actualNativeApp!==true||
+             r.sourceGroupsUnverified<1||r.sourceGroupsUnverified>12||
+             r.ownerPrivateSaves!==0||r.humanAccuracyMeasured!==false||
+             r.physicalDevice!==false||r.hostedSignedRLS!==false||
+             r.familyAlpha!=='HOLD'||r.releaseAllowed!==false||
+             r.unexpectedOutbound.length!==0)
+            throw Error('M58 actual model worker or no-silent-save receipt is invalid');
+          console.log('M58 actual live browser donor worker real source proposals',r.sourceGroupsUnverified);
+          JS
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
+          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/native-owner-wardrobe-index-167.mjs' ':(exclude)public/outfit-capture.js' ':(exclude)public/outfit-board.js' ':(exclude)public/capture-navigation.js' ':(exclude)public/index.html' ':(exclude)public/native-2d-preview-p99.mjs' ':(exclude)public/native-outfit-source-plan-p99.mjs' ':(exclude)public/native-photo-3d-veto-p99.mjs' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-reviewed-shared-original-157.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ benchmark/ ':(exclude)benchmark/fixtures/commons-artist-cowrie-original-4000x6000-cc-by-sa-4.0.jpg' research/multi-garment-capture-01/ ':(exclude)research/multi-garment-capture-01/review-ui.mjs' research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
+      - name: Archive metrics ONLY (NO private photos, masked crops, model weights)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m58-${{ matrix.engine }}-real-p88-browser-wasm-original-JPEG-owner-HOLD
+          path: |
+            benchmark/main58-real-p88-browser-worker/${{ matrix.engine }}/M58-ACTUAL-P88-BROWSER-NO-SILENT-SAVE.json
+            benchmark/main58-real-p88-browser-worker/${{ matrix.engine }}/P91-LIFECYCLE.json
+          retention-days: 14
+          if-no-files-found: ignore
+
+  m58-unchanged-native-outfit-2d:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M51_ENGINE: ${{ matrix.engine }}
+      P99_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: M201 pin independently verified M199 exact product and review-receipt test blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          M199=8993da21fd5d103f25dbcb5eab36ed9498047cd7
+          git merge-base --is-ancestor "$M199" HEAD
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
+          test "$(git rev-parse HEAD:research/wardrobe-index-01/owner-wardrobe-index.mjs)" = 60581e3b00f6877bbb424d0c090d9ab294890277
+          test "$(git rev-parse HEAD:research/index-04/verified-saved-recognition.mjs)" = b84a47731e8775ac8a8b8d520fcdefc56ea46ba9
+          test "$(git rev-parse HEAD:tests/wardrobe-index-01.test.mjs)" = dd8e412f6f20ef540f6b7340e23f86ec919ce3a9
+          test "$(git rev-parse HEAD:tests/index-04-saved-recognition.test.mjs)" = 5580cd8bac5d0ddc810644e50269805c45034b42
+          test "$(git rev-parse HEAD:tests/main199-source-cutout-owner-proof.test.mjs)" = 526f627375112ed261bd7651613eb76ed2131814
+          test "$(git rev-parse HEAD:tests/multigarment-cutout-byte-116.test.mjs)" = 47efa493b8f442c26487b2e1b6ddc25923ceac38
+          test "$(git rev-parse HEAD:tests/p87-catalog-crosswalk.test.mjs)" = 5bef21fc5898bdf7ab4fda6097e2cbc2cf298993
+          test "$(git rev-parse HEAD:.github/workflows/main199-source-cutout-owner-proof-no-deploy.yml)" = 6479230f776614f487b673228180a1a25083f8d9
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
+          M205R=f90767e8a775b18722c55afea4a0dec875063fa9
+          M209=0a0fe5e4355ec9857915da3b6d8d0964cca57b3a
+          git merge-base --is-ancestor "$M209" HEAD
+          test "$(git rev-parse HEAD:.github/workflows/main209-m205r-m206-focus-source-gate-no-deploy.yml)" = 5d26aae412ce3180ec4edbd1363240ccc6060903
+          test "$(git rev-parse HEAD:tests/main206-pending-owner-focus-reentry.test.mjs)" = 511c0f174c35ebae42ebd49f07ea9c3de6201f96
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          node --check tests/main206-pending-owner-focus-reentry.test.mjs
+          git merge-base --is-ancestor "f6f7206f7bda1198958bdce06a7b51bc61a9c431" HEAD
+          git merge-base --is-ancestor "24571ba087e4bc21bac5a07a18769a945aaaa096" HEAD
+          git merge-base --is-ancestor "$M205R" HEAD
+          test "$(git rev-parse "8993da21fd5d103f25dbcb5eab36ed9498047cd7:public/native-default-atomic-import-m3.mjs")" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:tests/main204-restore-source-revocation.test.mjs)" = db61ee39f972b25f07a6579607e1213e2c6f6dbc
+          test "$(git rev-parse HEAD:.github/workflows/main205-m203-m204-source-restore-native-no-deploy.yml)" = 84298f9d7963adf586e5995b791017b4ac57a0d0
+          changed="$(git diff --name-only "$M209" HEAD)"
+          test "$changed" = ".github/workflows/main212-m209-m206-focus-m204-restore-protected-m58-no-deploy.yml"
+          node --check public/native-owner-wardrobe-index-167.mjs
+          node --check research/index-04/verified-saved-recognition.mjs
+          node --check research/wardrobe-index-01/owner-wardrobe-index.mjs
+      - name: Pin immutable M51 donor, M89 classified reporter and unchanged consumer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          M51=22f3db9f9d5dd34ff2d1323e59d3848935e65f4f
+          git cat-file -e "$M51^{commit}"
+          # Preserve immutable M51 donor while pinning the additive failure reporter.
+          test "$(git rev-parse "$M51:scripts/test-main51-real-app-owner-original-2d.mjs")" = 1150a6db461b1d5968183d1c9e798cac7ae88478
+          test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = 63cc9da00eaecbeb2576482dcae1528b44ea8189
+          node --check scripts/test-main51-real-app-owner-original-2d.mjs
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
+          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/native-owner-wardrobe-index-167.mjs' ':(exclude)public/outfit-capture.js' ':(exclude)public/outfit-board.js' ':(exclude)public/capture-navigation.js' ':(exclude)public/index.html' ':(exclude)public/native-2d-preview-p99.mjs' ':(exclude)public/native-outfit-source-plan-p99.mjs' ':(exclude)public/native-photo-3d-veto-p99.mjs' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-reviewed-shared-original-157.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ research/main-thread-integration-1054/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
+      - name: Install pinned isolated application test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: M167 execute ALL inherited M51 original/photo/session tests with one stable hit-target click and P95 source reentry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = 63cc9da00eaecbeb2576482dcae1528b44ea8189
+          test "$(git rev-parse HEAD:scripts/test-parallel95-native-source-restore-reentry.mjs)" = afbb22bcfb4373b9ae2525703ab8dd04ddf0b800
+          node --check scripts/test-parallel95-native-source-restore-reentry.mjs
+          node scripts/test-parallel95-native-source-restore-reentry.mjs
+      - name: M106 and M147 native Chromium/WebKit stale first-import + newer-click ownership regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
+          test "$(git rev-parse HEAD:scripts/test-main1054-m106-preview-terminal-browser.mjs)" = 016a266af467fea93a61315ad7738a2caec2da7d
+          node --check public/outfit-board.js
+          node --check scripts/test-main1054-m106-preview-terminal-browser.mjs
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync,rmSync} from 'node:fs';
+          import {spawnSync} from 'node:child_process';
+          const src=readFileSync('scripts/test-main1054-m106-preview-terminal-browser.mjs','utf8');
+          const replacements=[
+           ["5668a4bc6da2e94fc13d23392cd7fb4981d0bc2d",
+            "b8ed5ebe18e81ec3f8f5659257289b8217a6877b"],
+           ["research/main-thread-integration-1054/native-2d-preview.mjs",
+            "public/native-2d-preview-p99.mjs"],
+           ["0af20d49d87436683630d587ec0284c611cd3414",
+            "b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e"]
+          ];
+          let adapted=src;
+          for(const [old,newValue] of replacements){
+           assert.ok(adapted.includes(old),'M173 inherited M106 source or module path changed');
+           adapted=adapted.replaceAll(old,newValue);
+          }
+          // The SAME original M106 race/owner revocation assertions execute in
+          // a temporary test; only exact consumer blob and import path are pinned.
+          const path='scripts/.m173-normal-m106-repin.mjs';
+          try{
+           writeFileSync(path,adapted,{flag:'wx'});
+           const p=spawnSync(process.execPath,[path],{env:process.env,stdio:'inherit',timeout:12*60*1000});
+           if(p.error)throw p.error;
+           assert.equal(p.status,0,'M173 inherited M106 browser acceptance failed');
+          }finally{rmSync(path,{force:true});}
+          JS
+      - name: M175 REAL unflagged Home to reviewed private closet to saved 2D original outfit at 3 widths
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
+          node scripts/build.mjs
+          for file in native-2d-preview-p99.mjs native-outfit-source-plan-p99.mjs native-photo-3d-veto-p99.mjs; do
+            test -s "dist/$file"
+          done
+          for width in 320 390 430; do
+            P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+          done
+      - name: M123 actual native PHOTO119 reviewed-original to v3 UI restore to signed original 2D
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs)" = b76ffa0625d421a36a1cf3bcc00d109e9cea42b9
+          node --check scripts/test-main1054-m123-photo119-restore-2d-browser.mjs
+          M123_ENGINE=${{ matrix.engine }} node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs
+      - name: M158 native same-photo reviewed two-piece source -> v3 atomic restore -> 2D (both engines)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:scripts/test-main157-same-photo-native-outfit-browser.mjs)" = c65c47091156c8996a1f463bff80b1c690b9fd90
+          M123_ENGINE=${{ matrix.engine }} node scripts/test-main157-same-photo-native-outfit-browser.mjs
+      - name: Assert actual app three widths and no unjustified 3D or release
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const engine=process.env.M51_ENGINE;
+          const p=`benchmark/main51-real-app-owner-2d/${engine}/M51-native-owner-source-2d-NOT-RELEASE.json`;
+          const r=JSON.parse(fs.readFileSync(p,'utf8'));
+          if(r.engine!==engine||r.actualNativeAppShell!==true||
+             r.actualAppOwnerButtonUsed!==true||r.screenshotCount!==3||
+             r.cases?.length!==3||r.consumer3D!==false||r.releaseAuthorized!==false||
+             r.familyAlpha!=='HOLD'||r.realUserAccounts!==false||
+             r.hostedJWTAndRLS!==false||r.physicalAndroidIphone!==false)
+            throw Error('M58 inherited actual M51 app journey is incomplete');
+          for(const width of [320,390,430]){
+            const c=r.cases.find(x=>x.width===width);
+            if(!c||c.ownerBDeniedOldOwnerPhoto!==true||
+               c.sourceTamperRejected!==true||c.originalPhoto2DOnly!==true)
+              throw Error('M58 native app owner/source/2D veto failed for '+width);
+          }
+          console.log('M58 unchanged M51 real native owner 2D passed',engine,'at 320/390/430; no 3D admission');
+          JS
+      - name: Archive numeric owner/source receipts only, no private originals
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m58-${{ matrix.engine }}-native-original-2d-HOLD
+          path: benchmark/main51-real-app-owner-2d/${{ matrix.engine }}/M51-native-owner-source-2d-NOT-RELEASE.json
+          retention-days: 14
+          if-no-files-found: ignore
+
+  m58-native-lossless-restore-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: M201 pin independently verified M199 exact product and review-receipt test blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          M199=8993da21fd5d103f25dbcb5eab36ed9498047cd7
+          git merge-base --is-ancestor "$M199" HEAD
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
+          test "$(git rev-parse HEAD:research/wardrobe-index-01/owner-wardrobe-index.mjs)" = 60581e3b00f6877bbb424d0c090d9ab294890277
+          test "$(git rev-parse HEAD:research/index-04/verified-saved-recognition.mjs)" = b84a47731e8775ac8a8b8d520fcdefc56ea46ba9
+          test "$(git rev-parse HEAD:tests/wardrobe-index-01.test.mjs)" = dd8e412f6f20ef540f6b7340e23f86ec919ce3a9
+          test "$(git rev-parse HEAD:tests/index-04-saved-recognition.test.mjs)" = 5580cd8bac5d0ddc810644e50269805c45034b42
+          test "$(git rev-parse HEAD:tests/main199-source-cutout-owner-proof.test.mjs)" = 526f627375112ed261bd7651613eb76ed2131814
+          test "$(git rev-parse HEAD:tests/multigarment-cutout-byte-116.test.mjs)" = 47efa493b8f442c26487b2e1b6ddc25923ceac38
+          test "$(git rev-parse HEAD:tests/p87-catalog-crosswalk.test.mjs)" = 5bef21fc5898bdf7ab4fda6097e2cbc2cf298993
+          test "$(git rev-parse HEAD:.github/workflows/main199-source-cutout-owner-proof-no-deploy.yml)" = 6479230f776614f487b673228180a1a25083f8d9
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
+          M205R=f90767e8a775b18722c55afea4a0dec875063fa9
+          M209=0a0fe5e4355ec9857915da3b6d8d0964cca57b3a
+          git merge-base --is-ancestor "$M209" HEAD
+          test "$(git rev-parse HEAD:.github/workflows/main209-m205r-m206-focus-source-gate-no-deploy.yml)" = 5d26aae412ce3180ec4edbd1363240ccc6060903
+          test "$(git rev-parse HEAD:tests/main206-pending-owner-focus-reentry.test.mjs)" = 511c0f174c35ebae42ebd49f07ea9c3de6201f96
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          node --check tests/main206-pending-owner-focus-reentry.test.mjs
+          git merge-base --is-ancestor "f6f7206f7bda1198958bdce06a7b51bc61a9c431" HEAD
+          git merge-base --is-ancestor "24571ba087e4bc21bac5a07a18769a945aaaa096" HEAD
+          git merge-base --is-ancestor "$M205R" HEAD
+          test "$(git rev-parse "8993da21fd5d103f25dbcb5eab36ed9498047cd7:public/native-default-atomic-import-m3.mjs")" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:tests/main204-restore-source-revocation.test.mjs)" = db61ee39f972b25f07a6579607e1213e2c6f6dbc
+          test "$(git rev-parse HEAD:.github/workflows/main205-m203-m204-source-restore-native-no-deploy.yml)" = 84298f9d7963adf586e5995b791017b4ac57a0d0
+          changed="$(git diff --name-only "$M209" HEAD)"
+          test "$changed" = ".github/workflows/main212-m209-m206-focus-m204-restore-protected-m58-no-deploy.yml"
+          node --check public/native-owner-wardrobe-index-167.mjs
+          node --check research/index-04/verified-saved-recognition.mjs
+          node --check research/wardrobe-index-01/owner-wardrobe-index.mjs
+      - name: Pin tested inherited restore script and unchanged consumer source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
+          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/native-owner-wardrobe-index-167.mjs' ':(exclude)public/outfit-capture.js' ':(exclude)public/outfit-board.js' ':(exclude)public/capture-navigation.js' ':(exclude)public/index.html' ':(exclude)public/native-2d-preview-p99.mjs' ':(exclude)public/native-outfit-source-plan-p99.mjs' ':(exclude)public/native-photo-3d-veto-p99.mjs' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-reviewed-shared-original-157.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ research/multi-garment-capture-01/ ':(exclude)research/multi-garment-capture-01/review-ui.mjs' research/mission1-parallel88/ research/parallel89/
+          test -s scripts/test-mission3-lossless-v4-owner-acceptance-browser.mjs
+          node --check scripts/test-mission3-lossless-v4-owner-acceptance-browser.mjs
+      - name: Install pinned no-deploy browser/test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: M212 genuine pending original-photo focus owner-lease regression
+        run: node --test tests/main206-pending-owner-focus-reentry.test.mjs
+      - name: M207 enforce M204 deleted/revoked original restore lifecycle on real fake-indexeddb
+        run: node --test tests/main204-restore-source-revocation.test.mjs
+      - name: Run inherited owner-photo and source-mask negative checks
+        run: node --test tests/main49-licensed-original-photo-private-outfit-2d.test.mjs tests/main54-unresolved-multi-mask-owner-veto.test.mjs tests/main55-p88-source-key-lease.test.mjs tests/main56-source-mask-to-owner-intake.test.mjs tests/mission3-lossless-v4-owner-acceptance.test.mjs
+      - name: M87 legacy backup owner/source receipt and saved-board category no-downgrade regression
+        run: |
+          node --test tests/main157-reviewed-shared-source-v3.test.mjs
+          node --test tests/mission3-default-atomic-backup-source-guard.test.mjs
+          node --test tests/main1054-m104-large-original-export-receipts.test.mjs
+          node --check public/native-reviewed-private-save-167.mjs
+          test "$(git rev-parse HEAD:tests/main1054-m132-photo119-large-display-preview.test.mjs)" = 79295b94fc0b1abe954a621ccf056abb23a902a6
+          node --test tests/main1054-m132-photo119-large-display-preview.test.mjs
+          test "$(git rev-parse HEAD:tests/main1054-m148-preview-click-ownership.test.mjs)" = 182e135803cb2be354211969ddfb83382eb828e5
+          node --test tests/main1054-m148-preview-click-ownership.test.mjs
+          node --check public/native-default-atomic-import-m3.mjs
+      - name: Actually test browser v4 lossless owner backup/restore and cross-owner refusal
+        run: node scripts/test-mission3-lossless-v4-owner-acceptance-browser.mjs benchmark/main58-native-v4-owner-restore
+      - name: Test M98 8MiB-preserved camera original and strict native legacy restore in Chromium/WebKit
+        run: |
+          test "$(git rev-parse HEAD:scripts/test-mission3-default-atomic-import-browser.mjs)" = 375ff22b8c69bd6f7ddb19fc59cb6c4460eb7ba8
+          node scripts/test-mission3-default-atomic-import-browser.mjs benchmark/main91-native-import-recovery
+      - name: Confirm browser receipt and inherited app build, no deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d benchmark/main58-native-v4-owner-restore
+          node scripts/build.mjs
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
+          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/native-owner-wardrobe-index-167.mjs' ':(exclude)public/outfit-capture.js' ':(exclude)public/outfit-board.js' ':(exclude)public/capture-navigation.js' ':(exclude)public/index.html' ':(exclude)public/native-2d-preview-p99.mjs' ':(exclude)public/native-outfit-source-plan-p99.mjs' ':(exclude)public/native-photo-3d-veto-p99.mjs' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-reviewed-shared-original-157.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ research/multi-garment-capture-01/ ':(exclude)research/multi-garment-capture-01/review-ui.mjs' research/mission1-parallel88/ research/parallel89/
+
+  m58-full-inherited-native-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: M201 pin independently verified M199 exact product and review-receipt test blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          M199=8993da21fd5d103f25dbcb5eab36ed9498047cd7
+          git merge-base --is-ancestor "$M199" HEAD
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
+          test "$(git rev-parse HEAD:research/wardrobe-index-01/owner-wardrobe-index.mjs)" = 60581e3b00f6877bbb424d0c090d9ab294890277
+          test "$(git rev-parse HEAD:research/index-04/verified-saved-recognition.mjs)" = b84a47731e8775ac8a8b8d520fcdefc56ea46ba9
+          test "$(git rev-parse HEAD:tests/wardrobe-index-01.test.mjs)" = dd8e412f6f20ef540f6b7340e23f86ec919ce3a9
+          test "$(git rev-parse HEAD:tests/index-04-saved-recognition.test.mjs)" = 5580cd8bac5d0ddc810644e50269805c45034b42
+          test "$(git rev-parse HEAD:tests/main199-source-cutout-owner-proof.test.mjs)" = 526f627375112ed261bd7651613eb76ed2131814
+          test "$(git rev-parse HEAD:tests/multigarment-cutout-byte-116.test.mjs)" = 47efa493b8f442c26487b2e1b6ddc25923ceac38
+          test "$(git rev-parse HEAD:tests/p87-catalog-crosswalk.test.mjs)" = 5bef21fc5898bdf7ab4fda6097e2cbc2cf298993
+          test "$(git rev-parse HEAD:.github/workflows/main199-source-cutout-owner-proof-no-deploy.yml)" = 6479230f776614f487b673228180a1a25083f8d9
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
+          M205R=f90767e8a775b18722c55afea4a0dec875063fa9
+          M209=0a0fe5e4355ec9857915da3b6d8d0964cca57b3a
+          git merge-base --is-ancestor "$M209" HEAD
+          test "$(git rev-parse HEAD:.github/workflows/main209-m205r-m206-focus-source-gate-no-deploy.yml)" = 5d26aae412ce3180ec4edbd1363240ccc6060903
+          test "$(git rev-parse HEAD:tests/main206-pending-owner-focus-reentry.test.mjs)" = 511c0f174c35ebae42ebd49f07ea9c3de6201f96
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          node --check tests/main206-pending-owner-focus-reentry.test.mjs
+          git merge-base --is-ancestor "f6f7206f7bda1198958bdce06a7b51bc61a9c431" HEAD
+          git merge-base --is-ancestor "24571ba087e4bc21bac5a07a18769a945aaaa096" HEAD
+          git merge-base --is-ancestor "$M205R" HEAD
+          test "$(git rev-parse "8993da21fd5d103f25dbcb5eab36ed9498047cd7:public/native-default-atomic-import-m3.mjs")" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:tests/main204-restore-source-revocation.test.mjs)" = db61ee39f972b25f07a6579607e1213e2c6f6dbc
+          test "$(git rev-parse HEAD:.github/workflows/main205-m203-m204-source-restore-native-no-deploy.yml)" = 84298f9d7963adf586e5995b791017b4ac57a0d0
+          changed="$(git diff --name-only "$M209" HEAD)"
+          test "$changed" = ".github/workflows/main212-m209-m206-focus-m204-restore-protected-m58-no-deploy.yml"
+          node --check public/native-owner-wardrobe-index-167.mjs
+          node --check research/index-04/verified-saved-recognition.mjs
+          node --check research/wardrobe-index-01/owner-wardrobe-index.mjs
+      - name: Pin verified corrected M57 structural guards, parent and unchanged consumer source
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=8eed18265db2191afdb553147330e2db7e412750
+          M57=91723408a7d1ddc7240e5cbb67d90b242f6f4743
+          git merge-base --is-ancestor "$BASE" HEAD
+          git cat-file -e "$M57^{commit}"
+          # M155: controlled M154 default/P94 optional worker-route test differs
+          # from immutable M57 ONLY in the test; retain and source-pin it.
+          test "$(git rev-parse HEAD:tests/detector-manual-recovery-65.test.mjs)" = 23e83af2cf40e37d640e6b302f1a6e0f751af673
+          for path in tests/invalid-selection-race-71.test.mjs tests/review-source-epoch-34.test.mjs; do
+            test "$(git rev-parse "HEAD:$path")" = "$(git rev-parse "$M57:$path")"
+          done
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
+          git diff --exit-code "$BASE" HEAD -- public/ ':(exclude)public/native-owner-wardrobe-index-167.mjs' ':(exclude)public/outfit-capture.js' ':(exclude)public/outfit-board.js' ':(exclude)public/capture-navigation.js' ':(exclude)public/index.html' ':(exclude)public/native-2d-preview-p99.mjs' ':(exclude)public/native-outfit-source-plan-p99.mjs' ':(exclude)public/native-photo-3d-veto-p99.mjs' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-reviewed-shared-original-157.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ research/multi-garment-capture-01/ ':(exclude)research/multi-garment-capture-01/review-ui.mjs' research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
+      - name: Install isolated inherited native test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      # tests/pwa.test.mjs reads dist/manifest.webmanifest and dist/sw.js.
+      # Generate these offline artifacts BEFORE the inherited test suite;
+      # previously 2776/2777 passed but PWA failed on ENOENT (no dist build).
+      - name: Offline application source build before PWA regression (no deploy)
+        run: node scripts/build.mjs
+      - name: M167 source-exact current original/slot DOM proof and negative cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
+          test "$(git rev-parse HEAD:tests/p95-exact-current-original-dom.test.mjs)" = 7923b70f2d5272286c3250842fd4ac9fcfa38b03
+          node --test tests/p95-exact-current-original-dom.test.mjs
+      - name: M179 P96 source EXIF and owner lease fail-closed contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:tests/parallel96-highres-source-derivative.test.mjs)" = 2d913221968d4c09d9be33068efa80ef45b9de9b
+          node --test tests/parallel96-highres-source-derivative.test.mjs
+      - name: Run exact-head all inherited application and recognition tests
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Final protected source and branch boundaries
+        run: git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/native-owner-wardrobe-index-167.mjs' ':(exclude)public/outfit-capture.js' ':(exclude)public/outfit-board.js' ':(exclude)public/capture-navigation.js' ':(exclude)public/index.html' ':(exclude)public/native-2d-preview-p99.mjs' ':(exclude)public/native-outfit-source-plan-p99.mjs' ':(exclude)public/native-photo-3d-veto-p99.mjs' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-reviewed-shared-original-157.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/ research/multi-garment-capture-01/ ':(exclude)research/multi-garment-capture-01/review-ui.mjs' research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
+
+  m58-duplicate-jpeg-durable-write:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: M201 pin independently verified M199 exact product and review-receipt test blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          M199=8993da21fd5d103f25dbcb5eab36ed9498047cd7
+          git merge-base --is-ancestor "$M199" HEAD
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
+          test "$(git rev-parse HEAD:research/wardrobe-index-01/owner-wardrobe-index.mjs)" = 60581e3b00f6877bbb424d0c090d9ab294890277
+          test "$(git rev-parse HEAD:research/index-04/verified-saved-recognition.mjs)" = b84a47731e8775ac8a8b8d520fcdefc56ea46ba9
+          test "$(git rev-parse HEAD:tests/wardrobe-index-01.test.mjs)" = dd8e412f6f20ef540f6b7340e23f86ec919ce3a9
+          test "$(git rev-parse HEAD:tests/index-04-saved-recognition.test.mjs)" = 5580cd8bac5d0ddc810644e50269805c45034b42
+          test "$(git rev-parse HEAD:tests/main199-source-cutout-owner-proof.test.mjs)" = 526f627375112ed261bd7651613eb76ed2131814
+          test "$(git rev-parse HEAD:tests/multigarment-cutout-byte-116.test.mjs)" = 47efa493b8f442c26487b2e1b6ddc25923ceac38
+          test "$(git rev-parse HEAD:tests/p87-catalog-crosswalk.test.mjs)" = 5bef21fc5898bdf7ab4fda6097e2cbc2cf298993
+          test "$(git rev-parse HEAD:.github/workflows/main199-source-cutout-owner-proof-no-deploy.yml)" = 6479230f776614f487b673228180a1a25083f8d9
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
+          M205R=f90767e8a775b18722c55afea4a0dec875063fa9
+          M209=0a0fe5e4355ec9857915da3b6d8d0964cca57b3a
+          git merge-base --is-ancestor "$M209" HEAD
+          test "$(git rev-parse HEAD:.github/workflows/main209-m205r-m206-focus-source-gate-no-deploy.yml)" = 5d26aae412ce3180ec4edbd1363240ccc6060903
+          test "$(git rev-parse HEAD:tests/main206-pending-owner-focus-reentry.test.mjs)" = 511c0f174c35ebae42ebd49f07ea9c3de6201f96
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          node --check tests/main206-pending-owner-focus-reentry.test.mjs
+          git merge-base --is-ancestor "f6f7206f7bda1198958bdce06a7b51bc61a9c431" HEAD
+          git merge-base --is-ancestor "24571ba087e4bc21bac5a07a18769a945aaaa096" HEAD
+          git merge-base --is-ancestor "$M205R" HEAD
+          test "$(git rev-parse "8993da21fd5d103f25dbcb5eab36ed9498047cd7:public/native-default-atomic-import-m3.mjs")" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:tests/main204-restore-source-revocation.test.mjs)" = db61ee39f972b25f07a6579607e1213e2c6f6dbc
+          test "$(git rev-parse HEAD:.github/workflows/main205-m203-m204-source-restore-native-no-deploy.yml)" = 84298f9d7963adf586e5995b791017b4ac57a0d0
+          changed="$(git diff --name-only "$M209" HEAD)"
+          test "$changed" = ".github/workflows/main212-m209-m206-focus-m204-restore-protected-m58-no-deploy.yml"
+          node --check public/native-owner-wardrobe-index-167.mjs
+          node --check research/index-04/verified-saved-recognition.mjs
+          node --check research/wardrobe-index-01/owner-wardrobe-index.mjs
+      - name: Pin verified exact-source duplicate-JPEG donor (no deployment)
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          DONOR=055f7a6569059c3845c0d8dc5960767fc944c6ac
+          git cat-file -e "$DONOR^{commit}"
+          # M85: M82-M84 intentionally changed those three files,
+          # so equality with the old P1212 donor would block tests before
+          # executing them. Pin ALL current blobs and attest old donor
+          # provenance separately. No unlisted application code is exempt.
+          test "$(git rev-parse "$DONOR:public/app.js")" = ce16b3e219ec9596ffd396264d882ade99590490
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:scripts/test-main1054-duplicate-fence-browser.mjs)" = 2665c14c998c3b0f5aff6f77ccb214766190f77a
+          test "$(git rev-parse HEAD:tests/main1054-saved-photo-duplicate-fence.test.mjs)" = 4393a2ecd16fa81a40e3a271444e0f31ffcbc1aa
+          node --check public/app.js
+          node --check scripts/test-main1054-duplicate-fence-browser.mjs
+      - name: Execute owner durable write CAS and duplicate-source checks
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          node --test tests/main1054-saved-photo-duplicate-fence.test.mjs
+          node scripts/test-main1054-duplicate-fence-browser.mjs
+      - name: Preserve source-owner/no-deploy boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
+          test "$(git rev-parse HEAD:tests/mission3-default-atomic-backup-source-guard.test.mjs)" = 443c4f3a9b288aa8af36137985c684826b4414cd
+          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/native-owner-wardrobe-index-167.mjs' ':(exclude)public/outfit-capture.js' ':(exclude)public/outfit-board.js' ':(exclude)public/capture-navigation.js' ':(exclude)public/index.html' ':(exclude)public/native-2d-preview-p99.mjs' ':(exclude)public/native-outfit-source-plan-p99.mjs' ':(exclude)public/native-photo-3d-veto-p99.mjs' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' ':(exclude)public/native-reviewed-shared-original-157.mjs' ':(exclude)public/native-default-verified-backup-export-m3.mjs' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)public/outfit-worker-p94.mjs' ':(exclude)public/outfit-instance-review-840.mjs' supabase/
