@@ -919,6 +919,9 @@ try{
      sourceName.sourceBoneName.length>0&&sourceName.sourceBoneName.length<=96);
     assert.ok(sourceName.sourceMeshId>=0&&
      Number.isSafeInteger(sourceName.sourceMeshId));
+    assert.ok(Number.isSafeInteger(sourceName.sourceBoneIndex)&&
+     sourceName.sourceBoneIndex>=0&&sourceName.sourceBoneIndex<163);
+    assert.equal(typeof sourceName.sourceNameRequiresReview,'boolean');
     assert.ok(sourceName.sourceMeshName.length>0);
     assert.ok(sourceName.unknownRayDirections>=1&&
      sourceName.unknownRayDirections<=excluded);
