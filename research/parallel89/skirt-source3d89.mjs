@@ -233,6 +233,42 @@ export function sourceSkirtBandTextureV89(outline,bandIndex){
  if(y<0||y>1)throw Error('original-source-photo-uv-row-outside-image');
  return 1-y;
 }
+/**
+ * SHA-attested source-front image centerline, never physical rear/drape proof.
+ * The original photograph cannot determine camera angle or garment depth.
+ */
+export function sourceSkirtMeasuredPhotoCenterline89(outline,waistHalfWidthMeters=.23){
+ const bands=outline?.sourceRowWidths,width=outline?.pixelDimensions?.[0];
+ if(outline?.schema!=='P89-source-measured-skirt-silhouette/v1'||
+  !Array.isArray(bands)||bands.length!==7||
+  !Number.isFinite(width)||width<12||width>512||
+  !Number.isFinite(waistHalfWidthMeters)||waistHalfWidthMeters<.16||
+  waistHalfWidthMeters>.32||
+  bands.some(b=>!Number.isFinite(b?.centerPixels)||
+   !Number.isFinite(b?.widthPixels)||b.widthPixels<=0||
+   b.widthPixels>width||b.centerPixels<0||b.centerPixels>=width||
+   b.centerPixels-b.widthPixels/2<-.5||
+   b.centerPixels+b.widthPixels/2>width+.5))
+  throw Error('attested-photograph-centerline-bands-required');
+ const pxPerMeter=bands[0].widthPixels/(2*waistHalfWidthMeters);
+ if(!Number.isFinite(pxPerMeter)||pxPerMeter<=0)
+  throw Error('original-source-skirt-front-centerline-scale-unverifiable');
+ const start=bands[0].centerPixels;
+ const offsets=bands.map(b=>(b.centerPixels-start)/pxPerMeter);
+ if(offsets.some((v,i)=>!Number.isFinite(v)||Math.abs(v)>.15||
+  (i>0&&Math.abs(v-offsets[i-1])>.10)))
+  throw Error('original-source-front-centerline-physical-projection-unverifiable');
+ return Object.freeze({
+  schema:'P89-attested-original-photo-front-centerline-trial/v1',
+  sourceBandCount:7,
+  sourceRelativeWorldXOffsetsMeters:Object.freeze(offsets),
+  frontPixelCentersFromOriginalSourceAlpha:true,
+  rearCenterlineInferredNotPhotographed:true,
+  cameraAngleAndPhysicalDrapeUnverified:true,
+  consumer3DAdmitted:false,originalPhoto2DFallbackRequired:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
 function sourceSkeleton(root){
  if(!root?.isObject3D)throw Error('actual skinned human required');
  let body;
@@ -282,7 +318,7 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
   if(![at.x,at.y,at.z].every(Number.isFinite)||at.y<.5||at.y>2.2)
    throw Error('anatomical waist height invalid');
   const inverse=body.matrixWorld.clone().invert();
-  const center=verifiedOutline.sourceRowWidths[0].centerPixels;
+  const frontLine=sourceSkirtMeasuredPhotoCenterline89(verifiedOutline,waistHalfWidthMeters);
   const scale=waistHalfWidthMeters/Math.max(1,verifiedOutline.sourceRowWidths[0].widthPixels/2);
   const heights=verifiedOutline.sourceRowWidths;
   const verts=[],uv=[],bone=[],weights=[],tris=[],seams=[],rest=[];
@@ -295,7 +331,10 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
    const y=at.y-t*skirtLengthMeters;
    for(let j=0;j<=segments;j++){
     const a=2*Math.PI*j/segments,x=Math.sin(a),z=Math.cos(a);
-    const pos=new THREE.Vector3(at.x+radiusX*x,y,at.z+radiusZ*z);
+    // Original front photograph determines x drift; its rear cannot.
+    const frontWeight=z>=0?1:Math.max(0,1+z);
+    const pos=new THREE.Vector3(at.x+radiusX*x+
+     frontLine.sourceRelativeWorldXOffsetsMeters[ri]*frontWeight,y,at.z+radiusZ*z);
     rest.push(...pos.toArray());
     pos.applyMatrix4(inverse);verts.push(...pos.toArray());
     bone.push(pelvis,0,0,0);weights.push(1,0,0,0);
@@ -342,6 +381,9 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
    authenticLowerBodyBoneName,inferredPelvisBinding,
    distinctSourceOriginalJPEG:true,measuredSourceMaskRows:heights.length,
    extractedSourceHemToWaistRatio:verifiedOutline.sourceHemToWaistWidthRatio,
+   photoFrontCenterlineOffsetsMeters:frontLine.sourceRelativeWorldXOffsetsMeters,
+   genuinePhotoFrontCenterlineAppliedToProvisionalMesh:true,
+   hypotheticalPhotoRearCenterlineNotClaimed:true,
    frontPhotoAppliedFromVerifiedCutout:true,unobservedBackNeutral:true,
    measuredPhysicalGarmentFit:false,sourceAbsoluteScaleInferred:true,
    sourcePhotoCameraUnadjudicated:true,originalPhotoBytesUntouched:true,
@@ -364,6 +406,9 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
   mesh?.removeFromParent();geo?.dispose();materials?.forEach(m=>m.dispose());texture?.dispose();
   return fail(['authentic 163-bone anatomical body source required',
    'real lower-torso 163-bone source landmarks unavailable','anatomical waist height invalid',
-   'independent rig changed'].includes(e.message)?e.message:'source-skirt-rig-proposal-rejected');
+   'independent rig changed','attested-photograph-centerline-bands-required',
+   'original-source-skirt-front-centerline-scale-unverifiable',
+   'original-source-front-centerline-physical-projection-unverifiable'
+  ].includes(e.message)?e.message:'source-skirt-rig-proposal-rejected');
  }
 }
