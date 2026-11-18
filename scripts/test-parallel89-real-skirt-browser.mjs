@@ -1305,6 +1305,36 @@ try{
      part.originalIndexedNonmanifoldEdges);
     assert.equal(part.restSkinCompatibleVirtualUVSeamsNeverJoined,true);
    }
+   const global=eproof.originalSevenHeightSourceIndexedComponentProof;
+   assert.equal(global.schema,
+    'P89-original-163bone-seven-photographed-height-source-component/v1');
+   assert.equal(global.originalPhotographedSkirtHeightCount,7);
+   assert.equal(global.originalPhotographedSkirtSlabCount,6);
+   assert.equal(global.selectedOriginalIndexedFaceCount,slab.selectedOriginalFaceCount);
+   assert.equal(global.originalSixClippedSourceSlabs.length,6);
+   assert.equal(global.trueOriginalSourceComponentCountPerHeight.length,7);
+   assert.equal(global.trueSourceConnectedComponentsAcrossSixSlabs,
+    global.sourceComponentsCrossingAllSevenHeightPlanes+
+    global.sourceComponentsCoveringFewerThanSevenHeightPlanes+
+    global.sourceComponentsTouchingNoMeasuredHeightPlane);
+   assert.equal(global.originalSourceSlabFaceOccurrences,
+    global.originalSixClippedSourceSlabs.reduce((n,b)=>n+b.originalActiveSourceTriangles,0));
+   assert.equal(global.sourceOriginalUVSeamNeverWelded,true);
+   assert.equal(global.onlyOriginalIndexedOpenSlabAndOriginalInterfaceEdgesJoined,true);
+   assert.equal(global.sourceShellSignedAndWatertight,false);
+   assert.equal(global.oneBodyExteriorProven,false);
+   assert.equal(global.originalPhysicalGarmentFitProven,false);
+   assert.equal(global.originalPhoto2DFallbackRequired,true);
+   assert.equal(global.consumer3DAdmitted,false);
+   assert.equal(global.releaseAuthorized,false);
+   for(const [band,b] of global.originalSixClippedSourceSlabs.entries()){
+    assert.deepEqual(b.originalPhotoSkirtHeightInterval,[band,band+1]);
+    assert.ok(b.originalActiveSourceTriangles<=
+     slab.originalAdjacentSlabSourceEdgeConnectivity[band].eligibleOriginalSelectedSourceFaces);
+    assert.ok(b.actualSourceOpenSlabIndexedEdgeLinks<=
+     slab.originalAdjacentSlabSourceEdgeConnectivity[band].originalIndexedSharedEdgesWithOpenSlabInterior);
+    assert.equal(b.pointOnlyCutDoesNotCountAsSourceSegment,true);
+   }
    assert.equal(eproof.sourceOriginalFaceMaskExclusionsNeverPromoted,true);
    assert.equal(eproof.originalOnlyWorldCoordinateMatchNotStitchable,true);
    assert.equal(eproof.sourceModelSignedBodyVolumeUnproved,true);
