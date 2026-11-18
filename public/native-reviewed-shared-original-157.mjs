@@ -21,7 +21,11 @@ function boundedCutoutBytes(image){
  }catch{return null;}
 }
 async function readReviewedPiece(row,owner,provider){
- if(!row||typeof row!=='object'||Array.isArray(row)||row.ownerId!==owner||
+ // Retired owner-private sources are not active proof of an independently
+ // reviewed sibling. Their historical crop hashes cannot resurrect the same
+ // original under a fresh ID through v1-v3 restore.
+ if(!row||Boolean(row.deleted)||Boolean(row.sourceRevoked)||
+    typeof row!=='object'||Array.isArray(row)||row.ownerId!==owner||
     row.sourceHashVerified!==true||row.singleGarmentVerified!==false||
     row.ownerReviewed!==true||row.humanReviewedSource!==true||
     row.reviewProvenance!=='explicit-owner-claim-not-independent-review-evidence'||
