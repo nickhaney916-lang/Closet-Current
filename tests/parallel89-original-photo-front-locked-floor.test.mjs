@@ -13,7 +13,7 @@ import {auditOriginalPhotoFrontLockedCollisionFloor89 as audit,
 const PHOTO='c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344';
 const RIG=Object.freeze({
  female:'a571a5872a5f9d75c013ce6d88b3484436cf2109bf133fbc31e42c41f52389f1',
- male:'d15a07e2b4cf1d08a3b91cb212a9c06a91438077f05a3f2a62f45351e8a71eb8'
+ male:'d15a07e2b4cf1d08a3b91cb212a9a06a91438077f05a3f2a62f45351e8a71eb8'
 });
 const POSES=['source','blend-25','blend-50','blend-75','relaxed'];
 function fixture(avatar='female'){
@@ -89,6 +89,25 @@ test('five genuine-identity synthetic source pose receipts prove immutable front
   assert.deepEqual(x.g.getAttribute('position').array,orig);
   assert.equal(JSON.stringify(r).includes('0|42'),false,'never export body/skirt triangle identity');
  }
+});
+test('one altered source male GLB SHA cannot impersonate the genuine 163-bone identity',()=>{
+ const x=fixture('male');
+ const good=audit(x.input);
+ assert.equal(good.status,'ORIGINAL_PHOTO_FRONT_LOCKED_COLLISIONS_PREVENT_REAR_ONLY_CLEARANCE');
+ assert.equal(good.immutablePhotographFrontCollisionFloorAcrossFivePoses,10);
+ assert.equal(good.consumer3DAdmitted,false);
+ // One hexadecimal character changed in the original male GLB digest was
+ // the root cause of the formerly RED fixture: the exact same five-pose
+ // genuine-identity synthetic contract was rejected before it ran.
+ const tampered=RIG.male.slice(0,28)+'c'+RIG.male.slice(29);
+ assert.notEqual(tampered,RIG.male);
+ const bad=audit({...x.input,sourceAnatomyGLBSHA256:tampered});
+ assert.equal(bad.status,'SOURCE_FRONT_LOCKED_ORIGINAL_CONTACT_PROOF_UNVERIFIABLE');
+ assert.equal(bad.reason,'real-source-front-pixel-centerline-rig-and-whole-body-BVH-required');
+ assert.equal(bad.originalPhoto2DFallbackRequired,true);
+ assert.equal(bad.consumer3DAdmitted,false);
+ assert.equal(bad.releaseAuthorized,false);
+ assert.equal(x.getCurrent(),'source');
 });
 test('no front contact does not become a false source-authentic garment clearance',()=>{
  const x=fixture(),base=x.input;
