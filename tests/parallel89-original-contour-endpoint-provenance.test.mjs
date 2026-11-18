@@ -74,11 +74,31 @@ function checked(f){
   assert.equal(x.indexedGraphOpenEndpoints,
    y.original95OriginalIndexTopology.genuineIndexedOpenEndpoints);
   assert.equal(x.sourceOriginal95ContourSegments,y.original95NamedSourceContourSegments);
+  const loop=x.originalSourceVirtualSeamLoopCounterfactual;
+  assert.equal(loop.virtualGraphOnlyNoOriginalIndexWeld,true);
+  assert.equal(loop.originalBodyWatertightAndGarmentFitUnproved,true);
+  assert.ok(loop.possibleMutuallyUniqueRestSkinSeamPairs*2<=x.indexedGraphOpenEndpoints);
+  assert.equal(loop.possibleMutuallyUniqueRestSkinSeamPairs,
+   loop.locallyOpposingOriginalPosedTangentPairs+
+   loop.nonOpposingOriginalPosedTangentPairs+
+   loop.insufficientTangentSourcePairs);
+  assert.equal(loop.originalIndexedGraphComponentsAfterVirtualLinks,
+   loop.hypotheticalTopologicalCyclesAfterVirtualLinks+
+   loop.otherOpenOrBranchedCounterfactualComponents);
+  assert.ok(loop.hypotheticalCyclesWithOpposingTangentCandidates<=
+   loop.hypotheticalTopologicalCyclesAfterVirtualLinks);
   assert.equal(Object.values(x.disjointIndexedEndpointProvenance)
    .reduce((s,n)=>s+n,0),x.indexedGraphOpenEndpoints);
  }
  assert.equal(Object.values(v.originalEndpointCauseTotals).reduce((s,n)=>s+n,0),
   v.originalSourceIndexedOpenEndpointTotal);
+ assert.equal(v.originalSourceUniqueMutualVirtualPairCount,
+  v.originalSevenSourceSkirtEndpointRings.reduce((n,x)=>
+   n+x.originalSourceVirtualSeamLoopCounterfactual.possibleMutuallyUniqueRestSkinSeamPairs,0));
+ assert.equal(v.originalSourceCounterfactualClosedLoopCount,
+  v.originalSevenSourceSkirtEndpointRings.reduce((n,x)=>
+   n+x.originalSourceVirtualSeamLoopCounterfactual.hypotheticalTopologicalCyclesAfterVirtualLinks,0));
+ assert.equal(v.sourceVirtualLoopCounterfactualNeverWeldsOrCertifiesVolume,true);
  assert.equal(v.sourceIndexOrRestSkinCandidateEndpointTotal+
   v.posedOnlyCoincidenceUntrustedEndpointTotal+
   v.originalNoMatchingEndpointTotal,v.originalSourceIndexedOpenEndpointTotal);
@@ -94,6 +114,8 @@ test('strict original indexed cube true closed source ring has ZERO open graph e
  const v=checked(fixture());
  assert.equal(v.originalSourceIndexedOpenEndpointTotal,0);
  assert.equal(v.sourceIndexOrRestSkinCandidateEndpointTotal,0);
+ assert.equal(v.originalSourceUniqueMutualVirtualPairCount,0);
+ assert.equal(v.originalSourceCounterfactualClosedLoopCount,0);
 });
 test('SOURCE index neighbors excluded by original anatomical core mask stay excluded, do not become wearable geometry',()=>{
  const f=fixture();f.coreBodyFaceMask[0]=0;f.coreBodyFaceMask[1]=0;
@@ -110,6 +132,8 @@ test('split original source UV position INDEX with identical rest+skin+mesh is a
  const v=checked(fixture({type:'uvsplit'}));
  assert.ok(count(v,'POSSIBLE_ORIGINAL_UV_SPLIT_REST_SKIN_AND_MESH_COMPATIBLE')>0);
  assert.equal(v.sourceVirtualRestAndSkinEvidenceNeverSewn,true);
+ assert.ok(v.originalSourceUniqueMutualVirtualPairCount>0);
+ assert.ok(v.originalSourceCounterfactualClosedLoopCount>0);
 });
 test('same posed positions but DIFFERENT original source rest position never qualifies as compatible index seam',()=>{
  const v=checked(fixture({type:'restchange'}));
@@ -119,10 +143,12 @@ test('same posed and rest vertex coordinates but DIFFERENT original skin influen
  const v=checked(fixture({type:'skinchange'}));
  assert.ok(count(v,'POSED_COINCIDENT_DIFFERENT_ORIGINAL_SKIN')>0);
  assert.equal(count(v,'POSSIBLE_ORIGINAL_UV_SPLIT_REST_SKIN_AND_MESH_COMPATIBLE'),0);
+ assert.equal(v.originalSourceUniqueMutualVirtualPairCount,0);
 });
 test('same coordinates on ORIGINAL DIFFERENT BODY MESHES cannot count as legitimate stitch',()=>{
  const v=checked(fixture({type:'meshchange'}));
  assert.ok(count(v,'POSED_COINCIDENT_DIFFERENT_ORIGINAL_MESH')>0);
+ assert.equal(v.originalSourceUniqueMutualVirtualPairCount,0);
 });
 test('95%-named original spine/pelvis/leg blended skin never changes source or grants approved core clearance',()=>{
  const v=checked(fixture({type:'uvsplit',blend:true}));
