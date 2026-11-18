@@ -57,11 +57,12 @@ const closed=(rows,width,height)=>{
  * original-photo/cutout SHA check establishes this input's true provenance.
  */
 export function proveOriginalPhotoMetricNonIdentifiability89({
- sourceId,originalPhotoSHA256,originalCutoutSHA256,
+ sourceId,museumAccession,originalPhotoSHA256,originalCutoutSHA256,
  originalSourcePhotoAndCutoutAttested,avatar,original163BoneGLBSHA256,
  rigBoneCount,pose,outline
 }={}){
- if(sourceId!=='commons-0043'||originalPhotoSHA256!==PHOTO||
+ if(sourceId!=='commons-0043'||museumAccession!=='5152.1'||
+  originalPhotoSHA256!==PHOTO||
   originalCutoutSHA256!==CUTOUT||
   originalSourcePhotoAndCutoutAttested!==true||
   !Object.hasOwn(RIG,avatar)||original163BoneGLBSHA256!==RIG[avatar]||
