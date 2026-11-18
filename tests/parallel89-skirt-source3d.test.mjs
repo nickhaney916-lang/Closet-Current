@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {SKIRT_SOURCE89,attestActualSkirt89,sourceSkirtOutline89,
- buildOriginalPhotoSkirtProposal89,sourceSkirtBandTextureV89} from '../research/parallel89/skirt-source3d89.mjs';
+ buildOriginalPhotoSkirtProposal89,sourceSkirtBandTextureV89,
+ sourceSkirtMeasuredPhotoCenterline89} from '../research/parallel89/skirt-source3d89.mjs';
 
 const file=readFileSync(new URL('../benchmark/fixtures/commons-0043.jpg',import.meta.url));
 const dress=readFileSync(new URL('../benchmark/fixtures/commons-0053.jpg',import.meta.url));
@@ -115,4 +116,52 @@ test('forged source receipt and test-only male/female labels can never construct
   assert.equal(candidate.consumer3DAdmitted,false);
   assert.equal(candidate.releaseAuthorized,false);
  }
+});
+
+test('source front photo drift from the ORIGINAL mask is used as bounded 7-band centerline evidence',()=>{
+ const width=96,height=96,alpha=new Uint8Array(width*height);
+ for(let y=10;y<=84;y++){
+  const t=(y-10)/74,half=Math.round(13+t*14),center=48+Math.round(t*3);
+  for(let x=center-half;x<=center+half;x++)alpha[y*width+x]=255;
+ }
+ const source=sourceSkirtOutline89({alpha,width,height});
+ const proof=sourceSkirtMeasuredPhotoCenterline89(source,.23);
+ assert.equal(proof.schema,'P89-attested-original-photo-front-centerline-trial/v1');
+ assert.equal(proof.sourceBandCount,7);
+ assert.equal(proof.sourceRelativeWorldXOffsetsMeters.length,7);
+ assert.equal(proof.sourceRelativeWorldXOffsetsMeters[0],0);
+ assert.ok(proof.sourceRelativeWorldXOffsetsMeters.at(-1)>.015,
+  'actual photo measured skirt-center skew should not disappear into proxy geometry');
+ assert.ok(proof.sourceRelativeWorldXOffsetsMeters.at(-1)<.15);
+ const pixelsPerMeter=source.sourceRowWidths[0].widthPixels/(2*.23);
+ source.sourceRowWidths.forEach((band,i)=>{
+  assert.ok(Math.abs(
+   proof.sourceRelativeWorldXOffsetsMeters[i]*pixelsPerMeter-
+   (band.centerPixels-source.sourceRowWidths[0].centerPixels))<1e-10);
+ });
+ assert.equal(proof.rearCenterlineInferredNotPhotographed,true);
+ assert.equal(proof.cameraAngleAndPhysicalDrapeUnverified,true);
+ assert.equal(proof.originalPhoto2DFallbackRequired,true);
+ assert.equal(proof.consumer3DAdmitted,false);
+ assert.equal(proof.releaseAuthorized,false);
+ assert.ok(Object.isFrozen(proof.sourceRelativeWorldXOffsetsMeters));
+});
+test('unmeasured or oversized photographed centerline is refused before mesh can imply a physical skew',()=>{
+ const source=sourceSkirtOutline89(sourceAlpha());
+ for(const input of [
+  [{...source,pixelDimensions:[NaN,96]},.23],
+  [{...source,sourceRowWidths:[...source.sourceRowWidths.slice(0,6)]},.23],
+  [source,.9],
+  [{...source,sourceRowWidths:source.sourceRowWidths.map((x,i)=>
+    i===6?{...x,centerPixels:x.centerPixels+11}:x)},.23],
+  [{...source,sourceRowWidths:source.sourceRowWidths.map((x,i)=>
+    i===3?{...x,centerPixels:x.widthPixels/2-10}:x)},.23]
+ ])assert.throws(()=>sourceSkirtMeasuredPhotoCenterline89(...input));
+});
+test('symmetric original photographed skirt stays neutral; source front shift never claims measured rear',()=>{
+ const s=sourceSkirtOutline89(sourceAlpha());
+ const p=sourceSkirtMeasuredPhotoCenterline89(s,.23);
+ assert.ok(p.sourceRelativeWorldXOffsetsMeters.every(x=>x===0));
+ assert.equal(p.rearCenterlineInferredNotPhotographed,true);
+ assert.equal(p.familyAlpha,'HOLD');
 });
