@@ -1,0 +1,92 @@
+name: MAIN226 genuine WebKit zero-proposal scalar cause diagnostic NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main226-webkit-genuine-zero-segmentation-cause-evidence-HOLD]
+  pull_request:
+    branches: [research/main225-m224-full-original-seven-job-acceptance-HOLD]
+permissions:
+  contents: read
+jobs:
+  source-and-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original model immutable and M226 research-only exact diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=9b243ee584d6f16f553e2365e373e6e8be85cc36
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              scripts/test-main226-webkit-zero-cause-real-model.mjs|tests/main226-person-gate-observation.test.mjs|.github/workflows/main226-webkit-zero-cause-original-model-no-deploy.yml) ;;
+              *) echo "M226 forbidden public/model/private/production modification $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:public/outfit-segmentation.mjs)" = d357955dd8fdab7c0cb727ea597c270edd9309ac
+          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 8cc2977f1932b3012c44bdd401081cc542b94c57
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:scripts/test-main226-webkit-zero-cause-real-model.mjs)" = 608db1629e220774f8cf891df9d12342bbde9fcd
+          test "$(git rev-parse HEAD:tests/main226-person-gate-observation.test.mjs)" = bc9741aa05b4c360effb575a63c8d1ca5ae54735
+          node --check scripts/test-main226-webkit-zero-cause-real-model.mjs
+          node --check tests/main226-person-gate-observation.test.mjs
+      - name: Pinned dependencies and deterministic candidate/body gating witness
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node --test tests/main226-person-gate-observation.test.mjs
+      - name: All inherited M225 source/photo/owner/recognition Node and offline build
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  real-worker-observability:
+    name: Genuine pinned SegFormer no-synthetic-positive (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [webkit, chromium]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict source + worker + diagnostic source pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:public/outfit-segmentation.mjs)" = d357955dd8fdab7c0cb727ea597c270edd9309ac
+          test "$(git rev-parse HEAD:scripts/test-main226-webkit-zero-cause-real-model.mjs)" = 608db1629e220774f8cf891df9d12342bbde9fcd
+          node --check scripts/test-main226-webkit-zero-cause-real-model.mjs
+      - name: Install pinned actual native model engine dependencies and build app
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node scripts/build.mjs
+      - name: Multiple fresh genuine P94 original source models, no retry after failure
+        shell: bash
+        run: |
+          set -euo pipefail
+          count=2
+          if [ "$M58_ENGINE" = webkit ]; then count=4; fi
+          for attempt in $(seq 1 "$count"); do
+            M214_ATTEMPT="m226-$M58_ENGINE-430-$attempt" P94_WIDTH=430 node scripts/test-main226-webkit-zero-cause-real-model.mjs
+          done
