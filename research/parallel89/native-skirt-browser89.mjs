@@ -23,7 +23,7 @@ import {auditActualOriginalBodyBoundaryRegions89} from './skirt-original-source-
 import {auditActualOriginalSkirtCoreSpan89} from './skirt-original-core-span89.mjs';
 import {auditOriginalSkirtCoreRayUnknownCauses89} from './skirt-original-core-unknown-causes89.mjs';
 import {auditOriginalSkirtCoreBoneNamesAndNoHits89} from './skirt-original-core-nohit-source-bones89.mjs';
-import {auditOriginalCoreSkinSensitivity89,summarizeOriginalCoreSkinSensitivity89} from './skirt-original-core-skin-sensitivity89.mjs';
+import {auditOriginalCoreSkinSensitivity89} from './skirt-original-core-skin-sensitivity89.mjs';
 import {auditOriginalNoHitLineGeometry89} from './skirt-original-nohit-line-geometry89.mjs';
 if(!['localhost','127.0.0.1','[::1]'].includes(location.hostname))
  throw Error('Original skirt research is localhost-only');
@@ -1007,7 +1007,6 @@ function auditSelectedOriginalNoHitLineGeometry89(){
    sourceMeshIds:restSkin.sourceMeshIds,sourceMeshNames:names,
    sourceBoneNamesByMesh:boneNames
   };
-  const samePoseBaseline=summarizeOriginalCoreSkinSensitivity89(observedSource);
   const report=auditOriginalNoHitLineGeometry89({
    ...observedSource,
    independentlyVerifiedSkinSensitivityReceipt:
@@ -1021,18 +1020,7 @@ function auditSelectedOriginalNoHitLineGeometry89(){
    report.originalPhoto2DFallbackRequired===true&&
    report.consumer3DAdmitted===false&&report.releaseAuthorized===false,
    'original body source no-hit line geometry cannot authorize fit: '+String(report?.reason||report?.status||'unknown')+
-   '; independent source snapshot '+JSON.stringify({
-    same:[samePoseBaseline.baselineStrictCoreInward,samePoseBaseline.baselineStrictCoreOutward,
-     samePoseBaseline.baselineStrictCoreNear,samePoseBaseline.baselineStrictCoreUnknown,
-     samePoseBaseline.baselineUnknownExcludedOriginalFaceRayHits,
-     samePoseBaseline.baselineUnknownNoOriginalFaceRayHits],
-    prior:[prev.originalSkinCoreSensitivityEvidence.baselineStrictCoreInward,
-     prev.originalSkinCoreSensitivityEvidence.baselineStrictCoreOutward,
-     prev.originalSkinCoreSensitivityEvidence.baselineStrictCoreNear,
-     prev.originalSkinCoreSensitivityEvidence.baselineStrictCoreUnknown,
-     prev.originalSkinCoreSensitivityEvidence.baselineUnknownExcludedOriginalFaceRayHits,
-     prev.originalSkinCoreSensitivityEvidence.baselineUnknownNoOriginalFaceRayHits]
-   }));
+);
   return report;
  }finally{
   skirt?.g.dispose();body?.g.dispose();originalBodyPositions();
