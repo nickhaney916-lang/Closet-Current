@@ -128,7 +128,8 @@ export function summarizeOriginalSkirtCoreUnknownCauses89({
  for(const i of skirtIndices)if(i>=343)throw Error('original-skirt-index-invalid');
  if(coreBodyFaceMask.some(x=>x!==0&&x!==1))
   throw Error('original-anatomy-core-face-mask-invalid');
- const regions=new Array(vertices),dominantNames=new Array(vertices);
+ const regions=new Array(vertices),dominantNames=new Array(vertices),
+  dominantBoneIndices=new Array(vertices);
  for(let v=0;v<vertices;v++){
   const mesh=sourceMeshIds[v];if(mesh>=sourceMeshNames.length)
    throw Error('original-body-mesh-id-out-of-range');
@@ -141,6 +142,7 @@ export function summarizeOriginalSkirtCoreUnknownCauses89({
   }
   if(Math.abs(total-1)>.003)
    throw Error('original-bone-weight-sum-not-normalized');
+  dominantBoneIndices[v]=dominant;
   dominantNames[v]=max<.5?'AMBIGUOUS_ORIGINAL_SKIN_WEIGHTS':
    sourceBoneNamesByMesh[mesh][dominant];
   regions[v]=max<.5?'UNKNOWN_ORIGINAL_BONE':
@@ -163,7 +165,9 @@ export function summarizeOriginalSkirtCoreUnknownCauses89({
     bodyPositions[c*3+1]);
   sourceFacets.push({a,b,c,kind,ymin,ymax,
    sourceMeshIds:[sourceMeshIds[a],sourceMeshIds[b],sourceMeshIds[c]],
-   sourceDominantBoneNames:[dominantNames[a],dominantNames[b],dominantNames[c]]});
+   sourceDominantBoneNames:[dominantNames[a],dominantNames[b],dominantNames[c]],
+   sourceDominantBoneIndices:[dominantBoneIndices[a],
+    dominantBoneIndices[b],dominantBoneIndices[c]]});
  }
  const allRows=[],totals=emptyReasons(),axes=emptyAxis(),
   allExcludedHits=emptyCategories(),noSourceHitAxes=emptyAxis(),
@@ -235,11 +239,17 @@ export function summarizeOriginalSkirtCoreUnknownCauses89({
         for(let v=0;v<3;v++){
          const sourceMeshId=facet.sourceMeshIds[v],
           sourceMeshName=sourceMeshNames[sourceMeshId],
-          sourceBoneName=facet.sourceDominantBoneNames[v];
+          sourceBoneName=facet.sourceDominantBoneNames[v],
+          sourceBoneIndex=facet.sourceDominantBoneIndices[v];
          rayMeshes.set(kind+'|'+sourceMeshId,
           {kind,sourceMeshId,sourceMeshName});
-         rayBones.set(kind+'|'+sourceMeshId+'|'+sourceBoneName,
-          {kind,sourceMeshId,sourceMeshName,sourceBoneName});
+         rayBones.set(kind+'|'+sourceMeshId+'|'+sourceBoneIndex+'|'+sourceBoneName,
+          {kind,sourceMeshId,sourceMeshName,sourceBoneIndex,
+           sourceBoneName,
+           // Original native loader substitutes SOURCE_BONE_n if blank;
+           // that is not an independently verified actual GLB bone name.
+           sourceNameRequiresReview:/^SOURCE_BONE_[0-9]+$/.test(sourceBoneName)||
+            sourceBoneName==='AMBIGUOUS_ORIGINAL_SKIN_WEIGHTS'});
         }
        }
       }
