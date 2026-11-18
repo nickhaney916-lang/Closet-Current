@@ -34,8 +34,11 @@ const out=await build({
 const inputs=Object.keys(out.metafile.inputs);
 const ortInputs=inputs.filter(x=>x.includes('onnxruntime-web'));
 assert.ok(ortInputs.length>0,'CPU-only ORT dependency missing');
-assert.ok(ortInputs.some(x=>x.includes('ort.wasm.min.mjs')),
- 'The CPU-only ONNX Runtime entrypoint was NOT bundled');
+const exportedCpuEntries=ortInputs.filter(x=>/(?:^|\/)ort\.wasm(?:\.min)?\.mjs$/.test(x));
+console.log('P102_CPU_BUNDLE_ORT_INPUT_NAMES',
+ JSON.stringify(ortInputs.slice(0,16).map(x=>x.split('/').at(-1))));
+assert.equal(exportedCpuEntries.length,1,
+ 'Expected exactly one exported WASM-only ONNX runtime ESM entrypoint');
 assert.ok(ortInputs.every(x=>!/(?:ort\.all|ort\.webgpu|ort\.min\.mjs)/.test(x)),
  'Default/JSEP runtime appears in CPU-only bundle');
 const bytes=await readFile(resolve(target));
@@ -47,6 +50,7 @@ const bundleEvidence={
  ort:packageJson.version,
  selectedORT:'onnxruntime-web/wasm',
  cpuEntryIncluded:true,
+ cpuEntryFilename:exportedCpuEntries[0].split('/').at(-1),
  bundledBytes:bytes.length,
  bundleSHA256:hash,
  observedInputCount:inputs.length,
