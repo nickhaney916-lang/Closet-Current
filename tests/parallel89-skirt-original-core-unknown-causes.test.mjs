@@ -176,7 +176,8 @@ test('excluded original unmapped source bone is identified by immutable exact me
  assert.deepEqual(r.originalExcludedSourceBoneRayNames,[{
   kind:'UNKNOWN_ORIGINAL_DOMINANT_BONE',sourceMeshId:0,
   sourceMeshName:'OriginalSourceBody',
-  sourceBoneName:'CautionUnmappedSourceBone',unknownRayDirections:336
+  sourceBoneIndex:0,sourceBoneName:'CautionUnmappedSourceBone',
+  sourceNameRequiresReview:false,unknownRayDirections:336
  }]);
  assert.equal(r.consumer3DAdmitted,false);
 });
@@ -185,6 +186,7 @@ test('excluded real original hand source bone remains EXCLUDED rather than anato
  const r=compare(fixture({bone:'hand01L'}));
  assert.ok(r.originalExcludedSourceBoneRayNames.some(x=>
   x.kind==='EXCLUDED_HEAD_ARMS'&&x.sourceBoneName==='hand01L'&&
+  x.sourceBoneIndex===0&&x.sourceNameRequiresReview===false&&
   x.sourceMeshId===0&&x.unknownRayDirections===336));
  assert.equal(r.strictCoreUnknownRays,336);
  assert.equal(r.releaseAuthorized,false);
