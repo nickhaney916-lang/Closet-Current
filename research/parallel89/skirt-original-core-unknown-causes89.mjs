@@ -20,6 +20,7 @@ const RIG=Object.freeze({
 const POSES=new Set(['source','blend-25','blend-50','blend-75','relaxed']);
 const validIndex=x=>x instanceof Uint16Array||x instanceof Uint32Array;
 const finite=x=>typeof x==='number'&&Number.isFinite(x);
+const sum=values=>values.reduce((n,x)=>n+x,0);
 const allowedLabel=x=>typeof x==='string'&&x.length>0&&x.length<=96&&
  /^[\x20-\x7e]+$/.test(x);
 const reasons=Object.freeze([
