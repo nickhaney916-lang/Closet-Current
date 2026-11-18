@@ -1,0 +1,99 @@
+name: MAIN219 actual WebKit Chromium PHOTO119 postcommit private owner lease NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main219-genuine-photo119-postcommit-browser-lease-HOLD]
+  pull_request:
+    branches: [research/main217-photo119-transaction-terminal-session-lease-HOLD]
+permissions:
+  contents: read
+jobs:
+  source-and-node:
+    name: Immutable M217 photo source, original Node regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact immutable M217 source and research-only two-file diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=ae108f331c321e1bf6719f8a70e4cb0fbb0cb895
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              scripts/test-main219-native-idb-photo119-terminal-lease-browser.mjs|.github/workflows/main219-genuine-photo119-idb-postcommit-no-deploy.yml) ;;
+              *) echo "M219 altered forbidden product, original photo, model or other assignment: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
+          test "$(git rev-parse HEAD:tests/main217-photo119-postcommit-session-revoke.test.mjs)" = 13aac94823e306f84bdbcce1a1d2f80be22eb9b2
+          test "$(git rev-parse HEAD:public/native-reviewed-shared-original-157.mjs)" = 2108bdc2f0a67b8e356ea8c47d0042512ca618bf
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          node --check scripts/test-main219-native-idb-photo119-terminal-lease-browser.mjs
+      - name: Install pinned inherited source and real browser test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original before and after PHOTO119 signed-session event Node regression
+        run: node --test tests/main217-photo119-postcommit-session-revoke.test.mjs
+      - name: Inherited owner-review real fake IDB source and atomic backup regressions
+        run: node --test tests/manual-reviewed-private-save-119.test.mjs
+      - name: Actual offline PWA build and full security/recognition/owner Node tests
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  native-owner-transaction-ack:
+    name: Actual original PHOTO119 browser IDB commit lease (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M219_ENGINE: ${{ matrix.engine }}
+      P99_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable genuine signed PHOTO119 source with zero app modifications
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=ae108f331c321e1bf6719f8a70e4cb0fbb0cb895
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              scripts/test-main219-native-idb-photo119-terminal-lease-browser.mjs|.github/workflows/main219-genuine-photo119-idb-postcommit-no-deploy.yml) ;;
+              *) echo "M219 forbidden source, owner or hosted mutation: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Install pinned native Chromium/WebKit real application runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Actual browser IndexedDB PHOTO119 after-commit signed session source gate across three mobile widths
+        run: node scripts/test-main219-native-idb-photo119-terminal-lease-browser.mjs
+      - name: Build original normal native PWA without deployment
+        run: node scripts/build.mjs
+      - name: Unmodified real normal user private photo to original 2D and v3 restoration at 390
+        run: P99_WIDTH=390 node scripts/test-parallel99-normal-app-browser.mjs
+      - name: Unmodified real normal user private photo to original 2D and v3 restoration at 430
+        run: P99_WIDTH=430 node scripts/test-parallel99-normal-app-browser.mjs
