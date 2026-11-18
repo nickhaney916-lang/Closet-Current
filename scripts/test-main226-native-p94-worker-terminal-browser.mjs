@@ -83,6 +83,9 @@ const before=[
  "  modelMocked:false,privateDataLogged:false,familyAlpha:'HOLD'",
  " }));"
 ].join('\n')+'\n';
+replaceOnly("/unverified region|Automatic extraction unavailable|could not start|timed out/i.test(",
+ "/unverified region|No unverified garment regions|Automatic extraction unavailable|Local detection worker failed|could not start|timed out/i.test(",
+ 'end test wait on genuine zero/error terminal, retain original fail-closed assertion');
 replaceOnly(" assert.ok(state.cards>0&&state.cards<=12,",
  before+" assert.ok(state.cards>0&&state.cards<=12,",'original zero proposal assertion');
 const failure=[
