@@ -600,7 +600,15 @@ export function mountMultiGarmentCapture24({
        const failed=data.type==='error';
        clearTimeout(next.timeout);next.worker.terminate();job=null;
        redraw();
+       // A Worker 'done' packet can report a nonzero count without a single
+       // source-verified, owner-bound proposal being accepted. Never call zero
+       // accepted review cards a successful extraction or suggest invisible cards.
+       // Keep the original JPEG and the explicit manual-review path available.
        status.textContent=failed?'Automatic extraction unavailable. Add and crop pieces manually; no items saved.':
+        state.pieces.length===0?
+         'No unverified garment regions were detected. Your verified original photo is retained. '+
+         'Choose Add missed piece, adjust the crop, and confirm category, subtype and color. '+
+         'Nothing was automatically saved.':
         state.pieces.length+' unverified region'+(state.pieces.length===1?'':'s')+' found. '+
          (next.ignored?next.ignored+' extra, duplicate or invalid detector proposals were ignored for mobile reliability. ':'')+
          'Stronger suggestions appear first, other regions remain below. Inspect each crop or Add missed piece.';
