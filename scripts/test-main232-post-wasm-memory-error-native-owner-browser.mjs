@@ -26,15 +26,15 @@ const originalWorker=workerBytes.toString('utf8');
 const afterModelSession="  return {model,processor,RawImage};";
 assert.equal(originalWorker.split(afterModelSession).length,2,
  'source-locked original P94 model-session success boundary moved');
-const syntheticError="  self.postMessage({type:'m232-fault',phase:'after-native-wasm',faultKind:'synthetic-memory-access'});\\n"+
- "  throw new WebAssembly.RuntimeError('memory access out of bounds');\\n"+
+const syntheticError="  self.postMessage({type:'m232-fault',phase:'after-native-wasm',faultKind:'synthetic-memory-access'});\n"+
+ "  throw new WebAssembly.RuntimeError('memory access out of bounds');\n"+
  afterModelSession;
 const instrumentedWorker=originalWorker.replace(afterModelSession,syntheticError);
 const workerSourceRead="  const body=await readFile(absolute);";
 assert.equal(derived.split(workerSourceRead).length,2,
  'original P94 fixture static server source changed');
 derived=derived.replace(workerSourceRead,
- "  const bytes=await readFile(absolute);\\n  const body=path==='/public/outfit-worker-p94.mjs'?Buffer.from("+
+ "  const bytes=await readFile(absolute);\n  const body=path==='/public/outfit-worker-p94.mjs'?Buffer.from("+
  JSON.stringify(instrumentedWorker)+",'utf8'):bytes;");
 const originalPage=" const page=await context.newPage();";
 assert.equal(derived.split(originalPage).length,2,'P94 main owner page anchor moved');
