@@ -38,7 +38,7 @@ jobs:
           test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           node --check tests/main211-retired-shared-original-import.test.mjs
-          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 469d802e8394936261d6f4518524c265ba7ffc43
+          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 8cc2977f1932b3012c44bdd401081cc542b94c57
           test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
           test "$(git rev-parse HEAD:public/outfit-segmentation.mjs)" = d357955dd8fdab7c0cb727ea597c270edd9309ac
           node --check public/outfit-worker-p94.mjs
@@ -103,7 +103,7 @@ jobs:
           test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           test "$(git rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 9b8c3b37d1d8116e4bf9bc6dbf7ea82e2752433d
-          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 469d802e8394936261d6f4518524c265ba7ffc43
+          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 8cc2977f1932b3012c44bdd401081cc542b94c57
           test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
           test "$(git rev-parse HEAD:public/outfit-segmentation.mjs)" = d357955dd8fdab7c0cb727ea597c270edd9309ac
       - name: Install exact tested real WASM WebKit Chromium dependencies
