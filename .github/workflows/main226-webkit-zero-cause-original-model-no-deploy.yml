@@ -3,7 +3,7 @@ on:
   push:
     branches: [research/main226-webkit-genuine-zero-segmentation-cause-evidence-HOLD]
   pull_request:
-    branches: [research/main225-m224-full-original-m58-seven-job-no-deploy-HOLD]
+    branches: [research/main225-m224-full-original-seven-job-acceptance-HOLD]
 permissions:
   contents: read
 jobs:
