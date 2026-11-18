@@ -1,0 +1,95 @@
+name: MAIN238 native WASM internal memory reference snapshot NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main238-native-internal-wasm-memory-snapshot-HOLD]
+  pull_request:
+    branches: [research/main237-p101-native-wasm-memory-growth-HOLD]
+permissions:
+  contents: read
+jobs:
+  source-security:
+    name: M238 synthetic internal-growth controls + original owner security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact four research paths, original P101/M237/P94 immutable
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=7483a14ec1987718cf6ad6eb62b4b430b3eef733
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' '.github/workflows/main238-wasm-memory-snapshot-no-deploy.yml' 'scripts/main238-wasm-memory-observer-fixture.mjs' 'scripts/test-main238-original-wasm-memory-snapshot-browser.mjs' 'tests/main238-wasm-internal-memory-snapshot.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = ad8ab0eb33322a34f8cc3f45a1fe26feff87b2ab
+          test "$(git rev-parse HEAD:scripts/test-main237-native-p101-wasm-memory-probe.mjs)" = e281589a2f482791875ba2b9b51d0f215bc1af77
+          test "$(git rev-parse HEAD:scripts/main238-wasm-memory-observer-fixture.mjs)" = 2d3a927a760af39918b0204880a715523426e713
+          test "$(git rev-parse HEAD:scripts/test-main238-original-wasm-memory-snapshot-browser.mjs)" = 1b2b998478aadb6239cec7b94301b23ab64f7da7
+          test "$(git rev-parse HEAD:tests/main238-wasm-internal-memory-snapshot.test.mjs)" = 294dc3a10c619ac2cc0e9966e5bf8f53bc64e432
+          node --check scripts/main238-wasm-memory-observer-fixture.mjs
+          node --check scripts/test-main238-original-wasm-memory-snapshot-browser.mjs
+          node --test tests/main238-wasm-internal-memory-snapshot.test.mjs
+          M238_SOURCE_ONLY=1 node scripts/test-main238-original-wasm-memory-snapshot-browser.mjs
+      - name: Original app pinned dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Immutable app build and complete owner/private/security regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  genuine-native:
+    name: M238 original model + native memory snapshots (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [webkit, chromium]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P101_CACHE_MODE: baseline
+      P101_SESSION_MODE: baseline
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact original P94 Worker and observer source lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=7483a14ec1987718cf6ad6eb62b4b430b3eef733
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' '.github/workflows/main238-wasm-memory-snapshot-no-deploy.yml' 'scripts/main238-wasm-memory-observer-fixture.mjs' 'scripts/test-main238-original-wasm-memory-snapshot-browser.mjs' 'tests/main238-wasm-internal-memory-snapshot.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/main238-wasm-memory-observer-fixture.mjs)" = 2d3a927a760af39918b0204880a715523426e713
+          test "$(git rev-parse HEAD:scripts/test-main238-original-wasm-memory-snapshot-browser.mjs)" = 1b2b998478aadb6239cec7b94301b23ab64f7da7
+          node --test tests/main238-wasm-internal-memory-snapshot.test.mjs
+          M238_SOURCE_ONLY=1 node scripts/test-main238-original-wasm-memory-snapshot-browser.mjs
+      - name: Original pinned model/Playwright native dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Two genuine original P94 positive model/private 2D/v4 journeys 320+430, no retries
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          for width in 320 430; do
+            M214_ATTEMPT="M238-$M58_ENGINE-$width" P94_WIDTH="$width" node scripts/test-main238-original-wasm-memory-snapshot-browser.mjs
+          done
