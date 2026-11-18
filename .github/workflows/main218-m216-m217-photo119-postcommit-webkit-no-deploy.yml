@@ -1,0 +1,159 @@
+name: MAIN218 M216 P94 plus M217 signed PHOTO119 postcommit owner lease NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main218-m216-adopt-m217-photo119-postcommit-lease-HOLD]
+  pull_request:
+    branches: [research/main216-m215-adopt-m214-worker-outcome-HOLD]
+permissions:
+  contents: read
+jobs:
+  signed-owner-source-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable M210 product and M213 retired original proof only
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=786507ff26ed2740673f97187f11306f7e4f7145
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              public/native-reviewed-private-save-167.mjs|tests/main217-photo119-postcommit-session-revoke.test.mjs|.github/workflows/main218-m216-m217-photo119-postcommit-webkit-no-deploy.yml) ;;
+              *) echo "M218 unauthorized change $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse "$BASE":public/native-reviewed-shared-original-157.mjs)" = 2108bdc2f0a67b8e356ea8c47d0042512ca618bf
+          test "$(git rev-parse HEAD:public/native-reviewed-shared-original-157.mjs)" = 2108bdc2f0a67b8e356ea8c47d0042512ca618bf
+          test "$(git rev-parse HEAD:tests/main211-retired-shared-original-import.test.mjs)" = a4351afaa97cb30ecdbf8c781da6cdd4032f7b99
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          node --check tests/main211-retired-shared-original-import.test.mjs
+          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 8cc2977f1932b3012c44bdd401081cc542b94c57
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:public/outfit-segmentation.mjs)" = d357955dd8fdab7c0cb727ea597c270edd9309ac
+          node --check public/outfit-worker-p94.mjs
+          node --check scripts/test-main214-p94-worker-outcome.mjs
+          test "$(git rev-parse "$BASE":public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
+          test "$(git rev-parse HEAD:tests/main217-photo119-postcommit-session-revoke.test.mjs)" = 13aac94823e306f84bdbcce1a1d2f80be22eb9b2
+          test "$(git rev-parse HEAD:.github/workflows/main216-m215-m214-webkit-outcome-no-deploy.yml)" = 3eb7bc9d2022bafaced17287fdb1897a36b0294f
+          node --check public/native-reviewed-private-save-167.mjs
+          node --check tests/main217-photo119-postcommit-session-revoke.test.mjs
+      - name: Install strictly pinned offline source and actual browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Genuine OWNER private IndexedDB postcommit current signed-session revocation
+        run: node --test tests/main217-photo119-postcommit-session-revoke.test.mjs
+      - name: Original manually approved PHOTO119 original private source atomic save
+        run: node --test tests/manual-reviewed-private-save-119.test.mjs
+      - name: Original M183 current owner epoch and negative Worker session assertions
+        run: node --test tests/outfit-capture.test.cjs
+      - name: Original M187 current signed owner private original-photo lease
+        run: node --test tests/main187-required-owner-assert-current.test.mjs
+      - name: Original M204 existing-ID deletion and source-revocation restore refusal
+        run: node --test tests/main204-restore-source-revocation.test.mjs
+      - name: Original M206 pending owner-photo focus auth/DB swap revocation
+        run: node --test tests/main206-pending-owner-focus-reentry.test.mjs
+      - name: Original M211 retired shared-original different-ID backup admission refusal
+        run: node --test tests/main211-retired-shared-original-import.test.mjs
+      - name: Offline PWA app build and full inherited independent Node source security suite
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  real-native-owner-24mp:
+    name: Actual signed-owner native original P88/24MP + restored shared photo (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P99_ENGINE: ${{ matrix.engine }}
+      M51_ENGINE: ${{ matrix.engine }}
+      M58_ENGINE: ${{ matrix.engine }}
+      M123_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: '390'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin actual M210 native signed-owner view source and M211 read-only cutout fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=786507ff26ed2740673f97187f11306f7e4f7145
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              public/native-reviewed-private-save-167.mjs|tests/main217-photo119-postcommit-session-revoke.test.mjs|.github/workflows/main218-m216-m217-photo119-postcommit-webkit-no-deploy.yml) ;;
+              *) echo "M218 unauthorized changed source $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/native-reviewed-shared-original-157.mjs)" = 2108bdc2f0a67b8e356ea8c47d0042512ca618bf
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 9b8c3b37d1d8116e4bf9bc6dbf7ea82e2752433d
+          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 8cc2977f1932b3012c44bdd401081cc542b94c57
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:public/outfit-segmentation.mjs)" = d357955dd8fdab7c0cb727ea597c270edd9309ac
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
+          test "$(git rev-parse HEAD:tests/main217-photo119-postcommit-session-revoke.test.mjs)" = 13aac94823e306f84bdbcce1a1d2f80be22eb9b2
+          test "$(git rev-parse HEAD:.github/workflows/main216-m215-m214-webkit-outcome-no-deploy.yml)" = 3eb7bc9d2022bafaced17287fdb1897a36b0294f
+      - name: Install exact tested real WASM WebKit Chromium dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build actual normal-user PWA without deployment
+        run: node scripts/build.mjs
+      - name: Real native owner private photo 2D outfit and v3 restoration at 320 390 430
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+          done
+      - name: Original M51 signed owner auth and private source reentry across all widths
+        run: node scripts/test-main51-real-app-owner-original-2d.mjs
+      - name: Original M157 TWO actively owner-reviewed cutouts same licensed JPEG original to v3 2D
+        run: node scripts/test-main157-same-photo-native-outfit-browser.mjs
+      - name: Genuine P88 SegFormer WASM using original licensed 4000x6000 24MP JPEG
+        env:
+          P96_NATIVE_4K: 'true'
+        run: node scripts/test-parallel96-native-highres-browser.mjs
+      - name: Original M172 entire private items and state no-write and valid 24MP reentry
+        env:
+          P96_NATIVE_4K: 'true'
+        run: node scripts/test-main172-24mp-private-state-invariance.mjs
+      - name: Exact real P94 model-to-reviewed-private-outfit outcome at three original viewports
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            M214_ATTEMPT="first-$width" P94_WIDTH="$width" node scripts/test-main214-p94-worker-outcome.mjs
+          done
+      - name: Independent original P94 WebKit 430 replication, no retries and original positive proposal assertion
+        if: matrix.engine == 'webkit'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for slot in 1 2 3 4; do
+            M214_ATTEMPT="repeat-$slot" P94_WIDTH=430 node scripts/test-main214-p94-worker-outcome.mjs
+          done
