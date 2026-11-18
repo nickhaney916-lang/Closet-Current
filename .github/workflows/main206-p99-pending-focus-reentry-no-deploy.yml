@@ -58,6 +58,7 @@ jobs:
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       P99_ENGINE: ${{ matrix.engine }}
+      M51_ENGINE: ${{ matrix.engine }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -94,3 +95,5 @@ jobs:
           for width in 320 390 430; do
             P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
           done
+      - name: Full M51 real-app owner original JPEG browser reentry and source revocation
+        run: node scripts/test-main51-real-app-owner-original-2d.mjs
