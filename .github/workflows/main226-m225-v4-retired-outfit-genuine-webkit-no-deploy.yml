@@ -47,6 +47,7 @@ jobs:
           node --check scripts/test-main223-genuine-p94-crop-prepare-rejection-browser.mjs
           test "$(git rev-parse HEAD:tests/bounded-detection-review-58.test.mjs)" = 2f90d83b2b162a11e68d08e4d0ad3c38d470671a
           test "$(git rev-parse "$BASE":research/restore-atomic-01/atomic-restore.mjs)" = 50bb781239d68d09e353a773240b2dc9630a8b67
+          test "$(git rev-parse HEAD:research/restore-atomic-01/atomic-restore.mjs)" = 6bcc29508b2818dc3e60f4ca93cdcbf7d15f0a14
           test "$(git rev-parse HEAD:tests/main226-v4-retired-original-outfit-lifecycle.test.mjs)" = 9166cfa7e6923cc773e6b38291a97d3d5cb227f3
           test "$(git rev-parse HEAD:public/native-lossless-v4-owner-acceptance-m3.mjs)" = e20f2b4926671e6ede769c4598894881d4318de8
           node --check tests/main226-v4-retired-original-outfit-lifecycle.test.mjs
@@ -106,6 +107,7 @@ jobs:
           test "$(git rev-parse HEAD:tests/bounded-detection-review-58.test.mjs)" = 2f90d83b2b162a11e68d08e4d0ad3c38d470671a
           node --check scripts/test-main223-genuine-p94-crop-prepare-rejection-browser.mjs
           test "$(git rev-parse "$BASE":research/restore-atomic-01/atomic-restore.mjs)" = 50bb781239d68d09e353a773240b2dc9630a8b67
+          test "$(git rev-parse HEAD:research/restore-atomic-01/atomic-restore.mjs)" = 6bcc29508b2818dc3e60f4ca93cdcbf7d15f0a14
           test "$(git rev-parse HEAD:tests/main226-v4-retired-original-outfit-lifecycle.test.mjs)" = 9166cfa7e6923cc773e6b38291a97d3d5cb227f3
           test "$(git rev-parse HEAD:public/native-lossless-v4-owner-acceptance-m3.mjs)" = e20f2b4926671e6ede769c4598894881d4318de8
           node --check tests/main226-v4-retired-original-outfit-lifecycle.test.mjs
