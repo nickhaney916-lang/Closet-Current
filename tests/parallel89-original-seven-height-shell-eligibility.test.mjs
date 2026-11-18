@@ -251,3 +251,118 @@ test('missing or malformed original skin/rest/mesh proof fails closed, not as a 
   {...x,skinWeights:Float32Array.from(x.skinWeights,(v,i)=>i===0?2:v)}
  ])assert.throws(()=>audit(bad));
 });
+
+
+const namedProof=x=>{
+ const v=withOriginalProof(x);
+ v.sourceMeshNames=['originalCore'];
+ v.sourceBoneNamesByMesh=[Array.from({length:163},(_,i)=>
+  i===0?'pelvis':i===1?'upperleg_L':'sourceBone'+i)];
+ v.originalFaceExclusionReasons=Array.from(v.selectedSourceFaceMask,(flag)=>
+  flag?'SELECTED_ORIGINAL_SOURCE_FACE':
+   'ORIGINAL_INDEX_SHARED_FACE_EXCLUDED_BY_MASK');
+ return v;
+};
+const namedCheck=x=>{
+ const saved=Object.fromEntries(Object.entries(x)
+  .filter(([,v])=>ArrayBuffer.isView(v)).map(([k,v])=>[k,v.slice()]));
+ const p=audit(x);
+ const c=p.originalSevenHeightBoundaryCauseAudit;
+ const r=c.originalUnmatchedAndMaskedEdgeRegions;
+ assert.equal(r.schema,'P89-original-unmatched-masked-edge-region-proof/v1');
+ assert.equal(r.allSevenHeightActualUnpairedIndexedEdges,
+  c.noExactRestPoseSkinMeshTwinEdges);
+ assert.equal(r.allSevenHeightMaskedOriginalNeighbourEdges,
+  c.originalMaskExcludedSameIndexedEdge);
+ assert.equal(r.anonymousUnpairedEdgeRegions.length,r.allSevenHeightActualUnpairedIndexedEdges);
+ assert.equal(r.groupedOriginalExcludedFaceRegions.reduce((n,g)=>n+g.count,0),
+  r.allSevenHeightMaskedOriginalNeighbourEdges);
+ assert.equal(r.noUVSeamWelding,true);
+ assert.equal(r.originalPhoto2DFallbackRequired,true);
+ assert.equal(r.consumer3DAdmitted,false);
+ assert.equal(r.releaseAuthorized,false);
+ assert.equal(r.noSourceFaceVertexIndicesOrCoordinatesReleased,true);
+ assert.equal(JSON.stringify(r).includes('bodyPositions'),false);
+ assert.equal(JSON.stringify(r).includes('sourceFaceId'),false);
+ for(const [k,v] of Object.entries(saved))assert.deepEqual(x[k],v);
+ return r;
+};
+test('source original closed box has zero unmatched and excluded open edges with bone metadata',()=>{
+ const r=namedCheck(namedProof(make(vertices,boxFaces)));
+ assert.equal(r.allSevenHeightActualUnpairedIndexedEdges,0);
+ assert.equal(r.allSevenHeightMaskedOriginalNeighbourEdges,0);
+});
+test('unmatched genuine open wall edges locate source mesh and dominant original pelvis bone',()=>{
+ const r=namedCheck(namedProof(make(wallVertices,wallFaces)));
+ assert.equal(r.allSevenHeightActualUnpairedIndexedEdges,4);
+ assert.equal(r.allSevenHeightMaskedOriginalNeighbourEdges,0);
+ for(const edge of r.anonymousUnpairedEdgeRegions){
+  assert.equal(edge.originalSourceMesh,'originalCore');
+  assert.deepEqual(edge.originalDominantSourceBoneNames,['pelvis']);
+  assert.deepEqual(edge.originalDominantBoneRegions,['SOURCE_TORSO_HIP']);
+  assert.match(edge.midpointSkirtPhotoHeightBand,/PHOTO_HEIGHT_BAND/);
+ }
+});
+test('authentic indexed excluded source face is grouped by actual original face reason not declared a UV stitch',()=>{
+ const x=namedProof(make(vertices,boxFaces));
+ x.selectedSourceFaceMask[0]=0;
+ x.originalFaceExclusionReasons[0]='ORIGINAL_INDEX_SHARED_FACE_EXCLUDED_BY_ANATOMY';
+ const r=namedCheck(x);
+ assert.equal(r.allSevenHeightMaskedOriginalNeighbourEdges,3);
+ assert.ok(r.groupedOriginalExcludedFaceRegions.every(g=>
+  g.originalExcludedReason==='ORIGINAL_INDEX_SHARED_FACE_EXCLUDED_BY_ANATOMY'&&
+  g.originalExcludedNeighbourMeshes==='originalCore'&&g.count>=1));
+});
+test('original selection mask reason remains independently visible, not silently reclassified as anatomy',()=>{
+ const x=namedProof(make(vertices,boxFaces));
+ x.selectedSourceFaceMask[0]=0;
+ x.originalFaceExclusionReasons[0]='ORIGINAL_INDEX_SHARED_FACE_EXCLUDED_BY_MASK';
+ const r=namedCheck(x);
+ assert.equal(r.allSevenHeightMaskedOriginalNeighbourEdges,3);
+ assert.equal(r.groupedOriginalExcludedFaceRegions.reduce((n,g)=>n+g.count,0),3);
+ assert.ok(r.groupedOriginalExcludedFaceRegions.every(g=>
+  g.originalExcludedReason==='ORIGINAL_INDEX_SHARED_FACE_EXCLUDED_BY_MASK'));
+});
+test('original skin mismatch resolves coincident walls as unpaired edges in distinct source bone regions',()=>{
+ const x=namedProof(repeatedWalls());
+ for(let i=4;i<8;i++){
+  x.skinIndices[4*i]=1;
+  x.skinWeights[4*i]=1;
+ }
+ const r=namedCheck(x);
+ assert.equal(r.allSevenHeightActualUnpairedIndexedEdges,8);
+ const names=new Set(r.anonymousUnpairedEdgeRegions.map(e=>
+  e.originalDominantSourceBoneNames.join(',')));
+ assert.ok(names.has('pelvis'));assert.ok(names.has('upperleg_L'));
+});
+test('original different-mesh same-world duplicate walls never become one physical anatomical surface',()=>{
+ const x=namedProof(repeatedWalls());
+ x.sourceMeshNames=['originalCore','secondOriginalMesh'];
+ x.sourceBoneNamesByMesh.push(x.sourceBoneNamesByMesh[0].slice());
+ x.sourceMeshIds.fill(1,4);
+ const r=namedCheck(x);
+ assert.equal(r.allSevenHeightActualUnpairedIndexedEdges,8);
+ assert.deepEqual(new Set(r.anonymousUnpairedEdgeRegions.map(z=>z.originalSourceMesh)),
+  new Set(['originalCore','secondOriginalMesh']));
+});
+test('exact original UV twins are not emitted as unmatched repair candidates',()=>{
+ const r=namedCheck(namedProof(repeatedWalls()));
+ assert.equal(r.allSevenHeightActualUnpairedIndexedEdges,0);
+ assert.equal(r.allSevenHeightMaskedOriginalNeighbourEdges,0);
+});
+test('source face exclusion labels must match original selection mask, no forged anatomical attribution',()=>{
+ const x=namedProof(make(vertices,boxFaces));
+ x.originalFaceExclusionReasons[0]='ORIGINAL_INDEX_SHARED_FACE_EXCLUDED_BY_ANATOMY';
+ assert.throws(()=>audit(x),/region-proof-names-and-source-selection/);
+});
+test('invalid source mesh name or absent 163bone names refuses region annotation',()=>{
+ const x=namedProof(make(wallVertices,wallFaces));
+ for(const bad of [
+  {...x,sourceMeshNames:['']},
+  {...x,sourceMeshNames:['bad\u0000name']},
+  {...x,sourceBoneNamesByMesh:[]},
+  {...x,sourceBoneNamesByMesh:[['pelvis']]},
+  {...x,originalFaceExclusionReasons:[]},
+  {...x,sourceMeshIds:new Uint16Array(4).fill(99)}
+ ])assert.throws(()=>audit(bad));
+});
