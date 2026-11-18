@@ -1114,7 +1114,7 @@ function auditSelectedOriginalSkirtEndpointSourceProvenance89(){
   skirt=posedSource84(candidate.meshes);
   const positions=body.g.getAttribute('position').array,
    original=originalBodySourceSeamProvenance89(positions.length/3),
-   safe=x=>String(x||'').replace(/[^\\x20-\\x7e]/g,'_').slice(0,96),
+   safe=x=>String(x||'').replace(/[^\x20-\x7e]/g,'_').slice(0,96),
    names=bodies.map((mesh,i)=>safe(mesh.name)||'SOURCE_BODY_MESH_'+i),
    bones=bodies.map(mesh=>{
     check(mesh?.skeleton?.bones?.length===163,
