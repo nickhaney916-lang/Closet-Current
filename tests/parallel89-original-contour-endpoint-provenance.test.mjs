@@ -112,6 +112,29 @@ function checked(f){
   assert.equal(Object.values(x.disjointIndexedEndpointProvenance)
    .reduce((s,n)=>s+n,0),x.indexedGraphOpenEndpoints);
  }
+ const slab=v.originalIndexedSourceAdjacentSlabConnectivity;
+ assert.equal(slab.schema,'P89-original-selected-body-indexed-edge-slab-bridge/v1');
+ assert.equal(slab.originalSkirtPlaneCount,7);
+ assert.equal(slab.originalInterHeightSlabCount,6);
+ assert.equal(slab.selectedOriginalFaceCount,
+  v.sourceOriginalStrictCoreFaces+v.source95CounterfactualExtraFaces);
+ assert.equal(slab.noInferredOrVirtualSeamBridges,true);
+ assert.equal(slab.sourceIndexedLoopsAndExteriorNotProven,true);
+ assert.equal(slab.consumer3DAdmitted,false);
+ assert.equal(slab.originalPhoto2DFallbackRequired,true);
+ for(const [i,part] of slab.originalAdjacentSlabSourceEdgeConnectivity.entries()){
+  assert.deepEqual(part.originalPhotoSkirtAdjacentHeightPair,[i,i+1]);
+  assert.equal(part.lowerPlaneCutSelectedFaces,
+   v.originalSevenSourceSkirtEndpointRings[i].sourceOriginal95ContourSegments);
+  assert.equal(part.upperPlaneCutSelectedFaces,
+   v.originalSevenSourceSkirtEndpointRings[i+1].sourceOriginal95ContourSegments);
+  assert.equal(part.lowerPlaneIndexedComponents,
+   part.sourceIndexedEdgeConnectedBothPlanes+part.lowerOnlyIndexedComponents);
+  assert.equal(part.upperPlaneIndexedComponents,
+   part.sourceIndexedEdgeConnectedBothPlanes+part.upperOnlyIndexedComponents);
+  assert.equal(part.onlyOriginalVertexIndexSharedEdgesCountAsConnections,true);
+  assert.equal(part.restSkinCompatibleVirtualUVSeamsNeverJoined,true);
+ }
  assert.equal(Object.values(v.originalEndpointCauseTotals).reduce((s,n)=>s+n,0),
   v.originalSourceIndexedOpenEndpointTotal);
  assert.equal(v.originalSourceUniqueMutualVirtualPairCount,
