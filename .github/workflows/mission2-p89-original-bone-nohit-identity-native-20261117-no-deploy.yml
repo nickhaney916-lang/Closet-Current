@@ -106,7 +106,7 @@ jobs:
           cd .p89-disposable-p541
           node scripts/build-work47-benchmark.mjs
           node research/three-d-20/restore-approved-models.mjs
-      - name: Original photographed skirt missing core source ray: exact public bone names and no-hit 7x48 axes in 163-bone Chromium WebKit
+      - name: Original photographed skirt missing core source rays and exact public bone names in 163-bone Chromium WebKit
         run: node scripts/test-parallel89-real-skirt-browser.mjs .p89-disposable-p541 .p89-readonly-p84
       - name: Confirm real source donors and held consumer remain immutable
         shell: bash
