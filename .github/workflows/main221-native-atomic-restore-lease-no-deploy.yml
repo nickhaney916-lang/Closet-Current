@@ -1,0 +1,85 @@
+name: MAIN221 native original restore terminal lease NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main221-native-atomic-restore-terminal-lease-HOLD]
+  pull_request:
+    branches: [research/main220-m218-m219-native-idb-model-joint-HOLD]
+permissions:
+  contents: read
+jobs:
+  original-restored-source-node:
+    name: Immutable v3 original source and regression tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fail closed on any product or original owner/model change
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=12402bd5cbd390d9ffa4526316cecfc8855db8be
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              scripts/test-main221-native-atomic-restore-terminal-lease-browser.mjs|.github/workflows/main221-native-atomic-restore-lease-no-deploy.yml) ;;
+              *) echo "M221 forbidden source/private owner/other assignment change: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main219-native-idb-photo119-terminal-lease-browser.mjs)" = 4692fedf8b9f61478f1cf27170de72d6d82064d7
+          node --check scripts/test-main221-native-atomic-restore-terminal-lease-browser.mjs
+      - name: Install pinned offline dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Full inherited Node privacy source backup and app build
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  actual-browser-atomic-lease:
+    name: Genuine native IndexedDB restore session race (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M221_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve unchanged native original source and strictly limited scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=12402bd5cbd390d9ffa4526316cecfc8855db8be
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              scripts/test-main221-native-atomic-restore-terminal-lease-browser.mjs|.github/workflows/main221-native-atomic-restore-lease-no-deploy.yml) ;;
+              *) echo "M221 forbidden runtime or model modification: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          node --check scripts/test-main221-native-atomic-restore-terminal-lease-browser.mjs
+      - name: Install pinned real browsers
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Native v3 original validation and real oncomplete rollback and revoked acknowledgment
+        run: node scripts/test-main221-native-atomic-restore-terminal-lease-browser.mjs
