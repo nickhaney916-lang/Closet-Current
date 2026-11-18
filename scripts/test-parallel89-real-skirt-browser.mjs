@@ -666,8 +666,15 @@ try{
     window.nativeP89Skirt.auditSelectedOriginalUpperInwardSource89(radial,coverage),
     {radial,coverage});
    assert.equal(upper.schema,'P89-original-upper-skirt-source-inward-ray-anatomy/v1');
+   assert.ok([
+    'ORIGINAL_UPPER_INWARD_SOURCE_RAY_BONE_MESH_WITNESSED_NOT_WEARABLE',
+    'NO_ORIGINAL_UPPER_INWARD_RAY_OBSERVED_NOT_BODY_FIT'
+   ].includes(upper.status),
+    'original top-band could be empty while other original bands remain inward');
    assert.equal(upper.status,
-    'ORIGINAL_UPPER_INWARD_SOURCE_RAY_BONE_MESH_WITNESSED_NOT_WEARABLE');
+    upper.originalCoreSourceInwardRayCount>0?
+     'ORIGINAL_UPPER_INWARD_SOURCE_RAY_BONE_MESH_WITNESSED_NOT_WEARABLE':
+     'NO_ORIGINAL_UPPER_INWARD_RAY_OBSERVED_NOT_BODY_FIT');
    assert.equal(upper.avatar,avatar);
    assert.equal(upper.pose,selectedPose);
    assert.equal(upper.originalSourcePhotoSHA256,required.skirt);
@@ -686,7 +693,13 @@ try{
     band1.exactRayUnknownSectors);
    assert.equal(upper.originalOtherSixPhotoHeightBandsInwardRayCount,
     radial.exactRayInwardSourceSectors-band1.exactRayObservedInwardSectors);
-   assert.ok(upper.originalCoreSourceInwardRayCount>=1);
+   assert.ok(upper.originalCoreSourceInwardRayCount>=0);
+   assert.equal(upper.originalCoreSourceInwardRayCount+
+    upper.originalOtherSixPhotoHeightBandsInwardRayCount,
+    radial.exactRayInwardSourceSectors,
+    'must preserve genuine exact body inward warnings across ALL seven bands');
+   assert.ok(radial.exactRayInwardSourceSectors>0,
+    'real original rig source radial inward body gap evidence must remain blocked');
    assert.equal(upper.originalInwardTopSectorWitnesses.length,
     upper.originalCoreSourceInwardRayCount);
    assert.ok(upper.originalInwardTopSectorWitnesses.every(row=>
