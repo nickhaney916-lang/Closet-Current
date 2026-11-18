@@ -1,0 +1,70 @@
+name: MAIN214 exact M212 WebKit 430 P88 worker terminal classifier NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main214-m212-webkit-p88-terminal-classifier-HOLD]
+  pull_request:
+    branches: [research/main212-m209-m207-protected-m58-focus-restore-HOLD]
+    paths:
+      - .github/workflows/main214-m212-webkit-430-p88-terminal-no-deploy.yml
+      - scripts/test-parallel94-native-p88-browser.mjs
+permissions:
+  contents: read
+jobs:
+  original-webkit-430-independent-process:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        trial: [1, 2, 3, 4]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: webkit
+      P94_WIDTH: '430'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve exact failed source M212 and original research-only model and photo
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          M212=a32c4a8ad3e4bb86d54b56123f464d179f19cd92
+          git merge-base --is-ancestor "$M212" HEAD
+          changed="$(git diff --name-only "$M212" HEAD)"
+          expected="$(printf '%s\n' '.github/workflows/main214-m212-webkit-430-p88-terminal-no-deploy.yml' 'scripts/test-parallel94-native-p88-browser.mjs')"
+          test "$changed" = "$expected"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = d478fcf6e4e8889a23b1620b444667ac949da7a9
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:benchmark/fixtures/commons-0003.jpg)" = "$(git rev-parse "$M212":benchmark/fixtures/commons-0003.jpg)"
+          test "$(git rev-parse HEAD:.github/workflows/main212-m209-m206-focus-m204-restore-protected-m58-no-deploy.yml)" = f06ca5717b32be5f57c9045e28a69a4e3776fd14
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 87a9232ea3935eeadba9b8709642d3531058e65a
+          git diff --exit-code "$M212" HEAD -- public/ research/ supabase/ benchmark/
+          grep -Fq 'assert.ok(state.cards>0&&state.cards<=12,' scripts/test-parallel94-native-p88-browser.mjs
+          grep -Fq 'M214_P88_TERMINAL_CLASSIFICATION' scripts/test-parallel94-native-p88-browser.mjs
+          node --check scripts/test-parallel94-native-p88-browser.mjs
+      - name: Install pinned real WebKit, P88 and local native app test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Real independent WebKit 430 model and original-to-private-outfit acceptance trial ${{ matrix.trial }}
+        run: node scripts/test-parallel94-native-p88-browser.mjs
+      - name: Preserve scrubbed categorical diagnosis even on genuine failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main214-real-webkit-430-terminal-trial-${{ matrix.trial }}-HOLD
+          path: |
+            benchmark/parallel94-native-p88-browser/webkit/430/M214-P88-TERMINAL.json
+            benchmark/parallel94-native-p88-browser/webkit/430/M58-ACTUAL-P88-BROWSER-NO-SILENT-SAVE.json
+          if-no-files-found: warn
+          retention-days: 14

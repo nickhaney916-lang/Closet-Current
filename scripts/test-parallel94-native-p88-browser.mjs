@@ -188,6 +188,27 @@ try{
   status:document.getElementById('multi24Status')?.textContent||'',
   cards:document.querySelectorAll('#multi24Grid .multi24-card').length
  }));
+ // M214: do not weaken the original hard fail. Classify the terminal
+ // reason without storing any photo bytes, person/owner credentials or logits.
+ const m214Terminal=state.status.startsWith('Automatic extraction unavailable.')?'worker-error':
+  /^0 unverified regions? found\./.test(state.status)?'completed-zero-proposals':
+  /Local segmentation timed out\./.test(state.status)?'model-timeout':
+  /Local detection worker failed\./.test(state.status)?'worker-crash':
+  /Local detection returned an unreadable message\./.test(state.status)?'worker-message-error':
+  state.status.includes('unverified region')?'completed-reviewed-proposals':
+  'other-terminal-refusal';
+ const m214Receipt={
+  engine,width,terminal:m214Terminal,sourceSHA256Matches:state.debug.sourceSHA256===sha,
+  originalWorkerSeen:actualWorkerPaths94.includes('/public/outfit-worker-p94.mjs'),
+  cards:state.cards,acceptedPieces:state.debug.pieces?.length||0,
+  working:state.debug.working,requestAllowed:state.debug.p88Transport57===true,
+  modelResponseHTTP:modelResponses.map(x=>x.status),
+  blockedExternalRequests:rejected.length,documentNavigationCount:mainFrameNavigationsM69.length,
+  pageErrorCount:issues.length,
+  physicalPhone:false,hostedRLS:false,originalSource:'commons-0003',familyAlpha:'HOLD'
+ };
+ await writeFile(join(out,'M214-P88-TERMINAL.json'),JSON.stringify(m214Receipt,null,2)+'\n');
+ console.log('M214_P88_TERMINAL_CLASSIFICATION',JSON.stringify(m214Receipt));
  assert.ok(external.some(x=>x.type==='pinned-browser-library'),
   'No real worker attempted the pinned CDN import');
  assert.ok(external.some(x=>x.type==='pinned-model-hub')||
