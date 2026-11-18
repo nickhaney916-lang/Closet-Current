@@ -214,6 +214,12 @@ try{
   await page.evaluate(()=>window.nativeP89Skirt.setPose('source'));
   for(const panelIndex of [0,1]){
    await page.evaluate(i=>window.nativeP89Skirt.setView(i===0?0:180),panelIndex);
+   // A screenshot of the body alone cannot prove the new skirt panel rendered.
+   // First capture the ACTUAL original 163bone bare anatomy from the SAME
+   // camera, then require the detached panel to change genuine GPU pixels.
+   await page.evaluate(()=>window.nativeP89Skirt.toggleSkirt(false));
+   const bareBody=await page.locator('#avatar').screenshot({animations:'disabled'});
+   await page.evaluate(()=>window.nativeP89Skirt.toggleSkirt(true));
    const preview=await page.evaluate(i=>
     window.nativeP89Skirt.showProvisionalOpenPanel89(i),panelIndex);
    assert.equal(preview.status,'ONE_DETACHED_PROVISIONAL_OPEN_PANEL_RENDERED_NOT_REAL_GARMENT');
@@ -226,6 +232,9 @@ try{
    const meta=await sharp(image).metadata();
    assert.equal(meta.width,390);assert.equal(meta.height,690);
    assert.ok(image.byteLength>10000,'real original skinned detached panel WebGL preview absent');
+   const visibleChannels=await changed(image,bareBody);
+   assert.ok(visibleChannels>500,
+    'provisional original-rig OPEN panel must affect genuine WebGL anatomy pixels');
    const filename=['research-only-unobserved-panel',engine,avatar,panelIndex].join('-')+'.png';
    await writeFile(join(out,filename),image);
    results.originalSkirtOpenPanelNativePreviews.push({
@@ -233,6 +242,7 @@ try{
     sourceGlbReal:true,independentActualGarmentPanelMeasured:false,
     originalUnknownBackMaterialNotPhotographed:true,
     sha256:hash(image),width:meta.width,height:meta.height,
+    changedRGBChannelsFromBareOriginalSkinnedBody:visibleChannels,
     consumer3DAdmitted:false,filename
    });
    const restored=await page.evaluate(()=>
