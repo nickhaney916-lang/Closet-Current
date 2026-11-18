@@ -26,7 +26,7 @@ jobs:
           BASE=b6f8942d8c44cbfd1f66ceef01ad856308d03d18
           git merge-base --is-ancestor "$BASE" HEAD
           changed="$(git diff --name-only "$BASE" HEAD)"
-          test "$changed" = "$(printf '%s\n' '.github/workflows/parallel102-webkit-ort-compat-no-deploy.yml' 'scripts/test-parallel102-ort-runtime-compat-browser.mjs')"
+          test "$changed" = "$(printf '%s\n' '.github/workflows/parallel102-cpu-only-no-deploy.yml' '.github/workflows/parallel102-webkit-ort-compat-no-deploy.yml' 'scripts/test-parallel102-ort-runtime-compat-browser.mjs')"
           test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = 142d496e0fa54452a16dbb68120622ca6885ed90
           test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
