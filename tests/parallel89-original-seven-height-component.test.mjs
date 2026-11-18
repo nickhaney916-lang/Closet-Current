@@ -125,7 +125,7 @@ test('nonmanifold exact original index edge is not authorizing cross-face contin
  assert.equal(r.sourceComponentsCrossingAllSevenHeightPlanes,3);
 });
 test('original zero-area/collinear 3D source face is excluded from connectivity, not physical garment proof',()=>{
- const r=verified(input([0,.2,0,0,.9,0,0,1.8,0],[0,1,2]));
+ const r=verified(input([0,.2,0,0,.9,0,0,1.8,0,5,2,5],[0,1,2]));
  assert.equal(r.originalSelectedGeometricDegenerateFaceCount,1);
  assert.equal(r.sourceComponentsCrossingAllSevenHeightPlanes,0);
 });
