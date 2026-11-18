@@ -43,7 +43,7 @@ export function mountOwnerOutfitPhotoPreview1054({
   typeof getBoard!=='function'||typeof cleanBoard!=='function'||
   !events?.addEventListener||!events?.removeEventListener)
   fail('signed-owner native interface required');
- let closed=false,revision=0,renderedSession=null,renderedBoardStamp=null,phase='idle';
+ let closed=false,revision=0,renderedSession=null,renderedBoardStamp=null,phase='idle',pendingSession=null;
  // The real Outfit Builder returns a synchronous cloned currentBoard.
  // For previously rendered private JPEGs, a thenable/invalid/reentrant
  // board cannot be checked synchronously: revoke instead of guessing.
@@ -64,7 +64,7 @@ export function mountOwnerOutfitPhotoPreview1054({
   }catch{return null;}
  };
  const clear=()=>{target.replaceChildren();renderedSession=null;renderedBoardStamp=null;};
- const revoke=()=>{revision++;clear();phase='revoked';};
+ const revoke=()=>{revision++;pendingSession=null;clear();phase='revoked';};
  // The signed auth provider can throw after token replacement; a focus/status
  // event must revoke old private JPEG pixels without leaking the error.
  const currentSession=()=>{try{return getSession();}catch{return null;}};
@@ -80,7 +80,14 @@ export function mountOwnerOutfitPhotoPreview1054({
   // A hidden page must not retain previously authenticated photo pixels.
   if(doc.hidden||renderedSession&&!hasCurrentDisplayLease())revoke();
  }
- function onFocus(){if(renderedSession&&!hasCurrentDisplayLease())revoke();}
+ // A focus event can witness a transient same-owner auth/DB replacement
+ // while verification awaits a private read. Even if the old reference later
+ // returns, that pending request may not reuse the old source lease.
+ function onFocus(){
+  if((phase==='checking'&&pendingSession&&
+      !equalSession(pendingSession,currentSession()))||
+     (renderedSession&&!hasCurrentDisplayLease()))revoke();
+ }
  events.addEventListener('closet:session-locked',revoke);
  // The actual app dispatches this event after a committed signed-owner
  // wardrobe mutation; any already-published photo needs a fresh source SHA.
@@ -113,6 +120,7 @@ export function mountOwnerOutfitPhotoPreview1054({
    const ticket=++revision;
    clear();phase='checking';
    const start=currentSession();
+   pendingSession=start;
    let verified=null;
    try{
     if(!equalSession(start,currentSession()))
@@ -195,11 +203,12 @@ export function mountOwnerOutfitPhotoPreview1054({
     if(!hasCurrentDisplayLease()){
      revoke();fail('outfit selection changed at photo presentation');
     }
+    pendingSession=null;
     verified=Object.freeze({slotCount:pinned.length,presentationMode:'verified-original-photo-2d',
      renderAuthorized3D:false,releaseAuthorized:false,familyAlpha:'HOLD',
      threeDResearchStatus:research3D.status});
    }catch(error){
-    if(ticket===revision&&!closed){clear();phase='refused';}
+    if(ticket===revision&&!closed){pendingSession=null;clear();phase='refused';}
     throw error;
    }
    return verified;
