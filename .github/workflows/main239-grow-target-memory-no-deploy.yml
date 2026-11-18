@@ -33,7 +33,7 @@ jobs:
           test "$(git rev-parse HEAD:scripts/test-main238-original-wasm-memory-snapshot-browser.mjs)" = 69f6817634ecc89ea4b1c6b1ebe5a4cff1a3c20b
           test "$(git rev-parse HEAD:scripts/main239-grow-target-memory-fixture.mjs)" = 3afb59500cdf7e51b2baf828abe6c5590bccd899
           test "$(git rev-parse HEAD:scripts/test-main239-original-ort-grow-target-browser.mjs)" = fe2f0924c4c7cd48c744b55197adf234ca5b14c8
-          test "$(git rev-parse HEAD:tests/main239-native-memory-grow-target.test.mjs)" = e0412de671b32c620ee5dadd127a7c855367081a
+          test "$(git rev-parse HEAD:tests/main239-native-memory-grow-target.test.mjs)" = e2fa242231c22e5b9060b73d1f135304aaed308d
           node --check scripts/main239-grow-target-memory-fixture.mjs
           node --check scripts/test-main239-original-ort-grow-target-browser.mjs
           node --test tests/main239-native-memory-grow-target.test.mjs
