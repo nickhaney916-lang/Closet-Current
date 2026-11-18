@@ -40,7 +40,8 @@ function planeSegment(p,ids,h){
 }
 export function auditOriginalSevenHeightIndexedShellEligibility89({
  bodyPositions,bodyIndices,selectedSourceFaceMask,skirtPositions,
- restPositions,skinIndices,skinWeights,sourceMeshIds
+ restPositions,skinIndices,skinWeights,sourceMeshIds,
+ sourceMeshNames,sourceBoneNamesByMesh,originalFaceExclusionReasons
 }={}){
  const p=bodyPositions,idx=bodyIndices,mask=selectedSourceFaceMask,s=skirtPositions;
  if(!(p instanceof Float32Array)||p.length<12||p.length%3||
@@ -182,9 +183,9 @@ export function auditOriginalSevenHeightIndexedShellEligibility89({
     areaSquared(p,...ids)<=1e-18);
    for(let j=0;j<3;j++){
     const key=edgeKey(ids[j],ids[(j+1)%3]);
-    if(!raw.has(key))raw.set(key,{count:0,excluded:0,degenerate:0});
+    if(!raw.has(key))raw.set(key,{count:0,excluded:0,degenerate:0,excludedFaceIds:[]});
     const row=raw.get(key);row.count++;
-    if(!mask[f])row.excluded++;
+    if(!mask[f]){row.excluded++;row.excludedFaceIds.push(f);}
     if(deg)row.degenerate++;
    }
   }
@@ -240,8 +241,136 @@ export function auditOriginalSevenHeightIndexedShellEligibility89({
     totals.ambiguousExactRestPoseSkinMeshCandidateEdges+
     totals.noExactRestPoseSkinMeshTwinEdges!==totals.originalNoIndexedNeighborEdges)
    throw Error('original-shell-boundary-accounting-not-conserved');
+
+  // Classify ONLY the ten unpaired ORIGINAL edges and masked-neighbor
+  // boundaries by actual source mesh / dominant original bone name.
+  // These names are genuine CC0 source rig metadata, not inferred garment
+  // anatomy. No original indices, geometry coordinates or skin buffers escape.
+  let originalUnmatchedAndMaskedEdgeRegions=null;
+  const detailProvided=[sourceMeshNames,sourceBoneNamesByMesh,
+   originalFaceExclusionReasons].some(x=>x!==undefined);
+  if(detailProvided){
+   const ascii=x=>typeof x==='string'&&x.length>0&&x.length<=96&&
+    /^[\\x20-\\x7e]+$/.test(x);
+   const labels=new Set([
+    'SELECTED_ORIGINAL_SOURCE_FACE',
+    'ORIGINAL_INDEX_SHARED_FACE_EXCLUDED_BY_MASK',
+    'ORIGINAL_INDEX_SHARED_FACE_EXCLUDED_BY_ANATOMY',
+    'ORIGINAL_INDEX_SHARED_FACE_EXCLUDED_BY_MIXED_WEIGHT'
+   ]);
+   if(!Array.isArray(sourceMeshNames)||!sourceMeshNames.length||
+    sourceMeshNames.length>256||sourceMeshNames.some(x=>!ascii(x))||
+    !Array.isArray(sourceBoneNamesByMesh)||
+    sourceBoneNamesByMesh.length!==sourceMeshNames.length||
+    sourceBoneNamesByMesh.some(row=>!Array.isArray(row)||row.length!==163||
+     row.some(x=>!ascii(x)))||
+    !Array.isArray(originalFaceExclusionReasons)||
+    originalFaceExclusionReasons.length!==mask.length||
+    originalFaceExclusionReasons.some((x,i)=>!labels.has(x)||
+     (!!mask[i])!==(x==='SELECTED_ORIGINAL_SOURCE_FACE')))
+    throw Error('original-edge-region-proof-names-and-source-selection-required');
+   for(const mesh of sourceMeshIds)if(mesh>=sourceMeshNames.length)
+    throw Error('original-edge-region-source-mesh-out-of-range');
+   const originalBone=v=>{
+    const mesh=sourceMeshIds[v];let best=-1,joint=0;
+    for(let k=0;k<4;k++){
+     const w=skinWeights[4*v+k];
+     if(w>best){best=w;joint=skinIndices[4*v+k];}
+    }
+    if(best<=0)throw Error('original-edge-region-zero-source-skin');
+    return sourceBoneNamesByMesh[mesh][joint];
+   };
+   const region=name=>{
+    const b=name.toLowerCase();
+    if(/hand|finger|thumb|arm|forearm|shoulder|clavic|elbow|wrist|head|neck|eye|ear|face|jaw/.test(b))
+     return 'SOURCE_HEAD_ARM';
+    if(/foot|toe|ankle|knee|calf|shin|thigh|upleg|lowleg|leg|heel/.test(b))
+     return 'SOURCE_LEG';
+    if(/pelv|hip|spine|chest|torso|abdomen|back|waist|butt|root/.test(b))
+     return 'SOURCE_TORSO_HIP';
+    return 'UNKNOWN_ORIGINAL_BONE';
+   };
+   const midpointBand=(a,b)=>{
+    const y=(p[3*a+1]+p[3*b+1])/2;
+    if(y<Math.min(...h))return 'BELOW_ALL_SEVEN_SKIRT_HEIGHT_PLANES';
+    if(y>Math.max(...h))return 'ABOVE_ALL_SEVEN_SKIRT_HEIGHT_PLANES';
+    for(let i=0;i<6;i++)
+     if(y>=Math.min(h[i],h[i+1])&&y<=Math.max(h[i],h[i+1]))
+      return 'SOURCE_PHOTO_HEIGHT_BAND_'+i+'_'+(i+1);
+    throw Error('original-edge-region-midheight-unclassifiable');
+   };
+   const sourceBoneWitness=ids=>[...new Set(ids.map(originalBone))].sort();
+   const sourceMeshWitness=ids=>{
+    const v=[...new Set(ids.map(i=>sourceMeshNames[sourceMeshIds[i]]))].sort();
+    return v.length===1?v[0]:'MULTIPLE_ORIGINAL_SOURCE_MESHES';
+   };
+   const maskedGroups=new Map(),unmatched=[];
+   let masked=0,unpaired=0;
+   for(const [key,e] of open){
+    if(!all7Roots.has(find(e.incident[0].id)))continue;
+    const rawEdge=raw.get(key),band=midpointBand(e.a,e.b);
+    const selectedMesh=sourceMeshWitness([e.a,e.b]);
+    const selectedBones=sourceBoneWitness([e.a,e.b]);
+    if(rawEdge.excluded>0){
+     masked++;
+     const excluded=rawEdge.excludedFaceIds;
+     const causeNames=[...new Set(excluded.map(f=>
+      originalFaceExclusionReasons[f]))].sort();
+     const neighbourIds=[...new Set(excluded.flatMap(f=>[
+      idx[3*f],idx[3*f+1],idx[3*f+2]
+     ]))];
+     const group=Object.freeze({
+      originalExcludedReason:causeNames.length===1?causeNames[0]:
+       'MULTIPLE_ORIGINAL_EXCLUSION_REASONS',
+      originalSelectedSurfaceMesh:selectedMesh,
+      originalExcludedNeighbourMeshes:sourceMeshWitness(neighbourIds),
+      originalExcludedNeighbourBones:sourceBoneWitness(neighbourIds),
+      originalExcludedNeighbourBoneRegions:[...new Set(
+       neighbourIds.map(v=>region(originalBone(v))))].sort(),
+      selectedBoundaryDominantBones:selectedBones,
+      midpointSkirtPhotoHeightBand:band
+     });
+     const groupKey=JSON.stringify(group);
+     if(!maskedGroups.has(groupKey))maskedGroups.set(groupKey,{...group,count:0});
+     maskedGroups.get(groupKey).count++;
+    }else if(rawEdge.count===1&&(matches.get(edgeProof(e))||0)===1){
+     unpaired++;
+     unmatched.push(Object.freeze({
+      originalSourceMesh:selectedMesh,
+      originalDominantSourceBoneNames:selectedBones,
+      originalDominantBoneRegions:[...new Set(selectedBones.map(region))].sort(),
+      midpointSkirtPhotoHeightBand:band,
+      originalExactRestPoseSkinMeshTwinAbsent:true
+     }));
+    }
+   }
+   if(masked!==totals.originalMaskExcludedSameIndexedEdge||
+    unpaired!==totals.noExactRestPoseSkinMeshTwinEdges||
+    [...maskedGroups.values()].reduce((n,v)=>n+v.count,0)!==masked||
+    unmatched.length!==unpaired)
+    throw Error('original-edge-region-source-counts-not-reconciled');
+   unmatched.sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
+   const maskedReport=[...maskedGroups.values()]
+    .sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)))
+    .map(v=>Object.freeze(v));
+   originalUnmatchedAndMaskedEdgeRegions=Object.freeze({
+    schema:'P89-original-unmatched-masked-edge-region-proof/v1',
+    allSevenHeightActualUnpairedIndexedEdges:unpaired,
+    allSevenHeightMaskedOriginalNeighbourEdges:masked,
+    anonymousUnpairedEdgeRegions:Object.freeze(unmatched),
+    groupedOriginalExcludedFaceRegions:Object.freeze(maskedReport),
+    sourceEdgeMidpointHeightBandOnlyNotFullEdge3DPosition:true,
+    originalSourceMeshAndDominantBoneNamesNotPhysicalGarmentMeasurements:true,
+    noSourceFaceVertexIndicesOrCoordinatesReleased:true,
+    noUVSeamWelding:true,
+    originalPhoto2DFallbackRequired:true,
+    consumer3DAdmitted:false,releaseAuthorized:false
+   });
+  }
+
   originalSevenHeightBoundaryCauseAudit=Object.freeze({
    schema:'P89-original-sevenheight-source-boundary-causes/v1',
+   originalUnmatchedAndMaskedEdgeRegions,
    ...totals,exactFloat32RestPoseSkinMeshEvidenceOnly:true,
    candidateUVTwinsAreNotSewnOrSignedBody:true,
    originalIndexedSourcePreserved:true,
