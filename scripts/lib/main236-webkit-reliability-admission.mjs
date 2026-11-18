@@ -28,7 +28,7 @@ export function judgeWebkitCandidate236(input){
   ids.add(r.runId);
   if(r.headSha!==headSha||r.runtimeFamily!==runtimeFamily||
      r.scope!==POSITIVE_SCOPE||r.originalSourceLocked!==true||
-     r.publicLicensedPhoto===false||r.nativeBrowser!==true||
+     r.publicLicensedPhoto!==true||r.nativeBrowser!==true||
      r.ownerExplicitApproval!==true||r.privateOriginalBackupV4!==true||
      r.originalCardPositiveAssertion!==true||r.noAutoSaveOnError!==true)
     return refuse('not-original-source-and-owner-acceptance');
