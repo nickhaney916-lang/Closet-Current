@@ -13,6 +13,8 @@
  */
 import {summarizeOriginalPhotoSkirtContactTopology89} from './skirt-contact-topology89.mjs';
 import {snapshotOriginalSkirtBvhContact89} from './source-contact-snapshot89.mjs';
+import {classifySourcePhotoSkirtIndexedFace89}
+ from './skirt-original-photo-front-locked-floor89.mjs';
 const POSES=Object.freeze(['source','blend-50','relaxed']);
 // Research candidate safety also depends on actual intermediate skinned poses.
 // Static quarter poses do NOT establish continuously swept body/cloth clearance.
@@ -52,6 +54,71 @@ function pairCounts(before,after){
   newOriginalSourceFacePairIDs:introduced,
   planeDepthIncreased:after.maxDepth>before.maxDepth+.0005};
 }
+/**
+ * Measure each of the six authentic *photographic* front strips before/after
+ * the SAME original full-body BVH five-pose rigid registration candidates.
+ * These are source-face pair witnesses, not body-height, depth, fabric length,
+ * camera calibration, or physical-garment measurements.
+ *
+ * No original face ID or cloth/body pair key leaves the result.
+ */
+function comparePhotoFrontSourceStrips89(baseline,trial,bodyFaceCount){
+ if(!Array.isArray(baseline)||!Array.isArray(trial)||
+  baseline.length!==5||trial.length!==5)
+  throw Error('five-original-pose-photographed-front-pairs-missing');
+ const original=new Array(6).fill(0),candidate=new Array(6).fill(0);
+ const newlyIntroduced=new Array(6).fill(0),persisted=new Array(6).fill(0);
+ const posesWithOriginal=new Array(6).fill(0),
+  posesWithCandidate=new Array(6).fill(0);
+ for(let p=0;p<5;p++){
+  const before=snapshotOriginalSkirtBvhContact89(baseline[p],{bodyFaceCount}),
+   after=snapshotOriginalSkirtBvhContact89(trial[p],{bodyFaceCount});
+  if(!before||!after)throw Error('original-five-pose-front-strip-BVH-provenance-invalid');
+  const b=new Array(6).fill(0),a=new Array(6).fill(0);
+  for(const key of before.pairs){
+   const face=Number(key.split('|')[0]);
+   if(classifySourcePhotoSkirtIndexedFace89(face).photoRegion==='PHOTOGRAPH_FRONT_LOCKED'){
+    const band=Math.floor(face/96);b[band]++;original[band]++;
+   }
+  }
+  for(const key of after.pairs){
+   const face=Number(key.split('|')[0]);
+   if(classifySourcePhotoSkirtIndexedFace89(face).photoRegion==='PHOTOGRAPH_FRONT_LOCKED'){
+    const band=Math.floor(face/96);a[band]++;candidate[band]++;
+    if(before.pairs.has(key))persisted[band]++;
+    else newlyIntroduced[band]++;
+   }
+  }
+  for(let band=0;band<6;band++){
+   if(b[band]>0)posesWithOriginal[band]++;
+   if(a[band]>0)posesWithCandidate[band]++;
+  }
+ }
+ const total=xs=>xs.reduce((n,x)=>n+x,0);
+ if(total(candidate)!==total(persisted)+total(newlyIntroduced))
+  throw Error('five-original-pose-photo-front-pair-identity-reconciliation-failed');
+ return Object.freeze({
+  schema:'P89-original-photo-front-rigid-registration-six-alpha-strips/v1',
+  sourceOriginalPhotographFrontOnly:true,
+  exactOriginalSourceAlphaStripCount:6,
+  originalFrontPairsBySixSourceAlphaStrips:Object.freeze(original),
+  trialFrontPairsBySixSourceAlphaStrips:Object.freeze(candidate),
+  newlyIntroducedFrontPairsBySixSourceAlphaStrips:Object.freeze(newlyIntroduced),
+  persistedFrontPairsBySixSourceAlphaStrips:Object.freeze(persisted),
+  posesWithOriginalFrontContactsBySourceStrip:Object.freeze(posesWithOriginal),
+  posesWithTrialFrontContactsBySourceStrip:Object.freeze(posesWithCandidate),
+  originalFrontPairSum:total(original),trialFrontPairSum:total(candidate),
+  introducedFrontPairSum:total(newlyIntroduced),
+  allFiveOriginalBodyPoseComparisonsRetained:true,
+  sourceAlphaStripIsNotCalibratedAnatomicalHeight:true,
+  photographCameraExtrinsicsAndPerspectiveUnverified:true,
+  physicalTapeWaistAndLengthMeasurementsAbsent:true,
+  noPhysicalSizeOrDepthCertifiableFromSinglePhoto:true,
+  evenZeroFrontPairsWouldNotProveWearableFit:true,
+  originalPhoto2DFallbackRequired:true,
+  consumer3DAdmitted:false,releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
 export function compareActualOriginalPhotoSkirtRegistration89({
  mesh,avatar,applyPose,sampleContact,originalBodyFaceMask
 }={}){
@@ -75,6 +142,15 @@ export function compareActualOriginalPhotoSkirtRegistration89({
  if(p?.count!==343||index?.count!==1728||uv?.count!==343||
   skin?.count!==343||weights?.count!==343||rest?.count!==343)
   return fail('original photographed independent skirt-shell topology missing');
+ // A face count alone does not validate correspondence between genuine
+ // original alpha row strips and original source face IDs.
+ const si=index.array;
+ for(let band=0;band<6;band++)for(let j=0;j<48;j++){
+  const a=band*49+j,b=a+49,k=(band*48+j)*6;
+  if(si[k]!==a||si[k+1]!==a+1||si[k+2]!==b||
+   si[k+3]!==a+1||si[k+4]!==b+1||si[k+5]!==b)
+   return fail('original source skirt triangle index does not match photo strip topology');
+ }
  const base=p.array.slice(),protectedSource=[
   ['uv',uv.array.slice()],['skinIndex',skin.array.slice()],
   ['skinWeight',weights.array.slice()],
@@ -145,13 +221,14 @@ export function compareActualOriginalPhotoSkirtRegistration89({
    // candidate that happened to improve the original three. A true
    // quarter-pose improvement may matter even with a 3-pose tie.
    // This is still strictly STATIC original skinned BVH contact evidence.
-   const quarterPoseContacts=[];
+   const quarterPoseContacts=[],quarterPoseSnapshots=[];
    for(let i=0;i<QUARTERS.length;i++){
     applyPose(QUARTERS[i]);
     const after=snapshotOriginalSkirtBvhContact89(sampleContact(QUARTERS[i]),
      {bodyFaceCount:immutableBodyFaceMask.length});
     if(!validContact(after))
      throw Error('intermediate-candidate-source-BVH-pairs-missing');
+    quarterPoseSnapshots.push(after);
     quarterPoseContacts.push(Object.freeze({
      pose:QUARTERS[i],...pairCounts(quarterBaseline[i],after)
     }));
@@ -166,6 +243,18 @@ export function compareActualOriginalPhotoSkirtRegistration89({
     n+x.newOriginalSourceFacePairIDs,0);
    const researchOnlyReduction=allFiveNew===0&&!depthIncreased&&
     intermediateSafe&&trialFive<originalFive;
+   // Chronological five-pose source identity, including BOTH quarter poses.
+   // Never infer a "fitted photo" from a shift that merely removes an
+   // original front/body intersection pair.
+   const frontStrips=comparePhotoFrontSourceStrips89(
+    [baseline[0],quarterBaseline[0],baseline[1],quarterBaseline[1],baseline[2]],
+    [sourceBVHAfter[0],quarterPoseSnapshots[0],sourceBVHAfter[1],
+     quarterPoseSnapshots[1],sourceBVHAfter[2]],
+    immutableBodyFaceMask.length);
+   if(frontStrips.originalFrontPairSum>originalFive||
+    frontStrips.trialFrontPairSum>trialFive||
+    frontStrips.introducedFrontPairSum>allFiveNew)
+    throw Error('five-original-pose-photo-front-pair-identity-reconciliation-failed');
    const displacementMeters=Math.hypot(t.dx,t.dy,t.dz);
    const row=Object.freeze({
     name:t.name,localCameraFacingRegistrationMeters:[t.dx,t.dy,t.dz],
@@ -187,6 +276,7 @@ export function compareActualOriginalPhotoSkirtRegistration89({
     originalFivePoseStrictCrossingPairSum:originalFive,
     trialFivePoseStrictCrossingPairSum:trialFive,
     introducedFivePoseSourceFacePairIDs:allFiveNew,
+    genuinePhotoFrontSourceStripRegistrationEvidence:frontStrips,
     displacementMeters,
     fivePoseEvidenceIsStaticNotSwept:true,
     researchOnlyNonworseningReduction:researchOnlyReduction,
@@ -248,7 +338,10 @@ export function compareActualOriginalPhotoSkirtRegistration89({
    'original photographed skirt photo-derived positions modified',
    'genuine-source-contact-turnover-analysis-failed',
    'intermediate-original-source-BVH-pairs-missing',
-   'intermediate-candidate-source-BVH-pairs-missing'
+   'intermediate-candidate-source-BVH-pairs-missing',
+   'five-original-pose-photographed-front-pairs-missing',
+   'original-five-pose-front-strip-BVH-provenance-invalid',
+   'five-original-pose-photo-front-pair-identity-reconciliation-failed'
   ]);
   return fail(safe.has(e.message)?e.message:
    'real-photo-skirt-registration-trial-source-not-verifiable');
