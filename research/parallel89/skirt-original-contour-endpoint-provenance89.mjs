@@ -249,7 +249,8 @@ export function summarizeSourceContourEndpointProvenance89({
   faces.push({a,b,c,mesh,selected,excludedReason});
  }
  const totals=empty(),rings=[];
- let openTotal=0,supportTotal=0,poseCoincidentTotal=0,noneTotal=0,\n  counterfactualCycles=0,mutualSeamPairs=0;
+ let openTotal=0,supportTotal=0,poseCoincidentTotal=0,noneTotal=0,
+  counterfactualCycles=0,mutualSeamPairs=0;
  for(let row=0;row<7;row++){
   let y=0;for(let j=0;j<48;j++)y+=skirtPositions[3*(row*49+j)+1];y/=48;
   const nodes=new Map(),excluded=new Map(),meshHist=Object.create(null);
