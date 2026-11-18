@@ -17,7 +17,7 @@ assert.ok(initial.startsWith('const p101Classify=error=>'),'unexpected instrumen
 assert.ok(initial.includes("const p101ErrorCode=error=>"),'missing shared runtime classifier');
 
 const evaluate=runInNewContext(initial+
-  "\\nconst p101ExceptionText=e=>typeof e==='string'?e:(typeof e?.message==='string'?e.message:'');"+
+  "\nconst p101ExceptionText=e=>typeof e==='string'?e:(typeof e?.message==='string'?e.message:'');"+
   "\\n({run(error){return {category:p101Classify(error),code:p101ErrorCode(error),name:p101ErrorName(error)};}})",
   Object.create(null),{timeout:1000});
 
