@@ -81,7 +81,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
- selectedResearchPoseChecks:[],selectedDenseOriginalRigTransitionAudits:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedWholeVsCoreRayCauseAudits:[],selectedUpperInwardOriginalSourceWitnesses:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
+ selectedResearchPoseChecks:[],selectedDenseOriginalRigTransitionAudits:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedWholeVsCoreRayCauseAudits:[],selectedUpperInwardOriginalSourceWitnesses:[],sourceOriginalCoreUpperLimbVetoAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -605,6 +605,32 @@ try{
     assert.equal(restored.strictTransverseSourceBodyTriangleCrossings,expected,
      'original licensed selected source or rig not restored after dense sampling');
    }
+   // A true P541 original GLB wrist/metacarpal is NOT a torso/leg
+   // fitting surface, even if it intersects the waist photo-band plane.
+   // Keep all of these original source faces in the independent FULL
+   // original body BVH safety veto; remove only from selected-core rays.
+   const veto=await page.evaluate(()=>
+    window.nativeP89Skirt.auditSelectedOriginalCoreUpperLimbVeto89());
+   assert.equal(veto.schema,'P89-original-source-upper-limb-core-face-veto/v1');
+   assert.equal(veto.status,'TRUE_ORIGINAL_SOURCE_UPPER_EXTREMITY_FACE_VETOED_NOT_WEARABLE');
+   assert.equal(veto.avatar,avatar);
+   assert.equal(veto.sourcePhotoSHA256,required.skirt);
+   assert.equal(veto.sourceAnatomyGLBSHA256,required[avatar]);
+   assert.equal(veto.originalUpperLimbHeadFacesLeakedIntoCore,0);
+   assert.ok(veto.actualOriginalUpperLimbHeadWeightedFaces>0);
+   assert.ok(veto.originalUpperLimbHeadFacesConservativelyExcluded>0);
+   assert.equal(veto.actualOriginalBodyIndexedTriangles,
+    veto.selectedTorsoLegOriginalSourceFaces+veto.originalExcludedSourceFaces);
+   assert.ok(veto.observedRealOriginalExcludedBoneNames.some(name=>
+    /wrist|metacarp/i.test(name)),
+    'real source hand/wrist bone evidence missing');
+   assert.equal(veto.originalMetacarpalAndWristBoneNamesClassifiedAsUpperExtremity,true);
+   assert.equal(veto.originalFullBodyIndexedBVHStillRequired,true);
+   assert.equal(veto.upperHandRayNotIndependentCoreTorsoClothFit,true);
+   assert.equal(veto.consumer3DAdmitted,false);
+   assert.equal(veto.originalPhoto2DFallbackRequired,true);
+   assert.equal(veto.releaseAuthorized,false);
+   results.sourceOriginalCoreUpperLimbVetoAudits.push(veto);
    // Independent geometric body radial witness. Zero crossing pairs are NOT
    // sufficient to prove the cloth is outside the body or physically sized.
    const radial=await page.evaluate(()=>
@@ -698,8 +724,8 @@ try{
     upper.originalOtherSixPhotoHeightBandsInwardRayCount,
     radial.exactRayInwardSourceSectors,
     'must preserve genuine exact body inward warnings across ALL seven bands');
-   assert.ok(radial.exactRayInwardSourceSectors>0,
-    'real original rig source radial inward body gap evidence must remain blocked');
+   assert.ok(radial.exactRayUnknownSourceSectors>0,
+    'unobserved original source body sectors must remain unknown rather than false wearable fit');
    assert.equal(upper.originalInwardTopSectorWitnesses.length,
     upper.originalCoreSourceInwardRayCount);
    assert.ok(upper.originalInwardTopSectorWitnesses.every(row=>
@@ -752,9 +778,15 @@ try{
     radial.sampledInwardBodyGapAngularSectors>0);
    assert.equal(radial.originalBodyAngularSectorEvidenceMissing,
     radial.sampledUnknownBodyGapAngularSectors>0);
+   const sampledInward=radial.sampledInwardBodyGapAngularSectors>0,
+    sampledMissing=radial.sampledUnknownBodyGapAngularSectors>0;
    assert.equal(radial.status,
-    'SAMPLED_SOURCE_RADIAL_INWARD_AND_MISSING_BODY_SECTORS_NOT_WEARABLE',
-    'immutable original public photo model must disclose the independently witnessed radial inward AND missing source body sectors rather than calling zero BVH wearable');
+    sampledInward&&sampledMissing?
+     'SAMPLED_SOURCE_RADIAL_INWARD_AND_MISSING_BODY_SECTORS_NOT_WEARABLE':
+    sampledMissing?'SAMPLED_SOURCE_RADIAL_BODY_COVERAGE_INCOMPLETE_NOT_WEARABLE':
+    sampledInward?'SAMPLED_SOURCE_RADIAL_INWARD_BODY_OVERLAP_WITNESSED_NOT_WEARABLE':
+     'SAMPLED_SOURCE_RADIAL_GAP_OBSERVED_NOT_CLOSED_VOLUME_FIT',
+    'real original upper limb exclusion must never suppress honest inward/unknown fit evidence');
    assert.equal(radial.exactRayBodyContourSourceTopology,
     'ORIGINAL_INDEXED_FACE_HORIZONTAL_PLANE_RAY_INTERSECTION');
    assert.equal(radial.exactRaySampledAngularPositions,336);
@@ -1702,6 +1734,7 @@ try{
  assert.equal(results.selectedSourceBodyRadialGapAudits.length,10);
  assert.equal(results.selectedWholeVsCoreRayCauseAudits.length,10);
  assert.equal(results.selectedUpperInwardOriginalSourceWitnesses.length,10);
+ assert.equal(results.sourceOriginalCoreUpperLimbVetoAudits.length,10);
  assert.equal(results.selectedSourceWholeBodyClosureAudits.length,10);
  assert.equal(results.selectedOriginalSourceBodySeamAudits.length,10);
  assert.equal(results.selectedOriginalSourceBodyBoundaryRegionAudits.length,10);
@@ -1784,6 +1817,7 @@ try{
    originalDenseRigSixteenthStaticChecks:results.selectedDenseOriginalRigTransitionAudits.map(x=>({avatar:x.avatar,status:x.status,original:x.sumOriginalStrictFacePairs,selected:x.sumRegisteredStrictFacePairs,newPairs:x.sumNewlyIntroducedOriginalSourceFacePairs})),
    originalWholeVsCoreSourceRayChecks:results.selectedWholeVsCoreRayCauseAudits.map(x=>({avatar:x.avatar,pose:x.pose,inward:x.originalCoreSourceExactInwardRaySectors,coreUnknown:x.originalCoreSourceExactUnknownRaySectors,excludedSourceRays:x.sourceCoreRayMissingReasonTotals.EXCLUDED_ORIGINAL_BODY_SOURCE_FACE_RAY_FOUND,wholeSourceNoRay:x.sourceCoreRayMissingReasonTotals.NO_ORIGINAL_FULL_BODY_INDEXED_FACE_RAY})),
    originalUpperInwardWitnesses:results.selectedUpperInwardOriginalSourceWitnesses.map(x=>({avatar:x.avatar,pose:x.pose,sectorIndices:x.originalInwardTopSectorWitnesses.map(y=>y.originalSourceSkirtTopSectorIndex),dominantBones:[...new Set(x.originalInwardTopSectorWitnesses.flatMap(y=>y.farSourceOriginalMeshAndBoneProof.originalDominant163BoneNames))],sourceMeshes:[...new Set(x.originalInwardTopSectorWitnesses.flatMap(y=>y.farSourceOriginalMeshAndBoneProof.originalSourceMeshes))],firstBeyond:x.raysWithFirstOriginalBodyHitAlreadyBeyondSkirt,nearFar:x.raysWithFarthestOriginalBodyHitBeyondNearerSourceHit})),
+   originalUpperLimbCoreMaskVeto:results.sourceOriginalCoreUpperLimbVetoAudits.filter(x=>x.originalUpperLimbHeadFacesLeakedIntoCore===0).length,
    originalSourceEndpointProvenanceByAvatar:results.selectedOriginalSkirtEndpointSourceProvenanceAudits.filter(x=>x.pose==='source').map(x=>({
     avatar:x.avatar,
     originalIndexedOpenEndpointTotal:x.sourceEndpointProvenanceProof.originalSourceIndexedOpenEndpointTotal,
