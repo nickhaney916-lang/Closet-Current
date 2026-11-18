@@ -116,8 +116,13 @@ try{
   results.offsite.push('forbidden request');return route.abort();
  });
  await page.goto(origin+'/research/parallel89/native-skirt-browser89.html',{waitUntil:'domcontentloaded'});
- await page.waitForFunction(()=>window.nativeP89Skirt?.getState()?.phase==='ready'||
-  !!window.nativeP89SkirtError,null,{timeout:120000});
+ try{
+  await page.waitForFunction(()=>window.nativeP89Skirt?.getState()?.phase==='ready'||
+   !!window.nativeP89SkirtError,null,{timeout:30000});
+ }catch(e){
+  throw Error('actual original research native module initialization failed: '+
+   JSON.stringify(results.errors)+'; '+String(e.message));
+ }
  assert.equal(await page.evaluate(()=>window.nativeP89SkirtError||null),null,
   'real-licensed-skirt native setup failed');
  await page.locator('#original').evaluate(img=>img.decode());
