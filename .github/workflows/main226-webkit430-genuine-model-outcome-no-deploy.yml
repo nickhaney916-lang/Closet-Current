@@ -1,0 +1,148 @@
+name: MAIN226 real WebKit 430 model zero-region reproduction NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main226-webkit430-genuine-model-outcome-reproduction-HOLD]
+  pull_request:
+    branches: [research/main224-m223-source-crop-and-v3-retired-outfit-joined-HOLD]
+permissions:
+  contents: read
+jobs:
+  source-and-node:
+    name: M226 exact M224 source and inherited safety suite
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify ONE workflow-only diff and all native original source SHA guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = ".github/workflows/main226-webkit430-genuine-model-outcome-no-deploy.yml"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 8cc2977f1932b3012c44bdd401081cc542b94c57
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
+          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = af15a9c08a81aa4064d1e5d1c4f0af0d855582c9
+          node --check scripts/test-main214-p94-worker-outcome.mjs
+          node --check public/outfit-worker-p94.mjs
+      - name: Install pinned original app dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Offline build and all unchanged Node owner privacy and source guards
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  genuine-webkit-430:
+    name: M226 fresh WebKit 430 genuine outcomes shard ${{ matrix.shard }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: webkit
+      P94_WIDTH: '430'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin actual original Worker, tests and strict full-owner acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1 HEAD
+          test "$(git diff --name-only 4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1 HEAD)" = ".github/workflows/main226-webkit430-genuine-model-outcome-no-deploy.yml"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 8cc2977f1932b3012c44bdd401081cc542b94c57
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
+      - name: Install pinned real WebKit and original SegFormer runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Three fresh independent genuine model and owner journeys; preserve every RED
+        shell: bash
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -uo pipefail
+          failed=0
+          for attempt in 1 2 3; do
+            echo "::group::M226 REAL WebKit 430 source-locked original model shard $SHARD attempt $attempt"
+            if M214_ATTEMPT="M226-WEBKIT-430-S${SHARD}-A${attempt}" node scripts/test-main214-p94-worker-outcome.mjs; then
+              echo "M226_REAL_WEBKIT_430_ATTEMPT_PASS shard=$SHARD attempt=$attempt"
+            else
+              code=$?
+              echo "::error::M226_REAL_WEBKIT_430_ATTEMPT_FAIL shard=$SHARD attempt=$attempt exit=$code; preserve prior RED and stage evidence"
+              failed=$((failed+1))
+            fi
+            echo "::endgroup::"
+          done
+          echo "M226_REAL_WEBKIT_430_SHARD_RECEIPT shard=$SHARD attempts=3 failures=$failed"
+          test "$failed" -eq 0
+  genuine-chromium-control:
+    name: M226 genuine Chromium 430 unchanged-model control
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: chromium
+      P94_WIDTH: '430'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict exact source original diagnostic and Worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1 HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 8cc2977f1932b3012c44bdd401081cc542b94c57
+      - name: Install real pinned Chromium and SegFormer runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Two independent genuine chromium control journeys, no retries
+        shell: bash
+        run: |
+          set -uo pipefail
+          failed=0
+          for attempt in 1 2; do
+            echo "::group::M226 real Chromium 430 control attempt $attempt"
+            if M214_ATTEMPT="M226-CHROMIUM-430-A${attempt}" node scripts/test-main214-p94-worker-outcome.mjs; then
+              echo "M226_REAL_CHROMIUM_430_ATTEMPT_PASS attempt=$attempt"
+            else
+              code=$?
+              echo "::error::M226_REAL_CHROMIUM_430_ATTEMPT_FAIL attempt=$attempt exit=$code"
+              failed=$((failed+1))
+            fi
+            echo "::endgroup::"
+          done
+          echo "M226_REAL_CHROMIUM_430_CONTROL_RECEIPT attempts=2 failures=$failed"
+          test "$failed" -eq 0
