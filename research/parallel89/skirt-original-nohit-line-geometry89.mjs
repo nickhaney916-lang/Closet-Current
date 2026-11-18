@@ -290,7 +290,21 @@ export function auditOriginalNoHitLineGeometry89(a={}){
      p.originalStrictCoreSourceBandReceipts[i]?.originalExcludedFaceIntersection||
     v.originalNoForwardBodySourceRayHit!==
      p.originalStrictCoreSourceBandReceipts[i]?.noObservedOriginalFaceIntersection))
-   return error('original-skirt-line-analysis-disagrees-with-independent-336-ray-evidence');
+   return error('original-skirt-line-analysis-disagrees-with-independent-336-ray-evidence:'+
+    JSON.stringify({
+     observed:[x.originalStrictCoreInward,x.originalStrictCoreOutward,
+      x.originalStrictCoreNear,x.originalStrictCoreUnknown,
+      x.originalSourceExcludedFaceRayHits,x.originalSourceNoForwardFaceRayHits],
+     independent:[p.baselineStrictCoreInward,p.baselineStrictCoreOutward,
+      p.baselineStrictCoreNear,p.baselineStrictCoreUnknown,
+      p.baselineUnknownExcludedOriginalFaceRayHits,p.baselineUnknownNoOriginalFaceRayHits],
+     originalBandObserved:x.sevenOriginalSkirtBandLineReasons.map(v=>[
+      v.originalStrictUnknown,v.originalExcludedBodySourceHit,
+      v.originalNoForwardBodySourceRayHit]),
+     originalBandIndependent:p.originalStrictCoreSourceBandReceipts.map(v=>[
+      v.strictCoreUnknown,v.originalExcludedFaceIntersection,
+      v.noObservedOriginalFaceIntersection])
+    }));
   return Object.freeze({
    schema:'P89-locked-original-nohit-anatomy-plane-line/v1',
    status:'SOURCE_NOHIT_LINE_REASONS_EVIDENCED_NOT_WEARABLE_FIT',
