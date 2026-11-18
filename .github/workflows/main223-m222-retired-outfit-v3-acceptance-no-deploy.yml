@@ -91,6 +91,9 @@ jobs:
           done
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 896eba43aa3bd8bcbeb8599a30c6521adb500975
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
+          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = af15a9c08a81aa4064d1e5d1c4f0af0d855582c9
+          test "$(git rev-parse HEAD:tests/main220-retired-outfit-backup-lifecycle.test.mjs)" = 2ec604dbfe5b92ba205d78ca7b572c70af0043d6
       - name: Install pinned real engines and model dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Build real local app
