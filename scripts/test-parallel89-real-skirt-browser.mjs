@@ -80,7 +80,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  originalPhoto2DShown:true,
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
- captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
+ captures:[],poseSamples:[],photoFrontCenterlineNativeAudits:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
  selectedResearchPoseChecks:[],selectedDenseOriginalRigTransitionAudits:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedWholeVsCoreRayCauseAudits:[],selectedUpperInwardOriginalSourceWitnesses:[],sourceOriginalCoreUpperLimbVetoAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
@@ -128,6 +128,25 @@ try{
  results.realPhoto2DReferenceViews=1;
  for(const avatar of ['female','male']){
   if(avatar==='male')await page.evaluate(()=>window.nativeP89Skirt.load('male'));
+  const photoCenterline=await page.evaluate(()=>
+   window.nativeP89Skirt.auditPhotoFrontCenterline89());
+  assert.equal(photoCenterline.status,
+   'ORIGINAL_SOURCE_FRONT_CENTERLINE_PROJECTED_PROVISIONALLY_NOT_FITTED');
+  assert.equal(photoCenterline.actualP541Original163Bones,true);
+  assert.equal(photoCenterline.originalSourceSKIRTSHA256,required.skirt);
+  assert.equal(photoCenterline.exactSourceMaskRowCount,7);
+  assert.equal(photoCenterline.photoFrontCenterlineShiftsMeters.length,7);
+  assert.ok(Math.abs(photoCenterline.photoFrontCenterlineShiftsMeters[0])<1e-8,
+   'original photo source waist-center offset must be numerically zero');
+  assert.ok(photoCenterline.photoFrontCenterlineShiftsMeters.every(x=>
+   Number.isFinite(x)&&Math.abs(x)<=.15));
+  assert.equal(photoCenterline.originalSourcePixelsAndUVUnchanged,true);
+  assert.equal(photoCenterline.unphotographedRearCenterlineRetainsNeutralProposal,true);
+  assert.equal(photoCenterline.originalSkirtPhysicalScaleNotCalibrated,true);
+  assert.equal(photoCenterline.originalPhoto2DFallbackRequired,true);
+  assert.equal(photoCenterline.consumer3DAdmitted,false);
+  assert.equal(photoCenterline.releaseAuthorized,false);
+  results.photoFrontCenterlineNativeAudits.push({avatar,...photoCenterline});
   for(const pose of ['source','blend-50','relaxed']){
    const witness=await page.evaluate(name=>window.nativeP89Skirt.setPose(name),pose);
    const state=await page.evaluate(()=>window.nativeP89Skirt.getState());
@@ -1781,6 +1800,7 @@ try{
  assert.equal(results.captures.filter(x=>
   x.name?.startsWith('selected-five-pose-source-skirt-')).length,18,
   'selected original source screenshots must not be silently missing');
+ assert.equal(results.photoFrontCenterlineNativeAudits.length,2);
  assert.equal(results.poseSamples.length,6);
  assert.equal(results.diffs.length,18);
  assert.equal(results.errors.length,0,'real original source shader/crash problem');
