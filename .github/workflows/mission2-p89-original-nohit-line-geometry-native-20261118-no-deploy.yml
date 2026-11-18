@@ -27,7 +27,7 @@ jobs:
           git diff --exit-code d2e0eb8d2c7362f917b3d54787e094ee86c45664 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
           while IFS= read -r p; do
             case "$p" in
-              research/parallel89/skirt-original-nohit-line-geometry89.mjs|research/parallel89/native-skirt-browser89.mjs|scripts/test-parallel89-real-skirt-browser.mjs|tests/parallel89-skirt-original-nohit-line-geometry.test.mjs|.github/workflows/mission2-p89-original-nohit-line-geometry-native-20261118-no-deploy.yml) ;;
+              research/parallel89/skirt-original-core-skin-sensitivity89.mjs|research/parallel89/skirt-original-nohit-line-geometry89.mjs|research/parallel89/native-skirt-browser89.mjs|scripts/test-parallel89-real-skirt-browser.mjs|tests/parallel89-skirt-original-nohit-line-geometry.test.mjs|.github/workflows/mission2-p89-original-nohit-line-geometry-native-20261118-no-deploy.yml) ;;
               *) echo "Unauthorized non-M2 code change: $p"; exit 1 ;;
             esac
           done < <(git diff --name-only d2e0eb8d2c7362f917b3d54787e094ee86c45664 HEAD)
