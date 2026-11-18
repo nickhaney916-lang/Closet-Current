@@ -81,7 +81,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
- selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
+ selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -1047,6 +1047,70 @@ try{
    assert.equal(sensitive.originalPhoto2DFallbackRequired,true);
    assert.equal(sensitive.consumer3DAdmitted,false);
    assert.equal(sensitive.releaseAuthorized,false);
+   // TRUE original 163bone source nohit witness, preserving original
+   // previous strict and 95% hypothetical 336 spoke receipts. This
+   // does not patch body topology, change 3-unit ray cap or infer real
+   // skirt physical calibration or a closed solid human body.
+   const noHit=await page.evaluate(()=>
+    window.nativeP89Skirt.auditSelectedOriginalSkirtCoreNoHitGeometry89());
+   assert.equal(noHit.schema,
+    'P89-original-photo-95percent-core-nohit-source-geometry/v1');
+   assert.equal(noHit.status,
+    'ORIGINAL_SOURCE_95_CORE_NOHIT_CAUSES_LOCALIZED_NOT_FIT',
+    'original nohit source geometry failed: '+JSON.stringify(noHit));
+   assert.equal(noHit.avatar,avatar);
+   assert.equal(noHit.pose,selectedPose);
+   assert.equal(noHit.sourcePhotoSHA256,required.skirt);
+   assert.equal(noHit.sourceAnatomyGLBSHA256,required[avatar]);
+   assert.equal(noHit.independentlySourceLockedOriginalRays336,true);
+   const geo=noHit.originalSourceRayEvidence;
+   assert.equal(geo.schema,
+    'P89-original-95percent-skin-core-nohit-plane-ray-geometry/v1');
+   assert.equal(geo.originalIndexedBodyTriangleCount,
+    topology.originalIndexedTriangleCount);
+   assert.equal(geo.originalSkirtIndexedTriangleCount,576);
+   assert.equal(geo.originalSkirtSampledRays,336);
+   assert.equal(geo.originalStrictCoreFaceCount,
+    sc.actualStrictSourceEligibleCoreFaces);
+   assert.equal(geo.original95PercentHypotheticalAddedFaces,
+    sc.hypothetical95SourceBoneCoreWeightFaces);
+   assert.deepEqual(geo.original95PercentHypotheticalObservedRays,
+    sc.hypothetical95SourceRays);
+   assert.equal(geo.original95PercentHypotheticalUnknownRays,
+    sc.hypothetical95SourceRays.unknown);
+   assert.equal(geo.originalSourceSevenSkirtRingNoHitGeometry.length,7);
+   for(let i=0;i<7;i++){
+    const row=geo.originalSourceSevenSkirtRingNoHitGeometry[i],
+     prior=sc.originalSkirtBandSourceCounterfactuals[i];
+    assert.equal(row.originalSourceSkirtRing,i);
+    assert.equal(row.noHitRays,prior.hypothetical95.unknown);
+    assert.equal(row.originalSource95CorePlaneCutSegments,
+     prior.genuineStrictBodyFacePlaneCuts+
+     prior.additional95BoneAttestedFacePlaneCuts);
+    assert.equal(Object.values(row.primarySourceNoHitCauses)
+     .reduce((n,x)=>n+x,0),row.noHitRays);
+    assert.equal(row.angularEnvelopeOnlyNotCertifiedBodyVolume,true);
+   }
+   assert.equal(Object.values(geo.causePriorityDisjointOriginalBodyRayOutcomes)
+    .reduce((n,x)=>n+x,0),geo.original95PercentHypotheticalUnknownRays);
+   assert.equal(Object.values(geo.sourceUnknownRayDirectionsBySourceAxes)
+    .reduce((n,x)=>n+x,0),geo.original95PercentHypotheticalUnknownRays);
+   assert.equal(geo.sourceNoHitRaysWhoseOriginInsideCoreConvexEnvelope+
+    geo.sourceNoHitRaysWhoseOriginOutsideCoreConvexEnvelope,
+    geo.original95PercentHypotheticalUnknownRays);
+   assert.equal(geo.original95PercentSkinnedCoreFaceSetResearchOnly,true);
+   assert.equal(geo.oldOriginalHalfDominantCoreRuleStillAuthoritative,true);
+   assert.equal(geo.noOriginalSourceGeometryOrSkinWeightsMutated,true);
+   assert.equal(geo.convex2DEnvelopeIsNotAClosedBodySignedVolume,true);
+   assert.equal(geo.originalSourceSkirtRearUnobserved,true);
+   assert.equal(geo.consumer3DAdmitted,false);
+   assert.equal(geo.releaseAuthorized,false);
+   assert.equal(noHit.originalSignedBodyVolumeCertified,false);
+   assert.equal(noHit.originalPhysicalGarmentSizeVerified,false);
+   assert.equal(noHit.originalPhoto2DFallbackRequired,true);
+   assert.equal(noHit.consumer3DAdmitted,false);
+   assert.equal(noHit.releaseAuthorized,false);
+   results.selectedOriginalSkirtCoreNoHitGeometryAudits.push(noHit);
    results.selectedOriginalSkirtCoreWeightSensitivityAudits.push(sensitive);
    results.selectedOriginalSkirtCoreBoneNoHitAudits.push(boneNoHit);
    results.selectedOriginalSkirtCoreUnknownCauseAudits.push(causes);
@@ -1169,6 +1233,7 @@ try{
  assert.equal(results.selectedOriginalSkirtCoreUnknownCauseAudits.length,10);
  assert.equal(results.selectedOriginalSkirtCoreBoneNoHitAudits.length,10);
  assert.equal(results.selectedOriginalSkirtCoreWeightSensitivityAudits.length,10);
+ assert.equal(results.selectedOriginalSkirtCoreNoHitGeometryAudits.length,10);
  assert.equal(results.selectedResearchPoseChecks.length,10);
  assert.equal(results.selectedResearchNativeScreenshots.length,18);
  assert.equal(results.selectedResearchFrontCoverage.length,6);
@@ -1237,6 +1302,19 @@ try{
    selectedRegistrationTrueFivePoseNativeChecks:results.selectedResearchPoseChecks.length,
    sourceTrueWorldRadialGapCheckCount:results.selectedSourceBodyRadialGapAudits.length,
    sourceOriginalWholeBodyClosureCheckCount:results.selectedSourceWholeBodyClosureAudits.length,
+   originalSource95NoHitGeometryNativeChecks:results.selectedOriginalSkirtCoreNoHitGeometryAudits.length,
+   originalSource95NoHitGeometryByAvatar:results.selectedOriginalSkirtCoreNoHitGeometryAudits.filter(x=>x.pose==='source').map(x=>({
+    avatar:x.avatar,
+    sampledOriginalSkirtSourceRays:x.originalSourceRayEvidence.originalSkirtSampledRays,
+    strictlyUnknown95PercentOriginalRays:x.originalSourceRayEvidence.original95PercentHypotheticalUnknownRays,
+    exactUnknownCauseBreakdown:x.originalSourceRayEvidence.causePriorityDisjointOriginalBodyRayOutcomes,
+    originalCoreBackwardOnlyWitnesses:x.originalSourceRayEvidence.sourceNoHitRaysWithOriginalCoreBackwardLineIntersection,
+    originalForwardBodyButNonCoreWitnesses:x.originalSourceRayEvidence.sourceNoHitRaysWithExcludedOriginalBodyForwardWitness,
+    originalCoreBeyond3UnitResearchRadius:x.originalSourceRayEvidence.sourceNoHitRaysBeyond3OriginalModelUnitRadialLimit,
+    sourceRingCentersInsideProjectedCoreHull:x.originalSourceRayEvidence.sourceNoHitRaysWhoseOriginInsideCoreConvexEnvelope,
+    sourceRingCentersOutsideProjectedCoreHull:x.originalSourceRayEvidence.sourceNoHitRaysWhoseOriginOutsideCoreConvexEnvelope,
+    original7SkirtRingGeometry:x.originalSourceRayEvidence.originalSourceSevenSkirtRingNoHitGeometry
+   })),
    originalSourceSkinWeightCounterfactualNativeChecks:results.selectedOriginalSkirtCoreWeightSensitivityAudits.length,
    originalSourceSkinWeightCounterfactualByAvatar:results.selectedOriginalSkirtCoreWeightSensitivityAudits.filter(x=>x.pose==='source').map(x=>({
     avatar:x.avatar,
