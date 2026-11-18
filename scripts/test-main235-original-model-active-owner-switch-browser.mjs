@@ -53,8 +53,8 @@ const preflight=[
  "const nativeCheck=spawnSync(process.execPath,['--check','--input-type=module'],{input:derived,encoding:'utf8',timeout:30000});",
  "if(nativeCheck.error)throw nativeCheck.error;",
  "assert.equal(nativeCheck.status,0,'M235 complete inner native ESM syntax invalid: '+String(nativeCheck.stderr||'').slice(0,500));"
-].join('\\n');
-const prepared=derived.replace(nativeCheckAnchor,nativeCheckAnchor+'\\n'+preflight);
+].join('\n');
+const prepared=derived.replace(nativeCheckAnchor,nativeCheckAnchor+'\n'+preflight);
 
 // Parse the entire generated native ESM test with actual Node syntax checker.
 const path=resolve('scripts/.m235-active-owner-model-revocation-negative.mjs');
