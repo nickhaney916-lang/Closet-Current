@@ -128,6 +128,12 @@ try{
  results.realPhoto2DReferenceViews=1;
  for(const avatar of ['female','male']){
   if(avatar==='male')await page.evaluate(()=>window.nativeP89Skirt.load('male'));
+  // Actual original Commons JPEG + licensed alpha + original 163bone rig:
+  // independently require the outward 576-face source skirt in BOTH engines.
+  const originalWinding=await page.evaluate(()=>window.nativeP89Skirt.getState());
+  assert.equal(originalWinding.skirtOriginalRestOutwardNormalFaces,576);
+  assert.equal(originalWinding.skirtOriginalRestSourceWindingVerified,true);
+  assert.equal(originalWinding.consumer3DAdmission,false);
   // Genuine source JPEG + original source mesh + real 163bone male/female in
   // BOTH native engines and ALL five source poses. This intentionally has NO
   // actual photographed-garment tape measurements; it MUST not verify fit.

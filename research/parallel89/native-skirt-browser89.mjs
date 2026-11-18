@@ -224,6 +224,10 @@ async function load(avatar){
  candidate=buildOriginalPhotoSkirtProposal89({root,receipt:source,outline,cutoutImage:image});
  check(candidate?.receipt?.status==='ACTUAL_SOURCE_SKIRT_VISIBLE_FRONT_PROPOSAL_NOT_FITTED_OR_ACCEPTED',
   'independent source skirt unavailable on actual human rig '+candidate?.reason);
+ check(candidate.receipt.sourceRestWindingReport?.outwardRestTriangleCount===576&&
+  candidate.receipt.sourceRestTriangleNormalsExteriorFacing===true&&
+  candidate.receipt.sourceRestWindingReport?.consumer3DAdmitted===false,
+  'original source photo-skirt has inward or unproven exterior normal winding');
  check(candidate.mesh.skeleton===bodies[0].skeleton&&
   candidate.mesh.skeleton.bones.length===163,
   'skirt not on true anatomical bones');
@@ -1280,6 +1284,8 @@ function getState(){return Object.freeze({
  originalCutoutSHA256:source?.cutoutSHA256??null,originalSkirtUnapproved:true,
  meshSourceFrontTextureVerified:!!candidate?.mesh?.material?.[0]?.map?.isDataTexture,
  skirtTriangleCount:candidate?.receipt?.triangleCount??0,
+ skirtOriginalRestOutwardNormalFaces:candidate?.receipt?.sourceRestWindingReport?.outwardRestTriangleCount??0,
+ skirtOriginalRestSourceWindingVerified:candidate?.receipt?.sourceRestTriangleNormalsExteriorFacing===true,
  originalAnatomicalRigReal:true,bones:candidate?.mesh?.skeleton?.bones?.length??0,
  attachedSkinnedMesh:!!candidate?.mesh?.isSkinnedMesh,
  sourcePhotoInferredBack:true,realWorldScaleMeasured:false,pose,angle,frames,

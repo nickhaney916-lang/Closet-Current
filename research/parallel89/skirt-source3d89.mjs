@@ -5,6 +5,8 @@
  * unobserved. This is a research SkinnedMesh PROPOSAL, never consumer clothing.
  */
 import * as THREE from 'three';
+import {outwardSkirtQuadTriangles89,auditOutwardSkirtRestWinding89}
+ from './skirt-outward-winding89.mjs';
 export const SKIRT_SOURCE89=Object.freeze({
  id:'commons-0043',category:'skirt',slot:'bottom',
  originalSHA256:'c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344',
@@ -306,12 +308,15 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
       sourceMeasuredTextureV);
     if(ri<heights.length-1&&j<segments){
      const p=ri*(segments+1)+j,q=p+segments+1;
-     const offset=tris.length;tris.push(p,p+1,q,p+1,q+1,q);
+     const offset=tris.length;tris.push(...outwardSkirtQuadTriangles89(p,q));
      if(j<segments/4||j>=segments*3/4)seams.push({start:offset,count:6,materialIndex:0});
      else seams.push({start:offset,count:6,materialIndex:1});
     }
    }
   }
+  const outwardWinding=auditOutwardSkirtRestWinding89({
+   worldRest:rest,indices:tris,centerX:at.x,centerZ:at.z
+  });
   geo=new THREE.BufferGeometry();
   geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
   geo.setAttribute('sourceSkirt89Rest',new THREE.Float32BufferAttribute(rest,3));
@@ -354,6 +359,8 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
    originalMaskShapeDerivedFromExactAttestedCutoutPNG:true,
    callerSuppliedSilhouetteIsNotTrusted:true,
    genuinePhotoShaderWebGLNotYetMeasured:true,triangleCount:tris.length/3,
+   sourceRestWindingReport:outwardWinding,
+   sourceRestTriangleNormalsExteriorFacing:true,
    originalHumanVisualRealismAccepted:false,consumer3DAdmitted:false,
    originalPhoto2DFallbackRequired:true,releaseAuthorized:false,familyAlpha:'HOLD'
   });
