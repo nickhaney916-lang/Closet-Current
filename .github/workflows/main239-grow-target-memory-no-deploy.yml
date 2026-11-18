@@ -32,7 +32,7 @@ jobs:
           test "$(git rev-parse HEAD:scripts/test-main237-native-p101-wasm-memory-probe.mjs)" = e281589a2f482791875ba2b9b51d0f215bc1af77
           test "$(git rev-parse HEAD:scripts/test-main238-original-wasm-memory-snapshot-browser.mjs)" = 69f6817634ecc89ea4b1c6b1ebe5a4cff1a3c20b
           test "$(git rev-parse HEAD:scripts/main239-grow-target-memory-fixture.mjs)" = 3afb59500cdf7e51b2baf828abe6c5590bccd899
-          test "$(git rev-parse HEAD:scripts/test-main239-original-ort-grow-target-browser.mjs)" = fe2f0924c4c7cd48c744b55197adf234ca5b14c8
+          test "$(git rev-parse HEAD:scripts/test-main239-original-ort-grow-target-browser.mjs)" = 47e24a0a8973465ed6207e5465042d13ed3e988e
           test "$(git rev-parse HEAD:tests/main239-native-memory-grow-target.test.mjs)" = e2fa242231c22e5b9060b73d1f135304aaed308d
           node --check scripts/main239-grow-target-memory-fixture.mjs
           node --check scripts/test-main239-original-ort-grow-target-browser.mjs
@@ -82,7 +82,7 @@ jobs:
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           test "$(git rev-parse HEAD:scripts/test-main238-original-wasm-memory-snapshot-browser.mjs)" = 69f6817634ecc89ea4b1c6b1ebe5a4cff1a3c20b
           test "$(git rev-parse HEAD:scripts/main239-grow-target-memory-fixture.mjs)" = 3afb59500cdf7e51b2baf828abe6c5590bccd899
-          test "$(git rev-parse HEAD:scripts/test-main239-original-ort-grow-target-browser.mjs)" = fe2f0924c4c7cd48c744b55197adf234ca5b14c8
+          test "$(git rev-parse HEAD:scripts/test-main239-original-ort-grow-target-browser.mjs)" = 47e24a0a8973465ed6207e5465042d13ed3e988e
           node --test tests/main239-native-memory-grow-target.test.mjs
           M239_SOURCE_ONLY=1 node scripts/test-main239-original-ort-grow-target-browser.mjs
       - name: Original true SegFormer/native model and owner test dependencies
