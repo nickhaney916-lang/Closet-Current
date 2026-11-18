@@ -43,6 +43,20 @@ for(const added of inserts) {
  restored=restored.replace(added,'');
 }
 assert.equal(restored,worker,'Instrumentation altered actual model/processor/worker logic');
+// P101 controlled test-only variable. With cache=on the real model's cache
+// policy remains original. With cache=off ONLY this disposable Worker line is
+// changed; product Worker, model revision, positive assertions are immutable.
+const browserCacheMode=process.env.P101_BROWSER_CACHE||'on';
+assert.ok(['on','off'].includes(browserCacheMode),'P101 comparison accepts only cache on/off');
+assert.equal(instrumented.split('env.useBrowserCache=true;').length,2,'P101 original cache switch moved');
+if(browserCacheMode==='off'){
+ instrumented=instrumented.replace('env.useBrowserCache=true;','env.useBrowserCache=false;');
+ let cacheRestored=instrumented;
+ for(const added of inserts)cacheRestored=cacheRestored.replace(added,'');
+ assert.equal(cacheRestored,worker.replace('env.useBrowserCache=true;','env.useBrowserCache=false;'),
+  'Cache-off disposable Worker changed more than the one declared env flag');
+}
+
 assert.ok(worker.includes("await model(await processor(image))"));
 assert.ok(worker.includes("const modelId='Xenova/segformer_b0_clothes'"));
 assert.ok(worker.includes("revision='a2489ea8e7ec1ee912190546bad31a4906ccca76'"));
@@ -103,6 +117,7 @@ const evidence=[
  "   engine,width,attempt:process.env.P101_ATTEMPT||'one',",
  "   originalBrowserBlob:'"+originalSHA+"',actualSourceWorkerBlob:'"+workerSHA+"',",
  "   disposableStageOnlyWorker:true,genuineModelAndWasm:true,",
+ "   browserCacheMode:process.env.P101_BROWSER_CACHE||'on',"
  "   stagePath:p101Stages,terminals:p101Terminal,realReviewCards:state.cards,",
  "   responseStatuses:modelResponses.map(x=>x.status).sort(),",
  "   blockedRequests:rejected.length,pageErrors:issues.length,",
