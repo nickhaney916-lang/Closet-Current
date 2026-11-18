@@ -84,13 +84,15 @@ export function compareActualOriginalPhotoSkirtRegistration89({
  try{
   for(const pose of POSES){
    applyPose(pose);
-   const evidence=snapshotOriginalSkirtBvhContact89(sampleContact(pose));
+   const evidence=snapshotOriginalSkirtBvhContact89(sampleContact(pose),
+    {bodyFaceCount:immutableBodyFaceMask.length});
    if(!validContact(evidence))throw Error('original three-pose whole-body BVH pairs missing');
    baseline.push(evidence);
   }
   for(const pose of QUARTERS){
    applyPose(pose);
-   const evidence=snapshotOriginalSkirtBvhContact89(sampleContact(pose));
+   const evidence=snapshotOriginalSkirtBvhContact89(sampleContact(pose),
+    {bodyFaceCount:immutableBodyFaceMask.length});
    if(!validContact(evidence))
     throw Error('intermediate-original-source-BVH-pairs-missing');
    quarterBaseline.push(evidence);
@@ -118,7 +120,8 @@ export function compareActualOriginalPhotoSkirtRegistration89({
    const contact=[],sourceBVHAfter=[];
    for(let i=0;i<POSES.length;i++){
     applyPose(POSES[i]);
-    const after=snapshotOriginalSkirtBvhContact89(sampleContact(POSES[i]));
+    const after=snapshotOriginalSkirtBvhContact89(sampleContact(POSES[i]),
+     {bodyFaceCount:immutableBodyFaceMask.length});
     if(!validContact(after))
      throw Error('real-original-rig-posed-BVH-contact-pairs-unavailable');
     sourceBVHAfter.push(after);
@@ -145,7 +148,8 @@ export function compareActualOriginalPhotoSkirtRegistration89({
    const quarterPoseContacts=[];
    for(let i=0;i<QUARTERS.length;i++){
     applyPose(QUARTERS[i]);
-    const after=snapshotOriginalSkirtBvhContact89(sampleContact(QUARTERS[i]));
+    const after=snapshotOriginalSkirtBvhContact89(sampleContact(QUARTERS[i]),
+     {bodyFaceCount:immutableBodyFaceMask.length});
     if(!validContact(after))
      throw Error('intermediate-candidate-source-BVH-pairs-missing');
     quarterPoseContacts.push(Object.freeze({
