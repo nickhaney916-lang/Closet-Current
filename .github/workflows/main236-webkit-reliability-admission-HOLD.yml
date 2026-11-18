@@ -1,0 +1,103 @@
+name: MAIN236 native WebKit reliability candidate admission HOLD NO DEPLOY
+on:
+  push:
+    branches: [research/main236-webkit-reliability-evidence-admission-HOLD]
+  pull_request:
+    branches: [research/main233-webkit-ort-runtime-identity-release-gate-HOLD]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  offline-fail-closed:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact original source and only FOUR research paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor f5874c6efb1d3d0f5462439e3f9df024980595ad HEAD
+          actual="$(git diff --name-only f5874c6efb1d3d0f5462439e3f9df024980595ad HEAD)"
+          expected="$(printf '%s\n' '.github/workflows/main236-webkit-reliability-admission-HOLD.yml' 'research/main236-webkit-runtime-reliability-evidence.json' 'scripts/lib/main236-webkit-reliability-admission.mjs' 'tests/main236-webkit-reliability-admission.test.mjs')"
+          test "$actual" = "$expected"
+          test "$(git rev-parse HEAD:scripts/lib/main236-webkit-reliability-admission.mjs)" = 8a4f17a82d02d0b6d2c48b4bba34a85d83e6f585
+          test "$(git rev-parse HEAD:tests/main236-webkit-reliability-admission.test.mjs)" = 2a558c09051f4bdae52c84e38a68958a3c501203
+          test "$(git rev-parse HEAD:research/main236-webkit-runtime-reliability-evidence.json)" = 1e532383eae0508311f945601530811edb48b88e
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          node --check scripts/lib/main236-webkit-reliability-admission.mjs
+          node --check tests/main236-webkit-reliability-admission.test.mjs
+      - name: Focused original WebKit runtime red retention and no-false-release
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/main236-webkit-reliability-admission.test.mjs
+      - name: Install unchanged app and original inherited test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Unchanged original offline app build and full owner/privacy/security regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  live-github-workflow-evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify immutable candidate source and metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor f5874c6efb1d3d0f5462439e3f9df024980595ad HEAD
+          actual="$(git diff --name-only f5874c6efb1d3d0f5462439e3f9df024980595ad HEAD)"
+          expected="$(printf '%s\n' '.github/workflows/main236-webkit-reliability-admission-HOLD.yml' 'research/main236-webkit-runtime-reliability-evidence.json' 'scripts/lib/main236-webkit-reliability-admission.mjs' 'tests/main236-webkit-reliability-admission.test.mjs')"
+          test "$actual" = "$expected"
+          test "$(git rev-parse HEAD:scripts/lib/main236-webkit-reliability-admission.mjs)" = 8a4f17a82d02d0b6d2c48b4bba34a85d83e6f585
+          test "$(git rev-parse HEAD:tests/main236-webkit-reliability-admission.test.mjs)" = 2a558c09051f4bdae52c84e38a68958a3c501203
+          test "$(git rev-parse HEAD:research/main236-webkit-runtime-reliability-evidence.json)" = 1e532383eae0508311f945601530811edb48b88e
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          node --check scripts/lib/main236-webkit-reliability-admission.mjs
+          node --check tests/main236-webkit-reliability-admission.test.mjs
+      - name: Independently validate actual four GitHub Actions run heads and job failures
+        shell: bash
+        run: |
+          set -euo pipefail
+          while read -r run sha conclusion total failed; do
+            got_sha="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run" --jq .head_sha)"
+            got_status="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run" --jq .status)"
+            got_conclusion="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run" --jq .conclusion)"
+            got_total="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run/jobs?per_page=100" --jq .total_count)"
+            got_failed="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run/jobs?per_page=100" --jq '[.jobs[] | select(.conclusion=="failure")] | length')"
+            test "$got_status" = completed
+            test "$got_sha" = "$sha"
+            test "$got_conclusion" = "$conclusion"
+            test "$got_total" = "$total"
+            test "$got_failed" = "$failed"
+            printf 'M236_REAL_GITHUB_RUN_VERIFIED run=%s head=%s conclusion=%s jobs=%s failed_jobs=%s\n' "$run" "$got_sha" "$got_conclusion" "$got_total" "$got_failed"
+          done <<'RUNS'
+          44327263273 b6f8942d8c44cbfd1f66ceef01ad856308d03d18 failure 10 1
+          44327280559 b6f8942d8c44cbfd1f66ceef01ad856308d03d18 failure 10 2
+          44388723825 6c69e02b71a3e0ada8f13f5017156da7cfc4696a success 7 0
+          44388735330 6c69e02b71a3e0ada8f13f5017156da7cfc4696a failure 7 2
+          RUNS
+      - name: Validate source-authored WebKit admission independently from runtime tests
+        run: node --test tests/main236-webkit-reliability-admission.test.mjs
