@@ -128,18 +128,16 @@ for(const where of ['current','saved']){
     ownerDB:f.db,ownerId:f.owner,assertLease:f.assertLease});
    assert.equal(p.counts.garments,1);
    assert.equal(p.releaseAuthorized,false);
-   assert.equal(p.data.outfitBoard[where==='current'?'current':'saved']
-    [where==='current'?'slots':0]?.top,
-    where==='current'?'owned-top':undefined);
+   const board=where==='current'?p.data.outfitBoard.current:p.data.outfitBoard.saved[0];
+   assert.equal(board.slots.top,'owned-top');
   }finally{f.close();}
  });
  test('M220 independently owner-reviewed active '+where+' outfit still IMPORTS',async()=>{
   const f=await fixture(null,where,false);
   try{
    const p=await prepare(f,where);
-   assert.equal(p.board[where==='current'?'current':'saved']
-    [where==='current'?'slots':0]?.top,
-    where==='current'?'owned-top':undefined);
+   const board=where==='current'?p.board.current:p.board.saved[0];
+   assert.equal(board.slots.top,'owned-top');
    assert.equal(p.releaseAuthorized,false);
   }finally{f.close();}
  });
