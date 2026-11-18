@@ -1,3 +1,4 @@
+import {classifyP94Failure,classifyP94Done} from './p94-worker-terminal-codes.mjs';
 let loader;
 async function load(requestId){
  if(!loader)loader=(async()=>{
@@ -75,6 +76,18 @@ const color76=request.color76===true&&request.instanceReview70===true&&
    }
    self.postMessage({type:'piece',id:request.id,piece});count++;
   }
-  self.postMessage({type:'done',id:request.id,count,personDetected:map.personDetected===true,segmentationGroups:groups.length});
- }catch{self.postMessage({type:'error',id:request.id,reason:'P94_'+diagnosticStage,text:'This outfit could not be separated on this device. Your existing photos are kept. Try another clear photo of one person, head to toe.'});}
- }).catch(()=>self.postMessage({type:'error',id:request.id,text:'Outfit separation stopped. Try the photo again.'}));};
+  const personDetected=map.personDetected===true;
+  // M226: a zero result is not a runtime error. Preserve both original
+  // flags and add only a bounded, owner/photo-free terminal outcome label.
+  self.postMessage({type:'done',id:request.id,count,personDetected,
+   segmentationGroups:groups.length,
+   outcomeCode:classifyP94Done(personDetected,groups.length,count)});
+ }catch(error){
+  // Preserve historical stage reason. Never send raw exception text or stack:
+  // a WebKit failure may contain source URLs or private photo identifiers.
+  const diagnostic=classifyP94Failure(diagnosticStage,error);
+  self.postMessage({type:'error',id:request.id,...diagnostic,text:'This outfit could not be separated on this device. Your existing photos are kept. Try another clear photo of one person, head to toe.'});
+ }
+ }).catch(()=>self.postMessage({type:'error',id:request?.id,
+  reason:'P94_unknown',diagnosticCode:'P94_unknown_other',errorCategory:'other',
+  text:'Outfit separation stopped. Try the photo again.'}));};
