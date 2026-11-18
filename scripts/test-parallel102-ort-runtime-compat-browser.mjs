@@ -11,7 +11,7 @@ import {spawnSync} from 'node:child_process';
 import {resolve} from 'node:path';
 
 const mode=process.env.P102_MODE||'baseline';
-assert.ok(['baseline','fixed-simd','cpu-only'].includes(mode),'P102 limited to pinned modes');
+assert.ok(['baseline','fixed-simd','cpu-only','cpu-rebundle'].includes(mode),'P102 limited to pinned modes');
 assert.ok(['chromium','webkit'].includes(process.env.M58_ENGINE||'webkit'));
 assert.ok(['320','390','430'].includes(process.env.P94_WIDTH||'430'));
 const originalPath='scripts/test-parallel101-real-p94-model-init-stage-browser.mjs';
@@ -48,9 +48,28 @@ replaceOnce("const workerSource=workerBytes.toString('utf8');",[
  "// ONNX/Transformers package, WASM binary, model, masks or owner data.",
  "if(process.env.P102_MODE==='cpu-only'){",
  " workerSource="+JSON.stringify(cpuPrelude)+"+'\\n'+workerSource;",
+ "}",
+ "if(process.env.P102_MODE==='cpu-rebundle'){",
+ " const p102Setup=\"env.allowLocalModels=false;env.useBrowserCache=true;env.backends.onnx.wasm.numThreads=1;env.backends.onnx.wasm.proxy=false;\";",
+ " assert.equal(workerSource.split(p102Setup).length,2,'P94 runtime setup moved');",
+ " workerSource=workerSource.replace(p102Setup,p102Setup+\"env.backends.onnx.wasm.wasmPaths=new URL('/node_modules/onnxruntime-web/dist/',self.location.href).href;\");",
  "}"
 ].join('\n'));
 const requestAssetProbe="  context.on('request',request=>{try{const u=new URL(request.url());const file=u.pathname.split('/').at(-1)||'';if(/^(?:ort-wasm[^/]*\\.(?:wasm|mjs)|ort\\.wasm\\.min\\.mjs|transformers\\.min\\.js)$/i.test(file)&&p102RuntimeAssets.length<32)p102RuntimeAssets.push(file);}catch{}});";
+
+// For the rebundled research variant, keep the unchanged original browser
+// URL/HTTP fixture, but fulfill ONLY the pinned transformers library GET with
+// a locally generated source-locked CPU-only bundle. No model/photo/owner
+// source or acceptance assertion is changed. No raw binary or URL telemetry.
+if(mode==='cpu-rebundle'){
+ replaceOnce('const negativeRouteAllowed=originalModelAllowed+',
+ [
+  'const negativeRouteAllowed=originalModelAllowed+',
+  " (process.env.P102_MODE==='cpu-rebundle' ?",
+  "  \"\\n    if(lib&&url.pathname.endsWith('/transformers.min.js')){return readFile('research/.parallel102-wasm-only-transformers.mjs').then(body=>route.fulfill({status:200,contentType:'text/javascript',body}));}\" : '')+"
+ ].join('\n'));
+}
+
 replaceOnce('const init=[','const init=[\n'+[
  '  // P102: collect only library/WASM filenames; never collect URLs or image data.',
  '  const p102RuntimeAssets=[];',
@@ -69,6 +88,17 @@ if(mode==='cpu-only'){
   "  assert.ok(evidence.p102RuntimeAssets.includes('ort-wasm-simd-threaded.mjs'),'P102 did not load CPU-only WASM binding');",
   "  assert.ok(evidence.p102RuntimeAssets.includes('ort-wasm-simd-threaded.wasm'),'P102 did not load CPU-only WASM binary');",
   "  assert.equal(evidence.p102RuntimeAssets.some(x=>x.includes('.jsep.')),false,'P102 leaked JSEP build into CPU-only comparison');",
+  "  assert.ok(evidence.workerEvents.some(e=>e.type==='diagnostic'),'P101 missing genuine Worker model-init stage messages; no genuine model evidence');"
+ ].map(s=>' '+JSON.stringify(s)+',').join('\n'));
+}
+
+
+if(mode==='cpu-rebundle'){
+ const pinnedTerminal=' "  assert.ok(evidence.workerEvents.some(e=>e.type===\'diagnostic\'),\'P101 missing genuine Worker model-init stage messages; no genuine model evidence\');",';
+ replaceOnce(pinnedTerminal,[
+  "  assert.ok(evidence.p102RuntimeAssets.includes('ort-wasm-simd-threaded.mjs'),'P102 CPU rebundle did not load non-JSEP WASM JS');",
+  "  assert.ok(evidence.p102RuntimeAssets.includes('ort-wasm-simd-threaded.wasm'),'P102 CPU rebundle did not load non-JSEP WASM binary');",
+  "  assert.equal(evidence.p102RuntimeAssets.some(x=>x.includes('.jsep.')),false,'P102 CPU rebundle accidentally selected JSEP');",
   "  assert.ok(evidence.workerEvents.some(e=>e.type==='diagnostic'),'P101 missing genuine Worker model-init stage messages; no genuine model evidence');"
  ].map(s=>' '+JSON.stringify(s)+',').join('\n'));
 }
