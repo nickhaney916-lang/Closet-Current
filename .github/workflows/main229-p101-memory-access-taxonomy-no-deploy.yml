@@ -1,0 +1,88 @@
+name: MAIN229 WebKit memory-access vs allocation diagnostic accuracy NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main229-p101-wasm-memory-access-classification-HOLD]
+  pull_request:
+    branches: [research/main229-webkit-memory-access-review-base-HOLD]
+permissions:
+  contents: read
+jobs:
+  deterministic-classifier-and-full-node:
+    name: M229 classified WASM memory-access regression and inherited original owner tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source-pinned diagnostic and original model/backup guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=b6f8942d8c44cbfd1f66ceef01ad856308d03d18
+          git merge-base --is-ancestor "$BASE" HEAD
+          changed="$(git diff --name-only "$BASE" HEAD)"
+          test "$changed" = "$(printf '%s\n' '.github/workflows/main229-p101-memory-access-taxonomy-no-deploy.yml' 'scripts/test-parallel101-real-p94-model-init-stage-browser.mjs' 'tests/main229-p101-wasm-memory-access-classifier.test.mjs')"
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = 4555d3b066d713f474ab01a49a77819f80f4532f
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
+          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = af15a9c08a81aa4064d1e5d1c4f0af0d855582c9
+          node --check scripts/test-parallel101-real-p94-model-init-stage-browser.mjs
+          node --check tests/main229-p101-wasm-memory-access-classifier.test.mjs
+      - name: Deterministic exact-source memory access vs out-of-memory regression
+        run: node --test tests/main229-p101-wasm-memory-access-classifier.test.mjs
+      - name: Install pinned app test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Offline PWA build and complete inherited Node owner/privacy/photo source suite
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  genuine-native:
+    name: M229 genuine pinned P94 WebKit/Chromium owner original (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [webkit, chromium]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P101_CACHE_MODE: baseline
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Lock real original Worker/model and test-only diagnostic blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor b6f8942d8c44cbfd1f66ceef01ad856308d03d18 HEAD
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = 4555d3b066d713f474ab01a49a77819f80f4532f
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          node --test tests/main229-p101-wasm-memory-access-classifier.test.mjs
+      - name: Install pinned genuine browser/model dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Exact genuine native 320/430 original positive model private owner 2D v4
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 430; do
+            M214_ATTEMPT="M229-${M58_ENGINE}-${width}" P94_WIDTH="$width" node scripts/test-parallel101-real-p94-model-init-stage-browser.mjs
+          done
