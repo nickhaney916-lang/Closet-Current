@@ -27,6 +27,13 @@ const verifyAndReplace=(s,anchor,replacement,label)=>{
  return s.replace(anchor,replacement);
 };
 let modified=original;
+// Only the disposable negative-path harness wait predicate recognizes the new
+// truthful zero-result copy. The positive original P94 test and actual UI
+// source/model/private owner assertions remain immutable.
+modified=verifyAndReplace(modified,
+ "return d&&!d.working&&(/unverified region|Automatic extraction unavailable|could not start|timed out/i.test(",
+ "return d&&!d.working&&(/unverified (?:garment )?region|Automatic extraction unavailable|could not start|timed out/i.test(",
+ "M220 negative zero-result terminal wait");
 modified=verifyAndReplace(modified,
  " await context.route('**/*',route=>{",
  [
