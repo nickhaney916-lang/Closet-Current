@@ -59,7 +59,7 @@ jobs:
           M210=52c1db4045ccef854353df8cb10f86f2699a51d9
           M215=f7534e0d1a9be48284d6be3eedd205420b7e1931
           M224=4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1
-          git merge-base --is-ancestor "$M224" HEAD
+          git merge-base --is-ancestor "4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1" HEAD
           git merge-base --is-ancestor "$M210" HEAD
           git merge-base --is-ancestor "$M215" HEAD
           # Original protected M183/M187 session-lease donor & original M215
@@ -83,7 +83,7 @@ jobs:
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
           test "$(git rev-parse HEAD:tests/main204-restore-source-revocation.test.mjs)" = db61ee39f972b25f07a6579607e1213e2c6f6dbc
           test "$(git rev-parse HEAD:.github/workflows/main205-m203-m204-source-restore-native-no-deploy.yml)" = 84298f9d7963adf586e5995b791017b4ac57a0d0
-          changed="$(git diff --name-only "$M224" HEAD)"
+          changed="$(git diff --name-only "4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1" HEAD)"
           test "$changed" = ".github/workflows/main225-m224-full-original-m58-seven-job-no-deploy.yml"
           node --check public/native-owner-wardrobe-index-167.mjs
           node --check research/index-04/verified-saved-recognition.mjs
@@ -174,7 +174,7 @@ jobs:
           node --check scripts/test-parallel96-native-highres-browser.mjs
           # Immutable M224 parent anchors accepted UI, model, source,
           # session and retired-backup fixes: only this new CI file can differ.
-          test "$(git diff --name-only "$M224" HEAD)" = ".github/workflows/main225-m224-full-original-m58-seven-job-no-deploy.yml"
+          test "$(git diff --name-only "4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1" HEAD)" = ".github/workflows/main225-m224-full-original-m58-seven-job-no-deploy.yml"
           test "$(git rev-parse HEAD:tests/main220-retired-outfit-backup-lifecycle.test.mjs)" = 2ec604dbfe5b92ba205d78ca7b572c70af0043d6
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
           node --check research/multi-garment-capture-01/review-ui.mjs
@@ -356,7 +356,7 @@ jobs:
           M210=52c1db4045ccef854353df8cb10f86f2699a51d9
           M215=f7534e0d1a9be48284d6be3eedd205420b7e1931
           M224=4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1
-          git merge-base --is-ancestor "$M224" HEAD
+          git merge-base --is-ancestor "4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1" HEAD
           git merge-base --is-ancestor "$M210" HEAD
           git merge-base --is-ancestor "$M215" HEAD
           # Original protected M183/M187 session-lease donor & original M215
@@ -380,7 +380,7 @@ jobs:
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
           test "$(git rev-parse HEAD:tests/main204-restore-source-revocation.test.mjs)" = db61ee39f972b25f07a6579607e1213e2c6f6dbc
           test "$(git rev-parse HEAD:.github/workflows/main205-m203-m204-source-restore-native-no-deploy.yml)" = 84298f9d7963adf586e5995b791017b4ac57a0d0
-          changed="$(git diff --name-only "$M224" HEAD)"
+          changed="$(git diff --name-only "4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1" HEAD)"
           test "$changed" = ".github/workflows/main225-m224-full-original-m58-seven-job-no-deploy.yml"
           node --check public/native-owner-wardrobe-index-167.mjs
           node --check research/index-04/verified-saved-recognition.mjs
@@ -549,7 +549,7 @@ jobs:
           M210=52c1db4045ccef854353df8cb10f86f2699a51d9
           M215=f7534e0d1a9be48284d6be3eedd205420b7e1931
           M224=4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1
-          git merge-base --is-ancestor "$M224" HEAD
+          git merge-base --is-ancestor "4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1" HEAD
           git merge-base --is-ancestor "$M210" HEAD
           git merge-base --is-ancestor "$M215" HEAD
           # Original protected M183/M187 session-lease donor & original M215
@@ -573,7 +573,7 @@ jobs:
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
           test "$(git rev-parse HEAD:tests/main204-restore-source-revocation.test.mjs)" = db61ee39f972b25f07a6579607e1213e2c6f6dbc
           test "$(git rev-parse HEAD:.github/workflows/main205-m203-m204-source-restore-native-no-deploy.yml)" = 84298f9d7963adf586e5995b791017b4ac57a0d0
-          changed="$(git diff --name-only "$M224" HEAD)"
+          changed="$(git diff --name-only "4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1" HEAD)"
           test "$changed" = ".github/workflows/main225-m224-full-original-m58-seven-job-no-deploy.yml"
           node --check public/native-owner-wardrobe-index-167.mjs
           node --check research/index-04/verified-saved-recognition.mjs
@@ -676,7 +676,7 @@ jobs:
           M210=52c1db4045ccef854353df8cb10f86f2699a51d9
           M215=f7534e0d1a9be48284d6be3eedd205420b7e1931
           M224=4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1
-          git merge-base --is-ancestor "$M224" HEAD
+          git merge-base --is-ancestor "4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1" HEAD
           git merge-base --is-ancestor "$M210" HEAD
           git merge-base --is-ancestor "$M215" HEAD
           # Original protected M183/M187 session-lease donor & original M215
@@ -700,7 +700,7 @@ jobs:
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
           test "$(git rev-parse HEAD:tests/main204-restore-source-revocation.test.mjs)" = db61ee39f972b25f07a6579607e1213e2c6f6dbc
           test "$(git rev-parse HEAD:.github/workflows/main205-m203-m204-source-restore-native-no-deploy.yml)" = 84298f9d7963adf586e5995b791017b4ac57a0d0
-          changed="$(git diff --name-only "$M224" HEAD)"
+          changed="$(git diff --name-only "4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1" HEAD)"
           test "$changed" = ".github/workflows/main225-m224-full-original-m58-seven-job-no-deploy.yml"
           node --check public/native-owner-wardrobe-index-167.mjs
           node --check research/index-04/verified-saved-recognition.mjs
@@ -794,7 +794,7 @@ jobs:
           M210=52c1db4045ccef854353df8cb10f86f2699a51d9
           M215=f7534e0d1a9be48284d6be3eedd205420b7e1931
           M224=4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1
-          git merge-base --is-ancestor "$M224" HEAD
+          git merge-base --is-ancestor "4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1" HEAD
           git merge-base --is-ancestor "$M210" HEAD
           git merge-base --is-ancestor "$M215" HEAD
           # Original protected M183/M187 session-lease donor & original M215
@@ -818,7 +818,7 @@ jobs:
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
           test "$(git rev-parse HEAD:tests/main204-restore-source-revocation.test.mjs)" = db61ee39f972b25f07a6579607e1213e2c6f6dbc
           test "$(git rev-parse HEAD:.github/workflows/main205-m203-m204-source-restore-native-no-deploy.yml)" = 84298f9d7963adf586e5995b791017b4ac57a0d0
-          changed="$(git diff --name-only "$M224" HEAD)"
+          changed="$(git diff --name-only "4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1" HEAD)"
           test "$changed" = ".github/workflows/main225-m224-full-original-m58-seven-job-no-deploy.yml"
           node --check public/native-owner-wardrobe-index-167.mjs
           node --check research/index-04/verified-saved-recognition.mjs
