@@ -12,7 +12,7 @@ async function nativeAfterJsGrowth(imported){
  try{
   const observer=hook(receipts);
   observer.p239Attach('native');
-  const mem=imported?new WebAssembly.Memory({initial:1,maximum:6}):null;
+  const mem=imported?new WebAssembly.Memory({initial:1,maximum:4}):null;
   const bytes=m238SyntheticWasm(imported);
   assert.equal(WebAssembly.validate(bytes),true);
   const result=await WebAssembly.instantiate(bytes,imported?{env:{m:mem}}:undefined);
