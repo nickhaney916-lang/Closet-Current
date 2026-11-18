@@ -13,7 +13,7 @@ import {resolve} from 'node:path';
 
 const file='scripts/test-main214-p94-worker-outcome.mjs';
 const input=await readFile(file);
-const gitBlob=b=>createHash('sha1').update('blob '+b.length+'\\0').update(b).digest('hex');
+const gitBlob=b=>createHash('sha1').update('blob '+b.length+String.fromCharCode(0)).update(b).digest('hex');
 assert.equal(gitBlob(input),'8cc2977f1932b3012c44bdd401081cc542b94c57',
   'M226 expected immutable original passive M214 diagnostic');
 const old="const adapted=original.replace(stageInstall,init+stageInstall).replace(probeBefore,output+probeBefore).replace(oldWorkerLabel,currentWorkerLabel);";
@@ -23,7 +23,7 @@ const patch=[
  "const zeroAwareOriginal=original.replace(zeroText,",
  " '(/unverified (?:garment )?region|Automatic extraction unavailable|could not start|timed out/i.test(');",
  "const adapted=zeroAwareOriginal.replace(stageInstall,init+stageInstall).replace(probeBefore,output+probeBefore).replace(oldWorkerLabel,currentWorkerLabel);"
-].join('\\n');
+].join(String.fromCharCode(10));
 const source=input.toString('utf8');
 assert.equal(source.split(old).length,2,'M226 original M214 adaptation anchor moved');
 const changed=source.replace(old,patch);
