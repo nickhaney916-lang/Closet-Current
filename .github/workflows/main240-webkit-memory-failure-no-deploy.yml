@@ -1,0 +1,123 @@
+name: MAIN240 real original WebKit ORT failure heap witness HOLD
+on:
+  push:
+    branches: [research/main240-webkit-failure-memory-checkpoints-HOLD]
+  pull_request:
+    branches: [research/main239-grow-target-memory-snapshot-HOLD]
+permissions:
+  contents: read
+jobs:
+  source-security:
+    name: M240 original source checks + full owner privacy and security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: No product edits, exactly four test-only paths, pinned original
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=c107f72863cdff0e6c831dc7ea950ed3749390ca
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' \
+            '.github/workflows/main240-webkit-memory-failure-no-deploy.yml' \
+            'scripts/main240-webkit-memory-checkpoint-fixture.mjs' \
+            'scripts/test-main240-original-webkit-memory-failure-browser.mjs' \
+            'tests/main240-webkit-ort-memory-watch.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = ad8ab0eb33322a34f8cc3f45a1fe26feff87b2ab
+          test "$(git rev-parse HEAD:scripts/main239-grow-target-memory-fixture.mjs)" = 3afb59500cdf7e51b2baf828abe6c5590bccd899
+          node --check scripts/main240-webkit-memory-checkpoint-fixture.mjs
+          node --check scripts/test-main240-original-webkit-memory-failure-browser.mjs
+          node --test tests/main240-webkit-ort-memory-watch.test.mjs
+          M240_SOURCE_ONLY=1 node scripts/test-main240-original-webkit-memory-failure-browser.mjs
+      - name: Original pinned build/test dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original offline application and complete inherited security suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+
+  genuine-native:
+    name: M240 ${{ matrix.engine }} native original model A/B shard ${{ matrix.shard }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [webkit, chromium]
+        shard: [1, 2, 3]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P101_CACHE_MODE: baseline
+      P101_SESSION_MODE: baseline
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Unchanged original P94 Worker and source-only M240 witness
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor c107f72863cdff0e6c831dc7ea950ed3749390ca HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          node --test tests/main240-webkit-ort-memory-watch.test.mjs
+          M240_SOURCE_ONLY=1 node scripts/test-main240-original-webkit-memory-failure-browser.mjs
+      - name: Install exact native Playwright/model and owner test tools
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original genuine owner/source model positive, counterbalanced no-retry A/B
+        shell: bash
+        run: |
+          set -uo pipefail
+          node scripts/build.mjs || exit 1
+          failures=0
+          if [ "$M58_ENGINE" = webkit ]; then
+            case "${{ matrix.shard }}" in
+              1) widths="320 390 430 320";;
+              2) widths="390 430 320 390";;
+              3) widths="430 320 390 430";;
+            esac
+          else
+            case "${{ matrix.shard }}" in
+              1) widths="320 390";;
+              2) widths="390 430";;
+              3) widths="430 320";;
+            esac
+          fi
+          for width in $widths; do
+            if [ $(( ${{ matrix.shard }} % 2 )) -eq 1 ]; then arms="baseline pattern_off"; else arms="pattern_off baseline"; fi
+            for arm in $arms; do
+              printf 'M240_NATIVE_ORIGINAL_ATTEMPT engine=%s shard=%s width=%s arm=%s\n' "$M58_ENGINE" "${{ matrix.shard }}" "$width" "$arm"
+              M240_MEM_PATTERN_ARM="$arm" M214_ATTEMPT="M240-$M58_ENGINE-${{ matrix.shard }}-$width-$arm" \
+                P94_WIDTH="$width" node scripts/test-main240-original-webkit-memory-failure-browser.mjs || failures=$((failures+1))
+            done
+          done
+          printf 'M240_ORIGINAL_NATIVE_SUMMARY engine=%s shard=%s failures=%s\n' "$M58_ENGINE" "${{ matrix.shard }}" "$failures"
+          test "$failures" -eq 0
+      - name: Controlled genuine public ONNX interruption must preserve manual original, never silently save
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          P101_TEST_FAULT=model_weights_abort M240_MEM_PATTERN_ARM=baseline \
+            M214_ATTEMPT="M240-CONTROLLED-NEGATIVE-$M58_ENGINE-${{ matrix.shard }}" \
+            P94_WIDTH=320 node scripts/test-main240-original-webkit-memory-failure-browser.mjs
