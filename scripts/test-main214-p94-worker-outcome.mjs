@@ -17,7 +17,7 @@ const expectedSource='4f75a40cf153fa4b4d139d782b202dbe7bc55e41';
 // M216: original test script's static M58 receipt names the OLD P94 worker.
 // Assert exact real source Git blobs and correct only that diagnostic receipt in
 // a disposable copy. All original substantive assertions remain unchanged.
-const gitBlobSHA=bytes=>createHash('sha1').update('blob '+bytes.length+'\\0').update(bytes).digest('hex');
+const gitBlobSHA=bytes=>createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
 const originalBytes=Buffer.from(original,'utf8');
 const workerBytes=await readFile('public/outfit-worker-p94.mjs');
 assert.equal(gitBlobSHA(originalBytes),expectedSource,'original P94 browser test changed');
