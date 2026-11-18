@@ -191,16 +191,31 @@ export function sourceSkirtOutline89({alpha,width,height}={}){
  const span=bottom-top+1;
  const bands=[.08,.22,.36,.50,.64,.78,.92].map(p=>{
   const cy=top+Math.round((span-1)*p),rad=Math.max(1,Math.round(span*.025));
-  let widths=[],centers=[];
+  const measuredRows=[];
   for(let y=Math.max(top,cy-rad);y<=Math.min(bottom,cy+rad);y++){
    let a=width,b=-1,count=0;
    for(let x=left;x<=right;x++)if(dominant[y*width+x]){a=Math.min(a,x);b=Math.max(b,x);count++;}
-   if(b>a&&count>Math.max(3,(b-a)*.22)){widths.push(b-a+1);centers.push((a+b)/2);}
+   if(b>a&&count>Math.max(3,(b-a)*.22))
+    measuredRows.push({sourcePixelRow:y,widthPixels:b-a+1,centerPixels:(a+b)/2});
   }
-  if(widths.length<2)throw Error('source garment silhouette missing horizontal band');
-  widths.sort((a,b)=>a-b);centers.sort((a,b)=>a-b);
-  return Object.freeze({p,widthPixels:widths[Math.floor(widths.length/2)],
-   centerPixels:centers[Math.floor(centers.length/2)]});
+  if(measuredRows.length<2)throw Error('source garment silhouette missing horizontal band');
+  // A separately sorted median width and median center can belong to two
+  // DIFFERENT source rows, inventing a band that no photographed alpha row
+  // actually contains. Select one genuine measured row nearest the robust
+  // width/center medians; its width, center AND UV Y remain paired.
+  const middle=values=>values.sort((a,b)=>a-b)[Math.floor(values.length/2)];
+  const medianWidth=middle(measuredRows.map(v=>v.widthPixels)),
+   medianCenter=middle(measuredRows.map(v=>v.centerPixels));
+  const score=v=>(Math.abs(v.widthPixels-medianWidth)+
+   Math.abs(v.centerPixels-medianCenter))/medianWidth+
+   Math.abs(v.sourcePixelRow-cy)/(1000*span);
+  const chosen=measuredRows.reduce((best,v)=>
+   !best||score(v)<score(best)?v:best,null);
+  return Object.freeze({
+   p:(chosen.sourcePixelRow-top)/span,
+   sourcePixelRow:chosen.sourcePixelRow,
+   widthPixels:chosen.widthPixels,centerPixels:chosen.centerPixels
+  });
  });
  const waist=band=>band.widthPixels;
  const ratio=bands[6].widthPixels/bands[0].widthPixels;
@@ -232,6 +247,38 @@ export function sourceSkirtBandTextureV89(outline,bandIndex){
  const y=outline.crop[1]+bands[bandIndex].p*outline.crop[3];
  if(y<0||y>1)throw Error('original-source-photo-uv-row-outside-image');
  return 1-y;
+}
+/**
+ * The alpha profile is not a physical garment measurement. Its relative
+ * widths may be displayed only while the research shell can preserve ALL
+ * seven photographed widths. Never silently clamp an authentic broad hem
+ * to the provisional geometric limit and call it source-proportional.
+ * This helper alone grants no SHA, owner, 3D or fit capability.
+ */
+export function sourceSkirtMeasuredFrontWidths89(outline,waistHalfWidthMeters=.23){
+ const bands=outline?.sourceRowWidths,width=outline?.pixelDimensions?.[0];
+ if(outline?.schema!=='P89-source-measured-skirt-silhouette/v1'||
+  !Array.isArray(bands)||bands.length!==7||
+  !Number.isFinite(width)||width<12||width>512||
+  !Number.isFinite(waistHalfWidthMeters)||waistHalfWidthMeters<.16||
+  waistHalfWidthMeters>.32||
+  bands.some(b=>!Number.isFinite(b?.widthPixels)||b.widthPixels<=0||
+   b.widthPixels>width||!Number.isFinite(b.centerPixels)||
+   b.centerPixels-b.widthPixels/2<-.5||
+   b.centerPixels+b.widthPixels/2>width+.5))
+  throw Error('source-proportional-photo-band-width-evidence-missing');
+ const first=bands[0].widthPixels;
+ const radii=bands.map(b=>waistHalfWidthMeters*b.widthPixels/first);
+ if(radii.some(v=>!Number.isFinite(v)||v<.12||v>.70))
+  throw Error('photographic-skirt-front-width-requires-unverified-clamping');
+ return Object.freeze({
+  schema:'P89-measured-photo-front-widths-not-physical-fit/v1',
+  sourceHalfWidthsMeters:Object.freeze(radii),
+  allSevenFrontPhotographicWidthsPreservedWithoutClamping:true,
+  physicalScaleInferredNotCalibrated:true,
+  originalPhoto2DFallbackRequired:true,consumer3DAdmitted:false,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
 }
 /**
  * SHA-attested source-front image centerline, never physical rear/drape proof.
@@ -319,14 +366,14 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
    throw Error('anatomical waist height invalid');
   const inverse=body.matrixWorld.clone().invert();
   const frontLine=sourceSkirtMeasuredPhotoCenterline89(verifiedOutline,waistHalfWidthMeters);
-  const scale=waistHalfWidthMeters/Math.max(1,verifiedOutline.sourceRowWidths[0].widthPixels/2);
+  const sourceWidths=sourceSkirtMeasuredFrontWidths89(verifiedOutline,waistHalfWidthMeters);
   const heights=verifiedOutline.sourceRowWidths;
   const verts=[],uv=[],bone=[],weights=[],tris=[],seams=[],rest=[];
   for(let ri=0;ri<heights.length;ri++){
    const s=heights[ri],t=ri/(heights.length-1);
    const sourceMeasuredTextureV=sourceSkirtBandTextureV89(verifiedOutline,ri);
-   const sourceHalfWidth=s.widthPixels/2*scale;
-   const radiusX=Math.min(.70,Math.max(.12,sourceHalfWidth));
+   // A photographed source row is a measured constraint, not a clamped guess.
+   const radiusX=sourceWidths.sourceHalfWidthsMeters[ri];
    const radiusZ=Math.min(.45,Math.max(.10,radiusX*.66)); // rear is PROVISIONAL
    const y=at.y-t*skirtLengthMeters;
    for(let j=0;j<=segments;j++){
@@ -383,6 +430,7 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
    extractedSourceHemToWaistRatio:verifiedOutline.sourceHemToWaistWidthRatio,
    photoFrontCenterlineOffsetsMeters:frontLine.sourceRelativeWorldXOffsetsMeters,
    genuinePhotoFrontCenterlineAppliedToProvisionalMesh:true,
+   allSourceFrontRowWidthsPreservedWithoutClamp:true,
    hypotheticalPhotoRearCenterlineNotClaimed:true,
    frontPhotoAppliedFromVerifiedCutout:true,unobservedBackNeutral:true,
    measuredPhysicalGarmentFit:false,sourceAbsoluteScaleInferred:true,
@@ -408,7 +456,9 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
    'real lower-torso 163-bone source landmarks unavailable','anatomical waist height invalid',
    'independent rig changed','attested-photograph-centerline-bands-required',
    'original-source-skirt-front-centerline-scale-unverifiable',
-   'original-source-front-centerline-physical-projection-unverifiable'
+   'original-source-front-centerline-physical-projection-unverifiable',
+   'source-proportional-photo-band-width-evidence-missing',
+   'photographic-skirt-front-width-requires-unverified-clamping'
   ].includes(e.message)?e.message:'source-skirt-rig-proposal-rejected');
  }
 }
