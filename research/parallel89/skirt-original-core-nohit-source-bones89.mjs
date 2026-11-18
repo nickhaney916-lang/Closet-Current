@@ -368,7 +368,7 @@ export function auditOriginalSkirtCoreBoneNamesAndNoHits89(args={}){
    status:'ORIGINAL_SOURCE_BONE_NAMES_AND_NOHIT_DIRECTIONS_EVIDENCED_NOT_FIT',
    avatar,pose,sourcePhotoSHA256,sourceAnatomyGLBSHA256,
    originalPhotoSkirtSourceBoneNoHitEvidence:details,
-   336OriginalSourceSpokesIndependentlyVerified:true,
+   original336SourceSpokesIndependentlyVerified:true,
    originalSourceAnatomyNeverEdited:true,
    originalPhoto2DFallbackRequired:true,
    closedBodyVolumeCertified:false,signedExteriorContainmentCertified:false,
