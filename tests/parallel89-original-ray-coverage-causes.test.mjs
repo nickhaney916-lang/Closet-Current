@@ -158,3 +158,23 @@ test('no earlier original radial source receipt is accepted as a surrogate for g
  assert.equal(x.reason,'immutable-original-indexed-face-and-independent-exact-ray-receipt-required');
  assert.equal(x.originalPhoto2DFallbackRequired,true);
 });
+test('a skinned source-photo ring tilted at an unsampled spoke cannot be audited as one level body slice',()=>{
+ for(const avatar of ['female','male'])for(const ring of [0,3,6]){
+  const f=fixture();
+  f.avatar=avatar;
+  if(avatar==='male')f.sourceAnatomyGLBSHA256=
+   'd15a07e2b4cf1d08a3b91cb212a9a06a91438077f05a3f2a62f45351e8a71eb8';
+  const original=f.skirtPositions.slice();
+  // Opposite spokes j=0 and j=24 retain the original equal Y. The older
+  // source audit accepted this data despite the hidden +60mm third spoke.
+  f.skirtPositions[(ring*49+12)*3+1]+=.06;
+  const r=evaluate(f);
+  assert.equal(r.status,'ORIGINAL_WHOLE_VS_SELECTED_CORE_RAY_EVIDENCE_UNVERIFIABLE');
+  assert.equal(r.reason,'posed-photo-skirt-ring-slice-not-planar');
+  assert.equal(r.originalPhoto2DFallbackRequired,true);
+  assert.equal(r.consumer3DAdmitted,false);
+  assert.equal(r.releaseAuthorized,false);
+  assert.equal(f.skirtPositions[(ring*49+0)*3+1],original[(ring*49+0)*3+1]);
+  assert.equal(f.skirtPositions[(ring*49+24)*3+1],original[(ring*49+24)*3+1]);
+ }
+});
