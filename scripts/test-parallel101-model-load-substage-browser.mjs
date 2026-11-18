@@ -56,7 +56,7 @@ const loadAnchor="const file=await readFile('benchmark/fixtures/commons-0003.jpg
 patchOnce(loadAnchor,
  "const p101TemporaryWorker="+JSON.stringify(instrumented)+";\n"+loadAnchor,
  'private-only local test worker declaration');
-const routeAnchor="   if(url.href===origin+'/public/cloud-backup.js')";
+const routeAnchor="  if(url.href===origin+'/public/cloud-backup.js')";
 patchOnce(routeAnchor,
  "   // P101: disposable Worker copy differs ONLY by bounded progress stage tags.\n"+
  "   if(url.href===origin+'/public/outfit-worker-p94.mjs')\n"+
