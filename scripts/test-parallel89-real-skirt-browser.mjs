@@ -1229,6 +1229,27 @@ try{
     assert.equal(row.originalSourceFaceIndexNotRepaired,true);
    }
    assert.equal(eproof.sourceVirtualRestAndSkinEvidenceNeverSewn,true);
+   assert.equal(eproof.sourceVirtualLoopCounterfactualNeverWeldsOrCertifiesVolume,true);
+   assert.equal(eproof.originalSourceUniqueMutualVirtualPairCount,
+    eproof.originalSevenSourceSkirtEndpointRings.reduce((n,x)=>
+     n+x.originalSourceVirtualSeamLoopCounterfactual.possibleMutuallyUniqueRestSkinSeamPairs,0));
+   assert.equal(eproof.originalSourceCounterfactualClosedLoopCount,
+    eproof.originalSevenSourceSkirtEndpointRings.reduce((n,x)=>
+     n+x.originalSourceVirtualSeamLoopCounterfactual.hypotheticalTopologicalCyclesAfterVirtualLinks,0));
+   for(const ring of eproof.originalSevenSourceSkirtEndpointRings){
+    const loop=ring.originalSourceVirtualSeamLoopCounterfactual;
+    assert.equal(loop.virtualGraphOnlyNoOriginalIndexWeld,true);
+    assert.equal(loop.originalBodyWatertightAndGarmentFitUnproved,true);
+    assert.ok(loop.possibleMutuallyUniqueRestSkinSeamPairs*2<=ring.indexedGraphOpenEndpoints);
+    assert.equal(loop.possibleMutuallyUniqueRestSkinSeamPairs,
+     loop.locallyOpposingOriginalPosedTangentPairs+
+      loop.nonOpposingOriginalPosedTangentPairs+loop.insufficientTangentSourcePairs);
+    assert.equal(loop.originalIndexedGraphComponentsAfterVirtualLinks,
+     loop.hypotheticalTopologicalCyclesAfterVirtualLinks+
+      loop.otherOpenOrBranchedCounterfactualComponents);
+    assert.ok(loop.hypotheticalCyclesWithOpposingTangentCandidates<=
+     loop.hypotheticalTopologicalCyclesAfterVirtualLinks);
+   }
    assert.equal(eproof.sourceOriginalFaceMaskExclusionsNeverPromoted,true);
    assert.equal(eproof.originalOnlyWorldCoordinateMatchNotStitchable,true);
    assert.equal(eproof.sourceModelSignedBodyVolumeUnproved,true);
@@ -1437,6 +1458,9 @@ try{
    originalSourceEndpointProvenanceByAvatar:results.selectedOriginalSkirtEndpointSourceProvenanceAudits.filter(x=>x.pose==='source').map(x=>({
     avatar:x.avatar,
     originalIndexedOpenEndpointTotal:x.sourceEndpointProvenanceProof.originalSourceIndexedOpenEndpointTotal,
+    possibleMutualOriginalRestSkinSeamPairs:x.sourceEndpointProvenanceProof.originalSourceUniqueMutualVirtualPairCount,
+    hypotheticalVirtual2dLoopsNotBodyVolume:x.sourceEndpointProvenanceProof.originalSourceCounterfactualClosedLoopCount,
+    originalVolumeAndWearabilityStillBlocked:true,
     sourceIndexedNeighborOrRestSkinVirtualCandidates:x.sourceEndpointProvenanceProof.sourceIndexOrRestSkinCandidateEndpointTotal,
     originalOnlyPosedCoincidenceUntrusted:x.sourceEndpointProvenanceProof.posedOnlyCoincidenceUntrustedEndpointTotal,
     originalNoCorrespondingSourceEndpoint:x.sourceEndpointProvenanceProof.originalNoMatchingEndpointTotal,
@@ -1447,7 +1471,8 @@ try{
      originalEligibleSourceFaceSegments:y.sourceOriginal95ContourSegments,
      originalExcludedSourceFaceSegments:y.sourceExcludedFacePlaneSegments,
      reasons:y.disjointIndexedEndpointProvenance,
-     originalSourceMeshCounts:y.originalSourceMeshEndpointCounts
+     originalSourceMeshCounts:y.originalSourceMeshEndpointCounts,
+     virtualLoopCandidateOnly:y.originalSourceVirtualSeamLoopCounterfactual
     }))
    })),
    originalIndexedContourGraphOriginalNativeChecks:results.selectedOriginalSkirtCoreContourGraphAudits.length,
