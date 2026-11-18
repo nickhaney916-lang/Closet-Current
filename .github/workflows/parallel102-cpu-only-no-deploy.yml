@@ -4,10 +4,6 @@ on:
     branches: [fix/parallel102-webkit-ort-runtime-compat-HOLD]
     paths:
       - .github/workflows/parallel102-cpu-only-no-deploy.yml
-  pull_request:
-    branches: [fix/parallel101-webkit-p94-model-initialization-HOLD]
-    paths:
-      - .github/workflows/parallel102-cpu-only-no-deploy.yml
 permissions:
   contents: read
 jobs:
