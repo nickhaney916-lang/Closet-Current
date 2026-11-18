@@ -1,0 +1,111 @@
+name: MAIN240 original WebKit ONNX retained WASM memory natural RED HOLD
+on:
+  push:
+    branches: [research/main240-natural-original-webkit-heap-red-HOLD]
+permissions:
+  contents: read
+jobs:
+  original-security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Guard exactly one test-only change and immutable original AI/privacy
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=c107f72863cdff0e6c831dc7ea950ed3749390ca
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = ".github/workflows/main240-natural-original-webkit-heap-red-no-deploy.yml"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = ad8ab0eb33322a34f8cc3f45a1fe26feff87b2ab
+          test "$(git rev-parse HEAD:scripts/test-main239-original-ort-grow-target-browser.mjs)" = 47e24a0a8973465ed6207e5465042d13ed3e988e
+          test "$(git rev-parse HEAD:scripts/main239-grow-target-memory-fixture.mjs)" = 3afb59500cdf7e51b2baf828abe6c5590bccd899
+          node --test tests/main239-native-memory-grow-target.test.mjs
+          M239_SOURCE_ONLY=1 node scripts/test-main239-original-ort-grow-target-browser.mjs
+      - name: Install pinned original test dependencies without paid AI
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original offline build and complete owner/photo/security tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  original-native-heap:
+    name: M240 native ONNX memory target ${{ matrix.engine }} shard ${{ matrix.shard }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {engine: webkit, shard: 1}
+          - {engine: webkit, shard: 2}
+          - {engine: webkit, shard: 3}
+          - {engine: webkit, shard: 4}
+          - {engine: chromium, shard: 1}
+          - {engine: chromium, shard: 2}
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      SHARD: ${{ matrix.shard }}
+      P101_CACHE_MODE: baseline
+      P101_SESSION_MODE: baseline
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Refuse any changed original model, test or private source
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=c107f72863cdff0e6c831dc7ea950ed3749390ca
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = ".github/workflows/main240-natural-original-webkit-heap-red-no-deploy.yml"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main239-original-ort-grow-target-browser.mjs)" = 47e24a0a8973465ed6207e5465042d13ed3e988e
+          test "$(git rev-parse HEAD:scripts/main239-grow-target-memory-fixture.mjs)" = 3afb59500cdf7e51b2baf828abe6c5590bccd899
+          node --test tests/main239-native-memory-grow-target.test.mjs
+          M239_SOURCE_ONLY=1 node scripts/test-main239-original-ort-grow-target-browser.mjs
+      - name: Install pinned real browser and model test dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original real SegFormer model/owner source plus WASM retained heap natural RED stress
+        shell: bash
+        run: |
+          set -uo pipefail
+          node scripts/build.mjs || exit 1
+          failures=0
+          total=6
+          if [ "$M58_ENGINE" = chromium ]; then total=3; fi
+          for attempt in $(seq 1 "$total"); do
+            case $(( (attempt-1) % 3 )) in
+              0) width=320 ;;
+              1) width=390 ;;
+              *) width=430 ;;
+            esac
+            echo "::group::M240 native=$M58_ENGINE shard=$SHARD attempt=$attempt width=$width"
+            echo "M240_GENUINE_ORIGINAL_ATTEMPT engine=$M58_ENGINE shard=$SHARD attempt=$attempt width=$width"
+            if M214_ATTEMPT="M240-$M58_ENGINE-$SHARD-$attempt" P94_WIDTH="$width" node scripts/test-main239-original-ort-grow-target-browser.mjs; then
+              echo "M240_GENUINE_ORIGINAL_PASS engine=$M58_ENGINE shard=$SHARD attempt=$attempt width=$width"
+            else
+              code=$?
+              echo "::error::M240_GENUINE_ORIGINAL_RED engine=$M58_ENGINE shard=$SHARD attempt=$attempt width=$width exit=$code; consult original M214 memory-target receipt, retain model RED"
+              failures=$((failures+1))
+            fi
+            echo "::endgroup::"
+          done
+          echo "M240_GENUINE_SHARD_FINAL engine=$M58_ENGINE shard=$SHARD total=$total failures=$failures"
+          test "$failures" -eq 0
