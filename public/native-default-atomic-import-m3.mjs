@@ -185,6 +185,13 @@ export async function prepareDefaultAtomicM3({
       (prior.originalPhoto?.ownerId===ownerId&&
        row.originalPhoto?.ownerId!==ownerId))
     throw Error('LEGACY_ATOMIC_EXISTING_OWNER_CLAIM_CONFLICT');
+   // M204: legacy backup metadata cannot silently resurrect a locally
+   // deleted/source-revoked original, nor revoke a currently usable source.
+   // These signed owner lifecycle transitions need a separate live action;
+   // matching JPEG bytes and owner review receipts never authorize them.
+   if(Boolean(prior.deleted)!==Boolean(row.deleted)||
+      Boolean(prior.sourceRevoked)!==Boolean(row.sourceRevoked))
+    throw Error('LEGACY_ATOMIC_EXISTING_SOURCE_LIFECYCLE_CONFLICT');
    // The same JPEG bytes do not authorize dropping verified-source or
    // independently recorded source-instance review provenance.
    if((prior.sourceHashVerified===true&&row.sourceHashVerified!==true)||
