@@ -74,6 +74,10 @@ test('M236 even invented two 100% green original-process runs require CAUSAL rev
  assert.equal(x.eligibleForRuntimeChange,false);
  assert.equal(x.familyAlphaAuthorized,false);
 });
+test('M236 absent original-photo provenance is a BLOCKED admission',()=>{
+ const a=copy(all.originalJsep);delete a.runs[0].publicLicensedPhoto;
+ assert.equal(judge(a).reason,'not-original-source-and-owner-acceptance');
+});
 test('M236 no allowed mode can output an alpha go decision',()=>{
  for(const candidate of [all.originalJsep,all.matchedCpuOnly]){
   const x=judge(candidate);assert.equal(x.familyAlphaAuthorized,false);
