@@ -38,7 +38,7 @@ jobs:
           node --check scripts/build-parallel102-cpu-only-transformers.mjs
           node --check scripts/test-parallel102-ort-runtime-compat-browser.mjs
       - name: Install same-version model JS and WASM-only runtime for research
-        run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 esbuild@0.25.12 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 esbuild@0.25.12 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Pin exact NPM versions and verify CPU-only dependency provenance
         run: node scripts/build-parallel102-cpu-only-transformers.mjs
   native-430:
@@ -66,7 +66,7 @@ jobs:
         with:
           node-version: '22'
       - name: Install pinned genuine browser model, owner and CPU runtime
-        run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 esbuild@0.25.12 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 esbuild@0.25.12 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Build alternate browser runtime with matching WASM-only JS dependency
         run: node scripts/build-parallel102-cpu-only-transformers.mjs
       - name: Genuine 430px original PHOTO model positive owner 2D/v4 and CPU-only asset guard
