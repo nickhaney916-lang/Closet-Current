@@ -409,8 +409,15 @@ export function summarizeSourceContourEndpointProvenance89({
  const originalSevenHeightIndexedShell=auditOriginalSevenHeightIndexedShellEligibility89({
   bodyPositions,bodyIndices,
   selectedSourceFaceMask:Uint8Array.from(faces,f=>f.selected?1:0),
-  skirtPositions
+  skirtPositions,restPositions,skinIndices,skinWeights,sourceMeshIds
  });
+ const originalBoundaryCauses=
+  originalSevenHeightIndexedShell.originalSevenHeightBoundaryCauseAudit;
+ if(originalBoundaryCauses?.schema!=='P89-original-sevenheight-source-boundary-causes/v1'||
+  originalBoundaryCauses.originalSelectedIndexedOpenEdges!==
+   originalSevenHeightIndexedShell.sourceAllSevenHeightComponentBoundaryEdges||
+  originalBoundaryCauses.consumer3DAdmitted!==false)
+  throw Error('original-sevenheight-body-boundary-provenance-unverified');
  if(originalSevenHeightIndexedShell.selectedOriginalSourceTriangleCount!==
     originalIndexedSourceSlabs.selectedOriginalFaceCount||
   originalSevenHeightIndexedShell.selectedSourceNondegenerateTriangles<
