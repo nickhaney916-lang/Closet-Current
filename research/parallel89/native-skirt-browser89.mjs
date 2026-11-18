@@ -28,6 +28,7 @@ import {auditActualOriginalCoreNoHitGeometry89} from './skirt-original-core-nohi
 import {auditActualOriginalContourConnectivity89} from './skirt-original-core-contour-connectivity89.mjs';
 import {auditSourceContourEndpointProvenance89} from './skirt-original-contour-endpoint-provenance89.mjs';
 import {auditOriginalSkirtPhysicalRegistration89} from './skirt-physical-registration89.mjs';
+import {deriveTwoDetachedPanelHypothesis89} from './skirt-provisional-open-panel89.mjs';
 if(!['localhost','127.0.0.1','[::1]'].includes(location.hostname))
  throw Error('Original skirt research is localhost-only');
 const MODELS=Object.freeze({
@@ -57,7 +58,7 @@ const sha=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA
 let source=null,outline=null,image=null,root=null,candidate=null,current=null,bodies=[],
  sourceBodies=[],contacts=[],pose='source',angle=0,frames=0,errors=[],networkDenied=[],
  phase='loading',lastContact=null,shapeMeasured=null,lastRenderMs=0,rigid45Preview=null,
- selectedPreview=null,lastRegistration=null;
+ selectedPreview=null,lastRegistration=null,openPanelPreview89=null;
 const check=(bool,why)=>{if(!bool)throw Error(why);};
 const read=async url=>{
  const r=await fetch(url,{cache:'no-store'});
@@ -190,6 +191,7 @@ function showOnlySourceRigidRegistration45(active,{draw=true}={}){
  });
 }
 async function load(avatar){
+ if(openPanelPreview89)showProvisionalOpenPanel89(null,{draw:false});
  if(selectedPreview)showOnlySelectedRegistration89(false,{draw:false});
  if(rigid45Preview)showOnlySourceRigidRegistration45(false,{draw:false});
  lastRegistration=null;
@@ -1275,6 +1277,87 @@ function auditOriginalSkirtMeasurementCalibration89(physicalTape=null){
   originalSkirtRestPositions:rest?.array,physicalTape
  });
 }
+/** Recomputed against the original immutable P89 shell while the genuine
+ * source JPEG and actual CC0 163bone rig are verified in localhost WebGL. */
+function auditDetachedSourcePanelHypothesis89(){
+ check(phase==='ready'&&candidate?.mesh?.isSkinnedMesh&&
+  candidate.mesh.skeleton?.bones.length===163,
+  'original-skinned-attested-source-required-for-panel-study');
+ const g=candidate.mesh.geometry;
+ const r=deriveTwoDetachedPanelHypothesis89({
+  sourceId:SKIRT_SOURCE89.id,originalPhotoSHA256:source?.originalSHA256,
+  originalSourceAttested:source?.status==='SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED',
+  avatar:current,pose,rigBoneCount:candidate.mesh.skeleton.bones.length,
+  positions:g.getAttribute('position')?.array,
+  restPositions:g.getAttribute('sourceSkirt89Rest')?.array,
+  uv:g.getAttribute('uv')?.array,
+  skinIndices:g.getAttribute('skinIndex')?.array,
+  skinWeights:g.getAttribute('skinWeight')?.array,indices:g.index?.array
+ });
+ check(r.status==='TWO_DISCONNECTED_PROVISIONAL_PANELS_NO_SOURCE_CLOSURE_PROOF',
+  'real-source-independent-open-panel-hypothesis-rejected: '+r.reason);
+ return r;
+}
+/** Render ONE independent OPEN candidate panel in a conspicuously neutral
+ * research-only color. Both exact source skirt/material and 163bone body
+ * are restored after the preview. Side/rear are not photographed reality.
+ */
+function showProvisionalOpenPanel89(panelIndex=null,{draw=true}={}){
+ if(panelIndex===null){
+  if(openPanelPreview89){
+   openPanelPreview89.mesh.removeFromParent();
+   openPanelPreview89.geometry.dispose();
+   openPanelPreview89.material.dispose();
+   candidate.mesh.visible=openPanelPreview89.oldVisibility;
+   openPanelPreview89=null;
+  }
+  if(draw&&phase==='ready')render();
+  return Object.freeze({status:'ORIGINAL_SOURCE_PHOTO_SKIRT_RESTORED',
+   sourcePhoto2DFallbackRequired:true,consumer3DAdmitted:false,
+   releaseAuthorized:false,familyAlpha:'HOLD'});
+ }
+ check(phase==='ready'&&[0,1].includes(panelIndex)&&
+  !selectedPreview&&!rigid45Preview,
+  'only isolated original source research preview allowed');
+ if(openPanelPreview89)showProvisionalOpenPanel89(null,{draw:false});
+ const audit=auditDetachedSourcePanelHypothesis89(),p=audit.panels[panelIndex];
+ const geo=new THREE.BufferGeometry();
+ let mesh=null,mat=null;
+ try{
+  geo.setAttribute('position',new THREE.BufferAttribute(p.positions,3));
+  geo.setAttribute('sourceSkirt89Rest',new THREE.BufferAttribute(p.restPositions,3));
+  geo.setAttribute('uv',new THREE.BufferAttribute(p.uv,2));
+  geo.setAttribute('skinIndex',new THREE.BufferAttribute(p.skinIndices,4));
+  geo.setAttribute('skinWeight',new THREE.BufferAttribute(p.skinWeights,4));
+  geo.setIndex(new THREE.BufferAttribute(p.indices,1));geo.computeVertexNormals();
+  mat=new THREE.MeshBasicMaterial({color:panelIndex===0?0x237b9f:0xbe6f35,
+   side:THREE.DoubleSide,transparent:true,opacity:.8,depthWrite:true});
+  mesh=new THREE.SkinnedMesh(geo,mat);
+  mesh.name='P89-PROVISIONAL-OPEN-PANEL-'+panelIndex+'-NOT-OBSERVED';
+  mesh.userData.work56Garment=true;mesh.userData.researchOnlyPanelHypothesis89=true;
+  mesh.position.copy(candidate.mesh.position);
+  mesh.quaternion.copy(candidate.mesh.quaternion);
+  mesh.scale.copy(candidate.mesh.scale);
+  candidate.mesh.parent.add(mesh);
+  mesh.bind(candidate.mesh.skeleton,candidate.mesh.bindMatrix);
+  mesh.frustumCulled=false;
+  check(mesh.skeleton===candidate.mesh.skeleton&&mesh.skeleton.bones.length===163,
+   'open-panel-preview-actual-rig-changed');
+  const oldVisibility=candidate.mesh.visible;
+  candidate.mesh.visible=false;
+  openPanelPreview89={mesh,geometry:geo,material:mat,oldVisibility};
+  originalBodyPositions();
+  if(draw)render();
+  return Object.freeze({...audit.metrics,
+   status:'ONE_DETACHED_PROVISIONAL_OPEN_PANEL_RENDERED_NOT_REAL_GARMENT',
+   sourcePanelNumber:panelIndex,sourcePanelTriangleCount:p.indices.length/3,
+   originalSourceRigRetained:true,originalPhoto2DFallbackRequired:true,
+   consumer3DAdmitted:false,releaseAuthorized:false,familyAlpha:'HOLD'});
+ }catch(e){
+  mesh?.removeFromParent();geo.dispose();mat?.dispose();
+  throw e;
+ }
+}
 function getState(){return Object.freeze({
  phase,avatar:current,sourceId:SKIRT_SOURCE89.id,originalSourceSHA256:source?.originalSHA256??null,
  originalCutoutSHA256:source?.cutoutSHA256??null,originalSkirtUnapproved:true,
@@ -1285,6 +1368,7 @@ function getState(){return Object.freeze({
  sourcePhotoInferredBack:true,realWorldScaleMeasured:false,pose,angle,frames,
  researchOnlySourceRigid45PreviewActive:!!rigid45Preview,
  researchOnlySourceSelectedPreviewActive:!!selectedPreview,
+ researchOnlyUnobservedPanelPreviewActive:!!openPanelPreview89,
  researchOnlySourceRigid45NotAnApprovedGarment:true,
  contact:lastContact,contactSamples:contacts.length,
  nativeWebGL2:!!renderer.getContext()&&renderer.capabilities.isWebGL2,
@@ -1294,11 +1378,12 @@ function getState(){return Object.freeze({
  consumer3DAdmission:false,releaseAuthorized:false,familyAlpha:'HOLD',
  errors:errors.length
 });}
-function close(){if(selectedPreview)showOnlySelectedRegistration89(false,{draw:false});
+function close(){if(openPanelPreview89)showProvisionalOpenPanel89(null,{draw:false});
+ if(selectedPreview)showOnlySelectedRegistration89(false,{draw:false});
  if(rigid45Preview)showOnlySourceRigidRegistration45(false,{draw:false});
  lastRegistration=null;candidate?.dispose();candidate=null;scene.remove(root);root=null;
  renderer.dispose();renderer.forceContextLoss();phase='disposed';return true;}
-window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,showOnlySelectedRegistration89,auditSelectedSourceRadialGap89,auditSelectedOriginalSourceBodyClosure89,auditSelectedOriginalBodySeams89,auditSelectedOriginalBodyBoundaryRegions89,auditSelectedOriginalSkirtCoreSpan89,auditSelectedOriginalSkirtCoreRayUnknownCauses89,auditSelectedOriginalSkirtSourceBoneNamesNoHits89,auditSelectedOriginalSkirtCoreWeightSensitivity89,auditSelectedOriginalSkirtCoreNoHitGeometry89,auditSelectedOriginalSkirtSourceContourConnectivity89,auditSelectedOriginalSkirtEndpointSourceProvenance89,auditOriginalSkirtMeasurementCalibration89,auditOnlyUnobservedRearRenderedPixels,close});
+window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,showOnlySelectedRegistration89,auditSelectedSourceRadialGap89,auditSelectedOriginalSourceBodyClosure89,auditSelectedOriginalBodySeams89,auditSelectedOriginalBodyBoundaryRegions89,auditSelectedOriginalSkirtCoreSpan89,auditSelectedOriginalSkirtCoreRayUnknownCauses89,auditSelectedOriginalSkirtSourceBoneNamesNoHits89,auditSelectedOriginalSkirtCoreWeightSensitivity89,auditSelectedOriginalSkirtCoreNoHitGeometry89,auditSelectedOriginalSkirtSourceContourConnectivity89,auditSelectedOriginalSkirtEndpointSourceProvenance89,auditOriginalSkirtMeasurementCalibration89,auditDetachedSourcePanelHypothesis89,showProvisionalOpenPanel89,auditOnlyUnobservedRearRenderedPixels,close});
 try{await verifySource();await load('female');}catch(e){
  phase='error';const msg=String(e?.message||e).slice(0,250);
  errors.push(msg);status.textContent='Original-photo 2D fallback: '+msg+' · HOLD';
