@@ -409,10 +409,22 @@ export function summarizeSourceContourEndpointProvenance89({
  const originalSevenHeightIndexedShell=auditOriginalSevenHeightIndexedShellEligibility89({
   bodyPositions,bodyIndices,
   selectedSourceFaceMask:Uint8Array.from(faces,f=>f.selected?1:0),
-  skirtPositions,restPositions,skinIndices,skinWeights,sourceMeshIds
+  skirtPositions,restPositions,skinIndices,skinWeights,sourceMeshIds,
+  sourceMeshNames,sourceBoneNamesByMesh,
+  originalFaceExclusionReasons:faces.map(f=>
+   f.selected?'SELECTED_ORIGINAL_SOURCE_FACE':f.excludedReason)
  });
  const originalBoundaryCauses=
   originalSevenHeightIndexedShell.originalSevenHeightBoundaryCauseAudit;
+ const originalBoundaryRegions=originalBoundaryCauses?.originalUnmatchedAndMaskedEdgeRegions;
+ if(originalBoundaryRegions?.schema!=='P89-original-unmatched-masked-edge-region-proof/v1'||
+  originalBoundaryRegions.allSevenHeightActualUnpairedIndexedEdges!==
+   originalBoundaryCauses.noExactRestPoseSkinMeshTwinEdges||
+  originalBoundaryRegions.allSevenHeightMaskedOriginalNeighbourEdges!==
+   originalBoundaryCauses.originalMaskExcludedSameIndexedEdge||
+  originalBoundaryRegions.consumer3DAdmitted!==false||
+  originalBoundaryRegions.noUVSeamWelding!==true)
+  throw Error('original-sevenheight-unpaired-and-masked-source-region-unverifiable');
  if(originalBoundaryCauses?.schema!=='P89-original-sevenheight-source-boundary-causes/v1'||
   originalBoundaryCauses.originalSelectedIndexedOpenEdges!==
    originalSevenHeightIndexedShell.sourceAllSevenHeightComponentBoundaryEdges||
