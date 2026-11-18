@@ -133,6 +133,18 @@ function checked(f){
   assert.equal(part.upperPlaneIndexedComponents,
    part.sourceIndexedEdgeConnectedBothPlanes+part.upperOnlyIndexedComponents);
   assert.equal(part.onlyOriginalVertexIndexSharedEdgesCountAsConnections,true);
+  assert.equal(part.originalSourceSharedEdgeMustIntersectOpenSlabInterior,true);
+  assert.equal(part.boundaryOnlyAndOutsideSharedEdgesNeverJoinSlabFaces,true);
+  assert.equal(part.originalSourceZeroLengthEdgesNeverJoinSlabFaces,true);
+  assert.equal(part.originalIndexedSharedEdgeAdjacencies,
+   part.originalIndexedSharedEdgesWithOpenSlabInterior+
+   part.originalIndexedSharedEdgesOutsideOrOnSlabBoundary+
+   part.originalIndexedZeroLengthSourceEdgesRejected);
+  assert.equal(part.eligibleOriginalSelectedSourceFaces,
+   part.selectedSourceFacesWithPositiveSlabInterior+
+   part.selectedSourceFacesOnlyTouchingSlabBoundary);
+  assert.ok(part.originalIndexedNonmanifoldEdgesWithinOpenSlab<=
+   part.originalIndexedNonmanifoldEdges);
   assert.equal(part.restSkinCompatibleVirtualUVSeamsNeverJoined,true);
  }
  assert.equal(Object.values(v.originalEndpointCauseTotals).reduce((s,n)=>s+n,0),
