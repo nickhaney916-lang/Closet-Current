@@ -39,8 +39,25 @@ jobs:
           node --check scripts/test-parallel102-ort-runtime-compat-browser.mjs
       - name: Install same-version model JS and WASM-only runtime for research
         run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 esbuild@0.25.12 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Source scope remains five research paths; installed app/owner unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=b6f8942d8c44cbfd1f66ceef01ad856308d03d18
+          actual="$(git diff --name-only "$BASE" HEAD)"
+          expected="$(printf '%s\n' '.github/workflows/parallel102-cpu-only-no-deploy.yml' '.github/workflows/parallel102-cpu-rebundle-probe-no-deploy.yml' '.github/workflows/parallel102-webkit-ort-compat-no-deploy.yml' 'scripts/build-parallel102-cpu-only-transformers.mjs' 'scripts/test-parallel102-ort-runtime-compat-browser.mjs')"
+          test "$actual" = "$expected"
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
+          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = af15a9c08a81aa4064d1e5d1c4f0af0d855582c9
       - name: Pin exact NPM versions and verify CPU-only dependency provenance
         run: node scripts/build-parallel102-cpu-only-transformers.mjs
+      - name: Offline build and full inherited original owner/privacy/security tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
   native-430:
     runs-on: ubuntu-24.04
     timeout-minutes: 100
