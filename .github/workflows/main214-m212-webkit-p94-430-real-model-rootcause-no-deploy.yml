@@ -1,0 +1,89 @@
+name: MAIN214 actual WebKit P94 430 real model error-versus-empty-mask diagnosis NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main214-m212-webkit-p94-430-model-diagnosis-HOLD]
+  pull_request:
+    branches: [research/main212-m209-m207-protected-m58-focus-restore-HOLD]
+    paths:
+      - .github/workflows/main214-m212-webkit-p94-430-real-model-rootcause-no-deploy.yml
+permissions:
+  contents: read
+jobs:
+  provenance-and-full-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact M212 original failing source plus only two safe diagnostic files
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a32c4a8ad3e4bb86d54b56123f464d179f19cd92
+          git merge-base --is-ancestor "$BASE" HEAD
+          expected="$(printf '%s\n' '.github/workflows/main214-m212-webkit-p94-430-real-model-rootcause-no-deploy.yml' 'scripts/test-main214-webkit-p88-430-probe.mjs')"
+          test "$(git diff --name-only "$BASE" HEAD)" = "$expected"
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = d478fcf6e4e8889a23b1620b444667ac949da7a9
+          test "$(git rev-parse HEAD:public/outfit-segmentation.mjs)" = d357955dd8fdab7c0cb727ea597c270edd9309ac
+          test "$(git rev-parse HEAD:scripts/test-main58-actual-p88-wasm-browser.mjs)" = 96ba2f5ee2420de52f45911881fdcc139455c353
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
+          git diff --exit-code "$BASE" HEAD -- public/ tests/ research/ benchmark/ supabase/ scripts/ ':(exclude)scripts/test-main214-webkit-p88-430-probe.mjs'
+          node --check scripts/test-main214-webkit-p88-430-probe.mjs
+          node --check scripts/test-parallel94-native-p88-browser.mjs
+          node --check public/outfit-worker-p94.mjs
+      - name: Pinned no-deploy offline native build and inherited owner/photo/backup Node suite
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  genuine-webkit-p94-430-diagnostic:
+    name: original P94 430 then genuine diagnostic WebKit 430 (${{ matrix.probe_count }} probes)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      matrix:
+        probe_count: [2, 3]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M178_PROBE_COUNT: ${{ matrix.probe_count }}
+      M178_ORIGINAL_P94_PRELUDE: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact original WebKit P94 failing source and no new executable app/model branches
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=a32c4a8ad3e4bb86d54b56123f464d179f19cd92
+          git merge-base --is-ancestor "$BASE" HEAD
+          expected="$(printf '%s\n' '.github/workflows/main214-m212-webkit-p94-430-real-model-rootcause-no-deploy.yml' 'scripts/test-main214-webkit-p88-430-probe.mjs')"
+          test "$(git diff --name-only "$BASE" HEAD)" = "$expected"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = d478fcf6e4e8889a23b1620b444667ac949da7a9
+          test "$(git rev-parse HEAD:public/outfit-segmentation.mjs)" = d357955dd8fdab7c0cb727ea597c270edd9309ac
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          git diff --exit-code "$BASE" HEAD -- public/ tests/ research/ benchmark/ supabase/
+          node --check scripts/test-main214-webkit-p88-430-probe.mjs
+      - name: Install same pinned browser and genuine onnx WASM model runtime dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Verify diagnostic is source-only and never weakens original positive model assertions
+        run: M178_SELF_CHECK=true node scripts/test-main214-webkit-p88-430-probe.mjs
+      - name: One UNMODIFIED original WebKit 430 P94 plus 2 or 3 full real instrumented 430 attempts; true failure remains RED
+        run: node scripts/test-main214-webkit-p88-430-probe.mjs
