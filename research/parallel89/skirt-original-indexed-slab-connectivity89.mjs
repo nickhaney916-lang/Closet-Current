@@ -53,8 +53,12 @@ export function auditOriginalIndexedSlabConnectivity89({
  for(let band=0;band<6;band++){
   const lo=Math.min(heights[band],heights[band+1]),
    hi=Math.max(heights[band],heights[band+1]),
-   lowPlane=heights[band],highPlane=heights[band+1];
+   lowPlane=heights[band],highPlane=heights[band+1],
+   // Strictly inside the open 3D slab: a boundary-only source edge
+   // is not a physical connection between cropped face interiors.
+   slabEpsilon=Math.min(1e-6,Math.max(1e-9,(hi-lo)*1e-7));
   const faces=[],parent=[],edges=new Map();
+  let sourceSlabInteriorFaces=0,sourceBoundaryOnlyFaces=0;
   for(let f=0;f<bodyIndices.length/3;f++){
    if(!selectedSourceFaceMask[f])continue;
    const ids=[bodyIndices[3*f],bodyIndices[3*f+1],bodyIndices[3*f+2]];
@@ -62,7 +66,10 @@ export function auditOriginalIndexedSlabConnectivity89({
    const ys=ids.map(i=>bodyPositions[3*i+1]);
    if(Math.min(...ys)>hi+1e-10||Math.max(...ys)<lo-1e-10)continue;
    const id=faces.length;
-   faces.push({ids,low:planeCut(bodyPositions,ids,lowPlane),
+   const inside=Math.max(...ys)>lo+slabEpsilon&&
+    Math.min(...ys)<hi-slabEpsilon;
+   if(inside)sourceSlabInteriorFaces++;else sourceBoundaryOnlyFaces++;
+   faces.push({ids,inside,low:planeCut(bodyPositions,ids,lowPlane),
     high:planeCut(bodyPositions,ids,highPlane)});
    parent.push(id);
    for(let e=0;e<3;e++){
@@ -77,15 +84,41 @@ export function auditOriginalIndexedSlabConnectivity89({
    while(parent[i]!==i){const next=parent[i];parent[i]=j;i=next;}
    return j;
   };
-  let originalSourceEdgeAdjacencies=0,nonmanifoldSourceEdges=0;
-  for(const list of edges.values()){
-   if(list.length>2){nonmanifoldSourceEdges++;continue;}
-   if(list.length===2){
-    originalSourceEdgeAdjacencies++;
-    const a=find(list[0]),b=find(list[1]);
-    if(a!==b)parent[b]=a;
+  let originalSourceEdgeAdjacencies=0,nonmanifoldSourceEdges=0,
+   originalOpenSlabSourceEdgeAdjacencies=0,
+   outsideOrBoundarySlabEdgeRejections=0,degenerateEdgeRejections=0,
+   openSlabNonmanifoldEdges=0;
+  for(const [key,list] of edges){
+   if(list.length<2)continue;
+   // Key is from the exact unmodified glTF ORIGINAL source indices.
+   // Reconstruct endpoints from those integers, NEVER world coincidence.
+   const [aId,bId]=key.split(':').map(Number),
+    ay=bodyPositions[3*aId+1],by=bodyPositions[3*bId+1];
+   const inside=Math.max(ay,by)>lo+slabEpsilon&&
+    Math.min(ay,by)<hi-slabEpsilon;
+   if(list.length>2){
+    nonmanifoldSourceEdges++;
+    if(inside)openSlabNonmanifoldEdges++;
+    continue;
    }
+   originalSourceEdgeAdjacencies++;
+   if(!inside||!faces[list[0]].inside||!faces[list[1]].inside){
+    outsideOrBoundarySlabEdgeRejections++;continue;
+   }
+   const dx=bodyPositions[3*aId]-bodyPositions[3*bId],
+    dy=ay-by,dz=bodyPositions[3*aId+2]-bodyPositions[3*bId+2];
+   if(Math.hypot(dx,dy,dz)<=1e-10){
+    degenerateEdgeRejections++;continue;
+   }
+   originalOpenSlabSourceEdgeAdjacencies++;
+   const a=find(list[0]),b=find(list[1]);
+   if(a!==b)parent[b]=a;
   }
+  if(originalSourceEdgeAdjacencies!==
+    originalOpenSlabSourceEdgeAdjacencies+
+    outsideOrBoundarySlabEdgeRejections+degenerateEdgeRejections||
+   sourceSlabInteriorFaces+sourceBoundaryOnlyFaces!==faces.length)
+   throw Error('original-open-slab-edge-classification-nonconservative');
   const all=new Set(),lower=new Set(),upper=new Set();
   let sourceFacePlaneCutsAtLow=0,sourceFacePlaneCutsAtHigh=0;
   for(let i=0;i<faces.length;i++){
@@ -103,7 +136,15 @@ export function auditOriginalIndexedSlabConnectivity89({
    originalPhotoSkirtAdjacentHeightPair:[band,band+1],
    eligibleOriginalSelectedSourceFaces:faces.length,
    originalIndexedSharedEdgeAdjacencies:originalSourceEdgeAdjacencies,
+   originalIndexedSharedEdgesWithOpenSlabInterior:
+    originalOpenSlabSourceEdgeAdjacencies,
+   originalIndexedSharedEdgesOutsideOrOnSlabBoundary:
+    outsideOrBoundarySlabEdgeRejections,
+   originalIndexedZeroLengthSourceEdgesRejected:degenerateEdgeRejections,
    originalIndexedNonmanifoldEdges:nonmanifoldSourceEdges,
+   originalIndexedNonmanifoldEdgesWithinOpenSlab:openSlabNonmanifoldEdges,
+   selectedSourceFacesWithPositiveSlabInterior:sourceSlabInteriorFaces,
+   selectedSourceFacesOnlyTouchingSlabBoundary:sourceBoundaryOnlyFaces,
    sourceIndexedFaceEdgeComponents:all.size,
    lowerPlaneCutSelectedFaces:sourceFacePlaneCutsAtLow,
    upperPlaneCutSelectedFaces:sourceFacePlaneCutsAtHigh,
@@ -113,6 +154,9 @@ export function auditOriginalIndexedSlabConnectivity89({
    lowerOnlyIndexedComponents:onlyLow,
    upperOnlyIndexedComponents:onlyHigh,
    onlyOriginalVertexIndexSharedEdgesCountAsConnections:true,
+   originalSourceSharedEdgeMustIntersectOpenSlabInterior:true,
+   boundaryOnlyAndOutsideSharedEdgesNeverJoinSlabFaces:true,
+   originalSourceZeroLengthEdgesNeverJoinSlabFaces:true,
    restSkinCompatibleVirtualUVSeamsNeverJoined:true,
    source3DVolumeAndGarmentWearabilityNotCertified:true
   }));
@@ -125,7 +169,8 @@ export function auditOriginalIndexedSlabConnectivity89({
   heightOrder:direction>0?'ASCENDING':'DESCENDING',
   originalAdjacentSlabSourceEdgeConnectivity:results,
   allSixSlabsHaveIndexedEdgeBridge:results.every(v=>
-   v.sourceIndexedEdgeConnectedBothPlanes>0&&v.originalIndexedNonmanifoldEdges===0),
+   v.sourceIndexedEdgeConnectedBothPlanes>0&&
+   v.originalIndexedNonmanifoldEdgesWithinOpenSlab===0),
   sourceIndexedLoopsAndExteriorNotProven:true,
   noInferredOrVirtualSeamBridges:true,
   originalPhoto2DFallbackRequired:true,
