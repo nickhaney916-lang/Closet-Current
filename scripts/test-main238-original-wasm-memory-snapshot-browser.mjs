@@ -48,7 +48,8 @@ const fields=[
  ' "       maxEndPages:Number.isInteger(safe.maxEndPages)&&safe.maxEndPages>=0&&safe.maxEndPages<=65536?safe.maxEndPages:null,",',
  ' "       maxIncreasePages:Number.isInteger(safe.maxIncreasePages)&&safe.maxIncreasePages>=0&&safe.maxIncreasePages<=65536?safe.maxIncreasePages:null,",'
 ].join('\n');
-adapted=adapted.replace(fieldAnchor,fieldAnchor+'\n'+fields);
+const fieldSource=fields.split('\n').map(x=>JSON.stringify(x)+',').join('\n');
+adapted=adapted.replace(fieldAnchor,fieldAnchor+'\n'+fieldSource);
 const gate="derived=derived.replace(terminal,terminal+'\\n'+extra);";
 unique(adapted,gate,'M237 genuine Worker terminal gate');
 const newGate='const m238Required='+
