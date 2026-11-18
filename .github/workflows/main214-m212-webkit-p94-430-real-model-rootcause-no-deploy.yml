@@ -3,7 +3,7 @@ on:
   push:
     branches: [research/main214-m212-webkit-p94-430-model-diagnosis-HOLD]
   pull_request:
-    branches: [research/main212-m209-m206-protected-m58-seven-job-HOLD]
+    branches: [research/main212-m209-m207-protected-m58-focus-restore-HOLD]
     paths:
       - .github/workflows/main214-m212-webkit-p94-430-real-model-rootcause-no-deploy.yml
 permissions:
