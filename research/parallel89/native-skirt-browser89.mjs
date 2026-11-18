@@ -1016,7 +1016,7 @@ function auditSelectedOriginalNoHitLineGeometry89(){
   check(report?.status==='SOURCE_NOHIT_LINE_REASONS_EVIDENCED_NOT_WEARABLE_FIT'&&
    report.originalPhoto2DFallbackRequired===true&&
    report.consumer3DAdmitted===false&&report.releaseAuthorized===false,
-   'original body source no-hit line geometry cannot authorize fit');
+   'original body source no-hit line geometry cannot authorize fit: '+String(report?.reason||report?.status||'unknown'));
   return report;
  }finally{
   skirt?.g.dispose();body?.g.dispose();originalBodyPositions();
