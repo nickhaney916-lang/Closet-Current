@@ -9,7 +9,7 @@ import {summarizeSourceContourEndpointProvenance89 as measure,
 import {summarizeOriginalContourConnectivity89 as previous}
  from '../research/parallel89/skirt-original-core-contour-connectivity89.mjs';
 const PHOTO='c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344';
-const FEMALE='a571a5872a5f9d75c013ce6d88b3484436cf2109bf133fbcc31e42c41f52389f1';
+const FEMALE='a571a5872a5f9d75c013ce6d88b3484436cf2109bf133fbc31e42c41f52389f1';
 function fixture({type='closed',blend=false}={}){
  const pos=[
   -.2,.2,-.2, .2,.2,-.2, .2,1.8,-.2, -.2,1.8,-.2,
