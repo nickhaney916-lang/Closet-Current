@@ -128,7 +128,7 @@ test('external seam claims, reviewer badges and historical pattern guesses canno
    realSourceBackside:true,photoVerifiedFromOriginalPublicJpegOnly:false,
    overlapMeasured:true,physicalFitAccepted:true,customerWoreGarment:true,
    tieAttachmentApproved:true,ownerApproved:true,consumer3DAdmitted:true});
- assert.equal(r.metrics.actualHistoricalPanelCountVerified,false);
+ assert.equal(r.metrics.originalHistoricalPanelCountVerified,false);
  assert.equal(r.metrics.exactSpecimenPleatsAndFastenersVerified,false);
  assert.equal(r.metrics.photoMeasuredPanelBoundaries,false);
  assert.equal(r.metrics.sourceBacksideObserved,false);
