@@ -53,7 +53,7 @@ const init=[
  "       reason:typeof safe.reason==='string'?safe.reason.slice(0,40):null,",
  "       count:Number.isInteger(safe.count)?safe.count:null,",
  "       groups:Number.isInteger(safe.segmentationGroups)?safe.segmentationGroups:null,",
- "       personDetected:typeof safe.personDetected==='boolean'?safe.personDetected:null",
+ "       personDetected:typeof safe.personDetected==='boolean'?safe.personDetected:null,",
  "       outcome:['start','ok','error'].includes(safe.outcome)?safe.outcome:null,",
  "       elapsedMs:Number.isFinite(safe.elapsedMs)?Math.max(0,Math.min(600000,Math.round(safe.elapsedMs))):null,",
  "       errorCategory:['abort','network','memory','wasm_or_session','type','other'].includes(safe.errorCategory)?safe.errorCategory:null,",
