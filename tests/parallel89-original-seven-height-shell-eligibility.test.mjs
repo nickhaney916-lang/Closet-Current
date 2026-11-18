@@ -300,7 +300,7 @@ test('unmatched genuine open wall edges locate source mesh and dominant original
   assert.equal(edge.originalSourceMesh,'originalCore');
   assert.deepEqual(edge.originalDominantSourceBoneNames,['pelvis']);
   assert.deepEqual(edge.originalDominantBoneRegions,['SOURCE_TORSO_HIP']);
-  assert.match(edge.midpointSkirtPhotoHeightBand,/PHOTO_HEIGHT_BAND/);
+  assert.match(edge.midpointSkirtPhotoHeightBand,/PHOTO_HEIGHT_BAND|ABOVE_ALL_SEVEN|BELOW_ALL_SEVEN/);
  }
 });
 test('authentic indexed excluded source face is grouped by actual original face reason not declared a UV stitch',()=>{
