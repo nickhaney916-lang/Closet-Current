@@ -81,7 +81,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
- selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
+ selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -1110,6 +1110,77 @@ try{
    assert.equal(noHit.originalPhoto2DFallbackRequired,true);
    assert.equal(noHit.consumer3DAdmitted,false);
    assert.equal(noHit.releaseAuthorized,false);
+   // Genuine original GLB INDEX-graph contour loops/open endpoints.
+   // Separately count coordinate-identical source UV seam vertices.
+   // NEVER join virtual coincidences or claim original body closure.
+   const graphReceipt=await page.evaluate(()=>
+    window.nativeP89Skirt.auditSelectedOriginalSkirtSourceContourConnectivity89());
+   assert.equal(graphReceipt.schema,
+    'P89-original-indexed-photo-skirt-contour-connectivity-locked/v1');
+   assert.equal(graphReceipt.status,
+    'ORIGINAL_SOURCE_CONTOUR_CONNECTIVITY_MAPPED_NOT_WEARABLE',
+    'original source indexed contour graph failed: '+JSON.stringify(graphReceipt));
+   assert.equal(graphReceipt.avatar,avatar);
+   assert.equal(graphReceipt.pose,selectedPose);
+   assert.equal(graphReceipt.sourcePhotoSHA256,required.skirt);
+   assert.equal(graphReceipt.sourceAnatomyGLBSHA256,required[avatar]);
+   assert.equal(graphReceipt.original7Ring336SourceRayCountsIndependentlyReconciled,true);
+   const contours=graphReceipt.sourceOriginalBodyContourGraph;
+   assert.equal(contours.schema,
+    'P89-original-indexed-skirt-ring-contour-graph-connectivity/v1');
+   assert.equal(contours.originalBodyIndexedTriangleCount,
+    topology.originalIndexedTriangleCount);
+   assert.equal(contours.originalSkirtIndexedTriangleCount,576);
+   assert.equal(contours.originalSourceSkirtSpokeRayCount,336);
+   assert.equal(contours.genuineOriginalStrictCoreSourceFaceCount,
+    sc.actualStrictSourceEligibleCoreFaces);
+   assert.equal(contours.hypothetical95AddedOriginalSourceFaces,
+    sc.hypothetical95SourceBoneCoreWeightFaces);
+   assert.deepEqual(contours.originalStrictSourceRayCounts,
+    sc.strictOriginalSourceRays);
+   assert.deepEqual(contours.hypothetical95SourceRayCounts,
+    sc.hypothetical95SourceRays);
+   assert.equal(contours.hypothetical95NoHitOriginalSkirtRays,
+    geo.original95PercentHypotheticalUnknownRays);
+   assert.equal(contours.originalSourceSevenRingContourConnectivity.length,7);
+   let openTotal=0,loops=0,twins=0;
+   for(let i=0;i<7;i++){
+    const row=contours.originalSourceSevenRingContourConnectivity[i],
+     previous=geo.originalSourceSevenSkirtRingNoHitGeometry[i];
+    assert.equal(row.originalSkirtSourceRing,i);
+    assert.equal(row.original95NamedSourceContourSegments,
+     previous.originalSource95CorePlaneCutSegments);
+    assert.equal(row.original95NoHitRayDirectionsCount,previous.noHitRays);
+    assert.equal(row.original95NoHitSectorSequenceRunLengths
+     .reduce((n,x)=>n+x,0),previous.noHitRays);
+    assert.equal(row.original95OriginalIndexTopology.originalIndexedContourSegments,
+     row.original95NamedSourceContourSegments);
+    assert.equal(row.original95OriginalIndexTopology.originalIndexedGraphComponents,
+     row.original95OriginalIndexTopology.originalIndexedClosedGraphCycles+
+     row.original95OriginalIndexTopology.originalIndexedOpenGraphComponents+
+     row.original95OriginalIndexTopology.originalIndexedBranchingGraphComponents);
+    assert.equal(row.original95OriginalIndexTopology.coordinateCoincidenceNeverSewn,true);
+    openTotal+=row.original95OriginalIndexTopology.genuineIndexedOpenEndpoints;
+    loops+=row.original95OriginalIndexTopology.originalIndexedClosedGraphCycles;
+    twins+=row.original95OriginalIndexTopology.coordinateEquivalentSeparateOriginalIndicesWithinSameMesh+
+     row.original95OriginalIndexTopology.coordinateEquivalentSeparateOriginalIndicesAcrossMeshes;
+   }
+   assert.equal(contours.totalOriginalIndexGraphOpenEndpointsAcrossSevenRings,openTotal);
+   assert.equal(contours.totalOriginalIndexClosedGraphCyclesAcrossSevenRings,loops);
+   assert.equal(contours.totalGeometricCoordinateMatchesWithDistinctSourceIndices,twins);
+   assert.equal(contours.virtualIndexTwinCoordinatesNotWelded,true);
+   assert.equal(contours.originalBodyNotProvenWatertightSignedVolume,true);
+   assert.equal(contours.noSourceOriginalModelMeshPhotoOrSkinMutation,true);
+   assert.equal(contours.sourceGarmentPhysicalWaistHemUnmeasured,true);
+   assert.equal(contours.originalSourceGarmentRearNotPhotographed,true);
+   assert.equal(contours.originalPhoto2DFallbackRequired,true);
+   assert.equal(contours.consumer3DAdmitted,false);
+   assert.equal(contours.releaseAuthorized,false);
+   assert.equal(graphReceipt.originalBodyWatertightVolumeCertified,false);
+   assert.equal(graphReceipt.originalPhoto2DFallbackRequired,true);
+   assert.equal(graphReceipt.consumer3DAdmitted,false);
+   assert.equal(graphReceipt.releaseAuthorized,false);
+   results.selectedOriginalSkirtCoreContourGraphAudits.push(graphReceipt);
    results.selectedOriginalSkirtCoreNoHitGeometryAudits.push(noHit);
    results.selectedOriginalSkirtCoreWeightSensitivityAudits.push(sensitive);
    results.selectedOriginalSkirtCoreBoneNoHitAudits.push(boneNoHit);
@@ -1234,6 +1305,7 @@ try{
  assert.equal(results.selectedOriginalSkirtCoreBoneNoHitAudits.length,10);
  assert.equal(results.selectedOriginalSkirtCoreWeightSensitivityAudits.length,10);
  assert.equal(results.selectedOriginalSkirtCoreNoHitGeometryAudits.length,10);
+ assert.equal(results.selectedOriginalSkirtCoreContourGraphAudits.length,10);
  assert.equal(results.selectedResearchPoseChecks.length,10);
  assert.equal(results.selectedResearchNativeScreenshots.length,18);
  assert.equal(results.selectedResearchFrontCoverage.length,6);
@@ -1302,6 +1374,26 @@ try{
    selectedRegistrationTrueFivePoseNativeChecks:results.selectedResearchPoseChecks.length,
    sourceTrueWorldRadialGapCheckCount:results.selectedSourceBodyRadialGapAudits.length,
    sourceOriginalWholeBodyClosureCheckCount:results.selectedSourceWholeBodyClosureAudits.length,
+   originalIndexedContourGraphOriginalNativeChecks:results.selectedOriginalSkirtCoreContourGraphAudits.length,
+   originalIndexedContourGraphByAvatar:results.selectedOriginalSkirtCoreContourGraphAudits.filter(x=>x.pose==='source').map(x=>({
+    avatar:x.avatar,
+    sourceCore95RaysStillUnknown:x.sourceOriginalBodyContourGraph.hypothetical95NoHitOriginalSkirtRays,
+    indexedOpenEndpointTotal:x.sourceOriginalBodyContourGraph.totalOriginalIndexGraphOpenEndpointsAcrossSevenRings,
+    indexedCompleteCycleTotal:x.sourceOriginalBodyContourGraph.totalOriginalIndexClosedGraphCyclesAcrossSevenRings,
+    separatelyIndexedVirtualCoordinates:x.sourceOriginalBodyContourGraph.totalGeometricCoordinateMatchesWithDistinctSourceIndices,
+    actualSevenRingIndexedTopology:x.sourceOriginalBodyContourGraph.originalSourceSevenRingContourConnectivity.map(y=>({
+     ring:y.originalSkirtSourceRing,
+     originalSourceSegments:y.original95NamedSourceContourSegments,
+     trueIndexedOpenEndpoints:y.original95OriginalIndexTopology.genuineIndexedOpenEndpoints,
+     trueIndexedCycleCount:y.original95OriginalIndexTopology.originalIndexedClosedGraphCycles,
+     trueIndexedConnectedComponents:y.original95OriginalIndexTopology.originalIndexedGraphComponents,
+     trueIndexedBranchNodes:y.original95OriginalIndexTopology.originalIndexedBranchNodes,
+     sourceUVSplitCoordinateMatches:y.original95OriginalIndexTopology.coordinateEquivalentSeparateOriginalIndicesWithinSameMesh,
+     acrossSourceMeshesCoordinateMatches:y.original95OriginalIndexTopology.coordinateEquivalentSeparateOriginalIndicesAcrossMeshes,
+     unknownSkirtRayDirections:y.original95NoHitRayDirectionsCount,
+     contiguousUnknownSectorArcLengths:y.original95NoHitSectorSequenceRunLengths
+    }))
+   })),
    originalSource95NoHitGeometryNativeChecks:results.selectedOriginalSkirtCoreNoHitGeometryAudits.length,
    originalSource95NoHitGeometryByAvatar:results.selectedOriginalSkirtCoreNoHitGeometryAudits.filter(x=>x.pose==='source').map(x=>({
     avatar:x.avatar,
