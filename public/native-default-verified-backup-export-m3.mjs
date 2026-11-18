@@ -102,7 +102,7 @@ export async function exportDurableOwnerBackupM3({
  if(review&&( !Array.isArray(review.batch)||review.batch.length ))
   fail('UNFINISHED_PHOTOS_NOT_IN_V3');
  const items=[];
- const ids=new Set();
+ const ids=new Set(),rowsById=new Map();
  // Maintain O(1) expected canonical photo/source lookup even with large
  // wardrobes. Rehash cutout only for exact image/source collisions.
  const priorByPicture=new Map(),priorByReceipt=new Map();
@@ -110,7 +110,7 @@ export async function exportDurableOwnerBackupM3({
  for(const row of snap.items){
   if(!row||typeof row.id!=='string'||!row.id||row.id.length>100||
      ids.has(row.id))fail('INVALID_GARMENT');
-  ids.add(row.id);
+  ids.add(row.id);rowsById.set(row.id,row);
   inspectOwner(row,ownerId);
   await checkedJPEG(row.image,
    !row.originalPhoto?.image||row.originalPhoto.image===row.image
@@ -173,6 +173,11 @@ export async function exportDurableOwnerBackupM3({
     fail('INVALID_BOARD');
    for(const id of Object.values(board.slots)){
     if(typeof id!=='string'||!ids.has(id))fail('MISSING_OUTFIT_PIECE');
+    // A retired original may remain in historic backup inventory but can
+    // never be presented as an active current or saved outfit garment.
+    const referenced=rowsById.get(id);
+    if(Boolean(referenced?.deleted)||Boolean(referenced?.sourceRevoked))
+     fail('RETIRED_OUTFIT_SOURCE');
    }
   }
   outfitBoard={current:structuredClone(storedBoard.current),
