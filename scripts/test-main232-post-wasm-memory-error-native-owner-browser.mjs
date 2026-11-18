@@ -3,7 +3,7 @@
  * Research-only controlled post-WASM fault; NOT a true original model failure,
  * NOT a permanent WebKit fix or reproduction of ORT's actual memory fault.
  * The app and original P94 Worker files are unchanged. A disposable Worker
- * injects one bounded test-only RuntimeError after native WASM instantiation.
+ * intentionally rejects after successful native WASM instantiation.
  */
 import assert from 'node:assert/strict';
 import {readFile,writeFile,rm} from 'node:fs/promises';
@@ -19,7 +19,7 @@ assert.equal(source.split(marker).length,2,'original authenticated app entry anc
 let derived=source.split(marker)[0];
 const workerBytes=await readFile('public/outfit-worker-p94.mjs');
 assert.equal(sha(workerBytes),'d66651b616de54c51eb7ef986324b30f1580888f','original installed P94 Worker moved');
-const prelude="// M232 disposable source-derived Worker; test ONLY, not a real crash or positive model result.\nlet m232WasmReady=false,m232PostReadyGrow=0,m232FaultSent=false;\nconst m232NativeInstantiate=WebAssembly.instantiateStreaming;\nWebAssembly.instantiateStreaming=function(...args){\n const r=Reflect.apply(m232NativeInstantiate,WebAssembly,args);\n if(r&&typeof r.then==='function')r.then(()=>{m232WasmReady=true;},()=>{});\n return r;\n};\nconst m232NativeGrow=WebAssembly.Memory.prototype.grow;\nWebAssembly.Memory.prototype.grow=function(...args){\n if(m232WasmReady&&!m232FaultSent&&++m232PostReadyGrow===2){\n  m232FaultSent=true;\n  self.postMessage({type:'m232-fault',phase:'after-native-wasm',faultKind:'synthetic-memory-access'});\n  throw new WebAssembly.RuntimeError('memory access out of bounds');\n }\n return Reflect.apply(m232NativeGrow,this,args);\n};\n";
+const prelude="// M232 forced rejection AFTER native instantiateStreaming resolution.\n// Deliberately transforms returned Promise as a TEST-ONLY adversarial negative.\n// It is NOT a production loader change nor a reproduction of native ORT memory corruption.\nlet m232FaultSent=false;\nconst m232NativeInstantiateStreaming=WebAssembly.instantiateStreaming;\nWebAssembly.instantiateStreaming=function(...args){\n const native=Reflect.apply(m232NativeInstantiateStreaming,WebAssembly,args);\n return native.then(instance=>{\n  if(!m232FaultSent){\n   m232FaultSent=true;\n   self.postMessage({type:'m232-fault',phase:'after-native-wasm',faultKind:'synthetic-memory-access'});\n   throw new WebAssembly.RuntimeError('memory access out of bounds');\n  }\n  return instance;\n });\n};\n";
 const workerSourceRead="  const body=await readFile(absolute);";
 assert.equal(derived.split(workerSourceRead).length,2,'original P94 static server source changed');
 derived=derived.replace(workerSourceRead,
