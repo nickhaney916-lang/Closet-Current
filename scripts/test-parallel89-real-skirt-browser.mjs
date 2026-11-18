@@ -81,7 +81,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
- selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
+ selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalSkirtPhysicalScaleSurveys:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -128,6 +128,28 @@ try{
  results.realPhoto2DReferenceViews=1;
  for(const avatar of ['female','male']){
   if(avatar==='male')await page.evaluate(()=>window.nativeP89Skirt.load('male'));
+  // Genuine source JPEG + original source mesh + real 163bone male/female in
+  // BOTH native engines and ALL five source poses. This intentionally has NO
+  // actual photographed-garment tape measurements; it MUST not verify fit.
+  for(const sourcePose of ['source','blend-25','blend-50','blend-75','relaxed']){
+   await page.evaluate(name=>window.nativeP89Skirt.setPose(name),sourcePose);
+   const metric=await page.evaluate(()=>
+    window.nativeP89Skirt.auditOriginalSkirtMeasurementCalibration89());
+   assert.equal(metric.status,'ORIGINAL_PHYSICAL_GARMENT_DIMENSIONS_MISSING',
+    'genuine source skirt must remain physically uncalibrated: '+(metric.reason||metric.status));
+   assert.equal(metric.avatar,avatar);
+   assert.equal(metric.pose,sourcePose);
+   assert.equal(metric.originalPhotoSHA256,required.skirt);
+   assert.equal(metric.originalRigBoneCount,163);
+   assert.equal(metric.originalSourceRestVertexCount,343);
+   assert.equal(metric.originalGarmentPhysicalDimensionsVerified,false);
+   assert.equal(metric.actualPhotoCameraScaleVerified,false);
+   assert.equal(metric.consumer3DAdmitted,false);
+   assert.equal(metric.originalPhoto2DFallbackRequired,true);
+   assert.equal(metric.releaseAuthorized,false);
+   assert.equal(metric.familyAlpha,'HOLD');
+   results.originalSkirtPhysicalScaleSurveys.push(metric);
+  }
   for(const pose of ['source','blend-50','relaxed']){
    const witness=await page.evaluate(name=>window.nativeP89Skirt.setPose(name),pose);
    const state=await page.evaluate(()=>window.nativeP89Skirt.getState());
