@@ -1,0 +1,153 @@
+name: MAIN214 source-pinned P94 real WebKit 430 zero-card stage evidence NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main214-p94-webkit430-zero-card-cause-HOLD]
+  pull_request:
+    branches: [research/main209-m205r-m206-preview-focus-integration-HOLD]
+    paths: [.github/workflows/main214-p94-webkit-zero-card-stage-no-deploy.yml, public/outfit-worker-p94.mjs, scripts/test-main214-p94-worker-outcome.mjs]
+permissions:
+  contents: read
+jobs:
+  original-source-and-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable M209 native owner original, source/scope and true P88 worker pins
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          M209=0a0fe5e4355ec9857915da3b6d8d0964cca57b3a
+          git merge-base --is-ancestor "$M209" HEAD
+          expected="$(printf '%s\n' '.github/workflows/main214-p94-webkit-zero-card-stage-no-deploy.yml' 'public/outfit-worker-p94.mjs' 'scripts/test-main214-p94-worker-outcome.mjs')"
+          test "$(git diff --name-only "$M209" HEAD)" = "$expected"
+          test "$(git rev-parse "$M209:public/outfit-worker-p94.mjs")" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = ab601f2d2a250564976e3fd5a11d759c7e7d7b2b
+          test "$(git rev-parse HEAD:public/outfit-segmentation.mjs)" = d357955dd8fdab7c0cb727ea597c270edd9309ac
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          node --check public/outfit-worker-p94.mjs
+          node --check scripts/test-main214-p94-worker-outcome.mjs
+          node --check scripts/test-parallel94-native-p88-browser.mjs
+      - name: Install original pinned offline app test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build original native PWA without deployment
+        run: node scripts/build.mjs
+      - name: All inherited source, owner, backup and recognition Node tests (no skips)
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  real-webkit-p94-four-independent-attempts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: webkit
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable M209 native owner original, source/scope and true P88 worker pins
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          M209=0a0fe5e4355ec9857915da3b6d8d0964cca57b3a
+          git merge-base --is-ancestor "$M209" HEAD
+          expected="$(printf '%s\n' '.github/workflows/main214-p94-webkit-zero-card-stage-no-deploy.yml' 'public/outfit-worker-p94.mjs' 'scripts/test-main214-p94-worker-outcome.mjs')"
+          test "$(git diff --name-only "$M209" HEAD)" = "$expected"
+          test "$(git rev-parse "$M209:public/outfit-worker-p94.mjs")" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = ab601f2d2a250564976e3fd5a11d759c7e7d7b2b
+          test "$(git rev-parse HEAD:public/outfit-segmentation.mjs)" = d357955dd8fdab7c0cb727ea597c270edd9309ac
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          node --check public/outfit-worker-p94.mjs
+          node --check scripts/test-main214-p94-worker-outcome.mjs
+          node --check scripts/test-parallel94-native-p88-browser.mjs
+      - name: Install authentic pinned browser/runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original P94 320,390 and two independent 430 outcomes without retry-to-green
+        shell: bash
+        run: |
+          set -uo pipefail
+          failures=0
+          for pair in 320:control320 390:control390 430:first430 430:second430; do
+            width="${pair%%:*}"
+            attempt="${pair#*:}"
+            echo "M214_START real_WebKit width=$width independent=$attempt"
+            M58_ENGINE=webkit P94_WIDTH="$width" M214_ATTEMPT="$attempt" node scripts/test-main214-p94-worker-outcome.mjs || failures=$((failures + 1))
+          done
+          echo "M214_TOTAL_REAL_FAILURES=$failures"
+          test "$failures" -eq 0
+      - name: Upload metadata-only recognition outcome receipts even when red
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main214-authentic-webkit-p94-stage-metadata-HOLD
+          path: benchmark/parallel94-native-p88-browser/webkit/*/M214-P94-BOUNDED-WORKER-OUTCOME-*.json
+          if-no-files-found: warn
+          retention-days: 14
+  real-chromium-p94-430-control:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: chromium
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable M209 native owner original, source/scope and true P88 worker pins
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          M209=0a0fe5e4355ec9857915da3b6d8d0964cca57b3a
+          git merge-base --is-ancestor "$M209" HEAD
+          expected="$(printf '%s\n' '.github/workflows/main214-p94-webkit-zero-card-stage-no-deploy.yml' 'public/outfit-worker-p94.mjs' 'scripts/test-main214-p94-worker-outcome.mjs')"
+          test "$(git diff --name-only "$M209" HEAD)" = "$expected"
+          test "$(git rev-parse "$M209:public/outfit-worker-p94.mjs")" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = ab601f2d2a250564976e3fd5a11d759c7e7d7b2b
+          test "$(git rev-parse HEAD:public/outfit-segmentation.mjs)" = d357955dd8fdab7c0cb727ea597c270edd9309ac
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          node --check public/outfit-worker-p94.mjs
+          node --check scripts/test-main214-p94-worker-outcome.mjs
+          node --check scripts/test-parallel94-native-p88-browser.mjs
+      - name: Install authentic pinned browser/runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Genuine 430 Chromium original P88/WASM control
+        run: M58_ENGINE=chromium P94_WIDTH=430 M214_ATTEMPT=chromium430 node scripts/test-main214-p94-worker-outcome.mjs
+      - name: Upload metadata-only Chromium receipt even when red
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main214-authentic-chromium-p94-stage-metadata-HOLD
+          path: benchmark/parallel94-native-p88-browser/chromium/430/M214-P94-BOUNDED-WORKER-OUTCOME-*.json
+          if-no-files-found: warn
+          retention-days: 14
