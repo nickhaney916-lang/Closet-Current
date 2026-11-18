@@ -50,7 +50,7 @@ jobs:
           node --check public/native-reviewed-private-save-167.mjs
           node --check tests/main217-photo119-postcommit-session-revoke.test.mjs
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 896eba43aa3bd8bcbeb8599a30c6521adb500975
-          test "$(git rev-parse HEAD:scripts/test-main220-p94-honest-zero-native-owner-recovery.mjs)" = 7161eb1184c62d0b9fb72fe0ebaa75f3914805fc
+          test "$(git rev-parse HEAD:scripts/test-main220-p94-honest-zero-native-owner-recovery.mjs)" = e5f334e660692a94eb8b04bee8094d8218f207b6
           test "$(git rev-parse HEAD:.github/workflows/main218-m216-m217-photo119-postcommit-webkit-no-deploy.yml)" = ecab2026837d3966510f6cee4d8e994cc239ab4e
           node --check research/multi-garment-capture-01/review-ui.mjs
           node --check scripts/test-main220-p94-honest-zero-native-owner-recovery.mjs
@@ -125,7 +125,7 @@ jobs:
           test "$(git rev-parse HEAD:tests/main217-photo119-postcommit-session-revoke.test.mjs)" = 13aac94823e306f84bdbcce1a1d2f80be22eb9b2
           test "$(git rev-parse HEAD:.github/workflows/main216-m215-m214-webkit-outcome-no-deploy.yml)" = 3eb7bc9d2022bafaced17287fdb1897a36b0294f
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 896eba43aa3bd8bcbeb8599a30c6521adb500975
-          test "$(git rev-parse HEAD:scripts/test-main220-p94-honest-zero-native-owner-recovery.mjs)" = 7161eb1184c62d0b9fb72fe0ebaa75f3914805fc
+          test "$(git rev-parse HEAD:scripts/test-main220-p94-honest-zero-native-owner-recovery.mjs)" = e5f334e660692a94eb8b04bee8094d8218f207b6
           test "$(git rev-parse HEAD:.github/workflows/main218-m216-m217-photo119-postcommit-webkit-no-deploy.yml)" = ecab2026837d3966510f6cee4d8e994cc239ab4e
           node --check research/multi-garment-capture-01/review-ui.mjs
           node --check scripts/test-main220-p94-honest-zero-native-owner-recovery.mjs
@@ -199,7 +199,7 @@ jobs:
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 896eba43aa3bd8bcbeb8599a30c6521adb500975
-          test "$(git rev-parse HEAD:scripts/test-main220-p94-honest-zero-native-owner-recovery.mjs)" = 7161eb1184c62d0b9fb72fe0ebaa75f3914805fc
+          test "$(git rev-parse HEAD:scripts/test-main220-p94-honest-zero-native-owner-recovery.mjs)" = e5f334e660692a94eb8b04bee8094d8218f207b6
           test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
           node --check scripts/test-main220-p94-honest-zero-native-owner-recovery.mjs
       - name: Install native P94 Chromium WebKit and owner review dependencies
