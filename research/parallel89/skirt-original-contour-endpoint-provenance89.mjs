@@ -86,6 +86,97 @@ function counterpart(nodes,me){
  }
  return others;
 }
+/** Independent, non-mutating graph COUNTERFACTUAL only.
+ * A same-rest/skin UV seam candidate does not join source GLB vertices,
+ * imply continuous physical material, signed containment, or fitted cloth. */
+function virtualSeamLoopHypothesis(nodes,open,buckets,excluded){
+ const links=new Map();
+ for(const n of open){
+  if(excluded.has(n.key))continue;
+  const twin=counterpart(buckets,n);
+  if(twin.length!==1||excluded.has(twin[0].key)||
+   compatible(n,twin[0])!==
+    'POSSIBLE_ORIGINAL_UV_SPLIT_REST_SKIN_AND_MESH_COMPATIBLE')continue;
+  links.set(n.key,twin[0].key);
+ }
+ const pairs=[],smoothPairs=new Set(), seenPair=new Set();
+ let unreciprocated=0,opposingTangentCandidates=0,
+  nonOpposingTangentCandidates=0,indeterminateTangentCandidates=0;
+ for(const [a,b] of links){
+  if(links.get(b)!==a){unreciprocated++;continue;}
+  const key=[a,b].sort().join('|');
+  if(seenPair.has(key))continue;seenPair.add(key);
+  pairs.push([a,b]);
+  const n=nodes.get(a),t=nodes.get(b);
+  if(!n||!t||n.degree!==1||t.degree!==1||
+   n.neighbors.length!==1||t.neighbors.length!==1){
+   indeterminateTangentCandidates++;continue;
+  }
+  const p=nodes.get(n.neighbors[0]),q=nodes.get(t.neighbors[0]);
+  if(!p||!q)throw Error('original-indexed-edge-neighbor-not-found');
+  const x=p.x-n.x,z=p.z-n.z,u=q.x-t.x,v=q.z-t.z,
+   length=Math.hypot(x,z)*Math.hypot(u,v);
+  if(length<=1e-12){
+   indeterminateTangentCandidates++;continue;
+  }
+  // Opposite inward endpoint tangents are locally consistent with
+  // a smooth seam. This is NOT a proof of 3D seam material continuity.
+  if((x*u+z*v)/length<=-.9){
+   opposingTangentCandidates++;smoothPairs.add(key);
+  }else nonOpposingTangentCandidates++;
+ }
+ const validLinks=new Map();
+ for(const [a,b] of pairs){validLinks.set(a,b);validLinks.set(b,a);}
+ const seen=new Set();
+ let graphComponents=0,hypotheticalClosedCycles=0,
+  oppositeTangentHypotheticalCycles=0,branchedOrOpenComponents=0;
+ for(const seed of nodes.keys()){
+  if(seen.has(seed))continue;
+  graphComponents++;const queue=[seed];seen.add(seed);
+  let degSum=0,allDeg2=true,virtualPairsInComponent=0,
+   allJoinedTangentsOpposing=true;
+  for(let i=0;i<queue.length;i++){
+   const n=nodes.get(queue[i]),partner=validLinks.get(n.key);
+   const adjacency=partner?[...n.neighbors,partner]:n.neighbors;
+   degSum+=adjacency.length;if(adjacency.length!==2)allDeg2=false;
+   if(partner){
+    virtualPairsInComponent++;
+    if(!smoothPairs.has([n.key,partner].sort().join('|')))
+     allJoinedTangentsOpposing=false;
+   }
+   for(const other of adjacency){
+    if(!nodes.has(other))throw Error('source-virtual-graph-unknown-original-node');
+    if(!seen.has(other)){seen.add(other);queue.push(other);}
+   }
+  }
+  if(allDeg2&&degSum/2===queue.length&&queue.length>=3&&
+   virtualPairsInComponent>=2){
+   hypotheticalClosedCycles++;
+   if(allJoinedTangentsOpposing)oppositeTangentHypotheticalCycles++;
+  }else branchedOrOpenComponents++;
+ }
+ if(pairs.length*2>open.length||
+  opposingTangentCandidates+nonOpposingTangentCandidates+
+   indeterminateTangentCandidates!==pairs.length||
+  hypotheticalClosedCycles+branchedOrOpenComponents!==graphComponents||
+  oppositeTangentHypotheticalCycles>hypotheticalClosedCycles)
+  throw Error('counterfactual-original-index-virtual-loop-accounting-invalid');
+ return Object.freeze({
+  possibleMutuallyUniqueRestSkinSeamPairs:pairs.length,
+  reciprocalSourceCandidateEndpoints:pairs.length*2,
+  candidateEndpointsWithoutReciprocalPair:open.length-pairs.length*2,
+  rejectedUnreciprocatedLinks:unreciprocated,
+  locallyOpposingOriginalPosedTangentPairs:opposingTangentCandidates,
+  nonOpposingOriginalPosedTangentPairs:nonOpposingTangentCandidates,
+  insufficientTangentSourcePairs:indeterminateTangentCandidates,
+  originalIndexedGraphComponentsAfterVirtualLinks:graphComponents,
+  hypotheticalTopologicalCyclesAfterVirtualLinks:hypotheticalClosedCycles,
+  hypotheticalCyclesWithOpposingTangentCandidates:oppositeTangentHypotheticalCycles,
+  otherOpenOrBranchedCounterfactualComponents:branchedOrOpenComponents,
+  virtualGraphOnlyNoOriginalIndexWeld:true,
+  originalBodyWatertightAndGarmentFitUnproved:true
+ });
+}
 export function summarizeSourceContourEndpointProvenance89({
  bodyPositions,restPositions,bodyIndices,skirtPositions,skirtIndices,
  coreBodyFaceMask,skinIndices,skinWeights,sourceMeshIds,
@@ -158,7 +249,8 @@ export function summarizeSourceContourEndpointProvenance89({
   faces.push({a,b,c,mesh,selected,excludedReason});
  }
  const totals=empty(),rings=[];
- let openTotal=0,supportTotal=0,poseCoincidentTotal=0,noneTotal=0;
+ let openTotal=0,supportTotal=0,poseCoincidentTotal=0,noneTotal=0,
+  counterfactualCycles=0,mutualSeamPairs=0;
  for(let row=0;row<7;row++){
   let y=0;for(let j=0;j<48;j++)y+=skirtPositions[3*(row*49+j)+1];y/=48;
   const nodes=new Map(),excluded=new Map(),meshHist=Object.create(null);
@@ -175,8 +267,10 @@ export function summarizeSourceContourEndpointProvenance89({
       if(Math.hypot(prev.x-p.x,prev.z-p.z)>1e-6)
        throw Error('original-source-index-cut-identity-conflict');
       prev.degree++;
-     }else nodes.set(p.key,{...p,degree:1});
+     }else nodes.set(p.key,{...p,degree:1,neighbors:[]});
     }
+    nodes.get(v[0].key).neighbors.push(v[1].key);
+    nodes.get(v[1].key).neighbors.push(v[0].key);
    }else{
     excludedSegments++;
     for(const p of v){
@@ -192,6 +286,9 @@ export function summarizeSourceContourEndpointProvenance89({
    if(!buckets.has(key))buckets.set(key,[]);
    buckets.get(key).push(n);
   }
+  const virtual=virtualSeamLoopHypothesis(nodes,open,buckets,excluded);
+  counterfactualCycles+=virtual.hypotheticalTopologicalCyclesAfterVirtualLinks;
+  mutualSeamPairs+=virtual.possibleMutuallyUniqueRestSkinSeamPairs;
   const counts=empty();
   for(const n of open){
    let cause;
@@ -229,7 +326,8 @@ export function summarizeSourceContourEndpointProvenance89({
    missingOriginalIndexedOrVirtualNeighborEndpoints:unsupported,
    originalSourceMeshEndpointCounts:Object.entries(meshHist)
     .sort((a,b)=>a[0].localeCompare(b[0])).map(([label,endpoints])=>({label,endpoints})),
-   originalSourceFaceIndexNotRepaired:true
+   originalSourceFaceIndexNotRepaired:true,
+   originalSourceVirtualSeamLoopCounterfactual:virtual
   });
  }
  if(sum(Object.values(totals))!==openTotal||
@@ -242,12 +340,15 @@ export function summarizeSourceContourEndpointProvenance89({
   sourceOriginalStrictCoreFaces:strict,
   source95CounterfactualExtraFaces:hypothetical,
   originalSourceIndexedOpenEndpointTotal:openTotal,
+  originalSourceUniqueMutualVirtualPairCount:mutualSeamPairs,
+  originalSourceCounterfactualClosedLoopCount:counterfactualCycles,
   sourceIndexOrRestSkinCandidateEndpointTotal:supportTotal,
   posedOnlyCoincidenceUntrustedEndpointTotal:poseCoincidentTotal,
   originalNoMatchingEndpointTotal:noneTotal,
   originalEndpointCauseTotals:totals,
   originalSevenSourceSkirtEndpointRings:rings,
   sourceVirtualRestAndSkinEvidenceNeverSewn:true,
+  sourceVirtualLoopCounterfactualNeverWeldsOrCertifiesVolume:true,
   sourceOriginalFaceMaskExclusionsNeverPromoted:true,
   originalOnlyWorldCoordinateMatchNotStitchable:true,
   sourceModelSignedBodyVolumeUnproved:true,
@@ -302,6 +403,9 @@ export function auditSourceContourEndpointProvenance89(args={}){
    'original-skin-weights-not-normalized',
    'original-source-index-cut-identity-conflict',
    'source-ring-endpoint-reasons-not-conserved',
+   'original-indexed-edge-neighbor-not-found',
+   'source-virtual-graph-unknown-original-node',
+   'counterfactual-original-index-virtual-loop-accounting-invalid',
    'original-source-ring-endpoint-provenance-nonconservative'
   ]);
   return fail(whitelist.has(e.message)?e.message:'source-original-index-skin-rest-provenance-failed-closed');
