@@ -1,0 +1,112 @@
+name: MAIN222 genuine WebKit P94 positive and honest empty review NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main222-integrate-honest-webkit-empty-review-HOLD]
+  pull_request:
+    branches: [research/main221-native-atomic-restore-terminal-lease-HOLD]
+permissions:
+  contents: read
+jobs:
+  source-and-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restrict diff and require byte-identical proven donor fix and existing owner model
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=3cafb6878710303ff5431105eff832ecf824989d
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/multi-garment-capture-01/review-ui.mjs|scripts/test-main220-p94-honest-zero-native-owner-recovery.mjs|.github/workflows/main222-honest-empty-owner-positive-model-no-deploy.yml) ;;
+              *) echo "M222 forbidden runtime or private source modification $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse "$BASE":research/multi-garment-capture-01/review-ui.mjs)" = d478fcf6e4e8889a23b1620b444667ac949da7a9
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 896eba43aa3bd8bcbeb8599a30c6521adb500975
+          test "$(git rev-parse HEAD:scripts/test-main220-p94-honest-zero-native-owner-recovery.mjs)" = e5f334e660692a94eb8b04bee8094d8218f207b6
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 8cc2977f1932b3012c44bdd401081cc542b94c57
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node --check scripts/test-main220-p94-honest-zero-native-owner-recovery.mjs
+      - name: Install pinned runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Run full unmodified Node privacy and source suite and offline app build
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  native-browser:
+    name: Actual original P94 model and no-card owner manual fallback (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      M221_ENGINE: ${{ matrix.engine }}
+      P99_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict immutable source guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=3cafb6878710303ff5431105eff832ecf824989d
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/multi-garment-capture-01/review-ui.mjs|scripts/test-main220-p94-honest-zero-native-owner-recovery.mjs|.github/workflows/main222-honest-empty-owner-positive-model-no-deploy.yml) ;;
+              *) echo "M222 unexpected source changed $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 896eba43aa3bd8bcbeb8599a30c6521adb500975
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+      - name: Install pinned real engines and model dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build real local app
+        run: node scripts/build.mjs
+      - name: Real signed-owner native v3 original restore unchanged M221
+        run: node scripts/test-main221-native-atomic-restore-terminal-lease-browser.mjs
+      - name: Actual unflagged photo review closet 2D and private backup
+        run: P99_WIDTH=390 node scripts/test-parallel99-normal-app-browser.mjs
+      - name: Actual real pinned SegFormer WebKit or Chromium model with positive review and 2D/v4
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 390 430; do
+            M214_ATTEMPT="main222-$width" P94_WIDTH="$width" node scripts/test-main214-p94-worker-outcome.mjs
+          done
+      - name: Zero output, dishonest count, error - explicit manual owner original recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            M220_CASE=done-zero P94_WIDTH="$width" node scripts/test-main220-p94-honest-zero-native-owner-recovery.mjs
+          done
+          for mode in done-claimed-two worker-error; do
+            M220_CASE="$mode" P94_WIDTH=430 node scripts/test-main220-p94-honest-zero-native-owner-recovery.mjs
+          done
