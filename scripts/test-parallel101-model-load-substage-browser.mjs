@@ -117,7 +117,7 @@ const evidence=[
  "   engine,width,attempt:process.env.P101_ATTEMPT||'one',",
  "   originalBrowserBlob:'"+originalSHA+"',actualSourceWorkerBlob:'"+workerSHA+"',",
  "   disposableStageOnlyWorker:true,genuineModelAndWasm:true,",
- "   browserCacheMode:process.env.P101_BROWSER_CACHE||'on',"
+ "   browserCacheMode:process.env.P101_BROWSER_CACHE||'on',",
  "   stagePath:p101Stages,terminals:p101Terminal,realReviewCards:state.cards,",
  "   responseStatuses:modelResponses.map(x=>x.status).sort(),",
  "   blockedRequests:rejected.length,pageErrors:issues.length,",
