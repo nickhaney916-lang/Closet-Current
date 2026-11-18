@@ -1,0 +1,121 @@
+name: MAIN220 combined original WebKit model plus actual signed-owner IDB lease NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main220-m218-m219-native-idb-model-joint-HOLD]
+  pull_request:
+    branches: [research/main218-m216-m217-owner-save-worker-joint-HOLD]
+permissions:
+  contents: read
+jobs:
+  immutable-owner-source-and-node:
+    name: Exact M218 source and original owner security regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove only tested M219 native acceptance and this workflow were added to M218
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a11397ba3aa367da0dccfd815b9df5cec353ef35
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              scripts/test-main219-native-idb-photo119-terminal-lease-browser.mjs|.github/workflows/main220-m218-m219-native-idb-model-no-deploy.yml) ;;
+              *) echo "M220 forbidden product, model, source JPEG or assignment change: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:scripts/test-main219-native-idb-photo119-terminal-lease-browser.mjs)" = 4692fedf8b9f61478f1cf27170de72d6d82064d7
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
+          test "$(git rev-parse HEAD:tests/main217-photo119-postcommit-session-revoke.test.mjs)" = 13aac94823e306f84bdbcce1a1d2f80be22eb9b2
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 8cc2977f1932b3012c44bdd401081cc542b94c57
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          node --check scripts/test-main219-native-idb-photo119-terminal-lease-browser.mjs
+      - name: Install pinned local source and real browser test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original RED-before-GREEN owner session postcommit IDB source regression
+        run: node --test tests/main217-photo119-postcommit-session-revoke.test.mjs
+      - name: Unmodified original PHOTO119 source, draft and lease regression
+        run: node --test tests/manual-reviewed-private-save-119.test.mjs
+      - name: Full inherited owner, source, recognition and backup regressions plus offline PWA build
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  genuine-browser-owner-and-model:
+    name: Actual IDB signed lease plus actual P94 segmentation (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M219_ENGINE: ${{ matrix.engine }}
+      P99_ENGINE: ${{ matrix.engine }}
+      M58_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable exact joint model and signed owner data provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=a11397ba3aa367da0dccfd815b9df5cec353ef35
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              scripts/test-main219-native-idb-photo119-terminal-lease-browser.mjs|.github/workflows/main220-m218-m219-native-idb-model-no-deploy.yml) ;;
+              *) echo "M220 forbidden source/model/private owner change $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:scripts/test-main219-native-idb-photo119-terminal-lease-browser.mjs)" = 4692fedf8b9f61478f1cf27170de72d6d82064d7
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 8cc2977f1932b3012c44bdd401081cc542b94c57
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+      - name: Install pinned genuine Chromium WebKit original-model and IndexedDB test runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Run actual browser native IndexedDB postcommit owner epoch and original JPEG persistence 320 390 430
+        run: node scripts/test-main219-native-idb-photo119-terminal-lease-browser.mjs
+      - name: Build real owner photo review PWA (no deployment)
+        run: node scripts/build.mjs
+      - name: Genuine normal owner original JPEG reviewed closet 2D and v3 restore, 390 and 430
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 390 430; do
+            P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+          done
+      - name: Genuine source-locked P94 SegFormer model worker to owner-reviewed private 2D and v4, 390 and 430
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 390 430; do
+            M214_ATTEMPT="main220-$width" P94_WIDTH="$width" node scripts/test-main214-p94-worker-outcome.mjs
+          done
+      - name: Extra independent real WebKit 430 process checks, zero retry or mocked model
+        if: matrix.engine == 'webkit'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for slot in 1 2; do
+            M214_ATTEMPT="main220-extra-$slot" P94_WIDTH=430 node scripts/test-main214-p94-worker-outcome.mjs
+          done
