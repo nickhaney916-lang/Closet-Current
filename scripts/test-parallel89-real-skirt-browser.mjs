@@ -81,7 +81,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
- selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreSkinSensitivityAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
+ selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreSkinSensitivityAudits:[],selectedOriginalNoHitLineGeometryAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -116,8 +116,13 @@ try{
   results.offsite.push('forbidden request');return route.abort();
  });
  await page.goto(origin+'/research/parallel89/native-skirt-browser89.html',{waitUntil:'domcontentloaded'});
- await page.waitForFunction(()=>window.nativeP89Skirt?.getState()?.phase==='ready'||
-  !!window.nativeP89SkirtError,null,{timeout:120000});
+ try{
+  await page.waitForFunction(()=>window.nativeP89Skirt?.getState()?.phase==='ready'||
+   !!window.nativeP89SkirtError,null,{timeout:30000});
+ }catch(e){
+  throw Error('actual original research native module initialization failed: '+
+   JSON.stringify(results.errors)+'; '+String(e.message));
+ }
  assert.equal(await page.evaluate(()=>window.nativeP89SkirtError||null),null,
   'real-licensed-skirt native setup failed');
  await page.locator('#original').evaluate(img=>img.decode());
@@ -1042,6 +1047,70 @@ try{
    assert.equal(sensitivity.originalPhoto2DFallbackRequired,true);
    assert.equal(sensitivity.consumer3DAdmitted,false);
    assert.equal(sensitivity.releaseAuthorized,false);
+   // Real 163bone public source: independently distinguish original
+   // no-forward-ray gaps by behind-skirt-center, >3m, collinear, or
+   // no source plane line intersection. These are NOT fit clearances.
+   const lineReport=await page.evaluate(()=>
+    window.nativeP89Skirt.auditSelectedOriginalNoHitLineGeometry89());
+   assert.equal(lineReport.schema,'P89-locked-original-nohit-anatomy-plane-line/v1');
+   assert.equal(lineReport.status,'SOURCE_NOHIT_LINE_REASONS_EVIDENCED_NOT_WEARABLE_FIT',
+    'real original source body no-hit ray result unverifiable: '+JSON.stringify(lineReport));
+   assert.equal(lineReport.avatar,avatar);
+   assert.equal(lineReport.pose,selectedPose);
+   assert.equal(lineReport.sourcePhotoSHA256,required.skirt);
+   assert.equal(lineReport.sourceAnatomyGLBSHA256,required[avatar]);
+   assert.equal(lineReport.sourceSkinSensitivityIndependentlyCrossChecked336,true);
+   const origin=lineReport.exactSourceNoHitLineGeometryEvidence;
+   assert.equal(origin.schema,'P89-true-original-skirt-nohit-line-geometry/v1');
+   assert.equal(origin.originalPhotoSkirtSourceRayCount,336);
+   assert.equal(origin.originalSourceIndexedBodyFaceCount,
+    topology.originalIndexedTriangleCount);
+   assert.equal(origin.originalStrictCoreUnknown,identity.originalCoreUnknown);
+   assert.equal(origin.originalStrictCoreOutward,identity.originalCoreOutward);
+   assert.equal(origin.originalStrictCoreInward,identity.originalCoreInward);
+   assert.equal(origin.originalStrictCoreNear,identity.originalCoreNear);
+   const noHitExpected=avatar==='female'?122:120,
+    excludedExpected=avatar==='female'?69:75;
+   assert.equal(origin.originalSourceNoForwardFaceRayHits,noHitExpected);
+   assert.equal(origin.originalSourceExcludedFaceRayHits,excludedExpected);
+   assert.equal(Object.values(origin.exclusiveNoHitLineGeometryReasons)
+    .reduce((n,x)=>n+x,0),noHitExpected);
+   const reasonLabels=[
+    'SOURCE_FORWARD_BEYOND_RAY_CAP',
+    'SOURCE_BEHIND_ORIGINAL_SKIRT_CENTER',
+    'SOURCE_COLLINEAR_OR_DEGENERATE_LINE',
+    'NO_ORIGINAL_SOURCE_PLANE_LINE_INTERSECTION'];
+   assert.deepEqual(Object.keys(origin.exclusiveNoHitLineGeometryReasons),reasonLabels);
+   assert.equal(origin.sevenOriginalSkirtBandLineReasons.length,7);
+   assert.deepEqual(origin.sevenOriginalSkirtBandLineReasons.map(
+    x=>x.originalNoForwardBodySourceRayHit),
+    identity.noOriginalBodyFaceHitByOriginalSkirtBand);
+   for(let band=0;band<7;band++){
+    const row=origin.sevenOriginalSkirtBandLineReasons[band];
+    assert.equal(row.originalPhotoSkirtBand,band);
+    assert.equal(row.originalStrictUnknown,
+     hypothesis.originalStrictCoreSourceBandReceipts[band].strictCoreUnknown);
+    assert.equal(row.originalExcludedBodySourceHit,
+     hypothesis.originalStrictCoreSourceBandReceipts[band].originalExcludedFaceIntersection);
+    assert.equal(Object.values(row.noHitLineGeometryReasons)
+     .reduce((n,x)=>n+x,0),row.originalNoForwardBodySourceRayHit);
+    assert.equal(row.noHitSourceAngularSectors.length,row.originalNoForwardBodySourceRayHit);
+    assert.ok(row.noHitSourceAngularSectors.every((x,i,a)=>
+     Number.isInteger(x)&&x>=0&&x<48&&(i===0||x>a[i-1])));
+   }
+   assert.equal(origin.lineBehindSkirtCenterIsNotBodyOrGarmentClearance,true);
+   assert.equal(origin.sourceOnlyUnobservedAngularDirectionsNotSignedVolume,true);
+   assert.equal(origin.sourceOriginalPublicAnatomyAndPhotoUnmodified,true);
+   assert.equal(origin.newRealWorldBodyGarmentDimensionsInferred,false);
+   assert.equal(origin.sourceMeshEdgesNotWeldedOrFabricated,true);
+   assert.equal(origin.originalPhoto2DFallbackRequired,true);
+   assert.equal(origin.consumer3DAdmitted,false);
+   assert.equal(origin.releaseAuthorized,false);
+   assert.equal(lineReport.closedSignedBodyVolumeVerified,false);
+   assert.equal(lineReport.consumer3DAdmitted,false);
+   assert.equal(lineReport.originalPhoto2DFallbackRequired,true);
+   assert.equal(lineReport.releaseAuthorized,false);
+   results.selectedOriginalNoHitLineGeometryAudits.push(lineReport);
    results.selectedOriginalSkirtCoreSkinSensitivityAudits.push(sensitivity);
    results.selectedOriginalSkirtCoreBoneNoHitAudits.push(boneNoHit);
    results.selectedOriginalSkirtCoreUnknownCauseAudits.push(causes);
@@ -1164,6 +1233,7 @@ try{
  assert.equal(results.selectedOriginalSkirtCoreUnknownCauseAudits.length,10);
  assert.equal(results.selectedOriginalSkirtCoreBoneNoHitAudits.length,10);
  assert.equal(results.selectedOriginalSkirtCoreSkinSensitivityAudits.length,10);
+ assert.equal(results.selectedOriginalNoHitLineGeometryAudits.length,10);
  assert.equal(results.selectedResearchPoseChecks.length,10);
  assert.equal(results.selectedResearchNativeScreenshots.length,18);
  assert.equal(results.selectedResearchFrontCoverage.length,6);
@@ -1232,6 +1302,23 @@ try{
    selectedRegistrationTrueFivePoseNativeChecks:results.selectedResearchPoseChecks.length,
    sourceTrueWorldRadialGapCheckCount:results.selectedSourceBodyRadialGapAudits.length,
    sourceOriginalWholeBodyClosureCheckCount:results.selectedSourceWholeBodyClosureAudits.length,
+   originalNoHitLineGeometryNativeCheckCount:
+    results.selectedOriginalNoHitLineGeometryAudits.length,
+   originalNoHitLineGeometryByAvatar:
+    results.selectedOriginalNoHitLineGeometryAudits.filter(x=>x.pose==='source').map(x=>({
+     avatar:x.avatar,
+     originalStrictUnknown:x.exactSourceNoHitLineGeometryEvidence.originalStrictCoreUnknown,
+     originalSourceExcludedHits:x.exactSourceNoHitLineGeometryEvidence.originalSourceExcludedFaceRayHits,
+     noForwardOriginalSourceHits:x.exactSourceNoHitLineGeometryEvidence.originalSourceNoForwardFaceRayHits,
+     originalLineReasons:x.exactSourceNoHitLineGeometryEvidence.exclusiveNoHitLineGeometryReasons,
+     sourceMeshBehindCenter:x.exactSourceNoHitLineGeometryEvidence.originalSourceMeshBehindCenterRayWitnesses,
+     sourceBandNoHitReasons:x.exactSourceNoHitLineGeometryEvidence.sevenOriginalSkirtBandLineReasons.map(y=>({
+      originalSkirtBand:y.originalPhotoSkirtBand,
+      noForwardSourceHit:y.originalNoForwardBodySourceRayHit,
+      originalSourceBodySegments:y.originalBodyPlaneSegments,
+      reasons:y.noHitLineGeometryReasons
+     }))
+    })),
    originalCoreSkinSensitivityActualNativeCheckCount:
     results.selectedOriginalSkirtCoreSkinSensitivityAudits.length,
    originalCoreSkinSensitivityByAvatar:
