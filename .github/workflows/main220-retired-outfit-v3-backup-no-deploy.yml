@@ -1,0 +1,42 @@
+name: MAIN220 retired owner outfit v3 backup lifecycle source fence NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main220-retired-outfit-board-backup-admission-HOLD]
+  pull_request:
+    branches: [research/main219-genuine-photo119-postcommit-browser-lease-HOLD]
+permissions:
+  contents: read
+jobs:
+  retired-source-outfit-preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable M219 signed owner original and allowlist
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=8265320886faf25c0bda8b336a6ab6ba81a387a1
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              public/native-default-verified-backup-export-m3.mjs|public/native-default-atomic-import-m3.mjs|tests/main220-retired-outfit-backup-lifecycle.test.mjs|.github/workflows/main220-retired-outfit-v3-backup-no-deploy.yml) ;;
+              *) echo "M220 unauthorized changed source path $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = 741e736ca107169c9e9861d803a49c2e6166e20b
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
+          test "$(git rev-parse HEAD:public/native-reviewed-shared-original-157.mjs)" = 2108bdc2f0a67b8e356ea8c47d0042512ca618bf
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          node --check tests/main220-retired-outfit-backup-lifecycle.test.mjs
+      - name: Install pinned native test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4
+      - name: True private IndexedDB source lifecycle v3 current and saved outfit export/import
+        run: node --test tests/main220-retired-outfit-backup-lifecycle.test.mjs
