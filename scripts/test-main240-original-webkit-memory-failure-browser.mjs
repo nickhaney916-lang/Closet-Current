@@ -23,6 +23,8 @@ assert.equal(blob(await readFile('scripts/main238-wasm-memory-observer-fixture.m
 const p237Line=p237Bytes.toString('utf8').split('\n').find(x=>x.startsWith('const workerProbe='));
 assert.ok(p237Line?.endsWith(';'),'M237 memory probe declaration changed');
 const originalProbe=JSON.parse(p237Line.slice('const workerProbe='.length,-1));
+const arm=process.env.M240_MEM_PATTERN_ARM||'baseline';
+assert.ok(['baseline','pattern_off'].includes(arm),'Unsupported M240 memory-pattern A/B arm');
 const combined=originalProbe+'\n'+M238_WORKER_PROBE+'\n'+M239_WORKER_PROBE+'\n'+M240_WORKER_PROBE;
 for(const name of ['p237Install','p238Install','p239Attach','p240Start','p237Emit','p238Emit','p239Emit','p240Finish']){
  assert.ok(combined.includes('function '+name+'('),'Missing '+name+' pass-through observer');
@@ -67,6 +69,10 @@ const addon=[
  'const m240Start='+JSON.stringify('  p101WasmProbe(requestId);\n')+';',
  "assert.equal(diagWorker.split(m240Start).length,2,'M240 model start moved');",
  "diagWorker=diagWorker.replace(m240Start,'  p101WasmProbe(requestId);\\n  p237Install(requestId);\\n  p238Install(requestId);\\n  p239Attach(requestId);\\n  p240Start(requestId);\\n');",
+ "diagWorker='const p240MemPatternArm='+JSON.stringify(arm)+';\\n'+diagWorker;",
+ "const p240PatternNeedle="+JSON.stringify("...(p101SessionMode==='arena_off'?{session_options:{enableCpuMemArena:false}}:{})")+";",
+ "assert.equal(diagWorker.split(p240PatternNeedle).length,2,'Original ONNX session-options source moved');",
+ "diagWorker=diagWorker.replace(p240PatternNeedle,"+JSON.stringify("...(p101SessionMode==='arena_off'?{session_options:{enableCpuMemArena:false}}:p240MemPatternArm==='pattern_off'?{session_options:{enableMemPattern:false}}:{})")+");",
  'const m240Success='+JSON.stringify(modelOK)+';',
  'const m240Failure='+JSON.stringify(modelError)+';',
  "assert.equal(diagWorker.split(m240Success).length,2,'M240 original model success moved');",
@@ -130,6 +136,7 @@ try{
  if(process.env.M240_SOURCE_ONLY==='1'){
   console.log('M240_PINNED_ORIGINAL_SOURCE_FAILURE_GATE_PASS',JSON.stringify({
    pinnedP101:true,unmodifiedP94Worker:true,originalNativeMemoryTarget:true,
+   memoryPatternArm:arm,
    tenSecondCheckpoints:true,timeoutFailureReceipt:true,
    strictOwnerSourceReviewAndV4:true,redRemainsRed:true,noPII:true,
    familyAlphaHold:true,releaseAuthorized:false}));
