@@ -179,3 +179,22 @@ test('nothing is inferred without the independent original source body radial an
  assert.equal(r.reason,
   'original-indexed-rest-skin-mesh-and-two-independent-ray-receipts-required');
 });
+
+
+test('genuine top skirt band can be zero-inward while lower original source bands still have inward witnesses; never lose non-top risk',()=>{
+ const x=fixture({clothRadius:.3});
+ // Only lower original photo height bands become narrower than original
+ // source body; no source triangles, skin, mesh or source photo is welded.
+ for(let band=1;band<7;band++)for(let j=0;j<=48;j++){
+  const k=3*(band*49+j);
+  x.skirtPositions[k]*=.4;
+  x.skirtPositions[k+2]*=.4;
+ }
+ const r=checked(attested(x));
+ assert.equal(r.originalCoreSourceInwardRayCount,0);
+ assert.ok(r.originalOtherSixPhotoHeightBandsInwardRayCount>0);
+ assert.equal(r.status,'NO_ORIGINAL_UPPER_INWARD_RAY_OBSERVED_NOT_BODY_FIT');
+ assert.equal(r.originalInwardTopSectorWitnesses.length,0);
+ assert.equal(r.consumer3DAdmitted,false);
+ assert.equal(r.releaseAuthorized,false);
+});
