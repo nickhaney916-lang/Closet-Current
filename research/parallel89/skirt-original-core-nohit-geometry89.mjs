@@ -320,7 +320,7 @@ export function summarizeOriginalCoreNoHitGeometry89({
   noOriginalSourceGeometryOrSkinWeightsMutated:true,
   originalSourceSkirtRearUnobserved:true,
   convex2DEnvelopeIsNotAClosedBodySignedVolume:true,
-  2DSourceAngularSliceIsNotPhysicalGarmentClearance:true,
+  original2DSourceAngularSliceIsNotPhysicalGarmentClearance:true,
   consumer3DAdmitted:false,releaseAuthorized:false,
   originalPhoto2DFallbackRequired:true
  });
