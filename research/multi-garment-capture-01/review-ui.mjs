@@ -588,7 +588,14 @@ export function mountMultiGarmentCapture24({
       const accepted=next.p88Intake57?
        next.p88Intake57.intake(data,state?.pieces||[]):
        intakeProposal58(data.piece,state?.pieces||[],next.received);
-      if(accepted.accepted)next.pending.push(addDetected(accepted.piece,next));
+      if(accepted.accepted){
+       // Attach a rejection handler in THIS worker-message task. Waiting for
+       // 'done' to call allSettled is too late: browsers can report an
+       // unhandled rejection at the intervening microtask checkpoint.
+       next.pending.push(addDetected(accepted.piece,next).then(
+        ()=>({prepared:true}),()=>({prepared:false})
+       ));
+      }
       else next.ignored++;
      }
      if(data.type==='progress')status.textContent=data.phase==='separating'?'Locating visible garment regions locally…':'Preparing local segmentation model…';
@@ -602,7 +609,7 @@ export function mountMultiGarmentCapture24({
       Promise.allSettled(next.pending).then(outcomes=>{
        if(job!==next)return;
        const failed=data.type==='error';
-       const failedCrops=outcomes.filter(x=>x.status==='rejected').length;
+       const failedCrops=outcomes.filter(x=>x.status!=='fulfilled'||x.value?.prepared!==true).length;
        clearTimeout(next.timeout);next.worker.terminate();job=null;
        redraw();
        status.textContent=failed?'Automatic extraction unavailable. Add and crop pieces manually; no items saved.':
