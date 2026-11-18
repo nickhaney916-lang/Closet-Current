@@ -62,6 +62,7 @@ jobs:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       P99_ENGINE: ${{ matrix.engine }}
       M51_ENGINE: ${{ matrix.engine }}
+      M58_ENGINE: ${{ matrix.engine }}
       M123_ENGINE: ${{ matrix.engine }}
       P94_WIDTH: '390'
     steps:
