@@ -251,7 +251,7 @@ export function auditOriginalSevenHeightIndexedShellEligibility89({
    originalFaceExclusionReasons].some(x=>x!==undefined);
   if(detailProvided){
    const ascii=x=>typeof x==='string'&&x.length>0&&x.length<=96&&
-    /^[\\x20-\\x7e]+$/.test(x);
+    /^[\x20-\x7e]+$/.test(x);
    const labels=new Set([
     'SELECTED_ORIGINAL_SOURCE_FACE',
     'ORIGINAL_INDEX_SHARED_FACE_EXCLUDED_BY_MASK',
