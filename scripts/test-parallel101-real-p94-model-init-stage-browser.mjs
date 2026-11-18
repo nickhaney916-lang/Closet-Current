@@ -128,13 +128,13 @@ const output=[
 const originalRead="  const body=await readFile(absolute);";
 const originalNetworkCounters="const external=[],rejected=[],issues=[],modelResponses=[];";
 assert.equal(original.split(originalNetworkCounters).length,2,'original network counter prelude moved');
-const negativeNetworkCounters=originalNetworkCounters+'\\nlet p101BlockedModelWeightRequests=0;';
+const negativeNetworkCounters=originalNetworkCounters+'\nlet p101BlockedModelWeightRequests=0;';
 const originalModelAllowed="   if(req.method()==='GET'&&(lib||hub||weights)){";
 assert.equal(original.split(originalModelAllowed).length,2,'pinned original model asset policy moved');
 const negativeRouteAllowed=originalModelAllowed+
- "\\n    if(process.env.P101_TEST_FAULT==='model_weights_abort'&&hub&&url.pathname.endsWith('.onnx')){"+
- "\\n     p101BlockedModelWeightRequests++;return route.abort();"+
- "\\n    }";
+ "\n    if(process.env.P101_TEST_FAULT==='model_weights_abort'&&hub&&url.pathname.endsWith('.onnx')){"+
+ "\n     p101BlockedModelWeightRequests++;return route.abort();"+
+ "\n    }";
 
 assert.equal(original.split(originalRead).length,2,'original fixture route moved');
 const workerSource=workerBytes.toString('utf8');
