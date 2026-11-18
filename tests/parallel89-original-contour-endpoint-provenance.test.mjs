@@ -89,6 +89,12 @@ function checked(f){
    loop.otherOpenOrBranchedCounterfactualComponents);
   assert.ok(loop.hypotheticalCyclesWithOpposingTangentCandidates<=
    loop.hypotheticalTopologicalCyclesAfterVirtualLinks);
+  assert.equal(loop.hypotheticalSimplePlanarCycles+
+   loop.hypotheticalSelfCrossingOrTouchingCycles+
+   loop.hypotheticalDegenerateAreaCycles+
+   loop.hypotheticalUntraversableCycles,
+   loop.hypotheticalTopologicalCyclesAfterVirtualLinks);
+  assert.equal(loop.only2DCounterfactualPlanarityNotSignedBody,true);
   assert.equal(Object.values(x.disjointIndexedEndpointProvenance)
    .reduce((s,n)=>s+n,0),x.indexedGraphOpenEndpoints);
  }
