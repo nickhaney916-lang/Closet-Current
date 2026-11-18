@@ -58,20 +58,26 @@ jobs:
           set -euo pipefail
           node scripts/build.mjs
           node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
-  native-430:
+  native-stress:
     runs-on: ubuntu-24.04
-    timeout-minutes: 100
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
-        engine: [chromium, webkit]
+        include:
+          - {engine: webkit, shard: 1}
+          - {engine: webkit, shard: 2}
+          - {engine: webkit, shard: 3}
+          - {engine: webkit, shard: 4}
+          - {engine: chromium, shard: 1}
+          - {engine: chromium, shard: 2}
     container:
       image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
       options: --shm-size=1gb
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       M58_ENGINE: ${{ matrix.engine }}
-      P94_WIDTH: '430'
+      SHARD: ${{ matrix.shard }}
       P102_MODE: cpu-rebundle
     steps:
       - uses: actions/checkout@v4
@@ -86,9 +92,27 @@ jobs:
         run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 esbuild@0.25.12 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Build alternate browser runtime with matching WASM-only JS dependency
         run: node scripts/build-parallel102-cpu-only-transformers.mjs
-      - name: Genuine 430px original PHOTO model positive owner 2D/v4 and CPU-only asset guard
+      - name: Six genuinely fresh original SegFormer and signed-local owner 2D/v4 positive sessions; no retries
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          M214_ATTEMPT="P102-REBUILD-${M58_ENGINE}-430" node scripts/test-parallel102-ort-runtime-compat-browser.mjs
+          failed=0
+          for attempt in 1 2 3 4 5 6; do
+            case "$attempt" in
+              1|4) width=320;;
+              2|5) width=390;;
+              3|6) width=430;;
+            esac
+            echo "::group::P102_CPU_REBUNDLE engine=$M58_ENGINE shard=$SHARD process=$attempt width=$width"
+            if P94_WIDTH="$width" M214_ATTEMPT="P102-CPU-${M58_ENGINE}-${SHARD}-${attempt}-${width}" node scripts/test-parallel102-ort-runtime-compat-browser.mjs; then
+              echo "P102_CPU_REBUNDLE_TRUE_NATIVE_PASS engine=$M58_ENGINE shard=$SHARD process=$attempt width=$width"
+            else
+              code=$?
+              echo "::error::P102_CPU_REBUNDLE_TRUE_NATIVE_RED engine=$M58_ENGINE shard=$SHARD process=$attempt width=$width exit=$code"
+              failed=$((failed+1))
+            fi
+            echo "::endgroup::"
+          done
+          echo "P102_CPU_REBUNDLE_SHARD_RESULT engine=$M58_ENGINE shard=$SHARD fresh=6 failed=$failed"
+          test "$failed" -eq 0
