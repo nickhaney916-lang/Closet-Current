@@ -1,0 +1,97 @@
+name: MAIN239 captured real ORT WASM grow target terminal memory HOLD
+on:
+  push:
+    branches: [research/main239-grow-target-memory-snapshot-HOLD]
+  pull_request:
+    branches: [research/main238-native-internal-wasm-memory-snapshot-HOLD]
+permissions:
+  contents: read
+jobs:
+  safety:
+    name: M239 pinned real original + native memory targeted synthetic tests + security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact four-path isolated research diff and source-identity gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=66f4152c48dd711ed3ffc0c5fafa87f0435b4745
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' '.github/workflows/main239-grow-target-memory-no-deploy.yml' 'scripts/main239-grow-target-memory-fixture.mjs' 'scripts/test-main239-original-ort-grow-target-browser.mjs' 'tests/main239-native-memory-grow-target.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = ad8ab0eb33322a34f8cc3f45a1fe26feff87b2ab
+          test "$(git rev-parse HEAD:scripts/test-main237-native-p101-wasm-memory-probe.mjs)" = e281589a2f482791875ba2b9b51d0f215bc1af77
+          test "$(git rev-parse HEAD:scripts/test-main238-original-wasm-memory-snapshot-browser.mjs)" = 69f6817634ecc89ea4b1c6b1ebe5a4cff1a3c20b
+          test "$(git rev-parse HEAD:scripts/main239-grow-target-memory-fixture.mjs)" = 3afb59500cdf7e51b2baf828abe6c5590bccd899
+          test "$(git rev-parse HEAD:scripts/test-main239-original-ort-grow-target-browser.mjs)" = fe2f0924c4c7cd48c744b55197adf234ca5b14c8
+          test "$(git rev-parse HEAD:tests/main239-native-memory-grow-target.test.mjs)" = e0412de671b32c620ee5dadd127a7c855367081a
+          node --check scripts/main239-grow-target-memory-fixture.mjs
+          node --check scripts/test-main239-original-ort-grow-target-browser.mjs
+          node --test tests/main239-native-memory-grow-target.test.mjs
+          M239_SOURCE_ONLY=1 node scripts/test-main239-original-ort-grow-target-browser.mjs
+      - name: Original pinned package dependencies (no native CUDA)
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original offline app build and complete inherited privacy/security regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  browser:
+    name: M239 true original P94 owner 2D/v4 and real JS Memory target snapshots (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [webkit, chromium]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P101_CACHE_MODE: baseline
+      P101_SESSION_MODE: baseline
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact original P94 source, no product/worker changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=66f4152c48dd711ed3ffc0c5fafa87f0435b4745
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' '.github/workflows/main239-grow-target-memory-no-deploy.yml' 'scripts/main239-grow-target-memory-fixture.mjs' 'scripts/test-main239-original-ort-grow-target-browser.mjs' 'tests/main239-native-memory-grow-target.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main238-original-wasm-memory-snapshot-browser.mjs)" = 69f6817634ecc89ea4b1c6b1ebe5a4cff1a3c20b
+          test "$(git rev-parse HEAD:scripts/main239-grow-target-memory-fixture.mjs)" = 3afb59500cdf7e51b2baf828abe6c5590bccd899
+          test "$(git rev-parse HEAD:scripts/test-main239-original-ort-grow-target-browser.mjs)" = fe2f0924c4c7cd48c744b55197adf234ca5b14c8
+          node --test tests/main239-native-memory-grow-target.test.mjs
+          M239_SOURCE_ONLY=1 node scripts/test-main239-original-ort-grow-target-browser.mjs
+      - name: Original true SegFormer/native model and owner test dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Two genuine original licensed photo model positive/private 2D/v4 journeys, no retries
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          for width in 320 430; do
+            M214_ATTEMPT="M239-$M58_ENGINE-$width" P94_WIDTH="$width" node scripts/test-main239-original-ort-grow-target-browser.mjs
+          done
