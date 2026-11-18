@@ -80,7 +80,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  originalPhoto2DShown:true,
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
- captures:[],poseSamples:[],photoFrontCenterlineNativeAudits:[],originalFrontLockedFivePoseSourceAudits:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],originalPhysicalCameraEvidenceAudits:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
+ captures:[],poseSamples:[],photoFrontCenterlineNativeAudits:[],originalFrontLockedFivePoseSourceAudits:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],originalPhysicalCameraEvidenceAudits:[],originalPhotoMetricNonIdentifiabilityAudits:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
  selectedResearchPoseChecks:[],selectedDenseOriginalRigTransitionAudits:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedWholeVsCoreRayCauseAudits:[],selectedUpperInwardOriginalSourceWitnesses:[],sourceOriginalCoreUpperLimbVetoAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
@@ -534,6 +534,55 @@ try{
    sourceCameraCalibrated:false,consumer3DAdmitted:false,
    originalPhoto2DFallbackRequired:true
   });
+  const originalAmbiguity=await page.evaluate(()=>
+   window.nativeP89Skirt.auditOriginalPhotoMetricIdentifiability89());
+  assert.equal(originalAmbiguity.schema,
+   'P89-original-licensed-photo-physical-camera-nonidentifiability/v1');
+  assert.equal(originalAmbiguity.status,
+   'TWO_DISTINCT_UNCALIBRATED_WORLDS_SAME_SEVEN_ORIGINAL_ALPHA_ROWS');
+  assert.equal(originalAmbiguity.sourceId,'commons-0043');
+  assert.equal(originalAmbiguity.museumAccession,'5152.1');
+  assert.equal(originalAmbiguity.originalPhotoSHA256,required.skirt);
+  assert.equal(originalAmbiguity.originalCutoutSHA256,required.cutout);
+  assert.equal(originalAmbiguity.original163BoneSHA256,required[avatar]);
+  assert.equal(originalAmbiguity.avatar,avatar);
+  assert.equal(originalAmbiguity.independentlyAttestedOriginalPhotoAlphaBands,7);
+  assert.equal(originalAmbiguity.photographicLeftRightAndRowConstraintsReprojected,21);
+  assert.equal(originalAmbiguity.exactOriginalSourceRowsMatchUnderBothExamples,true);
+  assert.equal(originalAmbiguity.selectedResearchRigidPreviewActive,false);
+  assert.equal(originalAmbiguity.observedOneFrontalAlphaMaskCannotDetermineAbsoluteScale,true);
+  assert.equal(originalAmbiguity.unobservedRearDepthCanVaryWithoutChangingFrontProjection,true);
+  assert.equal(originalAmbiguity.exampleOrthographicProjectionNotProofOfTrueCameraType,true);
+  assert.equal(originalAmbiguity.sameObjectPhysicalWaistAndLengthNotInOriginalSourceMetadata,true);
+  assert.equal(originalAmbiguity.unrelatedChineseSkirtMeasurementsMustNotBeSubstituted,true);
+  assert.equal(originalAmbiguity.realPhysicalGarmentMeasurementAvailable,false);
+  assert.equal(originalAmbiguity.calibratedActualCameraAvailable,false);
+  assert.equal(originalAmbiguity.trueOriginalPhotoAlphaBytesUntouched,true);
+  assert.equal(originalAmbiguity.originalPhoto2DFallbackRequired,true);
+  assert.equal(originalAmbiguity.consumer3DAdmitted,false);
+  assert.equal(originalAmbiguity.releaseAuthorized,false);
+  const worlds=originalAmbiguity.hypotheticalWorldAndCameraExamples;
+  assert.equal(worlds.length,2);
+  assert.notEqual(worlds[0].hypotheticalWaistHalfWidthMeters,
+   worlds[1].hypotheticalWaistHalfWidthMeters);
+  assert.notEqual(worlds[0].hypotheticalTopToHemDropMeters,
+   worlds[1].hypotheticalTopToHemDropMeters);
+  assert.notEqual(worlds[0].hypotheticalInvisibleRearDepthMeters,
+   worlds[1].hypotheticalInvisibleRearDepthMeters);
+  assert.ok(worlds.every(h=>
+   h.maximumOriginalObservedFrontRowReprojectionErrorPixels<1e-8&&
+   h.realCameraOrObjectSizeEstimated===false&&
+   h.sourcePixelsAndMaterialNotAltered===true));
+  results.originalPhotoMetricNonIdentifiabilityAudits.push({
+   avatar,stage:'original-licensed-photo-baseline',pose:'source',
+   sourceFrontPhotoAccession:'5152.1',originalPhotoSHA256:required.skirt,
+   distinctUncalibratedPhotoExplanations:2,originalAlphaRowsMatched:7,
+   maximumOriginalFrontPixelMismatch:
+    Math.max(...worlds.map(w=>w.maximumOriginalObservedFrontRowReprojectionErrorPixels)),
+   status:originalAmbiguity.status,actualCameraCalibrated:false,
+   actualGarmentSizeMeasured:false,originalPhoto2DFallbackRequired:true,
+   consumer3DAdmitted:false
+  });
   const waistAnchors=await page.evaluate(()=>window.nativeP89Skirt.auditWaistBoneAnchors());
   assert.equal(waistAnchors.schema,'P89-public-anatomical-waist-bone-attachment-audit/v1');
   assert.equal(waistAnchors.status,
@@ -749,6 +798,33 @@ try{
     status:selectedMetric.status,
     realTapeScaleMeasured:false,sourceCameraCalibrated:false,
     originalPhoto2DFallbackRequired:true,consumer3DAdmitted:false
+   });
+   const selectedAmbiguity=await page.evaluate(()=>
+    window.nativeP89Skirt.auditOriginalPhotoMetricIdentifiability89());
+   assert.equal(selectedAmbiguity.status,originalAmbiguity.status);
+   assert.equal(selectedAmbiguity.avatar,avatar);
+   assert.equal(selectedAmbiguity.pose,selectedPose);
+   assert.equal(selectedAmbiguity.sourceId,'commons-0043');
+   assert.equal(selectedAmbiguity.originalPhotoSHA256,required.skirt);
+   assert.equal(selectedAmbiguity.selectedResearchRigidPreviewActive,true);
+   assert.equal(selectedAmbiguity.selectedResearchRigidPreviewName,selected.name);
+   assert.equal(selectedAmbiguity.originalSourceMaskAndRigUnchanged,true);
+   assert.equal(selectedAmbiguity.exactOriginalSourceRowsMatchUnderBothExamples,true);
+   assert.equal(selectedAmbiguity.realPhysicalGarmentMeasurementAvailable,false);
+   assert.equal(selectedAmbiguity.calibratedActualCameraAvailable,false);
+   assert.deepEqual(selectedAmbiguity.hypotheticalWorldAndCameraExamples,worlds,
+    'selected research rigid offset forged an independent physical camera solution');
+   assert.equal(selectedAmbiguity.originalPhoto2DFallbackRequired,true);
+   assert.equal(selectedAmbiguity.consumer3DAdmitted,false);
+   assert.equal(selectedAmbiguity.releaseAuthorized,false);
+   results.originalPhotoMetricNonIdentifiabilityAudits.push({
+    avatar,stage:'selected-rigid-original-photo-preview',pose:selectedPose,
+    originalPhotoSHA256:required.skirt,
+    sourceFrontPhotoAccession:'5152.1',
+    distinctUncalibratedPhotoExplanations:2,originalAlphaRowsMatched:7,
+    status:selectedAmbiguity.status,actualCameraCalibrated:false,
+    actualGarmentSizeMeasured:false,originalPhoto2DFallbackRequired:true,
+    consumer3DAdmitted:false
    });
    const live=await page.evaluate(p=>
     window.nativeP89Skirt.setPose(p),selectedPose);
@@ -1956,6 +2032,16 @@ try{
   x=>x.status==='ORIGINAL_PHOTOGRAPH_CENTER_FRONT_COVERAGE_IMPROVED_RESEARCH_ONLY'
  ).length,results.selectedResearchFrontCoverage.length,
   'selected source registration fails authentic photographed front visible coverage: 3D remains BLOCKED');
+ assert.equal(results.originalPhotoMetricNonIdentifiabilityAudits.length,12,
+  'original JPEG photo camera ambiguity must be established on both original avatars and all five selected poses');
+ assert.ok(results.originalPhotoMetricNonIdentifiabilityAudits.every(v=>
+  v.status==='TWO_DISTINCT_UNCALIBRATED_WORLDS_SAME_SEVEN_ORIGINAL_ALPHA_ROWS'&&
+  v.originalAlphaRowsMatched===7&&
+  v.originalPhoto2DFallbackRequired===true&&v.consumer3DAdmitted===false));
+ assert.equal(results.originalPhotoMetricNonIdentifiabilityAudits.filter(v=>
+  v.stage==='original-licensed-photo-baseline').length,2);
+ assert.equal(results.originalPhotoMetricNonIdentifiabilityAudits.filter(v=>
+  v.stage==='selected-rigid-original-photo-preview').length,10);
  assert.equal(results.originalPhysicalCameraEvidenceAudits.length,12,
   'two original licensed avatar baselines plus ten selected original source poses must fail closed');
  assert.equal(results.originalPhysicalCameraEvidenceAudits.filter(x=>
@@ -2026,6 +2112,13 @@ try{
    provisionalContactReduction:results.neutralRearTrials.map(x=>x.bestProvisional?.originalSourcePoseCrossingSum-x.bestProvisional?.trialSourcePoseCrossingSum||0),
    measuredBodyFitTrialStatus:results.measuredBodyFitTrials.map(x=>x.status),
    photoSkirtRegistrationStatus:results.registrationTrials.map(x=>x.status),
+   originalFrontCameraNonidentifiability:results.originalPhotoMetricNonIdentifiabilityAudits.map(x=>({
+    avatar:x.avatar,pose:x.pose,stage:x.stage,status:x.status,
+    genuineOriginalPhotoAlphaRowsMatched:x.originalAlphaRowsMatched,
+    distinctUncalibratedMetricCameraExamples:x.distinctUncalibratedPhotoExplanations,
+    originalFrontPhotoAccession:x.sourceFrontPhotoAccession,
+    sourceSizeAndCameraCalibrated:false
+   })),
    originalPhysicalCameraEvidence:results.originalPhysicalCameraEvidenceAudits.map(x=>({
     avatar:x.avatar,pose:x.pose??'source',stage:x.stage,
     status:x.status,sourceCameraCalibrated:false,
