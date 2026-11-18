@@ -81,7 +81,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
- selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalSkirtPhysicalScaleSurveys:[],originalSkirtWrapClosureRefusalTests:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
+ selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalSkirtPhysicalScaleSurveys:[],originalSkirtWrapClosureRefusalTests:[],originalSkirtOpenPanelTopologyAudits:[],originalSkirtOpenPanelNativePreviews:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -181,6 +181,70 @@ try{
     avatar,pose:sourcePose,status:refuted.status,
     consumer3DAdmitted:false,virtualWaistDoesNotEqualRealCloth:true
    });
+  }
+  // Exact original public photograph + original 163bone source skinned geometry:
+  // 10 genuine source-pose topological audits per native browser. They derive
+  // two OPEN provisional aprons without sewing, claiming historical closures,
+  // or using unknown backside photos. No consumer/owner 3D admission.
+  for(const sourcePose of ['source','blend-25','blend-50','blend-75','relaxed']){
+   await page.evaluate(name=>window.nativeP89Skirt.setPose(name),sourcePose);
+   const panel=await page.evaluate(()=>
+    window.nativeP89Skirt.auditDetachedSourcePanelHypothesis89().metrics);
+   assert.equal(panel.schema,'P89-commons-0043-open-panel-163bone-provisional/v1');
+   assert.equal(panel.status,'TWO_DISCONNECTED_PROVISIONAL_PANELS_NO_SOURCE_CLOSURE_PROOF');
+   assert.equal(panel.avatar,avatar);assert.equal(panel.pose,sourcePose);
+   assert.equal(panel.originalPhotoSHA256,required.skirt);
+   assert.equal(panel.actual163BoneSourceRig,true);
+   assert.equal(panel.sourceOriginalShellVertices,343);
+   assert.equal(panel.sourceOriginalShellTriangles,576);
+   assert.deepEqual(panel.separatePanelVertexCounts,[189,182]);
+   assert.deepEqual(panel.separatePanelTriangleCounts,[312,300]);
+   assert.equal(panel.resultingResearchTriangleCount,612);
+   assert.equal(panel.detachedOpenVerticalPanelEdges,4);
+   assert.equal(panel.arbitraryDuplicatedAngularSectors,3);
+   assert.equal(panel.overlapWidthMeasuredOnRealGarment,false);
+   assert.equal(panel.originalHistoricalPanelCountVerified,false);
+   assert.equal(panel.exactSpecimenPleatsAndFastenersVerified,false);
+   assert.equal(panel.sourceBacksideObserved,false);
+   assert.equal(panel.originalPhoto2DFallbackRequired,true);
+   assert.equal(panel.consumer3DAdmitted,false);
+   assert.equal(panel.releaseAuthorized,false);
+   results.originalSkirtOpenPanelTopologyAudits.push(panel);
+  }
+  await page.evaluate(()=>window.nativeP89Skirt.setPose('source'));
+  for(const panelIndex of [0,1]){
+   await page.evaluate(i=>window.nativeP89Skirt.setView(i===0?0:180),panelIndex);
+   const preview=await page.evaluate(i=>
+    window.nativeP89Skirt.showProvisionalOpenPanel89(i),panelIndex);
+   assert.equal(preview.status,'ONE_DETACHED_PROVISIONAL_OPEN_PANEL_RENDERED_NOT_REAL_GARMENT');
+   assert.equal(preview.sourcePanelNumber,panelIndex);
+   assert.equal(preview.sourcePanelTriangleCount,panelIndex===0?312:300);
+   assert.equal(preview.originalSourceRigRetained,true);
+   assert.equal(preview.exactSpecimenPleatsAndFastenersVerified,false);
+   assert.equal(preview.consumer3DAdmitted,false);
+   const image=await page.locator('#avatar').screenshot({animations:'disabled'});
+   const meta=await sharp(image).metadata();
+   assert.equal(meta.width,390);assert.equal(meta.height,690);
+   assert.ok(image.byteLength>10000,'real original skinned detached panel WebGL preview absent');
+   const filename=['research-only-unobserved-panel',engine,avatar,panelIndex].join('-')+'.png';
+   await writeFile(join(out,filename),image);
+   results.originalSkirtOpenPanelNativePreviews.push({
+    avatar,panelIndex,sourcePose:'source',
+    sourceGlbReal:true,independentActualGarmentPanelMeasured:false,
+    originalUnknownBackMaterialNotPhotographed:true,
+    sha256:hash(image),width:meta.width,height:meta.height,
+    consumer3DAdmitted:false,filename
+   });
+   const restored=await page.evaluate(()=>
+    window.nativeP89Skirt.showProvisionalOpenPanel89(null));
+   assert.equal(restored.status,'ORIGINAL_SOURCE_PHOTO_SKIRT_RESTORED');
+   const back=await page.evaluate(()=>window.nativeP89Skirt.getState());
+   assert.equal(back.researchOnlyUnobservedPanelPreviewActive,false);
+   assert.equal(back.originalSourceSHA256,required.skirt);
+   assert.equal(back.originalCutoutSHA256,required.cutout);
+   assert.equal(back.skirtTriangleCount,576);
+   assert.equal(back.meshSourceFrontTextureVerified,true);
+   assert.equal(back.releaseAuthorized,false);
   }
   for(const pose of ['source','blend-50','relaxed']){
    const witness=await page.evaluate(name=>window.nativeP89Skirt.setPose(name),pose);
