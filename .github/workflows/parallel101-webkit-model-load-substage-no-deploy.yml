@@ -75,14 +75,18 @@ jobs:
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
           node scripts/build.mjs
-      - name: Three independent real browser processes with original mandatory positives
+      - name: Fresh actual browser processes with 12 WebKit 430 stress repeats and strict model positives
         shell: bash
         run: |
           set -uo pipefail
           failures=0
-          for width in 320 390 430; do
+          widths=(320 390 430)
+          if [ "$M58_ENGINE" = webkit ]; then widths+=(430 430); fi
+          attempt=0
+          for width in "${widths[@]}"; do
+            attempt=$((attempt+1))
             echo "::group::P101 real $M58_ENGINE shard=$P101_SHARD width=$width"
-            if P94_WIDTH="$width" P101_ATTEMPT="$M58_ENGINE-$P101_SHARD-$width" node scripts/test-parallel101-model-load-substage-browser.mjs; then
+            if P94_WIDTH="$width" P101_ATTEMPT="$M58_ENGINE-$P101_SHARD-$width-$attempt" node scripts/test-parallel101-model-load-substage-browser.mjs; then
               echo "P101_NATIVE_PASS $M58_ENGINE shard=$P101_SHARD width=$width"
             else
               code=$?
@@ -91,7 +95,7 @@ jobs:
             fi
             echo "::endgroup::"
           done
-          echo "P101_NATIVE_SHARD_RESULT engine=$M58_ENGINE shard=$P101_SHARD attempts=3 failures=$failures"
+          echo "P101_NATIVE_SHARD_RESULT engine=$M58_ENGINE shard=$P101_SHARD attempts=$attempt failures=$failures"
           test "$failures" -eq 0
       - name: Independently unmodified original Worker control at 430px
         if: ${{ matrix.shard == 1 }}
