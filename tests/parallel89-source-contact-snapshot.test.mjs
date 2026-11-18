@@ -60,3 +60,13 @@ test('empty authentic contact is preserved without inferring a 3D fit pass', () 
   assert.equal(Object.isFrozen(sample),true);
   assert.equal('consumer3DAdmitted' in sample,false);
 });
+
+test('rejects out-of-range original skirt and body face IDs across every pose', () => {
+  const bounds={bodyFaceCount:1100};
+  assert.equal(snapshot(contact(new Set(['575|1099'])),bounds).count,1);
+  assert.equal(snapshot(contact(new Set(['576|45'])),bounds),null);
+  assert.equal(snapshot(contact(new Set(['0|1100'])),bounds),null);
+  assert.equal(snapshot(contact(new Set(['0|9007199254740993'])),bounds),null);
+  assert.equal(snapshot(contact(new Set(['0|45'])),{bodyFaceCount:999}),null);
+  assert.equal(snapshot(contact(new Set(['0|45'])),{bodyFaceCount:NaN}),null);
+});
