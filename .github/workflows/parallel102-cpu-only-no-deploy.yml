@@ -3,12 +3,10 @@ on:
   push:
     branches: [fix/parallel102-webkit-ort-runtime-compat-HOLD]
     paths:
-      - scripts/test-parallel102-ort-runtime-compat-browser.mjs
       - .github/workflows/parallel102-cpu-only-no-deploy.yml
   pull_request:
     branches: [fix/parallel101-webkit-p94-model-initialization-HOLD]
     paths:
-      - scripts/test-parallel102-ort-runtime-compat-browser.mjs
       - .github/workflows/parallel102-cpu-only-no-deploy.yml
 permissions:
   contents: read
