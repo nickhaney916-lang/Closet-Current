@@ -1,0 +1,120 @@
+name: MAIN226 P94 privacy-safe WebKit worker terminal cause evidence NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main226-p94-private-terminal-cause-codes-HOLD]
+  pull_request:
+    branches: [research/main224-m223-source-crop-and-v3-retired-outfit-joined-HOLD]
+permissions:
+  contents: read
+jobs:
+  source-and-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce only original worker diagnosis and private classifier/test changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
+            case "$path" in
+              public/outfit-worker-p94.mjs|public/p94-worker-terminal-codes.mjs|tests/main226-p94-terminal-diagnostic.test.mjs|scripts/test-main226-genuine-p94-terminal-codes-browser.mjs|scripts/test-main226-p94-crop-positive-compat-browser.mjs|.github/workflows/main226-p94-private-terminal-cause-webkit-no-deploy.yml) ;;
+              *) echo "M226 unauthorized owner, model, source, private or other mission edit $path"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse "$BASE":public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = f3b1b5046f4abc55755c8b5d1e8b39d4aea46b2a
+          test "$(git rev-parse HEAD:public/p94-worker-terminal-codes.mjs)" = 0cafa407408e78b7e8ac191e5542526387e1aa51
+          test "$(git rev-parse HEAD:tests/main226-p94-terminal-diagnostic.test.mjs)" = 6f5c1120780623bffda21461819f345787654920
+          test "$(git rev-parse HEAD:scripts/test-main226-genuine-p94-terminal-codes-browser.mjs)" = 809ea82961f5d37c6dc4ac60959ef21334f59a80
+          test "$(git rev-parse HEAD:scripts/test-main226-p94-crop-positive-compat-browser.mjs)" =  1dd26c89edf64744bd51443992ad402c677a164c
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
+          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = af15a9c08a81aa4064d1e5d1c4f0af0d855582c9
+          test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 8cc2977f1932b3012c44bdd401081cc542b94c57
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:public/outfit-segmentation.mjs)" = d357955dd8fdab7c0cb727ea597c270edd9309ac
+          node --check public/outfit-worker-p94.mjs
+          node --check public/p94-worker-terminal-codes.mjs
+          node --check tests/main226-p94-terminal-diagnostic.test.mjs
+          node --check scripts/test-main226-genuine-p94-terminal-codes-browser.mjs
+          node --check scripts/test-main226-p94-crop-positive-compat-browser.mjs
+      - name: Install pinned local dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Explicit diagnostic privacy, typed failure and no-person vs no-garment semantics
+        run: node --test tests/main226-p94-terminal-diagnostic.test.mjs
+      - name: Full inherited private owner, v3 source, WebKit crop, backup and recognition node suite
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  genuine-model-browser:
+    name: Genuine SegFormer and real Worker safe classification (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 105
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      M221_ENGINE: ${{ matrix.engine }}
+      P99_ENGINE: ${{ matrix.engine }}
+      M226_HELPER_BLOB: 0cafa407408e78b7e8ac191e5542526387e1aa51
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve source SHA and scope of original model and authenticated owner
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
+            case "$path" in
+              public/outfit-worker-p94.mjs|public/p94-worker-terminal-codes.mjs|tests/main226-p94-terminal-diagnostic.test.mjs|scripts/test-main226-genuine-p94-terminal-codes-browser.mjs|scripts/test-main226-p94-crop-positive-compat-browser.mjs|.github/workflows/main226-p94-private-terminal-cause-webkit-no-deploy.yml) ;;
+              *) echo "M226 unexpected source modification $path"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = f3b1b5046f4abc55755c8b5d1e8b39d4aea46b2a
+          test "$(git rev-parse HEAD:public/p94-worker-terminal-codes.mjs)" = 0cafa407408e78b7e8ac191e5542526387e1aa51
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
+      - name: Install pinned actual native model and privacy browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Offline PWA build without deploying
+        run: node scripts/build.mjs
+      - name: Original owner signed-session native v3 terminal lease unaffected
+        run: node scripts/test-main221-native-atomic-restore-terminal-lease-browser.mjs
+      - name: Original normal-owner source photo to private 2D/v3
+        run: P99_WIDTH=390 node scripts/test-parallel99-normal-app-browser.mjs
+      - name: Genuine installed positive P94 model, terminal classification and malformed-input privacy, no retries
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 390 430; do
+            P94_WIDTH="$width" node scripts/test-main226-genuine-p94-terminal-codes-browser.mjs
+          done
+      - name: Preserve real positive P94 model after a deliberately failed single crop, no retries
+        run: P94_WIDTH=430 node scripts/test-main226-p94-crop-positive-compat-browser.mjs
+      - name: Preserve truthful zero-card owner photo 2D/v4 recovery on simulated negative only
+        run: M220_CASE=done-zero P94_WIDTH=430 node scripts/test-main220-p94-honest-zero-native-owner-recovery.mjs
