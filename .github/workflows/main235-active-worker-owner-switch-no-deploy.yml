@@ -32,7 +32,7 @@ jobs:
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
           test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
           test "$(git rev-parse HEAD:scripts/test-main231-stalled-p94-native-owner-manual-browser.mjs)" = e853f1bc693e0359fd079a0017f5279911ecfc9d
-          test "$(git rev-parse HEAD:scripts/test-main235-original-model-active-owner-switch-browser.mjs)" = f64b87f4e879fef2afbae5d3c8fac83b606b6151
+          test "$(git rev-parse HEAD:scripts/test-main235-original-model-active-owner-switch-browser.mjs)" = de1e8cfbbe40728fd20a0fceeec657d40442499a
           node --check scripts/test-main235-original-model-active-owner-switch-browser.mjs
       - name: Pinned full app dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
@@ -72,7 +72,7 @@ jobs:
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
           test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
-          test "$(git rev-parse HEAD:scripts/test-main235-original-model-active-owner-switch-browser.mjs)" = f64b87f4e879fef2afbae5d3c8fac83b606b6151
+          test "$(git rev-parse HEAD:scripts/test-main235-original-model-active-owner-switch-browser.mjs)" = de1e8cfbbe40728fd20a0fceeec657d40442499a
       - name: Original native Playwright and local app dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Native owner A logout DURING original P94 ONNX load, distinct B JPEG and A/B return (320/430)
