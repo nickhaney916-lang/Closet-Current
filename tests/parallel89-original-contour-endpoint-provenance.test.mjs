@@ -94,7 +94,21 @@ function checked(f){
    loop.hypotheticalDegenerateAreaCycles+
    loop.hypotheticalUntraversableCycles,
    loop.hypotheticalTopologicalCyclesAfterVirtualLinks);
-  assert.equal(loop.only2DCounterfactualPlanarityNotSignedBody,true);
+  assert.equal(loop.only2DCounterfactualPlanarityNotSignedBody,true); 
+  const arr=loop.originalSource2DContourArrangement;
+  assert.equal(arr.schema,'P89-genuine-source-virtual-seam-2d-arrangement/v1');
+  assert.equal(arr.simpleVirtualIndexLoopCount,loop.hypotheticalSimplePlanarCycles);
+  assert.equal(arr.loopPairCount,arr.intersectingOrTouchingLoopPairs+
+   arr.containedNestedLoopPairs+arr.disjointLoopPairs);
+  assert.equal(arr.sourceRingCenterInsideCandidateLoops+
+   arr.sourceRingCenterOutsideCandidateLoops+
+   arr.sourceRingCenterOnCandidateBoundary,arr.simpleVirtualIndexLoopCount);
+  assert.equal(arr.originalSourceIndexedBodyExteriorProven,false);
+  assert.equal(arr.sourceSkirtCenterNotAnatomicalInteriorProof,true);
+  assert.equal(arr.originalUnobservedSkirtSpokeDirectionsUnresolved,true);
+  assert.equal(arr.sealedSigned3DBodyProven,false);
+  assert.equal(arr.consumer3DAdmitted,false);
+  assert.equal(arr.originalPhoto2DFallbackRequired,true);
   assert.equal(Object.values(x.disjointIndexedEndpointProvenance)
    .reduce((s,n)=>s+n,0),x.indexedGraphOpenEndpoints);
  }

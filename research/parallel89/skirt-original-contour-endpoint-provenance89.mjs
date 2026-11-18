@@ -7,6 +7,7 @@
  * All original source models, photo, skin, faces remain read-only.
  */
 import {auditVirtualContourPlanarity89} from './skirt-virtual-loop-planarity89.mjs';
+import {auditVirtualContourArrangement89} from './skirt-virtual-contour-arrangement89.mjs';
 const PHOTO='c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344';
 const RIG=Object.freeze({
  female:'a571a5872a5f9d75c013ce6d88b3484436cf2109bf133fbc31e42c41f52389f1',
@@ -108,7 +109,7 @@ function traceVirtualContourCycle(nodes,links,seed,size){
 /** Independent, non-mutating graph COUNTERFACTUAL only.
  * A same-rest/skin UV seam candidate does not join source GLB vertices,
  * imply continuous physical material, signed containment, or fitted cloth. */
-function virtualSeamLoopHypothesis(nodes,open,buckets,excluded){
+function virtualSeamLoopHypothesis(nodes,open,buckets,excluded,sourceSkirtCenter){
  const links=new Map();
  for(const n of open){
   if(excluded.has(n.key))continue;
@@ -150,6 +151,7 @@ function virtualSeamLoopHypothesis(nodes,open,buckets,excluded){
  let graphComponents=0,hypotheticalClosedCycles=0,
   oppositeTangentHypotheticalCycles=0,branchedOrOpenComponents=0,
   planarSimple=0,planarSelfCrossing=0,planarDegenerate=0,planarUntraversable=0;
+ const simplePaths=[];
  for(const seed of nodes.keys()){
   if(seen.has(seed))continue;
   graphComponents++;const queue=[seed];seen.add(seed);
@@ -177,12 +179,17 @@ function virtualSeamLoopHypothesis(nodes,open,buckets,excluded){
    if(!traced)planarUntraversable++;
    else{
     const plane=auditVirtualContourPlanarity89(traced);
-    if(plane.classification==='SIMPLE_NONZERO_AREA')planarSimple++;
+    if(plane.classification==='SIMPLE_NONZERO_AREA'){
+     planarSimple++;simplePaths.push(traced);
+    }
     else if(plane.classification==='SELF_CROSSING_OR_TOUCHING')planarSelfCrossing++;
     else planarDegenerate++;
    }
   }else branchedOrOpenComponents++;
  }
+ const arrangement=auditVirtualContourArrangement89(simplePaths,sourceSkirtCenter);
+ if(arrangement.simpleVirtualIndexLoopCount!==planarSimple)
+  throw Error('source-virtual-planar-loop-arrangement-not-reconciled');
  if(pairs.length*2>open.length||
   opposingTangentCandidates+nonOpposingTangentCandidates+
    indeterminateTangentCandidates!==pairs.length||
@@ -207,6 +214,7 @@ function virtualSeamLoopHypothesis(nodes,open,buckets,excluded){
   hypotheticalDegenerateAreaCycles:planarDegenerate,
   hypotheticalUntraversableCycles:planarUntraversable,
   only2DCounterfactualPlanarityNotSignedBody:true,
+  originalSource2DContourArrangement:arrangement,
   otherOpenOrBranchedCounterfactualComponents:branchedOrOpenComponents,
   virtualGraphOnlyNoOriginalIndexWeld:true,
   originalBodyWatertightAndGarmentFitUnproved:true
@@ -287,7 +295,12 @@ export function summarizeSourceContourEndpointProvenance89({
  let openTotal=0,supportTotal=0,poseCoincidentTotal=0,noneTotal=0,
   counterfactualCycles=0,mutualSeamPairs=0;
  for(let row=0;row<7;row++){
-  let y=0;for(let j=0;j<48;j++)y+=skirtPositions[3*(row*49+j)+1];y/=48;
+  let y=0,cx=0,cz=0;
+  for(let j=0;j<48;j++){
+   const k=3*(row*49+j);
+   y+=skirtPositions[k+1];cx+=skirtPositions[k];cz+=skirtPositions[k+2];
+  }
+  y/=48;const sourceSkirtCenter=[cx/48,cz/48];
   const nodes=new Map(),excluded=new Map(),meshHist=Object.create(null);
   let selectedSegments=0,excludedSegments=0;
   for(const f of faces){
@@ -321,7 +334,7 @@ export function summarizeSourceContourEndpointProvenance89({
    if(!buckets.has(key))buckets.set(key,[]);
    buckets.get(key).push(n);
   }
-  const virtual=virtualSeamLoopHypothesis(nodes,open,buckets,excluded);
+  const virtual=virtualSeamLoopHypothesis(nodes,open,buckets,excluded,sourceSkirtCenter);
   counterfactualCycles+=virtual.hypotheticalTopologicalCyclesAfterVirtualLinks;
   mutualSeamPairs+=virtual.possibleMutuallyUniqueRestSkinSeamPairs;
   const counts=empty();
@@ -441,6 +454,12 @@ export function auditSourceContourEndpointProvenance89(args={}){
    'original-indexed-edge-neighbor-not-found',
    'source-virtual-graph-unknown-original-node',
    'counterfactual-original-index-virtual-loop-accounting-invalid',
+    'source-virtual-planar-loop-arrangement-not-reconciled',
+    'bounded-original-source-skirt-center-and-counterfactual-loops-required',
+    'counterfactual-source-loop-size-unbounded',
+    'source-hypothetical-loop-not-planar-simple',
+    'counterfactual-source-loop-impossible-mutual-containment',
+    'counterfactual-source-loop-arrangement-nonconservative',
    'original-source-ring-endpoint-provenance-nonconservative'
   ]);
   return fail(whitelist.has(e.message)?e.message:'source-original-index-skin-rest-provenance-failed-closed');
