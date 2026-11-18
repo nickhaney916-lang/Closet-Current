@@ -1,0 +1,116 @@
+name: MAIN211 owner-retired original new-ID crop fence NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main211-m208-retired-shared-original-import-guard-HOLD]
+  pull_request:
+    branches: [research/main208-m205r-m183-m187-joint-owner-lease-HOLD]
+permissions:
+  contents: read
+jobs:
+  source-guard-negative-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify strict signed-owner source and only these research changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=be8b5ea53f1e30bb1e9b5937588c0934405def78
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              public/native-reviewed-shared-original-157.mjs|tests/main211-retired-shared-original-import.test.mjs|.github/workflows/main211-retired-shared-original-source-no-deploy.yml) ;;
+              *) echo "M211 unexpected product/test path: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse be8b5ea53f1e30bb1e9b5937588c0934405def78:public/native-reviewed-shared-original-157.mjs)" = bae0d09e5f990f8c88a6c7d2d3b9d28a84604f6a
+          test "$(git rev-parse HEAD:public/native-reviewed-shared-original-157.mjs)" = 2108bdc2f0a67b8e356ea8c47d0042512ca618bf
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 62bad171a97030846b0f1bb3bab740dec20ac5e7
+          node --check tests/main211-retired-shared-original-import.test.mjs
+      - name: Install isolated synthetic private IndexedDB test dependency
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4
+      - name: M211 original retired sibling must not be used as import authority
+        run: node --test tests/main211-retired-shared-original-import.test.mjs
+      - name: Install pinned native and all signed-owner inheritance dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Verify original M204 deleted/source-revoked same-ID backup guard
+        run: node --test tests/main204-restore-source-revocation.test.mjs
+      - name: Full inherited Node source/owner/import/backup regression and genuine app build
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  real-native-signed-owner-two-cutouts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P99_ENGINE: ${{ matrix.engine }}
+      M51_ENGINE: ${{ matrix.engine }}
+      M58_ENGINE: ${{ matrix.engine }}
+      M123_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: '390'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source-preserving immutable M208 donor and four-line helper ONLY
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=be8b5ea53f1e30bb1e9b5937588c0934405def78
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              public/native-reviewed-shared-original-157.mjs|tests/main211-retired-shared-original-import.test.mjs|.github/workflows/main211-retired-shared-original-source-no-deploy.yml) ;;
+              *) echo "M211 forbidden source change $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/native-reviewed-shared-original-157.mjs)" = 2108bdc2f0a67b8e356ea8c47d0042512ca618bf
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 62bad171a97030846b0f1bb3bab740dec20ac5e7
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
+      - name: Install pinned model, local-source and signed-owner app dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build original native app without deployment
+        run: node scripts/build.mjs
+      - name: Original user photo wardrobe to 2D and v3 restored outfit 320 390 430
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+          done
+      - name: Original M51 actual owner-photo session revocation reentry
+        run: node scripts/test-main51-real-app-owner-original-2d.mjs
+      - name: Original M157 real two independently verified owner cutouts same photo to 2D v3 restore
+        run: node scripts/test-main157-same-photo-native-outfit-browser.mjs
+      - name: Actual P88 WASM original public licensed 4000 by 6000 photo 24MP browser path
+        env:
+          P96_NATIVE_4K: 'true'
+        run: node scripts/test-parallel96-native-highres-browser.mjs
+      - name: Actual 24MP owner-private entire items and state no-write reentry
+        env:
+          P96_NATIVE_4K: 'true'
+        run: node scripts/test-main172-24mp-private-state-invariance.mjs
