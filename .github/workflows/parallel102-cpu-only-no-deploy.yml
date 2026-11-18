@@ -1,0 +1,114 @@
+name: P102 matched-build CPU-only ORT WebKit native A/B NO DEPLOY HOLD
+on:
+  push:
+    branches: [fix/parallel102-webkit-ort-runtime-compat-HOLD]
+    paths:
+      - .github/workflows/parallel102-cpu-only-no-deploy.yml
+permissions:
+  contents: read
+jobs:
+  provenance-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify immutable P101 original and only P102 research files
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=b6f8942d8c44cbfd1f66ceef01ad856308d03d18
+          git merge-base --is-ancestor "$BASE" HEAD
+          changed="$(git diff --name-only "$BASE" HEAD)"
+          test "$changed" = "$(printf '%s\n' '.github/workflows/parallel102-cpu-only-no-deploy.yml' '.github/workflows/parallel102-webkit-ort-compat-no-deploy.yml' 'scripts/test-parallel102-ort-runtime-compat-browser.mjs')"
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = 142d496e0fa54452a16dbb68120622ca6885ed90
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
+          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = af15a9c08a81aa4064d1e5d1c4f0af0d855582c9
+          node --check scripts/test-parallel102-ort-runtime-compat-browser.mjs
+      - name: Install pinned browser/owner/security and exact ONNX same-build runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4
+      - name: Verify same-build non-JSEP CPU package manifest and SHA-256 file identities
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const root='node_modules/onnxruntime-web/';
+          const p=JSON.parse(fs.readFileSync(root+'package.json','utf8'));
+          assert.equal(p.version,'1.22.0-dev.20250409-89f8206ba4');
+          const expected=['ort.wasm.min.mjs','ort-wasm-simd-threaded.mjs','ort-wasm-simd-threaded.wasm'];
+          const hashes=Object.fromEntries(expected.map(name=>{
+            const bytes=fs.readFileSync(root+'dist/'+name);
+            assert.ok(bytes.length>1000,name+' unexpectedly empty');
+            return [name,{sha256:createHash('sha256').update(bytes).digest('hex'),bytes:bytes.length}];
+          }));
+          assert.notEqual(hashes['ort-wasm-simd-threaded.wasm'].sha256,
+            createHash('sha256').update(Buffer.alloc(0)).digest('hex'));
+          console.log('P102_CPU_MATCHED_PACKAGE',JSON.stringify({name:p.name,version:p.version,files:hashes,publicPackageOnly:true}));
+          NODE
+      - name: Full original offline build and inherited privacy/owner/security Node
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {engine: webkit, shard: 1}
+          - {engine: webkit, shard: 2}
+          - {engine: webkit, shard: 3}
+          - {engine: webkit, shard: 4}
+          - {engine: chromium, shard: 1}
+          - {engine: chromium, shard: 2}
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      SHARD: ${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install original real browser/owner and pinned ORT CPU package
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4
+      - name: Six fresh real model/owner/2D/v4 journeys with original JSEP and same-build CPU-only
+        shell: bash
+        run: |
+          set -uo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          failed=0
+          for attempt in 1 2 3 4 5 6; do
+            if [ "$attempt" -le 3 ]; then mode=baseline; else mode=cpu-only; fi
+            case "$attempt" in 1|4) width=320;; 2|5) width=390;; *) width=430;; esac
+            echo "::group::P102_ENGINE=$M58_ENGINE shard=$SHARD attempt=$attempt mode=$mode width=$width"
+            if P102_MODE="$mode" P94_WIDTH="$width" M214_ATTEMPT="P102-${M58_ENGINE}-${SHARD}-${attempt}-${mode}" node scripts/test-parallel102-ort-runtime-compat-browser.mjs; then
+              echo "P102_MATCHED_CPU_PASS engine=$M58_ENGINE shard=$SHARD attempt=$attempt mode=$mode width=$width"
+            else
+              code=$?
+              echo "::error::P102_MATCHED_CPU_RED engine=$M58_ENGINE shard=$SHARD attempt=$attempt mode=$mode width=$width exit=$code"
+              failed=$((failed+1))
+            fi
+            echo "::endgroup::"
+          done
+          echo "P102_MATCHED_CPU_SHARD_TOTAL engine=$M58_ENGINE shard=$SHARD attempts=6 failed=$failed"
+          test "$failed" -eq 0

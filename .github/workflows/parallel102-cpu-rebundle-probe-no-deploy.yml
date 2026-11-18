@@ -1,0 +1,118 @@
+name: P102 CPU-only Transformers rebundle 430px genuine smoke NO DEPLOY HOLD
+on:
+  push:
+    branches: [fix/parallel102-webkit-ort-runtime-compat-HOLD]
+    paths:
+      - scripts/build-parallel102-cpu-only-transformers.mjs
+      - scripts/test-parallel102-ort-runtime-compat-browser.mjs
+      - .github/workflows/parallel102-cpu-rebundle-probe-no-deploy.yml
+  pull_request:
+    branches: [fix/parallel101-webkit-p94-model-initialization-HOLD]
+    paths:
+      - scripts/build-parallel102-cpu-only-transformers.mjs
+      - scripts/test-parallel102-ort-runtime-compat-browser.mjs
+      - .github/workflows/parallel102-cpu-rebundle-probe-no-deploy.yml
+permissions:
+  contents: read
+jobs:
+  source-and-package-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Isolated source and immutable app guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor b6f8942d8c44cbfd1f66ceef01ad856308d03d18 HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = 142d496e0fa54452a16dbb68120622ca6885ed90
+          node --check scripts/build-parallel102-cpu-only-transformers.mjs
+          node --check scripts/test-parallel102-ort-runtime-compat-browser.mjs
+      - name: Install same-version model JS and WASM-only runtime for research
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 esbuild@0.25.12 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Source scope remains five research paths; installed app/owner unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=b6f8942d8c44cbfd1f66ceef01ad856308d03d18
+          actual="$(git diff --name-only "$BASE" HEAD)"
+          expected="$(printf '%s\n' '.github/workflows/parallel102-cpu-only-no-deploy.yml' '.github/workflows/parallel102-cpu-rebundle-probe-no-deploy.yml' '.github/workflows/parallel102-webkit-ort-compat-no-deploy.yml' 'scripts/build-parallel102-cpu-only-transformers.mjs' 'scripts/test-parallel102-ort-runtime-compat-browser.mjs')"
+          test "$actual" = "$expected"
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
+          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = af15a9c08a81aa4064d1e5d1c4f0af0d855582c9
+      - name: Pin exact NPM versions and verify CPU-only dependency provenance
+        run: node scripts/build-parallel102-cpu-only-transformers.mjs
+      - name: Offline build and full inherited original owner/privacy/security tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  native-stress:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {engine: webkit, shard: 1}
+          - {engine: webkit, shard: 2}
+          - {engine: webkit, shard: 3}
+          - {engine: webkit, shard: 4}
+          - {engine: chromium, shard: 1}
+          - {engine: chromium, shard: 2}
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      SHARD: ${{ matrix.shard }}
+      P102_MODE: cpu-rebundle
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned genuine browser model, owner and CPU runtime
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 esbuild@0.25.12 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build alternate browser runtime with matching WASM-only JS dependency
+        run: node scripts/build-parallel102-cpu-only-transformers.mjs
+      - name: Six genuinely fresh original SegFormer and signed-local owner 2D/v4 positive sessions; no retries
+        shell: bash
+        run: |
+          set -uo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          failed=0
+          for attempt in 1 2 3 4 5 6; do
+            case "$attempt" in
+              1|4) width=320;;
+              2|5) width=390;;
+              3|6) width=430;;
+            esac
+            echo "::group::P102_CPU_REBUNDLE engine=$M58_ENGINE shard=$SHARD process=$attempt width=$width"
+            if P94_WIDTH="$width" M214_ATTEMPT="P102-CPU-${M58_ENGINE}-${SHARD}-${attempt}-${width}" node scripts/test-parallel102-ort-runtime-compat-browser.mjs; then
+              echo "P102_CPU_REBUNDLE_TRUE_NATIVE_PASS engine=$M58_ENGINE shard=$SHARD process=$attempt width=$width"
+            else
+              code=$?
+              echo "::error::P102_CPU_REBUNDLE_TRUE_NATIVE_RED engine=$M58_ENGINE shard=$SHARD process=$attempt width=$width exit=$code"
+              failed=$((failed+1))
+            fi
+            echo "::endgroup::"
+          done
+          echo "P102_CPU_REBUNDLE_SHARD_RESULT engine=$M58_ENGINE shard=$SHARD fresh=6 failed=$failed"
+          test "$failed" -eq 0
