@@ -1,0 +1,94 @@
+name: MAIN222 actual P94 model single crop rejection safe owner manual recovery HOLD
+on:
+  push:
+    branches: [research/main222-p94-worker-crop-settled-review-HOLD]
+  pull_request:
+    branches: [research/main220-m218-m219-native-idb-model-joint-HOLD]
+permissions:
+  contents: read
+jobs:
+  immutable-model-owner-node:
+    name: M220 exact source and full Node safety suite
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Deny any changes except focused M222 review crop fail-closed, browser harness, CI
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=12402bd5cbd390d9ffa4526316cecfc8855db8be
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/multi-garment-capture-01/review-ui.mjs|scripts/test-main222-genuine-p94-crop-prepare-rejection-browser.mjs|.github/workflows/main222-p94-genuine-model-crop-rejection-no-deploy.yml) ;;
+              *) echo "M222 forbidden model/photo/owner/integration source change: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = e770cd0b2968439f6f9ed108479c967cf25cfe7a
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
+          test "$(git rev-parse HEAD:scripts/test-main219-native-idb-photo119-terminal-lease-browser.mjs)" = 4692fedf8b9f61478f1cf27170de72d6d82064d7
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node --check scripts/test-main222-genuine-p94-crop-prepare-rejection-browser.mjs
+      - name: Pin tested original Node and native browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Actual PWA build and inherited original private owner and recognition regressions
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  genuine-worker-crop-failure-browser:
+    name: Original real P94 and rejected crop native (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: '430'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove original worker and source validation unchanged; safe test-only diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=12402bd5cbd390d9ffa4526316cecfc8855db8be
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/multi-garment-capture-01/review-ui.mjs|scripts/test-main222-genuine-p94-crop-prepare-rejection-browser.mjs|.github/workflows/main222-p94-genuine-model-crop-rejection-no-deploy.yml) ;;
+              *) echo "M222 forbidden source mutation: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = e770cd0b2968439f6f9ed108479c967cf25cfe7a
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          node --check scripts/test-main222-genuine-p94-crop-prepare-rejection-browser.mjs
+      - name: Install tested native SegFormer and browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Genuine 430 model worker with rejected crop, remaining source-owner review, 2D and V4
+        run: node scripts/test-main222-genuine-p94-crop-prepare-rejection-browser.mjs
+      - name: Unmodified genuine model positive 430, original proposal threshold unchanged
+        run: M214_ATTEMPT=main222-post-crop-positive node scripts/test-main214-p94-worker-outcome.mjs
+      - name: Original private owner native saved photo to 2D/v3 source restore at 430
+        run: P99_ENGINE=${{ matrix.engine }} P99_WIDTH=430 node scripts/test-parallel99-normal-app-browser.mjs
