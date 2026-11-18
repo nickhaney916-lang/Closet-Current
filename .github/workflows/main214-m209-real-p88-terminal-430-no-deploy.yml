@@ -61,6 +61,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           PARENT=0a0fe5e4355ec9857915da3b6d8d0964cca57b3a
           git merge-base --is-ancestor "$PARENT" HEAD
           expected="$(printf '%s\n' '.github/workflows/main214-m209-real-p88-terminal-430-no-deploy.yml' 'scripts/test-main214-native-p88-terminal-observer.mjs')"
