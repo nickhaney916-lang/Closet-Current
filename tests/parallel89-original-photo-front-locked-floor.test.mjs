@@ -80,6 +80,17 @@ test('five genuine-identity synthetic source pose receipts prove immutable front
   assert.equal(r.originalSourceTransitionCrossingsAcrossFivePoses,5);
   assert.equal(r.rearOnlyFitCannotEliminatePhotographFrontContact,true);
   assert.deepEqual(r.originalFivePoseNames,POSES);
+  assert.equal(r.originalAlphaStripsDoNotProvePhysicalHeightOrAnatomicalFit,true);
+  assert.equal(r.originalPhotoFrontContactBySixMeasuredAlphaStrips.length,6);
+  assert.deepEqual(r.originalPhotoFrontContactBySixMeasuredAlphaStrips.map(v=>
+   v.originalFrontContactPairWitnessesAcrossFivePoses),[10,0,0,0,0,0]);
+  assert.deepEqual(r.originalPhotoFrontContactBySixMeasuredAlphaStrips.map(v=>
+   v.distinctOriginalFrontSourceTrianglesContacted),[2,0,0,0,0,0]);
+  assert.deepEqual(r.originalPhotoFrontContactBySixMeasuredAlphaStrips.map(v=>
+   v.posesWithOriginalFrontContact),[5,0,0,0,0,0]);
+  assert.ok(r.staticOriginalPoseSamples.every(v=>
+   v.photographedFrontContactPairsByOriginalAlphaStrip.length===6 &&
+   v.photographedFrontContactPairsByOriginalAlphaStrip.reduce((a,b)=>a+b,0)===2));
   assert.equal(r.staticOriginalPoseSamples.length,5);
   assert.equal(r.originalPhoto2DFallbackRequired,true);
   assert.equal(r.consumer3DAdmitted,false);
@@ -89,6 +100,34 @@ test('five genuine-identity synthetic source pose receipts prove immutable front
   assert.deepEqual(x.g.getAttribute('position').array,orig);
   assert.equal(JSON.stringify(r).includes('0|42'),false,'never export body/skirt triangle identity');
  }
+});
+test('original front collision map is source-strip and pose-local, not inferred anatomy',()=>{
+ const x=fixture(),current=x.getCurrent;
+ const receipts={source:['0|42'],'blend-25':['192|24'],
+  'blend-50':[],'blend-75':['575|33'],relaxed:['40|99']};
+ let currentPose='source';
+ const r=audit({...x.input,
+  applyPose:p=>{assert.ok(POSES.includes(p));currentPose=p;},
+  sampleContact:()=>x.evidence(receipts[currentPose])});
+ assert.equal(r.immutablePhotographFrontCollisionFloorAcrossFivePoses,3);
+ assert.equal(r.originalNeutralRearHypothesisCrossingsAcrossFivePoses,1);
+ assert.equal(r.originalWholeBodyStrictCrossingsAcrossFivePoses,4);
+ assert.deepEqual(r.originalPhotoFrontContactBySixMeasuredAlphaStrips.map(v=>
+  v.originalFrontContactPairWitnessesAcrossFivePoses),[1,0,1,0,0,1]);
+ assert.deepEqual(r.originalPhotoFrontContactBySixMeasuredAlphaStrips.map(v=>
+  v.distinctOriginalFrontSourceTrianglesContacted),[1,0,1,0,0,1]);
+ assert.deepEqual(r.originalPhotoFrontContactBySixMeasuredAlphaStrips.map(v=>
+  v.posesWithOriginalFrontContact),[1,0,1,0,0,1]);
+ assert.deepEqual(r.staticOriginalPoseSamples.map(v=>
+  v.photographedFrontContactPairsByOriginalAlphaStrip),
+  [[1,0,0,0,0,0],[0,0,1,0,0,0],[0,0,0,0,0,0],
+   [0,0,0,0,0,1],[0,0,0,0,0,0]]);
+ assert.equal(currentPose,'source');
+ assert.equal(JSON.stringify(r).includes('575|33'),false);
+ assert.equal(JSON.stringify(r).includes('192|24'),false);
+ assert.equal(r.originalPhoto2DFallbackRequired,true);
+ assert.equal(r.consumer3DAdmitted,false);
+ assert.equal(r.releaseAuthorized,false);
 });
 test('one altered source male GLB SHA cannot impersonate the genuine 163-bone identity',()=>{
  const x=fixture('male');
