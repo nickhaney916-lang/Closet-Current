@@ -62,7 +62,7 @@ const output=[
  "   working:!!window.multi24Research?.debug()?.working",
  "  }));",
  "  const evidence={",
- "   schema:'M214_P94_REAL_WEBKIT_REASON/v1',engine,width,",
+ "   schema:'M214_P94_REAL_WEBKIT_REASON/v1',engine,width,attempt:process.env.M214_ATTEMPT||'one',",
  "   originalScriptBlob:process.env.M214_ORIGINAL_SCRIPT_BLOB||'4f75a40cf153fa4b4d139d782b202dbe7bc55e41',",
  "   realWorkerSource:'/public/outfit-worker-p94.mjs',",
  "   realModelAttempted:external.some(x=>x.type==='pinned-model-hub'),",
@@ -74,7 +74,7 @@ const output=[
  "   success:m214.cards>0&&m214.cards<=12,",
  "   releaseAuthorized:false,physicalPhone:false,hostedRLS:false",
  "  };",
- "  await writeFile(join(out,'M214-P94-BOUNDED-WORKER-OUTCOME.json'),",
+ "  await writeFile(join(out,'M214-P94-BOUNDED-WORKER-OUTCOME-'+(process.env.M214_ATTEMPT||'one')+'.json'),",
  "   JSON.stringify(evidence,null,2)+'\\n');",
  "  console.log('M214_REAL_P94_WORKER_OUTCOME',JSON.stringify(evidence));",
 ].join('\n')+'\n';
