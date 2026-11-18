@@ -25,7 +25,7 @@ assert.equal(gitBlobSHA(originalBytes),expectedSource,'original P94 browser test
 const testedWorkerSHA='d66651b616de54c51eb7ef986324b30f1580888f';
 assert.equal(gitBlobSHA(workerBytes),testedWorkerSHA,'M216 tested P94 worker source changed');
 const oldWorkerLabel="actualWorkerSourceBlob:'ab7d3837139c5b7d693383f9d6617e199ec8de4f'";
-const currentWorkerLabel="actualWorkerSourceBlob:'"+testedWorkerSHA+"'";
+const currentWorkerLabel="actualWorkerSourceBlob:'m226-local-scalar-instrumented-from-"+testedWorkerSHA+"'";
 assert.equal(original.split(oldWorkerLabel).length,2,'original source receipt changed');
 const stageInstall=" await context.route('**/*',route=>{";
 const probeBefore=" assert.ok(state.cards>0&&state.cards<=12,\n";
@@ -95,7 +95,8 @@ const output=[
  "  };",
  "  await writeFile(join(out,'M214-P94-BOUNDED-WORKER-OUTCOME-'+(process.env.M214_ATTEMPT||'one')+'.json'),",
  "   JSON.stringify(evidence,null,2)+'\\n');",
- "  console.log('M214_REAL_P94_WORKER_OUTCOME',JSON.stringify(evidence));",
+ "  console.log('M214_REAL_P94_WORKER_OUTCOME',JSON.stringify({...evidence,probeOnly:true,modelOriginal:true,workerScalarInstrumented:true}));",
+ "  assert.ok(evidence.workerEvents.some(e=>e.type==='diagnostic'),'M226 expected scalar worker mask/gate counts missing; no genuine model evidence');",
 ].join('\n')+'\n';
 // M226 disposable worker: original pinned model/processor/weight source still
 // used, and all original positive assertions remain mandatory. This probe adds
