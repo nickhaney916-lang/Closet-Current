@@ -55,10 +55,10 @@ function subject({pauseBoard=false,pauseRows=false}={}){
   epoch:'m206-session-a',operationEpoch:5,authRef:realAuth,
   privateDbRef:db,privateDbName:db.name};
  const gate=deferred(),target=el('section'),events=new EventTarget(),doc=new Doc();
- let reads=0;
+ let reads=0,boardReads=0;
  const viewer=mountOwnerOutfitPhotoPreview1054({
   target,events,doc,cleanBoard:normalize,getSession:()=>active,
-  getBoard:()=>pauseBoard?gate.promise:structuredClone(board),
+  getBoard:()=>pauseBoard&&++boardReads===1?gate.promise:structuredClone(board),
   readOwnerItems:async()=>{reads++;return pauseRows&&reads===1?
    await gate.promise:[structuredClone(row())];}
  });
