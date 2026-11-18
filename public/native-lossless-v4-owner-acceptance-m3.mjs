@@ -63,6 +63,26 @@ async function verifyOriginalIdentities(data,ownerId,check){
  }
  check();
 }
+// The generic lossless validator intentionally preserves historic missing
+// garment IDs. But it must NEVER restore or export an existing retired
+// original as an active/saved outfit selection. Mirror the unflagged v3
+// retired-source fence without rewriting/losing archived inventory or the
+// unverified missing-slot metadata. The source has already been cloned and
+// every ID/slot schema checked before this inspection.
+function rejectRetiredOutfitReferencesV4(target,check){
+ const board=target.state?.['outfit-board'];
+ if(!board)return;
+ const byId=new Map(target.items.map(item=>[item.id,item]));
+ for(const outfit of [board.current,...board.saved]){
+  check();
+  for(const id of Object.values(outfit.slots)){
+   const row=byId.get(id);
+   if(row&&(Boolean(row.deleted)||Boolean(row.sourceRevoked)))
+    fail('RETIRED_OUTFIT_SOURCE');
+  }
+ }
+ check();
+}
 // Source freeze is the last line of defense against an attacker-supplied
 // mutable object during an asynchronous SHA-256 digest or confirmation.
 async function verifiedTarget(data,ownerId,check){
@@ -76,6 +96,8 @@ async function verifiedTarget(data,ownerId,check){
  const receipt=await validateRestore01(target,{ownerId});
  check();
  await verifyOriginalIdentities(target,ownerId,check);
+ check();
+ rejectRetiredOutfitReferencesV4(target,check);
  check();
  return {target,receipt,json};
 }
