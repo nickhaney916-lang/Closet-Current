@@ -3,7 +3,7 @@ on:
   push:
     branches: [research/main215-m210-m213-retired-photo-owner-lease-24mp-HOLD]
   pull_request:
-    branches: [research/main210-m209-m183-m187-focus-owner-lease-HOLD]
+    branches: [research/main210-m209-focus-m183-m187-protected-owner-lease-HOLD]
 permissions:
   contents: read
 jobs:
