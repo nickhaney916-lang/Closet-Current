@@ -167,14 +167,14 @@ export function summarizeOriginalCoreSkinSensitivity89(a={}){
    const i=(row*49+j)*3;cx+=s[i];cz+=s[i+2];y+=s[i+1];
   }
   cx/=48;cz/=48;y/=48;
-  const strictLines=[],allOriginalLines=[],candidateLines=THRESHOLDS.map(()=>[]),
+  const strictLines=[],excludedOriginalLines=[],candidateLines=THRESHOLDS.map(()=>[]),
    contaminatedLines=THRESHOLDS.map(()=>[]);
   for(let f=0;f<faces;f++){
    const a0=idx[f*3],a1=idx[f*3+1],a2=idx[f*3+2];
    const xy=cut(p,a0,a1,a2,y);
    if(!xy)continue;
-   allOriginalLines.push(xy);
    if(eligibleStrict[f])strictLines.push(xy);
+   else excludedOriginalLines.push(xy);
    for(let t=0;t<THRESHOLDS.length;t++){
     if(candidateByThreshold[t][f]){
      candidateLines[t].push(xy);
@@ -204,7 +204,7 @@ export function summarizeOriginalCoreSkinSensitivity89(a={}){
     continue;
    }
    strictUnknown++;rowUnknown++;
-   const any=cast(allOriginalLines,cx,cz,ux,uz).hasHit;
+   const any=cast(excludedOriginalLines,cx,cz,ux,uz).hasHit;
    if(any){originalCoreExcludedHit++;rowExcluded++;}
    else{originalNoSourceFaceHit++;rowNoHit++;}
    for(let t=0;t<THRESHOLDS.length;t++){
