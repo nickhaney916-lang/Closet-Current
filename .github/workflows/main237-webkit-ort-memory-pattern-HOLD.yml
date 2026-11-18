@@ -32,7 +32,7 @@ jobs:
           test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = ad8ab0eb33322a34f8cc3f45a1fe26feff87b2ab
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
-          test "$(git rev-parse HEAD:scripts/test-main237-original-webkit-mem-pattern-browser.mjs)" = f0a6753cee82cf58fe4cbae55b32f0097be342b5
+          test "$(git rev-parse HEAD:scripts/test-main237-original-webkit-mem-pattern-browser.mjs)" = 80b2855a4cae89373e60ce1e0e83670bda1a8b4d
           test "$(git rev-parse HEAD:tests/main237-original-webkit-memory-pattern.test.mjs)" = f0f898589e6b6a06e8b9a6be81e178345e22de46
           node --check scripts/test-main237-original-webkit-mem-pattern-browser.mjs
           node --check tests/main237-original-webkit-memory-pattern.test.mjs
@@ -89,7 +89,7 @@ jobs:
           test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = ad8ab0eb33322a34f8cc3f45a1fe26feff87b2ab
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
-          test "$(git rev-parse HEAD:scripts/test-main237-original-webkit-mem-pattern-browser.mjs)" = f0a6753cee82cf58fe4cbae55b32f0097be342b5
+          test "$(git rev-parse HEAD:scripts/test-main237-original-webkit-mem-pattern-browser.mjs)" = 80b2855a4cae89373e60ce1e0e83670bda1a8b4d
           test "$(git rev-parse HEAD:tests/main237-original-webkit-memory-pattern.test.mjs)" = f0f898589e6b6a06e8b9a6be81e178345e22de46
           node --check scripts/test-main237-original-webkit-mem-pattern-browser.mjs
           node --check tests/main237-original-webkit-memory-pattern.test.mjs
