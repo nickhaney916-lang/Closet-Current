@@ -33,7 +33,7 @@ jobs:
       - name: M201 pin independently verified M199 exact product and review-receipt test blobs
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           M199=8993da21fd5d103f25dbcb5eab36ed9498047cd7
           git merge-base --is-ancestor "$M199" HEAD
@@ -91,7 +91,7 @@ jobs:
       - name: Pin EXACT M57 parent, immutable P88 source and strict no-merge path allowance
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           BASE=8eed18265db2191afdb553147330e2db7e412750
           P88=cc4554ef0104506a72bf0a28423fee52b6e4fff2
@@ -189,7 +189,7 @@ jobs:
       - name: Extract exact immutable P88 browser worker + import graph (NO default public change)
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           P88=cc4554ef0104506a72bf0a28423fee52b6e4fff2
           mkdir -p .m57-exact-p88-donor/public
           for file in outfit-worker.mjs outfit-segmentation.mjs outfit-instance-review-840.mjs photo-color.js; do
@@ -200,7 +200,7 @@ jobs:
       - name: Verify exact immutable M59 research gallery now opt-in wired to real native consumer
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           M59=d3aa25c850d0a73e90a539c4e90595c378b86d11
           git cat-file -e "$M59^{commit}"
           # M193 M59 gallery source guard: the index was replaced with the verified
@@ -244,7 +244,7 @@ jobs:
       - name: M156 installed native P88 source -> signed private closet -> 2D and v4 restore (3 mobile widths)
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           for width in 320 390 430; do
             P94_WIDTH="$width" node scripts/test-parallel94-native-p88-browser.mjs
           done
@@ -253,7 +253,7 @@ jobs:
         env:
           P94_WIDTH: '390'
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
           # Same installed P88/WASM native app, signed SYNTHETIC review, private 2D,
           # exact original SHA, v3/v4 restore, and fitted 3D DENIAL.
@@ -264,7 +264,7 @@ jobs:
         env:
           P94_WIDTH: '390'
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           test "$(git rev-parse HEAD:scripts/test-main172-24mp-private-state-invariance.mjs)" = ad4cb6bfee719b6083b9abc6d11ade2551e77c58
           test "$(git rev-parse HEAD:scripts/test-parallel96-native-highres-browser.mjs)" = 58194c1bbcfca7b46f1c71b1ee0cc00c3dbc88c7
           node --check scripts/test-main172-24mp-private-state-invariance.mjs
@@ -272,7 +272,7 @@ jobs:
       - name: Verify source-safe actual worker receipt, zero private saves and immutable donor
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           node --input-type=module - <<'JS'
           import fs from 'node:fs';
           const engine=process.env.M58_ENGINE;
@@ -330,7 +330,7 @@ jobs:
       - name: M201 pin independently verified M199 exact product and review-receipt test blobs
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           M199=8993da21fd5d103f25dbcb5eab36ed9498047cd7
           git merge-base --is-ancestor "$M199" HEAD
@@ -388,7 +388,7 @@ jobs:
       - name: Pin immutable M51 donor, M89 classified reporter and unchanged consumer
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           M51=22f3db9f9d5dd34ff2d1323e59d3848935e65f4f
           git cat-file -e "$M51^{commit}"
@@ -405,7 +405,7 @@ jobs:
       - name: M167 execute ALL inherited M51 original/photo/session tests with one stable hit-target click and P95 source reentry
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = 63cc9da00eaecbeb2576482dcae1528b44ea8189
           test "$(git rev-parse HEAD:scripts/test-parallel95-native-source-restore-reentry.mjs)" = afbb22bcfb4373b9ae2525703ab8dd04ddf0b800
           node --check scripts/test-parallel95-native-source-restore-reentry.mjs
@@ -413,7 +413,7 @@ jobs:
       - name: M106 and M147 native Chromium/WebKit stale first-import + newer-click ownership regression
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
           test "$(git rev-parse HEAD:scripts/test-main1054-m106-preview-terminal-browser.mjs)" = 016a266af467fea93a61315ad7738a2caec2da7d
           node --check public/outfit-board.js
@@ -449,7 +449,7 @@ jobs:
       - name: M175 REAL unflagged Home to reviewed private closet to saved 2D original outfit at 3 widths
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
           node scripts/build.mjs
           for file in native-2d-preview-p99.mjs native-outfit-source-plan-p99.mjs native-photo-3d-veto-p99.mjs; do
@@ -461,20 +461,20 @@ jobs:
       - name: M123 actual native PHOTO119 reviewed-original to v3 UI restore to signed original 2D
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           test "$(git rev-parse HEAD:scripts/test-main1054-m123-photo119-restore-2d-browser.mjs)" = b76ffa0625d421a36a1cf3bcc00d109e9cea42b9
           node --check scripts/test-main1054-m123-photo119-restore-2d-browser.mjs
           M123_ENGINE=${{ matrix.engine }} node scripts/test-main1054-m123-photo119-restore-2d-browser.mjs
       - name: M158 native same-photo reviewed two-piece source -> v3 atomic restore -> 2D (both engines)
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           test "$(git rev-parse HEAD:scripts/test-main157-same-photo-native-outfit-browser.mjs)" = c65c47091156c8996a1f463bff80b1c690b9fd90
           M123_ENGINE=${{ matrix.engine }} node scripts/test-main157-same-photo-native-outfit-browser.mjs
       - name: Assert actual app three widths and no unjustified 3D or release
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           node --input-type=module - <<'JS'
           import fs from 'node:fs';
           const engine=process.env.M51_ENGINE;
@@ -523,7 +523,7 @@ jobs:
       - name: M201 pin independently verified M199 exact product and review-receipt test blobs
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           M199=8993da21fd5d103f25dbcb5eab36ed9498047cd7
           git merge-base --is-ancestor "$M199" HEAD
@@ -581,7 +581,7 @@ jobs:
       - name: Pin tested inherited restore script and unchanged consumer source
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
           test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
@@ -627,7 +627,7 @@ jobs:
       - name: Confirm browser receipt and inherited app build, no deployment
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           test -d benchmark/main58-native-v4-owner-restore
           node scripts/build.mjs
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
@@ -650,7 +650,7 @@ jobs:
       - name: M201 pin independently verified M199 exact product and review-receipt test blobs
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           M199=8993da21fd5d103f25dbcb5eab36ed9498047cd7
           git merge-base --is-ancestor "$M199" HEAD
@@ -708,7 +708,7 @@ jobs:
       - name: Pin verified corrected M57 structural guards, parent and unchanged consumer source
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           BASE=8eed18265db2191afdb553147330e2db7e412750
           M57=91723408a7d1ddc7240e5cbb67d90b242f6f4743
           git merge-base --is-ancestor "$BASE" HEAD
@@ -733,14 +733,14 @@ jobs:
       - name: M167 source-exact current original/slot DOM proof and negative cases
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
           test "$(git rev-parse HEAD:tests/p95-exact-current-original-dom.test.mjs)" = 7923b70f2d5272286c3250842fd4ac9fcfa38b03
           node --test tests/p95-exact-current-original-dom.test.mjs
       - name: M179 P96 source EXIF and owner lease fail-closed contract
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           test "$(git rev-parse HEAD:tests/parallel96-highres-source-derivative.test.mjs)" = 2d913221968d4c09d9be33068efa80ef45b9de9b
           node --test tests/parallel96-highres-source-derivative.test.mjs
       - name: Run exact-head all inherited application and recognition tests
@@ -768,7 +768,7 @@ jobs:
       - name: M201 pin independently verified M199 exact product and review-receipt test blobs
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           M199=8993da21fd5d103f25dbcb5eab36ed9498047cd7
           git merge-base --is-ancestor "$M199" HEAD
@@ -826,7 +826,7 @@ jobs:
       - name: Pin verified exact-source duplicate-JPEG donor (no deployment)
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           DONOR=055f7a6569059c3845c0d8dc5960767fc944c6ac
           git cat-file -e "$DONOR^{commit}"
@@ -848,7 +848,7 @@ jobs:
       - name: Preserve source-owner/no-deploy boundaries
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
           test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
