@@ -1,0 +1,41 @@
+name: MAIN217 PHOTO119 post-commit signed session lease NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main217-photo119-transaction-terminal-session-lease-HOLD]
+  pull_request:
+    branches: [research/main215-m210-m213-retired-photo-owner-lease-24mp-HOLD]
+permissions:
+  contents: read
+jobs:
+  photo119-postcommit-lease:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin M215 accepted original exact source, strict three path mutation fence
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=f7534e0d1a9be48284d6be3eedd205420b7e1931
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              public/native-reviewed-private-save-167.mjs|tests/main217-photo119-postcommit-session-revoke.test.mjs|.github/workflows/main217-photo119-transaction-final-signed-session-no-deploy.yml) ;;
+              *) echo "M217 unexpected source change $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = 8a4c5f1ba513792c8cacbf898d9263ce76a78963
+          test "$(git rev-parse HEAD:public/native-reviewed-shared-original-157.mjs)" = 2108bdc2f0a67b8e356ea8c47d0042512ca618bf
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 5a4b2f2e98a9c30a5fd0787ffbb8c9546aacc408
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = b2e26e8b0538b4d344b498bfb55fd74d7f65eb0e
+          node --check tests/main217-photo119-postcommit-session-revoke.test.mjs
+      - name: Install genuine private IndexedDB and reviewed source test dependency
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4
+      - name: M217 true IDB after-write before completion signed session revocation proof
+        run: node --test tests/main217-photo119-postcommit-session-revoke.test.mjs
