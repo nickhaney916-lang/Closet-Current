@@ -1,4 +1,4 @@
-name: "Mission 2 P89 real original upper inward ray bone provenance NO DEPLOY"
+name: "Mission 2 P89 fix real original wrist metacarpal core mask NO DEPLOY"
 on:
   push:
     branches: [research/mission2-p89-original-upper-inward-witness-20261118-HOLD]
@@ -25,7 +25,7 @@ jobs:
           git diff --exit-code 19778d5a4e2d96dc6ddf9105a725cd4049ac9b12 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
           while IFS= read -r p; do
             case "$p" in
-              research/parallel89/skirt-original-upper-inward-witness89.mjs|tests/parallel89-original-upper-inward-witness.test.mjs|research/parallel89/native-skirt-browser89.mjs|scripts/test-parallel89-real-skirt-browser.mjs|.github/workflows/mission2-p89-upper-inward-anatomy-source-20261118-no-deploy.yml) ;;
+              research/parallel89/skirt-original-upper-inward-witness89.mjs|tests/parallel89-original-upper-inward-witness.test.mjs|research/parallel89/skirt-original-upper-limb-core-veto89.mjs|tests/parallel89-original-upper-limb-core-veto.test.mjs|research/parallel89/native-skirt-browser89.mjs|scripts/test-parallel89-real-skirt-browser.mjs|.github/workflows/mission2-p89-upper-inward-anatomy-source-20261118-no-deploy.yml) ;;
               *) echo "Unauthorized non-M2 code change: $p"; exit 1 ;;
             esac
           done < <(git diff --name-only 19778d5a4e2d96dc6ddf9105a725cd4049ac9b12 HEAD)
@@ -56,6 +56,8 @@ jobs:
           node --check research/parallel89/skirt-source-radial-gap89.mjs
           node --check research/parallel89/skirt-original-ray-coverage-causes89.mjs
           node --check research/parallel89/skirt-original-upper-inward-witness89.mjs
+          node --check research/parallel89/skirt-original-upper-limb-core-veto89.mjs
+          node --check tests/parallel89-original-upper-limb-core-veto.test.mjs
           node --check tests/parallel89-original-upper-inward-witness.test.mjs
           node --check tests/parallel89-original-ray-coverage-causes.test.mjs
           node --check research/parallel89/source-contact-snapshot89.mjs
@@ -67,7 +69,7 @@ jobs:
           node --check tests/parallel89-source-contact-snapshot.test.mjs
           node --check tests/parallel89-skirt-rigid-registration.test.mjs
       - name: Focused adversarial pooled and out-of-range source triangle checks
-        run: node --test tests/parallel89-original-upper-inward-witness.test.mjs tests/parallel89-original-ray-coverage-causes.test.mjs tests/parallel89-original-dense-motion-contact.test.mjs tests/parallel89-source-contact-snapshot.test.mjs tests/parallel89-skirt-rigid-registration.test.mjs tests/parallel89-skirt-source-radial-gap.test.mjs tests/parallel89-skirt-source-body-manifold.test.mjs tests/parallel89-skirt-source-indexed-seam.test.mjs tests/parallel89-skirt-original-source-boundary-regions.test.mjs tests/parallel89-skirt-original-core-span.test.mjs tests/parallel89-skirt-original-core-unknown-causes.test.mjs tests/parallel89-skirt-original-core-nohit-source-bones.test.mjs tests/parallel89-skirt-original-core-skin-weight-sensitivity.test.mjs tests/parallel89-original-core-nohit-geometry.test.mjs tests/parallel89-original-core-contour-connectivity.test.mjs tests/parallel89-original-contour-endpoint-provenance.test.mjs tests/parallel89-virtual-loop-planarity.test.mjs tests/parallel89-virtual-contour-arrangement.test.mjs tests/parallel89-original-indexed-slab-connectivity.test.mjs tests/parallel89-original-seven-height-component.test.mjs tests/parallel89-original-seven-height-shell-eligibility.test.mjs
+        run: node --test tests/parallel89-original-upper-limb-core-veto.test.mjs tests/parallel89-original-upper-inward-witness.test.mjs tests/parallel89-original-ray-coverage-causes.test.mjs tests/parallel89-original-dense-motion-contact.test.mjs tests/parallel89-source-contact-snapshot.test.mjs tests/parallel89-skirt-rigid-registration.test.mjs tests/parallel89-skirt-source-radial-gap.test.mjs tests/parallel89-skirt-source-body-manifold.test.mjs tests/parallel89-skirt-source-indexed-seam.test.mjs tests/parallel89-skirt-original-source-boundary-regions.test.mjs tests/parallel89-skirt-original-core-span.test.mjs tests/parallel89-skirt-original-core-unknown-causes.test.mjs tests/parallel89-skirt-original-core-nohit-source-bones.test.mjs tests/parallel89-skirt-original-core-skin-weight-sensitivity.test.mjs tests/parallel89-original-core-nohit-geometry.test.mjs tests/parallel89-original-core-contour-connectivity.test.mjs tests/parallel89-original-contour-endpoint-provenance.test.mjs tests/parallel89-virtual-loop-planarity.test.mjs tests/parallel89-virtual-contour-arrangement.test.mjs tests/parallel89-original-indexed-slab-connectivity.test.mjs tests/parallel89-original-seven-height-component.test.mjs tests/parallel89-original-seven-height-shell-eligibility.test.mjs
       - name: Build disposable PWA required by inherited PWA tests (no deployment)
         run: node scripts/build.mjs
       - name: Entire inherited no-deploy Node regression
@@ -120,6 +122,7 @@ jobs:
           node --check tests/parallel89-skirt-source-radial-gap.test.mjs
           node --check research/parallel89/skirt-original-ray-coverage-causes89.mjs
           node --check research/parallel89/skirt-original-upper-inward-witness89.mjs
+          node --check research/parallel89/skirt-original-upper-limb-core-veto89.mjs
           node --check scripts/test-parallel89-real-skirt-browser.mjs
       - name: Install exact browser, THREE, photographic decode and real BVH packages
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
