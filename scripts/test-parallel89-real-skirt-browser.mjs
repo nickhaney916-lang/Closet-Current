@@ -81,7 +81,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
- selectedResearchPoseChecks:[],selectedDenseOriginalRigTransitionAudits:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedWholeVsCoreRayCauseAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
+ selectedResearchPoseChecks:[],selectedDenseOriginalRigTransitionAudits:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedWholeVsCoreRayCauseAudits:[],selectedUpperInwardOriginalSourceWitnesses:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -657,6 +657,63 @@ try{
    assert.equal(coverage.consumer3DAdmitted,false);
    assert.equal(coverage.releaseAuthorized,false);
    results.selectedWholeVsCoreRayCauseAudits.push(coverage);
+
+   // An EXACT original body ray (not a guessed closed shell) exposes
+   // its responsible original mesh / 163bone skin source and whether
+   // the closest source face is nearer or farther than the photographed
+   // skirt, without serializing original triangle ID or body coordinates.
+   const upper=await page.evaluate(({radial,coverage})=>
+    window.nativeP89Skirt.auditSelectedOriginalUpperInwardSource89(radial,coverage),
+    {radial,coverage});
+   assert.equal(upper.schema,'P89-original-upper-skirt-source-inward-ray-anatomy/v1');
+   assert.equal(upper.status,
+    'ORIGINAL_UPPER_INWARD_SOURCE_RAY_BONE_MESH_WITNESSED_NOT_WEARABLE');
+   assert.equal(upper.avatar,avatar);
+   assert.equal(upper.pose,selectedPose);
+   assert.equal(upper.originalSourcePhotoSHA256,required.skirt);
+   assert.equal(upper.originalSourceAnatomyGLBSHA256,required[avatar]);
+   assert.equal(upper.originalHuman163BoneRig,true);
+   assert.equal(upper.originalTopPhotographedSkirtBand,1);
+   assert.equal(upper.topSkirtRaySampleCount,48);
+   const band1=radial.sevenOriginalSourceSkirtBands[0];
+   assert.equal(upper.originalCoreSourceInwardRayCount,
+    band1.exactRayObservedInwardSectors);
+   assert.equal(upper.originalCoreSourceNearRayCount,
+    band1.exactRayObservedNearZeroSectors);
+   assert.equal(upper.originalCoreSourceOutwardRayCount,
+    band1.exactRayObservedOutwardSectors);
+   assert.equal(upper.originalCoreSourceUnknownRayCount,
+    band1.exactRayUnknownSectors);
+   assert.equal(upper.originalOtherSixPhotoHeightBandsInwardRayCount,
+    radial.exactRayInwardSourceSectors-band1.exactRayObservedInwardSectors);
+   assert.ok(upper.originalCoreSourceInwardRayCount>=1);
+   assert.equal(upper.originalInwardTopSectorWitnesses.length,
+    upper.originalCoreSourceInwardRayCount);
+   assert.ok(upper.originalInwardTopSectorWitnesses.every(row=>
+    Number.isSafeInteger(row.originalSourceSkirtTopSectorIndex)&&
+    row.originalSourceSkirtTopSectorIndex>=0&&
+    row.originalSourceSkirtTopSectorIndex<48&&
+    row.originalRayDistanceBeyondSkirtMeters>0&&
+    row.originalSourceFaceRayIntersectionCount>=1&&
+    row.farSourceOriginalMeshAndBoneProof.originalSourceMeshes.length>=1&&
+    row.farSourceOriginalMeshAndBoneProof.originalDominant163BoneNames.length>=1&&
+    row.farSourceOriginalMeshAndBoneProof.originalBoneAnatomicalRegions.length>=1&&
+    row.originalIndexedBoneMeshEvidenceNotSignedHumanExterior===true));
+   assert.equal(new Set(upper.originalInwardTopSectorWitnesses.map(x=>
+    x.originalSourceSkirtTopSectorIndex)).size,upper.originalCoreSourceInwardRayCount);
+   assert.equal(upper.raysWithFirstOriginalBodyHitAlreadyBeyondSkirt+
+    upper.raysWithFarthestOriginalBodyHitBeyondNearerSourceHit<=
+    upper.originalCoreSourceInwardRayCount,true);
+   assert.equal(upper.positionalRayHitIsNotSignedExteriorOrActualFabricPenetration,true);
+   assert.equal(upper.exactOriginal163BoneSourceMeshAndTopSkinInfluenceProvenanceUsed,true);
+   assert.equal(upper.noOriginalFaceIdsOrOriginalSourceBodyCoordinatesReleased,true);
+   assert.equal(upper.neverWeldOrFillOriginalHumanSurface,true);
+   assert.equal(upper.originalPhoto2DFallbackRequired,true);
+   assert.equal(upper.consumer3DAdmitted,false);
+   assert.equal(upper.releaseAuthorized,false);
+   assert.equal(JSON.stringify(upper).includes('originalFaceIndex'),false);
+   results.selectedUpperInwardOriginalSourceWitnesses.push(upper);
+
 
    assert.ok([
     'SAMPLED_SOURCE_RADIAL_INWARD_AND_MISSING_BODY_SECTORS_NOT_WEARABLE',
@@ -1631,6 +1688,7 @@ try{
  assert.equal(results.selectedDenseOriginalRigTransitionAudits.length,2);
  assert.equal(results.selectedSourceBodyRadialGapAudits.length,10);
  assert.equal(results.selectedWholeVsCoreRayCauseAudits.length,10);
+ assert.equal(results.selectedUpperInwardOriginalSourceWitnesses.length,10);
  assert.equal(results.selectedSourceWholeBodyClosureAudits.length,10);
  assert.equal(results.selectedOriginalSourceBodySeamAudits.length,10);
  assert.equal(results.selectedOriginalSourceBodyBoundaryRegionAudits.length,10);
@@ -1712,6 +1770,7 @@ try{
    originalSourceEndpointProvenanceNativeChecks:results.selectedOriginalSkirtEndpointSourceProvenanceAudits.length,
    originalDenseRigSixteenthStaticChecks:results.selectedDenseOriginalRigTransitionAudits.map(x=>({avatar:x.avatar,status:x.status,original:x.sumOriginalStrictFacePairs,selected:x.sumRegisteredStrictFacePairs,newPairs:x.sumNewlyIntroducedOriginalSourceFacePairs})),
    originalWholeVsCoreSourceRayChecks:results.selectedWholeVsCoreRayCauseAudits.map(x=>({avatar:x.avatar,pose:x.pose,inward:x.originalCoreSourceExactInwardRaySectors,coreUnknown:x.originalCoreSourceExactUnknownRaySectors,excludedSourceRays:x.sourceCoreRayMissingReasonTotals.EXCLUDED_ORIGINAL_BODY_SOURCE_FACE_RAY_FOUND,wholeSourceNoRay:x.sourceCoreRayMissingReasonTotals.NO_ORIGINAL_FULL_BODY_INDEXED_FACE_RAY})),
+   originalUpperInwardWitnesses:results.selectedUpperInwardOriginalSourceWitnesses.map(x=>({avatar:x.avatar,pose:x.pose,sectorIndices:x.originalInwardTopSectorWitnesses.map(y=>y.originalSourceSkirtTopSectorIndex),dominantBones:[...new Set(x.originalInwardTopSectorWitnesses.flatMap(y=>y.farSourceOriginalMeshAndBoneProof.originalDominant163BoneNames))],sourceMeshes:[...new Set(x.originalInwardTopSectorWitnesses.flatMap(y=>y.farSourceOriginalMeshAndBoneProof.originalSourceMeshes))],firstBeyond:x.raysWithFirstOriginalBodyHitAlreadyBeyondSkirt,nearFar:x.raysWithFarthestOriginalBodyHitBeyondNearerSourceHit})),
    originalSourceEndpointProvenanceByAvatar:results.selectedOriginalSkirtEndpointSourceProvenanceAudits.filter(x=>x.pose==='source').map(x=>({
     avatar:x.avatar,
     originalIndexedOpenEndpointTotal:x.sourceEndpointProvenanceProof.originalSourceIndexedOpenEndpointTotal,
