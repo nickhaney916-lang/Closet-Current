@@ -7,18 +7,20 @@ on:
 permissions:
   contents: read
 jobs:
-  v4-retired-source-lifecycle:
+  inherited-owner-node:
+    name: Exact M226 v4 source and FULL inherited owner photo Node
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Preserve exact immutable M224 source and tiny change boundary
+      - name: Strict immutable parent, source blob and four-path allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -26,17 +28,91 @@ jobs:
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
             case "$file" in
-              public/native-lossless-v4-owner-acceptance-m3.mjs|tests/main226-v4-retired-outfit-source-lifecycle.test.mjs|.github/workflows/main226-v4-retired-outfit-owner-source-no-deploy.yml) ;;
-              *) echo "M226 forbidden owner/model/source modification: $file"; exit 1 ;;
+              public/native-lossless-v4-owner-acceptance-m3.mjs|tests/main226-v4-retired-outfit-source-lifecycle.test.mjs|scripts/test-main226-native-v4-retired-source-browser.mjs|.github/workflows/main226-v4-retired-outfit-owner-source-no-deploy.yml) ;;
+              *) echo "M226 FORBIDDEN source change $file"; exit 1 ;;
             esac
           done
+          test "$(git rev-parse HEAD:public/native-lossless-v4-owner-acceptance-m3.mjs)" = 988918ee194b04c4764ac32ac3124cc633863165
+          test "$(git rev-parse HEAD:tests/main226-v4-retired-outfit-source-lifecycle.test.mjs)" = 6bd7c9eee331600cbe5d31e3efc7e46a6f4b8eea
+          test "$(git rev-parse HEAD:scripts/test-main226-native-v4-retired-source-browser.mjs)" = 057f1f51c77c4f1e43fa1761c8e361f7e53407c1
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
           test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = af15a9c08a81aa4064d1e5d1c4f0af0d855582c9
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
           node --check public/native-lossless-v4-owner-acceptance-m3.mjs
           node --check tests/main226-v4-retired-outfit-source-lifecycle.test.mjs
-      - name: Install original Node fixture dependencies only
-        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4
-      - name: Genuine private v4 lossless source/outfit regression (should be RED on old source)
+          node --check scripts/test-main226-native-v4-retired-source-browser.mjs
+      - name: Install pinned Node testing dependencies without changing lockfile
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Full 16-case v4 retired outfit and archived original photo regression
         run: node --test tests/main226-v4-retired-outfit-source-lifecycle.test.mjs
+      - name: Actual offline PWA build and ALL inherited original source privacy owner tests
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  original-native-chromium-webkit:
+    name: Actual v4 native source and genuine SegFormer owner restore (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin original model, signed private owner, real v4 and new browser test
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=4f3b0002e1f02b9dee9e72817c730ad8af2a3fc1
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              public/native-lossless-v4-owner-acceptance-m3.mjs|tests/main226-v4-retired-outfit-source-lifecycle.test.mjs|scripts/test-main226-native-v4-retired-source-browser.mjs|.github/workflows/main226-v4-retired-outfit-owner-source-no-deploy.yml) ;;
+              *) echo "M226 FORBIDDEN private or model source $file"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/native-lossless-v4-owner-acceptance-m3.mjs)" = 988918ee194b04c4764ac32ac3124cc633863165
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = fa01c862444c05f8e307f4e7447a75a9ede1ab5e
+          test "$(git rev-parse HEAD:scripts/test-main226-native-v4-retired-source-browser.mjs)" = 057f1f51c77c4f1e43fa1761c8e361f7e53407c1
+          node --check scripts/test-main226-native-v4-retired-source-browser.mjs
+      - name: Install genuine browser/owner model fixture dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Real IndexedDB+WebCrypto v4 retired original in browser 320 390 430
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            M226_WIDTH="$width" node scripts/test-main226-native-v4-retired-source-browser.mjs
+          done
+      - name: Build original native application and normal offline PWA
+        run: node scripts/build.mjs
+      - name: Genuine unchanged P94 SegFormer worker original owner JPEG to 2D and v4
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 390 430; do
+            P94_WIDTH="$width" node scripts/test-parallel94-native-p88-browser.mjs
+          done
+      - name: Unflagged normal owner original to private closet 2D/v3 remains valid
+        shell: bash
+        run: |
+          set -euo pipefail
+          P99_ENGINE="${{ matrix.engine }}" P99_WIDTH=430 node scripts/test-parallel99-normal-app-browser.mjs
