@@ -9,8 +9,9 @@ test('M226 all seven original P94 stage codes preserve legacy reason and bound t
  for(const stage of stages){
   const r=classifyP94Failure(stage,new Error('unclassified'));
   assert.equal(r.reason,'P94_'+stage);
-  assert.equal(r.diagnosticCode,'P94_'+stage+'_other');
-  assert.equal(r.errorCategory,'other');
+  const expectedCategory=stage==='validate'?'invalid_input':'other';
+  assert.equal(r.diagnosticCode,'P94_'+stage+'_'+expectedCategory);
+  assert.equal(r.errorCategory,expectedCategory);
   assert.deepEqual(Object.keys(r).sort(),['diagnosticCode','errorCategory','reason']);
   assert.ok(Object.isFrozen(r));
  }
