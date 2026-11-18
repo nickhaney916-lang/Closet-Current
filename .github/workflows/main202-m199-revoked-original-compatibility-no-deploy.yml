@@ -1,0 +1,109 @@
+name: MAIN202 M199 verified cutout plus revoked original owner acceptance NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main202-m199-revoked-original-compatibility-HOLD]
+  pull_request:
+    branches: [research/main199-verified-cutout-owner-source-gate-HOLD]
+    paths: [.github/workflows/main202-m199-revoked-original-compatibility-no-deploy.yml]
+permissions:
+  contents: read
+jobs:
+  owner-revocation-and-private-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require exact M199 source and original M188 no-deploy source guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          PARENT=8993da21fd5d103f25dbcb5eab36ed9498047cd7
+          git merge-base --is-ancestor 902bfe31e840a4e0dca69acf98ce85eea6a4d088 HEAD
+          git merge-base --is-ancestor "$PARENT" HEAD
+          git diff --name-only "$PARENT" HEAD | while IFS= read -r file; do
+            case "$file" in
+              .github/workflows/main202-m199-revoked-original-compatibility-no-deploy.yml) ;;
+              *) echo "M202 unauthorized changed path: $file"; exit 1 ;;
+            esac
+          done
+          # Exact native original SHA/owner session and final-render revoke witnesses.
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 62bad171a97030846b0f1bb3bab740dec20ac5e7
+          test "$(git rev-parse HEAD:tests/main188-owner-revoked-outfit-preview.test.mjs)" = b071964576659869bf11319aa335fb64a2bfe7a1
+          test "$(git rev-parse HEAD:.github/workflows/main188-owner-revoked-original-preview-no-deploy.yml)" = 3c0ea89a190afe20f8cdfa0d820ea685740ac994
+          # Independently corrected source identity, both real indexes, byte-verified receipt bridge.
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
+          test "$(git rev-parse HEAD:research/wardrobe-index-01/owner-wardrobe-index.mjs)" = 60581e3b00f6877bbb424d0c090d9ab294890277
+          test "$(git rev-parse HEAD:research/index-04/verified-saved-recognition.mjs)" = b84a47731e8775ac8a8b8d520fcdefc56ea46ba9
+          test "$(git rev-parse HEAD:tests/main199-source-cutout-owner-proof.test.mjs)" = 526f627375112ed261bd7651613eb76ed2131814
+          # No worker, native application, default backup or hosted mutation.
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = d41c1aeec7fac7c95dbf02d9ed12fcee0c46ed3e
+          test "$(git rev-parse HEAD:public/native-default-verified-backup-export-m3.mjs)" = 741e736ca107169c9e9861d803a49c2e6166e20b
+          node --check public/native-outfit-source-plan-p99.mjs
+          node --check public/native-2d-preview-p99.mjs
+          node --check public/native-owner-wardrobe-index-167.mjs
+          node --check tests/main188-owner-revoked-outfit-preview.test.mjs
+          node --check tests/main199-source-cutout-owner-proof.test.mjs
+      - name: Genuine licensed-source revoked/deleted and verified-cutout regression
+        run: |
+          node --test tests/main188-owner-revoked-outfit-preview.test.mjs tests/main199-source-cutout-owner-proof.test.mjs
+      - name: Install pinned isolated test dependencies without deploy
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build genuine native app then run inherited full source privacy and backup tests
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  genuine-unflagged-original-photo-outfit:
+    name: M202 original photo reviewed private outfit and restore (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P99_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin exact M199/M188 owner-source app and unchanged Chromium-WebKit harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          PARENT=8993da21fd5d103f25dbcb5eab36ed9498047cd7
+          git merge-base --is-ancestor "$PARENT" HEAD
+          test "$(git diff --name-only "$PARENT" HEAD)" = ".github/workflows/main202-m199-revoked-original-compatibility-no-deploy.yml"
+          test "$(git rev-parse HEAD:public/native-owner-wardrobe-index-167.mjs)" = d872c582a9d8e6f319cae4c99f84dbc81ea7f7d3
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 0d4972a7fddfcfae0dd811765e4a94b962f4b578
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 62bad171a97030846b0f1bb3bab740dec20ac5e7
+          test "$(git rev-parse HEAD:tests/main188-owner-revoked-outfit-preview.test.mjs)" = b071964576659869bf11319aa335fb64a2bfe7a1
+          test "$(git rev-parse HEAD:tests/main199-source-cutout-owner-proof.test.mjs)" = 526f627375112ed261bd7651613eb76ed2131814
+          test "$(git rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 9b8c3b37d1d8116e4bf9bc6dbf7ea82e2752433d
+      - name: Install browser and app dependencies without network access during test
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build actual native application without deploy
+        run: node scripts/build.mjs
+      - name: Chromium or WebKit 320 390 430 signed owner original-to-outfit private restore
+        shell: bash
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+          done
