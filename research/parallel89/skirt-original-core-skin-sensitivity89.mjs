@@ -147,7 +147,7 @@ export function summarizeOriginalCoreSkinSensitivity89(a={}){
  validate(a);
  const {bodyPositions:p,bodyIndices:idx,skirtPositions:s,
   coreBodyFaceMask:mask,skinIndices:bi,skinWeights:bw,
-  sourceMeshIds:mi,sourceBoneNamesByMesh:bn}=a;
+  sourceMeshIds:mi,sourceMeshNames:mn,sourceBoneNamesByMesh:bn}=a;
  const vertices=p.length/3,faces=idx.length/3;
  const eligibleStrict=new Uint8Array(faces),
   candidateByThreshold=THRESHOLDS.map(()=>new Uint8Array(faces)),
