@@ -61,8 +61,11 @@ verified+="\n console.log('M233_STALLED_MODEL_FULL_OWNER_RECOVERY_VERIFIED',JSON
  "crossOwnerRejected:true,ownerARecovered:true,fitted3D:false,"+
  "hostedRLS:false,physicalPhone:false,hold:true}));\n";
 const marker=' " for(const route of heldRequests){try{await route.abort();}catch{}route.__m231Resolve?.();}",';
-assert.equal(donor.split(marker).length,2,
- 'M231 canonical held-model cleanup anchor moved or duplicated');
+// M231 has exactly TWO cleanup copies: one before page close and one in finally.
+// Insert the full owner/2D/v4 continuation BEFORE only the first cleanup,
+// retaining the second unconditional finally cleanup exactly as written.
+assert.equal(donor.split(marker).length,3,
+ 'M231 canonical held-model cleanup pair moved');
 const additions=verified.trimEnd().split('\n').map(line=>' '+JSON.stringify(line)+',').join('\n');
 const adapted=donor.replace(marker,additions+'\n'+marker);
 assert.equal(adapted.split('M233_STALLED_MODEL_FULL_OWNER_RECOVERY_VERIFIED').length,2);
