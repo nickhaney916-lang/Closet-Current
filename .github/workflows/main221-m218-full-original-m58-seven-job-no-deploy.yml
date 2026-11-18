@@ -196,7 +196,7 @@ jobs:
             git show "$P88:public/$file" > ".m57-exact-p88-donor/public/$file"
             test "$(git hash-object ".m57-exact-p88-donor/public/$file")" = "$(git rev-parse "$P88:public/$file")"
           done
-          test "$(git hash-object .m57-exact-p88-donor/public/outfit-worker.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git hash-object .m57-exact-p88-donor/public/outfit-worker.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
       - name: Verify exact immutable M59 research gallery now opt-in wired to real native consumer
         shell: bash
         run: |
