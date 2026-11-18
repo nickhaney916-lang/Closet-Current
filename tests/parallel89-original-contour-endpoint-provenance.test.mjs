@@ -177,6 +177,35 @@ function checked(f){
    slab.originalAdjacentSlabSourceEdgeConnectivity[band].originalIndexedSharedEdgesWithOpenSlabInterior);
   assert.equal(b.pointOnlyCutDoesNotCountAsSourceSegment,true);
  }
+ const sh=v.originalSevenHeightSourceIndexedShellEligibility;
+ assert.equal(sh.schema,'P89-original-163bone-sevenheight-component-shell-eligibility/v1');
+ assert.equal(sh.originalSkirtSampleHeightPlanes,7);
+ assert.equal(sh.selectedOriginalSourceTriangleCount,global.selectedOriginalIndexedFaceCount);
+ assert.equal(sh.selectedOriginalSourceTriangleCount,
+  sh.selectedSourceDegenerateTriangles+sh.selectedSourceNondegenerateTriangles);
+ assert.equal(sh.sourceOriginalIndexedUniqueEdges,
+  sh.sourceExactlyTwoIncidentFaceEdges+
+  sh.sourceSingleIncidentFaceBoundaryEdges+sh.sourceNonmanifoldIndexedEdges);
+ assert.equal(sh.sourceFaceComponentCountAtEachHeight.length,7);
+ assert.ok(sh.allSevenClosedOrientedIndexedShellCandidates<=
+  sh.sourceComponentsIntersectingEveryOriginalSkirtHeight);
+ if(global.sourceComponentsCrossingAllSevenHeightPlanes>0)
+  assert.ok(sh.sourceComponentsIntersectingEveryOriginalSkirtHeight>0);
+ assert.equal(sh.originalSourceUVSeamTwinsNotWelded,true);
+ assert.equal(sh.signedOriginalHumanVolumeNotCertified,true);
+ assert.equal(sh.originalPhotoGarmentPhysicalDimensionsNotMeasured,true);
+ assert.equal(sh.fitted3DClothContactAndHistoricalRearNotVerified,true);
+ assert.equal(sh.originalPhoto2DFallbackRequired,true);
+ assert.equal(sh.consumer3DAdmitted,false);
+ assert.equal(sh.releaseAuthorized,false);
+ for(const component of sh.allSevenIndexedSourceComponentSummaries){
+  assert.equal(component.intersectionWithAllSevenOriginalPhotoHeightPlanes,true);
+  assert.equal(component.closedSourceFaceShellEligibleOnly,
+   component.originalIndexedBoundaryEdges===0&&
+   component.originalIndexedNonmanifoldEdges===0&&
+   component.originalIndexedSameDirectionSharedEdges===0);
+  assert.equal(component.original3DSignedBodyAndWearabilityUnproved,true);
+ }
  assert.equal(Object.values(v.originalEndpointCauseTotals).reduce((s,n)=>s+n,0),
   v.originalSourceIndexedOpenEndpointTotal);
  assert.equal(v.originalSourceUniqueMutualVirtualPairCount,

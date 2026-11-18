@@ -10,6 +10,7 @@ import {auditVirtualContourPlanarity89} from './skirt-virtual-loop-planarity89.m
 import {auditVirtualContourArrangement89} from './skirt-virtual-contour-arrangement89.mjs';
 import {auditOriginalIndexedSlabConnectivity89} from './skirt-original-indexed-slab-connectivity89.mjs';
 import {auditOriginalIndexedSevenHeightComponents89} from './skirt-original-seven-height-component89.mjs';
+import {auditOriginalSevenHeightIndexedShellEligibility89} from './skirt-original-seven-height-shell-eligibility89.mjs';
 const PHOTO='c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344';
 const RIG=Object.freeze({
  female:'a571a5872a5f9d75c013ce6d88b3484436cf2109bf133fbc31e42c41f52389f1',
@@ -405,6 +406,18 @@ export function summarizeSourceContourEndpointProvenance89({
      originalIndexedSourceSlabs.originalAdjacentSlabSourceEdgeConnectivity[i]
       .originalIndexedSharedEdgesWithOpenSlabInterior))
   throw Error('true-sevenheight-source-face-component-vs-slab-not-reconciled');
+ const originalSevenHeightIndexedShell=auditOriginalSevenHeightIndexedShellEligibility89({
+  bodyPositions,bodyIndices,
+  selectedSourceFaceMask:Uint8Array.from(faces,f=>f.selected?1:0),
+  skirtPositions
+ });
+ if(originalSevenHeightIndexedShell.selectedOriginalSourceTriangleCount!==
+    originalIndexedSourceSlabs.selectedOriginalFaceCount||
+  originalSevenHeightIndexedShell.selectedSourceNondegenerateTriangles<
+   originalSevenHeightIndexedComponentProof.sourceComponentsCrossingAllSevenHeightPlanes||
+  (originalSevenHeightIndexedComponentProof.sourceComponentsCrossingAllSevenHeightPlanes>0&&
+   originalSevenHeightIndexedShell.sourceComponentsIntersectingEveryOriginalSkirtHeight===0))
+  throw Error('original-sevenheight-indexed-shell-vs-source-components-not-reconciled');
  if(sum(Object.values(totals))!==openTotal||
   supportTotal+poseCoincidentTotal+noneTotal!==openTotal)
   throw Error('original-source-ring-endpoint-provenance-nonconservative');
@@ -419,6 +432,7 @@ export function summarizeSourceContourEndpointProvenance89({
   originalSourceCounterfactualClosedLoopCount:counterfactualCycles,
   originalIndexedSourceAdjacentSlabConnectivity:originalIndexedSourceSlabs,
   originalSevenHeightSourceIndexedComponentProof:originalSevenHeightIndexedComponentProof,
+  originalSevenHeightSourceIndexedShellEligibility:originalSevenHeightIndexedShell,
   sourceIndexOrRestSkinCandidateEndpointTotal:supportTotal,
   posedOnlyCoincidenceUntrustedEndpointTotal:poseCoincidentTotal,
   originalNoMatchingEndpointTotal:noneTotal,
@@ -507,6 +521,15 @@ export function auditSourceContourEndpointProvenance89(args={}){
     'original-sevenheight-active-source-graph-unbounded',
     'original-sevenheight-source-component-coverage-not-conservative',
     'true-sevenheight-source-face-component-vs-slab-not-reconciled',
+    'original-indexed-sevenheight-shell-source-arrays-required',
+    'original-indexed-shell-body-must-be-finite',
+    'original-indexed-shell-skirt-must-be-finite',
+    'original-indexed-shell-out-of-bounds-face',
+    'original-indexed-shell-selected-face-mask-binary',
+    'original-indexed-shell-seven-photographed-planes-not-strict',
+    'original-indexed-shell-repeated-source-face-index',
+    'original-indexed-sevenheight-shell-accounting-not-conserved',
+    'original-sevenheight-indexed-shell-vs-source-components-not-reconciled',
    'original-source-ring-endpoint-provenance-nonconservative'
   ]);
   return fail(whitelist.has(e.message)?e.message:'source-original-index-skin-rest-provenance-failed-closed');

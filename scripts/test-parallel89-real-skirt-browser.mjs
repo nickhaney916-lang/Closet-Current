@@ -1335,6 +1335,35 @@ try{
      slab.originalAdjacentSlabSourceEdgeConnectivity[band].originalIndexedSharedEdgesWithOpenSlabInterior);
     assert.equal(b.pointOnlyCutDoesNotCountAsSourceSegment,true);
    }
+   const sh=eproof.originalSevenHeightSourceIndexedShellEligibility;
+   assert.equal(sh.schema,'P89-original-163bone-sevenheight-component-shell-eligibility/v1');
+   assert.equal(sh.originalSkirtSampleHeightPlanes,7);
+   assert.equal(sh.selectedOriginalSourceTriangleCount,global.selectedOriginalIndexedFaceCount);
+   assert.equal(sh.selectedOriginalSourceTriangleCount,
+    sh.selectedSourceDegenerateTriangles+sh.selectedSourceNondegenerateTriangles);
+   assert.equal(sh.sourceOriginalIndexedUniqueEdges,
+    sh.sourceExactlyTwoIncidentFaceEdges+
+    sh.sourceSingleIncidentFaceBoundaryEdges+sh.sourceNonmanifoldIndexedEdges);
+   assert.equal(sh.sourceFaceComponentCountAtEachHeight.length,7);
+   assert.ok(sh.allSevenClosedOrientedIndexedShellCandidates<=
+    sh.sourceComponentsIntersectingEveryOriginalSkirtHeight);
+   if(global.sourceComponentsCrossingAllSevenHeightPlanes>0)
+    assert.ok(sh.sourceComponentsIntersectingEveryOriginalSkirtHeight>0);
+   assert.equal(sh.originalSourceUVSeamTwinsNotWelded,true);
+   assert.equal(sh.signedOriginalHumanVolumeNotCertified,true);
+   assert.equal(sh.originalPhotoGarmentPhysicalDimensionsNotMeasured,true);
+   assert.equal(sh.fitted3DClothContactAndHistoricalRearNotVerified,true);
+   assert.equal(sh.originalPhoto2DFallbackRequired,true);
+   assert.equal(sh.consumer3DAdmitted,false);
+   assert.equal(sh.releaseAuthorized,false);
+   for(const component of sh.allSevenIndexedSourceComponentSummaries){
+    assert.equal(component.intersectionWithAllSevenOriginalPhotoHeightPlanes,true);
+    assert.equal(component.closedSourceFaceShellEligibleOnly,
+     component.originalIndexedBoundaryEdges===0&&
+     component.originalIndexedNonmanifoldEdges===0&&
+     component.originalIndexedSameDirectionSharedEdges===0);
+    assert.equal(component.original3DSignedBodyAndWearabilityUnproved,true);
+   }
    assert.equal(eproof.sourceOriginalFaceMaskExclusionsNeverPromoted,true);
    assert.equal(eproof.originalOnlyWorldCoordinateMatchNotStitchable,true);
    assert.equal(eproof.sourceModelSignedBodyVolumeUnproved,true);
@@ -1546,6 +1575,13 @@ try{
     possibleMutualOriginalRestSkinSeamPairs:x.sourceEndpointProvenanceProof.originalSourceUniqueMutualVirtualPairCount,
     hypotheticalVirtual2dLoopsNotBodyVolume:x.sourceEndpointProvenanceProof.originalSourceCounterfactualClosedLoopCount,
     originalVolumeAndWearabilityStillBlocked:true,
+    originalSelectedSourceShellEligibility:x.sourceEndpointProvenanceProof.originalSevenHeightSourceIndexedShellEligibility.schema,
+    originalSevenHeightSourceFaceComponents:x.sourceEndpointProvenanceProof.originalSevenHeightSourceIndexedShellEligibility.sourceComponentsIntersectingEveryOriginalSkirtHeight,
+    originalSevenHeightSourceBoundaryEdges:x.sourceEndpointProvenanceProof.originalSevenHeightSourceIndexedShellEligibility.sourceAllSevenHeightComponentBoundaryEdges,
+    originalSevenHeightSourceNonmanifoldEdges:x.sourceEndpointProvenanceProof.originalSevenHeightSourceIndexedShellEligibility.sourceAllSevenHeightComponentNonmanifoldEdges,
+    originalSevenHeightSourceWindingConflicts:x.sourceEndpointProvenanceProof.originalSevenHeightSourceIndexedShellEligibility.sourceAllSevenHeightComponentWindingConflicts,
+    originalSevenHeightClosedIndexedShellCandidateOnly:x.sourceEndpointProvenanceProof.originalSevenHeightSourceIndexedShellEligibility.allSevenClosedOrientedIndexedShellCandidates,
+    originalSevenHeightTrueSignedBodyNeverCertified:true,
     sourceIndexedNeighborOrRestSkinVirtualCandidates:x.sourceEndpointProvenanceProof.sourceIndexOrRestSkinCandidateEndpointTotal,
     originalOnlyPosedCoincidenceUntrusted:x.sourceEndpointProvenanceProof.posedOnlyCoincidenceUntrustedEndpointTotal,
     originalNoCorrespondingSourceEndpoint:x.sourceEndpointProvenanceProof.originalNoMatchingEndpointTotal,
