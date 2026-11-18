@@ -177,7 +177,17 @@ function transactionCommit({db,ownerId,currentOwner,assertLease,record,
    tx=db.transaction(['items','state'],'readwrite');
    tx.objectStore('items').getAll().onsuccess=e=>{items=e.target.result;admit();};
    tx.objectStore('state').get('draft').onsuccess=e=>{draft=e.target.result;admit();};
-   tx.oncomplete=()=>resolve(verdict('saved',kind));
+   tx.oncomplete=()=>{
+    // A real IndexedDB commit cannot be rolled back after oncomplete.
+    // Recheck the complete signed-owner/source lease BEFORE saying 'saved':
+    // same-owner re-login and owner A->B must reload their private state.
+    try{
+     checkLive({db,ownerId,currentOwner,assertLease,record,review,initial});
+     resolve(verdict('saved',kind));
+    }catch{
+     reject(Error('PHOTO119_SESSION_REVOKED_AFTER_COMMIT_RELOAD'));
+    }
+   };
    tx.onabort=()=>reject(abortReason||Error('PHOTO119 owner transaction aborted'));
    tx.onerror=()=>{}; // abort handled at transaction level
   }catch{reject(Error('PHOTO119 owner transaction unavailable'));}
