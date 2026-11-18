@@ -120,3 +120,20 @@ test('M206 existing visible original still revoked on focus auth reference chang
   assert.equal(h.viewer.status.hasOwnerPhotos,false);
  }finally{h.viewer.dispose();}
 });
+
+
+test('M206 cancelled focus owner lease permits a fresh explicit same-owner reentry',async()=>{
+ const h=subject({pauseBoard:true});
+ try{
+  const pending=h.viewer.refresh();
+  h.swapAuth();h.events.dispatchEvent(new Event('focus'));
+  h.restoreAuth();h.resolve();
+  await assert.rejects(pending,/MAIN1054_PREVIEW signed owner or refresh changed/);
+  assert.equal(h.target.querySelectorAll('img').length,0);
+  const result=await h.viewer.refresh();
+  assert.equal(result.presentationMode,'verified-original-photo-2d');
+  assert.equal(result.renderAuthorized3D,false);
+  assert.equal(result.releaseAuthorized,false);
+  assert.equal(h.target.querySelectorAll('img').length,1);
+ }finally{h.viewer.dispose();}
+});
