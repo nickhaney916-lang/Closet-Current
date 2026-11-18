@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {setResearchPose} from '/donor/research/three-d-43/intermediate-pose.mjs';
 import {SKIRT_SOURCE89,attestActualSkirt89,sourceSkirtOutline89,
- buildOriginalPhotoSkirtProposal89} from './skirt-source3d89.mjs';
+ buildOriginalPhotoSkirtProposal89,sourceSkirtMeasuredPhotoCenterline89} from './skirt-source3d89.mjs';
 import {posedSource84} from '/p84/research/parallel84-real-photo-layers/source-bone-yoke-trial84.mjs';
 import {countStableOriginalBodyContacts89} from './skirt-stable-source-contacts89.mjs';
 import {compareActualNeutralSkirtRear89} from './skirt-neutral-contact-trial89.mjs';
@@ -1520,6 +1520,47 @@ function setPose(mode){const out=inspectPose(mode);render();return out;}
 function setView(deg){check([0,90,180].includes(deg),'only research original photo views');angle=deg;render();return getState();}
 function toggleSkirt(show){check(phase==='ready','actual photographed skirt not loaded');
  candidate.mesh.visible=!!show;render();return getState();}
+/** Compare the REAL SHA-verified original source alpha centerline to the
+ * original attached skinned proposal rest XYZ, without allowing consumer 3D.
+ * The back-center of the neutral proxy stays put: it is NOT source-observed.
+ */
+function auditPhotoFrontCenterline89(){
+ check(phase==='ready'&&candidate?.mesh?.isSkinnedMesh&&
+  candidate?.mesh?.skeleton?.bones?.length===163&&!!outline,
+  'real original public skirt and skinned human source required');
+ const independent=sourceSkirtMeasuredPhotoCenterline89(outline);
+ const rest=candidate.mesh.geometry.getAttribute('sourceSkirt89Rest');
+ const uv=candidate.mesh.geometry.getAttribute('uv');
+ check(rest?.count===343&&uv?.count===343&&
+  candidate.receipt.genuinePhotoFrontCenterlineAppliedToProvisionalMesh===true,
+  'original photo front centerline was not mapped to actual source geometry');
+ const source=independent.sourceRelativeWorldXOffsetsMeters;
+ const measured=[];
+ const baselineRearX=rest.getX(24);
+ for(let row=0;row<7;row++){
+  const first=row*49,last=first+48,rear=first+24;
+  check(Math.hypot(rest.getX(first)-rest.getX(last),
+   rest.getY(first)-rest.getY(last),
+   rest.getZ(first)-rest.getZ(last))<.0001,
+   'source 3D front centerline tore original repeated seam');
+  const x=rest.getX(first)-rest.getX(rear);
+  check(Number.isFinite(x)&&Math.abs(x-source[row])<.00002&&
+   Math.abs(rest.getX(rear)-baselineRearX)<.00002,
+   'original source front centerline not preserved on P541 skinned mesh');
+  measured.push(Math.round(x*1e5)/1e5);
+ }
+ return Object.freeze({
+  status:'ORIGINAL_SOURCE_FRONT_CENTERLINE_PROJECTED_PROVISIONALLY_NOT_FITTED',
+  actualP541Original163Bones:true,originalSourceSKIRTSHA256:SKIRT_SOURCE89.originalSHA256,
+  exactSourceMaskRowCount:7,originalSourcePixelsAndUVUnchanged:true,
+  photoFrontCenterlineShiftsMeters:Object.freeze(measured),
+  sourcePixelCentersMeasuredNotPhysicalFabricCoordinates:true,
+  unphotographedRearCenterlineRetainsNeutralProposal:true,
+  originalSkirtPhysicalScaleNotCalibrated:true,
+  originalPhoto2DFallbackRequired:true,consumer3DAdmitted:false,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
 function getState(){return Object.freeze({
  phase,avatar:current,sourceId:SKIRT_SOURCE89.id,originalSourceSHA256:source?.originalSHA256??null,
  originalCutoutSHA256:source?.cutoutSHA256??null,originalSkirtUnapproved:true,
@@ -1543,7 +1584,7 @@ function close(){if(selectedPreview)showOnlySelectedRegistration89(false,{draw:f
  if(rigid45Preview)showOnlySourceRigidRegistration45(false,{draw:false});
  lastRegistration=null;candidate?.dispose();candidate=null;scene.remove(root);root=null;
  renderer.dispose();renderer.forceContextLoss();phase='disposed';return true;}
-window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,showOnlySelectedRegistration89,auditSelectedDenseOriginalRigTransition89,auditSelectedSourceRadialGap89,auditSelectedOriginalCoreUpperLimbVeto89,auditSelectedOriginalWholeVsCoreRayCauses89,auditSelectedOriginalUpperInwardSource89,auditSelectedOriginalSourceBodyClosure89,auditSelectedOriginalBodySeams89,auditSelectedOriginalBodyBoundaryRegions89,auditSelectedOriginalSkirtCoreSpan89,auditSelectedOriginalSkirtCoreRayUnknownCauses89,auditSelectedOriginalSkirtSourceBoneNamesNoHits89,auditSelectedOriginalSkirtCoreWeightSensitivity89,auditSelectedOriginalSkirtCoreNoHitGeometry89,auditSelectedOriginalSkirtSourceContourConnectivity89,auditSelectedOriginalSkirtEndpointSourceProvenance89,auditOnlyUnobservedRearRenderedPixels,close});
+window.nativeP89Skirt=Object.freeze({getState,load,auditPhotoFrontCenterline89,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,showOnlySelectedRegistration89,auditSelectedDenseOriginalRigTransition89,auditSelectedSourceRadialGap89,auditSelectedOriginalCoreUpperLimbVeto89,auditSelectedOriginalWholeVsCoreRayCauses89,auditSelectedOriginalUpperInwardSource89,auditSelectedOriginalSourceBodyClosure89,auditSelectedOriginalBodySeams89,auditSelectedOriginalBodyBoundaryRegions89,auditSelectedOriginalSkirtCoreSpan89,auditSelectedOriginalSkirtCoreRayUnknownCauses89,auditSelectedOriginalSkirtSourceBoneNamesNoHits89,auditSelectedOriginalSkirtCoreWeightSensitivity89,auditSelectedOriginalSkirtCoreNoHitGeometry89,auditSelectedOriginalSkirtSourceContourConnectivity89,auditSelectedOriginalSkirtEndpointSourceProvenance89,auditOnlyUnobservedRearRenderedPixels,close});
 try{await verifySource();await load('female');}catch(e){
  phase='error';const msg=String(e?.message||e).slice(0,250);
  errors.push(msg);status.textContent='Original-photo 2D fallback: '+msg+' · HOLD';
