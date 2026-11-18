@@ -58,6 +58,17 @@ function compare(x){
  assert.equal(a.unknownRaysWithExcludedSourceFaceWitness+
   a.unknownRaysWithNoObservedOriginalBodyFaceWitness,a.strictCoreUnknownRays);
  assert.equal(a.sourceBodyAllIndexedFacesNeverModified,true);
+ assert.equal(Object.values(a.unknownWithNoOriginalIndexedFaceByModelAxes).reduce((n,v)=>n+v,0),
+  a.unknownRaysWithNoObservedOriginalBodyFaceWitness);
+ assert.equal(a.unknownWithNoOriginalIndexedFaceCircularRunsByBand.length,7);
+ assert.equal(a.unknownWithNoOriginalIndexedFaceCircularRunsByBand.reduce(
+  (n,v)=>n+v.noOriginalIndexedBodyFaceHitRays,0),
+  a.unknownRaysWithNoObservedOriginalBodyFaceWitness);
+ assert.equal(a.originalExcludedSourceMeshRayNames.every(x=>
+  x.unknownRayDirections<=a.unknownRaysWithExcludedSourceFaceWitness),true);
+ assert.equal(a.originalExcludedSourceBoneRayNames.every(x=>
+  x.unknownRayDirections<=a.unknownRaysWithExcludedSourceFaceWitness),true);
+ assert.equal(a.sourceDominantBoneNamesAreHeuristicNotVerifiedAnatomicalRegions,true);
  assert.equal(a.sourceBodyNotProvenClosedSignedVolume,true);
  assert.equal(a.originalPhoto2DFallbackRequired,true);
  assert.equal(a.consumer3DAdmitted,false);
@@ -151,4 +162,56 @@ test('synthetic malformed original source buffers and fake bone weights rejected
   {sourceBoneNamesByMesh:[['wrong-length']]},
   {sourceMeshIds:Uint16Array.from(f.sourceMeshIds,(v,i)=>i===0?99:v)}
  ])assert.throws(()=>measure({...f,...x}));
+});
+
+test('excluded original unmapped source bone is identified by immutable exact mesh ID and dominant name',()=>{
+ const f=fixture({bone:'CautionUnmappedSourceBone'});
+ const r=compare(f);
+ assert.equal(r.unknownRaysWithExcludedSourceFaceWitness,336);
+ assert.equal(r.unknownRaysWithNoObservedOriginalBodyFaceWitness,0);
+ assert.deepEqual(r.originalExcludedSourceMeshRayNames,[{
+  kind:'UNKNOWN_ORIGINAL_DOMINANT_BONE',sourceMeshId:0,
+  sourceMeshName:'OriginalSourceBody',unknownRayDirections:336
+ }]);
+ assert.deepEqual(r.originalExcludedSourceBoneRayNames,[{
+  kind:'UNKNOWN_ORIGINAL_DOMINANT_BONE',sourceMeshId:0,
+  sourceMeshName:'OriginalSourceBody',
+  sourceBoneName:'CautionUnmappedSourceBone',unknownRayDirections:336
+ }]);
+ assert.equal(r.consumer3DAdmitted,false);
+});
+
+test('excluded real original hand source bone remains EXCLUDED rather than anatomical core',()=>{
+ const r=compare(fixture({bone:'hand01L'}));
+ assert.ok(r.originalExcludedSourceBoneRayNames.some(x=>
+  x.kind==='EXCLUDED_HEAD_ARMS'&&x.sourceBoneName==='hand01L'&&
+  x.sourceMeshId===0&&x.unknownRayDirections===336));
+ assert.equal(r.strictCoreUnknownRays,336);
+ assert.equal(r.releaseAuthorized,false);
+});
+
+test('uncovered source directions preserve a full seven-ring 48-sector circular gap and four axes',()=>{
+ const f=fixture();
+ f.bodyPositions=Float32Array.from(f.bodyPositions,(v,i)=>i%3===0?v+8:v);
+ const r=compare(f);
+ assert.equal(r.strictCoreUnknownRays,336);
+ assert.equal(r.unknownRaysWithExcludedSourceFaceWitness,0);
+ assert.equal(r.unknownRaysWithNoObservedOriginalBodyFaceWitness,336);
+ assert.equal(Object.values(r.unknownWithNoOriginalIndexedFaceByModelAxes).reduce(
+  (n,v)=>n+v,0),336);
+ assert.ok(r.unknownWithNoOriginalIndexedFaceCircularRunsByBand.every(x=>
+  x.noOriginalIndexedBodyFaceHitRays===48&&
+  x.longestCircularConsecutiveNoHitSectors===48));
+ assert.equal(r.originalExcludedSourceBoneRayNames.length,0);
+ assert.equal(r.originalExcludedSourceMeshRayNames.length,0);
+});
+
+test('original inputs and original bone label tables remain byte-unmodified after source-name attribution',()=>{
+ const f=fixture({bone:'OriginalUnknownBoneSource'});
+ const before=f.sourceBoneNamesByMesh.map(x=>x.slice());
+ const ids=f.sourceMeshIds.slice(),mask=f.coreBodyFaceMask.slice();
+ compare(f);
+ assert.deepEqual(f.sourceBoneNamesByMesh,before);
+ assert.deepEqual(f.sourceMeshIds,ids);
+ assert.deepEqual(f.coreBodyFaceMask,mask);
 });
