@@ -14,8 +14,8 @@ import {resolve} from 'node:path';
 const originalPath='scripts/test-parallel94-native-p88-browser.mjs';
 const original=await readFile(originalPath,'utf8');
 const expectedSource='4f75a40cf153fa4b4d139d782b202dbe7bc55e41';
-const stageInstall="  await context.route('**/*',route=>{";
-const probeBefore="  assert.ok(state.cards>0&&state.cards<=12,\n";
+const stageInstall=" await context.route('**/*',route=>{";
+const probeBefore=" assert.ok(state.cards>0&&state.cards<=12,\n";
 assert.equal(original.split(stageInstall).length,2,'original browser route prelude changed');
 assert.equal(original.split(probeBefore).length,2,'original fail-closed P94 assertion changed');
 
