@@ -81,7 +81,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
- selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalSkirtPhysicalScaleSurveys:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
+ selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalSkirtPhysicalScaleSurveys:[],originalSkirtWrapClosureRefusalTests:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -135,6 +135,13 @@ try{
    await page.evaluate(name=>window.nativeP89Skirt.setPose(name),sourcePose);
    const metric=await page.evaluate(()=>
     window.nativeP89Skirt.auditOriginalSkirtMeasurementCalibration89());
+   assert.equal(metric.schema,'P89-original-photo-skirt-construction-aware-size-registration/v2');
+   assert.equal(metric.sourceConstruction.accession,'5152.1');
+   assert.equal(metric.sourceConstruction.publicCategory,'QING_MAMIANQUN_CLASSIFICATION');
+   assert.equal(metric.sourceConstruction.exactSpecimenPanelConstructionVerified,false);
+   assert.equal(metric.sourceConstruction.exactSpecimenWaistClosureAndOverlapVerified,false);
+   assert.equal(metric.modelWaistPerimeterAsPhysicalGarmentCircumferenceAllowed,false);
+   assert.equal(metric.actualSourceOverlapAndFasteningUnobserved,true);
    assert.equal(metric.status,'ORIGINAL_PHYSICAL_GARMENT_DIMENSIONS_MISSING',
     'genuine source skirt must remain physically uncalibrated: '+(metric.reason||metric.status));
    assert.equal(metric.avatar,avatar);
@@ -149,6 +156,31 @@ try{
    assert.equal(metric.releaseAuthorized,false);
    assert.equal(metric.familyAlpha,'HOLD');
    results.originalSkirtPhysicalScaleSurveys.push(metric);
+   // Negative control on actual GLB: measured-looking values are fabricated
+   // for the TEST. Even photo IDs, reviewer and closure booleans cannot
+   // convert a virtual closed ring into the true Qing wrap waist geometry.
+   const refuted=await page.evaluate(()=>
+    window.nativeP89Skirt.auditOriginalSkirtMeasurementCalibration89({
+     waistCircumferenceMm:900,waistToHemLengthMm:600,
+     waistMeasurementKind:'TIED_ON_BODY_WAIST_CIRCUMFERENCE',
+     sourceMuseumAccession:'5152.1',panelCount:2,
+     sourceRearPhotoAttested:true,independentReviewerApproved:true,
+     actualOverlapVerified:true,consumer3DAdmitted:true
+    }));
+   assert.equal(refuted.schema,'P89-original-photo-skirt-construction-aware-size-registration/v2');
+   assert.equal(refuted.status,'WRAP_SKIRT_OVERLAP_AND_CLOSURE_UNVERIFIED_NO_WAIST_SCALE');
+   assert.equal(refuted.modelWaistPerimeterAsPhysicalGarmentCircumferenceAllowed,false);
+   assert.equal(refuted.independentWaistScaleCandidate,null);
+   assert.equal(refuted.hypotheticalUniformScale,null);
+   assert.equal(refuted.originalGarmentClosureAndOverlapVerified,false);
+   assert.equal(refuted.sourceBacksideObserved,false);
+   assert.equal(refuted.originalPhoto2DFallbackRequired,true);
+   assert.equal(refuted.consumer3DAdmitted,false);
+   assert.equal(refuted.releaseAuthorized,false);
+   results.originalSkirtWrapClosureRefusalTests.push({
+    avatar,pose:sourcePose,status:refuted.status,
+    consumer3DAdmitted:false,virtualWaistDoesNotEqualRealCloth:true
+   });
   }
   for(const pose of ['source','blend-50','relaxed']){
    const witness=await page.evaluate(name=>window.nativeP89Skirt.setPose(name),pose);

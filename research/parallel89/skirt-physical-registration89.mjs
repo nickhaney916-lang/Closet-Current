@@ -1,37 +1,55 @@
-/** P89 original 163-bone photo-skirt physical sizing boundary.
- * The SOURCE 343-vertex 7 x 49 skirt shell is a research proposal in GLB
- * coordinates. No ruler, actual photographed garment waist circumference or
- * hem drop has been independently measured. Source model units are not a
- * legitimate substitute for measured real-garment dimensions.
+/**
+ * Commons-0043 Qing mamianqun-class photographed-skirt source:
+ * CONSTRUCTION-AWARE physical-registration refusal, research only.
  *
- * This audit NEVER certifies a wearable garment, even when a caller supplies
- * externally typed numbers. It exposes the missing input and tests whether
- * a *uniform* scale hypothesis would be internally consistent.
+ * Wikimedia identifies accession 5152.1 as Qing mamianqun; such skirts
+ * commonly use overlapping panels / waist ties or fastenings. This is
+ * historical category context, NOT proof of this exact museum specimen's
+ * original inner overlap, fasteners, flat waistband length or wearable
+ * circumference. The 343-vertex, 7x49 P89 closed ring is a modeled proxy:
+ * its source mesh perimeter cannot be equated to measured garment waist,
+ * even when an arbitrary entered "waist circumference" happens to fit.
+ *
+ * Public sources:
+ * https://commons.wikimedia.org/wiki/File:Woman%27s_summer_skirt_from_China,_Honolulu_Museum_of_Art_5152.1.JPG
+ * https://uritextilecollection.omeka.net/items/show/599
+ *
+ * The audit never modifies original model, photograph or skin and never
+ * admits owner/customer 3D. It exposes only derived uncalibrated geometry.
  */
 const PHOTO='c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344';
 const POSES=new Set(['source','blend-25','blend-50','blend-75','relaxed']);
 const finite=Number.isFinite;
-const round=n=>Math.round(n*1e5)/1e5;
-const invalid=reason=>Object.freeze({
- schema:'P89-original-photo-skirt-physical-size-registration/v1',
- status:'PHYSICAL_SOURCE_SKIRT_REGISTRATION_UNVERIFIABLE',reason,
+const round=x=>Math.round(x*1e5)/1e5;
+const SOURCE_CLASS=Object.freeze({
+ accession:'5152.1',museum:'Honolulu Museum of Art',
+ publicCategory:'QING_MAMIANQUN_CLASSIFICATION',
+ exactSpecimenPanelConstructionVerified:false,
+ exactSpecimenWaistClosureAndOverlapVerified:false,
+ originalFrontPhotoOnly:true,
+ frontPanelReferenceNotIdenticalToSewnCylinder:true
+});
+const FAIL_SCHEMA='P89-original-photo-skirt-construction-aware-size-registration/v2';
+const fail=reason=>Object.freeze({
+ schema:FAIL_SCHEMA,status:'PHYSICAL_SOURCE_SKIRT_REGISTRATION_UNVERIFIABLE',
+ reason,sourceConstruction:SOURCE_CLASS,
  originalGarmentPhysicalDimensionsVerified:false,
+ originalGarmentClosureAndOverlapVerified:false,
  actualPhotoCameraScaleVerified:false,sourceBacksideObserved:false,
  actualSignedBodyContainmentCertified:false,continuousClothFitCertified:false,
  originalPhoto2DFallbackRequired:true,consumer3DAdmitted:false,
  releaseAuthorized:false,familyAlpha:'HOLD'
 });
-function distance(a,b){return Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);}
-function point(p,i){return [p[3*i],p[3*i+1],p[3*i+2]];}
+function at(p,i){const n=3*i;return [p[n],p[n+1],p[n+2]];}
 function ring(p,row){
- const offset=row*49;
- const first=point(p,offset),last=point(p,offset+48);
- let length=0;
- for(let i=0;i<48;i++)length+=distance(point(p,offset+i),point(p,offset+i+1));
- return {perimeter:length,seamGap:distance(first,last)};
+ const first=at(p,49*row),last=at(p,49*row+48);
+ let len=0;
+ for(let i=0;i<48;i++){
+  const a=at(p,49*row+i),b=at(p,49*row+i+1);
+  len+=Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+ }
+ return {length:len,endGap:Math.hypot(...first.map((v,i)=>v-last[i]))};
 }
-/** This is a read-only numerical audit. The real browser caller must verify
- * the original JPEG, mask, source mesh and 163-bone rig BEFORE calling it. */
 export function auditOriginalSkirtPhysicalRegistration89({
  sourceId,sourceSHA256,originalSourceAttested=false,avatar,pose,
  originalSkirtRestPositions,rigBoneCount,physicalTape=null
@@ -39,86 +57,90 @@ export function auditOriginalSkirtPhysicalRegistration89({
  if(sourceId!=='commons-0043'||sourceSHA256!==PHOTO||
     originalSourceAttested!==true||!['female','male'].includes(avatar)||
     !POSES.has(pose)||rigBoneCount!==163)
-  return invalid('genuine-original-commons-0043-photo-and-163bone-context-required');
+  return fail('genuine-original-commons-0043-photo-and-163bone-context-required');
  const p=originalSkirtRestPositions;
  if(!(p instanceof Float32Array)||p.length!==343*3||
     p.some(n=>!finite(n)||Math.abs(n)>10))
-  return invalid('original-343-vertex-rest-geometry-invalid');
- const snapshot=p.slice();
+  return fail('original-343-vertex-rest-geometry-invalid');
+ const immutable=p.slice();
  const waist=ring(p,0),hem=ring(p,6);
- if(!finite(waist.perimeter)||!finite(hem.perimeter)||
-    waist.perimeter<.15||waist.perimeter>8||
-    hem.perimeter<.15||hem.perimeter>10||
-    waist.seamGap>.035||hem.seamGap>.035)
-  return invalid('original-source-rest-rings-not-closed-for-perimeter-audit');
- const lengths=[];
- for(let col=0;col<49;col++){
-  const a=point(p,col),b=point(p,6*49+col);
-  const yDrop=a[1]-b[1];
-  if(!finite(yDrop)||yDrop<.08||yDrop>2.5)
-   return invalid('original-photo-skirt-top-bottom-rest-direction-invalid');
-  lengths.push(yDrop);
+ if(!finite(waist.length)||!finite(hem.length)||
+    waist.length<.15||waist.length>8||hem.length<.15||
+    hem.length>10||waist.endGap>.035||hem.endGap>.035)
+  return fail('virtual-closed-ring-proxy-invalid');
+ const verticalDrops=[];
+ for(let k=0;k<49;k++){
+  const a=at(p,k),b=at(p,6*49+k);
+  const h=a[1]-b[1];
+  if(!finite(h)||h<.08||h>2.5)
+   return fail('original-photo-skirt-top-bottom-rest-direction-invalid');
+  verticalDrops.push(h);
  }
- const meanDrop=lengths.reduce((a,b)=>a+b,0)/lengths.length;
- if(Math.max(...lengths)-Math.min(...lengths)>.25)
-  return invalid('original-skirt-rest-top-bottom-height-too-inconsistent');
- if(p.some((n,i)=>!Object.is(n,snapshot[i])))
-  return invalid('original-rest-geometry-was-mutated');
+ if(Math.max(...verticalDrops)-Math.min(...verticalDrops)>.25)
+  return fail('original-skirt-rest-top-bottom-height-too-inconsistent');
+ const meanDrop=verticalDrops.reduce((a,b)=>a+b,0)/49;
+ if(p.some((n,i)=>!Object.is(n,immutable[i])))
+  return fail('original-rest-geometry-was-mutated');
  const base={
-  schema:'P89-original-photo-skirt-physical-size-registration/v1',
-  sourceId,originalPhotoSHA256:PHOTO,avatar,pose,originalRigBoneCount:163,
+  schema:FAIL_SCHEMA,sourceId,sourceConstruction:SOURCE_CLASS,
+  originalPhotoSHA256:PHOTO,avatar,pose,originalRigBoneCount:163,
   originalSourceRestVertexCount:343,sourceRingCount:7,ringSamples:49,
-  // These are geometric distances in the research shell coordinate frame.
-  // NEVER report as authenticated tape measurements.
-  uncalibratedSourceWaistPerimeterModelUnits:round(waist.perimeter),
-  uncalibratedSourceHemPerimeterModelUnits:round(hem.perimeter),
+  // Model-space geometry only: NOT sewn physical garment circumference.
+  uncalibratedVirtualClosedShellWaistPerimeterModelUnits:round(waist.length),
+  uncalibratedVirtualClosedShellHemPerimeterModelUnits:round(hem.length),
   uncalibratedSourceTopToHemDropModelUnits:round(meanDrop),
+  modelWaistPerimeterAsPhysicalGarmentCircumferenceAllowed:false,
+  physicalClothWaistbandLengthAndClosedWearerWaistAreNotInterchangeable:true,
+  actualSourceOverlapAndFasteningUnobserved:true,
+  originalGarmentClosureAndOverlapVerified:false,
   originalGarmentPhysicalDimensionsVerified:false,
-  actualPhotoCameraScaleVerified:false,
-  independentHumanTapePhotoReviewed:false,
-  physicalGarmentOwnerApproved:false,
-  sourceBacksideObserved:false,actualSignedBodyContainmentCertified:false,
-  continuousClothFitCertified:false,originalSourceRestGeometryUnchanged:true,
-  originalPhoto2DFallbackRequired:true,consumer3DAdmitted:false,
-  releaseAuthorized:false,familyAlpha:'HOLD'
+  actualPhotoCameraScaleVerified:false,independentHumanTapePhotoReviewed:false,
+  physicalGarmentOwnerApproved:false,sourceBacksideObserved:false,
+  actualSignedBodyContainmentCertified:false,continuousClothFitCertified:false,
+  originalSourceRestGeometryUnchanged:true,originalPhoto2DFallbackRequired:true,
+  consumer3DAdmitted:false,releaseAuthorized:false,familyAlpha:'HOLD'
  };
+ const missing=Object.freeze([
+  'same-artifact-waistband-flat-length-and-tie-closure-method',
+  'same-artifact-front-back-panel-number-and-overlap-topology',
+  'same-artifact-original-physical-skirt-vertical-length',
+  'independently-adjudicated-object-matched-measurement-and-multiview-photos',
+  'actual-object-photo-camera-calibration-and-hidden-side-rear-coverage'
+ ]);
  if(physicalTape==null)return Object.freeze({...base,
   status:'ORIGINAL_PHYSICAL_GARMENT_DIMENSIONS_MISSING',
-  missingIndependentEvidence:Object.freeze([
-   'actual-same-garment-measured-waist-circumference',
-   'actual-same-garment-measured-waist-to-hem-length',
-   'independent-source-matched-measurement-photo-review',
-   'camera-calibration-and-same-garment-side-rear-coverage'
-  ]),
-  hypotheticalUniformScale:null});
+  hypotheticalUniformScale:null,independentWaistScaleCandidate:null,
+  missingIndependentEvidence:missing
+ });
+ if(!physicalTape||typeof physicalTape!=='object'||Array.isArray(physicalTape))
+  return fail('physical-tape-record-type-invalid');
+ // Compatibility: old inputs named waistCircumferenceMm are NOT sufficient:
+ // when source skirt uses wraps, a waistband's laid-flat length, tie length,
+ // and tied-on-body circumference can differ dramatically.
  const {waistCircumferenceMm,waistToHemLengthMm}=physicalTape;
  if(!finite(waistCircumferenceMm)||!finite(waistToHemLengthMm)||
     waistCircumferenceMm<300||waistCircumferenceMm>2400||
     waistToHemLengthMm<100||waistToHemLengthMm>2000)
-  return invalid('external-tape-sizes-outside-physical-sanity-bounds');
- const waistScale=waistCircumferenceMm/(1000*waist.perimeter),
-   dropScale=waistToHemLengthMm/(1000*meanDrop);
- const disagreement=Math.abs(waistScale-dropScale)/
-   Math.max(Math.abs(waistScale),Math.abs(dropScale));
- if(!finite(disagreement)||waistScale<.1||waistScale>4||
-    dropScale<.1||dropScale>4||disagreement>.06)
-  return invalid('waist-and-height-measurements-inconsistent-with-uniform-source-scale');
- // Untyped external numbers do not independently establish that the true
- // photographed artifact was ever measured. No automatic size approval.
+  return fail('external-tape-sizes-outside-physical-sanity-bounds');
+ const kind=physicalTape.waistMeasurementKind??'UNSPECIFIED';
+ if(!['UNSPECIFIED','FLAT_WAISTBAND_LENGTH',
+       'TIED_ON_BODY_WAIST_CIRCUMFERENCE','CLAIMED_CLOSED_WAIST_PERIMETER'].includes(kind))
+  return fail('unknown-waist-physical-measurement-method');
+ // Even asserted photos, panel counts, timestamps, signatures or reviewer
+ // booleans cannot certify the true specimen's topology from self-report.
+ const lengthOnly=waistToHemLengthMm/(1000*meanDrop);
+ if(!finite(lengthOnly)||lengthOnly<.1||lengthOnly>4)
+  return fail('external-vertical-height-not-consistent-with-source-hypothesis');
  return Object.freeze({...base,
-  status:'UNREVIEWED_EXTERNAL_TAPE_UNIFORM_SCALE_HYPOTHESIS_ONLY',
-  externallyEnteredWaistCircumferenceMm:waistCircumferenceMm,
-  externallyEnteredWaistToHemLengthMm:waistToHemLengthMm,
-  independentWaistScaleCandidate:round(waistScale),
-  independentLengthScaleCandidate:round(dropScale),
-  fractionalTwoMeasureScaleDisagreement:round(disagreement),
-  hypotheticalUniformScale:round((waistScale+dropScale)/2),
-  missingIndependentEvidence:Object.freeze([
-   'verified-source-matched-physical-tape-photographs',
-   'independent-human-measurement-adjudication',
-   'original-source-calibrated-camera-geometry',
-   'verified-same-garment-side-rear-source',
-   'signed-full-volume-containment-and-moving-cloth-fit'
-  ])
+  status:'WRAP_SKIRT_OVERLAP_AND_CLOSURE_UNVERIFIED_NO_WAIST_SCALE',
+  externallyEnteredWaistMm:waistCircumferenceMm,
+  externalWaistMeasurementMeaningUnreviewed:kind,
+  externallyEnteredVerticalLengthMm:waistToHemLengthMm,
+  // Vertical-only hypothesis is NOT camera calibration or actual waist fit.
+  provisionalVerticalOnlyScaleHypothesis:round(lengthOnly),
+  hypotheticalUniformScale:null,
+  independentWaistScaleCandidate:null,
+  fractionalTwoMeasureScaleDisagreement:null,
+  missingIndependentEvidence:missing
  });
 }
