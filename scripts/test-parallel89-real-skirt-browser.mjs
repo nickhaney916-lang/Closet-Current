@@ -81,7 +81,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  screenCaptureCountExpected:54,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
  captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],
- selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalSkirtPhysicalScaleSurveys:[],originalSkirtWrapClosureRefusalTests:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
+ selectedResearchPoseChecks:[],selectedResearchNativeScreenshots:[],selectedResearchFrontCoverage:[],selectedSourceBodyRadialGapAudits:[],selectedSourceWholeBodyClosureAudits:[],selectedOriginalSourceBodySeamAudits:[],selectedOriginalSourceBodyBoundaryRegionAudits:[],selectedOriginalSkirtCoreSpanAudits:[],selectedOriginalSkirtCoreUnknownCauseAudits:[],selectedOriginalSkirtCoreBoneNoHitAudits:[],selectedOriginalSkirtCoreWeightSensitivityAudits:[],selectedOriginalSkirtCoreNoHitGeometryAudits:[],selectedOriginalSkirtCoreContourGraphAudits:[],selectedOriginalSkirtEndpointSourceProvenanceAudits:[],originalSkirtPhysicalScaleSurveys:[],originalSkirtWrapClosureRefusalTests:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,originalSkirtSourcePoseTransitionMotionRisk:[],errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -231,6 +231,45 @@ try{
      sourceSkirtVisible:diff>1000,subjectNotHumanApproved:true});
    }
   }
+  // Original photo + original 163bone anatomical BVH: motion broadphase
+  // over FOUR intervals, not just five discrete static sample frames.
+  const motion=await page.evaluate(()=>
+   window.nativeP89Skirt.auditOriginalSkirtLinearPoseMotion89());
+  assert.equal(motion.schema,'P89-original-licensed-photo-skirt-five-source-pose-motion-risk/v1');
+  assert.equal(motion.avatar,avatar);
+  assert.equal(motion.originalPhotographedSource,'commons-0043');
+  assert.equal(motion.originalRigBones,163);
+  assert.equal(motion.authenticPoseSamples,5);
+  assert.equal(motion.consecutiveTransitionCount,4);
+  assert.equal(motion.transitions.length,4);
+  assert.ok(motion.candidateConservativeSourceBodyPairs>0,
+   'authentic source skirt/body motion must have conservative contact possibilities');
+  assert.equal(motion.originalPhotoAndRigUntouched,true);
+  assert.equal(motion.actualNonlinearBoneMotionSafetyUnknown,true);
+  assert.equal(motion.physicalGarmentFitApproved,false);
+  assert.equal(motion.consumer3DAdmitted,false);
+  assert.equal(motion.originalPhoto2DFallbackRequired,true);
+  assert.equal(motion.releaseAuthorized,false);
+  const authenticPoses=['source','blend-25','blend-50','blend-75','relaxed'];
+  for(let i=0;i<4;i++){
+   const item=motion.transitions[i];
+   assert.equal(item.fromPose,authenticPoses[i]);
+   assert.equal(item.toPose,authenticPoses[i+1]);
+   assert.equal(item.exactOriginalSkirtSourceFaceCount,576);
+   assert.ok(item.originalBodyIndexedFaceCount>=1000);
+   assert.equal(item.endpointStaticBVHStrictCrossingsContainedInConservativeBroadphase,true);
+   assert.equal(item.sourcePhotoBandPotentialPairs.length,6);
+   assert.equal(item.originalFacePairIDsPersistedOrEmitted,false);
+   assert.equal(item.originalSkirtAndBodyGeometryPersistedOrEmitted,false);
+   assert.equal(item.continuousTrueSkeletalMotionSafetyCertified,false);
+   assert.equal(item.consumer3DAdmitted,false);
+   assert.equal(item.originalPhoto2DFallbackRequired,true);
+   assert.ok(item.conservativeSourceTrianglePairAABBOverlapCount>=
+    Math.max(...item.originalEndpointStrictBVHPairCounts));
+  }
+  results.originalSkirtSourcePoseTransitionMotionRisk.push(motion);
+  assert.equal((await page.evaluate(()=>window.nativeP89Skirt.getState())).pose,'source',
+   'source pose not restored after original motion audit');
   const trial=await page.evaluate(()=>window.nativeP89Skirt.trialNeutralRear());
   assert.ok([
    'BOUNDED_NEUTRAL_REAR_CONTACT_REDUCTION_NOT_CLEARANCE',
