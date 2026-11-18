@@ -1,4 +1,4 @@
-name: P101 actual WebKit SegFormer model initialization NO DEPLOY HOLD
+name: P101 controlled WebKit P94 model vs WASM cache isolate NO DEPLOY HOLD
 on:
   push:
     branches: [fix/parallel101-webkit-p94-model-initialization-HOLD]
@@ -30,7 +30,7 @@ jobs:
           test "$changed" = "$(printf '%s\n' '.github/workflows/parallel101-webkit-p94-model-init-no-deploy.yml' 'scripts/test-parallel101-real-p94-model-init-stage-browser.mjs')"
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 8cc2977f1932b3012c44bdd401081cc542b94c57
-          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = da7ea5ebc43d638ec5ec812ff40b0411e2233ab3
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = 720aefb1207477d22b4884f822cfa7085adfc315
           test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 1a4cf649a3656f604c4f3e1d2b1efd7910179edc
@@ -78,7 +78,7 @@ jobs:
           test "$changed" = "$(printf '%s\n' '.github/workflows/parallel101-webkit-p94-model-init-no-deploy.yml' 'scripts/test-parallel101-real-p94-model-init-stage-browser.mjs')"
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 8cc2977f1932b3012c44bdd401081cc542b94c57
-          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = da7ea5ebc43d638ec5ec812ff40b0411e2233ab3
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = 720aefb1207477d22b4884f822cfa7085adfc315
           test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
           test "$(git rev-parse HEAD:research/multi-garment-capture-01/review-ui.mjs)" = 1bd97b80b51fab1cb269ae565acb73a274b6e6d0
       - name: Install pinned real WebKit and original SegFormer runtime
@@ -90,14 +90,22 @@ jobs:
         run: |
           set -uo pipefail
           failed=0
+          # Four independent controlled cache cells; every cell exercises all
+          # three mobile viewports with a fresh real browser process per case.
+          case "$SHARD" in
+            1) cacheMode=baseline ;;
+            2) cacheMode=browser_off ;;
+            3) cacheMode=wasm_off ;;
+            4) cacheMode=both_off ;;
+          esac
           for attempt in 1 2 3; do
             echo "::group::P101 REAL WebKit model-initialization source shard $SHARD attempt $attempt"
-            case "$SHARD:$attempt" in
-              1:1|4:1) width=320 ;;
-              2:1|4:2) width=390 ;;
-              *) width=430 ;;
+            case "$attempt" in
+              1) width=320 ;;
+              2) width=390 ;;
+              3) width=430 ;;
             esac
-            if P94_WIDTH="$width" M214_ATTEMPT="P101-WEBKIT-${width}-S${SHARD}-A${attempt}" node scripts/test-parallel101-real-p94-model-init-stage-browser.mjs; then
+            if P101_CACHE_MODE="$cacheMode" P94_WIDTH="$width" M214_ATTEMPT="P101-WEBKIT-${width}-${cacheMode}-S${SHARD}-A${attempt}" node scripts/test-parallel101-real-p94-model-init-stage-browser.mjs; then
               echo "P101_REAL_WEBKIT_430_ATTEMPT_PASS shard=$SHARD attempt=$attempt"
             else
               code=$?
@@ -136,7 +144,7 @@ jobs:
           git merge-base --is-ancestor 9b243ee584d6f16f553e2365e373e6e8be85cc36 HEAD
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
           test "$(git rev-parse HEAD:scripts/test-main214-p94-worker-outcome.mjs)" = 8cc2977f1932b3012c44bdd401081cc542b94c57
-          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = da7ea5ebc43d638ec5ec812ff40b0411e2233ab3
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = 720aefb1207477d22b4884f822cfa7085adfc315
       - name: Install real pinned Chromium and SegFormer runtime
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Two independent genuine chromium control journeys, no retries
@@ -144,14 +152,19 @@ jobs:
         run: |
           set -uo pipefail
           failed=0
-          for attempt in 1 2 3 4 5 6; do
+          for attempt in 1 2 3 4 5 6 7 8; do
             echo "::group::P101 real Chromium 430 control attempt $attempt"
             case "$attempt" in
-              1) width=320 ;;
-              2) width=390 ;;
-              *) width=430 ;;
+              1) width=320; cacheMode=baseline ;;
+              2) width=390; cacheMode=baseline ;;
+              3) width=430; cacheMode=baseline ;;
+              4) width=430; cacheMode=browser_off ;;
+              5) width=430; cacheMode=wasm_off ;;
+              6) width=430; cacheMode=both_off ;;
+              7) width=430; cacheMode=baseline ;;
+              8) width=430; cacheMode=both_off ;;
             esac
-            if P94_WIDTH="$width" M214_ATTEMPT="P101-CHROMIUM-${width}-A${attempt}" node scripts/test-parallel101-real-p94-model-init-stage-browser.mjs; then
+            if P101_CACHE_MODE="$cacheMode" P94_WIDTH="$width" M214_ATTEMPT="P101-CHROMIUM-${width}-${cacheMode}-A${attempt}" node scripts/test-parallel101-real-p94-model-init-stage-browser.mjs; then
               echo "P101_REAL_CHROMIUM_430_ATTEMPT_PASS attempt=$attempt"
             else
               code=$?
@@ -160,5 +173,5 @@ jobs:
             fi
             echo "::endgroup::"
           done
-          echo "P101_REAL_CHROMIUM_430_CONTROL_RECEIPT attempts=6 failures=$failed"
+          echo "P101_REAL_CHROMIUM_430_CONTROL_RECEIPT attempts=8 failures=$failed"
           test "$failed" -eq 0
