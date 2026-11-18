@@ -1,0 +1,132 @@
+{
+  "schema": "M236_verified_native_evidence_v1",
+  "purpose": "historical research only, not release approval",
+  "originalJsep": {
+    "runtimeFamily": "jsep",
+    "headSha": "b6f8942d8c44cbfd1f66ceef01ad856308d03d18",
+    "runs": [
+      {
+        "runId": 44327263273,
+        "headSha": "b6f8942d8c44cbfd1f66ceef01ad856308d03d18",
+        "runtimeFamily": "jsep",
+        "scope": "original-pinned-segformer-real-model-owner-original-2d-v4",
+        "originalSourceLocked": true,
+        "publicLicensedPhoto": true,
+        "nativeBrowser": true,
+        "ownerExplicitApproval": true,
+        "privateOriginalBackupV4": true,
+        "originalCardPositiveAssertion": true,
+        "noAutoSaveOnError": true,
+        "webkit": {
+          "attempts": 32,
+          "passed": 31,
+          "failed": 1
+        },
+        "chromium": {
+          "attempts": 8,
+          "passed": 8,
+          "failed": 0
+        },
+        "genuineWebkitFailures": [
+          "runtime-memory"
+        ],
+        "runConclusion": "failure"
+      },
+      {
+        "runId": 44327280559,
+        "headSha": "b6f8942d8c44cbfd1f66ceef01ad856308d03d18",
+        "runtimeFamily": "jsep",
+        "scope": "original-pinned-segformer-real-model-owner-original-2d-v4",
+        "originalSourceLocked": true,
+        "publicLicensedPhoto": true,
+        "nativeBrowser": true,
+        "ownerExplicitApproval": true,
+        "privateOriginalBackupV4": true,
+        "originalCardPositiveAssertion": true,
+        "noAutoSaveOnError": true,
+        "webkit": {
+          "attempts": 32,
+          "passed": 29,
+          "failed": 3
+        },
+        "chromium": {
+          "attempts": 8,
+          "passed": 8,
+          "failed": 0
+        },
+        "genuineWebkitFailures": [
+          "runtime-memory",
+          "runtime-memory",
+          "session-hang"
+        ],
+        "runConclusion": "failure"
+      }
+    ]
+  },
+  "matchedCpuOnly": {
+    "runtimeFamily": "non-jsep-cpu",
+    "headSha": "6c69e02b71a3e0ada8f13f5017156da7cfc4696a",
+    "runs": [
+      {
+        "runId": 44388723825,
+        "headSha": "6c69e02b71a3e0ada8f13f5017156da7cfc4696a",
+        "runtimeFamily": "non-jsep-cpu",
+        "scope": "original-pinned-segformer-real-model-owner-original-2d-v4",
+        "originalSourceLocked": true,
+        "publicLicensedPhoto": true,
+        "nativeBrowser": true,
+        "ownerExplicitApproval": true,
+        "privateOriginalBackupV4": true,
+        "originalCardPositiveAssertion": true,
+        "noAutoSaveOnError": true,
+        "webkit": {
+          "attempts": 24,
+          "passed": 24,
+          "failed": 0
+        },
+        "chromium": {
+          "attempts": 12,
+          "passed": 12,
+          "failed": 0
+        },
+        "genuineWebkitFailures": [],
+        "runConclusion": "success"
+      },
+      {
+        "runId": 44388735330,
+        "headSha": "6c69e02b71a3e0ada8f13f5017156da7cfc4696a",
+        "runtimeFamily": "non-jsep-cpu",
+        "scope": "original-pinned-segformer-real-model-owner-original-2d-v4",
+        "originalSourceLocked": true,
+        "publicLicensedPhoto": true,
+        "nativeBrowser": true,
+        "ownerExplicitApproval": true,
+        "privateOriginalBackupV4": true,
+        "originalCardPositiveAssertion": true,
+        "noAutoSaveOnError": true,
+        "webkit": {
+          "attempts": 24,
+          "passed": 22,
+          "failed": 2
+        },
+        "chromium": {
+          "attempts": 12,
+          "passed": 12,
+          "failed": 0
+        },
+        "genuineWebkitFailures": [
+          "runtime-other",
+          "runtime-memory"
+        ],
+        "runConclusion": "failure"
+      }
+    ]
+  },
+  "references": [
+    "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/44327263273",
+    "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/44327280559",
+    "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/44388723825",
+    "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/44388735330"
+  ],
+  "limitations": "GitHub job and browser receipts independently audited; static allowlisted summary; no authenticated live account, no physical phone, no causal RED-before/GREEN-after proven."
+}
