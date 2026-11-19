@@ -81,7 +81,9 @@ test('same actual model 307 root and original model SHA body succeeds but remain
  assert.equal(r.originalModelNetworkGate,'PARTIAL');
  assert.equal(r.originalJsepNetworkGate,'OBSERVED');
  assert.equal(r.sourceEvidenceGate,'BLOCKED');
+ assert.equal(r.originalModelCanonicalBodies,1);
  assert.equal(r.nativeLoadedOnnxSHA256,null);
+ assert.equal(r.nativeRuntimeIdentityAttested,false);
  assert.equal(r.nativeCompiledJsepSHA256,null);
  assert.equal(r.releaseAuthorized,false);
 });
@@ -128,6 +130,7 @@ test('Chromium unreadable JSEP/ONNX bodies and normal model redirect remain PART
  assert.equal(r.originalModelNetworkGate,'PARTIAL');
  assert.equal(r.originalJsepNetworkGate,'PARTIAL');
  assert.equal(r.redirectChainGate,'LINKED');
+ assert.equal(r.originalModelCanonicalBodies,0);
  assert.equal(r.sourceEvidenceGate,'BLOCKED');
 });
 test('model hard HTTP error mixed with original body never promotes to chain PASS',()=>{
