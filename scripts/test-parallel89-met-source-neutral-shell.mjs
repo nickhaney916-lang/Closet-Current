@@ -47,7 +47,7 @@ for(let v=0;v<shell.positions.length/6;v++){
  assert.equal(shell.positions[v*3+0],shell.positions[(v+shell.positions.length/6)*3+0]);
  assert.equal(shell.positions[v*3+1],shell.positions[(v+shell.positions.length/6)*3+1]);
  assert.equal(shell.positions[v*3+2],0);
- assert.equal(shell.positions[(v+shell.positions.length/6)*3+2],-.02);
+ assert.equal(shell.positions[(v+shell.positions.length/6)*3+2],Math.fround(-.02));
  const rearUV=(v+shell.positions.length/6)*2;
  assert.equal(shell.uv[rearUV],0);
  assert.equal(shell.uv[rearUV+1],0);
