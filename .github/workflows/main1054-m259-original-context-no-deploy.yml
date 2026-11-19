@@ -1,0 +1,96 @@
+name: MAIN1054 M259 original ONNX JSEP context network witness NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m259-original-context-resource-observation-HOLD]
+  pull_request:
+    branches: [research/main1054-m258-evidence-review-fix-HOLD]
+permissions:
+  contents: read
+jobs:
+  source-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin unchanged original M258 donor and prohibit any product edits
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          PARENT=4e00e78abfe6484188b9c803d5257506529b1dd8
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          git merge-base --is-ancestor "$PARENT" HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/main1054/m259-original-context-network.mjs|tests/main1054-m259-original-context-network.test.mjs|.github/workflows/main1054-m259-original-context-no-deploy.yml) ;;
+              *) echo "M259 unexpected change: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$PARENT" HEAD -- public/ scripts/ supabase/ benchmark/ research/parallel105/ research/main1054/m257-real-runner-evidence.mjs
+          node --check research/main1054/m259-original-context-network.mjs
+          node --test tests/main1054-m259-original-context-network.test.mjs
+      - name: Install locked test-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: PWA build and all inherited privacy backup source tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+
+  original-network:
+    needs: source-node
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: 390
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify source-pinned genuine original P94 browser and install no-deploy dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node research/main1054/m259-original-context-network.mjs prepare
+          node --check scripts/.m259-original-context-observation.mjs
+      - name: Run actual original model browser with context-only binary observation
+        shell: bash
+        run: |
+          set +e
+          node scripts/.m259-original-context-observation.mjs 2>&1 | tee m259-original.log
+          model_exit="${PIPESTATUS[0]}"
+          set -e
+          node research/main1054/m259-original-context-network.mjs verify m259-original.log
+          test "$model_exit" -eq 0
