@@ -3,7 +3,7 @@ on:
   push:
     branches: [research/main1054-m266-merge-http-truth-with-fresh-cohort-HOLD]
   pull_request:
-    branches: [research/main1054-m265-original-jsep-http-truth-HOLD]
+    branches: [research/main1054-m265-original-jsep-http-trust-HOLD]
 permissions:
   contents: read
 jobs:
