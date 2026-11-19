@@ -134,3 +134,55 @@ test('angular padding is added ONCE per true vertex, not repeatedly per three fa
  assert.equal(x.fullAllOriginalFrontAndBodyAngularBroadphaseCompleted,true);
  assert.equal(x.consumer3DAdmitted,false);
 });
+
+test('unmeasured depth interval triggers REAL original indexed contact refusal',()=>{
+ const x=evaluate({...config(),sourceFrontDepthShiftIntervalRigUnits:[-3,0]});
+ assert.equal(x.decision,'BLOCKED_ACTUAL_TRUE_ORIGINAL_DISCRETE_CONTACT');
+ assert.equal(x.witness.sourceDepthShiftRigUnits,-3);
+ assert.equal(x.witness.transformedOriginalSourceCopyOnly,true);
+ assert.equal(x.depthIntervalIsUnmeasuredCounterfactual,true);
+ assert.equal(x.consumer3DAdmitted,false);
+ assert.equal(x.familyAlpha,'HOLD');
+});
+test('genuine between-candidate-depth contact remains unresolved and BLOCKED',()=>{
+ const x=evaluate({...config(),
+  sourceFrontDepthShiftIntervalRigUnits:[-3.05,-2.96]});
+ assert.equal(x.decision,'BLOCKED_UNRESOLVED_FULL_INDEXED_ANGULAR_CONTACT');
+ assert.equal(x.overlappingOriginalAngularEnvelopes,1);
+ assert.equal(x.fullAllOriginalFrontAndBodyAngularBroadphaseCompleted,true);
+ assert.equal(x.consumer3DAdmitted,false);
+});
+test('all-face angular bounds can exclude a small uncalibrated shifted depth RANGE',()=>{
+ const x=evaluate({...config(),
+  sourceFrontDepthShiftIntervalRigUnits:[-2.95,-2.85]});
+ assert.equal(x.decision,'RESEARCH_ONLY_FULL_INDEXED_ANGULAR_ENVELOPES_DISJOINT');
+ assert.equal(x.fullAllOriginalFrontAndBodyAngularBroadphaseCompleted,true);
+ assert.deepEqual(x.researchSourceFrontDepthIntervalRigUnits,[-2.95,-2.85]);
+ assert.equal(x.depthIntervalIsUnmeasuredCounterfactual,true);
+ assert.equal(x.physicallyCalibratedSourceFit,false);
+ assert.equal(x.consumer3DAdmitted,false);
+});
+test('invalid or unbounded pseudo-camera calibration is rejected, not normalised',()=>{
+ for(const v of [null,{},[-5,0],[0,4],[.2,-.2],
+  [NaN,0],[0,Infinity],[0],['0',0],[],[0,0,0]]){
+  const out=evaluate({...config(),sourceFrontDepthShiftIntervalRigUnits:v});
+  assert.equal(out.decision,'BLOCKED_UNVERIFIED_SOURCE_DEPTH_INTERVAL',
+   'bad source interval must not be coerced '+String(v));
+  assert.equal(out.consumer3DAdmitted,false);
+ }
+});
+test('source original front and body pose buffers do not change after varied depth probes',()=>{
+ const input=config();
+ const frozenF=input.frontPoses.map(x=>Array.from(x)),
+  frozenB=input.bodyPoses.map(x=>Array.from(x));
+ const x=evaluate({...input,sourceFrontDepthShiftIntervalRigUnits:[-3.05,-2.96]});
+ assert.equal(x.consumer3DAdmitted,false);
+ assert.deepEqual(input.frontPoses.map(x=>Array.from(x)),frozenF);
+ assert.deepEqual(input.bodyPoses.map(x=>Array.from(x)),frozenB);
+});
+test('depth-range boundary cannot smuggle sampled source instead of full original faces',()=>{
+ const x=evaluate({...config(),expectedFrontFaces:35262,
+  sourceFrontDepthShiftIntervalRigUnits:[-3,0]});
+ assert.equal(x.decision,'BLOCKED_INCOMPLETE_ORIGINAL_INDEXED_SCOPE');
+ assert.equal(x.consumer3DAdmitted,false);
+});
