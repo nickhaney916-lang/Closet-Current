@@ -324,6 +324,139 @@ function sampleOriginalBodyTriangleSurfaceGap(x){
   physicalCollisionOrSweptClearanceEstablished:false
  };
 }
+
+/*
+ * Strict, conservative edge-through-triangle detector: SIX finite directed
+ * edges, both directions. A positive means sampled ORIGINAL FRONT triangle
+ * and genuine posed BODY triangle intersect non-coplanarly. No positive does
+ * NOT mean collision-free: coplanar overlap, touching, enclosed surfaces,
+ * unsampled faces and between-pose trajectories remain UNKNOWN.
+ *
+ * In particular this is not a garment/body certified BVH collision solver.
+ */
+const crossingEPS=1e-8;
+function strictSegmentIntoTriangle(a,b,p,q,r){
+ const direction=b.clone().sub(a),edge1=q.clone().sub(p),
+  edge2=r.clone().sub(p),cross=direction.clone().cross(edge2);
+ const det=edge1.dot(cross);
+ if(!Number.isFinite(det)||Math.abs(det)<crossingEPS)return false;
+ const inv=1/det,s=a.clone().sub(p),u=s.dot(cross)*inv;
+ if(!(u>crossingEPS&&u<1-crossingEPS))return false;
+ const v=direction.clone().cross(s).dot(edge2)*inv;
+ if(!(v>crossingEPS&&u+v<1-crossingEPS))return false;
+ const t=edge2.dot(direction.clone().cross(s))*inv;
+ return Number.isFinite(t)&&t>crossingEPS&&t<1-crossingEPS;
+}
+function strictTwoTriangleCrossing(a,b){
+ const edges=[[0,1],[1,2],[2,0]];
+ return edges.some(([i,j])=>strictSegmentIntoTriangle(
+   a[i],a[j],b[0],b[1],b[2]))||
+  edges.some(([i,j])=>strictSegmentIntoTriangle(
+   b[i],b[j],a[0],a[1],a[2]));
+}
+function controlledCrossingKernelProbe(){
+ const v=(x,y,z)=>new THREE.Vector3(x,y,z);
+ const a=[v(-1,-1,0),v(1,-1,0),v(0,1,0)];
+ const crossing=[v(0,-.3,-1),v(0,.3,1),v(0,.3,-1)];
+ const separated=crossing.map(p=>p.clone().add(v(4,0,0)));
+ const coplanar=[v(-.5,-.5,0),v(.5,-.5,0),v(0,.5,0)];
+ return {
+  actualStrictCrossingDetected:strictTwoTriangleCrossing(a,crossing),
+  separatedTriangleRejected:!strictTwoTriangleCrossing(a,separated),
+  coplanarClaimExplicitlyUnresolved:!strictTwoTriangleCrossing(a,coplanar),
+  syntheticControlOnlyNotGenuineBodyCollisionEvidence:true
+ };
+}
+function sampledOriginalFrontBodyFaceCrossings(x){
+ x.model.root.updateMatrixWorld(true);x.body.skeleton.update();
+ x.body.updateWorldMatrix(true,false);x.mesh.updateWorldMatrix(true,false);
+ const controls=controlledCrossingKernelProbe();
+ invariant(controls.actualStrictCrossingDetected&&
+  controls.separatedTriangleRejected&&
+  controls.coplanarClaimExplicitlyUnresolved,
+  'sampled-original-body-face-crossing-kernel-contradicted-by-controls');
+ const originalBody=x.body.geometry,bodyIndex=originalBody.getIndex(),
+  originalBodyFaceCount=Math.floor((bodyIndex?bodyIndex.count:
+   originalBody.getAttribute('position').count)/3);
+ const frontStart=range.sourcePhotoFront.start,
+  frontCount=range.sourcePhotoFront.count,
+  photoFrontFaceCount=frontCount/3;
+ invariant(Number.isSafeInteger(photoFrontFaceCount)&&photoFrontFaceCount>=32&&
+  frontStart===0&&frontCount<=faces.length,
+  'authentic-original-photo-front-index-range-invalid');
+ invariant(originalBodyFaceCount>=128,'original-body-face-index-range-invalid');
+ const nBody=Math.min(2048,originalBodyFaceCount),
+  nFront=Math.min(192,photoFrontFaceCount);
+ const bodyFaces=[];
+ for(let j=0;j<nBody;j++){
+  const index=Math.floor((j+.5)*originalBodyFaceCount/nBody),offset=3*index;
+  const vi=k=>bodyIndex?bodyIndex.getX(offset+k):offset+k;
+  const triangle=[0,1,2].map(k=>x.body.applyBoneTransform(
+   vi(k),new THREE.Vector3()).applyMatrix4(x.body.matrixWorld));
+  invariant(triangle.every(p=>p.toArray().every(Number.isFinite)),
+   'actual-posed-body-triangle-nonfinite');
+  bodyFaces.push({triangle,box:new THREE.Box3().setFromPoints(triangle)});
+ }
+ let bboxCandidates=0,strictCrossings=0;
+ for(let j=0;j<nFront;j++){
+  const index=Math.floor((j+.5)*photoFrontFaceCount/nFront),
+   offset=frontStart+3*index;
+  const triangle=[0,1,2].map(k=>{
+   const originalVertex=faces[offset+k];
+   invariant(originalVertex<x.sourceFrontN,
+    'unverified-original-photo-front-vertex-index');
+   return actualSkinnedPhotoPoint(x,originalVertex);
+  });
+  invariant(triangle.every(p=>p.toArray().every(Number.isFinite)),
+   'actual-original-front-posed-triangle-nonfinite');
+  const box=new THREE.Box3().setFromPoints(triangle);
+  for(const b of bodyFaces){
+   if(!box.intersectsBox(b.box))continue;
+   bboxCandidates++;
+   if(strictTwoTriangleCrossing(triangle,b.triangle))strictCrossings++;
+  }
+ }
+ return {
+  trueLicensedBodyRig:x.kind,
+  originalPublicPhotoFrontOnly:true,
+  actualOriginalBodyFacesSampled:nBody,
+  actualOriginalFrontFacesSampled:nFront,
+  overlappingFaceAxisAlignedBoundsPairs:bboxCandidates,
+  strictPositiveNonCoplanarFaceCrossingPairs:strictCrossings,
+  controlledCrossingKernelPositiveAndNegativePassed:true,
+  countOnlyDiscreteSampledFaces:true,
+  coplanarTouchingEnclosedAndUnsampledUnknown:true,
+  physicallyCalibratedBodyGarmentSize:false,
+  fullBodyClothIntersectionCoverage:false,
+  continuousSweptClothContactEstablished:false,
+  collisionFreeFitProved:false,
+  consumer3DAdmitted:false,originalPhoto2DFallbackRequired:true,
+  familyAlpha:'HOLD'
+ };
+}
+function sampleFiveAuthenticSpinePoseCrossings(){
+ const x=sourceSkinResearch;
+ invariant(x?.mesh?.isSkinnedMesh&&x.mesh.skeleton===x.body.skeleton,
+  'no-source-bound-real-body-discrete-pose-trial');
+ const originalCurrent=x.posedBone.quaternion.clone();
+ const degrees=[-12,-6,0,6,12];
+ try{
+  const samples=degrees.map(degrees=>{
+   x.posedBone.quaternion.copy(x.originalPose);
+   x.posedBone.rotateZ(degrees*Math.PI/180);
+   return {degrees,actualPosePhotoFrontBodyCrossings:
+    sampledOriginalFrontBodyFaceCrossings(x)};
+  });
+  return {samples,actualOriginalLicensed163BoneRig:x.kind,
+   discretePosesOnly:true,continuousCollisionSafetyUnproved:true,
+   arbitraryImageToAnatomyRegistration:true,consumer3DAdmitted:false,
+   familyAlpha:'HOLD'};
+ }finally{
+  x.posedBone.quaternion.copy(originalCurrent);
+  x.model.root.updateMatrixWorld(true);x.body.skeleton.update();
+ }
+}
+
 function sourceSkinProvenanceUnchanged(){
  const a=geometry.getAttribute('position').array,
   u=geometry.getAttribute('uv').array;
@@ -462,6 +595,7 @@ function setSourceSkinnedMotionTrialPose(stage){
  const now=x.samples.map(i=>actualSkinnedPhotoPoint(x,i));
  const deltas=now.map((p,i)=>p.distanceTo(x.rest[i]));
  const actualBodySurfaceGap=sampleOriginalBodyTriangleSurfaceGap(x);
+ const actualFaceCrossings=sampledOriginalFrontBodyFaceCrossings(x);
  sourceSkinProvenanceUnchanged();assertModelUnchanged(x.model);
  angle=0;render();x.lastPose=stage;
  return {
@@ -473,6 +607,7 @@ function setSourceSkinnedMotionTrialPose(stage){
   threeOriginalPhotoVertexDisplacements:deltas.map(round6),
   maximumMeasuredOriginalPhotoSourceVertexDisplacement:round6(Math.max(...deltas)),
   originalRigBodySurfaceGapResearchOnly:actualBodySurfaceGap,
+  originalRigPhotoFrontBodyFaceCrossingResearchOnly:actualFaceCrossings,
   actualMeasuredBodyClothIntersection:false,
   physicalContactOrDrapeCleared:false,
   owner3DApproved:false,consumer3DAdmitted:false,
@@ -481,6 +616,8 @@ function setSourceSkinnedMotionTrialPose(stage){
 }
 window.__M2RealRigPhotoTrial={
  select,startSourceSkinnedMotionTrial,setSourceSkinnedMotionTrialPose,
+ getControlledTriangleCrossingKernelProof:controlledCrossingKernelProbe,
+ sampleFiveAuthenticSpinePoseCrossings,
  getProof:()=>proof,
  getFlags:()=>({
   ready:!!proof,rig:proof?.actualLicensedRig||null,
