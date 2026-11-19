@@ -32,8 +32,12 @@ const source=extract('function savePiece(', 'function node(')+
   .replace('function persistDraft(){','function realPersistDraft88(){');
 // Browser-only exception witness: never silently turn a rejected review into
 // a 30s timeout or a fake success. The actual consumer source stays unchanged.
-const checkedSource=source.replace('}catch{\\n  saveInFlight=false;',
- '}catch(error){window.p846LastSaveError=String(error?.message||error);\\n  saveInFlight=false;');
+const checkedSource=source.replace(
+ /}catch\{\n  saveInFlight=false;/,
+ `}catch(error){window.p846LastSaveError=String(error?.message||error);
+  saveInFlight=false;`
+);
+if(checkedSource===source)throw Error('P846 native save error handler changed');
 const harness=[
  "const categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];",
  "let items=[],batch=[],stream=null,cameraOpening=false,busy=false,localReady=true,session=0;",
