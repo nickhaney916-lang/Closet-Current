@@ -250,3 +250,23 @@ test('ordinary already-saved whole-frame image is a peer of a newly cropped orig
  assert.equal(lease.exactPhotoPeers88[0].id,old.id);
  assert.equal(c.reviewedDistinctPhotoReceiptValid88({...next},lease),false);
 });
+
+
+test('owner duplicate review conflict guidance blocks blind retry without overstating custody',()=>{
+ const c={Error,Array,JSON,String};vm.createContext(c);vm.runInContext(native,c);
+ const duplicate=c.ownerReviewedSaveConflict88(Error('P88_DURABLE_REVIEWED_DUPLICATE_CHANGED'));
+ assert.match(duplicate,/same complete original/);
+ assert.match(duplicate,/still unsaved/);
+ assert.match(duplicate,/Close Adjust, refresh/);
+ const mask=c.ownerReviewedSaveConflict88(Error('P88_DURABLE_PHYSICAL_UNIT_ALREADY_SAVED'));
+ assert.match(mask,/physical garment mask/);
+ assert.match(mask,/still unsaved/);
+ const pending=c.ownerReviewedSaveConflict88(Error('P88_DRAFT_STORAGE_CHANGED'));
+ assert.match(pending,/unsaved photos/);
+ assert.match(pending,/refresh your closet/);
+ const source=c.ownerReviewedSaveConflict88(Error('P88_SOURCE_DRAFT_STORAGE_CHANGED'));
+ assert.match(source,/unsaved photos/);
+ assert.equal(c.ownerReviewedSaveConflict88(Error('normal-network-offline')),null,
+  'ordinary failures must not claim cross-tab source collision');
+ assert.equal(c.ownerReviewedSaveConflict88(null),null);
+});
