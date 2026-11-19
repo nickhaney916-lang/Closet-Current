@@ -88,6 +88,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$M253_ENGINE" = "${{ matrix.engine }}"
           test "$M253_WIDTH" = "${{ matrix.width }}"
           test "$M253_COUNT" = "${{ matrix.count }}"
