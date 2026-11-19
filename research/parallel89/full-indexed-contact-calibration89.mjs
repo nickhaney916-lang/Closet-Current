@@ -142,6 +142,10 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{
  maxPairs=50000000,stopAtFirstVerifiedContact=false}={}){
  if(!Array.isArray(bodyFaces)||!Array.isArray(frontFaces)||!bodyFaces.length||!frontFaces.length)
   throw Error('real-original-full-face-counts-required');
+ if(!Number.isSafeInteger(maxPairs)||maxPairs<1)
+  throw Error('full-indexed-contact-invalid-resource-budget');
+ if(!bodyFaces.every(allFinite)||!frontFaces.every(allFinite))
+  throw Error('full-indexed-contact-original-face-nonfinite');
  // This checker may audit actual full geometry only. No skip/stride/cap of
  // source faces or body submeshes: a truncated evaluation is FAIL, not PASS.
  if(bodyFaces.length>150000||frontFaces.length>150000)

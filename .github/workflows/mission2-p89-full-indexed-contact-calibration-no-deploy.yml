@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - research/mission2-p89-full-face-contact-calibration-20261119-HOLD
+      - research/mission2-p89-complete-face-contact-budget-repair-20261119-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -29,7 +30,7 @@ jobs:
           git diff --exit-code a3a5fbab99ae45d1a80568a32d30a59151965e90 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
           while IFS= read -r p; do
             case "$p" in
-              research/parallel89/full-indexed-contact-calibration89.mjs|research/parallel89/met-original-163bone-uncalibrated-registration89.mjs|scripts/test-parallel89-met-real-163bone-anatomy-study.mjs|.github/workflows/mission2-p89-full-indexed-contact-calibration-no-deploy.yml) ;;
+              research/parallel89/full-indexed-contact-calibration89.mjs|research/parallel89/met-original-163bone-uncalibrated-registration89.mjs|scripts/test-parallel89-met-real-163bone-anatomy-study.mjs|.github/workflows/mission2-p89-full-indexed-contact-calibration-no-deploy.yml|tests/m2-original-indexed-contact-failclosed.test.mjs) ;;
               *) echo "Wrong protected/non-M2 path: $p"; exit 1 ;;
             esac
           done < <(git diff --name-only a3a5fbab99ae45d1a80568a32d30a59151965e90 HEAD)
@@ -136,3 +137,27 @@ jobs:
           path: benchmark/parallel89-met-real-anatomy-uncalibrated-HOLD/
           retention-days: 14
           if-no-files-found: warn
+
+  adversarial-original-face-geometry-and-budget-failclosed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Frozen parent original authentic-triangle safety scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor fa16e5290142fef8083ebea934e9c3e86a1ec147 HEAD
+          git diff --exit-code fa16e5290142fef8083ebea934e9c3e86a1ec147 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          node --check research/parallel89/full-indexed-contact-calibration89.mjs
+          node --check tests/m2-original-indexed-contact-failclosed.test.mjs
+      - name: Negative finite-original-source geometry and unsafe budget refusal
+        run: node --test tests/m2-original-indexed-contact-failclosed.test.mjs
+      - name: No consumer production or family data mutation
+        run: git diff --exit-code fa16e5290142fef8083ebea934e9c3e86a1ec147 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
