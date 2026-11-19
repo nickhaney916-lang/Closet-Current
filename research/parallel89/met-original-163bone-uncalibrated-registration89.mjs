@@ -14,6 +14,8 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {evaluateFullIndexedContact,controlledFullContactFixtures}
  from './full-indexed-contact-calibration89.mjs';
+import {auditOriginalContactNumerics,controlledOriginalNumericReasonFixtures}
+ from './original-contact-numeric-diagnostics89.mjs';
 
 if(!['127.0.0.1','localhost','[::1]'].includes(location.hostname))
  throw Error('source-anatomy-research-loopback-required');
@@ -268,12 +270,31 @@ function clearSourceSkinResearchTrial(){
  sourceSkinResearch=null;
  if(!imageMesh.parent)scene.add(imageMesh);
 }
+/*
+ * IMPORTANT native THREE contract: applyBoneTransform(index, vector)
+ * requires the ORIGINAL local vertex position as vector. Passing an empty
+ * Vector3 silently collapses true source/front and true anatomical faces
+ * into bone-weighted images of the origin (2026-11-19 original failure).
+ * No original attributes are modified; only a copy is transformed.
+ */
+function originalSkinnedVertexWorld(mesh,index){
+ const attr=mesh.geometry.getAttribute('position');
+ invariant(mesh.isSkinnedMesh&&attr&&Number.isSafeInteger(index)&&
+  index>=0&&index<attr.count,
+  'original-skinned-local-vertex-not-addressable');
+ const realLocal=new THREE.Vector3().fromBufferAttribute(attr,index);
+ invariant(realLocal.toArray().every(Number.isFinite),
+  'original-source-local-vertex-not-finite');
+ const posed=mesh.applyBoneTransform(index,realLocal);
+ invariant(posed.toArray().every(Number.isFinite),
+  'actual-original-skinned-vertex-result-not-finite');
+ return posed.applyMatrix4(mesh.matrixWorld);
+}
 const actualSkinnedPhotoPoint=(x,index)=>{
  x.model.root.updateMatrixWorld(true);
  x.body.skeleton.update();
  x.mesh.updateWorldMatrix(true,false);
- const p=x.mesh.applyBoneTransform(index,new THREE.Vector3());
- return p.applyMatrix4(x.mesh.matrixWorld);
+ return originalSkinnedVertexWorld(x.mesh,index);
 };
 // Rebuild a bounded sample of actual original *skinned body triangles* in each
 // genuine pose. Closest-point distances are UNSIGNED and sampled, not proof
@@ -292,8 +313,7 @@ function sampleOriginalBodyTriangleSurfaceGap(x){
  for(let j=0;j<nBody;j++){
   const face=Math.floor((j+.5)*nTriangles/nBody),offset=face*3;
   const vi=k=>bodyIndices?bodyIndices.getX(offset+k):offset+k;
-  const p=k=>x.body.applyBoneTransform(vi(k),new THREE.Vector3())
-   .applyMatrix4(x.body.matrixWorld);
+  const p=k=>originalSkinnedVertexWorld(x.body,vi(k));
   triangles.push(new THREE.Triangle(p(0),p(1),p(2)));
  }
  const target=new THREE.Vector3(),gaps=[];
@@ -394,8 +414,8 @@ function sampledOriginalFrontBodyFaceCrossings(x){
  for(let j=0;j<nBody;j++){
   const index=Math.floor((j+.5)*originalBodyFaceCount/nBody),offset=3*index;
   const vi=k=>bodyIndex?bodyIndex.getX(offset+k):offset+k;
-  const triangle=[0,1,2].map(k=>x.body.applyBoneTransform(
-   vi(k),new THREE.Vector3()).applyMatrix4(x.body.matrixWorld));
+  const triangle=[0,1,2].map(k=>
+   originalSkinnedVertexWorld(x.body,vi(k)));
   invariant(triangle.every(p=>p.toArray().every(Number.isFinite)),
    'actual-posed-body-triangle-nonfinite');
   bodyFaces.push({triangle,box:new THREE.Box3().setFromPoints(triangle)});
@@ -516,8 +536,7 @@ function fullActualSkinnedIndexedSourceContact(x){
    invariant(Number.isSafeInteger(i)&&i>=0&&i<original.count,
     'original-indexed-face-vertex-out-of-bounds');
    if(!cache[i]){
-    const p=m.applyBoneTransform(i,new THREE.Vector3())
-     .applyMatrix4(m.matrixWorld);
+    const p=originalSkinnedVertexWorld(m,i);
     invariant(p.toArray().every(Number.isFinite),
      'original-skinned-full-surface-has-nonfinite-vertex');
     cache[i]=p.toArray();
@@ -546,6 +565,40 @@ function fullActualSkinnedIndexedSourceContact(x){
  const indexed=new THREE.BufferAttribute(faces,1);
  const allPhotoFront=posedTriangleArray(x.mesh,indexed,
   range.sourcePhotoFront.start,range.sourcePhotoFront.count);
+ // Diagnose actual source and real licensed body per-face numerical reasons
+ // WITHOUT claiming that these bounded AABB pairs certify full contact.
+ const numericalRootCause=auditOriginalContactNumerics(bodyFaces,allPhotoFront,{
+  maxObservedPairs:512,prefixFront:12,distributedFront:12});
+ // Same exact original real body/source/pose, two candidate algorithms:
+ // the old empty-vector one MUST differ from actual original local vertices.
+ // Proven numerically rather than asserting a hardcoded pass marker.
+ const oldZeroSeedDistances=[0,Math.floor(x.sourceFrontN/2),
+  x.sourceFrontN-1].map(i=>{
+  const correct=originalSkinnedVertexWorld(x.mesh,i),
+   incorrect=x.mesh.applyBoneTransform(i,new THREE.Vector3())
+    .applyMatrix4(x.mesh.matrixWorld);
+  return correct.distanceTo(incorrect);
+ });
+ const maximumZeroSeedErrorRigUnits=Math.max(...oldZeroSeedDistances);
+ invariant(Number.isFinite(maximumZeroSeedErrorRigUnits)&&
+  maximumZeroSeedErrorRigUnits>.0001,
+  'actual-original-coordinate-versus-zero-seed-error-not-demonstrated');
+ // Exact pinned source and original male/female GLBs have strictly
+ // positive original posed triangle areas after restoring TRUE local XYZ.
+ // Failing this check must preserve the genuine browser RED; never accept
+ // zero-seeded THREE skinning because a no-contact audit returned PASS.
+ invariant(numericalRootCause.originalFrontFaceProfile.doubleAreaBelowOriginalThreshold===0&&
+  numericalRootCause.originalBodyFaceProfile.doubleAreaBelowOriginalThreshold===0&&
+  numericalRootCause.originalFrontFaceProfile.exactZeroAreaFaces===0&&
+  numericalRootCause.originalBodyFaceProfile.exactZeroAreaFaces===0,
+  'original-source-or-licensed-body-geometry-still-degenerate-after-real-position-seeding');
+ invariant(numericalRootCause.originalFrontFaceProfile.actualIndexedFaces===
+  allPhotoFront.length&&
+  numericalRootCause.originalBodyFaceProfile.actualIndexedFaces===
+  bodyFaces.length&&
+  numericalRootCause.consumer3DAdmitted===false&&
+  numericalRootCause.diagnosticSamplesOnly===true,
+  'authentic-original-numeric-root-trace-not-attested');
  // A responsive original-source browser must not spend minutes enumerating
  // every non-contact pair in already uncalibrated, unapproved geometry.
  // The strict budget is a FAIL-CLOSED outcome, never a fit certificate.
@@ -564,7 +617,15 @@ function fullActualSkinnedIndexedSourceContact(x){
     result.consumer3DAdmitted===false)),
   'full-original-indexed-collision-gate-has-neither-complete-negative-audit-nor-positive-rejection');
  return {
-  ...result,originalBodySkinnedMeshComponentsAudited:bodyMeshCoverage.length,
+  ...result,
+  originalSkinnedWorldPointsSeededFromActualGeometry:true,
+  actualSourceWorldPointErrorFromZeroSeedMeasuredRigUnits:
+   round6(maximumZeroSeedErrorRigUnits),
+  wrongZeroSeedDemonstrablyDifferentFromRealOriginalCoordinates:true,
+  allActualOriginalSkinnedFrontAndBodyFaceAreasAboveNumericThreshold:true,
+  researchPhotoFrontFloatSpaceOnlyNotPhysicallyFitted:true,
+  realOriginalFaceNumericRootCauseResearchOnly:numericalRootCause,
+  originalBodySkinnedMeshComponentsAudited:bodyMeshCoverage.length,
   originalBodyComponentTriangleCounts:bodyMeshCoverage.map(x=>x.actualIndexedTrianglesAudited),
   originalPhotoSourceJPEGByteSHA256:payload.originalJPEGByteSHA256,
   sourceOriginalRGBSHA256:required.sourceRGB,
@@ -738,6 +799,7 @@ window.__M2RealRigPhotoTrial={
  select,startSourceSkinnedMotionTrial,setSourceSkinnedMotionTrialPose,
  getControlledTriangleCrossingKernelProof:controlledCrossingKernelProbe,
  getFullContactControlProof:controlledFullContactFixtures,
+ getContactNumericControlProof:controlledOriginalNumericReasonFixtures,
  sampleFiveAuthenticSpinePoseCrossings,
  getProof:()=>proof,
  getFlags:()=>({

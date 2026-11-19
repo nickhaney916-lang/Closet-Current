@@ -1,0 +1,139 @@
+name: "M2 actual original face indeterminate numerical root-cause NO DEPLOY HOLD"
+on:
+  push:
+    branches:
+      - research/mission2-p89-contact-numeric-root-cause-20261119-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  authenticate-original-photo-and-actual-licensed-anatomy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Immutable genuine original rig/pose SHA plus EXACT 3 scoped research paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 56231ca92dc38a59a880786998a7df2af4f3d222 HEAD
+          git diff --exit-code 56231ca92dc38a59a880786998a7df2af4f3d222 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          while IFS= read -r p; do
+            case "$p" in
+              research/parallel89/original-contact-numeric-diagnostics89.mjs|research/parallel89/met-original-163bone-uncalibrated-registration89.mjs|tests/m2-original-contact-numeric-diagnostics89.test.mjs|.github/workflows/mission2-p89-numeric-root-cause-no-deploy.yml) ;;
+              *) echo "Wrong protected/non-M2 path: $p"; exit 1 ;;
+            esac
+          done < <(git diff --name-only 56231ca92dc38a59a880786998a7df2af4f3d222 HEAD)
+          node --check research/parallel89/original-contact-numeric-diagnostics89.mjs
+          node --check tests/m2-original-contact-numeric-diagnostics89.test.mjs
+          node --check research/parallel89/met-original-163bone-uncalibrated-registration89.mjs
+          node --check scripts/test-parallel89-met-real-163bone-anatomy-study.mjs
+      - name: Install pinned immutable original source PNG and anatomy test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Genuine institutional original JPEG and full decoded RGB SHA
+        run: node scripts/test-parallel89-met-four-original-photo-silhouettes.mjs
+      - name: Pinned true original public photo foreground masks, never owner-approved
+        run: |
+          python -m venv .m2-met-mask-env
+          .m2-met-mask-env/bin/python -m pip install --no-cache-dir --disable-pip-version-check numpy==1.26.4 opencv-python-headless==4.11.0.86 scipy==1.14.1
+          .m2-met-mask-env/bin/python scripts/test-parallel89-met-four-real-full-masks.py
+      - name: Checkout immutable independent 163bone CC0 rig donor and restore exact original GLBs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .m2-immutable-licensed-body df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.m2-immutable-licensed-body"
+          test "$(git -C .m2-immutable-licensed-body rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          ln -s ../node_modules .m2-immutable-licensed-body/node_modules
+          cd .m2-immutable-licensed-body
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Real original 163-bone and full-photo front 2M blocked pair numerical root cause evidence
+        run: node scripts/test-parallel89-met-real-163bone-anatomy-study.mjs .m2-immutable-licensed-body
+      - name: Original protected app build unchanged
+        run: node scripts/build.mjs
+      - name: Entire inherited original owner/security/photo/backup and M2 no-release tests
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Reconfirm unchanged research parent owner/cloud and original anatomy donor
+        run: |
+          git diff --exit-code 56231ca92dc38a59a880786998a7df2af4f3d222 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          test "$(git -C .m2-immutable-licensed-body rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M2-original-photo-numeric-reasons-rig-hashes-HOLD
+          path: |
+            benchmark/parallel89-met70759-four-photo-research/
+            benchmark/parallel89-met70759-full-alpha-proposals/
+            benchmark/parallel89-met-real-anatomy-uncalibrated-HOLD/
+          retention-days: 7
+          if-no-files-found: error
+
+  genuine-male-female-original-163bone-native-browser:
+    needs: authenticate-original-photo-and-actual-licensed-anatomy
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P89_BROWSER: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact parent and original app/protected owner/hosted source diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 56231ca92dc38a59a880786998a7df2af4f3d222 HEAD
+          git diff --exit-code 56231ca92dc38a59a880786998a7df2af4f3d222 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+      - uses: actions/download-artifact@v4
+        with:
+          name: M2-original-photo-numeric-reasons-rig-hashes-HOLD
+          path: benchmark/
+      - name: Pinned native THREE actual skinned GLB browser and original museum JPEG parser
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 three@0.180.0
+      - name: Immutable original P541 male/female rig models (not an invented humanoid)
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .m2-immutable-licensed-body df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.m2-immutable-licensed-body"
+          test "$(git -C .m2-immutable-licensed-body rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          ln -s ../node_modules .m2-immutable-licensed-body/node_modules
+          cd .m2-immutable-licensed-body
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Real ${{ matrix.engine }} source photo and original anatomical numeric reason-profile at 5 poses
+        run: node scripts/test-parallel89-met-real-163bone-anatomy-study.mjs .m2-immutable-licensed-body
+      - name: Strict no deployment or original model mutation
+        run: |
+          git diff --exit-code 56231ca92dc38a59a880786998a7df2af4f3d222 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          test "$(git -C .m2-immutable-licensed-body rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M2-original-numeric-contact-${{ matrix.engine }}-HOLD
+          path: benchmark/parallel89-met-real-anatomy-uncalibrated-HOLD/
+          retention-days: 14
+          if-no-files-found: warn
