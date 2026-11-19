@@ -129,9 +129,9 @@ test('no positive result without original native pointer/owner receipt',()=>{
  assert.throws(()=>adjudicateProcess(entry+originalPositive,0,meta),/invented/);
 });
 for(const [name,changes,match] of [
- ['wrong original count',{modelLength:15199745,originalFP32ModelLengthMatches:false},/original SegFormer/],
- ['out of bounds model range',{modelRangeWithinLiveMemory:false},/not proven/],
- ['missing model pointer',{modelPointer:null},/original model/],
+ ['wrong original count',{modelLength:15199745,originalFP32ModelLengthMatches:false},/invented/],
+ ['out of bounds model range',{modelRangeWithinLiveMemory:false},/invented/],
+ ['missing model pointer',{modelPointer:null},/invented/],
  ['unknown ABI argc',{argc:2},/argument count/]
 ]){
  test(name,()=>assert.throws(()=>adjudicateProcess(
@@ -141,6 +141,17 @@ test('a true native RED may not be converted to green through a forged owner suc
  const r=adjudicateProcess(entry+red+origRed+originalPositive,1,meta);
  assert.equal(r.originalRealRed,true);
  assert.equal(r.originalJourneyPositive,false);
+ assert.equal(r.releaseAllowed,false);
+});
+test('real native RED with input model outside memory is retained as RED evidence rather than silently dropped',()=>{
+ const broken={...base,modelRangeWithinLiveMemory:false,modelRangeWithinHeapView:false};
+ const r=adjudicateProcess(
+  mk('M279_NATIVE_MODEL_BOUNDS',{phase:'enter',...broken})+
+  mk('M279_NATIVE_MODEL_BOUNDS',{phase:'throw',...broken,exceptionClass:'wasm-bounds',
+    wasmFunctionOffsets:[]})+origRed,1,meta);
+ assert.equal(r.originalRealRed,true);
+ assert.equal(r.entryRangeWithinHeap,false);
+ assert.equal(r.exitRangeWithinHeap,false);
  assert.equal(r.releaseAllowed,false);
 });
 test('no raw stack or original model bytes appear in the sanitized receipt',()=>{
