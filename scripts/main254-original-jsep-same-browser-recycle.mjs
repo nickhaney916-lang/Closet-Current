@@ -77,6 +77,10 @@ export function deriveM254PinnedM251Runner(original){
   "import {spawnSync} from 'node:child_process';\nimport {deriveM254SameBrowserFixture} from './main254-original-jsep-same-browser-recycle.mjs';",
   'real M251 research import');
  s=unique(s,
+  "P94_WIDTH:'390'",
+  "P94_WIDTH:String(process.env.M254_WIDTH||'390')",
+  'real original browser viewport propagation');
+ s=unique(s,
   "const temporary=resolve('scripts/.m251-original-jsep-native-option-browser.mjs');",
   "source=deriveM254SameBrowserFixture(source);\nconst temporary=resolve('scripts/.m254-original-jsep-same-browser-fixture.mjs');",
   'original M251 source derivation');
@@ -146,6 +150,8 @@ export function classifyM254SameBrowser({engine,width,status,signal=null,stdout}
   originalNonzeroOrTimeout:status!==0||!!signal,
   category:pass?'genuine_same_browser_two_original_owner_journeys_pass':
     status===null||signal?'original_browser_terminated_or_timed_out':
+    status===0&&nativeValid&&jsepValid&&ownerValid&&isolationValid?
+     'original_harness_viewport_context_receipt_mismatch':
     'original_model_native_owner_or_session_recycle_red',
   originalCppAllocatorStateRead:false,naturalIntermittentWebkitRootCauseFixed:false,
   noRetries:true,originalShippedWorkerUnchanged:true,
