@@ -146,56 +146,61 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{maxPairs=300000
  if(bodyFaces.length>150000||frontFaces.length>150000)
   throw Error('original-face-scope-exceeds-safe-resource-budget');
  const bodyBoxes=bodyFaces.map(bbox),frontBoxes=frontFaces.map(bbox);
- const all=bodyBoxes.concat(frontBoxes),min=[Infinity,Infinity,Infinity],
-  max=[-Infinity,-Infinity,-Infinity];
- for(const box of all)for(let a=0;a<3;a++){
-  min[a]=Math.min(min[a],box.min[a]);max[a]=Math.max(max[a],box.max[a]);
- }
- // High resolution bounding-box hash limits same-cell false candidate pairs.
- // It does NOT skip a single original body or front face; all original
- // skinned vertices and all exact indexed triangles still participate.
- const shape=[36,56,30],ranges=shape.map((n,a)=>Math.max((max[a]-min[a])/n,EPS*100)),
-  index=(p,a)=>Math.max(0,Math.min(shape[a]-1,Math.floor((p-min[a])/ranges[a]))),
-  key=(i,j,k)=>(i*shape[1]+j)*shape[2]+k,
-  grid=new Array(shape[0]*shape[1]*shape[2]);
- const cells=box=>{
-  const lo=[0,1,2].map(i=>index(box.min[i]-EPS,i)),
-   hi=[0,1,2].map(i=>index(box.max[i]+EPS,i));
-  return {lo,hi};
+ // A genuine bounded-volume hierarchy over EVERY original indexed body face.
+ // Branch union boxes conservatively contain all descendants. Traversing
+ // exact overlapping nodes cannot omit a contact, unlike stride/sampling.
+ const allIndices=Uint32Array.from(bodyFaces,(_,i)=>i);
+ let bvhNodes=0,bvhLeaves=0;
+ const build=ids=>{
+  const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity],
+   cmin=[Infinity,Infinity,Infinity],cmax=[-Infinity,-Infinity,-Infinity];
+  for(const i of ids){
+   const b=bodyBoxes[i];
+   for(let a=0;a<3;a++){
+    lo[a]=Math.min(lo[a],b.min[a]);hi[a]=Math.max(hi[a],b.max[a]);
+    const center=(b.min[a]+b.max[a])*.5;
+    cmin[a]=Math.min(cmin[a],center);cmax[a]=Math.max(cmax[a],center);
+   }
+  }
+  const node={box:{min:lo,max:hi}};bvhNodes++;
+  if(ids.length<=12){node.faces=ids;bvhLeaves++;return node;}
+  let axis=0;
+  for(let a=1;a<3;a++)if(cmax[a]-cmin[a]>cmax[axis]-cmin[axis])axis=a;
+  ids.sort((a,b)=>(bodyBoxes[a].min[axis]+bodyBoxes[a].max[axis])-
+   (bodyBoxes[b].min[axis]+bodyBoxes[b].max[axis]));
+  const mid=Math.floor(ids.length/2);
+  node.left=build(ids.slice(0,mid));node.right=build(ids.slice(mid));
+  return node;
  };
- for(let i=0;i<bodyFaces.length;i++){
-  const {lo,hi}=cells(bodyBoxes[i]);
-  for(let a=lo[0];a<=hi[0];a++)
-   for(let b=lo[1];b<=hi[1];b++)
-    for(let c=lo[2];c<=hi[2];c++){
-     const cell=key(a,b,c);(grid[cell]??=[]).push(i);
-    }
- }
- const used=new Uint32Array(bodyFaces.length),counts={
+ const root=build(allIndices);
+ const counts={
   CROSSING:0,COPLANAR_OVERLAP:0,TOUCHING:0,INDETERMINATE:0,NONE:0
  };
- let pairs=0,aabbPairs=0,firstContact=null,bodySwept=0;
+ let pairs=0,aabbPairs=0,firstContact=null,bodySwept=0,nodeVisits=0;
  for(let i=0;i<frontFaces.length;i++){
-  const {lo,hi}=cells(frontBoxes[i]),stamp=i+1;
-  for(let a=lo[0];a<=hi[0];a++)
-   for(let b=lo[1];b<=hi[1];b++)
-    for(let c=lo[2];c<=hi[2];c++)
-     for(const j of grid[key(a,b,c)]||[]){
-      if(used[j]===stamp)continue;
-      used[j]=stamp;pairs++;
-      if(pairs>maxPairs)throw Error('original-full-indexed-audit-resource-bound-reached '+
-       JSON.stringify({bodyFaces:bodyFaces.length,photoFaces:frontFaces.length,
-        broadphaseCandidatePairs:pairs,actualAABBOverlaps:aabbPairs,
-        maxPairs,gridShape:shape}));
-      if(!boxesOverlap(frontBoxes[i],bodyBoxes[j]))continue;
-      aabbPairs++;
-      if(aabbPairs>3000000)throw Error('original-full-indexed-exact-contact-resource-bound '+
-       JSON.stringify({bodyFaces:bodyFaces.length,photoFaces:frontFaces.length,
-        actualAABBOverlaps:aabbPairs,broadphaseCandidatePairs:pairs}));
-      const result=classifyExactTriangleContact(frontFaces[i],bodyFaces[j]);
-      counts[result]++;
-      if(result!=='NONE'&&!firstContact)firstContact={frontFace:i,bodyFace:j,class:result};
-     }
+  const box=frontBoxes[i],stack=[root];
+  while(stack.length){
+   const node=stack.pop();nodeVisits++;
+   if(!boxesOverlap(box,node.box))continue;
+   if(node.faces){
+    for(const j of node.faces){
+     pairs++;
+     if(pairs>maxPairs)throw Error('original-full-indexed-audit-resource-bound-reached '+
+      JSON.stringify({bodyFaces:bodyFaces.length,photoFaces:frontFaces.length,
+       broadphaseCandidatePairs:pairs,actualAABBOverlaps:aabbPairs,
+       maxPairs,bvhNodes,visitedNodes:nodeVisits}));
+     if(!boxesOverlap(box,bodyBoxes[j]))continue;
+     aabbPairs++;
+     if(aabbPairs>3000000)throw Error('original-full-indexed-exact-contact-resource-bound '+
+      JSON.stringify({bodyFaces:bodyFaces.length,photoFaces:frontFaces.length,
+       actualAABBOverlaps:aabbPairs,broadphaseCandidatePairs:pairs}));
+     const result=classifyExactTriangleContact(frontFaces[i],bodyFaces[j]);
+     counts[result]++;
+     if(result!=='NONE'&&!firstContact)
+      firstContact={frontFace:i,bodyFace:j,class:result};
+    }
+   }else{stack.push(node.left,node.right);}
+  }
   bodySwept=i+1;
  }
  return {
@@ -205,6 +210,9 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{maxPairs=300000
   originalBodyFaceSubsetUsed:false,originalPhotoFaceSubsetUsed:false,
   fullBroadphaseUniqueCandidatePairs:pairs,
   actualAABBOverlappingPairs:aabbPairs,
+  allOriginalBodyIndexedFacesPresentInBVH:true,
+  originalBodyBVHNodes:bvhNodes,originalBodyBVHLeaves:bvhLeaves,
+  completeSourceFrontBVHVisits:nodeVisits,
   classifications:counts,
   firstObservedContactFaceIndices:firstContact,
   strictGeometricContactObserved:counts.CROSSING+counts.COPLANAR_OVERLAP+counts.TOUCHING>0,
