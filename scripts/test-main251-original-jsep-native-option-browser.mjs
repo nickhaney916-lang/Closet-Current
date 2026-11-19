@@ -186,6 +186,7 @@ const review251=" assert.ok(/unverified region/.test(state.status),'Never call t
 assert.equal(source.split(review251).length,2,'Original unverified proposal stage changed');
 source=source.replace(review251,review251+'\n'+[
  " assert.equal(m251NativeEvents.length,1,'Actual original JSEP native options Wasm export not observed exactly once');",
+ " console.log('M251_NATIVE_OPTION_BOUNDED_ACTUAL',JSON.stringify(m251NativeEvents[0]));",
  " const proof251=verifyM251OriginalNativeOptionReceipt(m251NativeEvents[0],{engine,arm:m251Arm});",
  " console.log('M251_REAL_ORIGINAL_JSEP_NATIVE_ABI',JSON.stringify({...proof251,",
  "  actualOriginalNativeP94ModelAndPrivateOwnerMustPassLater:true}));"
