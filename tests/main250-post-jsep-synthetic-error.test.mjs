@@ -32,6 +32,15 @@ test('M250 synthetic post-JSEP negative contract distinguishes real browser SHA 
  assert.equal(result.releaseAuthorized,false);
  assert.equal(result.familyAlphaHold,true);
 });
+test('M250 original runtime wrapper can report network_abort without proving any network cause',()=>{
+ const wrapped=good();wrapped.modelExceptionCategory='network_abort';
+ const proof=verifyM250ControlledPostJsepReceipt(wrapped);
+ assert.equal(proof.originalReportedErrorCategory,'network_abort');
+ assert.equal(proof.errorClassification,'SYNTHETIC_JAVASCRIPT_GROW_WITH_WRAPPED_RUNTIME_ERROR');
+ assert.equal(proof.actualNetworkAbortCauseProven,false);
+ assert.equal(proof.nativeCppAllocatorCauseProven,false);
+ assert.equal(proof.syntheticFaultIsNaturalWebkitBug,false);
+});
 test('M250 refuses silent passing model, any fake same-failing-browser JSEP, missing heap or false native attribution',()=>{
  const edits=[
   x=>{x.schema='not-pinned';}, x=>{x.engine='chromium';},
@@ -44,7 +53,7 @@ test('M250 refuses silent passing model, any fake same-failing-browser JSEP, mis
   x=>{x.publicWasmStatus=404;},
   x=>{x.exactOneObservedException=false;},
   x=>{x.modelExceptionName='NetworkError';},
-  x=>{x.modelExceptionCategory='other';},
+  x=>{x.modelExceptionCategory='network';},
   x=>{x.originalHeapTerminalSeen=false;},
   x=>{x.observedGrowCalls=0;}, x=>{x.observedGrowCalls=-1;},
   x=>{x.observedGrowErrors=0;}, x=>{x.observedGrowErrors=-1;},
