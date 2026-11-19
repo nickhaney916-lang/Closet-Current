@@ -20,12 +20,16 @@ const app=await readFile('public/app.js','utf8'),
  details=await readFile('public/clothing-details.js','utf8');
 function extract(a,b){const i=app.indexOf(a),j=app.indexOf(b,i+a.length);
  assert.ok(i>=0&&j>i,'P846 source segment missing '+a);return app.slice(i,j);}
-const source=extract('function persistDraft()', 'function savePiece(')+
- extract('function savePiece(', 'function node(')+
+const source=extract('function savePiece(', 'function node(')+
  extract('function node(', 'function hasSourceBoundMask88(')+
  extract('function hasSourceBoundMask88(', '// P846:')+
  extract('function unit70Receipts(', 'function renderRecognitionNotice(')+
- extract('function candidate(', 'function queueAutomatic(');
+ extract('function candidate(', 'function queueAutomatic(')+
+ // Keep candidate()'s inherited fake backup for its existing UX checks, but
+ // source-execute the REAL native persistDraft body under a separate local
+ // test alias for the new IndexedDB transactional backup acceptance.
+ extract('function persistDraft()', 'function readDraft()')
+  .replace('function persistDraft(){','function realPersistDraft88(){');
 const harness=[
  "const categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];",
  "let items=[],batch=[],stream=null,cameraOpening=false,busy=false,localReady=true,session=0;",
@@ -515,7 +519,7 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     batch=[second];
     const newer={...second,color:'Purple'};
     await putDraft([newer]);
-    await persistDraft();
+    await realPersistDraft88();
     const afterBackup=await getDraft();
     const backupBlocked=afterBackup[0]?.color==='Purple'&&afterBackup.length===1;
     ownerDb.close();
