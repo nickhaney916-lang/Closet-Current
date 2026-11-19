@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Frozen verified original photo shell parent plus exactly 3 research paths only
+      - name: Frozen verified original photo shell parent plus exactly 4 limited source/research paths only
         shell: bash
         run: |
           set -euo pipefail
@@ -29,7 +29,7 @@ jobs:
           git diff --exit-code bec42338eb24d884c074351e69149aae03e85987 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
           while IFS= read -r p; do
             case "$p" in
-              research/parallel89/interactive-original-source-preview89.html|scripts/test-parallel89-interactive-source-mobile89.mjs|.github/workflows/mission2-p89-original-mobile-interactive-preview-no-deploy.yml) ;;
+              research/parallel89/interactive-original-source-preview89.html|research/parallel89/met-original-mask-rgb-uv-front89.mjs|scripts/test-parallel89-interactive-source-mobile89.mjs|.github/workflows/mission2-p89-original-mobile-interactive-preview-no-deploy.yml) ;;
               *) echo "Other team/product/hosted/locked photo file modified: $p"; exit 1 ;;
             esac
           done < <(git diff --name-only bec42338eb24d884c074351e69149aae03e85987 HEAD)
