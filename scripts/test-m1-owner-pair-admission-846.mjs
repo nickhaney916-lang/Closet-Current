@@ -31,7 +31,7 @@ const harness=[
  "const reviewFirst836=true;const ui88={};const $=id=>(ui88[id]??={hidden:false,textContent:'',src:''});",
  // Keep the browser's original P846 native Adjust source, but provide the
  // same signed owner/IDB transaction boundary required by the new P88 guard.
- "let db={name:'closet-current-user-owner-A',transaction(stores,mode){if(mode!=='readwrite')throw Error('P88_EXPECTED_WRITE');const tx={objectStore(name){return {put(value){if(name==='items'){window.writeCount++;tx.saved=structuredClone(value);}else if(name==='state')tx.next=structuredClone(value);else throw Error('UNKNOWN_STORE');}}}};window.completions.push({resolve(){if(tx.next)window.draftSnapshots.push(tx.next);window.stored.push(tx.saved);tx.oncomplete?.();},reject(error){tx.error=error||Error('REJECT');tx.onerror?.();}});return tx;}};",
+ "let db={name:'closet-current-user-owner-A',transaction(stores,mode){if(mode!=='readwrite')throw Error('P88_EXPECTED_WRITE');const tx={objectStore(name){return {add(value){if(name!=='items')throw Error('P88_INSERT_ONLY_ITEMS');window.lastItemWriteMethod='add';window.writeCount++;tx.saved=structuredClone(value);},put(value){if(name==='items'){window.lastItemWriteMethod='put';window.writeCount++;tx.saved=structuredClone(value);}else if(name==='state')tx.next=structuredClone(value);else throw Error('UNKNOWN_STORE');}}}};window.completions.push({resolve(){if(tx.next)window.draftSnapshots.push(tx.next);window.stored.push(tx.saved);tx.oncomplete?.();},reject(error){tx.error=error||Error('REJECT');tx.onerror?.();}});return tx;}};",
  "const queued=async fn=>{await window.beforeWriteTest?.();return fn();};",
  "const originalSource88="+JSON.stringify(originalSource88),
  "const sourceHash88="+JSON.stringify(originalHash88),
@@ -40,7 +40,7 @@ const harness=[
  "const checkPhoto=async()=>({colorEstimate:null,signature:[],aspect:1});",
  "const openPhotoCrop=(item,callbacks)=>{window.crop88Editor=callbacks;return Promise.resolve();};",
  "window.closetAuth={user:{id:'owner-A'}};",
- "window.writeCount=0;window.stored=[];window.completions=[];window.draftSnapshots=[];window.messageText='';",
+ "window.writeCount=0;window.lastItemWriteMethod=null;window.stored=[];window.completions=[];window.draftSnapshots=[];window.messageText='';",
  "const removeItem=async()=>{};",
  "const persistDraft=async()=>{window.persistDraftCount=(window.persistDraftCount||0)+1;};",
  "const render=()=>{};",
@@ -214,6 +214,8 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    await page.waitForFunction(()=>window.writeCount===1);
    await page.evaluate(()=>window.completions.shift().resolve());
    await page.waitForFunction(()=>window.stored.length===1&&items.length===2&&batch.length===0);
+   assert.equal(await page.evaluate(()=>window.lastItemWriteMethod),'add',
+    'ordinary owner-reviewed draft must be inserted, never replace an existing closet item');
    const distinctReceipt=await page.evaluate(()=>items[1]?.ownerDuplicateReview88);
    assert.equal(distinctReceipt?.schema,'p88-distinct-physical-owner-attestation/v1');
    assert.deepEqual(distinctReceipt?.identicalSavedPhotoItemIds,['already-owned']);
