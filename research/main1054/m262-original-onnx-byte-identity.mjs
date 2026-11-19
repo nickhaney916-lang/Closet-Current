@@ -82,7 +82,10 @@ export function assessM262(log,identity){
  }
  // Genuine observed wrong ONNX bytes are an explicit source FAIL even if the
  // unchanged M260 evidence reader otherwise recorded a healthy user journey.
- const modelIdentityGate=mismatch?'FAIL':good&&!unreadable?'OBSERVED':'PARTIAL';
+ // A successful model body alongside a non-200 redirect/error or unreadable
+ // response does not establish the identity of EVERY attempted model load.
+ // Classify mixed observations PARTIAL; never promote them to OBSERVED.
+ const modelIdentityGate=mismatch?'FAIL':good&&!unreadable&&!redirectOrNon200?'OBSERVED':'PARTIAL';
  const first=identity.runAttempt===1;
  const originalJourneyGate=mismatch?'FAIL':journey.originalJourneyGate;
  const sourceEvidenceGate=mismatch||journey.sourceEvidenceGate==='FAIL'?'FAIL':'BLOCKED';
@@ -121,10 +124,19 @@ export function verifyM262(log,identity,{corrupt=false}={}){
  const result=assessM262(log,identity);
  if(identity.runAttempt!==1)throw Error('Non-first attempt is ineligible');
  if(!corrupt){
+  // A real WebKit original ONNX GET may issue a 307 redirect followed by a
+  // SHA-attested 200 model body. It is PARTIAL network evidence, not a failed
+  // owner journey or an OBSERVED entire-response chain. Never invent a model
+  // SHA for unreadable responses; WebKit must directly hash the canonical
+  // final ONNX body and JSEP to accept a successful native owner journey.
+  const webkitSourceBodyIndependentlySeen=
+   result.originalModelBytesCorrectlyHashed>=1&&
+   result.originalModelBytesUnreadable===0&&
+   result.originalJsepNetworkGate==='OBSERVED';
   if(identity.exitCode!==0||result.originalJourneyGate!=='PASS'||
      result.sourceEvidenceGate!=='BLOCKED'||
      result.originalModelNetworkGate==='FAIL'||
-     (identity.engine==='webkit'&&result.originalModelNetworkGate!=='OBSERVED'))
+     (identity.engine==='webkit'&&!webkitSourceBodyIndependentlySeen))
    throw Error('Original first-attempt model/network acceptance incomplete');
  }else{
   const mark=markerRows(log,'M262_ONNX_INJECTION_OBSERVED');
@@ -139,6 +151,16 @@ export function verifyM262(log,identity,{corrupt=false}={}){
      result.changedOrInvalidModelBodies<1||result.sourceEvidenceGate!=='FAIL')
    throw Error('Changed original ONNX network bytes did not preserve RED');
   const rows=markerRows(log,'M259_CONTEXT_NETWORK_WITNESS').rows;
+  const models=rows.filter(r=>r.kind==='model-onnx');
+  // Every actual controlled model GET must have a response row. Unknown body
+  // bytes are disclosed, never guessed. A legitimate original model body or
+  // extra model response cannot be laundered through one corrupted SHA.
+  if(models.length!==mark.intercepted||
+     models.some(r=>r.status==='body-observed'&&
+      (r.sha256!==CORRUPT_ONNX_SHA256||r.size!==CORRUPT_ONNX_BYTES.length))||
+     models.some(r=>!['body-observed','body-unavailable'].includes(r.status))||
+     result.originalModelBytesCorrectlyHashed!==0)
+   throw Error('Controlled ONNX interception/body-count/identity mismatch');
   if(!rows.some(r=>r.kind==='model-onnx'&&r.status==='body-observed'&&
     r.sha256===CORRUPT_ONNX_SHA256&&r.size===CORRUPT_ONNX_BYTES.length))
    throw Error('No SHA-attested genuinely changed ONNX response body');

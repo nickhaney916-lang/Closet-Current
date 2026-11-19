@@ -1,9 +1,9 @@
-name: MAIN1054 M262 source-verified original ONNX identity NO DEPLOY HOLD
+name: MAIN1054 M263 model-response integrity and dual-browser negative NO DEPLOY HOLD
 on:
   push:
-    branches: [research/main1054-m262-original-onnx-byte-identity-HOLD]
+    branches: [research/main1054-m263-model-integrity-cross-engine-HOLD]
   pull_request:
-    branches: [research/main1054-m261-original-jsep-fault-gate-HOLD]
+    branches: [research/main1054-m262-original-onnx-byte-identity-HOLD]
 permissions:
   contents: read
 jobs:
@@ -26,7 +26,7 @@ jobs:
         run: |
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          PARENT=fe351bd1409c4b212c82d0598c7b00150549e3e2
+          PARENT=5f594d7f7a32ec0718393afc0290b6ee01af2809
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
           git merge-base --is-ancestor "$PARENT" HEAD
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
@@ -63,6 +63,8 @@ jobs:
           - engine: webkit
             mode: healthy
           - engine: webkit
+            mode: invalid-onnx
+          - engine: chromium
             mode: invalid-onnx
     container:
       image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
