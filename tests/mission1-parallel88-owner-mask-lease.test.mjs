@@ -1209,6 +1209,8 @@ function sourceSaveHarness88(){
     abort(){aborted=true;queueMicrotask(()=>tx.onabort?.());},
     objectStore(name){
      if(name==='items')return {
+      getAll(){const req={result:[...rows.values()].map(x=>structuredClone(x))};
+       queueMicrotask(()=>req.onsuccess?.());return req;},
       add(value){
        if(rows.has(value.id))throw Error('ConstraintError: saved item ID exists');
        writes.push({name,method:'add',value:structuredClone(value)});
@@ -1833,7 +1835,7 @@ function exactDuplicateOwnerSaveHarness88(){
  const records=[],user={id:'owner-A'};
  const ownerDb={name:'closet-current-user-owner-A',transaction(){
   const tx={objectStore(store){
-   return {get(key){assert.equal(key,'draft');const req={result:{id:'draft',batch:[structuredClone(current)]}};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){records.push({store,value:structuredClone(value)});},put(value){records.push({store,value:structuredClone(value)});}};
+   return {getAll(){assert.equal(store,'items');const req={result:[structuredClone(existing)]};queueMicrotask(()=>req.onsuccess?.());return req;},get(key){assert.equal(key,'draft');const req={result:{id:'draft',batch:[structuredClone(current)]}};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){records.push({store,value:structuredClone(value)});},put(value){records.push({store,value:structuredClone(value)});}};
   }};
   queueMicrotask(()=>queueMicrotask(()=>tx.oncomplete?.()));return tx;
  }};
@@ -1938,7 +1940,7 @@ test('P88 ordinary review save holds exact owner, image and IDB after cloud pref
   const written={};
   const database={name:'closet-current-user-owner-A',transaction(){
    const tx={objectStore(store){
-    return {get(key){assert.equal(key,'draft');const req={result:{id:'draft',batch:[structuredClone(item)]}};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){writeCount++;written[store]=structuredClone(value);},put(value){writeCount++;written[store]=structuredClone(value);}};
+    return {getAll(){assert.equal(store,'items');const req={result:[]};queueMicrotask(()=>req.onsuccess?.());return req;},get(key){assert.equal(key,'draft');const req={result:{id:'draft',batch:[structuredClone(item)]}};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){writeCount++;written[store]=structuredClone(value);},put(value){writeCount++;written[store]=structuredClone(value);}};
    }};
    queueMicrotask(()=>queueMicrotask(()=>tx.oncomplete?.()));
    return tx;
@@ -3269,6 +3271,8 @@ test('P88 ordinary reviewed draft ID collision preserves existing closet row and
   let aborted=false;
   const tx={oncomplete:null,onabort:null,onerror:null,abort(){aborted=true;queueMicrotask(()=>tx.onabort?.());},objectStore(name){
    if(name==='items')return {
+    getAll(){const req={result:[...savedRows.values()].map(x=>structuredClone(x))};
+     queueMicrotask(()=>req.onsuccess?.());return req;},
     add(value){operations.push('items.add');
      if(savedRows.has(value.id))throw Error('ConstraintError: key already exists');
      savedRows.set(value.id,structuredClone(value));},
@@ -3308,7 +3312,7 @@ test('P88 reviewed original cannot erase another tab new private draft during sa
   assert.deepEqual(Array.from(stores),['items','state']);
   let aborted=false;
   const tx={objectStore(name){
-   if(name==='items')return {add(v){writes.push(v);savedRows.set(v.id,v);}};
+   if(name==='items')return {getAll(){const req={result:[...savedRows.values()].map(x=>structuredClone(x))};queueMicrotask(()=>req.onsuccess?.());return req;},add(v){writes.push(v);savedRows.set(v.id,v);}};
    if(name==='state')return {
     get(key){assert.equal(key,'draft');
      const req={result:structuredClone(remote)};
@@ -3341,7 +3345,7 @@ test('P88 ordinary fresh-ID reviewed save inserts rather than overwrites a close
  let savedDraft={id:'draft',batch:[structuredClone(source)]};
  const db={name:'closet-current-user-owner-A',transaction(){
   const tx={oncomplete:null,onabort:null,onerror:null,objectStore(name){
-   return {add(value){operations.push(name+'.add:'+value.id);},
+   return {getAll(){assert.equal(name,'items');const req={result:[]};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){operations.push(name+'.add:'+value.id);},
     get(id){assert.equal(id,'draft');const req={result:structuredClone(savedDraft)};
      queueMicrotask(()=>req.onsuccess?.());return req;},
     put(value){operations.push(name+'.put:'+value.id);
