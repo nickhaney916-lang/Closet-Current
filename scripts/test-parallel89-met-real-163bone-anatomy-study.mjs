@@ -145,15 +145,29 @@ const origin='http://127.0.0.1:'+server.address().port;
 const browser=await ({webkit,chromium})[browserName].launch({
  headless:true,args:browserName==='chromium'?['--no-sandbox']:[]
 });
-const failures=[],httpExternal=[],sourceRows=[],pngHash=[];
+const failures=[],httpExternal=[],sourceRows=[],pngHash=[],httpFailures=[],browserConsole=[];
 try{
  const page=await browser.newPage({viewport:{width:390,height:870},deviceScaleFactor:1});
  page.on('pageerror',e=>failures.push(e.message));
+ page.on('console',m=>{if(m.type()==='error')browserConsole.push(m.text())});
+ page.on('requestfailed',r=>httpFailures.push({url:r.url(),failure:r.failure()}));
+ page.on('response',r=>{if(r.status()>=400)httpFailures.push({
+  url:r.url(),status:r.status()})});
  page.on('request',r=>{if(/^https?:/i.test(r.url())&&!r.url().startsWith(origin))
   httpExternal.push(r.url())});
  await page.goto(origin,{waitUntil:'load'});
- await page.waitForFunction(()=>window.__M2RealRigPhotoTrial?.getFlags().ready===true,
-  null,{timeout:60000});
+ try{
+  await page.waitForFunction(()=>window.__M2RealRigPhotoTrial?.getFlags().ready===true,
+   null,{timeout:20000});
+ }catch(e){
+  const status=await page.locator('#status').textContent().catch(()=>null);
+  const exists=await page.evaluate(()=>Boolean(window.__M2RealRigPhotoTrial))
+   .catch(()=>false);
+  throw Error('original 163bone native startup NOT VERIFIED '+JSON.stringify({
+   engine:browserName,status,exists,failures,httpFailures,browserConsole,
+   message:e.message
+  }).slice(0,6000));
+ }
  const baseline=await page.evaluate(()=>window.__M2RealRigPhotoTrial.getProof());
  assert.equal(baseline.trueOriginalAnatomicalBoneCount,163);
  assert.equal(baseline.actualLicensedRig,'female');
