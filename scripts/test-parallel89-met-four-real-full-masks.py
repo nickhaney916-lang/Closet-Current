@@ -46,6 +46,9 @@ for photo_id,meta in sorted(SOURCES.items()):
     assert audit["sourceMuseumObjectNumber"]=="1983.21a, b"
     assert len(audit["sevenFullMaskSourceImageBands"])==7
     assert audit["twoIndependentPhotoSeedMaskIoU"]>=.97
+    assert audit["exportedMaskIsConservativeIntersectionOfTwoSourceSeededRuns"]
+    assert audit["uncertainSourceBoundaryPixelsExcludedFromAlphaButShownInOverlay"]
+    assert np.count_nonzero(primary>0)+audit["uncertainBoundaryPixelCount"]==np.count_nonzero(challenger>0)
     assert audit["fullMaskContainsEarlierChromaticTextileFraction"]>=.93
     assert audit["fullMaskContainsLightNeutralUpperGarmentPixels"]>15000
     assert audit["originalHonolulu5152_1SourceNotReusedOrCalibrated"]
@@ -79,6 +82,8 @@ for photo_id,meta in sorted(SOURCES.items()):
       "id":photo_id,"sourceRGBSHA256":sha,"maskSHA256":audit["outputMaskPngSHA256"],
       "maskForegroundPixels":audit["maskForegroundPixelCount"],
       "maskSeedStabilityIoU":audit["twoIndependentPhotoSeedMaskIoU"],
+      "conservativeConsensusAlpha":True,
+      "uncertainExcludedBoundaryPixels":audit["uncertainBoundaryPixelCount"],
       "earlierColorTextileInNewMask":audit["fullMaskContainsEarlierChromaticTextileFraction"],
       "upperPaleWaistbandPixelsIncluded":audit["fullMaskContainsLightNeutralUpperGarmentPixels"],
       "sourceFullMaskWidthsPx":[x["candidateFullForegroundWidthPixels"]
