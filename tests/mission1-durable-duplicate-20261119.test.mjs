@@ -205,3 +205,48 @@ test('unrelated original and unrelated crop still admit normal owner-reviewed ga
  assert.equal(c.state.savedCalls,1);
  assert.equal(c.state.draft.length,0);
 });
+
+
+test('actual owner-review lease requires a second decision for two crop previews of the same original',()=>{
+ const raw='original-same-jpeg',old={id:'confirmed-region-left',image:'first-crop',
+  originalPhoto:{image:raw},category:'Tops'};
+ const next={id:'new-region-right',image:'second-crop',
+  originalPhoto:{image:raw},category:'Tops',color:'Green'};
+ const owner={id:'owner-A'},ctx={
+  items:[old],batch:[next],window:{closetAuth:{user:owner}},
+  db:{name:'closet-current-user-owner-A'}
+ };
+ vm.createContext(ctx);
+ vm.runInContext(extract('function reviewedExactPhotoPeers88(','function empty('),ctx);
+ const lease=ctx.reviewedSaveLease88(next);
+ assert.equal(lease.exactPhotoPeers88.length,1);
+ assert.equal(lease.exactPhotoPeers88[0].id,old.id);
+ assert.equal(lease.exactPhotoPeers88[0].original,raw);
+ assert.equal(ctx.reviewedSaveLeaseLive88(lease),true);
+ assert.equal(ctx.reviewedDistinctPhotoReceiptValid88({...next},lease),false,
+  'a normal category/color review is insufficient');
+ const receipt=ctx.reviewedDistinctPhotoReceipt88(lease);
+ assert.equal(receipt.ownerAttestedDistinctPhysicalItem,true);
+ assert.equal(receipt.independentPhysicalItemVerified,false);
+ assert.equal(receipt.threeDReady,false);
+ assert.equal(ctx.reviewedDistinctPhotoReceiptValid88(
+  {...next,ownerDuplicateReview88:receipt},lease),true);
+ old.originalPhoto.image='different-source-after-review';
+ assert.equal(ctx.reviewedSaveLeaseLive88(lease),false,
+  'a locally replaced original cannot reuse the older photo decision');
+});
+
+test('ordinary already-saved whole-frame image is a peer of a newly cropped original',()=>{
+ const owner={id:'owner-A'},raw='legacy-entire-jpeg';
+ const old={id:'old-original',image:raw,category:'Tops'};
+ const next={id:'new-crop',image:'new-cropped-preview',
+  originalPhoto:{image:raw},category:'Tops'};
+ const c={items:[old],batch:[next],db:{name:'closet-current-user-owner-A'},
+  window:{closetAuth:{user:owner}}};
+ vm.createContext(c);
+ vm.runInContext(extract('function reviewedExactPhotoPeers88(','function empty('),c);
+ const lease=c.reviewedSaveLease88(next);
+ assert.equal(lease.exactPhotoPeers88.length,1);
+ assert.equal(lease.exactPhotoPeers88[0].id,old.id);
+ assert.equal(c.reviewedDistinctPhotoReceiptValid88({...next},lease),false);
+});
