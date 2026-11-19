@@ -828,6 +828,36 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     await window.crop88Editor.save({image:newImage},null);
     const savedCropCommitted=(await get('items',base.id))?.image===newImage;
     const originalSaved=(await get('items',base.id))?.originalPhoto?.image===raw;
+    // Previously a saved item's Crop > Use suggested details could rewrite
+    // confirmed category and subtype without a separate Adjust approval.
+    cropClothingPhoto(base);
+    let savedModelRejected=false;
+    try{
+     await window.crop88Editor.save({image:oldImage},{
+      category:'Dresses',itemType:'Dress',color:'Red',label:'a dress',
+      details:{color:'Red',fit:'Loose'}
+     });
+    }catch(e){
+     savedModelRejected=/P88_SAVED_CROP_MODEL_SUGGESTION_REQUIRES_ADJUST/.test(e.message);
+    }
+    const savedAfterModel=await get('items',base.id);
+    const ownerLabelsUntouched=savedAfterModel?.category==='Tops'&&
+     savedAfterModel?.itemType==='T-shirt'&&savedAfterModel?.color==='Blue'&&
+     savedAfterModel?.image===newImage;
+
+    // Even a missing saved color cannot be silently filled by an estimated
+    // garment-mask palette during Crop. Only explicit Adjust can change it.
+    const unknown={id:'actual-saved-unknown-color-crop-88',
+     image:oldImage,category:'Tops',itemType:'T-shirt',color:'',
+     seasons:[],userAdjusted:true};
+    items=[unknown];batch=[];await put('items',unknown);
+    cropClothingPhoto(unknown);
+    await window.crop88Editor.save({image:newImage,maskApplied:true,
+     maskedColorEstimate:{color:'Red',source:'photo-estimate'}},null);
+    const afterEstimate=await get('items',unknown.id);
+    const savedUnknownRemainsUnknown=afterEstimate?.image===newImage&&
+     afterEstimate?.color===''&&afterEstimate?.colorSource===undefined;
+
 
     const pending={id:'actual-pending-crop-88',image:oldImage,
      originalPhoto:{image:raw},name:'Pending original',category:'Tops',
@@ -907,6 +937,7 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
      unchanged?.originalPhoto?.verified!==true;
     ownerDb.close();
     return {firstCropSaved,forgedOriginalUntouched,forgedRejected,
+     savedModelRejected,ownerLabelsUntouched,savedUnknownRemainsUnknown,
      staleSavedRefused,correctionIntact,localSavedIntact,
      savedCropCommitted,originalSaved,staleDraftRefused,otherPreserved,
      pendingRawPreserved,newCropSaved,otherStillPreserved,
@@ -914,6 +945,8 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    });
    assert.deepEqual(cropCas88,{
     firstCropSaved:true,forgedOriginalUntouched:true,forgedRejected:3,
+    savedModelRejected:true,ownerLabelsUntouched:true,
+    savedUnknownRemainsUnknown:true,
     staleSavedRefused:true,correctionIntact:true,localSavedIntact:true,
     savedCropCommitted:true,originalSaved:true,staleDraftRefused:true,
     otherPreserved:true,pendingRawPreserved:true,
