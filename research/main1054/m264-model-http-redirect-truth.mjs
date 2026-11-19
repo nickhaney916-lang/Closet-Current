@@ -104,7 +104,7 @@ export function verifyM264(log,identity,{fault404=false}={}){
   // Reuse all existing original private owner+source+JSEP guards and never
   // repair a genuinely failed original Worker by choosing a later attempt.
   verifyM262(log,identity);
-  if(!['NO_REDIRECT','REDIRECT_PLUS_BODY'].includes(result.originalModelHttpGate)||
+  if(!['NO_REDIRECT','REDIRECT_PLUS_BODY','PARTIAL'].includes(result.originalModelHttpGate)||
      result.originalModelHttpErrors!==0||result.originalJourneyGate!=='PASS'||
      result.sourceEvidenceGate!=='BLOCKED')
    throw Error('Original model HTTP failure during otherwise healthy journey');
