@@ -1835,9 +1835,9 @@ function exactDuplicateOwnerSaveHarness88(){
  const records=[],user={id:'owner-A'};
  const ownerDb={name:'closet-current-user-owner-A',transaction(){
   const tx={objectStore(store){
-   return {getAll(){assert.equal(store,'items');const req={result:[structuredClone(existing)]};queueMicrotask(()=>req.onsuccess?.());return req;},get(key){assert.equal(key,'draft');const req={result:{id:'draft',batch:[structuredClone(current)]}};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){records.push({store,value:structuredClone(value)});},put(value){records.push({store,value:structuredClone(value)});}};
+   return {getAll(){assert.equal(store,'items');const req={result:[structuredClone(existing)]};queueMicrotask(()=>req.onsuccess?.());return req;},get(key){assert.equal(key,'draft');const req={result:{id:'draft',batch:[structuredClone(current)]}};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){records.push({store,value:structuredClone(value)});},put(value){records.push({store,value:structuredClone(value)});if(store==='state')queueMicrotask(()=>tx.oncomplete?.());}};
   }};
-  queueMicrotask(()=>queueMicrotask(()=>tx.oncomplete?.()));return tx;
+  return tx;
  }};
  const photo='data:image/jpeg;base64,UEhPVE8=',existing={id:'already-owned',image:photo,category:'Tops'},
   current={id:'new-capture',image:photo,category:'Tops',itemType:'T-shirt',color:'Blue',
@@ -1940,9 +1940,8 @@ test('P88 ordinary review save holds exact owner, image and IDB after cloud pref
   const written={};
   const database={name:'closet-current-user-owner-A',transaction(){
    const tx={objectStore(store){
-    return {getAll(){assert.equal(store,'items');const req={result:[]};queueMicrotask(()=>req.onsuccess?.());return req;},get(key){assert.equal(key,'draft');const req={result:{id:'draft',batch:[structuredClone(item)]}};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){writeCount++;written[store]=structuredClone(value);},put(value){writeCount++;written[store]=structuredClone(value);}};
+    return {getAll(){assert.equal(store,'items');const req={result:[]};queueMicrotask(()=>req.onsuccess?.());return req;},get(key){assert.equal(key,'draft');const req={result:{id:'draft',batch:[structuredClone(item)]}};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){writeCount++;written[store]=structuredClone(value);},put(value){writeCount++;written[store]=structuredClone(value);if(store==='state')queueMicrotask(()=>tx.oncomplete?.());}};
    }};
-   queueMicrotask(()=>queueMicrotask(()=>tx.oncomplete?.()));
    return tx;
   }};
   const user={id:'owner-A'};
@@ -3283,11 +3282,10 @@ test('P88 ordinary reviewed draft ID collision preserves existing closet row and
      const req={result:structuredClone(savedDraft)};
      queueMicrotask(()=>req.onsuccess?.());
      return req;},
-    put(value){operations.push('state.put');savedDraft=structuredClone(value);}
+    put(value){operations.push('state.put');savedDraft=structuredClone(value);queueMicrotask(()=>{if(!aborted)tx.oncomplete?.();});}
    };
    throw Error('Unexpected store');
   }};
-  queueMicrotask(()=>queueMicrotask(()=>{if(!aborted)tx.oncomplete?.();}));
   return tx;
  }};
  const c={window:{closetAuth:{user:owner}},db,items:[saved],batch:[source],
@@ -3316,9 +3314,9 @@ test('P88 reviewed original cannot erase another tab new private draft during sa
    if(name==='state')return {
     get(key){assert.equal(key,'draft');
      const req={result:structuredClone(remote)};
-     queueMicrotask(()=>{req.onsuccess?.();if(!aborted)queueMicrotask(()=>tx.oncomplete?.());});
+     queueMicrotask(()=>req.onsuccess?.());
      return req;},
-    put(v){remote=structuredClone(v);}
+    put(v){remote=structuredClone(v);queueMicrotask(()=>{if(!aborted)tx.oncomplete?.();});}
    };
   },abort(){aborted=true;queueMicrotask(()=>tx.onabort?.());}};
   return tx;
@@ -3349,9 +3347,9 @@ test('P88 ordinary fresh-ID reviewed save inserts rather than overwrites a close
     get(id){assert.equal(id,'draft');const req={result:structuredClone(savedDraft)};
      queueMicrotask(()=>req.onsuccess?.());return req;},
     put(value){operations.push(name+'.put:'+value.id);
-     if(name==='state')savedDraft=structuredClone(value);}};
+     if(name==='state'){savedDraft=structuredClone(value);queueMicrotask(()=>tx.oncomplete?.());}}};
   }};
-  queueMicrotask(()=>queueMicrotask(()=>tx.oncomplete?.()));return tx;
+  return tx;
  }};
  const c={window:{closetAuth:{user:owner}},db,items:[],batch:[source],
   structuredClone,draftStoreRevision88:JSON.stringify(savedDraft.batch),queued:async fn=>fn()};
