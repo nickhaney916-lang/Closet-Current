@@ -35,8 +35,14 @@ function buildBVH(boxes,indices){
  if(indices.length<=12){
   return {box:indices.map(i=>boxes[i]).reduce(union),indices};
  }
- const extent=[0,1,2].map(k=>Math.max(...indices.map(i=>boxes[i].max[k]))-
-  Math.min(...indices.map(i=>boxes[i].min[k])));
+ // Iterate instead of spreading the full original 109k+ body face array:
+ // large spread calls can exceed native JavaScript argument limits.
+ const lower=[Infinity,Infinity,Infinity],upper=[-Infinity,-Infinity,-Infinity];
+ for(const i of indices)for(let k=0;k<3;k++){
+  lower[k]=Math.min(lower[k],boxes[i].min[k]);
+  upper[k]=Math.max(upper[k],boxes[i].max[k]);
+ }
+ const extent=lower.map((x,k)=>upper[k]-x);
  const axis=extent.indexOf(Math.max(...extent));
  const sorted=indices.slice().sort((i,j)=>
   (boxes[i].min[axis]+boxes[i].max[axis])-
