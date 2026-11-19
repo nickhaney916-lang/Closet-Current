@@ -259,6 +259,28 @@ try{
   assert.equal(await page.locator('#shell').isDisabled(),true,kind);
   await context.close();
  }
+ // An actual network rejection (not HTTP 404) of the optional research
+ // manifest used to reject Promise.all before the authentic JPEG could be
+ // verified. The user must still see source-original 2D with no 3D option.
+ const offline3D=await browser.newContext({viewport:{width:390,height:760}});
+ await offline3D.route('**/source-locked-preview.json',route=>route.abort('failed'));
+ const originalOnly=await offline3D.newPage();
+ originalOnly.on('pageerror',e=>errors.push(e.message));
+ await originalOnly.goto(origin+'/viewer');
+ await originalOnly.waitForFunction(()=>window.__m2PreviewEvidence?.getSnapshot().errorCode!==null,
+  null,{timeout:30000});
+ const disconnected=await snapshot(originalOnly);
+ assert.equal(disconnected.verified,false,'manifest network unavailable');
+ assert.equal(disconnected.mode,'photo');
+ assert.equal(disconnected.originalImageVisible,true,
+  'aborted research manifest fetch must not hide independently verified source JPEG');
+ assert.equal(disconnected.previewVisible,false);
+ assert.equal(disconnected.consumer3DAdmitted,false);
+ assert.equal(await originalOnly.locator('#shell').isDisabled(),true);
+ assert.equal(await originalOnly.locator('#photo').evaluate(e=>[e.naturalWidth,e.naturalHeight].join('x')),
+  '1200x933');
+ await originalOnly.screenshot({path:out+'/'+engine+'-390-3D-NETWORK-ABORT-ORIGINAL-2D.png'});
+ await offline3D.close();
  assert.deepEqual(errors,[],'native browser page errors');
  console.log('M2_INTERACTIVE_ORIGINAL_SOURCE_MOBILE_BROWSER_RESEARCH_PASS '+JSON.stringify({
   engine,realNativeBrowser:true,devicePhysical:false,
