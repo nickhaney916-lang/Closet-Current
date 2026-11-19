@@ -13,7 +13,7 @@ const sha=b=>createHash('sha256').update(b).digest('hex');
 const blob=b=>createHash('sha1').update('blob '+b.length+'\0').update(b).digest('hex');
 const receipt=(arm='baseline')=>({
  phase:'m251_native_option',actualExportCalled:true,
- memPattern:arm==='baseline',cpuArena:true,argCount:10,handleReturned:true
+ memPattern:arm==='baseline',cpuArena:false,argCount:10,handleReturned:true
 });
 test('M251 shipped original source and full original JSEP JS/WASM SHA locked',async()=>{
  const w=await readFile('public/outfit-worker-p94.mjs');
@@ -50,7 +50,7 @@ test('M251 observed WASM native bridge flag baseline must be actual TRUE and opt
   const proof=verifyM251OriginalNativeOptionReceipt(receipt(arm),{engine:'webkit',arm});
   assert.equal(proof.realWasmExportInvoked,true);
   assert.equal(proof.nativeMemPatternFlag,arm==='baseline');
-  assert.equal(proof.nativeCpuArenaFlag,true);
+  assert.equal(proof.nativeCpuArenaFlag,false);
   assert.equal(proof.genuineReturnedOptionsHandle,true);
   assert.equal(proof.originalPinnedJsepGlueSourceSha256,PINNED_JS);
   assert.equal(proof.researchOnlyLoaderInstrumentation,true);
@@ -65,7 +65,7 @@ test('M251 strict falsification rejects missing/duplicate native return values o
   for(const edit of [
    x=>{x.phase='fake';},x=>{x.actualExportCalled=false;},
    x=>{x.memPattern=!x.memPattern;},x=>{x.memPattern=null;},
-   x=>{x.cpuArena=false;},x=>{x.cpuArena=null;},
+   x=>{x.cpuArena=true;},x=>{x.cpuArena=null;},
    x=>{x.argCount=9;},x=>{x.argCount=11;},
    x=>{x.handleReturned=false;}
   ]){
