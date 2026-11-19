@@ -247,6 +247,18 @@ const readiness=async()=>{
    signed.ranges.inferredNeutralSideWalls.start+signed.ranges.inferredNeutralSideWalls.count!==
     signed.indices.length)
    throw Error('source-geometry-contract-rejected');
+  // The original RGB hash alone does not authenticate the geometry supplied
+  // to WebGL. Reject malformed/hostile vertex and index arrays before GPU
+  // allocation; retain the independently verified original JPEG in 2D.
+  if(signed.positions.length===0||signed.positions.length%3!==0||
+   signed.uv.length%2!==0||signed.indices.length%3!==0||
+   signed.positions.some(v=>typeof v!=='number'||!Number.isFinite(v)||Math.abs(v)>2)||
+   signed.uv.some(v=>typeof v!=='number'||!Number.isFinite(v)||v<0||v>1)||
+   signed.indices.some(v=>!Number.isSafeInteger(v)||v<0||v>=signed.positions.length/3)||
+   Object.values(signed.ranges).some(v=>!v||!Number.isSafeInteger(v.start)||
+    !Number.isSafeInteger(v.count)||v.start<0||v.count<0||v.count%3!==0)||
+   signed.sourceRGBA.some(v=>!Number.isInteger(v)||v<0||v>255))
+   throw Error('source-geometry-values-rejected');
   const rgbaHash=await b64Digest(new Uint8Array(signed.sourceRGBA));
   if(rgbaHash!==signed.sourceRGBA_SHA256||
     rgbaHash!=='b8adb2fbd644203341051d6475788c69c1954868e5c2e8942f2fed0a3d8f116d')
