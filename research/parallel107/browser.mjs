@@ -60,14 +60,17 @@ try {
     const downloaded = await readFile(await (await downloadEvent).path());
     assert.equal(createHash('sha256').update(downloaded).digest('hex'), licensedSHA256);
 
+    let selection = 0;
     const loadMock = orientation => photo.setInputFiles({
-      name: 'synthetic.jpg', mimeType: 'image/jpeg', buffer: mocks.get(orientation)
+      name: `synthetic-${orientation}-${++selection}.jpg`, mimeType: 'image/jpeg', buffer: mocks.get(orientation)
     });
     const mocks = new Map(await Promise.all([1, 2, 6].map(async value => [value, await syntheticJpeg(value)])));
     for (const orientation of [2, 6]) {
       await loadMock(orientation);
       await page.locator('#preview').waitFor();
-      assert.equal(await page.locator('#references').isDisabled(), true);
+      await page.getByRole('status').filter({ hasText: 'Reference placement is disabled' }).waitFor();
+      assert.equal(await page.locator('#references').evaluate(fieldset => fieldset.disabled), true);
+      assert.equal(await page.locator('[name=startX1]').isDisabled(), true);
       const [w, h] = await page.locator('#preview').evaluate(img => [img.naturalWidth, img.naturalHeight]);
       assert.deepEqual([w, h], orientation === 6 ? [300, 400] : [400, 300]);
     }
