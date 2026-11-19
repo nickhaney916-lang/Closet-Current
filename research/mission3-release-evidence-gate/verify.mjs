@@ -41,6 +41,13 @@ const APP_EVENTS=new Set([
  'blank_skipped','exact_duplicate_skipped','recognized_saved',
  'photo_check_failed','outfit_split_start','outfit_split_ready','outfit_split_failed'
 ]);
+// An earlier genuine runtime/photograph/split failure must not be hidden by
+// manually selected PASS steps or a later saved-recognition event. The owner
+// can restart device QA for a fresh, clean private report after fixing it.
+const FATAL_DEVICE_EVENTS=new Set([
+ 'scanner_error','worker_start_failed','timeout',
+ 'photo_check_failed','outfit_split_failed'
+]);
 const APP_STAGES=new Set([
  'idle','runtime','weights','runtime_import','model_download','ready',
  'catalog_import','identify','details','photo_check'
@@ -103,6 +110,8 @@ function reportShape(value,family,appAssetRelease,errors,path){
    const p=path+'.events['+i+']';
    if(!keys(event,['type','stage','code','durationMs','percent'],p,errors))continue;
    if(!APP_EVENTS.has(event.type))errors.push(p+'.type: unrecognized');
+   if(FATAL_DEVICE_EVENTS.has(event.type))
+    errors.push(p+': recorded device failure requires a new clean QA session');
    if(event.stage!==undefined&&!APP_STAGES.has(event.stage))errors.push(p+'.stage: unexpected');
    if(event.code!==undefined&&!APP_CODES.has(event.code))errors.push(p+'.code: unexpected');
    if(event.durationMs!==undefined&&(!Number.isInteger(event.durationMs)||event.durationMs<0||event.durationMs>600000))
