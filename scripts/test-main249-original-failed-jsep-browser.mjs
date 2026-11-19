@@ -42,6 +42,10 @@ const injectAt='assert.ok(source.includes("M58_REAL_P88_WORKER_FAIL"));';
 const build=String.raw`
  // M249 local-only: exactly one original-browser failed attempt, same-run
  // public JSEP SHA and model-load category. No raw errors/pixels/auth logged.
+ const generatedImport="import {verifySameOriginalJsepModelBoundary,sanitizeRealWorkerJsepMessage} from './main247-original-worker-jsep-heap-observer.mjs';";
+ assert.equal(source.split(generatedImport).length,2);
+ source=source.replace(generatedImport,generatedImport+"\n"+
+  "import {summarizeM249Failure} from './main249-original-failed-jsep-source-witness.mjs';");
  const stateAnchor="let browser,stage='startup';";
  assert.equal(source.split(stateAnchor).length,2);
  source=source.replace(stateAnchor,"const m249Errors=[],m249Heap=[];\n"+stateAnchor);
