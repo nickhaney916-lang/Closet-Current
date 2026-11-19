@@ -1,0 +1,91 @@
+name: MAIN1054 M274 M181 zero-proposal safe integration successor NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m274-m181-zero-proposal-HOLD]
+permissions:
+  contents: read
+jobs:
+  m274-source-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: First-attempt exact checkout and immutable owner/model/zero-result source gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:scripts/main1054-m274-m181-source-gate.mjs)" = 81e5e42840330a9c7a05d084f64b4297b09d9b0e
+          node scripts/main1054-m274-m181-source-gate.mjs
+          node --check scripts/test-main181-zero-proposal-native-browser.mjs
+          node --check public/outfit-capture.js
+      - name: M274 adversarial source proof and M181 original negative results
+        run: node --test tests/main1054-m274-m181-source-gate.test.mjs tests/outfit-capture.test.cjs
+      - name: Preserve inherited source/lease/security positive and negative assertions
+        run: node --test tests/main1054-m271-m58-gate.test.mjs tests/main1054-m272-m173-source-gate.test.mjs tests/main1054-m273-m180-source-gate.test.mjs tests/main1054-m254-signed-outfit-lease.test.mjs
+      - name: Install same pinned Node and Playwright dependencies without hosted writes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Offline real PWA build and entire inherited privacy and account regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          grep -Fq 'No new clothing pieces were added. Nothing was saved.' dist/outfit-capture.js
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  m274-native-zero-proposals:
+    needs: m274-source-node
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+        width: [320, 390, 430]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M181_ENGINE: ${{ matrix.engine }}
+      M181_WIDTH: ${{ matrix.width }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fail-closed no-deploy same-commit source pins and original-worker identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:scripts/main1054-m274-m181-source-gate.mjs)" = 81e5e42840330a9c7a05d084f64b4297b09d9b0e
+          node scripts/main1054-m274-m181-source-gate.mjs
+          test "$(git rev-parse HEAD:scripts/test-main181-zero-proposal-native-browser.mjs)" = ea1a5bdb7f0617c71695f9b0382afd6ff7d5f089
+          test "$(git rev-parse HEAD:public/outfit-capture.js)" = 8d55715ef09e34086d3c401ec38340bfc25f5fe8
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Install pinned genuine native Chromium/WebKit and source-only fixtures
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Offline normal PWA build; never deploy or contact hosted private accounts
+        run: node scripts/build.mjs
+      - name: 'Real native app negative case: zero Worker proposals then retry, single-item fallback, explicit private-owner approval'
+        run: node scripts/test-main181-zero-proposal-native-browser.mjs
+      - name: Archive sanitized original-source no-silent-save receipt on success or failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m274-zero-proposal-${{ matrix.engine }}-${{ matrix.width }}-HOLD
+          path: benchmark/main181-zero-result-native/${{ matrix.engine }}/${{ matrix.width }}/**/*.json
+          retention-days: 7
+          if-no-files-found: ignore
