@@ -24,11 +24,12 @@ try{
  page.on('pageerror',e=>{throw e;});
  await page.goto(pathToFileURL(pagePath).href,{waitUntil:'load'});
  await page.waitForFunction(()=>document.getElementById('region').options.length>0);
+ await page.waitForFunction(()=>document.getElementById('original').height>150);
  assert.match(await page.title(),/UNAPPROVED/i);
  assert.equal(await page.locator('#photo option').count(),4);
  assert.equal(await page.locator('#photo').inputValue(),'2551406');
  assert.equal(await page.locator('#region').inputValue(),'2551406-region-1');
- assert.match(await page.locator('#coords').innerText(),/13,180 disputed pixels/);
+ assert.match(await page.locator('#coords').innerText(),/13180 disputed pixels/);
  const controls=await page.evaluate(()=>{
   const data=JSON.parse(document.getElementById('source-packet').textContent);
   const i=data.images.find(x=>x.imageId===2551406);
