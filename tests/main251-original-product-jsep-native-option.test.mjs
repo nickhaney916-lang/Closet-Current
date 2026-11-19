@@ -27,11 +27,14 @@ const identity={originalP94JsepRealWorker:true,
  directBrowserJsepWasmBodyHash:true};
 const e=flag=>({phase:'m251_original_jsep_native_abi',
  optionsArgumentCount:10,originalNativeExportCalled:true,
- arenaFlag:1,patternFlag:flag,returnedNativeHandle:true,threw:false});
+ arenaFlag:1,patternFlag:flag,nativeArgumentsZeroOneOnly:[null,1,flag,null,null,null,null,null,null,null],
+ returnedNativeHandle:true,threw:false});
 test('real original P94 native ABI receipt admits default memory pattern only as witnessed',()=>{
  const r=admitRealNativeSessionTransport({engine:'webkit',arm:'baseline',events:[e(1)],identity});
  assert.equal(r.actualNativeMemoryPatternFlag,1);
- assert.equal(r.actualNativeOptionTransportMatchesRequest,true);
+ assert.equal(r.candidatePatternFlagMatchesRequest,true);
+ assert.equal(r.actualNativeOptionTransportVerified,false);
+ assert.equal(r.nativePatternFlagMeaningSourceVerified,false);
  assert.equal(r.spontaneousWebKitRedBeforeGreenAfterProven,false);
  assert.equal(r.nativeCppAllocatorStateRead,false);
  assert.equal(r.releaseAuthorized,false);
@@ -40,13 +43,13 @@ test('actual native ABI can disprove Transformers pattern-off request transport'
  const r=admitRealNativeSessionTransport({engine:'webkit',arm:'pattern_off',events:[e(1)],identity});
  assert.equal(r.actualNativeMemoryPatternFlag,1);
  assert.equal(r.expectedMemoryPatternFlag,0);
- assert.equal(r.actualNativeOptionTransportMatchesRequest,false);
+ assert.equal(r.candidatePatternFlagMatchesRequest,false);
  assert.equal(r.webKitMemoryFaultRepaired,false);
 });
 test('actual native ABI match for pattern-off is evidence, not a permanent repair',()=>{
  const r=admitRealNativeSessionTransport({engine:'webkit',arm:'pattern_off',events:[e(0)],identity});
  assert.equal(r.actualNativeMemoryPatternFlag,0);
- assert.equal(r.actualNativeOptionTransportMatchesRequest,true);
+ assert.equal(r.candidatePatternFlagMatchesRequest,true);
  assert.equal(r.spontaneousWebKitRedBeforeGreenAfterProven,false);
 });
 test('reject fake native handle, wrong WASM, ambiguous or missing worker pass-through',()=>{
@@ -57,6 +60,7 @@ test('reject fake native handle, wrong WASM, ambiguous or missing worker pass-th
   {events:[{...e(0),originalNativeExportCalled:false}]},
   {events:[{...e(0),optionsArgumentCount:9}]},
   {events:[{...e(0),patternFlag:null}]},
+  {events:[{...e(0),nativeArgumentsZeroOneOnly:[10]}]},
   {events:[e(0)],identity:{...identity,pinnedLocalJsepBinarySha:'0'.repeat(64)}},
   {events:[e(0)],identity:{...identity,originalModelAndPrivate2DV4Passed:false}},
   {events:[e(0)],identity:{...identity,directBrowserJsepWasmBodyHash:false}}
