@@ -259,8 +259,8 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     duplicateStoredOnlyAfterSeparateAttestation:true,threeDAuthority:false,
     pageErrors:errors.length
    }));
-   // The actual native Crop flow must expire the old identical-JPEG
-   // marker when a pending duplicate photo is genuinely recropped.
+   // The preview crop changes, but the full-size source still matches an
+   // existing garment. Clear old attestations, not the physical duplicate gate.
    await page.evaluate(()=>window.setupCropDuplicate88());
    await page.evaluate(()=>{
     window.cropPromise88=window.crop88Editor.save({
@@ -275,22 +275,25 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     const v=batch[0],lease=reviewedSaveLease88(v);
     return {savedCount:items.length,pendingCount:batch.length,
      changedPhoto:v.image==='data:image/jpeg;base64,TkVXUElYRUxT',
-     clearedOldMatch:v.exactSavedPhotoMatch88===undefined,
+     stillSameOriginal:v.originalPhoto?.image===originalSource88,
+     sharedSourceMatch:v.exactSavedPhotoMatch88?.savedItemId==='saved-photo-exact',
      clearedOldAttestation:v.ownerDuplicateReview88===undefined,
      ownerReviewStillRequired:v.requiresOwnershipConfirmation===true,
-     newSourceAdmissibleForOwnerReview:reviewedDistinctPhotoReceiptValid88(v,lease)};
+     ownerDistinctReviewStillRequired:reviewedDistinctPhotoReceiptValid88(v,lease)===false};
    });
    assert.equal(cropDuplicate.savedCount,1);
    assert.equal(cropDuplicate.pendingCount,1);
    assert.equal(cropDuplicate.changedPhoto,true);
-   assert.equal(cropDuplicate.clearedOldMatch,true);
+   assert.equal(cropDuplicate.stillSameOriginal,true);
+   assert.equal(cropDuplicate.sharedSourceMatch,true);
    assert.equal(cropDuplicate.clearedOldAttestation,true);
    assert.equal(cropDuplicate.ownerReviewStillRequired,true);
-   assert.equal(cropDuplicate.newSourceAdmissibleForOwnerReview,true);
-   console.log('M1_P88_BROWSER_CROP_DUPLICATE_EVIDENCE_EXPIRY',JSON.stringify({
-    browser:browserName,width,oldMatchCleared:true,
-    newCropRetainedAsUnsaved:true,reviewStillRequired:true,
-    staleDuplicateGateUnblocked:true,pageErrors:errors.length
+   assert.equal(cropDuplicate.ownerDistinctReviewStillRequired,true);
+   console.log('M1_P88_BROWSER_CROP_SHARED_ORIGINAL_OWNER_GATE',JSON.stringify({
+    browser:browserName,width,rawOriginalPreserved:true,sharedSourceMatch:true,
+    oldAttestationCleared:true,newCropRetainedAsUnsaved:true,
+    reviewStillRequired:true,noAutomaticPhysicalDuplicateSave:true,
+    pageErrors:errors.length
    }));
    // Source-execute the actual native Crop controller in real Chromium and
    // WebKit. The crop editor transport and signed owner are synthetic; no
