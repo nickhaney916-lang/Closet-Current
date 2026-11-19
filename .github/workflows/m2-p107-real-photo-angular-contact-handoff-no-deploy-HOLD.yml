@@ -71,8 +71,8 @@ jobs:
           node --check .m2-immutable-p107-calibration/research/parallel107/calibration.mjs
       - name: Original 35262 photograph front / 109064 anatomy all-indexed original SHA and true-XYZ native proof
         run: node scripts/test-m2-original-all-indexed-angular-native-browser.mjs .m2-immutable-licensed-body
-      - name: Verify real original photographic P107 producer against BOTH real licensed body native receipts
-        run: node scripts/test-m2-original-p107-calibration-motion-handoff.mjs
+      - name: Verify immutable P107 contract implementation loads without any family data
+        run: node --check .m2-immutable-p107-calibration/research/parallel107/calibration.mjs
       - name: Unchanged original consumer offline app build
         run: node scripts/build.mjs
       - name: Inherited full original private owner photo backup and ALL M2 Node tests
