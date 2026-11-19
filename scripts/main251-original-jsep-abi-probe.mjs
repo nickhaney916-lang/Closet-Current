@@ -88,13 +88,21 @@ export function verifyM251OriginalNativeOptionReceipt(record,{engine,arm}){
  assert.equal(record.argCount,10);
  assert.equal(record.handleReturned,true);
  assert.equal(record.cpuArena,false,'Observed original P94 JSEP native CPU arena changed');
- assert.equal(record.memPattern,arm==='baseline',
-  'Original JSEP native ABI memPattern argument differs from requested arm');
+ assert.equal(record.memPattern,false,
+  'Original P94 JSEP native memory pattern is not the observed default/off value');
+ // Both original default and explicit enableMemPattern:false request reach
+ // the SAME native false flag. This is transport evidence, NOT C++ allocator
+ // internals or a WebKit fault correction; standalone NON-JSEP model tests
+ // use a DIFFERENT native option default and cannot replace this proof.
  return {
   schema:'M251_ORIGINAL_JSEP_NATIVE_OPTIONS_ABI/v1',
   engine,arm,realWasmExportInvoked:true,
   originalPinnedOrtExportName:'_OrtCreateSessionOptions',
   nativeMemPatternFlag:record.memPattern,
+  requestedMemPatternOff:arm==='pattern_off',
+  originalDefaultMemPatternFlagWasAlreadyFalse:arm==='baseline'&&record.memPattern===false,
+  optionRequestNativeFlagDifferenceNotEstablishedHere:true,
+  standaloneNonJsepNativeOptionDefaultsNotApplicable:true,
   nativeCpuArenaFlag:record.cpuArena,
   genuineReturnedOptionsHandle:true,
   originalPinnedJsepGlueSourceSha256:PINNED_JS,
