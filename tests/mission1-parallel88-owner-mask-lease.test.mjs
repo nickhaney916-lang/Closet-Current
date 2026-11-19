@@ -1928,18 +1928,63 @@ function savedDetailsHarness88(){
   segmentHint:{categories:['Tops']},cropBounds:{x:0,y:0,width:1,height:1},
   ownerSourceReview88:{ownerReviewed:true,threeDReady:false},
   ownerDuplicateReview88:{ownerAttestedDistinctPhysicalItem:true,threeDReady:false}};
+ // Synthetic IDB transactional model. An unrelated browser tab may mutate
+ // rows after the UI loaded its copy and before the queued readwrite opens.
+ // Only an oncomplete transaction applies staged put/delete writes.
+ const rows=new Map([[item.id,structuredClone(item)]]);
+ let c;
  const db={name:'closet-current-user-owner-A',transaction(store,mode){
   assert.equal(store,'items');assert.equal(mode,'readwrite');
-  const tx={objectStore(name){assert.equal(name,'items');return {put(value){writes.push(structuredClone(value));},delete(id){deletes.push(id);}}}};
-  queueMicrotask(()=>tx.oncomplete?.());return tx;
+  let readStarted=false,finishScheduled=false,staged=()=>{};
+  const tx={oncomplete:null,onabort:null,onerror:null,aborted:false,
+   abort(){this.aborted=true;queueMicrotask(()=>this.onabort?.());},
+   objectStore(name){
+    assert.equal(name,'items');
+    const finish=()=>{
+     if(finishScheduled)return;
+     finishScheduled=true;
+     queueMicrotask(()=>{
+      if(tx.aborted)return;
+      staged();
+      tx.oncomplete?.();
+     });
+    };
+    return {
+     get(key){
+      readStarted=true;
+      const request={result:undefined,onsuccess:null,onerror:null};
+      Promise.resolve(c.readGate).then(()=>{
+       if(tx.aborted)return;
+       request.result=rows.has(key)?structuredClone(rows.get(key)):undefined;
+       request.onsuccess?.({target:request});
+       finish();
+      });
+      return request;
+     },
+     put(value){
+      const copy=structuredClone(value);
+      writes.push(copy);
+      staged=()=>rows.set(copy.id,copy);
+      if(!readStarted)finish();
+     },
+     delete(key){
+      deletes.push(key);
+      staged=()=>rows.delete(key);
+      if(!readStarted)finish();
+     }
+    };
+   }
+  };
+  return tx;
  }};
- const c={window:{closetAuth:{user:owner}},db,items:[item],batch:[],structuredClone};
+ c={window:{closetAuth:{user:owner}},db,items:[item],batch:[],structuredClone,
+   readGate:null};
  c.beforeWrite=async()=>{};
  c.queued=async fn=>{await c.beforeWrite();return fn();};
  vm.createContext(c);
  vm.runInContext(appSource.slice(start,end)+appSource.slice(begin,finish),c);
  const lease=c.reviewedSaveLease88(item);
- return {c,item,db,owner,lease,writes,deletes};
+ return {c,item,db,owner,lease,writes,deletes,rows};
 }
 test('P88 existing closet item accepts manual category/type/color edits in captured IDB only',async()=>{
  const h=savedDetailsHarness88(),value=structuredClone(h.item);
@@ -2029,6 +2074,65 @@ test('P88 saved delete refuses stale source, reintroduced ID, or edited owner ph
   await assert.rejects(h.c.removeExistingPiece88(h.lease),/P88_REVOKED_SAVED_DELETE_OWNER_OR_SOURCE/);
   assert.equal(h.deletes.length,0,'stale deletion cannot remove or recreate a different row');
  }
+});
+
+// Cross-tab/private restore collisions: protect the actual persisted item
+// at the native IndexedDB readwrite boundary, not just the JS owner object.
+test('P88 cross-tab owner subtype/color correction blocks stale editor overwrite',async()=>{
+ for(const mutate of [
+  v=>{v.color='Green';},
+  v=>{v.itemType='Blouse';},
+  v=>{v.notes='corrected from other session';},
+  v=>{v.ownerSourceReview88.ownerReviewed=false;},
+  v=>{v.image='data:image/jpeg;base64,TkVX';}
+ ]){
+  const h=savedDetailsHarness88(),remote=structuredClone(h.rows.get(h.item.id));
+  mutate(remote);h.rows.set(h.item.id,remote);
+  const revised={...structuredClone(h.item),color:'Purple'};
+  await assert.rejects(h.c.saveExistingPiece88(revised,h.lease),
+   /P88_SAVED_EDITOR_STORAGE_CHANGED/,
+   'a second tab correction cannot be discarded by the first tab');
+  assert.deepEqual(h.rows.get(h.item.id),remote);
+  assert.equal(h.writes.length,0);
+ }
+});
+test('P88 saved editor cannot resurrect a source deleted in a second tab',async()=>{
+ const h=savedDetailsHarness88();
+ h.rows.delete(h.item.id);
+ await assert.rejects(h.c.saveExistingPiece88({...h.item,color:'Green'},h.lease),
+  /P88_SAVED_EDITOR_STORAGE_CHANGED/);
+ assert.equal(h.rows.has(h.item.id),false);
+ assert.equal(h.writes.length,0);
+});
+test('P88 cross-tab changed or replaced row blocks stale delete',async()=>{
+ for(const remote of [
+  row=>{row.color='Purple';},
+  row=>{row.sourceSHA256='a'.repeat(64);},
+  row=>{row.itemType='Dress';}
+ ]){
+  const h=savedDetailsHarness88(),changed=structuredClone(h.rows.get(h.item.id));
+  remote(changed);h.rows.set(h.item.id,changed);
+  await assert.rejects(h.c.removeExistingPiece88(h.lease),
+   /P88_SAVED_DELETE_STORAGE_CHANGED/);
+  assert.deepEqual(h.rows.get(h.item.id),changed);
+  assert.equal(h.deletes.length,0);
+ }
+ const h=savedDetailsHarness88();h.rows.delete(h.item.id);
+ await assert.rejects(h.c.removeExistingPiece88(h.lease),/P88_SAVED_DELETE_STORAGE_CHANGED/);
+ assert.equal(h.deletes.length,0);
+});
+test('P88 saved row read checks signed owner again when asynchronous IDB callback arrives',async()=>{
+ let release;
+ const gate=new Promise(r=>{release=r});
+ const h=savedDetailsHarness88();
+ h.c.readGate=gate;
+ const task=h.c.saveExistingPiece88({...h.item,color:'Green'},h.lease);
+ // Confirm an actual IDB read was queued before revoking the signed session.
+ await Promise.resolve();await Promise.resolve();await Promise.resolve();
+ h.c.window.closetAuth.user={id:'owner-A'};
+ release();
+ await assert.rejects(task,/P88_(?:SAVED_EDITOR_STORAGE_CHANGED|REVOKED_SAVED_EDITOR_OWNER_OR_SOURCE)/);
+ assert.equal(h.writes.length,0);
 });
 
 // P88: exercise the ACTUAL native asynchronous closetReady reload, not a
