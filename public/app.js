@@ -727,9 +727,11 @@ function reviewedSourceReceiptValid88(value,lease){
   r.color===value.color&&r.physicalUnitDecision===lease.status);
 }
 function saveSourceBoundPiece88(value,nextBatch,lease){
- // Recheck inside queued(), AFTER cloud.beforeWrite, just before the DB write.
- // The exact original-photo digest is independently checked before enqueueing.
+ // The source-bound unit is also a newly reviewed unsaved original. It must
+ // NEVER replace another private item on an ID collision and must not erase a
+ // different tab's unfinished original when clearing this reviewed draft.
  if(!sourceSaveLeaseLive88(lease))return Promise.reject(Error('P88_STALE_SOURCE_OWNER'));
+ if(lease.wasDraft!==true)return Promise.reject(Error('P88_SOURCE_REVIEW_INSERT_ONLY'));
  return queued(()=>{
   if(!sourceSaveLeaseLive88(lease)||
    value.id!==lease.item.id||
@@ -738,7 +740,7 @@ function saveSourceBoundPiece88(value,nextBatch,lease){
    JSON.stringify(value.cropBounds??null)!==lease.cropRevision||
    JSON.stringify(value.segmentHint??null)!==lease.hintRevision||
    JSON.stringify(value.reconciliation70??null)!==lease.receiptRevision||
-   // A model region or owner checkbox never certifies one physical garment.
+   // Owner review never certifies independent garment physical identity.
    value.singleGarmentVerified===true||value.threeDReady===true||
    value.independentPhysicalItemVerified===true||
    value.segmentHint?.verified===true||
@@ -753,15 +755,35 @@ function saveSourceBoundPiece88(value,nextBatch,lease){
    !unit70OwnerEvidenceValid({...lease.item,category:value.category})||
    duplicateUnit70InCloset(value,items))
    throw Error('P88_REVOKED_SOURCE_SAVE');
-  // A source-bound owner confirmation must never erase a different garment
-  // captured while cloud.beforeWrite was pending. Recompute from live drafts
-  // INSIDE the authorized queue, not the stale pre-await nextBatch argument.
   const liveRemaining=batch.filter(x=>x.id!==lease.item.id);
+  const liveBatchRevision=JSON.stringify(batch),expected=draftStoreRevision88;
+  if(typeof expected!=='string')throw Error('P88_DRAFT_STORAGE_NOT_LOADED');
   return new Promise((resolve,reject)=>{
-   const tx=lease.ownerDb.transaction(['items','state'],'readwrite');
-   tx.objectStore('items').put(value);
-   tx.objectStore('state').put({id:'draft',batch:structuredClone(liveRemaining)});
-   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+   let tx,reason=null;
+   try{
+    tx=lease.ownerDb.transaction(['items','state'],'readwrite');
+    const itemStore=tx.objectStore('items'),stateStore=tx.objectStore('state');
+    const read=stateStore.get('draft');
+    read.onsuccess=()=>{
+     try{
+      if(!sourceSaveLeaseLive88(lease)||
+       draftStoreRevision88!==expected||
+       JSON.stringify(read.result?.batch??null)!==expected||
+       JSON.stringify(batch)!==liveBatchRevision||
+       duplicateUnit70InCloset(value,items))
+       throw Error('P88_SOURCE_DRAFT_STORAGE_CHANGED');
+      itemStore.add(value); // insert-only; transaction aborts on item-ID collision
+      stateStore.put({id:'draft',batch:structuredClone(liveRemaining)});
+     }catch(e){reason=e;try{tx.abort();}catch{reject(reason);}}
+    };
+    read.onerror=()=>{reason=read.error||Error('P88_SOURCE_DRAFT_READ_FAIL');};
+    tx.oncomplete=()=>{
+     if(!sourceSaveLeaseLive88(lease))return reject(Error('P88_REVOKED_SOURCE_SAVE'));
+     draftStoreRevision88=JSON.stringify(liveRemaining);resolve();
+    };
+    tx.onabort=()=>reject(reason||tx.error||Error('P88_SOURCE_DRAFT_STORAGE_CHANGED'));
+    tx.onerror=()=>{}; // a duplicate item key aborts both stores
+   }catch(e){reject(e);}
   });
  });
 }
