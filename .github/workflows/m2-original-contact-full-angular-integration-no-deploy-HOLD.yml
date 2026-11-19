@@ -29,16 +29,18 @@ jobs:
           git diff --exit-code 4da5c090df129f9e3a7e91530a85965263518ed9 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
           while IFS= read -r p; do
             case "$p" in
-              research/parallel89/donor-original-camera-axis-body-contact89.mjs|research/parallel89/original-depth-full-swept-integration-addon89.mjs|tests/m2-original-depth-to-all-angular-contact-integration.test.mjs|scripts/test-m2-original-depth-angular-contact-native-browser.mjs|.github/workflows/m2-original-contact-full-angular-integration-no-deploy-HOLD.yml) ;;
+              research/parallel89/donor-original-camera-axis-body-contact89.mjs|research/parallel89/contact-first-original-indexed-swept-veto89.mjs|research/parallel89/original-depth-full-swept-integration-addon89.mjs|tests/m2-original-depth-to-all-angular-contact-integration.test.mjs|scripts/test-m2-original-depth-angular-contact-native-browser.mjs|.github/workflows/m2-original-contact-full-angular-integration-no-deploy-HOLD.yml) ;;
               *) echo "UNEXPECTED other-mission, original rig or protected file: $p"; exit 1 ;;
             esac
           done < <(git diff --name-only 4da5c090df129f9e3a7e91530a85965263518ed9 HEAD)
           node --check research/parallel89/donor-original-camera-axis-body-contact89.mjs
+          node --check research/parallel89/contact-first-original-indexed-swept-veto89.mjs
+          node --check tests/m2-contact-first-original-indexed-swept-veto.test.mjs
           node --check research/parallel89/original-depth-full-swept-integration-addon89.mjs
           node --check scripts/test-m2-original-depth-angular-contact-native-browser.mjs
           node --check tests/m2-original-depth-to-all-angular-contact-integration.test.mjs
       - name: Cross-branch contact positive donor and swept BVH 10 negative/positive regression fixtures
-        run: node --test tests/m2-original-depth-to-all-angular-contact-integration.test.mjs
+        run: node --test tests/m2-original-depth-to-all-angular-contact-integration.test.mjs tests/m2-contact-first-original-indexed-swept-veto.test.mjs
       - name: Install frozen offline source and original rig test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
       - name: Original museum RGB front+pixel identity, exact published original source
