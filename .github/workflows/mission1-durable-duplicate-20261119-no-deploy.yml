@@ -67,3 +67,5 @@ jobs:
           grep -Fq 'M1_P88_ACTUAL_BROWSER_DURABLE_NEW_DUPLICATE' /tmp/m1-native-idb
           grep -Fq '"staleDuplicateDenied":true' /tmp/m1-native-idb
           grep -Fq '"uniqueCommitted":true' /tmp/m1-native-idb
+          grep -Fq 'M1_P88_BROWSER_SHARED_ORIGINAL_DIFFERENT_CROP' /tmp/m1-native-idb
+          grep -Fq '"changedPeerBlocked":true' /tmp/m1-native-idb
