@@ -1,0 +1,24 @@
+# Assignment #104 — original JSEP memory-pattern transport evidence audit
+
+Assignment #1439 specifically requires avoiding duplicate parallel work. The read-only source audit found that [M253 draft #1440](https://github.com/nickhaney916-lang/Closet-Current/pull/1440) already runs both explicit settings with the same original P94 model and owner fixture. A second M253 branch also runs explicit on/off and a separately labeled default. This branch records independent verification of the installed artifacts and job receipts. The browser cohorts are attributed to their original jobs.
+
+## Native export attribution
+
+Independently hashed the installed Transformers.js 3.8.1 JSEP artifacts and enumerated the compiled module exports using Node. The 44,484-byte JS loader SHA-256 is `08fb86ec433c78bfb032c5d84a68b8e8e5a8d81268fa39e24314179a5767a5b9`. Its ten-argument `_OrtCreateSessionOptions` bridge assigns and directly invokes `K.Ha` with the arguments in order. The 21,596,019-byte WASM SHA-256 is `c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39`. Its export table contains the function `Ha`. Both M253 candidate heads retain original P94 Worker blob `d66651b616de54c51eb7ef986324b30f1580888f`.
+
+[M252 #1435](https://github.com/nickhaney916-lang/Closet-Current/pull/1435) identifies argument index 2 as the normalized memory-pattern boolean in the pinned ORT caller. [M251 #1433](https://github.com/nickhaney916-lang/Closet-Current/pull/1433) observed false for WebKit default, WebKit explicit false and Chromium default via a research-only pass-through JS loader. [M251 #1431](https://github.com/nickhaney916-lang/Closet-Current/pull/1431) retains its missing-native-evidence RED from looking for the unminified export. Local hash/exports enumeration alone supplies source attribution.
+
+## Explicit true/false browser receipts
+
+[M253 run 44456347991](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/44456347991), immutable head `8184555109d9b7b57041ed168e4f05edffbba31d`, uses the attested original JSEP binary and a disposable pass-through JS loader. Its Chromium 390px [explicit true](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/44456347991/job/135332180582) and [explicit false](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/44456347991/job/135332180830) jobs each emitted a fresh-process PASS with observed native flag true and false, respectively, genuine model ready, and the synthetic-owner private 2D/v4 and isolation checks passing. Chromium direct browser WASM response hashes remain UNVERIFIED. The local installed SHA cannot fill those missing receipts.
+
+At initial review the four WebKit jobs and inherited CI regression job were in progress. Admit explicit WebKit transport only from each original first-attempt job containing the matched native boolean and same-run WebKit WASM hash. A missing or contrary boolean or missing same-run body stays unresolved. A real model or owner failure stays RED even if its native flag was recorded.
+
+The [second M253 run 44456375404](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/44456375404) at `16f8f04f562968704b0f5bb833a5a12fb4a35a78` had failed browser jobs. The [WebKit on job log](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/44456375404/job/135332274339) shows that container `sh` rejected `set -o pipefail` before the browser step. That is a CI preflight failure. The historical genuine WebKit P101 4/64 and [M248 #1420](https://github.com/nickhaney916-lang/Closet-Current/pull/1420) 1/24 model-load REDs remain unresolved.
+
+## Admission and limits
+
+- The #1440 positive classifier requires parsed source/owner receipts and rejects their absence or duplication. It requires the expected flag before recording its public success receipt. A failed arm therefore needs a separately retained bounded raw ABI observation before a present-but-wrong flag can be distinguished from a missing observation in its final summary.
+- The second branch's audited classifier preserves a contrary bit, but its outer admission tests for the model and owner receipt marker text. Treat those receipt payloads and the same-run WebKit hash as mandatory when reviewing any later successful output.
+- Independent local offline build PASS. Inherited M250 targeted tests PASS 10/10, including missing or wrong source/owner evidence, failed children, wrong arm and no synthetic source-only promotion.
+- Native option argument transport, internal allocator state, spontaneous runtime failure, and causal repair require distinct evidence. No allocator-internal or permanent repair evidence was observed in this audit. Family Alpha [#255](https://github.com/nickhaney916-lang/Closet-Current/issues/255) is OPEN/HOLD.
