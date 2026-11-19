@@ -248,13 +248,40 @@ const readiness=async()=>{
   const jpgHash=await b64Digest(originalBytes);
   if(!ALLOWED_SOURCE_JPEG_SHA.has(jpgHash))
    throw Error('original-source-JPEG-byte-identity-invalid');
-  // Independently verified original JPEG remains available in 2D even if
-  // the separate derived 3D manifest is missing, corrupt or unapproved.
-  sourceVerifiedJPEGHash=jpgHash;
-  sourceObjectUrl=URL.createObjectURL(new Blob([originalBytes],{type:'image/jpeg'}));
-  photo.src=sourceObjectUrl;await photo.decode();
-  if(photo.naturalWidth!==1200||photo.naturalHeight!==933)
-   throw Error('original-source-2d-dimensions-invalid');
+  // A matching SHA authenticates the JPEG bytes, not successful browser
+  // decoding. Never publish the source as usable 2D (or unlock 3D) until
+  // decode AND exact natural dimensions have finished. A broken decoder
+  // cannot leave this mobile viewer waiting forever with a misleading photo.
+  let candidateUrl=URL.createObjectURL(new Blob([originalBytes],{type:'image/jpeg'}));
+  try{
+   photo.src=candidateUrl;
+   let decodeDeadline;
+   try{
+    await Promise.race([
+     Promise.resolve().then(()=>photo.decode())
+      .catch(()=>{throw Error('original-source-JPEG-decode-failed');}),
+     new Promise((_,reject)=>{
+      decodeDeadline=setTimeout(
+       ()=>reject(Error('original-source-JPEG-decode-timeout')),4000);
+     })
+    ]);
+   }finally{
+    clearTimeout(decodeDeadline);
+   }
+   if(photo.naturalWidth!==1200||photo.naturalHeight!==933)
+    throw Error('original-source-2d-dimensions-invalid');
+   sourceObjectUrl=candidateUrl;
+   sourceVerifiedJPEGHash=jpgHash;
+   candidateUrl=null; // ownership transferred only after real image decode
+  }finally{
+   if(candidateUrl){
+    photo.removeAttribute('src');
+    photo.hidden=true;
+    URL.revokeObjectURL(candidateUrl);
+   }
+  }
+  // Independently verified, successfully decoded original JPEG remains
+  // available in 2D even if the separate research manifest later fails.
   displayPhoto('Verified original 2D photograph. Checking unapproved research shell.');
   // Optional research 3D must never hold a verified original photograph in
   // an endless loading state. Bound both the response and its JSON body read;
