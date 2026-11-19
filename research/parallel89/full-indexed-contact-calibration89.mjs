@@ -214,6 +214,8 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{
   pairEnumerationStoppedAfterRealContact:false,
   resourceBoundReached:true,
   resourceBoundKind:kind,lastOriginalFrontFaceIndexChecked:lastFrontFaceIndex,
+  numberOfAABBOverlapsNotYetClassifiedAtLimit:
+   kind==='EXACT_AABB_CONTACT_BUDGET'?1:0,
   unresolvedDegenerateOrNearParallelPairs:counts.INDETERMINATE,
   entireOriginalFrontAndBodyDataIndexedButNotAllPairsExamined:true,
   garmentPhysicalFitCertified:false,fullMotionSweepCertified:false,
