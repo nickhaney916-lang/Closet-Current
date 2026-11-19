@@ -448,6 +448,49 @@ try{
    assert.equal(full.originalBodyComponentTriangleCounts.reduce((a,b)=>a+b,0),
     full.originalBodyIndexedFacesAudited);
    assert.equal(full.photoFrontOnly,true);
+   assert.equal(full.actualOriginalSourceAnatomicalNegativeVetoVerified,true);
+   assert.equal(full.allOriginalFacePairNegativeAuditsStillNotPhysicallyFitted,true);
+   const actualPositive=full.genuineOriginalSourceFrontRigidAnatomicalContactRejection;
+   assert.equal(actualPositive.sourcePhotoFrontOriginalIndexedFaces,
+    full.originalPhotoFrontIndexedFacesAudited);
+   assert.equal(actualPositive.actualLicensedBodyOriginalIndexedFaces,
+    full.originalBodyIndexedFacesAudited);
+   assert.ok(Number.isSafeInteger(actualPositive.authenticSourceFaceAnchorIndex));
+   assert.ok(actualPositive.authenticSourceFaceAnchorIndex>=0);
+   assert.ok(actualPositive.authenticSourceFaceAnchorIndex<
+    actualPositive.sourcePhotoFrontOriginalIndexedFaces);
+   assert.ok(Number.isSafeInteger(actualPositive.authenticBodyFaceAnchorIndex));
+   assert.ok(actualPositive.authenticBodyFaceAnchorIndex>=0);
+   assert.ok(actualPositive.authenticBodyFaceAnchorIndex<
+    actualPositive.actualLicensedBodyOriginalIndexedFaces);
+   assert.equal(actualPositive.actuallyOriginalSourceAndBodySelectedTriangleContact,
+    'COPLANAR_OVERLAP');
+   assert.ok(actualPositive.realSourceAndLicensedBodyFaceAreaRigUnits.source>1e-8);
+   assert.ok(actualPositive.realSourceAndLicensedBodyFaceAreaRigUnits.body>1e-8);
+   const positiveGate=actualPositive.actualFullOriginalIndexedPhotoContactRefusal;
+   assert.equal(positiveGate.originalBodyIndexedFacesAudited,
+    full.originalBodyIndexedFacesAudited);
+   assert.equal(positiveGate.originalPhotoFrontIndexedFacesAudited,
+    full.originalPhotoFrontIndexedFacesAudited);
+   assert.equal(positiveGate.contactDecision,
+    'BLOCKED_ACTUAL_ORIGINAL_FRONT_BODY_CONTACT');
+   assert.equal(positiveGate.definitiveCollisionRejection,true);
+   assert.equal(positiveGate.strictGeometricContactObserved,true);
+   assert.equal(positiveGate.fullOriginalIndexedScopeEvaluated,false);
+   assert.equal(positiveGate.pairEnumerationStoppedAfterRealContact,true);
+   assert.ok(positiveGate.classifications.COPLANAR_OVERLAP+
+    positiveGate.classifications.CROSSING+
+    positiveGate.classifications.TOUCHING>0);
+   assert.equal(actualPositive.identicalRigidRegistrationAppliedToEverySourceFace,true);
+   assert.equal(actualPositive.realOriginalPositionUVRGBAndRigBuffersNotMutated,true);
+   assert.equal(actualPositive.selectedCandidateGeometryCopiedNoPermanentMeshChange,true);
+   assert.equal(actualPositive.exhaustiveNegativeContactCheckNotProved,true);
+   assert.equal(actualPositive.actualTruePhysicalGarmentFitCalibrated,false);
+   assert.equal(actualPositive.originalGarmentReversePhotographAvailable,false);
+   assert.equal(actualPositive.genuineOwner3DContactApproved,false);
+   assert.equal(actualPositive.consumer3DAdmitted,false);
+   assert.equal(actualPositive.sourceOriginalPhoto2DFallbackRequired,true);
+   assert.equal(actualPositive.familyAlpha,'HOLD');
    assert.equal(full.originalPhotoSourceJPEGByteSHA256,hash(image));
    assert.equal(full.sourceOriginalRGBSHA256,shell.originalDecodedRGBSHA256);
    assert.equal(full.actualRigOriginalGLBSHA256,rigHashes[kind]);
@@ -508,6 +551,19 @@ try{
    sampledOriginalBodyPhotoNonCoplanarCrossingsAtBend:bentCrossing,
    fiveOriginalRealSpinePoseBodyPhotoFaceCrossingStudies:fiveDiscretePoses,
    originalFrontBodyEveryIndexedFaceIndexedAndGatedInFivePoses:true,
+   actualOriginalPhotoRigidbodyNegativeContactControlsAcrossFivePoses:true,
+   realOriginalAnatomicalPositiveRejectionPerPose:
+    completeEvidence.map(x=>({
+     sourceFace:x.genuineOriginalSourceFrontRigidAnatomicalContactRejection
+      .authenticSourceFaceAnchorIndex,
+     bodyFace:x.genuineOriginalSourceFrontRigidAnatomicalContactRejection
+      .authenticBodyFaceAnchorIndex,
+     decision:x.genuineOriginalSourceFrontRigidAnatomicalContactRejection
+      .actualFullOriginalIndexedPhotoContactRefusal.contactDecision,
+     actuallyObservedContact:
+      x.genuineOriginalSourceFrontRigidAnatomicalContactRejection
+      .actuallyOriginalSourceAndBodySelectedTriangleContact
+    })),
    originalFullNegativeActualContactOrBlockedResourceDecisions:completeEvidence,
    physicalCalibrationEvidenceStillMissing:calibration,
    trueContactControlsWithCoplanarTouchAndUnknown:true,
@@ -568,6 +624,8 @@ try{
   coplanarAndTouchingControlVerified:true,
   actualPhysicalScaleAndCameraNotInvented:true,
   originalContactEligibilityFailsClosedOnUnfinishedResourceAudits:true,
+  actualOriginalMaleFemaleRigidPhotoFrontAnatomicalContactVetoProved:true,
+  originalPhotoRGBUVAndGLBImmutableAfterPositiveCollisionTests:true,
   browserErrors:failures.length,externalHTTP:0,
   consumer3DAdmitted:false,familyAlpha:'HOLD'
  }));
