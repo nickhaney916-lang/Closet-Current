@@ -585,6 +585,21 @@ function cropClothingPhoto(item){
     throw Error('P88_CROP_ORIGINAL_SOURCE_CHANGED');
    if(photo.maskApplied!==undefined&&photo.maskApplied!==true)
     throw Error('P88_CROP_UNEXPECTED_FIELD');
+   // A masked palette is only a tentative pixel estimate, not an owner
+   // confirmation, source hash, or independently verified mask receipt.
+   // Never attach "garment-mask" provenance to an UNMASKED crop. Only the
+   // native editor's narrow color estimate schema may reach the draft.
+   if(photo.maskedColorEstimate!==undefined){
+    if(photo.maskApplied!==true)throw Error('P88_CROP_MASK_ESTIMATE_WITHOUT_MASK');
+    const est=photo.maskedColorEstimate,keys=['color','source','secondaryColor'];
+    if(!est||typeof est!=='object'||Array.isArray(est)||
+     Object.keys(est).some(k=>!keys.includes(k))||
+     typeof est.color!=='string'||!est.color.trim()||
+     est.color.length>40||est.source!=='photo-estimate'||
+     (est.secondaryColor!==undefined&&est.secondaryColor!==null&&
+      (typeof est.secondaryColor!=='string'||est.secondaryColor.length>40)))
+     throw Error('P88_CROP_INVALID_MASK_COLOR');
+   }
    // The crop rectangle is untrusted callback metadata. An invalid or
    // overflowing normalized rectangle must never poison an owner-private
    // wardrobe row even when the derived JPEG and original JPEG are valid.
@@ -622,7 +637,8 @@ function cropClothingPhoto(item){
    // for a post-crop pixel estimate to create a new confirmed garment color.
    if(lease.wasDraft){
     Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));
-    if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')value.colorMethod='garment-mask';
+    if(photo.maskApplied===true&&photo.maskedColorEstimate&&
+     value.colorSource==='photo-estimate')value.colorMethod='garment-mask';
    }
    delete value.maskedColorEstimate;delete value.maskApplied;
    value.visualSignature=quality.signature;value.visualAspect=quality.aspect;
