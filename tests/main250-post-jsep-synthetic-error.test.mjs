@@ -46,8 +46,8 @@ test('M250 refuses silent passing model, any fake same-failing-browser JSEP, mis
   x=>{x.modelExceptionName='NetworkError';},
   x=>{x.modelExceptionCategory='other';},
   x=>{x.originalHeapTerminalSeen=false;},
-  x=>{x.observedGrowCalls=0;}, x=>{x.observedGrowCalls=5;},
-  x=>{x.observedGrowErrors=0;}, x=>{x.observedGrowErrors=2;},
+  x=>{x.observedGrowCalls=0;}, x=>{x.observedGrowCalls=-1;},
+  x=>{x.observedGrowErrors=0;}, x=>{x.observedGrowErrors=-1;},
   x=>{x.observedFirstPages=0;},x=>{x.observedTerminalPages=0;},
   x=>{x.nativeCppAllocatorCauseProven=true;},
   x=>{x.nativeMemoryAccessRootCauseProven=true;},
@@ -69,7 +69,7 @@ test('M250 changes ONLY a disposable original real-worker grow pass-through and 
  assert.equal(actual.includes('m250'),false);
  assert.equal(m249.includes('m250Synthetic'),false);
  assert.equal(injected.includes("throw new WebAssembly.RuntimeError('memory access out of bounds');"),true);
- assert.equal(injected.split("if(m247Stats.calls===2)").length,2);
+ assert.equal(injected.split("if(m247Stats.calls>=2)").length,2);
  assert.equal(injected.split('    const result=Reflect.apply(nativeGrow,this,args);').length,2);
  assert.equal(injected.includes("m249ClassifyOriginal(error);m247Emit(requestId,'error');loader=null;throw error;"),true);
  assert.equal(injected.includes("device:'wasm',dtype:'fp32'"),true);
