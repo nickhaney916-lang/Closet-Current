@@ -93,7 +93,7 @@ jobs:
         run: node scripts/test-main58-actual-p88-wasm-browser.mjs
       - name: Second FRESH WebKit browser - original installed P94 model, source and v4 restore
         run: node scripts/test-parallel94-native-p88-browser.mjs
-      - name: Original M180 receipt: two real browser processes and unverified-model no-silent-save invariant
+      - name: 'Original M180 receipt: two real browser processes and unverified-model no-silent-save invariant'
         shell: bash
         run: |
           set -euo pipefail
