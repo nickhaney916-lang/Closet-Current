@@ -43,8 +43,8 @@ function validateRealJavaScriptHandoff({worker,models,backend,transformers,ort},
   "from_pretrained(modelId,{revision,device:'wasm',dtype:'fp32',session_options:{enableMemPattern:false},progress_callback:",
   anchor
  ),worker,'Experimental M250 Worker changed more than its one option request');
- once(models,'session_options = {},','Transformers from_pretrained parameter');
- once(models,'            session_options,','Transformers option carried into local options');
+ assert.match(models,/static async from_pretrained\(pretrained_model_name_or_path, \{[\s\S]*?session_options = \{\},[\s\S]*?\} = \{\}\) \{/,'Pinned Transformers from_pretrained must accept session_options');
+ assert.ok(models.includes('            session_options,'),'Transformers local options must retain session_options');
  once(models,'const session_options = { ...options.session_options };','Transformers session options spread');
  once(models,'return { buffer_or_path, session_options, session_config };','Transformers getSession result');
  once(models,'const { buffer_or_path, session_options, session_config } = await getSession(pretrained_model_name_or_path, names[name], options);','Transformers constructed session options');
