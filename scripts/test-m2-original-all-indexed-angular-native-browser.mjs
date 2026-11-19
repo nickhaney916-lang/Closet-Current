@@ -12,7 +12,7 @@ import {spawnSync} from 'node:child_process';
 const pins={
  runner:'5f999c1dc440539cec143f7c7de48b8fe88dd91e',
  registration:'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb',
- addon:'0e7c524a034594e4d0c63f6e89318ff99667e434'
+ addon:'4c443d62c311d88f00f88a361765dd345f86c55f'
 };
 const sha=b=>createHash('sha1').update('blob '+Buffer.byteLength(b)+'\0')
  .update(b).digest('hex');
@@ -39,7 +39,7 @@ const routeLines=[
  "    const addonSource=await readFile('research/parallel89/original-full-indexed-spine04-bvh-addon89.mjs','utf8');",
  "    const blobSha=t=>createHash('sha1').update('blob '+Buffer.byteLength(t)+'\\0').update(t).digest('hex');",
  "    assert.equal(blobSha(originalSource),'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb');",
- "    assert.equal(blobSha(addonSource),'0e7c524a034594e4d0c63f6e89318ff99667e434');",
+ "    assert.equal(blobSha(addonSource),'4c443d62c311d88f00f88a361765dd345f86c55f');",
  "    await route.fulfill({status:200,contentType:'text/javascript',body:originalSource+'\\n'+addonSource});",
  "   });",
  routeAnchor
@@ -80,6 +80,22 @@ const verifyLines=[
  "   assert.equal(audit.sourcePhoto2DFallbackRequired,true);",
  "   assert.equal(audit.consumer3DAdmitted,false);",
  "   assert.equal(audit.familyAlpha,'HOLD');",
+ "   assert.deepEqual(audit.unmeasuredCameraAxisDepthIntervalRigUnits,[-.5,0]);",
+ "   assert.equal(audit.unmeasuredCounterfactualDepthNotCameraCalibrated,true);",
+ "   const depth=audit.actualAllOriginalIndexedDepthUncertaintySweptBVH;",
+ "   assert.equal(depth.originalFrontFaceCount,35262);",
+ "   assert.equal(depth.originalBodyFaceCount,109064);",
+ "   assert.equal(depth.allOriginalBodyFacesPresentInSweptBVH,true);",
+ "   assert.deepEqual(depth.researchSourceFrontDepthIntervalRigUnits,[-.5,0]);",
+ "   assert.equal(depth.depthIntervalIsUnmeasuredCounterfactual,true);",
+ "   assert.ok(['BLOCKED_ACTUAL_TRUE_ORIGINAL_DISCRETE_CONTACT',",
+ "    'BLOCKED_UNRESOLVED_FULL_INDEXED_ANGULAR_CONTACT',",
+ "    'BLOCKED_ANGULAR_BVH_VISIT_BUDGET',",
+ "    'BLOCKED_ANGULAR_FACE_PAIR_BUDGET',",
+ "    'BLOCKED_ANGULAR_EXACT_SAMPLE_BUDGET'].includes(depth.decision),",
+ "    'UNMEASURED original JPEG depth uncertainty must BLOCK, never certify garment fit');",
+ "   assert.equal(depth.consumer3DAdmitted,false);",
+ "   assert.equal(depth.physicallyCalibratedSourceFit,false);",
  "   await writeFile(resultDir+browserName+'-'+kind+",
  "    '-ORIGINAL-FULL-INDEXED-163bone-ANGULAR-BVH-RESEARCH-HOLD.json',",
  "    JSON.stringify(audit,null,2)+'\\n');",
@@ -98,6 +114,12 @@ const verifyLines=[
  "    exactOriginalDiscretePairSamples:actual.exactDiscreteOriginalFaceTests,",
  "    completeOriginalAngularBroadphase:actual.fullAllOriginalFrontAndBodyAngularBroadphaseCompleted,",
  "    decision:actual.decision,",
+ "    sourceDepthCounterfactualIntervalRigUnits:[-.5,0],",
+ "    actualAllOriginalIndexedDepthUncertaintyDecision:",
+ "     depth.decision,",
+ "    depthEnvelopeOverlaps:depth.overlappingOriginalAngularEnvelopes,",
+ "    depthBVHNodesVisited:depth.bodyBVHNodesVisited,",
+ "    measuredOriginalGarmentScale:false,",
  "    physicallyFitted:false,consumer3DAdmitted:false,familyAlpha:'HOLD'",
  "   }));",
  poseAnchor
