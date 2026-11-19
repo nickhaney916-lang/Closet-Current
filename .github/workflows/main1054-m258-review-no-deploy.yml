@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify unchanged original model source, M255/M256 donor, and four added paths
+      - name: Verify original model source, reviewed test delta, and exact four-path M258 scope
         shell: bash
         run: |
           set -euo pipefail
@@ -36,13 +36,13 @@ jobs:
           test "$(git rev-parse HEAD:.github/workflows/main1054-m255-combined-no-deploy.yml)" = ca67f4f9da15997cef60e66b7298a33979db9527
           git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
             case "$path" in
-              research/main1054/m257-real-runner-evidence.mjs|tests/main1054-m258-review-falsification.test.mjs|.github/workflows/main1054-m258-review-no-deploy.yml) ;;
-              *) echo "M257 unexpected changed path: $path"; exit 1 ;;
+              research/main1054/m257-real-runner-evidence.mjs|tests/main1054-m257-real-runner-evidence.test.mjs|tests/main1054-m258-review-falsification.test.mjs|.github/workflows/main1054-m258-review-no-deploy.yml) ;;
+              *) echo "M258 unexpected changed path: $path"; exit 1 ;;
             esac
           done
           git diff --exit-code "$PARENT" HEAD -- public/ scripts/ supabase/ benchmark/ research/parallel105/ research/main1054/m256-negative-attempt-quarantine.mjs
           node --check research/main1054/m257-real-runner-evidence.mjs
-      - name: Test original M256 and M257 falsification (no fake browser PASS)
+      - name: Test original M256/M257 and new M258 terminal-RED falsification
         shell: bash
         run: |
           set -euo pipefail
