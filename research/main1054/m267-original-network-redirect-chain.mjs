@@ -103,7 +103,7 @@ export function assessM267(log,identity){
   originalJsepNetworkGate:oldError||missingFinal?'FAIL':base.originalJsepNetworkGate,
   originalModelHttpErrors:modelHttp.originalModelHttpErrors,
   originalJsepHttpErrors:base.jsepHardHttpErrors,
-  originalModelCanonicalBodies:base.originalModelBytesCorrectlyHashed,
+  originalModelCanonicalBodies:modelHttp.originalModelBytesCorrectlyHashed,
   originalJsepCanonicalBodies:base.canonicalJsepResponses,
   modelRedirectChains:redirectedModelChains,
   jsepRedirectChains:redirectedJsepChains,
@@ -111,7 +111,7 @@ export function assessM267(log,identity){
   orphanRedirectChains,multipleTerminals,badResponseChains,
   redirectChainGate:chainGate,
   nativeLoadedOnnxSHA256:null,nativeCompiledJsepSHA256:null,
-  nativeNativeRuntimeIdentityAttested:false,
+  nativeRuntimeIdentityAttested:false,
   sourceEvidenceGate:oldError||missingFinal?'FAIL':'BLOCKED',
   naturalIntermittentWebKitFaultRepaired:false,releaseAuthorized:false,familyAlpha:'HOLD'
  };
