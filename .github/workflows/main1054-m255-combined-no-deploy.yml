@@ -1,0 +1,158 @@
+name: MAIN1054 M255 combined exact-head source and browser acceptance NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m255-combined-acceptance-HOLD]
+  pull_request:
+    branches: [research/main1054-m254-signed-outfit-lease-assert-HOLD]
+permissions:
+  contents: read
+jobs:
+  combined-source-and-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact combined checkout, donor identity and no private/production change
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=f2befed4c776786dc11843b98fafec72f2d9c202
+          M254=ebb8f7f333864ee6072a620e8b93bca76ebed9ae
+          M105=5061d8087badc300dabed2ff246b2d0461ff0cac
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          git merge-base --is-ancestor "$M254" HEAD
+          git merge-base --is-ancestor "$BASE" HEAD
+          git cat-file -e "$M105^{commit}"
+          # Adopt precisely the reviewed donor's research-only blobs.
+          for path in .github/workflows/parallel105-closeout-no-deploy.yml research/parallel105/README.md research/parallel105/closeout.mjs tests/parallel105-closeout.test.mjs; do
+            test "$(git rev-parse "HEAD:$path")" = "$(git rev-parse "$M105:$path")"
+          done
+          # The only consumer source change is M254's tested current owner assertion.
+          test "$(git rev-parse HEAD:public/native-outfit-source-plan-p99.mjs)" = 62ebfaad2fb14a965cd7ef386c383e849f511463
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 52d2b6d8834f27d9114e022fe8574947eda85206
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
+            case "$path" in
+              public/native-outfit-source-plan-p99.mjs|tests/main1054-m254-signed-outfit-lease.test.mjs|.github/workflows/main1054-m254-signed-lease-no-deploy.yml|.github/workflows/parallel105-closeout-no-deploy.yml|research/parallel105/README.md|research/parallel105/closeout.mjs|tests/parallel105-closeout.test.mjs|.github/workflows/main1054-m255-combined-no-deploy.yml) ;;
+              *) echo "M255 unexpected changed path: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$BASE" HEAD -- public/app.js public/outfit-board.js public/native-2d-preview-p99.mjs public/auth.js public/outfit-worker-p94.mjs supabase/ benchmark/fixtures/
+          node --check public/native-outfit-source-plan-p99.mjs
+          node --check research/parallel105/closeout.mjs
+      - name: Run original-source review, six M254 lease and five #105 receipt falsification tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/main1054-m254-signed-outfit-lease.test.mjs tests/parallel105-closeout.test.mjs
+      - name: Install locked test runtime without cloud access
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build no-deploy PWA and run entire inherited offline/privacy/source/security/backup suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  normal-native-ui:
+    needs: combined-source-and-regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P99_ENGINE: ${{ matrix.engine }}
+      P99_WIDTH: '390'
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact source and dependencies without deploying
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node scripts/build.mjs
+      - name: Actual owner-confirmed normal app private 2D/v3 workflow with synthetic auth
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/test-parallel99-normal-app-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m255-normal-${{ matrix.engine }}-390-HOLD
+          path: benchmark/parallel99-normal-journey/${{ matrix.engine }}/390/**/*.json
+          retention-days: 14
+          if-no-files-found: warn
+  original-segformer-native:
+    needs: combined-source-and-regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+        width: [320, 390, 430]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: ${{ matrix.width }}
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original P94 pinned model and immutable source, no-release
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Unchanged genuine first-attempt original SegFormer browser and synthetic-owner source journey
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/test-parallel94-native-p88-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m255-original-${{ matrix.engine }}-${{ matrix.width }}-HOLD
+          path: benchmark/parallel94-native-p88-browser/${{ matrix.engine }}/${{ matrix.width }}/*.json
+          retention-days: 14
+          if-no-files-found: warn
