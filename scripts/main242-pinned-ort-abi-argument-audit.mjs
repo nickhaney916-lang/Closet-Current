@@ -67,8 +67,10 @@ export function extractNativeSessionCalls(source){
 }
 export function classifyPosition(args){
  const locations=args.flatMap((value,i)=>/\benableMemPattern\b/.test(value)?[i]:[]);
- if(locations.length===1&&locations[0]===1)
-  return 'static-wasm-export-argument-1-source-verified-native-value-unobserved';
+ if(locations.length===1&&locations[0]===2&&
+    /^!!\s*[A-Za-z_$][A-Za-z0-9_$]*\.enableMemPattern$/.test(args[2])&&
+    /\benableCpuMemArena\b/.test(args[1]))
+  return 'static-wasm-export-argument-2-source-verified-native-value-unobserved';
  if(locations.length)return 'static-wasm-export-argument-other-or-ambiguous';
  return 'static-wasm-export-forwarding-not-identifiable';
 }
@@ -101,8 +103,14 @@ export async function auditExactPinnedABI(root=process.cwd()){
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const data=await auditExactPinnedABI(process.cwd());
  console.log('M242_PINNED_ABI_ARGUMENT_SOURCE_EVIDENCE',JSON.stringify(data));
- assert.ok(data.reports.some(r=>r.nativeExportCalls>0),
-  'Pinned ORT installed WASM modules expose no direct session-options call');
+ for(const report of data.reports){
+  assert.equal(report.nativeExportCalls,1,'Pinned ORT native session-options call count drifted');
+  assert.deepEqual(report.argumentCounts,[10],'Pinned native session-options call arity drifted');
+  assert.deepEqual(report.memoryOptionPositions,[[2]],'Pinned enableMemPattern argument position drifted');
+  assert.deepEqual(report.forwardingClass,
+   ['static-wasm-export-argument-2-source-verified-native-value-unobserved'],
+   'Pinned source did not prove 3rd native export parameter mapping');
+ }
  assert.equal(data.nativeAllocatorPolicyProven,false,
   'JS-to-WASM source argument position is not native allocator proof');
 }
