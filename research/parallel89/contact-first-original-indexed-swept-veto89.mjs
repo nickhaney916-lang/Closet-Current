@@ -57,8 +57,8 @@ export function checkOriginalIndexedContactBeforeSweptBVH({
   /^[a-f0-9]{64}$/.test(sourceWitness.originalLicensedRigSHA256);
  if(!hashes||sourceWitness?.actualRigBoneCount!==163||
   sourceWitness?.correctedPositionAttributeWorldSkinning!==true||
-  sourceWitness?.oneNamedJointOnly==='spine04'&&
-   sourceWitness?.otherBoneLocalPosesFrozen!==true)
+  sourceWitness?.oneNamedJointOnly!=='spine04'||
+  sourceWitness?.otherBoneLocalPosesFrozen!==true)
   return block('BLOCKED_UNVERIFIED_ORIGINAL_RIG_IDENTITY_OR_SKINNING');
  const finitePoses=poses=>poses.every(arr=>{
   for(let i=0;i<arr.length;i++)if(!Number.isFinite(arr[i]))return false;
