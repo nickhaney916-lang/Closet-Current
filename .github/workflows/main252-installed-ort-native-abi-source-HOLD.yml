@@ -1,0 +1,48 @@
+name: MAIN252 exact installed ORT WASM session-options ABI source HOLD
+on:
+  push:
+    branches: [research/main252-ort-native-session-options-abi-source-HOLD]
+permissions:
+  contents: read
+jobs:
+  native-abi-source-hold:
+    name: M252 original source lock / installed ONNX-WASM ABI / inherited original tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact M251 base and strictly two new research-only paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=1f2a18d715ee787c84926e713754b41c87362327
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' \
+            '.github/workflows/main252-installed-ort-native-abi-source-HOLD.yml' \
+            'scripts/test-main252-installed-ort-native-abi-source.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/main250-original-jsep-mempattern-study.mjs)" = 55325ef58db3e6f5df55499948e708e2e40766f9
+          test "$(git rev-parse HEAD:scripts/test-main251-v381-exact-javascript-handoff.mjs)" = "$(git rev-parse "$BASE":scripts/test-main251-v381-exact-javascript-handoff.mjs)"
+          node --check scripts/test-main252-installed-ort-native-abi-source.mjs
+      - name: Install exact pinned genuine Transformers and ORT dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Verify immutable npm distribution and directly inspect installed native ABI source mapping
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(npm view onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 dist.integrity)" = "sha512-0uS76OPgH0hWCPrFKlL8kYVV7ckM7t/36HfbgoFw6Nd0CZVVbQC4PkrR8mBX8LtNUFZO25IQBqV2Hx2ho3FlbQ=="
+          node --test scripts/test-main251-v381-exact-javascript-handoff.mjs
+          node --test scripts/test-main252-installed-ort-native-abi-source.mjs
+      - name: Unchanged original offline app and entire inherited owner/privacy/backup/security suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
