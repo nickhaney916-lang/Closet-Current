@@ -480,6 +480,60 @@ test('P88 unsegmented single-photo crop still works with original owner-edit wor
  assert.equal(item.image,'data:image/jpeg;base64,TkVXUElYRUxT');
  assert.equal(c.messages.length,0);
 });
+test('P88 real crop editor first crop preserves complete original JPEG while saving derived pixels',async()=>{
+ const c=cropHarness88(),item=sampleSource88(),raw=item.image;
+ c.cropClothingPhoto(item);
+ await c.editor.save({
+  image:'data:image/jpeg;base64,TkVXLURFUklWRUQtQ1JPUA==',
+  originalPhoto:{image:raw},cropBounds:{x:0,y:0,width:1,height:1}
+ },null);
+ assert.equal(c.written.length,1);
+ assert.equal(item.image,'data:image/jpeg;base64,TkVXLURFUklWRUQtQ1JPUA==');
+ assert.equal(item.originalPhoto?.image,raw,
+  'normal crop editor must retain the captured original JPEG');
+ assert.equal(c.durableDraft.batch[0].originalPhoto?.image,raw);
+ assert.equal(c.durableDraft.batch[0].image,item.image);
+});
+test('P88 crop callback cannot mint source hash, independent physical identity or 3D verification',async()=>{
+ const c=cropHarness88({saved:true}),item={...sampleSource88(),
+  originalPhoto:{image:sampleSource88().image}};
+ c.cropClothingPhoto(item);
+ const forged=[
+  {sourceSHA256:'f'.repeat(64)},
+  {sourceHashVerified:true},
+  {ownerReviewed:true},
+  {sourcePhotoOriginal:true},
+  {singleGarmentVerified:true},
+  {independentPhysicalItemVerified:true},
+  {threeDReady:true},
+  {originalPhoto:{image:item.originalPhoto.image,sha256:'f'.repeat(64),verified:true}},
+  {originalPhoto:{image:'data:image/jpeg;base64,Rk9SR0VELVJBVw=='}}
+ ];
+ for(const extra of forged){
+  await assert.rejects(c.editor.save({
+   image:'data:image/jpeg;base64,TkVXLUNST1A=',...extra
+  },null),/P88_CROP_(?:UNEXPECTED_FIELD|ORIGINAL_SOURCE_CHANGED)/);
+ }
+ assert.equal(c.written.length,0);
+ assert.equal(c.durableItems.get(item.id).sourceHashVerified,undefined);
+ assert.equal(item.image,sampleSource88().image);
+});
+test('P88 recropping a source with existing trusted original SHA leaves SHA and verification untouched',async()=>{
+ const raw=sampleSource88().image;
+ const item={...sampleSource88(),originalPhoto:{
+  image:raw,sha256:'a'.repeat(64),verified:true
+ }};
+ const c=cropHarness88({saved:true});c.cropClothingPhoto(item);
+ await c.editor.save({
+  image:'data:image/jpeg;base64,U0VDT05ELUNST1A=',
+  originalPhoto:{image:raw},
+  cropBounds:{x:0.1,y:0.1,width:0.8,height:0.8}
+ },null);
+ assert.equal(c.durableItems.get(item.id).originalPhoto.sha256,'a'.repeat(64));
+ assert.equal(c.durableItems.get(item.id).originalPhoto.verified,true);
+ assert.equal(item.originalPhoto.sha256,'a'.repeat(64));
+ assert.equal(item.image,'data:image/jpeg;base64,U0VDT05ELUNST1A=');
+});
 test('P88 changed cropped photo clears old exact-JPEG duplicate marker so owner may review new source',async()=>{
  const original=sampleSource88();
  const peer={id:'saved-identical',image:original.image};
