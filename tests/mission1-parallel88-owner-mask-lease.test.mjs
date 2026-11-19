@@ -467,6 +467,39 @@ test('P88 saved wardrobe crop cannot silently replace owner-confirmed subtype/co
  assert.equal(c.durableItems.get(item.id).color,'Blue');
  assert.equal(item.image,sampleSource88().image);
 });
+test('P88 re-cropping saved photo-estimated color retains color and its UNCONFIRMED source',async()=>{
+ const raw=sampleSource88().image;
+ const item={...sampleSource88(),color:'Blue',
+  colorSource:'photo-estimate',colorMethod:'garment-mask',
+  category:'Tops',itemType:'T-shirt',userAdjusted:true,
+  originalPhoto:{image:raw}};
+ const c=cropHarness88({saved:true});
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,U0FWRUQtUkVDUk9Q'},null);
+ const persisted=c.durableItems.get(item.id);
+ assert.equal(persisted.image,'data:image/jpeg;base64,U0FWRUQtUkVDUk9Q');
+ assert.equal(persisted.originalPhoto?.image,raw);
+ assert.equal(persisted.color,'Blue',
+  'cropping an already-owned garment must not erase an estimated color');
+ assert.equal(persisted.colorSource,'photo-estimate',
+  'cropping must not silently promote an estimate to owner-confirmed truth');
+ assert.equal(persisted.category,'Tops');
+ assert.equal(persisted.itemType,'T-shirt');
+ assert.equal(item.color,'Blue','the rendered owner closet entry retains color');
+ assert.equal(item.colorSource,'photo-estimate');
+ assert.equal(c.written.length,1);
+});
+test('P88 changing an unsaved draft crop still clears stale pixel color estimates',async()=>{
+ const item={...sampleSource88(),color:'Blue',colorSource:'photo-estimate'};
+ const c=cropHarness88();
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,VU5TQVZFRC1OQVQ='},null);
+ const draft=c.durableDraft.batch[0];
+ assert.equal(draft.color,'','an old crop-based unconfirmed color estimate must be reset');
+ assert.equal(draft.colorSource,undefined);
+ assert.equal(draft.originalPhoto.image,sampleSource88().image);
+ assert.equal(c.durableItems.size,0,'no silent wardrobe save');
+});
 test('P88 saved crop with no suggestion must not silently fill an unknown owner color',async()=>{
  const c=cropHarness88({saved:true,checkPhoto:async()=>({
   colorEstimate:{color:'Red',source:'photo-estimate'},signature:[],aspect:1
