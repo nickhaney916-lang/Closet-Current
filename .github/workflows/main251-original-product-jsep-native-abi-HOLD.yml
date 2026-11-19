@@ -1,0 +1,85 @@
+name: MAIN251 original product JSEP native ABI flag at real Worker boundary HOLD
+on:
+  push:
+    branches: [research/main251-original-worker-jsep-native-abi-exact-boundary-HOLD]
+permissions:
+  contents: read
+jobs:
+  exact-source-entire-security:
+    name: M251 original source immutable / full inherited owner privacy and security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Allow only four M251 research-only paths and source-pinned original Worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=f85aa3eda38c5be2eb3762c296504f9f45e3c11a
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' '.github/workflows/main251-original-product-jsep-native-abi-HOLD.yml' 'scripts/main251-original-product-jsep-native-option-spy.mjs' 'scripts/test-main251-original-product-jsep-native-option-browser.mjs' 'tests/main251-original-product-jsep-native-option.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:scripts/main250-original-jsep-mempattern-study.mjs)" = 55325ef58db3e6f5df55499948e708e2e40766f9
+          node --check scripts/main251-original-product-jsep-native-option-spy.mjs
+          node --check scripts/test-main251-original-product-jsep-native-option-browser.mjs
+          node --check tests/main251-original-product-jsep-native-option.test.mjs
+      - name: Exact pinned original runtime research dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original native ABI adversarial negative controls and actual browser source-only check
+        run: node --test tests/main251-original-product-jsep-native-option.test.mjs
+      - name: Entire original offline application build and strict owner/private backup/security regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  real-original-native-option:
+    name: M251 genuine original JSEP option ${{ matrix.engine }} ${{ matrix.arm }} ${{ matrix.width }}px
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {engine: webkit, arm: baseline, width: 320}
+          - {engine: webkit, arm: pattern_off, width: 320}
+          - {engine: chromium, arm: baseline, width: 390}
+          - {engine: chromium, arm: pattern_off, width: 390}
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M251_ENGINE: ${{ matrix.engine }}
+      M251_ARM: ${{ matrix.arm }}
+      M251_WIDTH: ${{ matrix.width }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm original model Worker and source locked unmodified
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor f85aa3eda38c5be2eb3762c296504f9f45e3c11a HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+      - name: Install pinned actual original JSEP/original photo native browser dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original same-model Worker native ABI source and source-private owner journey
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/main251-original-product-jsep-native-option.test.mjs
+          node scripts/test-main251-original-product-jsep-native-option-browser.mjs
