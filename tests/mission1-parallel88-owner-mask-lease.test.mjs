@@ -391,14 +391,40 @@ function cropHarness88({saved=false,checkPhoto=null,peers=[]}={}){
   message(s){c.messages.push(s);},openPhotoCrop(_,callbacks){c.editor=callbacks;return Promise.resolve();},
   structuredClone,checkPhoto:checkPhoto||(async()=>({colorEstimate:null,signature:[],aspect:1})),
   ClothingDetails:{fillColor:()=>({})},
-  items:[],batch:[],draftStoreRevision88:'null',writeCount:0,written:[],render(){c.renderCount++;},renderCount:0,
+  items:[],batch:[],durableItems:new Map(),durableDraft:{id:'draft',batch:[]},
+  draftStoreRevision88:'null',writeCount:0,written:[],render(){c.renderCount++;},renderCount:0,
   queued:async fn=>{await c.beforeWrite?.();const result=fn();c.writeCount++;return result;},
   db:{name:'closet-current-user-owner-A',transaction(stores,mode){
    assert.equal(mode,'readwrite');
-   const tx={objectStore(store){return {put(value){
-    c.written.push({store,value:structuredClone(value)});
-   }}}};
-   queueMicrotask(()=>tx.oncomplete?.());return tx;
+   const allowed=Array.isArray(stores)?stores:[stores];
+   const tx={aborted:false,error:null,objectStore(store){
+    assert.ok(allowed.includes(store),'unexpected transaction store '+store);
+    return {
+     get(key){
+      const req={result:structuredClone(store==='state'?c.durableDraft:c.durableItems.get(key))};
+      queueMicrotask(()=>{if(!tx.aborted)req.onsuccess?.()});return req;
+     },
+     getAll(){
+      assert.equal(store,'items');
+      const req={result:structuredClone([...c.durableItems.values()])};
+      queueMicrotask(()=>{if(!tx.aborted)req.onsuccess?.()});return req;
+     },
+     put(value){
+      const row=structuredClone(value);
+      c.written.push({store,value:row});
+      queueMicrotask(()=>{
+       if(tx.aborted)return;
+       if(store==='state')c.durableDraft=structuredClone(row);
+       else c.durableItems.set(row.id,structuredClone(row));
+       tx.oncomplete?.();
+      });
+     }
+    };
+   },abort(){
+    if(tx.aborted)return;
+    tx.aborted=true;queueMicrotask(()=>tx.onabort?.());
+   }};
+   return tx;
   }},
   applyLocalChoice(){throw Error('unexpected suggestion')},
   window:{closetAuth:{user:{id:'owner-A'}}}
@@ -417,6 +443,8 @@ function cropHarness88({saved=false,checkPhoto=null,peers=[]}={}){
   // Match the exact object identity of the native saved closet or draft.
   if(saved){c.items=[item,...peers];c.batch=[];}else{c.items=[...peers];c.batch=[item];}
   c.draftStoreRevision88=JSON.stringify(c.batch);
+  c.durableItems=new Map(c.items.map(x=>[x.id,structuredClone(x)]));
+  c.durableDraft={id:'draft',batch:structuredClone(c.batch)};
   return nativeCrop(item);
  };
  return c;
@@ -3357,4 +3385,31 @@ test('P88 ordinary fresh-ID reviewed save inserts rather than overwrites a close
  await c.savePiece({...source},[],c.reviewedSaveLease88(source));
  assert.deepEqual(operations,['items.add:new-id','state.put:draft'],
   'new item ID must be insert-only; the captured draft is cleared atomically');
+});
+
+
+test('P88 saved crop must not overwrite second-tab correction of the durable wardrobe row',async()=>{
+ const c=cropHarness88({saved:true}),item=sampleSource88();
+ c.cropClothingPhoto(item);
+ c.durableItems.set(item.id,{...structuredClone(item),color:'Green',itemType:'Blouse'});
+ await assert.rejects(
+  c.editor.save({image:'data:image/jpeg;base64,TkVXLVNBVkVELUNST1A='},null),
+  /P88_SAVED_CROP_STORAGE_CHANGED/);
+ assert.equal(c.written.length,0);
+ assert.equal(c.durableItems.get(item.id).color,'Green');
+ assert.equal(item.image,sampleSource88().image);
+ assert.equal(c.renderCount,0);
+});
+test('P88 draft crop must not erase another tab new original in the same durable draft store',async()=>{
+ const c=cropHarness88(),item=sampleSource88();
+ c.cropClothingPhoto(item);
+ const additional={id:'unseen-other-tab-photo',image:'data:image/jpeg;base64,T1RIRVItT1JJR0lOQUw='};
+ c.durableDraft={id:'draft',batch:[structuredClone(item),additional]};
+ await assert.rejects(
+  c.editor.save({image:'data:image/jpeg;base64,TkVXLURJQUxPRw=='},null),
+  /P88_CROP_DRAFT_STORAGE_CHANGED/);
+ assert.equal(c.written.length,0);
+ assert.deepEqual(c.durableDraft.batch.map(x=>x.id),[item.id,additional.id]);
+ assert.equal(item.image,sampleSource88().image);
+ assert.equal(c.renderCount,0);
 });
