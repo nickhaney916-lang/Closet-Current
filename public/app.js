@@ -64,6 +64,10 @@ function readDraft(){return new Promise((resolve,reject)=>{const r=db.transactio
 function savePiece(value,nextBatch,lease){
  if(!reviewedSaveLeaseLive88(lease))
   return Promise.reject(Error('P88_STALE_REVIEWED_OWNER'));
+ // This transaction creates a NEW wardrobe item from a reviewed unsaved draft.
+ // Existing closet edits use saveExistingPiece88; never replace an existing ID.
+ if(lease.wasDraft!==true)
+  return Promise.reject(Error('P88_REVIEWED_DRAFT_INSERT_ONLY'));
  if(!reviewedDistinctPhotoReceiptValid88(value,lease))
   return Promise.reject(Error('P88_DISTINCT_OWNER_DECISION_REQUIRED'));
  return queued(()=>{
@@ -82,7 +86,9 @@ function savePiece(value,nextBatch,lease){
   const liveRemaining=lease.wasDraft?batch.filter(x=>x!==lease.item):batch;
   return new Promise((resolve,reject)=>{
    const tx=lease.ownerDb.transaction(['items','state'],'readwrite');
-   tx.objectStore('items').put(value);
+   // IndexedDB add() refuses a colliding item key and aborts BOTH stores.
+   // put() would silently overwrite an existing physical closet garment.
+   tx.objectStore('items').add(value);
    tx.objectStore('state').put({id:'draft',batch:structuredClone(liveRemaining)});
    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
   });
