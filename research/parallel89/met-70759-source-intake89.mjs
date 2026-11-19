@@ -32,6 +32,10 @@ export const MET_70759_89=Object.freeze({
   'https://collectionapi.metmuseum.org/api/collection/v1/iiif/70759/2551408/main-image',
   'https://collectionapi.metmuseum.org/api/collection/v1/iiif/70759/2551409/main-image'
  ]),
+ publishedPhotoSHA256:Object.freeze([
+  '59c0e6568000b68678efb067a5cdd2f95eee3c1407b9927df82ac89af0124ec2',
+  '239c547f950cc28475fb860357b0173d7670a0fe5210637db5f54fb88ff4b515'
+ ]),
  publishedImageIDsNotProofOfExactGarmentPartOrViewAngle:true,
  physicalOriginalGarmentBackViewIndependentHumanVerified:false,
  cameraParametersPublished:false
@@ -47,12 +51,13 @@ const failure=reason=>Object.freeze({
  photoDerivedWearable3DAuthorized:false,consumer3DAdmitted:false,
  originalPhoto2DFallbackRequired:true,releaseAuthorized:false,familyAlpha:'HOLD'
 });
-const safePhoto=(item,expected)=>{
+const safePhoto=(item,expected,originalExpectedSHA)=>{
  if(!item||item.sourceObjectId!==70759||item.sourceObjectNumber!=='1983.21a, b'||
   item.sourceUrl!==expected||
   !['collectionapi.metmuseum.org','images.metmuseum.org'].includes(item.responseOrigin)||
   item.redirectedToNonMuseumHost===true||
   item.httpStatus!==200||item.contentType!=='image/jpeg'||
+  item.sha256!==originalExpectedSHA||
   !Number.isSafeInteger(item.byteLength)||item.byteLength<10000||
   item.byteLength>40000000||!hex(item.sha256)||
   !Number.isSafeInteger(item.widthPixels)||item.widthPixels<400||
@@ -116,7 +121,8 @@ export function assessMet70759IndependentSource89({
    sourcePhotoEvidenceForActual3DStillMissing:true
   });
  if(!Array.isArray(images)||images.length!==2||
-  !images.every((x,i)=>safePhoto(x,catalog.publishedPhotoEndpoints[i]))||
+  !images.every((x,i)=>safePhoto(x,catalog.publishedPhotoEndpoints[i],
+   catalog.publishedPhotoSHA256[i]))||
   images[0].sha256===images[1].sha256||
   images[0].sourceUrl===images[1].sourceUrl)
   return failure('real-distinct-same-met-object-two-source-jpegs-required');
