@@ -17,16 +17,20 @@ const MET='1983.21a, b';
 const VIEWS=Object.freeze([
  Object.freeze({id:2551406,part:'a',
   researchViewLabel:'a-front-museum-first-caption',
-  catalogCaptionExact:'a) front',sourcePartViewVerified:true}),
+  catalogCaptionExact:'a) front',sourcePartViewVerified:true,
+  canonicalDecodedRGBSHA256:'e0b7738db57ac4b7c27d4f03f724442f53c8e85f09f7a139839dfaa04c86cbec'}),
  Object.freeze({id:2551407,part:'a',
   researchViewLabel:'a-other-side-candidate',
-  catalogCaptionExact:null,sourcePartViewVerified:false}),
+  catalogCaptionExact:null,sourcePartViewVerified:false,
+  canonicalDecodedRGBSHA256:'e59253bef19ccc908b7cb1519c1ef4c92e011e9ae955bca878de14f40a9f9678'}),
  Object.freeze({id:2551408,part:'b',
   researchViewLabel:'b-decorated-side-candidate',
-  catalogCaptionExact:null,sourcePartViewVerified:false}),
+  catalogCaptionExact:null,sourcePartViewVerified:false,
+  canonicalDecodedRGBSHA256:'dddbda448c32667a0ab5c1b90a43d139b5917c1b9955dc428987beec035e06c0'}),
  Object.freeze({id:2551409,part:'b',
   researchViewLabel:'b-less-decorated-side-candidate',
-  catalogCaptionExact:null,sourcePartViewVerified:false})
+  catalogCaptionExact:null,sourcePartViewVerified:false,
+  canonicalDecodedRGBSHA256:'1cd4c7f71ebbb00a27f769e46a438a03f19393bd6a6ba200af14a092d1461e3f'})
 ]);
 const frozen=a=>Object.freeze(a.map(x=>Object.freeze(x)));
 const reject=reason=>Object.freeze({
@@ -60,8 +64,9 @@ function percentile(hist,total,portion){
  * deliberately outside its measurement definition.
  */
 export function measureMet70759ColorFabricProjection89({
- imageId,sourceSHA256,expectedSourceSHA256,
+ imageId,sourceSHA256,decodedRGBSHA256,expectedSourceSHA256,
  originalMuseumObjectNumber,actualOriginalJPEGAttested,
+ actualDecodedRGBHashIndependentlyChecked,
  width,height,rgb
 }={}){
  const view=good(imageId);
@@ -69,6 +74,8 @@ export function measureMet70759ColorFabricProjection89({
   actualOriginalJPEGAttested!==true||
   typeof sourceSHA256!=='string'||!/^[a-f0-9]{64}$/.test(sourceSHA256)||
   sourceSHA256!==expectedSourceSHA256||
+  decodedRGBSHA256!==view.canonicalDecodedRGBSHA256||
+  actualDecodedRGBHashIndependentlyChecked!==true||
   !Number.isSafeInteger(width)||!Number.isSafeInteger(height)||
   width<90||height<90||width>18000||height>18000||
   !(rgb instanceof Uint8Array)&&!(rgb instanceof Uint8ClampedArray))
@@ -123,6 +130,9 @@ export function measureMet70759ColorFabricProjection89({
   status:'ORIGINAL_MUSEUM_TEXTILE_COLOR_REGION_MEASURED_RESEARCH_ONLY',
   museumObjectNumber:MET,museumObjectId:70759,imageId,
   originalImageSHA256:sourceSHA256,
+  observedDecodedRGBSHA256:decodedRGBSHA256,
+  canonicalSourceRGBContentSHA256:view.canonicalDecodedRGBSHA256,
+  jpegByteEncodingMayVaryButExactRGBMustMatch:true,
   sourcePixelDimensions:Object.freeze([width,height]),
   sourceImageRoleViewLabel:view.researchViewLabel,
   sourceMuseumExactCaption:view.catalogCaptionExact,
