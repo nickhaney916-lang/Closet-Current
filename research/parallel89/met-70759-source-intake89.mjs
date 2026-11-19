@@ -68,14 +68,17 @@ const failure=reason=>Object.freeze({
  photoDerivedWearable3DAuthorized:false,consumer3DAdmitted:false,
  originalPhoto2DFallbackRequired:true,releaseAuthorized:false,familyAlpha:'HOLD'
 });
-const safePhoto=(item,expected,originalExpectedSHA,originalExpectedRGBSHA,observedJPEGEncodings)=>{
+const safePhoto=(item,expected,originalExpectedSHA,originalExpectedRGBSHA)=>{
  if(!item||item.sourceObjectId!==70759||item.sourceObjectNumber!=='1983.21a, b'||
   item.sourceUrl!==expected||
   !['collectionapi.metmuseum.org','images.metmuseum.org'].includes(item.responseOrigin)||
   item.redirectedToNonMuseumHost===true||
   item.httpStatus!==200||item.contentType!=='image/jpeg'||
+  // The actual independent Node ingestion MUST hash downloaded JPEG
+  // bytes and independently decode/attest exact RGB content. Different
+  // museum-approved JPEG encodings of identical pixels are valid source
+  // content and should not cause false failures.
   item.decodedRGBSHA256!==originalExpectedRGBSHA||
-  !observedJPEGEncodings.includes(item.sha256)||
   !Number.isSafeInteger(item.byteLength)||item.byteLength<10000||
   item.byteLength>40000000||!hex(item.sha256)||
   !Number.isSafeInteger(item.widthPixels)||item.widthPixels<400||
@@ -143,8 +146,7 @@ export function assessMet70759IndependentSource89({
  if(!Array.isArray(images)||images.length!==2||
   !images.every((x,i)=>safePhoto(x,catalog.publishedPhotoEndpoints[i],
    catalog.publishedPhotoSHA256[i],
-   catalog.publishedPhotoDecodedRGBSHA256[i],
-   catalog.publishedPhotoAcceptedObservedJPEGEncodings[i]))||
+   catalog.publishedPhotoDecodedRGBSHA256[i]))||
   images[0].sha256===images[1].sha256||
   images[0].sourceUrl===images[1].sourceUrl)
   return failure('real-distinct-same-met-object-two-source-jpegs-required');
