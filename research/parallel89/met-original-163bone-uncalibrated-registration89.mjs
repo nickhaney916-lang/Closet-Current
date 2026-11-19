@@ -583,11 +583,15 @@ function fullActualSkinnedIndexedSourceContact(x){
  invariant(Number.isFinite(maximumZeroSeedErrorRigUnits)&&
   maximumZeroSeedErrorRigUnits>.0001,
   'actual-original-coordinate-versus-zero-seed-error-not-demonstrated');
- invariant(numericalRootCause.originalFrontFaceProfile.exactZeroAreaFaces<
-  allPhotoFront.length&&
-  numericalRootCause.originalBodyFaceProfile.exactZeroAreaFaces<
-  bodyFaces.length,
-  'real-original-vertex-input-restoration-failed-zero-seed-degeneracy');
+ // Exact pinned source and original male/female GLBs have strictly
+ // positive original posed triangle areas after restoring TRUE local XYZ.
+ // Failing this check must preserve the genuine browser RED; never accept
+ // zero-seeded THREE skinning because a no-contact audit returned PASS.
+ invariant(numericalRootCause.originalFrontFaceProfile.doubleAreaBelowOriginalThreshold===0&&
+  numericalRootCause.originalBodyFaceProfile.doubleAreaBelowOriginalThreshold===0&&
+  numericalRootCause.originalFrontFaceProfile.exactZeroAreaFaces===0&&
+  numericalRootCause.originalBodyFaceProfile.exactZeroAreaFaces===0,
+  'original-source-or-licensed-body-geometry-still-degenerate-after-real-position-seeding');
  invariant(numericalRootCause.originalFrontFaceProfile.actualIndexedFaces===
   allPhotoFront.length&&
   numericalRootCause.originalBodyFaceProfile.actualIndexedFaces===
@@ -618,6 +622,8 @@ function fullActualSkinnedIndexedSourceContact(x){
   actualSourceWorldPointErrorFromZeroSeedMeasuredRigUnits:
    round6(maximumZeroSeedErrorRigUnits),
   wrongZeroSeedDemonstrablyDifferentFromRealOriginalCoordinates:true,
+  allActualOriginalSkinnedFrontAndBodyFaceAreasAboveNumericThreshold:true,
+  researchPhotoFrontFloatSpaceOnlyNotPhysicallyFitted:true,
   realOriginalFaceNumericRootCauseResearchOnly:numericalRootCause,
   originalBodySkinnedMeshComponentsAudited:bodyMeshCoverage.length,
   originalBodyComponentTriangleCounts:bodyMeshCoverage.map(x=>x.actualIndexedTrianglesAudited),
