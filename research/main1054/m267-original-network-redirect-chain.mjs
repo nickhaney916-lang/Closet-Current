@@ -11,6 +11,7 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 import {deriveM265,assessM265,verifyM265} from './m265-original-jsep-http-truth.mjs';
+import {assessM264} from './m264-model-http-redirect-truth.mjs';
 const original='scripts/test-parallel94-native-p88-browser.mjs';
 const disposable='scripts/.m267-original-network-chain.mjs';
 const runnerSHA='4803707515debafdc8041069c6081bd20530e455c03c0842d1a0bc30161ed2f5';
@@ -57,6 +58,8 @@ function parse(log,label){
 }
 export function assessM267(log,identity){
  const base=assessM265(log,identity);
+ // Preserve independent model HTTP evidence; M265 reports only JSEP details.
+ const modelHttp=assessM264(log,identity);
  const witness=parse(log,'M259_CONTEXT_NETWORK_WITNESS');
  if(!Array.isArray(witness?.rows)||witness.rows.length>32||
    witness.familyAlpha!=='HOLD'||witness.sourceEvidenceGate!=='BLOCKED'||
@@ -98,7 +101,7 @@ export function assessM267(log,identity){
   originalJourneyGate:base.originalJourneyGate,
   originalModelNetworkGate:oldError||missingFinal?'FAIL':base.originalModelNetworkGate,
   originalJsepNetworkGate:oldError||missingFinal?'FAIL':base.originalJsepNetworkGate,
-  originalModelHttpErrors:base.originalModelHttpErrors,
+  originalModelHttpErrors:modelHttp.originalModelHttpErrors,
   originalJsepHttpErrors:base.jsepHardHttpErrors,
   originalModelCanonicalBodies:base.originalModelBytesCorrectlyHashed,
   originalJsepCanonicalBodies:base.canonicalJsepResponses,
