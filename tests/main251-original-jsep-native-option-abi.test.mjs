@@ -98,7 +98,11 @@ test('M251 native boundary pass-through scalar functions preserve arguments/retu
   _OrtCreateSessionOptions(...args){invocations.push({kind:'options',args});return 123;},
   _OrtCreateSession(...args){invocations.push({kind:'session',args});return 456;}
  };
+ const unchangedMinifiedNative=function(...args){return args.length;};
+ object.nativeExports.Az=unchangedMinifiedNative;
  const first=object.exports,second=object.exports;
+ assert.equal(first.Az,unchangedMinifiedNative,'Minified real WASM exports must retain exact native function identity');
+ assert.equal(first.Az(1,2,3),3);
  assert.equal(first,second,'Actual export object identity must be preserved');
  assert.equal(first._OrtCreateSessionOptions(1,1,0,3,4,5),123);
  assert.equal(first._OrtCreateSession(10,20,30),456);
