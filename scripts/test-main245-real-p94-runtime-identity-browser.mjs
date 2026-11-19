@@ -23,7 +23,7 @@ let derived=original.toString('utf8');
 const imports="import assert from 'node:assert/strict';";
 assertOne(derived,imports,'original P94 import');
 derived=derived.replace(imports,imports+
- "\nimport {classifyPinnedPublicRuntime,digestPublicRuntimeResponse,installedOrtWasmFingerprints,attestP94LoadedRuntime} from './main245-original-worker-cdn-wasm-identity.mjs';");
+ "\nimport {classifyPinnedPublicRuntime,digestPublicRuntimeResponse,installedOrtWasmFingerprints,attestP94LoadedRuntime,independentlyFetchPinnedWasm} from './main245-original-worker-cdn-wasm-identity.mjs';");
 const start='const external=[],rejected=[],issues=[],modelResponses=[];';
 assertOne(derived,start,'original outbound request recorder');
 derived=derived.replace(start,start+'\nconst m245Assets=[],m245Pending=[];');
@@ -38,9 +38,10 @@ const listener=[
  "  const task=(async()=>{",
  "   try{",
  "    const status=response.status();",
- "    const bytes=status===200?await response.body():null;",
+ "    let bytes=null;",
+ "    if(status===200){try{await response.finished();bytes=await response.body();}catch{bytes=null;}}",
  "    m245Assets.push(digestPublicRuntimeResponse(asset,status,bytes));",
- "   }catch{m245Assets.push(digestPublicRuntimeResponse(asset,0,null));}",
+ "   }catch{m245Assets.push(digestPublicRuntimeResponse(asset,response.status(),null));}",
  "  })();",
  "  m245Pending.push(task);",
  " });"
@@ -51,7 +52,10 @@ assertOne(derived,afterReal,'original genuine model positive assertion');
 const evidence=[
  " await Promise.allSettled(m245Pending);",
  " const localM245=await installedOrtWasmFingerprints(root);",
- " const actualM245=attestP94LoadedRuntime(m245Assets,localM245);",
+ " const independentlyAttestedWasmM245=[];",
+ " for(const item of m245Assets.filter(x=>x.kind==='onnx-wasm'&&x.status===200))",
+ "  independentlyAttestedWasmM245.push(await independentlyFetchPinnedWasm(item.name));",
+ " const actualM245=attestP94LoadedRuntime(m245Assets,localM245,independentlyAttestedWasmM245);",
  " console.log('M245_REAL_P94_WASM_ASSET_IDENTITY',JSON.stringify({",
  "  engine,width,...actualM245,originalOwnerSuccessLaterRequired:true",
  " }));"
