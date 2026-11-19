@@ -83,6 +83,7 @@ jobs:
           grep -Fq '"savedModelRejected":true' /tmp/m1-native-idb
           grep -Fq '"ownerLabelsUntouched":true' /tmp/m1-native-idb
           grep -Fq '"savedUnknownRemainsUnknown":true' /tmp/m1-native-idb
+          grep -Fq '"savedEstimatedColorRetained":true' /tmp/m1-native-idb
           grep -Fq 'M1_P88_BROWSER_CROP_TERMINAL_CONFLICT' /tmp/m1-native-idb
           grep -Fq '"code":"P88_SAVED_CROP_STORAGE_CHANGED"' /tmp/m1-native-idb
           grep -Fq '"code":"P88_CROP_DRAFT_STORAGE_CHANGED"' /tmp/m1-native-idb
