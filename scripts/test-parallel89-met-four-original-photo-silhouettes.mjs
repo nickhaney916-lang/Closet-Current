@@ -16,7 +16,8 @@ import sharp from 'sharp';
 import {MET_70759_89 as source}
  from '../research/parallel89/met-70759-source-intake89.mjs';
 import {MET70759_GALLERY_VIEW_NOTES89 as gallery,
- measureMet70759ColorFabricProjection89 as measure}
+ measureMet70759ColorFabricProjection89 as measure,
+ assessMet70759PhotoPartViewEvidence89 as photoRole}
  from '../research/parallel89/met-four-photo-chromatic-silhouette89.mjs';
 const out='benchmark/parallel89-met70759-four-photo-research';
 await mkdir(out,{recursive:true});
@@ -82,6 +83,25 @@ for(const view of gallery){
  assert.equal(profile.consumer3DAdmitted,false);
  assert.equal(profile.releaseAuthorized,false);
  assert.equal(profile.physicalClothFitCertified,false);
+ const role=photoRole({
+  imageId:id,decodedRGBSHA256,
+  originalMuseumObjectNumber:source.objectNumber,
+  // Both assertions were independently evaluated on actual institutional
+  // HTTPS original JPEG bytes and Sharp decoded full RGB above.
+  actualOriginalJPEGAttested:true,
+  actualDecodedRGBHashIndependentlyChecked:true
+ });
+ assert.equal(role.source2DPhotographAllowed,true);
+ assert.equal(role.museumCaptionVerified,id===2551406);
+ assert.equal(role.institutionallyVerifiedPart,id===2551406?'a':null);
+ assert.equal(role.institutionallyVerifiedSide,id===2551406?'front':null);
+ assert.equal(role.provisionalResearchPart,view.provisionalPartForSourceResearch);
+ assert.equal(role.approvedFull3DGarment,false);
+ assert.equal(role.mayInferSewnBackOr360FromThisSource,false);
+ assert.equal(role.consumer3DAdmitted,false);
+ assert.equal(role.releaseAuthorized,false);
+ assert.equal(profile.verifiedSourcePhotoPart,role.institutionallyVerifiedPart);
+ assert.equal(profile.verifiedSourcePhotoSide,role.institutionallyVerifiedSide);
  const receipt={
   originalMuseumObjectId:70759,originalMuseumAccession:'1983.21a, b',
   sourceUrl:url,sourceInstitutionalHost:host,imageId:id,
@@ -92,7 +112,13 @@ for(const view of gallery){
   jpegEncodingPreviouslyObserved:observedExactEncodings[id].includes(jpegSHA256),
   independentActualByteDigestChecked:true,
   originalExactSourcePixelsVerified:true,
-  proposedPart:view.part,
+  proposedPart:view.provisionalPartForSourceResearch,
+  institutionallyVerifiedPart:role.institutionallyVerifiedPart,
+  institutionallyVerifiedSide:role.institutionallyVerifiedSide,
+  officialMuseumPhotoRoleStatus:role.status,
+  catalogDimensionsCannotCertifyUncaptionedPhotoPart:role.catalogMeasurementsOfPartsCannotCertifyImagePart,
+  noBackOr360GeometryFromGallery:role.mayInferSewnBackOr360FromThisSource,
+  galleryProvisionalPartNeverAnAuthoritativePart:view.part===null||id===2551406,
   provisionalGalleryViewLabel:view.researchViewLabel,
   viewCaptionMuseumVerified:view.sourcePartViewVerified,
   museumExactCaption:view.catalogCaptionExact,
@@ -112,6 +138,11 @@ assert.equal(profiles.length,4);
 assert.equal(records.filter(x=>x.viewCaptionMuseumVerified).length,1,
  'Only the official a) front caption is independently source-grounded');
 assert.equal(records[0].museumExactCaption,'a) front');
+assert.deepEqual(records.map(x=>x.institutionallyVerifiedPart),['a',null,null,null]);
+assert.deepEqual(records.map(x=>x.institutionallyVerifiedSide),['front',null,null,null]);
+assert.deepEqual(records.map(x=>x.proposedPart),['a','a','b','b']);
+assert.ok(records.every(x=>x.galleryProvisionalPartNeverAnAuthoritativePart===true));
+assert.ok(records.every(x=>x.noBackOr360GeometryFromGallery===false));
 assert.deepEqual(records.map(x=>x.imageId),[2551406,2551407,2551408,2551409]);
 const publishedCatalog=source.parts.map(x=>({
  part:x.part,recordedLengthMm:x.lengthInches*25.4,

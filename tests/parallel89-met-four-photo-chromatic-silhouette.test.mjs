@@ -4,7 +4,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {measureMet70759ColorFabricProjection89 as audit,
- MET70759_GALLERY_VIEW_NOTES89 as views}
+ MET70759_GALLERY_VIEW_NOTES89 as views,
+ assessMet70759PhotoPartViewEvidence89 as partView}
  from '../research/parallel89/met-four-photo-chromatic-silhouette89.mjs';
 
 const SHA='59c0e6568000b68678efb067a5cdd2f95eee3c1407b9927df82ac89af0124ec2';
@@ -33,6 +34,10 @@ test('seven horizontal original-style color fabric rows measure a photographic p
  assert.equal(r.sourceImageCountInOfficialGallery,4);
  assert.equal(r.sourceImageRoleViewLabel,'b-decorated-side-candidate');
  assert.equal(r.photographicPartAndViewIndependentlyVerified,false);
+ assert.equal(r.verifiedSourcePhotoPart,null);
+ assert.equal(r.verifiedSourcePhotoSide,null);
+ assert.equal(r.proposedPartForSourceResearch,'b');
+ assert.equal(r.physicallyVerifiedReversePhotoForSamePart,false);
  assert.equal(r.partBOrReverseRoleRemainsProvisional,true);
  assert.equal(r.sourcePixelDimensions[0],180);
  assert.equal(r.sevenMeasuredChromaticImageBands.length,7);
@@ -56,8 +61,12 @@ test('museum expressly captions only first gallery view as a) front, all other r
  assert.deepEqual(views.map(v=>v.id),[2551406,2551407,2551408,2551409]);
  assert.equal(views[0].catalogCaptionExact,'a) front');
  assert.equal(views[0].sourcePartViewVerified,true);
+ assert.equal(views[0].part,'a');
+ assert.equal(views[0].museumVerifiedSide,'front');
+ assert.deepEqual(views.slice(1).map(v=>v.provisionalPartForSourceResearch),['a','b','b']);
  assert.ok(views.slice(1).every(v=>
-  v.catalogCaptionExact===null&&v.sourcePartViewVerified===false));
+  v.catalogCaptionExact===null&&v.sourcePartViewVerified===false&&
+  v.part===null&&v.museumVerifiedSide===null));
  const x=sample({imageId:2551406,
   decodedRGBSHA256:views[0].canonicalDecodedRGBSHA256});
  assert.equal(x.status,'ORIGINAL_MUSEUM_TEXTILE_COLOR_REGION_MEASURED_RESEARCH_ONLY');
@@ -112,4 +121,66 @@ test('original RGB input is not modified by color projection; removed fabric cha
  assert.ok(modified.sevenMeasuredChromaticImageBands[6].observedColorFabricWidthPixels<
   r.sevenMeasuredChromaticImageBands[6].observedColorFabricWidthPixels);
  assert.deepEqual(props.rgb,original);
+});
+
+test('exact-source official view role gate never promotes inferred part B or reverse photo to source fact',()=>{
+ for(const [i,view] of views.entries()){
+  const r=partView({
+   imageId:view.id,decodedRGBSHA256:view.canonicalDecodedRGBSHA256,
+   originalMuseumObjectNumber:'1983.21a, b',
+   actualOriginalJPEGAttested:true,
+   actualDecodedRGBHashIndependentlyChecked:true
+  });
+  assert.equal(r.museumCaptionVerified,i===0);
+  assert.equal(r.museumExactCaption,i===0?'a) front':null);
+  assert.equal(r.institutionallyVerifiedPart,i===0?'a':null);
+  assert.equal(r.institutionallyVerifiedSide,i===0?'front':null);
+  assert.equal(r.provisionalResearchPart,view.provisionalPartForSourceResearch);
+  assert.equal(r.source2DPhotographAllowed,true);
+  assert.equal(r.backwardFacingOriginalTextileSurfaceQualified,false);
+  assert.equal(r.mayInferSewnBackOr360FromThisSource,false);
+  assert.equal(r.approvedFull3DGarment,false);
+  assert.equal(r.consumer3DAdmitted,false);
+  assert.equal(r.releaseAuthorized,false);
+  assert.equal(r.familyAlpha,'HOLD');
+ }
+});
+test('forged original source digest, catalog source, or caller caption cannot verify unavailable side',()=>{
+ const b=views[2];
+ const valid={
+  imageId:b.id,decodedRGBSHA256:b.canonicalDecodedRGBSHA256,
+  originalMuseumObjectNumber:'1983.21a, b',
+  actualOriginalJPEGAttested:true,
+  actualDecodedRGBHashIndependentlyChecked:true
+ };
+ for(const edit of [
+  {imageId:0},
+  {imageId:5152},
+  {originalMuseumObjectNumber:'5152.1'},
+  {decodedRGBSHA256:'a'.repeat(64)},
+  {actualOriginalJPEGAttested:false},
+  {actualDecodedRGBHashIndependentlyChecked:false},
+  {actualOriginalJPEGAttested:'true'},
+  {actualDecodedRGBHashIndependentlyChecked:'true'}
+ ]){
+  const x=partView({...valid,...edit});
+  assert.equal(x.status,'ORIGINAL_SOURCE_PHOTO_ROLE_REFUSED');
+  assert.equal(x.institutionallyVerifiedPart,null);
+  assert.equal(x.institutionallyVerifiedSide,null);
+  assert.equal(x.consumer3DAdmitted,false);
+ }
+ for(const malicious of [
+  {callerOfficialCaption:'b) back',claimedVerifiedSide:'back',
+   curatorApproved:true},
+  {originalGalleryPart:'b',sourcePartViewVerified:true,
+   completeBackSewnPatternMeasured:true},
+  {cameraCalibrated:true,ownerFitAuthorized:true,releaseAuthorized:true}
+ ]){
+  const r=partView({...valid,...malicious});
+  assert.equal(r.status,'IMAGE_PIXELS_VERIFIED_BUT_GARMENT_PART_AND_SIDE_UNVERIFIED');
+  assert.equal(r.institutionallyVerifiedPart,null);
+  assert.equal(r.institutionallyVerifiedSide,null);
+  assert.equal(r.approvedFull3DGarment,false);
+  assert.equal(r.releaseAuthorized,false);
+ }
 });
