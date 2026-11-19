@@ -71,7 +71,7 @@ function attest({session,core}, worker,m250){
  const appendEnd=code.indexOf('const setExecutionProviders',appendStart);
  assert.ok(appendStart>=0&&appendEnd>appendStart,'Unknown installed ORT default-option normalization');
  const appendDefault=code.slice(appendStart,appendEnd);
- assert.ok(!/enableMemPattern\\s*(?:=|\\?\\?=)\\s*true/.test(appendDefault),
+ assert.ok(!/enableMemPattern\s*(?:=|\?\?=)\s*true/.test(appendDefault),
   'Default session options force memory patterns on; M250 baseline/false may differ');
  const nativeCallPatterns=[...code.matchAll(/enableMemPattern/g)].length;
  assert.ok(nativeCallPatterns>=1&&nativeCallPatterns<=2,
