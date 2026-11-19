@@ -12,9 +12,34 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve,extname} from 'node:path';
 import sharp from 'sharp';
+import {controlledFullContactFixtures,classifyExactTriangleContact,
+ evaluateFullIndexedContact}
+ from '../research/parallel89/full-indexed-contact-calibration89.mjs';
 import {buildMetSourceFrontNeutralBackShell89 as build}
  from '../research/parallel89/met-source-front-neutral-shell89.mjs';
 const hash=b=>createHash('sha256').update(b).digest('hex');
+const fullFixture=controlledFullContactFixtures();
+assert.equal(fullFixture.cases.crossing,'CROSSING');
+assert.equal(fullFixture.cases.separated,'NONE');
+assert.equal(fullFixture.cases.identicalCoplanar,'COPLANAR_OVERLAP');
+assert.equal(fullFixture.cases.shiftedCoplanar,'COPLANAR_OVERLAP');
+assert.equal(fullFixture.cases.sharedCoplanarEdge,'TOUCHING');
+assert.equal(fullFixture.cases.endpoint,'TOUCHING');
+assert.equal(fullFixture.cases.degenerate,'INDETERMINATE');
+assert.equal(fullFixture.indexedResult.fullOriginalIndexedScopeEvaluated,true);
+assert.equal(fullFixture.indexedResult.originalBodyFaceSubsetUsed,false);
+assert.equal(fullFixture.indexedResult.originalPhotoFaceSubsetUsed,false);
+assert.equal(fullFixture.indexedResult.originalBodyIndexedFacesAudited,2);
+assert.equal(fullFixture.indexedResult.originalPhotoFrontIndexedFacesAudited,3);
+assert.ok(fullFixture.indexedResult.classifications.CROSSING>0);
+assert.ok(fullFixture.indexedResult.classifications.COPLANAR_OVERLAP>0);
+assert.ok(fullFixture.indexedResult.classifications.TOUCHING>0);
+assert.equal(fullFixture.indexedResult.garmentPhysicalFitCertified,false);
+assert.throws(()=>evaluateFullIndexedContact([],[]),/full-face-counts-required/);
+assert.throws(()=>evaluateFullIndexedContact([[[0,0,0],[0,1,0],[0,0,1]]],
+ [[[0,0,0],[0,1,0],[0,0,1]]],{maxPairs:0}),
+ /resource-bound-reached/);
+console.log('M2_FULL_INDEXED_ADVERSARIAL_GEOMETRY_NODES_PASS '+JSON.stringify(fullFixture.cases));
 const rigHashes=Object.freeze({
  female:'a571a5872a5f9d75c013ce6d88b3484436cf2109bf133fbc31e42c41f52389f1',
  male:'d15a07e2b4cf1d08a3b91cb212a9a06a91438077f05a3f2a62f45351e8a71eb8'
@@ -227,6 +252,10 @@ try{
   coplanarClaimExplicitlyUnresolved:true,
   syntheticControlOnlyNotGenuineBodyCollisionEvidence:true
  },'actual native intersection detector must reject manufactured clearances');
+ const fullControl=await page.evaluate(()=>window.__M2RealRigPhotoTrial
+  .getFullContactControlProof());
+ assert.deepEqual(fullControl.cases,fullFixture.cases);
+ assert.deepEqual(fullControl.indexedResult,fullFixture.indexedResult);
  const skeletonPoseEvidence=[];
  for(const kind of ['female','male']){
   const accept=await page.evaluate(async kind=>
@@ -336,11 +365,64 @@ try{
   assert.equal(fiveDiscretePoses.arbitraryImageToAnatomyRegistration,true);
   assert.equal(fiveDiscretePoses.consumer3DAdmitted,false);
   assert.equal(fiveDiscretePoses.familyAlpha,'HOLD');
+  assert.equal(fiveDiscretePoses.fullOriginalIndexedBodyAndSourceFrontCoverage,true);
+  const calibration=fiveDiscretePoses.physicalCalibrationEvidence;
+  assert.equal(calibration.verifiedMuseumPhotoImageId,2551406);
+  assert.equal(calibration.trueLicensedRig,kind);
+  assert.equal(calibration.originalLicensedRigSHA256,rigHashes[kind]);
+  assert.deepEqual(calibration.originalImageSizePixels,[192,149]);
+  assert.deepEqual(calibration.threeArbitraryDisplayWidthRatios,[.512,.64,.768]);
+  assert.equal(calibration.originalCameraFocalLengthPixels,null);
+  assert.equal(calibration.originalCameraDistanceCM,null);
+  assert.equal(calibration.independentlyMeasuredGarmentWidthCM,null);
+  assert.equal(calibration.independentlyMeasuredGarmentHeightCM,null);
+  assert.equal(calibration.independentlyMeasuredWearerChestCM,null);
+  assert.equal(calibration.independentlyMeasuredWearerHeightCM,null);
+  assert.equal(calibration.approvedExactFrontSilhouetteMask,false);
+  assert.equal(calibration.authenticatedCalibrationEvidenceAvailable,false);
+  assert.equal(calibration.validPhysicalGarmentCalibration,false);
+  assert.equal(calibration.physicalScaleUnits,'UNKNOWN');
+  assert.equal(calibration.consumer3DAdmitted,false);
+  assert.equal(calibration.sourceOriginalPhoto2DFallbackRequired,true);
+  assert.equal(calibration.familyAlpha,'HOLD');
   assert.deepEqual(fiveDiscretePoses.samples.map(x=>x.degrees),
    [-12,-6,0,6,12]);
+  const completeEvidence=[];
   for(const trial of fiveDiscretePoses.samples){
    checkCrossing({originalRigPhotoFrontBodyFaceCrossingResearchOnly:
     trial.actualPosePhotoFrontBodyCrossings});
+   const full=trial.everyIndexedBodyComponentAndSourceFrontContact;
+   assert.equal(full.fullOriginalIndexedScopeEvaluated,true);
+   assert.equal(full.originalBodyFaceSubsetUsed,false);
+   assert.equal(full.originalPhotoFaceSubsetUsed,false);
+   assert.ok(full.originalBodyIndexedFacesAudited>5000,
+    'genuine licensed body original entire component face coverage required');
+   assert.ok(full.originalPhotoFrontIndexedFacesAudited>=192,
+    'entire original front indexed silhouette required');
+   assert.ok(full.originalBodySkinnedMeshComponentsAudited>=1);
+   assert.equal(full.originalBodyComponentTriangleCounts.reduce((a,b)=>a+b,0),
+    full.originalBodyIndexedFacesAudited);
+   assert.equal(full.photoFrontOnly,true);
+   assert.equal(full.originalPhotoSourceJPEGByteSHA256,hash(image));
+   assert.equal(full.sourceOriginalRGBSHA256,shell.originalDecodedRGBSHA256);
+   assert.equal(full.actualRigOriginalGLBSHA256,rigHashes[kind]);
+   assert.equal(full.fullMotionSweepCertified,false);
+   assert.equal(full.originalUnobservedRearCertified,false);
+   assert.equal(full.actualPhysicallyCalibratedFit,false);
+   assert.equal(full.garmentPhysicalFitCertified,false);
+   assert.equal(full.humanApprovedMask,false);
+   assert.equal(full.consumer3DAdmitted,false);
+   assert.equal(full.sourceOriginalPhoto2DFallbackRequired,true);
+   assert.equal(full.familyAlpha,'HOLD');
+   const counts=full.classifications;
+   assert.ok(['CROSSING','COPLANAR_OVERLAP','TOUCHING','INDETERMINATE','NONE']
+    .every(key=>Number.isSafeInteger(counts[key])&&counts[key]>=0));
+   assert.equal(Object.values(counts).reduce((a,b)=>a+b,0),
+    full.actualAABBOverlappingPairs);
+   assert.ok(full.fullBroadphaseUniqueCandidatePairs>=full.actualAABBOverlappingPairs);
+   assert.equal(full.strictGeometricContactObserved,
+    counts.CROSSING+counts.COPLANAR_OVERLAP+counts.TOUCHING>0);
+   completeEvidence.push(full);
   }
   assert.deepEqual(fiveDiscretePoses.samples[2].actualPosePhotoFrontBodyCrossings,
    restCrossing,'0 degree discrete photo/body face witness must equal rest');
@@ -379,6 +461,10 @@ try{
    sampledOriginalBodyPhotoNonCoplanarCrossingsAtRest:restCrossing,
    sampledOriginalBodyPhotoNonCoplanarCrossingsAtBend:bentCrossing,
    fiveOriginalRealSpinePoseBodyPhotoFaceCrossingStudies:fiveDiscretePoses,
+   originalFrontBodyEveryIndexedFaceAuditedInFivePoses:true,
+   fullIndexedOriginalContactCountsForFivePoses:completeEvidence,
+   physicalCalibrationEvidenceStillMissing:calibration,
+   trueContactControlsWithCoplanarTouchAndUnknown:true,
    nativeTriangleCrossingPositiveAndSeparatedControlsPassed:true,
    unsampledOriginalFacesAndContinuousMotionRemainUnknown:true,
    fullSurfaceOrSweptIntersectionNotProved:true,
@@ -409,6 +495,9 @@ try{
   controlledPositiveSeparatedAndCoplanarKernelOutcomes:true,
   realBodyFrontOnlyFiveDiscretePoseTrials:true,
   fullSurfaceAndContinuousCollisionNotProved:true,
+  everyOriginalIndexedFrontAndBodyFaceAuditedForFiveDiscretePoses:true,
+  coplanarAndTouchingAndIndeterminateExercised:true,
+  physicalSizeCalibrationRefusedWithoutExternalMeasurements:true,
   noActualHumanMaskReview:true,noPhysicalMobileDevice:true,
   sourceOriginalPhoto2DFallbackRequired:true,consumer3DAdmitted:false,
   releaseAuthorized:false,familyAlpha:'HOLD'
@@ -427,6 +516,9 @@ try{
   strictTriangleFaceIntersectionSampledForBothOriginalLicensedRigs:true,
   fiveDiscreteAuthenticSpinePoseCrossingStudies:true,
   kernelPositiveAndSeparatedControlProof:true,
+  fullIndexedFacePairContactAuditedBothOriginalMaleFemaleRigs:true,
+  coplanarAndTouchingControlVerified:true,
+  actualPhysicalScaleAndCameraNotInvented:true,
   browserErrors:failures.length,externalHTTP:0,
   consumer3DAdmitted:false,familyAlpha:'HOLD'
  }));
