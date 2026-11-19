@@ -569,6 +569,20 @@ function fullActualSkinnedIndexedSourceContact(x){
  // WITHOUT claiming that these bounded AABB pairs certify full contact.
  const numericalRootCause=auditOriginalContactNumerics(bodyFaces,allPhotoFront,{
   maxObservedPairs:512,prefixFront:12,distributedFront:12});
+ // Same exact original real body/source/pose, two candidate algorithms:
+ // the old empty-vector one MUST differ from actual original local vertices.
+ // Proven numerically rather than asserting a hardcoded pass marker.
+ const oldZeroSeedDistances=[0,Math.floor(x.sourceFrontN/2),
+  x.sourceFrontN-1].map(i=>{
+  const correct=originalSkinnedVertexWorld(x.mesh,i),
+   incorrect=x.mesh.applyBoneTransform(i,new THREE.Vector3())
+    .applyMatrix4(x.mesh.matrixWorld);
+  return correct.distanceTo(incorrect);
+ });
+ const maximumZeroSeedErrorRigUnits=Math.max(...oldZeroSeedDistances);
+ invariant(Number.isFinite(maximumZeroSeedErrorRigUnits)&&
+  maximumZeroSeedErrorRigUnits>.0001,
+  'actual-original-coordinate-versus-zero-seed-error-not-demonstrated');
  invariant(numericalRootCause.originalFrontFaceProfile.exactZeroAreaFaces<
   allPhotoFront.length&&
   numericalRootCause.originalBodyFaceProfile.exactZeroAreaFaces<
@@ -601,7 +615,9 @@ function fullActualSkinnedIndexedSourceContact(x){
  return {
   ...result,
   originalSkinnedWorldPointsSeededFromActualGeometry:true,
-  legacyZeroVectorSeedCollapsedEntirePhotoFrontProvedInPriorCI:true,
+  actualSourceWorldPointErrorFromZeroSeedMeasuredRigUnits:
+   round6(maximumZeroSeedErrorRigUnits),
+  wrongZeroSeedDemonstrablyDifferentFromRealOriginalCoordinates:true,
   realOriginalFaceNumericRootCauseResearchOnly:numericalRootCause,
   originalBodySkinnedMeshComponentsAudited:bodyMeshCoverage.length,
   originalBodyComponentTriangleCounts:bodyMeshCoverage.map(x=>x.actualIndexedTrianglesAudited),
