@@ -365,7 +365,9 @@ try{
   assert.equal(fiveDiscretePoses.arbitraryImageToAnatomyRegistration,true);
   assert.equal(fiveDiscretePoses.consumer3DAdmitted,false);
   assert.equal(fiveDiscretePoses.familyAlpha,'HOLD');
-  assert.equal(fiveDiscretePoses.fullOriginalIndexedBodyAndSourceFrontCoverage,true);
+  assert.equal(fiveDiscretePoses
+   .fullOriginalBodyAndPhotoFrontFacesIndexedForFailClosedContactGate,true);
+  assert.equal(fiveDiscretePoses.noCollisionClaimWithoutCompleteFacePairAudit,true);
   const calibration=fiveDiscretePoses.physicalCalibrationEvidence;
   assert.equal(calibration.verifiedMuseumPhotoImageId,2551406);
   assert.equal(calibration.trueLicensedRig,kind);
@@ -392,7 +394,25 @@ try{
    checkCrossing({originalRigPhotoFrontBodyFaceCrossingResearchOnly:
     trial.actualPosePhotoFrontBodyCrossings});
    const full=trial.everyIndexedBodyComponentAndSourceFrontContact;
-   assert.equal(full.fullOriginalIndexedScopeEvaluated,true);
+   assert.ok(full.fullOriginalIndexedScopeEvaluated===true||
+    (full.definitiveCollisionRejection===true&&
+     full.pairEnumerationStoppedAfterRealContact===true),
+    'original complete negative audit OR genuine exact contact must reject');
+   assert.equal(full.allOriginalBodyIndexedFacesPresentInBVH,true);
+   assert.ok(full.originalBodyBVHNodes>=full.originalBodyBVHLeaves);
+   assert.ok(full.originalBodyBVHLeaves>0);
+   if(full.pairEnumerationStoppedAfterRealContact){
+    assert.equal(full.fullOriginalIndexedScopeEvaluated,false);
+    assert.equal(full.contactDecision,'BLOCKED_ACTUAL_ORIGINAL_FRONT_BODY_CONTACT');
+    assert.ok(full.firstObservedContactFaceIndices);
+    assert.equal(full.strictGeometricContactObserved,true);
+   }else{
+    assert.equal(full.fullOriginalIndexedScopeEvaluated,true);
+    assert.ok(['BLOCKED_ACTUAL_ORIGINAL_FRONT_BODY_CONTACT',
+     'BLOCKED_INDETERMINATE_GEOMETRY',
+     'NO_CONTACT_DETECTED_IN_COMPLETE_DISCRETE_FACE_AUDIT']
+     .includes(full.contactDecision));
+   }
    assert.equal(full.originalBodyFaceSubsetUsed,false);
    assert.equal(full.originalPhotoFaceSubsetUsed,false);
    assert.ok(full.originalBodyIndexedFacesAudited>5000,
@@ -461,8 +481,8 @@ try{
    sampledOriginalBodyPhotoNonCoplanarCrossingsAtRest:restCrossing,
    sampledOriginalBodyPhotoNonCoplanarCrossingsAtBend:bentCrossing,
    fiveOriginalRealSpinePoseBodyPhotoFaceCrossingStudies:fiveDiscretePoses,
-   originalFrontBodyEveryIndexedFaceAuditedInFivePoses:true,
-   fullIndexedOriginalContactCountsForFivePoses:completeEvidence,
+   originalFrontBodyEveryIndexedFaceIndexedAndGatedInFivePoses:true,
+   originalFullNegativeOrActualEarlyContactDecisions:completeEvidence,
    physicalCalibrationEvidenceStillMissing:calibration,
    trueContactControlsWithCoplanarTouchAndUnknown:true,
    nativeTriangleCrossingPositiveAndSeparatedControlsPassed:true,
@@ -495,7 +515,8 @@ try{
   controlledPositiveSeparatedAndCoplanarKernelOutcomes:true,
   realBodyFrontOnlyFiveDiscretePoseTrials:true,
   fullSurfaceAndContinuousCollisionNotProved:true,
-  everyOriginalIndexedFrontAndBodyFaceAuditedForFiveDiscretePoses:true,
+  allOriginalFaceDataIndexedForFailClosedGateAcrossFiveDiscretePoses:true,
+  positiveContactMayShortCircuitBeforeAllPairs:true,
   coplanarAndTouchingAndIndeterminateExercised:true,
   physicalSizeCalibrationRefusedWithoutExternalMeasurements:true,
   noActualHumanMaskReview:true,noPhysicalMobileDevice:true,
@@ -516,7 +537,7 @@ try{
   strictTriangleFaceIntersectionSampledForBothOriginalLicensedRigs:true,
   fiveDiscreteAuthenticSpinePoseCrossingStudies:true,
   kernelPositiveAndSeparatedControlProof:true,
-  fullIndexedFacePairContactAuditedBothOriginalMaleFemaleRigs:true,
+  realFullIndexedOriginalFaceFailClosedContactGateBothLicensedRigs:true,
   coplanarAndTouchingControlVerified:true,
   actualPhysicalScaleAndCameraNotInvented:true,
   browserErrors:failures.length,externalHTTP:0,
