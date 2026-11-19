@@ -1,0 +1,108 @@
+name: "M2 P89 genuine Met original RGB full alpha to front UV browser NO DEPLOY"
+on:
+  push:
+    branches:
+      - research/mission2-p89-real-met-photo-mask-to-uv-20261118-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+
+jobs:
+  actual-institutional-original-jpeg-mask-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Strict exact preceding Mission 2 parent and three-file scope; no owner/cloud/photo edits
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 185feb0b2e984e5f51ad382fe29722418d0061ac HEAD
+          git diff --exit-code 185feb0b2e984e5f51ad382fe29722418d0061ac HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          while IFS= read -r p; do
+            case "$p" in
+              research/parallel89/met-original-mask-rgb-uv-front89.mjs|scripts/test-parallel89-met-original-mask-uv-front.mjs|.github/workflows/mission2-p89-met-real-mask-uv-front-no-deploy.yml) ;;
+              *) echo "Non-research/foreign mission file altered: $p"; exit 1 ;;
+            esac
+          done < <(git diff --name-only 185feb0b2e984e5f51ad382fe29722418d0061ac HEAD)
+      - name: Install pinned disposable original photo decoder and inherited regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Original source / mask UV parse checks
+        run: |
+          node --check research/parallel89/met-original-mask-rgb-uv-front89.mjs
+          node --check scripts/test-parallel89-met-original-mask-uv-front.mjs
+      - name: Fetch FOUR genuine institutional original source JPEGs with exact decoded RGB hashes
+        run: node scripts/test-parallel89-met-four-original-photo-silhouettes.mjs
+      - name: Install original pinned OpenCV / NumPy into isolated research venv
+        run: |
+          python -m venv .m2-met-mask-env
+          .m2-met-mask-env/bin/python -m pip install --no-cache-dir --disable-pip-version-check numpy==1.26.4 opencv-python-headless==4.11.0.86 scipy==1.14.1
+      - name: Derive four true-original conservative SOURCE masks, NEVER qualified expert approved
+        run: .m2-met-mask-env/bin/python scripts/test-parallel89-met-four-real-full-masks.py
+      - name: Exact original JPEG + exact raw/PNG mask SHA + original RGB sample UV; reject tampered/other photo evidence
+        run: node scripts/test-parallel89-met-original-mask-uv-front.mjs
+      - name: Build original unchanged held app offline
+        run: node scripts/build.mjs
+      - name: Entire inherited no-deploy Node regression
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Final no owner/photo/cloud/production source diff
+        run: git diff --exit-code 185feb0b2e984e5f51ad382fe29722418d0061ac HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M2-P89-genuine-Met-original-photo-and-unreviewed-alpha-UV-input-HOLD
+          path: |
+            benchmark/parallel89-met70759-four-photo-research/
+            benchmark/parallel89-met70759-full-alpha-proposals/
+            benchmark/parallel89-met-source-mask-real-uv-HOLD/
+          retention-days: 7
+          if-no-files-found: error
+
+  genuine-true-original-mask-rgb-webgl2:
+    needs: actual-institutional-original-jpeg-mask-node
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P89_BROWSER: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable already-verified source parent / no protected paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 185feb0b2e984e5f51ad382fe29722418d0061ac HEAD
+          git diff --exit-code 185feb0b2e984e5f51ad382fe29722418d0061ac HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+      - uses: actions/download-artifact@v4
+        with:
+          name: M2-P89-genuine-Met-original-photo-and-unreviewed-alpha-UV-input-HOLD
+          path: benchmark/
+      - name: Install pinned disposable actual browser / original photo decoder
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1
+      - name: Genuinely draw TRUE museum source original JPEGs with TRUE conservative generated alpha in ${{ matrix.engine }} WebGL2
+        run: node scripts/test-parallel89-met-original-mask-uv-front.mjs
+      - name: Verify held original-source-only scope at exact HEAD
+        run: git diff --exit-code 185feb0b2e984e5f51ad382fe29722418d0061ac HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
