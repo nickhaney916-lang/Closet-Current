@@ -139,10 +139,19 @@ def propose_full_mask(rgb,image_id):
     candidate,ca=seeded_grabcut(rgb,source["outer"],source["inner"],0)
     challenger,cb=seeded_grabcut(rgb,source["outer"],source["inner"],1)
     a=(candidate>0);b=(challenger>0)
-    foreground=int(np.count_nonzero(a))
     intersection=int(np.count_nonzero(a&b))
     union=int(np.count_nonzero(a|b))
     iou=intersection/union if union else 0
+    # Avoid accidentally including the near-white photo background region
+    # disputed by different reasonable source-image seed assumptions.
+    # Foreground is the conservative overlap; uncertain pixels are excluded
+    # from alpha but preserved in the review overlay as the union-minus-core.
+    core=a&b
+    fuzzy=a|b
+    candidate=np.where(core,255,0).astype(np.uint8)
+    challenger=np.where(fuzzy,255,0).astype(np.uint8)
+    a=core
+    foreground=int(np.count_nonzero(a))
     area=foreground/a.size
     yy,xx=np.nonzero(a)
     if len(yy)==0: raise ValueError("source-foreground-empty")
@@ -184,7 +193,9 @@ def propose_full_mask(rgb,image_id):
       "discardedDisconnectedImageComponents":ca["discardedSmallComponentCount"],
       "independentlySeededSecondMaskForegroundComponents":cb["rawForegroundComponents"],
       "twoIndependentPhotoSeedMaskIoU":round(iou,6),
-      "uncertainBoundaryPixelCount":int(np.count_nonzero(a!=b)),
+      "uncertainBoundaryPixelCount":int(np.count_nonzero(core!=fuzzy)),
+      "exportedMaskIsConservativeIntersectionOfTwoSourceSeededRuns":True,
+      "uncertainSourceBoundaryPixelsExcludedFromAlphaButShownInOverlay":True,
       "fullMaskContainsEarlierChromaticTextileFraction":round(colorRecall,6),
       "fullMaskContainsLightNeutralUpperGarmentPixels":upperNeutral,
       "garmentCandidateBboxOriginalPixels":[x0,y0,x1,y1],
