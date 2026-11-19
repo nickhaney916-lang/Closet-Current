@@ -1,0 +1,124 @@
+name: MAIN248 genuine original JSEP WebKit first-failure ledger HOLD
+on:
+  push:
+    branches: [research/main248-original-jsep-first-red-evidence-HOLD]
+  pull_request:
+    branches: [research/main247-original-worker-jsep-heap-boundary-HOLD]
+permissions:
+  contents: read
+jobs:
+  source-and-security:
+    name: M248 immutable original JSEP and full inherited privacy/security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict exact 4 research paths, immutable Worker/M247/native JSEP
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=184aec36e43b63097a6e6f563638414cea6b6bec
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' '.github/workflows/main248-original-jsep-first-red-HOLD.yml' 'scripts/main248-original-jsep-first-red-ledger.mjs' 'scripts/test-main248-original-jsep-first-attempt-browser.mjs' 'tests/main248-first-original-jsep-red-ledger.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:scripts/test-main247-real-p94-jsep-model-heap-browser.mjs)" = 92670c115a42f6408577de4d08d8dea24c263cd2
+          test "$(git rev-parse HEAD:scripts/main247-original-worker-jsep-heap-observer.mjs)" = ea461a2cc7d06b8b03db0f245f0911c5d4695a20
+          node --check scripts/main248-original-jsep-first-red-ledger.mjs
+          node --check scripts/test-main248-original-jsep-first-attempt-browser.mjs
+          node --test tests/main248-first-original-jsep-red-ledger.test.mjs
+          M248_SOURCE_ONLY=1 node scripts/test-main248-original-jsep-first-attempt-browser.mjs
+      - name: Install original published pinned JSEP/browser and owner-private tests
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Pinned npm integrity, original offline build and full inherited privacy regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(npm view onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 dist.integrity)" = "sha512-0uS76OPgH0hWCPrFKlL8kYVV7ckM7t/36HfbgoFw6Nd0CZVVbQC4PkrR8mBX8LtNUFZO25IQBqV2Hx2ho3FlbQ=="
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  first-original-jsep-session:
+    name: M248 genuine pinned original JSEP first attempt ${{ matrix.engine }} ${{ matrix.attempt }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - engine: webkit
+            attempt: w01
+          - engine: webkit
+            attempt: w02
+          - engine: webkit
+            attempt: w03
+          - engine: webkit
+            attempt: w04
+          - engine: webkit
+            attempt: w05
+          - engine: webkit
+            attempt: w06
+          - engine: webkit
+            attempt: w07
+          - engine: webkit
+            attempt: w08
+          - engine: webkit
+            attempt: w09
+          - engine: webkit
+            attempt: w10
+          - engine: webkit
+            attempt: w11
+          - engine: webkit
+            attempt: w12
+          - engine: webkit
+            attempt: w13
+          - engine: webkit
+            attempt: w14
+          - engine: webkit
+            attempt: w15
+          - engine: webkit
+            attempt: w16
+          - engine: chromium
+            attempt: c01
+          - engine: chromium
+            attempt: c02
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M248_ENGINE: ${{ matrix.engine }}
+      M248_ATTEMPT: ${{ matrix.attempt }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable original product JSEP, first-attempt ledger negative controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 184aec36e43b63097a6e6f563638414cea6b6bec HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main247-real-p94-jsep-model-heap-browser.mjs)" = 92670c115a42f6408577de4d08d8dea24c263cd2
+          node --test tests/main248-first-original-jsep-red-ledger.test.mjs
+          M248_SOURCE_ONLY=1 node scripts/test-main248-original-jsep-first-attempt-browser.mjs
+      - name: Install exact original pinned JSEP runtime + browser dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: ONE genuine P94 original JSEP first attempt and private owner/v4
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/test-main248-original-jsep-first-attempt-browser.mjs
