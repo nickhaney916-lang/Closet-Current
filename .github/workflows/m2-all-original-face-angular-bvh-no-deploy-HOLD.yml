@@ -1,8 +1,8 @@
-name: "M2 all original 35262 plus 109064 corrected angular 163bone BVH HOLD"
+name: "M2 real 163bone all-face angular-depth uncertainty native refusal HOLD"
 on:
   push:
     branches:
-      - research/m2-all-original-face-angular-bvh-20261119-HOLD
+      - research/m2-original-all-face-depth-uncertainty-20261119-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -25,19 +25,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git merge-base --is-ancestor d28804ae048349161a61c337147fb6f8e662e017 HEAD
-          git diff --exit-code d28804ae048349161a61c337147fb6f8e662e017 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          git merge-base --is-ancestor 4da5c090df129f9e3a7e91530a85965263518ed9 HEAD
+          git diff --exit-code 4da5c090df129f9e3a7e91530a85965263518ed9 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
           while IFS= read -r p; do
             case "$p" in
               research/parallel89/all-indexed-original-angular-bvh89.mjs|research/parallel89/original-full-indexed-spine04-bvh-addon89.mjs|tests/m2-all-original-angular-bvh.test.mjs|scripts/test-m2-original-all-indexed-angular-native-browser.mjs|.github/workflows/m2-all-original-face-angular-bvh-no-deploy-HOLD.yml) ;;
               *) echo "UNEXPECTED other-mission, original rig or protected file: $p"; exit 1 ;;
             esac
-          done < <(git diff --name-only d28804ae048349161a61c337147fb6f8e662e017 HEAD)
+          done < <(git diff --name-only 4da5c090df129f9e3a7e91530a85965263518ed9 HEAD)
           node --check research/parallel89/all-indexed-original-angular-bvh89.mjs
           node --check research/parallel89/original-full-indexed-spine04-bvh-addon89.mjs
           node --check scripts/test-m2-original-all-indexed-angular-native-browser.mjs
           node --check tests/m2-all-original-angular-bvh.test.mjs
-      - name: All original indexed swept BVH full-negative and fail-closed adversarial Node fixtures
+      - name: All original indexed angular and camera-axis uncertainty hard rejection regressions
         run: node --test tests/m2-all-original-angular-bvh.test.mjs
       - name: Install frozen offline source and original rig test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
@@ -68,7 +68,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: M2-all-original-indexed-angular-source-SHA-no-release-HOLD
+          name: M2-original-all-face-depth-uncertainty-source-SHA-HOLD
           path: |
             benchmark/parallel89-met70759-four-photo-research/
             benchmark/parallel89-met70759-full-alpha-proposals/
@@ -102,11 +102,11 @@ jobs:
         shell: bash
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git merge-base --is-ancestor d28804ae048349161a61c337147fb6f8e662e017 HEAD
-          git diff --exit-code d28804ae048349161a61c337147fb6f8e662e017 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          git merge-base --is-ancestor 4da5c090df129f9e3a7e91530a85965263518ed9 HEAD
+          git diff --exit-code 4da5c090df129f9e3a7e91530a85965263518ed9 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
       - uses: actions/download-artifact@v4
         with:
-          name: M2-all-original-indexed-angular-source-SHA-no-release-HOLD
+          name: M2-original-all-face-depth-uncertainty-source-SHA-HOLD
           path: benchmark/
       - name: Exact pinned native browser and true licensed GLB tools
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 three@0.180.0
@@ -120,14 +120,14 @@ jobs:
           ln -s ../node_modules .m2-immutable-licensed-body/node_modules
           cd .m2-immutable-licensed-body
           node research/three-d-20/restore-approved-models.mjs
-      - name: Native ${{ matrix.engine }} 35262 ORIGINAL FRONT and 109064 true body complete-scope 163bone swept angular BVH
+      - name: Native ${{ matrix.engine }} original 35262 and 109064 full-face angular PLUS unmeasured depth uncertainty
         run: node scripts/test-m2-original-all-indexed-angular-native-browser.mjs .m2-immutable-licensed-body
       - name: Protected source remains unchanged and consumer untouched
-        run: git diff --exit-code d28804ae048349161a61c337147fb6f8e662e017 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+        run: git diff --exit-code 4da5c090df129f9e3a7e91530a85965263518ed9 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: M2-ALL-original-indexed-angular-BVH-${{ matrix.engine }}-HOLD
+          name: M2-all-original-angular-plus-depth-${{ matrix.engine }}-HOLD
           path: benchmark/parallel89-met-real-anatomy-uncalibrated-HOLD/
           retention-days: 7
           if-no-files-found: warn
