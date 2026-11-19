@@ -61,6 +61,8 @@ test('M254 installed genuine original WebKit P94 native/JSEP owner fixture sourc
  assert.ok(script.includes('M247_REAL_ORIGINAL_P94_JSEP_BOUNDARY'));
  assert.ok(script.includes('M251_REAL_ORIGINAL_JSEP_NATIVE_ABI'));
  assert.ok(script.includes('instrumentM251OriginalJsepGlue'));
+ assert.ok(script.includes("P94_WIDTH:String(process.env.M254_WIDTH||'390')"),
+  'Native owner browser viewport must not silently stay 390px at 320px');
  assert.ok(!worker.toString('utf8').includes('m254Cycle'));
  assert.throws(()=>deriveM254PinnedM251Runner(m251.toString('utf8')+' // forged'),
   /modified/);
