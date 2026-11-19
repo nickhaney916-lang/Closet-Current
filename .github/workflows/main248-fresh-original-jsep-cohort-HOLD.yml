@@ -1,0 +1,101 @@
+name: MAIN248 fresh original JSEP WebKit natural-RED cohort HOLD
+on:
+  push:
+    branches: [research/main248-fresh-original-jsep-natural-red-witness-HOLD]
+permissions:
+  contents: read
+jobs:
+  original-source-security:
+    name: M248 exact source full inherited original owner privacy and evidence falsification
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require only four new research-only files, original immutable Worker/model owner fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=184aec36e43b63097a6e6f563638414cea6b6bec
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' '.github/workflows/main248-fresh-original-jsep-cohort-HOLD.yml' 'scripts/main248-original-jsep-trial-ledger.mjs' 'scripts/test-main248-fresh-original-jsep-cohort.mjs' 'tests/main248-original-jsep-cohort.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:scripts/test-main247-real-p94-jsep-model-heap-browser.mjs)" = 92670c115a42f6408577de4d08d8dea24c263cd2
+          node --check scripts/main248-original-jsep-trial-ledger.mjs
+          node --check scripts/test-main248-fresh-original-jsep-cohort.mjs
+          node --test tests/main248-original-jsep-cohort.test.mjs
+          M248_SOURCE_ONLY=1 M248_ENGINE=webkit M248_WIDTH=320 M248_COUNT=1 node scripts/test-main248-fresh-original-jsep-cohort.mjs
+      - name: Install original pinned research-only dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original npm SHA512, offline application, FULL original photo owner private backup security
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(npm view onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 dist.integrity)" = "sha512-0uS76OPgH0hWCPrFKlL8kYVV7ckM7t/36HfbgoFw6Nd0CZVVbQC4PkrR8mBX8LtNUFZO25IQBqV2Hx2ho3FlbQ=="
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  fresh-browser:
+    name: M248 original SegFormer/JSEP ${{ matrix.engine }} ${{ matrix.width }}px batch ${{ matrix.batch }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - {engine: webkit, width: 320, batch: a, count: 4}
+          - {engine: webkit, width: 320, batch: b, count: 4}
+          - {engine: webkit, width: 390, batch: a, count: 4}
+          - {engine: webkit, width: 390, batch: b, count: 4}
+          - {engine: webkit, width: 430, batch: a, count: 4}
+          - {engine: webkit, width: 430, batch: b, count: 4}
+          - {engine: chromium, width: 320, batch: control, count: 2}
+          - {engine: chromium, width: 390, batch: control, count: 2}
+          - {engine: chromium, width: 430, batch: control, count: 2}
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M248_ENGINE: ${{ matrix.engine }}
+      M248_WIDTH: ${{ matrix.width }}
+      M248_BATCH: ${{ matrix.batch }}
+      M248_COUNT: ${{ matrix.count }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact original worker/photo source and fail-closed cohort evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 184aec36e43b63097a6e6f563638414cea6b6bec HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          node --test tests/main248-original-jsep-cohort.test.mjs
+          M248_SOURCE_ONLY=1 node scripts/test-main248-fresh-original-jsep-cohort.mjs
+      - name: Original immutable published model, ORT and native Playwright browser dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: All fresh original JSEP source model owner private 2D v4 processes / KEEP every RED
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/test-main248-fresh-original-jsep-cohort.mjs
+      - name: Preserve bounded original genuine process outcomes even if native model RED
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: M248-original-JSEP-${{ matrix.engine }}-${{ matrix.width }}-${{ matrix.batch }}-HOLD
+          path: benchmark/main248-fresh-jsep-cohort/*.json
+          if-no-files-found: ignore
+          retention-days: 14
