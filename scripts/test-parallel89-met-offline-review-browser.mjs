@@ -94,12 +94,50 @@ try{
   ['2551406-region-1','2551408-region-1']);
  assert.equal(value2.consumer3DAdmitted,false);
  assert.equal(value2.sourceMaskHumanApproved,false);
+ // Complete the actual offline export->source-locked IMPORT->uncertainty-only
+ // preview round-trip; it must never become an accepted alpha mask.
+ await page.locator('#importFile').setInputFiles({
+  name:'source-review-PROPOSED-NOT-APPROVED.json',
+  mimeType:'application/json',
+  buffer:Buffer.from(JSON.stringify(value2),'utf8')
+ });
+ await page.locator('#importReview').click();
+ await page.waitForFunction(()=>document.getElementById('status').textContent.includes('Imported 2'));
+ assert.match(await page.locator('#status').innerText(),/ZERO original mask edits/);
+ assert.equal(await page.locator('#photo').inputValue(),'2551406');
+ assert.match(await page.locator('#previewStats').innerText(),/NOT ACCEPTED \/ NOT 3D/);
+ const proposed=Number((await page.locator('#previewStats').innerText()).split(' ')[0]);
+ assert.ok(proposed>0,'actual old disputed pixels should be previewed locally');
+ // A forged qualified review or cross-museum original-image hash must be
+ // visibly REJECTED and preserve existing source-bound preview state.
+ for(const forged of [
+  {...value2,qualifiedReviewerVerified:true},
+  {...value2,proposedRegionDecisions:[
+   {...value2.proposedRegionDecisions[0],originalRGBSHA256:'0'.repeat(64)},
+   value2.proposedRegionDecisions[1]
+  ]}
+ ]){
+  await page.locator('#importFile').setInputFiles({
+   name:'forged-not-accepted.json',mimeType:'application/json',
+   buffer:Buffer.from(JSON.stringify(forged),'utf8')
+  });
+  await page.locator('#importReview').click();
+  await page.waitForFunction(()=>document.getElementById('status').textContent.includes('REJECTED'));
+  assert.match(await page.locator('#status').innerText(),/REJECTED proposed review import/);
+  assert.match(await page.locator('#progress').innerText(),/2 \/ /);
+  const unchanged=Number((await page.locator('#previewStats').innerText()).split(' ')[0]);
+  assert.equal(unchanged,proposed,'invalid import mutated previous source candidate');
+ }
  assert.deepEqual(external,[],'reviewer page must not make network requests');
  console.log('P89_TRUE_MET_REVIEW_OFFLINE_BROWSER_NOT_EXPERT_APPROVED '+JSON.stringify({
   engine,sourceImageCount:4,originalSourcePixelDigestsPresent:true,
   sourceRegionCount:controls.r.disputedPixelCount,
   actualMouseDrawnOriginalPixelPolygonCount:3,
-  exportedSourceBoundProposals:2,externalRequests:external.length,
+  exportedSourceBoundProposals:2,
+  importedExactSourceProposalPreviewPixels:proposed,
+  adversarialForgedHumanAndWrongPhotoImportsRejected:2,
+  originalMaskAndUncertaintyUnionUnmodified:true,
+  externalRequests:external.length,
   originalGarmentMaskModified:false,sourceMaskHumanApproved:false,
   consumer3DAdmitted:false,familyAlpha:'HOLD'
  }));
