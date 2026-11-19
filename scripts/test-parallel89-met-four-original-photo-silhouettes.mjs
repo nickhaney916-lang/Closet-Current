@@ -20,7 +20,8 @@ await mkdir(out,{recursive:true});
 const receipts=[];
 for(const id of ids){
  const url='https://collectionapi.metmuseum.org/api/collection/v1/iiif/70759/'+id+'/main-image';
- const response=await fetch(url,{redirect:'follow',signal:AbortSignal.timeout(50000)});
+ const response=await fetch(url,{redirect:'follow',signal:AbortSignal.timeout(50000),
+  headers:{'accept':'image/jpeg'}});
  assert.equal(response.status,200,'Met official original source missing '+id);
  const host=new URL(response.url).hostname;
  assert.ok(['collectionapi.metmuseum.org','images.metmuseum.org'].includes(host));
@@ -34,6 +35,10 @@ for(const id of ids){
  assert.ok(meta.width>=400&&meta.width<=18000&&meta.height>=400&&meta.height<=18000);
  const digest=createHash('sha256').update(bytes).digest('hex');
  assert.match(digest,/^[0-9a-f]{64}$/);
+ console.log('MET_GALLERY_SOURCE_JPEG_RECEIPT '+JSON.stringify({
+  id,sha256:digest,width:meta.width,height:meta.height,
+  bytes:bytes.length,host,expectedPinnedSha256:known[id]??null
+ }));
  if(known[id])assert.equal(digest,known[id],
   'existing pinned original museum image source unexpectedly changed');
  assert.ok(!receipts.some(r=>r.sha256===digest),'distinct Met gallery photos expected');
