@@ -138,7 +138,8 @@ export function classifyExactTriangleContact(a,b,alreadyAABBAttested=false){
   return 'CROSSING';
  return touching?'TOUCHING':'NONE';
 }
-export function evaluateFullIndexedContact(bodyFaces,frontFaces,{maxPairs=50000000}={}){
+export function evaluateFullIndexedContact(bodyFaces,frontFaces,{
+ maxPairs=50000000,stopAtFirstVerifiedContact=false}={}){
  if(!Array.isArray(bodyFaces)||!Array.isArray(frontFaces)||!bodyFaces.length||!frontFaces.length)
   throw Error('real-original-full-face-counts-required');
  // This checker may audit actual full geometry only. No skip/stride/cap of
@@ -202,6 +203,29 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{maxPairs=500000
      counts[result]++;
      if(result!=='NONE'&&!firstContact)
       firstContact={frontFace:i,bodyFace:j,class:result};
+     // For a safety eligibility gate, one genuine positive original
+     // triangle contact is sufficient to REJECT fitting. Enumerating other
+     // contacts is unnecessary and extremely expensive (109k x 35k faces).
+     // Crucially, do NOT claim that the unvisited pairs have been checked.
+     if(stopAtFirstVerifiedContact&&
+      ['CROSSING','COPLANAR_OVERLAP','TOUCHING'].includes(result))
+      return {
+       originalBodyIndexedFacesAudited:bodyFaces.length,
+       originalPhotoFrontIndexedFacesAudited:frontFaces.length,
+       allOriginalBodyIndexedFacesPresentInBVH:true,
+       originalBodyBVHNodes:bvhNodes,originalBodyBVHLeaves:bvhLeaves,
+       fullOriginalIndexedScopeEvaluated:false,
+       originalBodyFaceSubsetUsed:false,originalPhotoFaceSubsetUsed:false,
+       fullBroadphaseUniqueCandidatePairs:pairs,
+       actualAABBOverlappingPairs:aabbPairs,
+       classifications:counts,firstObservedContactFaceIndices:firstContact,
+       strictGeometricContactObserved:true,definitiveCollisionRejection:true,
+       contactDecision:'BLOCKED_ACTUAL_ORIGINAL_FRONT_BODY_CONTACT',
+       pairEnumerationStoppedAfterRealContact:true,
+       unresolvedDegenerateOrNearParallelPairs:counts.INDETERMINATE,
+       garmentPhysicalFitCertified:false,fullMotionSweepCertified:false,
+       originalUnobservedRearCertified:false,familyAlpha:'HOLD'
+      };
     }
    }else{stack.push(node.left,node.right);}
   }
@@ -220,6 +244,13 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{maxPairs=500000
   classifications:counts,
   firstObservedContactFaceIndices:firstContact,
   strictGeometricContactObserved:counts.CROSSING+counts.COPLANAR_OVERLAP+counts.TOUCHING>0,
+  definitiveCollisionRejection:counts.CROSSING+counts.COPLANAR_OVERLAP+
+   counts.TOUCHING>0,
+  contactDecision:counts.CROSSING+counts.COPLANAR_OVERLAP+counts.TOUCHING>0?
+   'BLOCKED_ACTUAL_ORIGINAL_FRONT_BODY_CONTACT':
+   counts.INDETERMINATE>0?'BLOCKED_INDETERMINATE_GEOMETRY':
+   'NO_CONTACT_DETECTED_IN_COMPLETE_DISCRETE_FACE_AUDIT',
+  pairEnumerationStoppedAfterRealContact:false,
   unresolvedDegenerateOrNearParallelPairs:counts.INDETERMINATE,
   garmentPhysicalFitCertified:false,
   fullMotionSweepCertified:false,
