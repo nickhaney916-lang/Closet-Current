@@ -16,6 +16,8 @@ const companionJpeg88=Buffer.from([255,216,255,224,21,22,23,255,217]);
 const companionPhoto88='data:image/jpeg;base64,'+companionJpeg88.toString('base64');
 const companionHash88=createHash('sha256').update(companionJpeg88).digest('hex');
 const app=await readFile('public/app.js','utf8'),
+ cropEngineSrc=await readFile('public/photo-crop-engine.js','utf8'),
+ cropEditorSrc=await readFile('public/photo-crop-editor.js','utf8'),
  taxonomy=await readFile('public/taxonomy.js','utf8'),
  details=await readFile('public/clothing-details.js','utf8');
 function extract(a,b){const i=app.indexOf(a),j=app.indexOf(b,i+a.length);
@@ -958,6 +960,64 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     realBrowserIndexedDB:true,syntheticOwner:true,
     physicalDevice:false,pageErrors:errors.length
    }));
+   assert.deepEqual(errors,[]);
+
+   // True Crop editor DOM + browser canvas, not the native-app callback stub.
+   // A concurrent stored-row or pending-draft rejection cannot be retried
+   // against the old captured owner/source/IDB lease. Show honest guidance,
+   // disable further saves and allow closing/reopening after a fresh review.
+   await page.addScriptTag({content:cropEngineSrc});
+   await page.addScriptTag({content:cropEditorSrc});
+   const canvasJpeg=await page.evaluate(()=>{
+    const c=document.createElement('canvas');c.width=320;c.height=320;
+    const g=c.getContext('2d');g.fillStyle='#f1f1f1';g.fillRect(0,0,320,320);
+    g.fillStyle='#2f6898';g.fillRect(80,45,160,240);
+    return c.toDataURL('image/jpeg',0.94);
+   });
+   const conflictCodes=[
+    'P88_SAVED_CROP_STORAGE_CHANGED',
+    'P88_CROP_DRAFT_STORAGE_CHANGED',
+    'P88_STALE_CROP_OWNER_OR_SOURCE'
+   ];
+   for(const code of conflictCodes){
+    await page.evaluate(async ({source,code})=>{
+     window.cropTerminalCalls88=0;
+     await window.openPhotoCrop({image:source},{
+      analyze:async()=>null,
+      save:async()=>{window.cropTerminalCalls88++;throw Error(code);}
+     });
+    },{source:canvasJpeg,code});
+    const dlg=page.locator('dialog.photo-crop-editor[open]');
+    await dlg.getByRole('button',{name:'Save crop'}).click();
+    await page.waitForFunction(()=>document.querySelector('dialog.photo-crop-editor[open] [role="status"]')
+     ?.textContent.includes('Close Crop'));
+    const output=await page.evaluate(async()=>{
+     const dlg=document.querySelector('dialog.photo-crop-editor[open]');
+     const buttons=[...dlg.querySelectorAll('button')];
+     const save=buttons.find(x=>x.textContent==='Save crop');
+     const check=buttons.find(x=>x.textContent==='Check recognition');
+     const cancel=buttons.find(x=>x.textContent==='Cancel');
+     const status=dlg.querySelector('[role="status"]')?.textContent||'';
+     // Direct scripted re-entry must be denied even if caller invokes onclick
+     // and bypasses the disabled DOM button.
+     await save.onclick();
+     return {guidance:status,saveDisabled:save.disabled,checkDisabled:check.disabled,
+      cancelEnabled:!cancel.disabled,scriptedRetryBlocked:window.cropTerminalCalls88===1};
+    });
+    assert.match(output.guidance,/Close Crop/);
+    assert.equal(output.saveDisabled,true);
+    assert.equal(output.checkDisabled,true);
+    assert.equal(output.cancelEnabled,true);
+    assert.equal(output.scriptedRetryBlocked,true);
+    if(code==='P88_CROP_DRAFT_STORAGE_CHANGED')assert.match(output.guidance,/original/);
+    console.log('M1_P88_BROWSER_CROP_TERMINAL_CONFLICT',JSON.stringify({
+     browser:browserName,width,code,blocked:true,scriptedRetryBlocked:true,
+     cancelStillAvailable:true,realCanvasJpeg:true,syntheticPhoto:true,
+     physicalDevice:false,pageErrors:errors.length
+    }));
+    await dlg.getByRole('button',{name:'Cancel'}).click();
+    await page.waitForFunction(()=>!document.querySelector('dialog.photo-crop-editor[open]'));
+   }
    assert.deepEqual(errors,[]);
    await page.close();
   }
