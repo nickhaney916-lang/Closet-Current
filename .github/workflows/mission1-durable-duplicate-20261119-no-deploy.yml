@@ -72,3 +72,7 @@ jobs:
           grep -Fq 'M1_P88_BROWSER_STALE_OWNER_REVIEW_RECOVERY' /tmp/m1-native-idb
           grep -Fq '"staleButtonDisabled":true' /tmp/m1-native-idb
           grep -Fq '"scriptedRetryBlocked":true' /tmp/m1-native-idb
+          grep -Fq 'M1_P88_ACTUAL_BROWSER_CROP_SAVED_AND_DRAFT_CAS' /tmp/m1-native-idb
+          grep -Fq '"staleSavedRefused":true' /tmp/m1-native-idb
+          grep -Fq '"staleDraftRefused":true' /tmp/m1-native-idb
+          grep -Fq '"latePeerGuard":true' /tmp/m1-native-idb
