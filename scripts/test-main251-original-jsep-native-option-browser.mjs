@@ -88,18 +88,19 @@ const browserPrelude=[
  "  m247PublicPending.push(pending);",
  " });"
 ].join('\n');
-const m251ListenerAnchor="if(d?.type!=='diagnostic'||d?.phase!=='m247_jsep_memory')return;";
-const m251ListenerIndex=browserPrelude.findIndex(x=>x.includes(m251ListenerAnchor));
-assert.ok(m251ListenerIndex>=0,'Original P94 Worker native message listener drifted');
-browserPrelude.splice(m251ListenerIndex,0,
+const m251ListenerAnchor="     if(d?.type!=='diagnostic'||d?.phase!=='m247_jsep_memory')return;";
+assert.equal(browserPrelude.split(m251ListenerAnchor).length,2,'Original P94 Worker native listener changed');
+const m251NativeListener=[
  "     if(d?.type==='diagnostic'&&d?.phase==='m251_native_option'){",
  "      const f=v=>v===true||v===1?true:v===false||v===0?false:null;",
  "      const safe={phase:'m251_native_option',cpuArena:f(d.cpuArena),memPattern:f(d.memPattern),",
  "       argCount:d.argCount,actualExportCalled:d.actualExportCalled===true,handleReturned:d.handleReturned===true};",
  "      console.log('M251_NATIVE_OPTION_MESSAGE '+JSON.stringify(safe));return;",
  "     }"
-);
-source=source.replace(route,browserPrelude+'\n'+route);
+].join('\n');
+const m251Prelude=browserPrelude.replace(m251ListenerAnchor,
+ m251NativeListener+'\n'+m251ListenerAnchor);
+source=source.replace(route,m251Prelude+'\n'+route);
 
 const routeLocal="  if(url.origin===origin||url.protocol==='blob:'||url.protocol==='data:')\n   return route.continue();";
 once(routeLocal,'original same-origin request integrity');
