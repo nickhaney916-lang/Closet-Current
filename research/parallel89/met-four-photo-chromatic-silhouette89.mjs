@@ -55,11 +55,17 @@ export const MET70759_GALLERY_VIEW_NOTES89=VIEWS;
  * scale, fitting, or consumer 3D even for verified "a) front".
  */
 export function assessMet70759PhotoPartViewEvidence89({
- imageId,decodedRGBSHA256,originalMuseumObjectNumber
+ imageId,decodedRGBSHA256,originalMuseumObjectNumber,
+ actualOriginalJPEGAttested,actualDecodedRGBHashIndependentlyChecked
 }={}){
  const v=good(imageId);
+ // These two assertions MUST be established by the trusted real-JPEG CI
+ // caller that decodes and hashes actual museum bytes, not a user-supplied
+ // claim. Unit tests only exercise the logic, not live JPEG provenance.
  const valid=Boolean(v&&originalMuseumObjectNumber===MET&&
-  decodedRGBSHA256===v.canonicalDecodedRGBSHA256);
+  decodedRGBSHA256===v.canonicalDecodedRGBSHA256&&
+  actualOriginalJPEGAttested===true&&
+  actualDecodedRGBHashIndependentlyChecked===true);
  const institutionallyCaptioned=valid&&v.sourcePartViewVerified===true&&
   v.catalogCaptionExact==='a) front'&&v.part==='a'&&
   v.museumVerifiedSide==='front';
