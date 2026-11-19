@@ -20,7 +20,8 @@ const app=await readFile('public/app.js','utf8'),
  details=await readFile('public/clothing-details.js','utf8');
 function extract(a,b){const i=app.indexOf(a),j=app.indexOf(b,i+a.length);
  assert.ok(i>=0&&j>i,'P846 source segment missing '+a);return app.slice(i,j);}
-const source=extract('function savePiece(', 'function node(')+
+const source=extract('function persistDraft()', 'function savePiece(')+
+ extract('function savePiece(', 'function node(')+
  extract('function node(', 'function hasSourceBoundMask88(')+
  extract('function hasSourceBoundMask88(', '// P846:')+
  extract('function unit70Receipts(', 'function renderRecognitionNotice(')+
@@ -28,10 +29,11 @@ const source=extract('function savePiece(', 'function node(')+
 const harness=[
  "const categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];",
  "let items=[],batch=[],stream=null,cameraOpening=false,busy=false,localReady=true,session=0;",
+ "let draftStoreRevision88='null';",
  "const reviewFirst836=true;const ui88={};const $=id=>(ui88[id]??={hidden:false,textContent:'',src:''});",
  // Keep the browser's original P846 native Adjust source, but provide the
  // same signed owner/IDB transaction boundary required by the new P88 guard.
- "let db={name:'closet-current-user-owner-A',transaction(stores,mode){if(mode!=='readwrite')throw Error('P88_EXPECTED_WRITE');const tx={objectStore(name){return {add(value){if(name!=='items')throw Error('P88_INSERT_ONLY_ITEMS');window.lastItemWriteMethod='add';window.writeCount++;tx.saved=structuredClone(value);},put(value){if(name==='items'){window.lastItemWriteMethod='put';window.writeCount++;tx.saved=structuredClone(value);}else if(name==='state')tx.next=structuredClone(value);else throw Error('UNKNOWN_STORE');}}}};window.completions.push({resolve(){if(tx.next)window.draftSnapshots.push(tx.next);window.stored.push(tx.saved);tx.oncomplete?.();},reject(error){tx.error=error||Error('REJECT');tx.onerror?.();}});return tx;}};",
+ "let db={name:'closet-current-user-owner-A',transaction(stores,mode){if(mode!=='readwrite')throw Error('P88_EXPECTED_WRITE');const tx={objectStore(name){return {get(key){if(name!=='state'||key!=='draft')throw Error('P88_EXPECTED_DRAFT_READ');const req={result:{id:'draft',batch:structuredClone(batch)}};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){if(name!=='items')throw Error('P88_INSERT_ONLY_ITEMS');window.lastItemWriteMethod='add';window.writeCount++;tx.saved=structuredClone(value);},put(value){if(name==='items'){window.lastItemWriteMethod='put';window.writeCount++;tx.saved=structuredClone(value);}else if(name==='state')tx.next=structuredClone(value);else throw Error('UNKNOWN_STORE');}}}};window.completions.push({resolve(){if(tx.next)window.draftSnapshots.push(tx.next);window.stored.push(tx.saved);tx.oncomplete?.();},reject(error){tx.error=error||Error('REJECT');tx.onabort?.();}});return tx;}};",
  "const queued=async fn=>{await window.beforeWriteTest?.();return fn();};",
  "const originalSource88="+JSON.stringify(originalSource88),
  "const sourceHash88="+JSON.stringify(originalHash88),
@@ -59,6 +61,7 @@ const harness=[
  "    originalPhoto:{image:originalSource88},requiresOwnershipConfirmation:true,reconciliation70Status:status,reconciliation70:receipt('owner-A',11),",
  "    shoePair:{confirmedByOwner:true,companion:{image:companionPhoto88,reconciliation70:receipt('owner-A',12)}}};",
  "  batch=[item];items=dup?[{id:'old',image:'data:image/jpeg;base64,QUJD',category:'Shoes',itemType:'Sneakers',color:'Black',reconciliation70:receipt('owner-A',12)}]:[];",
+ "  draftStoreRevision88=JSON.stringify(batch);",
  "  adjustPhoto(item);return item;",
  "};",
  "window.setupExactSaved88=()=>{",
@@ -398,6 +401,8 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
      opened.onupgradeneeded=()=>{
       if(!opened.result.objectStoreNames.contains('items'))
        opened.result.createObjectStore('items',{keyPath:'id'});
+      if(!opened.result.objectStoreNames.contains('state'))
+       opened.result.createObjectStore('state',{keyPath:'id'});
      };
      opened.onsuccess=()=>resolve(opened.result);
      opened.onerror=()=>reject(opened.error);
@@ -457,6 +462,72 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     browser:browserName,width,durableUpdatedEdit:true,
     staleCrossTabCorrectionDenied:true,staleDeleteDenied:true,
     deletedRowCannotResurrect:true,syntheticOwner:true,physicalDevice:false,
+    pageErrors:errors.length
+   }));
+   assert.deepEqual(errors,[]);
+   const pendingPhoto88=await page.evaluate(async()=>{
+    // Use the REAL IndexedDB transaction implementation in both engines.
+    const opened=indexedDB.open('closet-current-user-owner-A');
+    const ownerDb=await new Promise((resolve,reject)=>{
+     opened.onsuccess=()=>resolve(opened.result);
+     opened.onerror=()=>reject(opened.error);
+    });
+    db=ownerDb;window.closetAuth.user={id:'owner-A'};
+    const putDraft=photos=>new Promise((resolve,reject)=>{
+     const tx=db.transaction('state','readwrite');
+     tx.objectStore('state').put({id:'draft',batch:structuredClone(photos)});
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+    const getDraft=()=>new Promise((resolve,reject)=>{
+     const req=db.transaction('state','readonly').objectStore('state').get('draft');
+     req.onsuccess=()=>resolve(req.result?.batch||[]);
+     req.onerror=()=>reject(req.error);
+    });
+    const getSaved=id=>new Promise((resolve,reject)=>{
+     const req=db.transaction('items','readonly').objectStore('items').get(id);
+     req.onsuccess=()=>resolve(req.result);
+     req.onerror=()=>reject(req.error);
+    });
+    const first={id:'real-pending-88',image:originalSource88,
+     category:'Tops',itemType:'T-shirt',color:'Blue',notes:'owner original'};
+    const second={id:'other-tab-original-88',image:companionPhoto88,
+     category:'Dresses',itemType:'Dress',color:'Green'};
+    items=[];batch=[first];
+    await putDraft([first]);draftStoreRevision88=JSON.stringify([first]);
+    const lease=reviewedSaveLease88(first);
+    // A second tab appends another original while owner A reviews first.
+    await putDraft([first,second]);
+    let staleSaveRefused=false;
+    try{await savePiece({...first},[],lease);}
+    catch(e){staleSaveRefused=/P88_DRAFT_STORAGE_CHANGED/.test(e.message);}
+    const otherPreservedBefore=(await getDraft()).some(x=>x.id===second.id);
+    const noUnconfirmedSave=(await getSaved(first.id))===undefined;
+    // Owner explicitly reloads the new durable source list, then confirms
+    // only the first photo; the second original must survive that commit.
+    batch=[first,second];draftStoreRevision88=JSON.stringify(batch);
+    await savePiece({...first},[second],reviewedSaveLease88(first));
+    const verifiedSaved=(await getSaved(first.id))?.color==='Blue';
+    const afterSave=await getDraft();
+    const secondSurvives=afterSave.length===1&&afterSave[0].id===second.id&&
+      afterSave[0].image===second.image;
+    // Another tab changes this remaining draft and the stale page attempts
+    // to persist a different local revision; the native backup must abort.
+    batch=[second];
+    const newer={...second,color:'Purple'};
+    await putDraft([newer]);
+    await persistDraft();
+    const afterBackup=await getDraft();
+    const backupBlocked=afterBackup[0]?.color==='Purple'&&afterBackup.length===1;
+    ownerDb.close();
+    return {staleSaveRefused,otherPreservedBefore,noUnconfirmedSave,
+     verifiedSaved,secondSurvives,backupBlocked};
+   });
+   assert.deepEqual(pendingPhoto88,{staleSaveRefused:true,otherPreservedBefore:true,
+    noUnconfirmedSave:true,verifiedSaved:true,secondSurvives:true,
+    backupBlocked:true},'real IDB save/backup must not delete second-tab private originals');
+   console.log('M1_P88_ACTUAL_BROWSER_DRAFT_CAS',JSON.stringify({
+    browser:browserName,width,...pendingPhoto88,
+    privatePhotos:false,syntheticOwner:true,physicalDevice:false,
     pageErrors:errors.length
    }));
    assert.deepEqual(errors,[]);
