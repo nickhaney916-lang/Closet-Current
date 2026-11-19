@@ -189,10 +189,16 @@ export function verifyEvidence(manifest,files=new Map()){
   caseStatuses(c.cases,CLOUD_CASES,path+'.cloud.cases',errors);
   const proof=artifact(files,c.reportFile,c.reportSha256,errors,path+'.cloud.report');
   if(proof){
-   if(keys(proof,['format','version','environment','testAccounts','passedCases'],path+'.cloud.report',errors)){
+   if(keys(proof,['format','version','environment','testAccounts','passedCases','sourceHead','testedAt'],path+'.cloud.report',errors)){
     if(proof.format!=='closet-current-mission3-cloud-check'||proof.version!==1||
        proof.environment!=='authorized-hosted')
      errors.push('mission3.cloud.report: wrong evidence type/environment');
+    // Digest matching is not enough: a prior hosted receipt must not be
+    // relabeled as evidence for a different integrated source or test time.
+    if(proof.sourceHead!==manifest.sourceHead||!GIT_SHA.test(proof.sourceHead||''))
+     errors.push('mission3.cloud.report: different source head');
+    if(proof.testedAt!==c.testedAt||!testedDate(proof.testedAt))
+     errors.push('mission3.cloud.report: test time mismatch');
     if(JSON.stringify(proof.testAccounts)!==JSON.stringify(c.testAccounts))
      errors.push('mission3.cloud.report: test account aliases differ');
     if(!Array.isArray(proof.passedCases)||proof.passedCases.length!==CLOUD_CASES.length||
@@ -212,10 +218,12 @@ export function verifyEvidence(manifest,files=new Map()){
   caseStatuses(g.cases,INTEGRATION_CASES,path+'.integration.cases',errors);
   const proof=artifact(files,g.reportFile,g.reportSha256,errors,path+'.integration.report');
   if(proof){
-   if(keys(proof,['format','version','sourceHead','passedCases'],path+'.integration.report',errors)){
+   if(keys(proof,['format','version','sourceHead','passedCases','testedAt'],path+'.integration.report',errors)){
     if(proof.format!=='closet-current-mission3-integration'||proof.version!==1||
        proof.sourceHead!==g.sourceHead)
      errors.push('mission3.integration.report: mismatched source/build');
+    if(proof.testedAt!==g.testedAt||!testedDate(proof.testedAt))
+     errors.push('mission3.integration.report: test time mismatch');
     if(!Array.isArray(proof.passedCases)||proof.passedCases.length!==INTEGRATION_CASES.length||
        new Set(proof.passedCases).size!==INTEGRATION_CASES.length||
        INTEGRATION_CASES.some(k=>!proof.passedCases.includes(k)))
