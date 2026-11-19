@@ -25,7 +25,7 @@ jobs:
           git diff --exit-code 0d967db4e3ba0878b7022230f179195e96e798f2 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
           while IFS= read -r p; do
             case "$p" in
-              research/parallel89/met-four-photo-chromatic-silhouette89.mjs|tests/parallel89-met-four-photo-chromatic-silhouette.test.mjs|scripts/test-parallel89-met-four-original-photo-silhouettes.mjs|.github/workflows/mission2-p89-met-four-original-gallery-silhouettes-20261118-no-deploy.yml) ;;
+              research/parallel89/met-70759-source-intake89.mjs|tests/parallel89-met-70759-source-intake.test.mjs|scripts/test-parallel89-met-70759-real-source-photos.mjs|research/parallel89/met-four-photo-chromatic-silhouette89.mjs|tests/parallel89-met-four-photo-chromatic-silhouette.test.mjs|scripts/test-parallel89-met-four-original-photo-silhouettes.mjs|.github/workflows/mission2-p89-met-four-original-gallery-silhouettes-20261118-no-deploy.yml) ;;
               *) echo "Unauthorized non-M2 code change: $p"; exit 1 ;;
             esac
           done < <(git diff --name-only 0d967db4e3ba0878b7022230f179195e96e798f2 HEAD)
@@ -122,6 +122,11 @@ jobs:
           path: benchmark/parallel89-met70759-source/
           retention-days: 14
           if-no-files-found: warn
+      - name: Four-gallery original photo chromatic region negative and museum-view-label provenance tests
+        run: |
+          node --check research/parallel89/met-four-photo-chromatic-silhouette89.mjs
+          node --check tests/parallel89-met-four-photo-chromatic-silhouette.test.mjs
+          node --test tests/parallel89-met-four-photo-chromatic-silhouette.test.mjs
       - name: Acquire genuine four-image museum gallery and photo byte hashes (research-only, no source import)
         run: |
           node --check scripts/test-parallel89-met-four-original-photo-silhouettes.mjs
