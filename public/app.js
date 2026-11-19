@@ -623,12 +623,20 @@ function cropClothingPhoto(item){
    if(value.id!==item.id||hasSourceBoundMask88(value)||value.ownerSourceReview88)
     throw Error('P88_CROP_CANNOT_REBIND_ID_OR_MASK');
    delete value.recognitionMemory;delete value.confirmedDetails;delete value.correctionReceipt72;delete value.learningReviewedWeek;delete value.weeklySuggestion;delete value.recognitionPhoto;delete value.colorMethod;
-   // Unsaved drafts must not reuse pixel color guessed from their PREVIOUS
-   // crop. But an already-saved closet row is owner data: never erase its
-   // existing unconfirmed estimated color just because its photo was cropped.
-   // Keep colorSource='photo-estimate' (not 'user') until explicit Adjust.
-   if(lease.wasDraft&&value.colorSource==='photo-estimate'){
+   // A classifier's category/subtype/color and its confidence diagnostics
+   // belong to the PREVIOUS pixels, not to the owner's newly selected crop.
+   // An unsaved draft is NOT an owner-approved wardrobe row even when a prior
+   // crop had set userAdjusted=true as an edit marker. Reset all previous
+   // inferred core fields BEFORE optional fresh crop analysis. The owner must
+   // explicitly approve the new photo in Adjust before private admission.
+   // The already-saved closet row is different: retain its owner-reviewed
+   // category/type/color, but drop stale photo-specific model diagnostics.
+   delete value.recognitionDiagnostics;delete value.indexingLevel;
+   if(lease.wasDraft){
+    value.category='Uncategorized';value.itemType='Unknown';value.name='';
+    value.sleeveLength='Unknown';value.pattern='Unknown';value.fit='Unknown';
     value.color='';delete value.colorSource;
+    value.requiresOwnershipConfirmation=true;
    }
    const quality=await checkPhoto(photo.image);
    if(hasSourceBoundMask88(item))throw Error('P88_STALE_MASK_AFTER_PHOTO_CHECK');
@@ -755,7 +763,7 @@ function cropClothingPhoto(item){
    });
    if(!cropLive88())return; // Old owner's completed write cannot paint B's UI.
    Object.assign(item,value);
-   for(const key of ['visualSignature','visualAspect','localChoices','indexedAt','recognitionPhoto','colorMethod','recognitionMemory','confirmedDetails','correctionReceipt72','learningReviewedWeek','weeklySuggestion','ownerDuplicateReview88','exactSavedPhotoMatch88'])if(!(key in value))delete item[key];
+   for(const key of ['visualSignature','visualAspect','localChoices','indexedAt','recognitionPhoto','colorMethod','recognitionDiagnostics','indexingLevel','recognitionMemory','confirmedDetails','correctionReceipt72','learningReviewedWeek','weeklySuggestion','ownerDuplicateReview88','exactSavedPhotoMatch88'])if(!(key in value))delete item[key];
    render();
   }
  }).catch(()=>message('Could not open this photo for cropping. Your saved photo is kept.'));
