@@ -139,7 +139,8 @@ export function classifyExactTriangleContact(a,b,alreadyAABBAttested=false){
  return touching?'TOUCHING':'NONE';
 }
 export function evaluateFullIndexedContact(bodyFaces,frontFaces,{
- maxPairs=50000000,stopAtFirstVerifiedContact=false}={}){
+ maxPairs=50000000,stopAtFirstVerifiedContact=false,
+ reportResourceBlockerInsteadOfThrow=false}={}){
  if(!Array.isArray(bodyFaces)||!Array.isArray(frontFaces)||!bodyFaces.length||!frontFaces.length)
   throw Error('real-original-full-face-counts-required');
  // This checker may audit actual full geometry only. No skip/stride/cap of
@@ -195,6 +196,31 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{
  };
  let pairs=0,aabbPairs=0,firstContact=null,bodySwept=0,nodeVisits=0,
   planePrunedNodes=0;
+ const blockedIncomplete=(kind,lastFrontFaceIndex)=>({
+  originalBodyIndexedFacesAudited:bodyFaces.length,
+  originalPhotoFrontIndexedFacesAudited:frontFaces.length,
+  allOriginalBodyIndexedFacesPresentInBVH:true,
+  originalBodyBVHNodes:bvhNodes,originalBodyBVHLeaves:bvhLeaves,
+  conservativePlaneSeparatedBvhNodesPruned:planePrunedNodes,
+  fullOriginalIndexedScopeEvaluated:false,
+  originalBodyFaceSubsetUsed:false,originalPhotoFaceSubsetUsed:false,
+  fullBroadphaseUniqueCandidatePairs:pairs,
+  actualAABBOverlappingPairs:aabbPairs,
+  classifications:{...counts},firstObservedContactFaceIndices:firstContact,
+  strictGeometricContactObserved:counts.CROSSING+counts.COPLANAR_OVERLAP+
+   counts.TOUCHING>0,
+  definitiveCollisionRejection:false,
+  contactDecision:'BLOCKED_INCOMPLETE_ORIGINAL_INDEXED_AUDIT',
+  pairEnumerationStoppedAfterRealContact:false,
+  resourceBoundReached:true,
+  resourceBoundKind:kind,lastOriginalFrontFaceIndexChecked:lastFrontFaceIndex,
+  unresolvedDegenerateOrNearParallelPairs:counts.INDETERMINATE,
+  entireOriginalFrontAndBodyDataIndexedButNotAllPairsExamined:true,
+  garmentPhysicalFitCertified:false,fullMotionSweepCertified:false,
+  originalUnobservedRearCertified:false,
+  consumer3DAdmitted:false,sourceOriginalPhoto2DFallbackRequired:true,
+  familyAlpha:'HOLD'
+ });
  for(let i=0;i<frontFaces.length;i++){
   const box=frontBoxes[i],plane=frontPlanes[i],stack=[root];
   while(stack.length){
@@ -206,17 +232,26 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{
    if(node.faces){
     for(const j of node.faces){
      pairs++;
-     if(pairs>maxPairs)throw Error('original-full-indexed-audit-resource-bound-reached '+
-      JSON.stringify({bodyFaces:bodyFaces.length,photoFaces:frontFaces.length,
-       broadphaseCandidatePairs:pairs,actualAABBOverlaps:aabbPairs,
-       maxPairs,bvhNodes,visitedNodes:nodeVisits,
-       lastFrontFaceIndex:i}));
+     if(pairs>maxPairs){
+      if(reportResourceBlockerInsteadOfThrow)
+       return blockedIncomplete('BROADPHASE_BUDGET',i);
+      throw Error('original-full-indexed-audit-resource-bound-reached '+
+       JSON.stringify({bodyFaces:bodyFaces.length,photoFaces:frontFaces.length,
+        broadphaseCandidatePairs:pairs,actualAABBOverlaps:aabbPairs,
+        maxPairs,bvhNodes,visitedNodes:nodeVisits,
+        lastFrontFaceIndex:i,classifications:counts}));
+     }
      if(!boxesOverlap(box,bodyBoxes[j]))continue;
      aabbPairs++;
-     if(aabbPairs>30000000)throw Error('original-full-indexed-exact-contact-resource-bound '+
-      JSON.stringify({bodyFaces:bodyFaces.length,photoFaces:frontFaces.length,
-       actualAABBOverlaps:aabbPairs,broadphaseCandidatePairs:pairs,
-       lastFrontFaceIndex:i}));
+     if(aabbPairs>30000000){
+      if(reportResourceBlockerInsteadOfThrow)
+       return blockedIncomplete('EXACT_AABB_CONTACT_BUDGET',i);
+      throw Error('original-full-indexed-exact-contact-resource-bound '+
+       JSON.stringify({bodyFaces:bodyFaces.length,photoFaces:frontFaces.length,
+        actualAABBOverlaps:aabbPairs,broadphaseCandidatePairs:pairs,
+        lastFrontFaceIndex:i,classifications:counts,
+        conservativePlaneSeparatedBvhNodesPruned:planePrunedNodes}));
+     }
      // The hierarchy and exact AABB check already attest the box witness;
      // do not recompute expensive per-triangle bounds for each narrow pair.
      const result=classifyExactTriangleContact(frontFaces[i],bodyFaces[j],true);
