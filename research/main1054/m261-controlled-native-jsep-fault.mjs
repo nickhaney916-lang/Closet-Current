@@ -78,12 +78,19 @@ export function verifyM261Failure(log,exitCode,identity){
  if(netLines.length!==1)throw new Error('Missing/duplicate actual invalid-JSEP response witness');
  try{network=JSON.parse(netLines[0].slice(networkTag.length));}
  catch{throw new Error('Malformed invalid-JSEP network response witness');}
- const invalid=(network?.rows||[]).filter(r=>r?.kind==='jsep-wasm'&&
-   r.status==='invalid-wasm-magic'&&r.sha256===
-   '4a333b50e854cbe7946e70d8a1d715a4c86f5fee16a3c2f4d6bf2e8ee46ebe01'&&
+ const originalJsepRows=Array.isArray(network?.rows)?
+   network.rows.filter(r=>r?.kind==='jsep-wasm'):[];
+ const invalid=originalJsepRows.filter(r=>r.status==='invalid-wasm-magic'&&
+   r.sha256==='4a333b50e854cbe7946e70d8a1d715a4c86f5fee16a3c2f4d6bf2e8ee46ebe01'&&
    r.size===45).length;
+ const unreadable=originalJsepRows.filter(r=>r.status==='body-unavailable').length;
+ // The actual Chromium protocol sometimes withholds a fulfilled response body;
+ // do not invent a SHA. At least one response MUST be directly hash-verified.
+ // Every intercepted request must be independently accounted for as either
+ // invalid bytes observed or explicitly unavailable in the original context.
  if(network?.engine!==identity.engine||network.width!==identity.width||
-   invalid!==fault.interceptedJsepRequests)
+   invalid<1||invalid+unreadable!==fault.interceptedJsepRequests||
+   originalJsepRows.length!==fault.interceptedJsepRequests)
    throw new Error('Original invalid WASM responses do not match actual interceptions');
  if(exitCode===0||!log.split(/\r?\n/).some(line=>line.startsWith('M58_REAL_P88_WORKER_FAIL ')))
   throw new Error('Original P94 did not fail naturally from actual corrupt network bytes');
@@ -104,7 +111,9 @@ export function verifyM261Failure(log,exitCode,identity){
   schema:'MAIN1054_M261_ACTUAL_BROWSER_INDUCED_JSEP_RED_V1',
   checkout:identity.checkout,engine:identity.engine,width:identity.width,
   runId:String(identity.runId),runAttempt:identity.runAttempt,
-  injectionInterceptCount:fault.interceptedJsepRequests,originalRunnerExitNonzero:true,
+  injectionInterceptCount:fault.interceptedJsepRequests,
+  invalidJsepResponseSHAObserved:invalid,unreadableJsepResponseBodies:unreadable,
+  originalRunnerExitNonzero:true,
   originalFailureMarkerObserved:true,
   ownerSaveOrRestoreSuccessObserved:false,
   originalJourneyGate:'FAIL',sourceEvidenceGate:'FAIL',
