@@ -48,7 +48,7 @@ try{
  });
  if(sourceOnly){
   if(result.error)throw result.error;
-  assert.equal(result.status,0,'M254 original derived source-only preflight failed');
+  assert.equal(result.status,0,'M254 original derived source-only preflight failed: '+String(result.stderr||'').slice(0,1700));
   assert.ok(result.stdout.includes('M247_PINNED_ORIGINAL_JSEP_PROBE_READY'),
    'M251 real fixture did not complete source-only preflight');
   assert.ok(!result.stdout.includes('M254_ORIGINAL_BROWSER_CYCLE_PASS'));
