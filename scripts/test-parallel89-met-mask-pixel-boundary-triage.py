@@ -81,6 +81,17 @@ if sum(x["museumVerifiedExactViewCaption"] is not None for x in receipts)!=1:
     raise RuntimeError("unknown-met-part-view-labels-were-promoted")
 if not all(x["externalQualifiedAnnotatorReviewActuallyProvided"] is False for x in receipts):
     raise RuntimeError("human-review-status-misrepresented")
+# New source-attested evidence distinguishes a large pale background
+# ambiguity in first photo from a smaller potentially excluded colored cloth
+# strip by the third photo's waistband. Neither is expert-accepted truth.
+r1406=next(x for x in receipts if x["imageId"]==2551406)
+r1408=next(x for x in receipts if x["imageId"]==2551408)
+if r1406["paleNearBackgroundOrWaistbandPixels"]<=10000:
+    raise RuntimeError("known-original-pale-photo-background-risk-not-observed")
+if r1408["distinctlyChromaticPotentialClothPixels"]<=400:
+    raise RuntimeError("known-original-potential-true-cloth-risk-not-observed")
+if r1406["largestConnectedDisputedReviewRegions"][0]["bboxOriginalPixels"]!=[864,115,1076,522]:
+    raise RuntimeError("expected-original-source-high-risk-region-changed-without-review")
 report={
  "schema":"M2-original-Met-four-mask-targeted-human-review-queue/v1",
  "officialMetSourcePage":"https://www.metmuseum.org/art/collection/search/70759",
@@ -90,6 +101,18 @@ report={
    [x["imageId"] for x in receipts],
    key=lambda i:next(v["disputedPixelCount"] for v in receipts if v["imageId"]==i),
    reverse=True),
+ "targetPossibleExcludedChromaticFabricFirst":sorted(
+   [x["imageId"] for x in receipts],
+   key=lambda i:next(v["distinctlyChromaticPotentialClothPixels"] for v in receipts
+                     if v["imageId"]==i),reverse=True),
+ "targetPotentialPaleBackgroundOrWaistbandFirst":sorted(
+   [x["imageId"] for x in receipts],
+   key=lambda i:next(v["paleNearBackgroundOrWaistbandPixels"] for v in receipts
+                     if v["imageId"]==i),reverse=True),
+ "twoIndependentReviewerRiskTypesNotEquivalent":True,
+ "firstImageLargestPaleSourceAmbiguityRegionBBoxPixels":[864,115,1076,522],
+ "firstImagePaleSourceAmbiguityRegionRequiresQualifiedReview":True,
+ "thirdImageSmallHighlyChromaticSourceUncertaintyRequiresQualifiedReview":True,
  "onlyExternallyCaptionVerifiedPhotoId":2551406,
  "sideAndPartLabelsForRemainingPhotosStillUnverified":True,
  "qualifiedIndependentReviewerIdentityOrApprovalNotReceived":True,
@@ -100,11 +123,17 @@ report={
  "originalHonoluluSourceAndFallbackUntouched":True,
  "consumer3DAdmitted":False,"releaseAuthorized":False,"familyAlpha":"HOLD"
 }
+if report["targetPossibleExcludedChromaticFabricFirst"][0]!=2551408:
+    raise RuntimeError("possible-real-fabric-review-priority-not-source-grounded")
+if report["targetPotentialPaleBackgroundOrWaistbandFirst"][0]!=2551406:
+    raise RuntimeError("pale-background-review-priority-not-source-grounded")
 (OUT/"met-70759-four-photo-BOUNDARY-REVIEW-QUEUE.json").write_text(
  json.dumps(report,indent=2)+"\n",encoding="utf8")
 print("M2_MET_FOUR_MASK_REVIEW_QUEUE_COMPLETE_HOLD "+json.dumps({
  "sourceImageCount":4,
  "mostDisputedOriginalSourceId":report["targetHighestUncertaintyFirst"][0],
+ "topPossibleExcludedChromaticFabric":report["targetPossibleExcludedChromaticFabricFirst"][0],
+ "topPaleBackgroundOrWaistbandRisk":report["targetPotentialPaleBackgroundOrWaistbandFirst"][0],
  "allQualifiedReviewStillRequired":True,
  "actual3DOrConsumerApproval":False,"familyAlpha":"HOLD"
 },sort_keys=True))
