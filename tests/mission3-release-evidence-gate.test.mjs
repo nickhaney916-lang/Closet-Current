@@ -230,3 +230,62 @@ test('CLI accepts a private local folder and returns BLOCKED/exit 2 without leak
   assert.equal(out.stderr,'');
  }finally{await rm(dir,{recursive:true,force:true})}
 });
+
+
+test('recorded hard device faults cannot be laundered by all-PASS checkboxes or a saved scan',()=>{
+ const failures=['scanner_error','worker_start_failed','timeout',
+  'photo_check_failed','outfit_split_failed'];
+ for(const family of ['android-chrome','ios-safari']){
+  for(const fault of failures){
+   for(const order of ['before','after']){
+    const f=fixture(),device=f.manifest.devices.find(d=>d.family===family);
+    const name=device.reportFile,report=JSON.parse(f.files.get(name));
+    const failed={type:fault,stage:'runtime',code:'network',durationMs:27};
+    if(order==='before')report.events.unshift(failed);
+    else report.events.push(failed);
+    const bytes=Buffer.from(JSON.stringify(report));
+    f.files.set(name,bytes);device.reportSha256=sha(bytes);
+    const result=check(f);
+    assert.equal(result.status,'BLOCKED',family+' '+fault+' '+order);
+    assert.equal(result.releaseAuthorized,false);
+    assert.equal(result.familyAlpha,'HOLD');
+    assert.ok(result.issues.some(x=>x.includes('recorded device failure')),
+     family+' '+fault+' '+order);
+    assert.ok(!JSON.stringify(result).includes('network'));
+   }
+  }
+ }
+});
+
+test('informational review/duplicate events do not falsely become terminal device failures',()=>{
+ const f=fixture(),d=f.manifest.devices[0];
+ const report=JSON.parse(f.files.get(d.reportFile));
+ report.events.push(
+  {type:'not_recognized',stage:'identify'},
+  {type:'duplicate_review'},
+  {type:'exact_duplicate_skipped'}
+ );
+ const bytes=Buffer.from(JSON.stringify(report));
+ f.files.set(d.reportFile,bytes);d.reportSha256=sha(bytes);
+ const result=check(f);
+ assert.equal(result.status,'EVIDENCE_READY_FOR_INDEPENDENT_REVIEW');
+ assert.equal(result.releaseAuthorized,false);
+ assert.equal(result.familyAlpha,'HOLD');
+});
+
+test('a new clean owner device report can be considered for review only after logged failure is absent',()=>{
+ const f=fixture(),d=f.manifest.devices[0],name=d.reportFile;
+ const original=JSON.parse(f.files.get(name));
+ const withFailure={...original,events:[...original.events,{type:'photo_check_failed',code:'image'}]};
+ let bytes=Buffer.from(JSON.stringify(withFailure));
+ f.files.set(name,bytes);d.reportSha256=sha(bytes);
+ assert.equal(check(f).status,'BLOCKED');
+ // Starting a *new* QA run clears the old device diagnostic history; the
+ // manifest checks only the newly attached report and still never releases.
+ bytes=Buffer.from(JSON.stringify(original));
+ f.files.set(name,bytes);d.reportSha256=sha(bytes);
+ const status=check(f);
+ assert.equal(status.status,'EVIDENCE_READY_FOR_INDEPENDENT_REVIEW');
+ assert.equal(status.releaseAuthorized,false);
+ assert.equal(status.familyAlpha,'HOLD');
+});
