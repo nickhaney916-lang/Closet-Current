@@ -1,0 +1,68 @@
+name: Parallel 107 photo calibration research (no deploy)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'research/parallel107/**'
+      - '.github/workflows/parallel107-photo-calibration-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  source-and-node:
+    if: github.head_ref == 'research/parallel107-photo-calibration-HOLD' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check isolated source scope
+        run: |
+          set -euo pipefail
+          base=8c3355350303399e9edc2e98beaf9de15d601282
+          git merge-base --is-ancestor "$base" HEAD
+          while IFS= read -r path; do
+            case "$path" in
+              research/parallel107/*|.github/workflows/parallel107-photo-calibration-no-deploy.yml) ;;
+              *) echo "Unexpected change: $path"; exit 1 ;;
+            esac
+          done < <(git diff --name-only "$base" HEAD)
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+      - run: node --test research/parallel107/calibration.test.mjs
+      - run: node scripts/build.mjs
+      - run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  browser:
+    if: github.head_ref == 'research/parallel107-photo-calibration-HOLD' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P107_BROWSER: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 axe-core@4.10.3
+      - run: node research/parallel107/browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: parallel107-${{ matrix.engine }}
+          path: parallel107-${{ matrix.engine }}.json
+          retention-days: 7
