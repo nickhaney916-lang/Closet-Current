@@ -17,19 +17,19 @@ export function injectM250SyntheticGrowFailure(originalM249Worker){
   'Actual pinned SegFormer CPU-WASM model changed');
  assert.ok(originalM249Worker.includes("m249ClassifyOriginal(error);m247Emit(requestId,'error');loader=null;throw error;"),
   'Original model-load failure must be rethrown and observed');
- // The second JS-observed grow occurs within genuine pinned JSEP session
+ // The subsequent JS-observed grows occur within genuine pinned JSEP session
  // initialization. Force an artificial JS exception BEFORE calling native
- // grow for this single invocation, keeping original pass-through otherwise.
+ // growth for all subsequent calls; ORT must not recover the synthetic failure.
  // m247Stats increments growCalls before this position, while its original
  // catch increments growErrors and rethrows; original model catch still RED.
  const inserted=[
-  '    if(m247Stats.calls===2){',
+  '    if(m247Stats.calls>=2){',
   "     throw new WebAssembly.RuntimeError('memory access out of bounds');",
   '    }',
   GROW_CALL
  ].join('\n');
  const output=originalM249Worker.replace(GROW_CALL,inserted);
- assert.ok(output.includes("if(m247Stats.calls===2)"));
+ assert.ok(output.includes("if(m247Stats.calls>=2)"));
  assert.ok(output.includes('throw new WebAssembly.RuntimeError('));
  assert.ok(output.includes(GROW_CALL));
  // Absolutely no model-retry, implicit owner approval, synthetic logits,
@@ -54,8 +54,8 @@ export function verifyM250ControlledPostJsepReceipt(receipt){
  assert.equal(receipt.modelExceptionName,'RuntimeError');
  assert.equal(receipt.modelExceptionCategory,'wasm_memory_access');
  assert.equal(receipt.originalHeapTerminalSeen,true);
- assert.equal(receipt.observedGrowCalls,2);
- assert.equal(receipt.observedGrowErrors,1);
+ assert.ok(Number.isInteger(receipt.observedGrowCalls)&&receipt.observedGrowCalls>=2);
+ assert.ok(Number.isInteger(receipt.observedGrowErrors)&&receipt.observedGrowErrors>=1);
  assert.ok(receipt.observedFirstPages>=256&&receipt.observedTerminalPages>=receipt.observedFirstPages);
  assert.equal(receipt.nativeCppAllocatorCauseProven,false);
  assert.equal(receipt.nativeMemoryAccessRootCauseProven,false);
