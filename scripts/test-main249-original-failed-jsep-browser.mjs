@@ -110,6 +110,15 @@ try{
    'M61_GENUINE_P88_TO_PRIVATE_OWNER_V4_RESTORE_SAME_SESSION_PASS '];
   for(const line of lines)if(prefixes.some(p=>line.startsWith(p)))console.log(line.slice(0,1800));
   const failure=lines.filter(x=>x.startsWith(prefixes[0]));
+  if(run.status!==0&&failure.length===0){
+   const diagnostic=['SyntaxError','ReferenceError','TypeError','ERR_ASSERTION',
+    'source derivation','Cannot access','not defined','No real original browser failure']
+     .filter(token=>String(run.stderr||'').includes(token));
+   console.log('M249_MISSING_FAILURE_RECEIPT_RETAIN_RED',JSON.stringify({
+    engine,width,control,originalChildStatus:run.status,
+    sanitizedErrorKinds:diagnostic,originalFailureReceiptAbsent:true,
+    repairProven:false,releaseAuthorized:false,hold:true}));
+  }
   if(control==='model_abort'){
    assert.notEqual(run.status,0,'Injected original public ONNX abort cannot count as genuine model success');
    assert.equal(failure.length,1,'No real original browser failure boundary receipt');
