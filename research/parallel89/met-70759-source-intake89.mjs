@@ -48,7 +48,8 @@ const failure=reason=>Object.freeze({
 });
 const safePhoto=(item,expected)=>{
  if(!item||item.sourceObjectId!==70759||item.sourceObjectNumber!=='1983.21a, b'||
-  item.sourceUrl!==expected||item.responseOrigin!=='collectionapi.metmuseum.org'||
+  item.sourceUrl!==expected||
+  !['collectionapi.metmuseum.org','images.metmuseum.org'].includes(item.responseOrigin)||
   item.redirectedToNonMuseumHost===true||
   item.httpStatus!==200||item.contentType!=='image/jpeg'||
   !Number.isSafeInteger(item.byteLength)||item.byteLength<10000||
