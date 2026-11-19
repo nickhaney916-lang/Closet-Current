@@ -181,8 +181,19 @@ export function cameraAxisOriginalPhotoBodyWitness(bodyFaces,frontFaces,{
   familyAlpha:'HOLD'
  };
  if(!first){
+  const candidate=hits[0]||null;
+  const inspect=candidate?{
+   sourceFaceIndex:candidate.sourceFaceIndex,
+   bodyFaceIndex:candidate.originalBodyFaceIndex,
+   depthRigUnits:candidate.photoFrontToActualBodyDepthRigUnits,
+   chosenFaceContactAtNominalDepth:classifyExactTriangleContact(
+    frontFaces[candidate.sourceFaceIndex].map(p=>
+     [p[0],p[1],p[2]-candidate.photoFrontToActualBodyDepthRigUnits]),
+    bodyFaces[candidate.originalBodyFaceIndex])
+  }:null;
   return {...receipt,decision:'BLOCKED_NO_DEPTH_ONLY_SOURCE_TO_BODY_CONTACT_WITNESS',
    testedTrueOriginalRaySurfaceCandidatePairs:attempts,
+   earliestRayHitThatFailedContactConfirmation:inspect,
    trueOriginalDepthContactWitness:null};
  }
  const movedFrontFaces=frontFaces.map(t=>t.map(p=>
