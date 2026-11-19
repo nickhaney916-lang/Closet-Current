@@ -557,6 +557,11 @@ function cropClothingPhoto(item){
    // the crop dialog remains open. Never recycle that mask with new pixels.
    if(hasSourceBoundMask88(item))throw Error('P88_SOURCE_MASK_CROP_FORBIDDEN');
    if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
+   // An existing wardrobe entry already has owner-approved details. A Crop
+   // checkbox asking to "Use suggested details" is not a new owner category,
+   // fine subtype, or color review; never let the model silently rewrite it.
+   if(!lease.wasDraft&&choice)
+    throw Error('P88_SAVED_CROP_MODEL_SUGGESTION_REQUIRES_ADJUST');
    // The photo editor emits ONLY derivative JPEG/PNG pixels, a rectangle
    // and optional mask-derived color advice. Never spread an untrusted callback
    // object over a private wardrobe row: source SHA, owner review, garment
@@ -592,13 +597,24 @@ function cropClothingPhoto(item){
    const quality=await checkPhoto(photo.image);
    if(hasSourceBoundMask88(item))throw Error('P88_STALE_MASK_AFTER_PHOTO_CHECK');
    if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
-   Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));
-   if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')value.colorMethod='garment-mask';
+   // Missing values on a SAVED item are also owner data, not permission
+   // for a post-crop pixel estimate to create a new confirmed garment color.
+   if(lease.wasDraft){
+    Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));
+    if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')value.colorMethod='garment-mask';
+   }
    delete value.maskedColorEstimate;delete value.maskApplied;
    value.visualSignature=quality.signature;value.visualAspect=quality.aspect;
    delete value.localChoices;delete value.indexedAt;
-   if(choice){applyLocalChoice(value,choice,true);Object.assign(value,ClothingDetails.fill(value,choice,choice.details,true));value.indexedAt=new Date().toISOString();}
-   value.localStatus=choice?'Crop checked. Suggested details applied.':'Crop saved. Check recognition or adjust the clothing details.';
+   if(lease.wasDraft&&choice){
+    applyLocalChoice(value,choice,true);
+    Object.assign(value,ClothingDetails.fill(value,choice,choice.details,true));
+    value.indexedAt=new Date().toISOString();
+   }
+   value.localStatus=!lease.wasDraft?
+    'Crop saved. Existing category, type and color kept. Use Adjust details for any changes.':
+    choice?'Crop checked. Suggested details applied. Confirm them in Adjust before adding.':
+    'Crop saved. Check recognition or adjust the clothing details.';
    // Recognition-derived suggestions and color estimates must never mint
    // verified original/source/owner/physical/3D permission during a crop.
    if(ordinarySourceEvidence88(value)!==lease.evidenceRevision||
