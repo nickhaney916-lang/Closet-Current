@@ -292,7 +292,7 @@ try{
  });
  const stalledPage=await stalled3D.newPage();
  stalledPage.on('pageerror',e=>errors.push(e.message));
- await stalledPage.goto(origin+'/viewer',{waitUntil:'load'});
+ await stalledPage.goto(origin+'/viewer',{waitUntil:'commit'});
  await stalledPage.waitForFunction(()=>{
   const s=window.__m2PreviewEvidence?.getSnapshot();
   return s?.originalImageVisible===true&&s.errorCode===null;
