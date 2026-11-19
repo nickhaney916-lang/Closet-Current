@@ -203,10 +203,10 @@ canvas.addEventListener('webglcontextlost',e=>{
 });
 const readiness=async()=>{
  try{
-  const [manifestResponse,imageResponse]=await Promise.all([
-   fetch('/source-locked-preview.json',{cache:'no-store'}),
-   fetch('/original-source.jpg',{cache:'no-store'})
-  ]);
+  // Original JPEG is the authoritative 2D fallback. Fetch and verify it
+  // independently: a rejected/aborted research 3D manifest request must
+  // never prevent a good source photograph from being displayed.
+  const imageResponse=await fetch('/original-source.jpg',{cache:'no-store'});
   if(!imageResponse.ok)throw Error('original-source-JPEG-missing');
   const originalBytes=await imageResponse.arrayBuffer();
   const jpgHash=await b64Digest(originalBytes);
@@ -220,6 +220,7 @@ const readiness=async()=>{
   if(photo.naturalWidth!==1200||photo.naturalHeight!==933)
    throw Error('original-source-2d-dimensions-invalid');
   displayPhoto('Verified original 2D photograph. Checking unapproved research shell.');
+  const manifestResponse=await fetch('/source-locked-preview.json',{cache:'no-store'});
   if(!manifestResponse.ok)throw Error('research-3D-manifest-missing');
   const signed=await manifestResponse.json();
   if(signed.originalJPEG_SHA256!==jpgHash||
