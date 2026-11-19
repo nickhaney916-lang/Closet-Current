@@ -626,6 +626,85 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     actualIndexedDB:true,physicalDevice:false,pageErrors:errors.length
    }));
    assert.deepEqual(errors,[]);
+
+   // Same RAW original can yield distinct cropped review images. This is
+   // not a new independent image nor evidence of two physical garments.
+   // Native IDB: without a current explicit owner decision, fail closed.
+   const sharedCroppedOriginal88=await page.evaluate(async()=>{
+    const request=indexedDB.open('closet-current-user-owner-A');
+    const ownerDb=await new Promise((resolve,reject)=>{
+     request.onsuccess=()=>resolve(request.result);
+     request.onerror=()=>reject(request.error);
+    });
+    db=ownerDb;window.closetAuth.user={id:'owner-A'};window.beforeWriteTest=null;
+    const putItem=v=>new Promise((resolve,reject)=>{
+     const tx=db.transaction('items','readwrite');
+     tx.objectStore('items').put(structuredClone(v));
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+    const getItem=id=>new Promise((resolve,reject)=>{
+     const req=db.transaction('items','readonly').objectStore('items').get(id);
+     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+    });
+    const setPending=values=>new Promise((resolve,reject)=>{
+     const tx=db.transaction('state','readwrite');
+     tx.objectStore('state').put({id:'draft',batch:structuredClone(values)});
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+    const getPending=()=>new Promise((resolve,reject)=>{
+     const req=db.transaction('state','readonly').objectStore('state').get('draft');
+     req.onsuccess=()=>resolve(req.result?.batch||[]);
+     req.onerror=()=>reject(req.error);
+    });
+    const raw='data:image/jpeg;base64,U0hBUkVELVJBVy1KUEVH';
+    const old={id:'shared-original-first-88',
+     image:'data:image/jpeg;base64,RklSU1QtQ1JPUA==',
+     originalPhoto:{image:raw},category:'Tops',itemType:'T-shirt',color:'Blue'};
+    const next={id:'shared-original-second-88',
+     image:'data:image/jpeg;base64,U0VDT05ELUNST1A=',
+     originalPhoto:{image:raw},category:'Tops',itemType:'T-shirt',color:'Red'};
+    await putItem(old);
+    batch=[next];items=[];await setPending([next]);
+    draftStoreRevision88=JSON.stringify(batch);
+    let staleCropBlocked=false;
+    try{await savePiece({...next},[],reviewedSaveLease88(next));}
+    catch(e){staleCropBlocked=/P88_DURABLE_REVIEWED_DUPLICATE_CHANGED/.test(e.message);}
+    const preservedBeforeReview=(await getPending()).some(x=>x.id===next.id);
+    items=[old];const lease=reviewedSaveLease88(next);
+    const localSourceLinked=lease.exactPhotoPeers88.length===1&&
+     lease.exactPhotoPeers88[0].id===old.id;
+    let unapprovedBlocked=false;
+    try{await savePiece({...next},[],lease);}
+    catch(e){unapprovedBlocked=/P88_DISTINCT_OWNER_DECISION_REQUIRED/.test(e.message);}
+    const ownerReceipt=reviewedDistinctPhotoReceipt88(lease);
+    const approved={...next,ownerDuplicateReview88:ownerReceipt};
+    // Simulated *explicit* owner decision; never independently certified.
+    await putItem({...old,originalPhoto:{image:'data:image/jpeg;base64,TkVXLVJBVw=='}});
+    let changedPeerBlocked=false;
+    try{await savePiece(approved,[],lease);}
+    catch(e){changedPeerBlocked=/P88_DURABLE_REVIEWED_DUPLICATE_CHANGED/.test(e.message);}
+    await putItem(old);
+    await savePiece(approved,[],lease);
+    const distinctSaved=(await getItem(next.id))?.image===next.image;
+    const untouchedOld=(await getItem(old.id))?.originalPhoto?.image===raw;
+    const draftCleared=(await getPending()).length===0;
+    const no3DCertification=(await getItem(next.id))?.ownerDuplicateReview88?.threeDReady===false;
+    ownerDb.close();
+    return {staleCropBlocked,preservedBeforeReview,localSourceLinked,
+     unapprovedBlocked,changedPeerBlocked,distinctSaved,untouchedOld,draftCleared,
+     no3DCertification};
+   });
+   assert.deepEqual(sharedCroppedOriginal88,{
+    staleCropBlocked:true,preservedBeforeReview:true,localSourceLinked:true,
+    unapprovedBlocked:true,changedPeerBlocked:true,distinctSaved:true,
+    untouchedOld:true,draftCleared:true,no3DCertification:true
+   },'actual IDB must require fresh approval for distinct crops of same raw original');
+   console.log('M1_P88_BROWSER_SHARED_ORIGINAL_DIFFERENT_CROP',JSON.stringify({
+    browser:browserName,width,...sharedCroppedOriginal88,
+    syntheticOwnerAndPhoto:true,actualIndexedDB:true,physicalDevice:false,
+    pageErrors:errors.length
+   }));
+   assert.deepEqual(errors,[]);
    await page.close();
   }
  }finally{await browser.close();}
