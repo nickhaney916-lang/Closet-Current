@@ -145,7 +145,7 @@ test('Chromium direct original JSEP unreadable remains PARTIAL, without invented
 });
 test('WebKit may not pretend an unreadable JSEP response has expected original digest',()=>{
  const l=originalLog({jseps:[{kind:'jsep-wasm',status:'body-unavailable'}]});
- assert.throws(()=>verifyM265(l,identity()),/final ONNX\/JSEP bytes|WebKit original JSEP/);
+ assert.throws(()=>verifyM265(l,identity()),/final ONNX\/JSEP bytes|WebKit original JSEP|Original first-attempt model\/network acceptance incomplete/);
 });
 test('wrong original JSEP WASM SHA and valid original model can never be promoted',()=>{
  const l=originalLog({jseps:[{...jsep,sha256:'f'.repeat(64)}]});
