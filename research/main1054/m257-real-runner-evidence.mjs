@@ -10,6 +10,7 @@ const widths = new Set([320, 390, 430]);
 const stages = [
   'M58_GENUINE_BROWSER_WASM_SOURCE_TO_NATIVE_REVIEW',
   'M61_GENUINE_P88_TO_PRIVATE_OWNER_V4_RESTORE_SAME_SESSION_PASS',
+  'M58_GENUINE_WORKER_SAVED_2D_OWNER_SWITCH_PRIVACY',
   'P91_FULL_JOURNEY_PASS',
 ];
 const cells = ['chromium', 'webkit'].flatMap(engine =>
@@ -43,15 +44,25 @@ function stageValues(log, name) {
 }
 
 export function extractM257Attempt(log, identity) {
-  if (typeof log !== 'string' || !isValidIdentity(identity))
+  if (typeof log !== 'string' || log.length > 8 * 1024 * 1024 ||
+      !isValidIdentity(identity))
     throw new TypeError('Invalid original-run log or exact CI identity');
   const { checkout, engine, width, runId, job, runAttempt, exitCode, lockedJpegSha } = identity;
   const reasons = [];
+  const lines = log.split(/\r?\n/);
+  const terminalRedCount = lines.filter(line =>
+    line.startsWith('M58_REAL_P88_WORKER_FAIL ')).length;
+  const markerOrder = lines.map(line =>
+    stages.findIndex(name => line.startsWith(name + ' '))).filter(i => i >= 0);
   const data = stages.map(name => stageValues(log, name));
   if (data.some(rows => rows.length !== 1 || rows[0] === null))
     reasons.push('Missing, duplicate, or malformed original browser stage signal');
 
-  const [model, owner, final] = data.map(rows => rows.length === 1 ? rows[0] : null);
+  const [model, owner, isolation, final] = data.map(rows =>
+    rows.length === 1 ? rows[0] : null);
+  if (markerOrder.length === stages.length &&
+      markerOrder.some((position, i) => position !== i))
+    reasons.push('Original browser stage markers are not in chronological order');
   if (model?.engine !== engine || model?.realWorker !== true ||
       model?.sourceSHA256 !== lockedJpegSha || model?.saved !== 0 ||
       model?.hold !== true || !(Number.isInteger(model?.modelRequests) && model.modelRequests > 0))
@@ -67,13 +78,26 @@ export function extractM257Attempt(log, identity) {
       owner?.hostedRLS !== false || owner?.familyAlpha !== 'HOLD')
     reasons.push('No verified synthetic-owner private outfit, original v4 restore, 2D-only and owner-exclusion signal');
 
+  if (isolation?.engine !== engine || isolation?.realWorkerFirst !== true ||
+      isolation?.explicitOwnerASave !== 1 || isolation?.ownerBPrivateRows !== 0 ||
+      isolation?.ownerAOriginalNotVisibleToB !== true ||
+      isolation?.ownerAOutfitNotVisibleToB !== true ||
+      isolation?.localIndexedDBOnly !== true || isolation?.syntheticAuth !== true ||
+      isolation?.hostedRLS !== false || isolation?.releaseAllowed !== false ||
+      isolation?.familyAlpha !== 'HOLD')
+    reasons.push('No independent same-browser original owner-B isolation and revocation signal');
+
   if (final?.engine !== engine || final?.uninterruptedSourceExportRestore !== true ||
       final?.writeRetries !== 0 || final?.ownerRecovery !== true ||
       final?.originalPhotoByteTamperRefused !== true ||
       final?.familyAlpha !== 'HOLD' || final?.releaseAuthorized !== false)
     reasons.push('Original final uninterrupted browser stage absent or invalid');
 
-  const journeyStatus = exitCode !== 0 ? 'FAIL' : reasons.length ? 'BLOCKED' : 'PASS';
+  // The original runner can print explicit failure taxonomy before cleanup.
+  // Preserve every terminal RED even if a surrounding wrapper returns 0.
+  if (terminalRedCount) reasons.unshift('Original P94 browser emitted terminal failure marker');
+  const journeyStatus = exitCode !== 0 || terminalRedCount ? 'FAIL' :
+    reasons.length ? 'BLOCKED' : 'PASS';
   if (exitCode !== 0) reasons.unshift('Original P94 browser child process exited nonzero');
 
   // The frozen P94 runner observes a genuine JPEG SHA but NOT model/JSEP
@@ -91,6 +115,7 @@ export function extractM257Attempt(log, identity) {
     actualBrowserProcessId: null,
     sourceVerifiedInOriginalProcess: false,
     recordedSignals: Object.fromEntries(stages.map((name, i) => [name, data[i].length])),
+    terminalRedMarkerCount: Math.min(terminalRedCount, 2),
     reasons: [...reasons, evidenceMissing],
     syntheticAuthOnly: true, privateCloudRlsTested: false,
     fittedPhoto3DAuthorized: false, familyAlpha: 'HOLD',
