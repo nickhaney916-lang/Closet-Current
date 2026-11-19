@@ -33,6 +33,7 @@ const VIEWS=Object.freeze([
   canonicalDecodedRGBSHA256:'1cd4c7f71ebbb00a27f769e46a438a03f19393bd6a6ba200af14a092d1461e3f'})
 ]);
 const frozen=a=>Object.freeze(a.map(x=>Object.freeze(x)));
+const roundMm=v=>Math.round(v*100)/100;
 const reject=reason=>Object.freeze({
  schema:'M2-Met70759-real-four-gallery-color-fabric-projection/v1',
  status:'MET_FOUR_GALLERY_COLOR_ENVELOPE_UNVERIFIABLE',reason,
@@ -149,10 +150,10 @@ export function measureMet70759ColorFabricProjection89({
   sevenMeasuredChromaticImageBands:frozen(bands),
   bottomToUpperColorRegionWidthRatio:lastWidth/firstWidth,
   immutableCatalogPartMeasurementsMm:MET_70759_89.parts.map(p=>Object.freeze({
-   part:p.part,recordedLengthMm:p.lengthInches*25.4,
-   recordedWidthAtBottomMm:p.widthAtBottomInches*25.4,
+   part:p.part,recordedLengthMm:roundMm(p.lengthInches*25.4),
+   recordedWidthAtBottomMm:roundMm(p.widthAtBottomInches*25.4),
    recordedWaistbandFlatWidthExcludingFastenerMm:
-    p.waistbandWidthWithoutLoopButtonInches*25.4,
+    roundMm(p.waistbandWidthWithoutLoopButtonInches*25.4),
    notAVerifiedPhotographicPixelScale:true
   })),
   noOriginalSourcePartMixedWithHonolulu:true,
