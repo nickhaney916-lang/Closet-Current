@@ -1,0 +1,100 @@
+name: MAIN250 original JSEP memory pattern request A/B HOLD
+on:
+  push:
+    branches: [research/main250-original-jsep-mempattern-ab-HOLD]
+permissions:
+  contents: read
+jobs:
+  original-source-owner-security:
+    name: M250 original app immutable / entire inherited privacy and security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exactly four added no-deploy files and unchanged verified original Worker/source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=c1edc0d53df7c003678f566d10cb40230b5836d8
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' \
+            '.github/workflows/main250-original-jsep-mempattern-ab-HOLD.yml' \
+            'scripts/main250-original-jsep-mempattern-study.mjs' \
+            'scripts/test-main250-original-jsep-mempattern-ab-browser.mjs' \
+            'tests/main250-original-jsep-mempattern-ab.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main249-original-failed-jsep-browser.mjs)" = c6f4d42e9e0b26c7adb727b1d1ff1c5999565def
+          test "$(git rev-parse HEAD:scripts/test-main247-real-p94-jsep-model-heap-browser.mjs)" = 92670c115a42f6408577de4d08d8dea24c263cd2
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          node --check scripts/main250-original-jsep-mempattern-study.mjs
+          node --check scripts/test-main250-original-jsep-mempattern-ab-browser.mjs
+          node --test tests/main250-original-jsep-mempattern-ab.test.mjs
+          M250_SOURCE_ONLY=1 M250_ENGINE=webkit M250_WIDTH=320 M250_ARM=baseline M250_COUNT=3 node scripts/test-main250-original-jsep-mempattern-ab-browser.mjs
+          M250_SOURCE_ONLY=1 M250_ENGINE=webkit M250_WIDTH=320 M250_ARM=pattern_off M250_COUNT=3 node scripts/test-main250-original-jsep-mempattern-ab-browser.mjs
+      - name: Original pinned test/development dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Full unchanged original offline app build and inherited tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(npm view onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 dist.integrity)" = "sha512-0uS76OPgH0hWCPrFKlL8kYVV7ckM7t/36HfbgoFw6Nd0CZVVbQC4PkrR8mBX8LtNUFZO25IQBqV2Hx2ho3FlbQ=="
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  genuine-original-jsep-session-arm:
+    name: M250 real JSEP ${{ matrix.engine }} ${{ matrix.width }} ${{ matrix.arm }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {engine: webkit, width: 320, arm: baseline, count: 3}
+          - {engine: webkit, width: 320, arm: pattern_off, count: 3}
+          - {engine: webkit, width: 390, arm: baseline, count: 2}
+          - {engine: webkit, width: 390, arm: pattern_off, count: 2}
+          - {engine: chromium, width: 390, arm: baseline, count: 2}
+          - {engine: chromium, width: 390, arm: pattern_off, count: 2}
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M250_ENGINE: ${{ matrix.engine }}
+      M250_WIDTH: ${{ matrix.width }}
+      M250_ARM: ${{ matrix.arm }}
+      M250_COUNT: ${{ matrix.count }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Actual native engine and only one real source-derived JSEP option request
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$M250_ENGINE" = "${{ matrix.engine }}"
+          test "$M250_WIDTH" = "${{ matrix.width }}"
+          test "$M250_ARM" = "${{ matrix.arm }}"
+          test "$M250_COUNT" = "${{ matrix.count }}"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          node --test tests/main250-original-jsep-mempattern-ab.test.mjs
+          M250_SOURCE_ONLY=1 node scripts/test-main250-original-jsep-mempattern-ab-browser.mjs
+      - name: Install pinned original SegFormer and true native browsers
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Truly original JSEP source-photo/owner private 2D/v4 and same-run failure receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/test-main250-original-jsep-mempattern-ab-browser.mjs
