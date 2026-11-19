@@ -171,7 +171,7 @@ test('a controlled failure never excuses private owner-save success or missing o
  assert.throws(()=>verifyM262(rawLog(opts),identity({exitCode:1}),{corrupt:true}),
   /Unexpected post-corruption owner success/);
  assert.throws(()=>verifyM262(rawLog({...opts,includeSuccess:false,modelSha:'f'.repeat(64)}),
-  identity({exitCode:1}),{corrupt:true}),/No SHA-attested/);
+  identity({exitCode:1}),{corrupt:true}),/interception.*body-count/);
  assert.throws(()=>verifyM262(rawLog({...opts,includeSuccess:false}).replace('M262_ONNX_INJECTION_OBSERVED','M262_NOT_INJECTED'),
   identity({exitCode:1}),{corrupt:true}),/Missing or duplicate/);
 });
