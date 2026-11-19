@@ -220,6 +220,13 @@ try{
  // bound to the original licensed male/female skeleton, and its original
  // source geometry/UV is sampled at rest / genuine named-spine bend / rest.
  // No physical-size, fit, body collision, or owner admission is asserted.
+ const crossingKernel=await page.evaluate(()=>window.__M2RealRigPhotoTrial
+  .getControlledTriangleCrossingKernelProof());
+ assert.deepEqual(crossingKernel,{
+  actualStrictCrossingDetected:true,separatedTriangleRejected:true,
+  coplanarClaimExplicitlyUnresolved:true,
+  syntheticControlOnlyNotGenuineBodyCollisionEvidence:true
+ },'actual native intersection detector must reject manufactured clearances');
  const skeletonPoseEvidence=[];
  for(const kind of ['female','male']){
   const accept=await page.evaluate(async kind=>
@@ -272,7 +279,32 @@ try{
    assert.equal(pose.physicalContactOrDrapeCleared,false);
    return gap;
   };
-  const restGap=checkGap(rest);
+  const checkCrossing=pose=>{
+   const c=pose.originalRigPhotoFrontBodyFaceCrossingResearchOnly;
+   assert.equal(c.trueLicensedBodyRig,kind);
+   assert.equal(c.originalPublicPhotoFrontOnly,true);
+   assert.ok(c.actualOriginalBodyFacesSampled>=128);
+   assert.ok(c.actualOriginalBodyFacesSampled<=2048);
+   assert.ok(c.actualOriginalFrontFacesSampled>=32);
+   assert.ok(c.actualOriginalFrontFacesSampled<=192);
+   assert.ok(Number.isSafeInteger(c.overlappingFaceAxisAlignedBoundsPairs));
+   assert.ok(Number.isSafeInteger(c.strictPositiveNonCoplanarFaceCrossingPairs));
+   assert.ok(c.overlappingFaceAxisAlignedBoundsPairs>=
+    c.strictPositiveNonCoplanarFaceCrossingPairs);
+   assert.ok(c.strictPositiveNonCoplanarFaceCrossingPairs>=0);
+   assert.equal(c.controlledCrossingKernelPositiveAndNegativePassed,true);
+   assert.equal(c.countOnlyDiscreteSampledFaces,true);
+   assert.equal(c.coplanarTouchingEnclosedAndUnsampledUnknown,true);
+   assert.equal(c.physicallyCalibratedBodyGarmentSize,false);
+   assert.equal(c.fullBodyClothIntersectionCoverage,false);
+   assert.equal(c.continuousSweptClothContactEstablished,false);
+   assert.equal(c.collisionFreeFitProved,false);
+   assert.equal(c.consumer3DAdmitted,false);
+   assert.equal(c.originalPhoto2DFallbackRequired,true);
+   assert.equal(c.familyAlpha,'HOLD');
+   return c;
+  };
+  const restGap=checkGap(rest),restCrossing=checkCrossing(rest);
   const shot1=await page.locator('#scene').screenshot();
   assert.ok(shot1.length>9000);
   await writeFile(resultDir+browserName+'-'+kind+
@@ -289,13 +321,31 @@ try{
   assert.equal(posed.originalSourcePositionAndUVStillImmutable,true);
   assert.equal(posed.consumer3DAdmitted,false);
   assert.equal(posed.physicalContactOrDrapeCleared,false);
-  const bentGap=checkGap(posed);
+  const bentGap=checkGap(posed),bentCrossing=checkCrossing(posed);
   const shot2=await page.locator('#scene').screenshot();
   assert.ok(shot2.length>9000);
   assert.notEqual(hash(shot1),hash(shot2),
    'real CC0 skeleton motion must visibly change original-photo-posed GL render');
   await writeFile(resultDir+browserName+'-'+kind+
    '-ORIGINAL-MET-SOURCE-SKINNED-SPINE04-BEND-163bone-HOLD.png',shot2);
+  const fiveDiscretePoses=await page.evaluate(()=>window.__M2RealRigPhotoTrial
+   .sampleFiveAuthenticSpinePoseCrossings());
+  assert.equal(fiveDiscretePoses.actualOriginalLicensed163BoneRig,kind);
+  assert.equal(fiveDiscretePoses.discretePosesOnly,true);
+  assert.equal(fiveDiscretePoses.continuousCollisionSafetyUnproved,true);
+  assert.equal(fiveDiscretePoses.arbitraryImageToAnatomyRegistration,true);
+  assert.equal(fiveDiscretePoses.consumer3DAdmitted,false);
+  assert.equal(fiveDiscretePoses.familyAlpha,'HOLD');
+  assert.deepEqual(fiveDiscretePoses.samples.map(x=>x.degrees),
+   [-12,-6,0,6,12]);
+  for(const trial of fiveDiscretePoses.samples){
+   checkCrossing({originalRigPhotoFrontBodyFaceCrossingResearchOnly:
+    trial.actualPosePhotoFrontBodyCrossings});
+  }
+  assert.deepEqual(fiveDiscretePoses.samples[2].actualPosePhotoFrontBodyCrossings,
+   restCrossing,'0 degree discrete photo/body face witness must equal rest');
+  assert.deepEqual(fiveDiscretePoses.samples[4].actualPosePhotoFrontBodyCrossings,
+   bentCrossing,'12 degree discrete photo/body face witness must equal posed');
   const restored=await page.evaluate(()=>window.__M2RealRigPhotoTrial
    .setSourceSkinnedMotionTrialPose('rest'));
   assert.equal(restored.stage,'rest');
@@ -307,6 +357,8 @@ try{
   assert.equal(restored.consumer3DAdmitted,false);
   assert.deepEqual(checkGap(restored),restGap,
    'original signed-free body/cloth proximity must restore exactly');
+  assert.deepEqual(checkCrossing(restored),restCrossing,
+   'original genuine photo-front body-surface sampled crossings must restore');
   skeletonPoseEvidence.push({avatar:kind,boneCount:163,
    originalGLBSHA256:rigHashes[kind],
    genuineSourceJPEG_SHA256:hash(image),
@@ -324,6 +376,11 @@ try{
     accept.genuineSpineSegmentLengthRigUnits,
    actualSkinnedSourceToBodySampledUnsignedGapAtRest:restGap,
    actualSkinnedSourceToBodySampledUnsignedGapAtBend:bentGap,
+   sampledOriginalBodyPhotoNonCoplanarCrossingsAtRest:restCrossing,
+   sampledOriginalBodyPhotoNonCoplanarCrossingsAtBend:bentCrossing,
+   fiveOriginalRealSpinePoseBodyPhotoFaceCrossingStudies:fiveDiscretePoses,
+   nativeTriangleCrossingPositiveAndSeparatedControlsPassed:true,
+   unsampledOriginalFacesAndContinuousMotionRemainUnknown:true,
    fullSurfaceOrSweptIntersectionNotProved:true,
    noCollisionSafetyOrDrapeProved:true,consumer3DAdmitted:false});
  }
@@ -348,6 +405,10 @@ try{
   realSpineBoneAnchoredResearchWeights:true,
   actualSkinnedBodyTriangleProximitySampled:true,
   unsignedDistanceNotIntersectionProof:true,
+  sampledOriginalFrontActualBodyTriangleCrossingsMeasured:true,
+  controlledPositiveSeparatedAndCoplanarKernelOutcomes:true,
+  realBodyFrontOnlyFiveDiscretePoseTrials:true,
+  fullSurfaceAndContinuousCollisionNotProved:true,
   noActualHumanMaskReview:true,noPhysicalMobileDevice:true,
   sourceOriginalPhoto2DFallbackRequired:true,consumer3DAdmitted:false,
   releaseAuthorized:false,familyAlpha:'HOLD'
@@ -363,6 +424,9 @@ try{
   physicallyFitted:false,collisionCleared:false,
   genuineBodyBoneAnchorWeightsButNotFitted:true,
   actualTriangleProximityMeasuredButNotCollisionCertified:true,
+  strictTriangleFaceIntersectionSampledForBothOriginalLicensedRigs:true,
+  fiveDiscreteAuthenticSpinePoseCrossingStudies:true,
+  kernelPositiveAndSeparatedControlProof:true,
   browserErrors:failures.length,externalHTTP:0,
   consumer3DAdmitted:false,familyAlpha:'HOLD'
  }));
