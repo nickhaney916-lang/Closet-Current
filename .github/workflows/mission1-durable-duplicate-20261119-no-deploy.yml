@@ -80,3 +80,6 @@ jobs:
           grep -Fq '"firstCropSaved":true' /tmp/m1-native-idb
           grep -Fq '"forgedOriginalUntouched":true' /tmp/m1-native-idb
           grep -Fq '"forgedRejected":3' /tmp/m1-native-idb
+          grep -Fq '"savedModelRejected":true' /tmp/m1-native-idb
+          grep -Fq '"ownerLabelsUntouched":true' /tmp/m1-native-idb
+          grep -Fq '"savedUnknownRemainsUnknown":true' /tmp/m1-native-idb
