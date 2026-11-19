@@ -1196,16 +1196,39 @@ function sourceSaveHarness88(){
  const jpeg='data:image/jpeg;base64,'+Buffer.from([255,216,255,225,7,255,217]).toString('base64');
  const secondJpeg='data:image/jpeg;base64,'+Buffer.from([255,216,255,224,8,255,217]).toString('base64');
  const hash=createHash('sha256').update(Buffer.from([255,216,255,225,7,255,217])).digest('hex');
- const user={id:'owner-a'},writes=[],db={
+ const user={id:'owner-a'},writes=[],rows=new Map();
+ let persistedDraft=null,aborted=false;
+ const db={
   name:'closet-current-user-owner-a',
   transaction(stores,mode){
    assert.deepEqual([...stores],['items','state']);
    assert.equal(mode,'readwrite');
-   const tx={
-    objectStore(name){return {put(value){
-     writes.push({name,value});
-     if(name==='state')queueMicrotask(()=>tx.oncomplete?.());
-    }}}
+   aborted=false;
+   const tx={oncomplete:null,onabort:null,onerror:null,
+    abort(){aborted=true;queueMicrotask(()=>tx.onabort?.());},
+    objectStore(name){
+     if(name==='items')return {
+      add(value){
+       if(rows.has(value.id))throw Error('ConstraintError: saved item ID exists');
+       writes.push({name,method:'add',value:structuredClone(value)});
+       rows.set(value.id,structuredClone(value));
+      }
+     };
+     assert.equal(name,'state');
+     return {
+      get(id){
+       assert.equal(id,'draft');
+       const req={result:persistedDraft?structuredClone(persistedDraft):undefined};
+       queueMicrotask(()=>req.onsuccess?.());
+       return req;
+      },
+      put(value){
+       writes.push({name,method:'put',value:structuredClone(value)});
+       persistedDraft=structuredClone(value);
+       queueMicrotask(()=>{if(!aborted)tx.oncomplete?.();});
+      }
+     };
+    }
    };
    return tx;
   }
@@ -1214,7 +1237,9 @@ function sourceSaveHarness88(){
  const item={id:'source-88',outfitSourceId:'photo-88',image:jpeg,
   originalPhoto:{image:jpeg},recognitionPhoto:{image:jpeg},
   reconciliation70:receipt,reconciliation70Status:'separate_confirmed'};
- const c={window:{closetAuth:{user}},db,items:[],batch:[item],crypto:{
+ persistedDraft={id:'draft',batch:[structuredClone(item)]};
+ const c={window:{closetAuth:{user}},db,items:[],batch:[item],
+  draftStoreRevision88:JSON.stringify(persistedDraft.batch),crypto:{
   subtle:{digest:async(_,bytes)=>Uint8Array.from(createHash('sha256').update(Buffer.from(bytes)).digest()).buffer}
  },atob:s=>Buffer.from(s,'base64').toString('binary'),
   Uint8Array,structuredClone,Promise,
@@ -1223,14 +1248,14 @@ function sourceSaveHarness88(){
   queued:async fn=>{await c.beforeWrite?.();return fn();}
  };
  vm.createContext(c);
- // Native duplicate predicate, not a mocked decision: source-bound saving
- // must detect masks that another item acquired while cloud preflight awaited.
  const receiptsStart=appSource.indexOf('function unit70Receipts(');
  const receiptsEnd=appSource.indexOf('function unit70OwnerEvidenceValid(',receiptsStart);
  assert.ok(receiptsStart>=0&&receiptsEnd>receiptsStart);
  vm.runInContext(appSource.slice(receiptsStart,receiptsEnd),c);
  vm.runInContext(appSource.slice(start,end),c);
- return {c,user,db,item,jpeg,secondJpeg,hash,writes};
+ return {c,user,db,item,jpeg,secondJpeg,hash,writes,rows,
+  readStored:()=>structuredClone(persistedDraft),
+  updateStored:v=>{persistedDraft=structuredClone(v);}};
 }
 // Reproduce the REAL native Adjust owner's physical-unit receipt for positive
 // private-save fixtures. Do not bypass the new fail-closed receipt at the DB
@@ -1257,6 +1282,42 @@ test('P88 owner source lease independently hashes original JPEG before atomic pr
  assert.equal(writes[0].value.ownerSourceReview88.threeDReady,false);
  assert.equal(writes[1].value.batch.length,0);
 });
+test('P88 source-bound garment create is insert-only and cannot replace saved same-ID wardrobe item',async()=>{
+ const h=sourceSaveHarness88(),lease=h.c.sourceSaveLease88(h.item);
+ const existing={id:h.item.id,image:'data:image/jpeg;base64,T0xE',category:'Outerwear'};
+ h.rows.set(existing.id,structuredClone(existing));
+ const prior=h.readStored();
+ await assert.rejects(
+  h.c.saveSourceBoundPiece88(reviewedForSave88(h.c,{...h.item},lease),[],lease),
+  /ConstraintError/
+ );
+ assert.equal(h.writes.length,0,'colliding source photo never changes items or state');
+ assert.deepEqual(h.rows.get(existing.id),existing);
+ assert.deepEqual(h.readStored(),prior,'original unsaved photo retained');
+});
+test('P88 source-bound reviewed item cannot erase a different tab source photo from private drafts',async()=>{
+ const h=sourceSaveHarness88(),lease=h.c.sourceSaveLease88(h.item);
+ const other={id:'second-original',image:'data:image/jpeg;base64,U0VDT05E'};
+ h.updateStored({id:'draft',batch:[structuredClone(h.item),other]});
+ const reviewed=reviewedForSave88(h.c,{...h.item},lease);
+ await assert.rejects(h.c.saveSourceBoundPiece88(reviewed,[],lease),
+  /P88_SOURCE_DRAFT_STORAGE_CHANGED/);
+ assert.equal(h.writes.length,0);
+ assert.deepEqual(h.readStored().batch[1],other);
+ assert.equal(h.rows.has(h.item.id),false);
+});
+test('P88 source-bound signed owner with reconciled latest draft revision saves only reviewed source',async()=>{
+ const h=sourceSaveHarness88(),other={id:'other',image:h.secondJpeg};
+ h.c.batch.push(other);
+ h.updateStored({id:'draft',batch:structuredClone(h.c.batch)});
+ h.c.draftStoreRevision88=JSON.stringify(h.c.batch);
+ const lease=h.c.sourceSaveLease88(h.item);
+ await h.c.saveSourceBoundPiece88(reviewedForSave88(h.c,{...h.item},lease),[],lease);
+ assert.deepEqual(h.writes.map(x=>x.method),['add','put']);
+ assert.deepEqual(h.readStored().batch,[other]);
+ assert.equal(h.rows.has(h.item.id),true);
+});
+
 test('P88 private source save rejects an absent or tampered owner review receipt',async()=>{
  const {c,item,writes}=sourceSaveHarness88(),lease=c.sourceSaveLease88(item);
  assert.equal(await c.sourceSavePhotoVerified88(lease),true);
