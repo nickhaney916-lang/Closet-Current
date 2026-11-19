@@ -546,7 +546,11 @@ function fullActualSkinnedIndexedSourceContact(x){
  const indexed=new THREE.BufferAttribute(faces,1);
  const allPhotoFront=posedTriangleArray(x.mesh,indexed,
   range.sourcePhotoFront.start,range.sourcePhotoFront.count);
+ // A responsive original-source browser must not spend minutes enumerating
+ // every non-contact pair in already uncalibrated, unapproved geometry.
+ // The strict budget is a FAIL-CLOSED outcome, never a fit certificate.
  const result=evaluateFullIndexedContact(bodyFaces,allPhotoFront,{
+  maxPairs:8000000,maxExactAABBPairs:2000000,
   stopAtFirstVerifiedContact:true,reportResourceBlockerInsteadOfThrow:true});
  invariant(result.originalBodyIndexedFacesAudited===
   bodyMeshCoverage.reduce((sum,x)=>sum+x.actualIndexedTrianglesAudited,0)&&
