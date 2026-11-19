@@ -123,10 +123,16 @@ test('unreadable Chromium browser body is PARTIAL, not fabricated model SHA',()=
  assert.equal(r.nativeLoadedOnnxSHA256,null);
 });
 
-test('model redirect metadata does not replace the independently decoded original model',()=>{
- const r=assessM262(rawLog({non200:true}),identity());
- assert.equal(r.originalModelNetworkGate,'OBSERVED');
+test('mixed valid model body and non-200 model request are PARTIAL, never fully source-attested',()=>{
+ const log=rawLog({non200:true});
+ const r=assessM262(log,identity());
+ assert.equal(r.originalModelNetworkGate,'PARTIAL');
+ assert.equal(r.originalModelBytesCorrectlyHashed,1);
  assert.equal(r.redirectedOrNon200ModelResponses,1);
+ assert.equal(r.sourceEvidenceGate,'BLOCKED');
+ assert.throws(()=>verifyM262(log,identity()),/acceptance incomplete/);
+ assert.equal(verifyM262(rawLog({engine:'chromium',non200:true}),
+  identity({engine:'chromium'})).originalModelNetworkGate,'PARTIAL');
 });
 
 test('positive genuine WebKit acceptance requires original full ONNX SHA, unlike partial Chromium',()=>{
@@ -168,6 +174,36 @@ test('a controlled failure never excuses private owner-save success or missing o
   identity({exitCode:1}),{corrupt:true}),/No SHA-attested/);
  assert.throws(()=>verifyM262(rawLog({...opts,includeSuccess:false}).replace('M262_ONNX_INJECTION_OBSERVED','M262_NOT_INJECTED'),
   identity({exitCode:1}),{corrupt:true}),/Missing or duplicate/);
+});
+
+test('controlled chromium model corruption preserves real worker RED and never native acceptance',()=>{
+ const red=rawLog({engine:'chromium',modelSha:CORRUPT_ONNX_SHA256,
+  modelBytes:CORRUPT_ONNX_BYTES.length,includeSuccess:false,fail:true,inject:true});
+ const r=verifyM262(red,identity({engine:'chromium',exitCode:1}),{corrupt:true});
+ assert.equal(r.originalModelNetworkGate,'FAIL');
+ assert.equal(r.sourceEvidenceGate,'FAIL');
+ assert.equal(r.nativeModelProcessIdentityVerified,false);
+});
+
+test('negative test cannot misstate intercepted count or mix original/corrupt model bodies',()=>{
+ const raw=rawLog({modelSha:CORRUPT_ONNX_SHA256,
+  modelBytes:CORRUPT_ONNX_BYTES.length,includeSuccess:false,fail:true,inject:true});
+ const tag='M259_CONTEXT_NETWORK_WITNESS ';
+ const lines=raw.split('\\n');
+ const wi=lines.findIndex(x=>x.startsWith(tag));
+ const orig=JSON.parse(lines[wi].slice(tag.length));
+ const wrongCount=raw.replace('"intercepted":1','"intercepted":2');
+ assert.throws(()=>verifyM262(wrongCount,identity({exitCode:1}),{corrupt:true}),
+  /interception\\/body-count/);
+ orig.rows.push({kind:'model-onnx',status:'body-observed',
+  sha256:EXPECTED_ONNX_SHA256,size:EXPECTED_ONNX_BYTES});
+ const mixed=lines.map((x,i)=>i===wi?tag+JSON.stringify(orig):x).join('\\n')
+  .replace('"intercepted":1','"intercepted":2');
+ assert.throws(()=>verifyM262(mixed,identity({exitCode:1}),{corrupt:true}),
+  /interception\\/body-count/);
+ const unseen=raw.replace('"intercepted":1','"intercepted":0');
+ assert.throws(()=>verifyM262(unseen,identity({exitCode:1}),{corrupt:true}),
+  /injection absent/);
 });
 
 test('duplicates, forged native certainty, wrong engine and malformed log are rejected',()=>{
