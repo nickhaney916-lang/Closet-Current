@@ -1,0 +1,146 @@
+name: MAIN1054 M273 exact-source original M180 cold WebKit cohort NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m273-m180-firstload-HOLD]
+permissions:
+  contents: read
+jobs:
+  m273-inherited-source-and-security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact first-attempt candidate ancestry and unchanged protected original workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:scripts/main1054-m273-m180-source-gate.mjs)" = d62d59e5ad1c4eff6e2af017c39833d1968d75f3
+          node scripts/main1054-m273-m180-source-gate.mjs
+          node --check scripts/main1054-m273-m180-source-gate.mjs
+          node --check scripts/test-main58-actual-p88-wasm-browser.mjs
+          node --check scripts/test-parallel94-native-p88-browser.mjs
+      - name: Fail-closed M273 exact source, donor, event and unauthorized-change falsification
+        run: node --test tests/main1054-m273-m180-source-gate.test.mjs
+      - name: Focused inherited M271/M272 signed-owner and source negative tests
+        run: node --test tests/main1054-m271-m58-gate.test.mjs tests/main1054-m272-m173-source-gate.test.mjs tests/main1054-m254-signed-outfit-lease.test.mjs tests/outfit-capture.test.cjs
+      - name: Install pinned test-only runtime, no hosted credentials or deploy
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build offline real app and verify full inherited source, security, privacy and backup tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  m273-original-webkit-cold-firstload:
+    needs: m273-inherited-source-and-security
+    name: genuine original M180 fresh WebKit cohort ${{ matrix.independent_run }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        independent_run: [1, 2, 3]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: webkit
+      P94_WIDTH: '390'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source-verify fresh independent WebKit process and immutable P88 WASM model harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:scripts/main1054-m273-m180-source-gate.mjs)" = d62d59e5ad1c4eff6e2af017c39833d1968d75f3
+          node scripts/main1054-m273-m180-source-gate.mjs
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Extract exact original donor ONLY into disposable M58 fixture route
+        shell: bash
+        run: |
+          set -euo pipefail
+          P88=cc4554ef0104506a72bf0a28423fee52b6e4fff2
+          mkdir -p .m57-exact-p88-donor/public
+          for file in outfit-worker.mjs outfit-segmentation.mjs outfit-instance-review-840.mjs photo-color.js; do
+            git show "$P88:public/$file" > ".m57-exact-p88-donor/public/$file"
+            test "$(git hash-object ".m57-exact-p88-donor/public/$file")" = "$(git rev-parse "$P88:public/$file")"
+          done
+          test "$(git hash-object .m57-exact-p88-donor/public/outfit-worker.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          node --check .m57-exact-p88-donor/public/outfit-worker.mjs
+          git diff --quiet HEAD -- public/ scripts/ tests/ supabase/
+      - name: Install exact real original browser/WASM test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: First FRESH WebKit browser - genuine M58 P88 model owner review and private restore
+        run: node scripts/test-main58-actual-p88-wasm-browser.mjs
+      - name: Second FRESH WebKit browser - original installed P94 model, source and v4 restore
+        run: node scripts/test-parallel94-native-p88-browser.mjs
+      - name: 'Original M180 receipt: two real browser processes and unverified-model no-silent-save invariant'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const m58=JSON.parse(readFileSync('benchmark/main58-real-p88-browser-worker/webkit/M58-ACTUAL-P88-BROWSER-NO-SILENT-SAVE.json','utf8'));
+          const p94=JSON.parse(readFileSync('benchmark/parallel94-native-p88-browser/webkit/390/M58-ACTUAL-P88-BROWSER-NO-SILENT-SAVE.json','utf8'));
+          for(const [kind,r] of [['original-M58',m58],['installed-P94',p94]]){
+            assert.equal(r.actualBrowser,'webkit',kind+' not native WebKit');
+            assert.equal(r.actualNativeApp,true,kind+' not native installed app');
+            assert.equal(r.actualP88ModuleWorkerExecuted,true,kind+' Worker not executed');
+            assert.equal(r.noSyntheticWorker,true,kind+' synthetic model substituted');
+            assert.equal(r.sourceVerified,true,kind+' original JPEG not source verified');
+            assert.equal(r.actualWorkerSourceBlob,'ab7d3837139c5b7d693383f9d6617e199ec8de4f',kind+' original Worker drift');
+            assert.equal(r.browserModelRuntime,'wasm-fp32',kind+' non-original model runtime');
+            assert.equal(r.actualModel,'Xenova/segformer_b0_clothes',kind+' changed model');
+            assert.ok(r.sourceGroupsUnverified>=1&&r.sourceGroupsUnverified<=12,kind+' no actual bounded proposals');
+            assert.equal(r.ownerPrivateSaves,0,kind+' silently saved unverified garment');
+            assert.deepEqual(r.unexpectedOutbound,[],kind+' unapproved request');
+            assert.equal(r.syntheticLogin,true,kind+' hosted private login unexpectedly used');
+            assert.equal(r.hostedSignedRLS,false,kind+' unproven hosted RLS claim');
+            assert.equal(r.physicalDevice,false,kind+' unproven physical phone claim');
+            assert.equal(r.releaseAllowed,false,kind+' release gate changed');
+            assert.equal(r.familyAlpha,'HOLD',kind+' HOLD changed');
+          }
+          assert.equal(p94.installedNativeP88Worker94,true,'installed P94 Worker missing');
+          assert.equal(m58.sourceSHA256,p94.sourceSHA256,'different original JPEG across the two fresh model processes');
+          assert.equal(m58.originalJPEGBytes,p94.originalJPEGBytes,'source bytes differ');
+          assert.equal(m58.modelWeightSHA256IndependentlyVerified,false,'do not invent compiled native/model proof');
+          console.log('M273_GENUINE_M180_WEBKIT_TWO_FRESH_PROCESSES_PASS',JSON.stringify({
+            firstAttempt:true,model:'original fp32 SegFormer/P88',
+            originalSHA256:m58.sourceSHA256,
+            unverifiedGroups:[m58.sourceGroupsUnverified,p94.sourceGroupsUnverified],
+            ownerPrivateSaves:[m58.ownerPrivateSaves,p94.ownerPrivateSaves],
+            sameBrowserEngine:'webkit',actualRuns:2,
+            hostRLSVerified:false,physicalPhoneVerified:false,nativeCauseRepaired:false,
+            familyAlpha:'HOLD',releaseAllowed:false
+          }));
+          JS
+      - name: Archive ONLY original public-model receipt and sanitized first-load metrics, never images or private data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m273-m180-original-webkit-cold-${{ matrix.independent_run }}-HOLD
+          path: |
+            benchmark/main58-real-p88-browser-worker/webkit/*.json
+            benchmark/parallel94-native-p88-browser/webkit/390/*.json
+          retention-days: 7
+          if-no-files-found: ignore
