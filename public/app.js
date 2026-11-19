@@ -97,6 +97,11 @@ function savePiece(value,nextBatch,lease){
 // Saved-item edits must be scoped to the exact signed owner and private IDB,
 // including AFTER the asynchronous cloud.beforeWrite queue. A model or
 // manual source-claim must never be minted by changing only clothing details.
+// An editor may be open while another tab corrects a garment, restores a
+// private backup or deletes/replaces that same item ID. The signed owner lease
+// alone cannot protect the durable row: check the ENTIRE captured saved record
+// inside the same readwrite transaction as the edit/delete. No await is allowed
+// between the IDB get success and the conditional put/delete.
 function saveExistingPiece88(value,lease){
  const live=()=>Boolean(lease&&!lease.wasDraft&&reviewedSaveLeaseLive88(lease)&&
   value?.id===lease.item.id&&value.image===lease.image&&
@@ -111,25 +116,49 @@ function saveExistingPiece88(value,lease){
  if(!live())return Promise.reject(Error('P88_STALE_SAVED_EDITOR_OWNER_OR_SOURCE'));
  return queued(()=>{
   if(!live())throw Error('P88_REVOKED_SAVED_EDITOR_OWNER_OR_SOURCE');
-  return new Promise((resolve,reject)=>{
-   const tx=lease.ownerDb.transaction('items','readwrite');
-   tx.objectStore('items').put(value);
-   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
-  });
+  return mutateSavedOwnerRow88(lease,live,value,'P88_SAVED_EDITOR_STORAGE_CHANGED');
  });
 }
-// Owner-identified saved deletions must not follow a replaced auth session
-// or an unrelated private IDB after serialized cloud.beforeWrite finishes.
+// A stale open closet tab must not delete a newer garment revision, including
+// an owner-corrected subtype or a different physical item using the same ID.
 function removeExistingPiece88(lease){
  const live=()=>Boolean(lease&&!lease.wasDraft&&reviewedSaveLeaseLive88(lease));
  if(!live())return Promise.reject(Error('P88_STALE_SAVED_DELETE_OWNER_OR_SOURCE'));
  return queued(()=>{
   if(!live())throw Error('P88_REVOKED_SAVED_DELETE_OWNER_OR_SOURCE');
-  return new Promise((resolve,reject)=>{
-   const tx=lease.ownerDb.transaction('items','readwrite');
-   tx.objectStore('items').delete(lease.item.id);
-   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
-  });
+  return mutateSavedOwnerRow88(lease,live,null,'P88_SAVED_DELETE_STORAGE_CHANGED');
+ });
+}
+function mutateSavedOwnerRow88(lease,live,value,reason){
+ return new Promise((resolve,reject)=>{
+  let tx,abortReason=null;
+  const abort=()=>{
+   abortReason=Error(reason);
+   try{tx.abort();}catch{reject(abortReason);}
+  };
+  try{
+   tx=lease.ownerDb.transaction('items','readwrite');
+   const store=tx.objectStore('items'),read=store.get(lease.item.id);
+   read.onsuccess=()=>{
+    try{
+     // Check actual persisted row *inside* the write transaction, after all
+     // queued cloud work. If another tab changed even unsurfaced metadata,
+     // preserve its correction and require this editor to reload.
+     if(!live()||!read.result||
+        JSON.stringify(read.result)!==lease.savedRowRevision88){
+      abort();return;
+     }
+     if(value===null)store.delete(lease.item.id);
+     else store.put(value); // only existing same-ID edits may replace a row
+     // Revocation immediately after the request must abort the transaction.
+     if(!live())abort();
+    }catch{abort();}
+   };
+   read.onerror=abort;
+   tx.oncomplete=()=>live()?resolve():reject(Error(reason));
+   tx.onabort=()=>reject(abortReason||tx.error||Error(reason));
+   tx.onerror=()=>{}; // errors settle via the transaction abort
+  }catch{reject(Error(reason));}
  });
 }
 function node(tag,text,className){const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;}
@@ -169,6 +198,8 @@ function reviewedSaveLease88(item){
   cropRevision:JSON.stringify(item?.cropBounds??null),
   exactSavedMarker88:JSON.stringify(item?.exactSavedPhotoMatch88??null),
   duplicateReviewRevision88:JSON.stringify(item?.ownerDuplicateReview88??null),
+  // Full private saved-row revision: no second-tab correction may be lost.
+  savedRowRevision88:batch.includes(item)?null:JSON.stringify(item),
   exactPhotoPeers88:reviewedExactPhotoPeers88(item).map(x=>({item:x,id:x.id,image:x.image})),
   evidenceRevision:ordinarySourceEvidence88(item)};
 }
@@ -198,6 +229,7 @@ function reviewedSaveLeaseLive88(lease){
    lease.ownerDb&&db===lease.ownerDb&&
    db.name==='closet-current-user-'+lease.ownerId&&
    (lease.wasDraft?batch.includes(item):items.includes(item))&&
+   (lease.wasDraft||lease.savedRowRevision88===JSON.stringify(item))&&
    item.image===lease.image&&item.originalPhoto?.image===lease.original&&
    item.recognitionPhoto?.image===lease.recognition&&
    item.outfitSourceId===lease.sourceId&&
