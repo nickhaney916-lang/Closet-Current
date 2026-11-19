@@ -28,6 +28,12 @@ function goodSignals(engine='webkit', override={}) {
       cancelledRestoreUnchanged: true, atomicRestore: true,
       threeDAuthorized: false, hostedRLS: false, familyAlpha: 'HOLD',
     },
+    M58_GENUINE_WORKER_SAVED_2D_OWNER_SWITCH_PRIVACY: {
+      engine, realWorkerFirst: true, explicitOwnerASave: 1, ownerBPrivateRows: 0,
+      ownerAOriginalNotVisibleToB: true, ownerAOutfitNotVisibleToB: true,
+      localIndexedDBOnly: true, syntheticAuth: true, hostedRLS: false,
+      releaseAllowed: false, familyAlpha: 'HOLD',
+    },
     P91_FULL_JOURNEY_PASS: {
       engine, uninterruptedSourceExportRestore: true, writeRetries: 0,
       ownerRecovery: true, originalPhotoByteTamperRefused: true,
