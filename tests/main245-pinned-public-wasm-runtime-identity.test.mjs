@@ -45,7 +45,7 @@ test('M245 original Worker runtime cannot be inferred from JS-only, redirect or 
  assert.throws(()=>attestP94LoadedRuntime([js,missing],[]),/no independently SHA-attested/);
  const wasm=digestPublicRuntimeResponse(asset,200,Buffer.from('wasm'));
  assert.throws(()=>attestP94LoadedRuntime([js,wasm,wasm],[]),/repeated or ambiguous/);
- assert.throws(()=>attestP94LoadedRuntime([wasm],[]),/exactly one real original Transformers/);
+ assert.throws(()=>attestP94LoadedRuntime([wasm],[]),/Exactly one real original Transformers/);
 });
 test('M245 no model weights/photo/owner/private network bytes and original acceptance retained',async()=>{
  const browser=await readFile('scripts/test-main245-real-p94-runtime-identity-browser.mjs','utf8');
