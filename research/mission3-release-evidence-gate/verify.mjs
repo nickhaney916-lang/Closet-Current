@@ -104,6 +104,11 @@ function reportShape(value,family,appAssetRelease,errors,path){
  if(!Array.isArray(value.events)||value.events.length>40){
   errors.push(path+'.events: invalid or unbounded');
  }else{
+  // The shipped device exporter retains only the last 40 events. A full
+  // export may have dropped an earlier genuine failure; without a separate
+  // lossless failure receipt, even 40 benign entries are not exculpatory.
+  if(value.events.length===40)
+   errors.push(path+': 40-event device diagnostic cap reached; omitted earlier faults cannot be ruled out');
   if(!value.events.some(e=>e?.type==='recognized_saved'))
    errors.push(path+': missing recorded saved-recognition event');
   for(const [i,event] of value.events.entries()){
