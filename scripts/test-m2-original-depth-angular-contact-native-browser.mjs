@@ -12,7 +12,7 @@ import {spawnSync} from 'node:child_process';
 const pins={
  runner:'5f999c1dc440539cec143f7c7de48b8fe88dd91e',
  registration:'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb',
- addon:'0036b79e28d40c73472d9b44b6e770a4fb719048'
+ addon:'c91daab28002f0068980d2aaa42ea80d7f9b6c92'
 };
 const sha=b=>createHash('sha1').update('blob '+Buffer.byteLength(b)+'\0')
  .update(b).digest('hex');
@@ -43,7 +43,7 @@ const routeLines=[
  "    const addonSource=await readFile('research/parallel89/original-depth-full-swept-integration-addon89.mjs','utf8');",
  "    const blobSha=t=>createHash('sha1').update('blob '+Buffer.byteLength(t)+'\\0').update(t).digest('hex');",
  "    assert.equal(blobSha(originalSource),'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb');",
- "    assert.equal(blobSha(addonSource),'0036b79e28d40c73472d9b44b6e770a4fb719048');",
+ "    assert.equal(blobSha(addonSource),'c91daab28002f0068980d2aaa42ea80d7f9b6c92');",
  "    await route.fulfill({status:200,contentType:'text/javascript',body:originalSource+'\\n'+addonSource});",
  "   });",
  routeAnchor
@@ -97,6 +97,20 @@ const verifyLines=[
  "   assert.equal(contact.sourcePhotoRotationChanged,false);",
  "   assert.equal(contact.sourcePhotoRGBUVGeometrySkinsStillImmutable,true);",
  "   assert.equal(contact.wholeOriginalFrontAndBodyPosedVertexBuffersIncluded,true);",
+ "   assert.equal(contact.soundContactFirstOriginalIndexedVeto,true);",
+ "   assert.equal(contact.canonicalTrueOriginalContactSafetyDecision,",
+ "    'BLOCKED_TRUE_ORIGINAL_INDEXED_CONTACT_BEFORE_BVH');",
+ "   const early=contact.contactFirstOriginalFaceVeto;",
+ "   assert.equal(early.decision,'BLOCKED_TRUE_ORIGINAL_INDEXED_CONTACT_BEFORE_BVH');",
+ "   assert.equal(early.actualVerifiedOriginalIndexedFaceContact,true);",
+ "   assert.equal(early.soundEarlyExitRequiresNoAdditionalPairs,true);",
+ "   assert.equal(early.originalFrontFacesIndexed,35262);",
+ "   assert.equal(early.originalBodyFacesIndexed,109064);",
+ "   assert.equal(early.allFiveOriginalPosesCoordinatesFinitelyChecked,true);",
+ "   assert.equal(early.completeOriginalFrontAndBodyFaceIndicesChecked,true);",
+ "   assert.equal(early.fullOriginalAngularBroadphaseCompleted,false);",
+ "   assert.ok(['CROSSING','TOUCHING','COPLANAR_OVERLAP'].includes(early.witnessClass));",
+ "   assert.equal(early.consumer3DAdmitted,false);",
  "   const afterContact=contact.followupEntireAngularBVH;",
  "   assert.equal(afterContact.originalFrontFaceCount,35262);",
  "   assert.equal(afterContact.originalBodyFaceCount,109064);",
@@ -122,6 +136,8 @@ const verifyLines=[
  "    realAnatomyWitness:contact.chosenTrueSourceBodyContactBodyFace,",
  "    cameraAxisShiftInRigUnits:contact.depthShiftRigUnitsOnly,",
  "    genuineOriginalDiscreteRefusal:contact.originalPositiveContactDecision,",
+ "    canonicalSoundEarlyContactVeto:contact.canonicalTrueOriginalContactSafetyDecision,",
+ "    genuineContactClass:early.witnessClass,",
  "    allOriginalAngularDecision:afterContact.decision,",
  "    fullSweptBroadphaseComplete:afterContact.fullAllOriginalFrontAndBodyAngularBroadphaseCompleted,",
  "    zeroSourceRotations:true,physicallyFitted:false,",
