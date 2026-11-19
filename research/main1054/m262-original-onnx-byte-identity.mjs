@@ -124,10 +124,19 @@ export function verifyM262(log,identity,{corrupt=false}={}){
  const result=assessM262(log,identity);
  if(identity.runAttempt!==1)throw Error('Non-first attempt is ineligible');
  if(!corrupt){
+  // A real WebKit original ONNX GET may issue a 307 redirect followed by a
+  // SHA-attested 200 model body. It is PARTIAL network evidence, not a failed
+  // owner journey or an OBSERVED entire-response chain. Never invent a model
+  // SHA for unreadable responses; WebKit must directly hash the canonical
+  // final ONNX body and JSEP to accept a successful native owner journey.
+  const webkitSourceBodyIndependentlySeen=
+   result.originalModelBytesCorrectlyHashed>=1&&
+   result.originalModelBytesUnreadable===0&&
+   result.originalJsepNetworkGate==='OBSERVED';
   if(identity.exitCode!==0||result.originalJourneyGate!=='PASS'||
      result.sourceEvidenceGate!=='BLOCKED'||
      result.originalModelNetworkGate==='FAIL'||
-     (identity.engine==='webkit'&&result.originalModelNetworkGate!=='OBSERVED'))
+     (identity.engine==='webkit'&&!webkitSourceBodyIndependentlySeen))
    throw Error('Original first-attempt model/network acceptance incomplete');
  }else{
   const mark=markerRows(log,'M262_ONNX_INJECTION_OBSERVED');
