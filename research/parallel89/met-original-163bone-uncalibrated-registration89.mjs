@@ -12,6 +12,8 @@
  */
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {evaluateFullIndexedContact,controlledFullContactFixtures}
+ from './full-indexed-contact-calibration89.mjs';
 
 if(!['127.0.0.1','localhost','[::1]'].includes(location.hostname))
  throw Error('source-anatomy-research-loopback-required');
@@ -446,9 +448,13 @@ function sampleFiveAuthenticSpinePoseCrossings(){
    x.posedBone.quaternion.copy(x.originalPose);
    x.posedBone.rotateZ(degrees*Math.PI/180);
    return {degrees,actualPosePhotoFrontBodyCrossings:
-    sampledOriginalFrontBodyFaceCrossings(x)};
+    sampledOriginalFrontBodyFaceCrossings(x),
+    everyIndexedBodyComponentAndSourceFrontContact:
+    fullActualSkinnedIndexedSourceContact(x)};
   });
   return {samples,actualOriginalLicensed163BoneRig:x.kind,
+   physicalCalibrationEvidence:actualPhysicalCalibrationLedger(x),
+   fullOriginalIndexedBodyAndSourceFrontCoverage:true,
    discretePosesOnly:true,continuousCollisionSafetyUnproved:true,
    arbitraryImageToAnatomyRegistration:true,consumer3DAdmitted:false,
    familyAlpha:'HOLD'};
@@ -456,6 +462,107 @@ function sampleFiveAuthenticSpinePoseCrossings(){
   x.posedBone.quaternion.copy(originalCurrent);
   x.model.root.updateMatrixWorld(true);x.body.skeleton.update();
  }
+}
+
+
+/*
+ * This exact image has NO physical ruler, camera intrinsic/extrinsic measurements,
+ * observed reverse, wearer-matched body or human-approved cloth boundary.
+ * Normalized original licensed rig dimensions are *not* centimeters.
+ * Do not infer a one-photo reconstruction scale from a guessed body height.
+ */
+function actualPhysicalCalibrationLedger(x){
+ const rig=new THREE.Box3().setFromObject(x.model.root);
+ const rigWidth=rig.getSize(new THREE.Vector3()).x;
+ const normalizedPhotoFrontWidth=photoWidth;
+ return {
+  verifiedMuseumPhotoImageId:2551406,
+  originalImageSizePixels:[192,149],
+  sourceOriginalRGBSHA256:required.sourceRGB,
+  sourceOriginalMaskSHA256:required.conservativeMaskPNG,
+  trueLicensedRig:x.kind,originalLicensedRigSHA256:x.model.sha256,
+  normalizedOriginalRigWidthUnits:round6(rigWidth),
+  originalImageSilhouetteWidthUncalibratedUnits:round6(normalizedPhotoFrontWidth),
+  threeArbitraryDisplayWidthRatios:[.8,1,1.2].map(s=>
+   round6(.64*s)),
+  originalCameraFocalLengthPixels:null,originalCameraDistanceCM:null,
+  independentlyMeasuredGarmentWidthCM:null,independentlyMeasuredGarmentHeightCM:null,
+  independentlyMeasuredWearerChestCM:null,independentlyMeasuredWearerHeightCM:null,
+  approvedExactFrontSilhouetteMask:false,
+  authenticatedCalibrationEvidenceAvailable:false,
+  observedOriginalReversePhotograph:false,
+  validPhysicalGarmentCalibration:false,
+  physicalScaleUnits:'UNKNOWN',
+  requiresIndependentPhysicalMeasurementAndCameraEvidence:true,
+  requiresHumanMaskApproval:true,
+  consumer3DAdmitted:false,sourceOriginalPhoto2DFallbackRequired:true,
+  familyAlpha:'HOLD'
+ };
+}
+function fullActualSkinnedIndexedSourceContact(x){
+ x.model.root.updateMatrixWorld(true);
+ x.mesh.skeleton.update();
+ x.mesh.updateWorldMatrix(true,false);
+ const posedTriangleArray=(m,indices,start,count)=>{
+  m.updateWorldMatrix(true,false);m.skeleton.update();
+  const original=m.geometry.getAttribute('position'),
+   idx=indices||m.geometry.getIndex(),
+   max=idx?idx.count:original.count;
+  invariant(Number.isSafeInteger(start)&&Number.isSafeInteger(count)&&
+   start>=0&&count>=3&&count%3===0&&start+count<=max,
+   'complete-original-indexed-scope-invalid');
+  const cache=new Array(original.count),pick=i=>{
+   invariant(Number.isSafeInteger(i)&&i>=0&&i<original.count,
+    'original-indexed-face-vertex-out-of-bounds');
+   if(!cache[i]){
+    const p=m.applyBoneTransform(i,new THREE.Vector3())
+     .applyMatrix4(m.matrixWorld);
+    invariant(p.toArray().every(Number.isFinite),
+     'original-skinned-full-surface-has-nonfinite-vertex');
+    cache[i]=p.toArray();
+   }
+   return cache[i];
+  };
+  const out=[];
+  for(let i=start;i<start+count;i+=3){
+   const pos=k=>idx?idx.getX(i+k):i+k;
+   out.push([pick(pos(0)),pick(pos(1)),pick(pos(2))]);
+  }
+  return out;
+ };
+ const bodyFaces=[],bodyMeshCoverage=[];
+ for(const record of x.model.snapshots){
+  const mesh=record.mesh;
+  invariant(mesh.isSkinnedMesh&&mesh.skeleton.bones.length===163,
+   'original-real-anatomy-submesh-authentic-skin-required');
+  const indices=mesh.geometry.getIndex(),
+   count=indices?indices.count:mesh.geometry.getAttribute('position').count;
+  const tris=posedTriangleArray(mesh,indices,0,count);
+  bodyFaces.push(...tris);
+  bodyMeshCoverage.push({originalMeshName:mesh.name||null,
+   actualIndexedTrianglesAudited:tris.length});
+ }
+ const indexed=new THREE.BufferAttribute(faces,1);
+ const allPhotoFront=posedTriangleArray(x.mesh,indexed,
+  range.sourcePhotoFront.start,range.sourcePhotoFront.count);
+ const result=evaluateFullIndexedContact(bodyFaces,allPhotoFront);
+ invariant(result.originalBodyIndexedFacesAudited===
+  bodyMeshCoverage.reduce((sum,x)=>sum+x.actualIndexedTrianglesAudited,0)&&
+  result.originalPhotoFrontIndexedFacesAudited===range.sourcePhotoFront.count/3&&
+  result.fullOriginalIndexedScopeEvaluated===true,
+  'full-original-indexed-contact-coverage-not-established');
+ return {
+  ...result,originalBodySkinnedMeshComponentsAudited:bodyMeshCoverage.length,
+  originalBodyComponentTriangleCounts:bodyMeshCoverage.map(x=>x.actualIndexedTrianglesAudited),
+  originalPhotoSourceJPEGByteSHA256:payload.originalJPEGByteSHA256,
+  sourceOriginalRGBSHA256:required.sourceRGB,
+  actualRigOriginalGLBSHA256:x.model.sha256,
+  photoFrontOnly:true,neutralUnobservedRearNotCertifiable:true,
+  actualPhysicallyCalibratedFit:false,
+  humanApprovedMask:false,
+  consumer3DAdmitted:false,sourceOriginalPhoto2DFallbackRequired:true,
+  familyAlpha:'HOLD'
+ };
 }
 
 function sourceSkinProvenanceUnchanged(){
@@ -618,6 +725,7 @@ function setSourceSkinnedMotionTrialPose(stage){
 window.__M2RealRigPhotoTrial={
  select,startSourceSkinnedMotionTrial,setSourceSkinnedMotionTrialPose,
  getControlledTriangleCrossingKernelProof:controlledCrossingKernelProbe,
+ getFullContactControlProof:controlledFullContactFixtures,
  sampleFiveAuthenticSpinePoseCrossings,
  getProof:()=>proof,
  getFlags:()=>({
