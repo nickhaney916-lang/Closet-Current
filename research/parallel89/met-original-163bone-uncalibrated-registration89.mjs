@@ -454,7 +454,8 @@ function sampleFiveAuthenticSpinePoseCrossings(){
   });
   return {samples,actualOriginalLicensed163BoneRig:x.kind,
    physicalCalibrationEvidence:actualPhysicalCalibrationLedger(x),
-   fullOriginalIndexedBodyAndSourceFrontCoverage:true,
+   fullOriginalBodyAndPhotoFrontFacesIndexedForFailClosedContactGate:true,
+   noCollisionClaimWithoutCompleteFacePairAudit:true,
    discretePosesOnly:true,continuousCollisionSafetyUnproved:true,
    arbitraryImageToAnatomyRegistration:true,consumer3DAdmitted:false,
    familyAlpha:'HOLD'};
@@ -545,12 +546,16 @@ function fullActualSkinnedIndexedSourceContact(x){
  const indexed=new THREE.BufferAttribute(faces,1);
  const allPhotoFront=posedTriangleArray(x.mesh,indexed,
   range.sourcePhotoFront.start,range.sourcePhotoFront.count);
- const result=evaluateFullIndexedContact(bodyFaces,allPhotoFront);
+ const result=evaluateFullIndexedContact(bodyFaces,allPhotoFront,{
+  stopAtFirstVerifiedContact:true});
  invariant(result.originalBodyIndexedFacesAudited===
   bodyMeshCoverage.reduce((sum,x)=>sum+x.actualIndexedTrianglesAudited,0)&&
   result.originalPhotoFrontIndexedFacesAudited===range.sourcePhotoFront.count/3&&
-  result.fullOriginalIndexedScopeEvaluated===true,
-  'full-original-indexed-contact-coverage-not-established');
+  result.allOriginalBodyIndexedFacesPresentInBVH===true&&
+  (result.fullOriginalIndexedScopeEvaluated===true||
+   (result.definitiveCollisionRejection===true&&
+    result.pairEnumerationStoppedAfterRealContact===true)),
+  'full-original-indexed-collision-gate-has-neither-complete-negative-audit-nor-positive-rejection');
  return {
   ...result,originalBodySkinnedMeshComponentsAudited:bodyMeshCoverage.length,
   originalBodyComponentTriangleCounts:bodyMeshCoverage.map(x=>x.actualIndexedTrianglesAudited),
