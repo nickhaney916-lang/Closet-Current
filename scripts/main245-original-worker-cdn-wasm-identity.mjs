@@ -47,36 +47,81 @@ export async function installedOrtWasmFingerprints(root=process.cwd()){
   return {name,sha256:sha256(bytes),bytes:bytes.length};
  }));
 }
-export function attestP94LoadedRuntime(network,installed){
- const publicAssets=network.filter(a=>a.available&&a.status===200);
- const entry=publicAssets.filter(a=>a.kind==='transformers-entry');
- const wasm=publicAssets.filter(a=>a.kind==='onnx-wasm');
- assert.ok(entry.length===1,'Exactly one real original Transformers entry JS body required');
- assert.ok(wasm.length>=1,'Original Worker downloaded no independently SHA-attested public ONNX WASM');
- assert.ok(network.every(a=>a.status===200&&a.available),
-  'Original public WASM/JS response unavailable; do not infer runtime identity');
+
+/** Playwright cannot always expose worker WASM response.body() even after an
+ * observed 200. Independently retrieve the SAME public, pinned CDN artifact
+ * in Node and LABEL it a separate GET, not the bytes actually delivered to
+ * the Worker. Never silently upgrade independently fetched bytes to direct
+ * browser/WASM-memory identity evidence.
+ */
+export async function independentlyFetchPinnedWasm(name,fetcher=fetch){
+ const url='https://cdn.jsdelivr.net'+PREFIX+name;
+ const asset=classifyPinnedPublicRuntime(url);
+ assert.ok(asset?.kind==='onnx-wasm','Only immutable original public ONNX WASM GET permitted');
+ const response=await fetcher(url,{signal:AbortSignal.timeout(180000)});
+ assert.equal(response.status,200,'Independent pinned CDN WASM GET did not return 200');
+ assert.equal(classifyPinnedPublicRuntime(response.url)?.name,name,
+  'Independent CDN WASM GET redirected to an unapproved public path');
+ const length=Number(response.headers.get('content-length'));
+ if(Number.isFinite(length)&&length>0)assert.ok(length<=128*1024*1024,'Public WASM response oversized');
+ const bytes=new Uint8Array(await response.arrayBuffer());
+ assert.ok(bytes.length>=100000&&bytes.length<=128*1024*1024,
+  'Independent WASM response was missing/oversized');
+ return {name,sha256:sha256(bytes),bytes:bytes.length,
+  source:'independent-public-CDN-GET',browserResponseBytes:false};
+}
+export function attestP94LoadedRuntime(network,installed,independentWasm){
+ const observedJS=network.filter(a=>a.kind==='transformers-entry'&&a.status===200&&a.available);
+ const observedWasm=network.filter(a=>a.kind==='onnx-wasm'&&a.status===200);
+ assert.equal(observedJS.length,1,'Exactly one original Transformers JS response body required');
+ assert.ok(observedWasm.length>0,'Original Worker WASM HTTP200 response was not observed');
+ assert.ok(network.every(a=>a.status===200&&
+   (a.available||a.kind==='onnx-wasm')),
+   'Non-WASM runtime source unreadable/unavailable or HTTP failure');
  const unique=new Set();
- for(const item of publicAssets){
-  assert.match(item.sha256,HASH_RE);
-  assert.ok(Number.isInteger(item.bytes)&&item.bytes>0);
-  assert.ok(!unique.has(item.name),'Original runtime identity repeated or ambiguous: '+item.name);
+ for(const item of network){
+  assert.ok(!unique.has(item.name),'Original runtime resource repeated/ambiguous: '+item.name);
   unique.add(item.name);
+  if(item.available){
+   assert.match(item.sha256,HASH_RE);
+   assert.ok(Number.isInteger(item.bytes)&&item.bytes>0);
+  }
  }
- const localHashes=new Set(installed.map(x=>x.sha256));
- const items=publicAssets.map(a=>({
-  name:a.name,kind:a.kind,sha256:a.sha256,bytes:a.bytes,
-  matchesInstalledLocalWasm:a.kind==='onnx-wasm'&&localHashes.has(a.sha256)
- }));
+ const independentlyAttested=[];
+ for(const entry of observedWasm){
+  const records=independentWasm.filter(x=>x.name===entry.name);
+  assert.equal(records.length,1,'Original WASM URI lacks one independently SHA-attested public fetch');
+  const info=records[0];
+  assert.match(info.sha256,HASH_RE);
+  assert.ok(info.bytes>100000&&info.source==='independent-public-CDN-GET');
+  if(entry.available){
+   assert.equal(entry.sha256,info.sha256,
+    'Actual original browser WASM differs from independent pinned public CDN bytes');
+   assert.equal(entry.bytes,info.bytes,'Original and independent CDN byte sizes disagree');
+  }
+  independentlyAttested.push(info);
+ }
+ const installedHashes=new Set(installed.map(x=>x.sha256));
  return {
-  schema:'M245_ORIGINAL_WORKER_CDN_RUNTIME_IDENTITY/v1',
+  schema:'M245_ORIGINAL_WORKER_CDN_RUNTIME_IDENTITY/v2',
   originalP94Worker:true,originalTransformersVersion:'3.8.1',
-  pinnedOriginalSourceSHAObservedExternally:true,
-  actualCDNEntryCount:entry.length,actualCDNWasmCount:wasm.length,
-  assets:items,localOrtVersion:'1.22.0-dev.20250409-89f8206ba4',
-  localWasmAssets:installed,
-  localAndCDNWasmBinaryIdentical:wasm.some(a=>localHashes.has(a.sha256)),
-  cdnAndLocalRuntimePathsIndependent:true,
-  originalNativeCAllocatorStateObserved:false,
-  provenOriginalWebkitRepair:false,releaseAuthorized:false,hold:true
+  actualCDNEntryJS:observedJS.length,originalWasmHTTP200Count:observedWasm.length,
+  originalWasmBrowserBodySHA256Count:observedWasm.filter(x=>x.available).length,
+  actualOriginalWasmResponseBytesVerified:observedWasm.every(x=>x.available),
+  independentPublicPinnedWasmBodySHA256Count:independentlyAttested.length,
+  independentPublicWasm:independentlyAttested.map(x=>({
+   name:x.name,sha256:x.sha256,bytes:x.bytes,source:x.source,
+   matchesInstalledLocalWasm:installedHashes.has(x.sha256)
+  })),
+  observedPublicResources:network.map(x=>({
+   kind:x.kind,name:x.name,status:x.status,available:x.available,
+   sha256:x.sha256,bytes:x.bytes
+  })),
+  localOrtVersion:'1.22.0-dev.20250409-89f8206ba4',localWasmAssets:installed,
+  browserAndLocalWasmExactParityProven:observedWasm.every(x=>x.available)&&
+   observedWasm.every(x=>installedHashes.has(x.sha256)),
+  independentlyDownloadedAndLocalIdentical:independentlyAttested.some(x=>installedHashes.has(x.sha256)),
+  originalCAllocatorStateObserved:false,originalWebkitRepairProven:false,
+  hostedFamilyPhoneVerified:false,releaseAuthorized:false,hold:true
  };
 }
