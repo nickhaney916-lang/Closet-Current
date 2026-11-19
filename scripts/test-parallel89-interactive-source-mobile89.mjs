@@ -109,6 +109,13 @@ const server=createServer((req,res)=>{
  }
  if(url==='/source-locked-preview.json'){
   res.setHeader('Content-Type','application/json');
+  if((req.headers.cookie||'').includes('oversize-3d=1')){
+   // Chunked real HTTP body without Content-Length, beyond client cap.
+   res.setHeader('Transfer-Encoding','chunked');
+   const chunk=Buffer.alloc(1024*1024,0x20);
+   for(let n=0;n<33;n++)res.write(chunk);
+   res.end();return;
+  }
   if((req.headers.cookie||'').includes('tamper=1')){
    const forged={...payload,sourceRGBA_SHA256:'0'.repeat(64)};
    res.end(Buffer.from(JSON.stringify(forged)));return;
@@ -281,6 +288,27 @@ try{
   '1200x933');
  await originalOnly.screenshot({path:out+'/'+engine+'-390-3D-NETWORK-ABORT-ORIGINAL-2D.png'});
  await offline3D.close();
+ // Real streamed 33 MiB optional 3D must refuse before JSON parsing;
+ // original source 2D remains visible and consumer 3D is still forbidden.
+ const oversized3D=await browser.newContext({viewport:{width:390,height:760}});
+ await oversized3D.addCookies([{name:'oversize-3d',value:'1',url:origin}]);
+ const oversizedPage=await oversized3D.newPage();
+ oversizedPage.on('pageerror',e=>errors.push(e.message));
+ await oversizedPage.goto(origin+'/viewer',{waitUntil:'commit'});
+ await oversizedPage.waitForFunction(()=>
+  window.__m2PreviewEvidence?.getSnapshot().errorCode==='research-3D-manifest-too-large',
+  null,{timeout:45000});
+ const oversized=await snapshot(oversizedPage);
+ assert.equal(oversized.verified,false);
+ assert.equal(oversized.mode,'photo');
+ assert.equal(oversized.originalImageVisible,true);
+ assert.equal(oversized.previewVisible,false);
+ assert.equal(oversized.consumer3DAdmitted,false);
+ assert.equal(await oversizedPage.locator('#shell').isDisabled(),true);
+ assert.equal(await oversizedPage.locator('#photo').evaluate(e=>
+  [e.naturalWidth,e.naturalHeight].join('x')),'1200x933');
+ await oversizedPage.screenshot({path:out+'/'+engine+'-390-OVERSIZE-3D-STREAM-ORIGINAL-2D.png'});
+ await oversized3D.close();
  // A connection that never returns a 3D manifest is different from a rejected
  // request: the original photo must remain visible, the 3D control must be
  // disabled after the bounded deadline, and the UI must stop waiting.

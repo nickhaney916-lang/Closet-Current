@@ -234,7 +234,32 @@ const readiness=async()=>{
     cache:'no-store',signal:manifestAbort.signal
    });
    if(!manifestResponse.ok)throw Error('research-3D-manifest-missing');
-   signed=await manifestResponse.json();
+   // A trusted original JPEG does not make an arbitrary 3D JSON response
+   // safe to buffer/parse on a phone. Cap compressed/decoded response bytes
+   // BEFORE JSON.parse; Content-Length is only an early advisory rejection.
+   const maxManifestBytes=32*1024*1024;
+   const claimed=manifestResponse.headers.get('content-length');
+   if(claimed!==null&&(/^\\d+$/.test(claimed)===false||
+    Number(claimed)>maxManifestBytes))
+    throw Error('research-3D-manifest-too-large');
+   if(!manifestResponse.body)throw Error('research-3D-manifest-stream-unavailable');
+   const reader=manifestResponse.body.getReader();
+   const chunks=[];let total=0;
+   try{
+    while(true){
+     const {done,value}=await reader.read();
+     if(done)break;
+     total+=value.byteLength;
+     if(total>maxManifestBytes)throw Error('research-3D-manifest-too-large');
+     chunks.push(value);
+    }
+   }finally{
+    if(total>maxManifestBytes)await reader.cancel().catch(()=>{});
+    reader.releaseLock();
+   }
+   const bytes=new Uint8Array(total);let offset=0;
+   for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
+   signed=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
   }catch(e){
    if(manifestTimedOut)throw Error('research-3D-manifest-timeout');
    throw e;
