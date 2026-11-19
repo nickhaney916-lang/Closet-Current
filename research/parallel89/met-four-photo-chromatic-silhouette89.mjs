@@ -15,20 +15,20 @@
 import {MET_70759_89} from './met-70759-source-intake89.mjs';
 const MET='1983.21a, b';
 const VIEWS=Object.freeze([
- Object.freeze({id:2551406,part:'a',
-  researchViewLabel:'a-front-museum-first-caption',
+ Object.freeze({id:2551406,part:'a',provisionalPartForSourceResearch:'a',
+  museumVerifiedSide:'front',researchViewLabel:'a-front-museum-first-caption',
   catalogCaptionExact:'a) front',sourcePartViewVerified:true,
   canonicalDecodedRGBSHA256:'e0b7738db57ac4b7c27d4f03f724442f53c8e85f09f7a139839dfaa04c86cbec'}),
- Object.freeze({id:2551407,part:'a',
-  researchViewLabel:'a-other-side-candidate',
+ Object.freeze({id:2551407,part:null,provisionalPartForSourceResearch:'a',
+  museumVerifiedSide:null,researchViewLabel:'a-other-side-candidate',
   catalogCaptionExact:null,sourcePartViewVerified:false,
   canonicalDecodedRGBSHA256:'e59253bef19ccc908b7cb1519c1ef4c92e011e9ae955bca878de14f40a9f9678'}),
- Object.freeze({id:2551408,part:'b',
-  researchViewLabel:'b-decorated-side-candidate',
+ Object.freeze({id:2551408,part:null,provisionalPartForSourceResearch:'b',
+  museumVerifiedSide:null,researchViewLabel:'b-decorated-side-candidate',
   catalogCaptionExact:null,sourcePartViewVerified:false,
   canonicalDecodedRGBSHA256:'dddbda448c32667a0ab5c1b90a43d139b5917c1b9955dc428987beec035e06c0'}),
- Object.freeze({id:2551409,part:'b',
-  researchViewLabel:'b-less-decorated-side-candidate',
+ Object.freeze({id:2551409,part:null,provisionalPartForSourceResearch:'b',
+  museumVerifiedSide:null,researchViewLabel:'b-less-decorated-side-candidate',
   catalogCaptionExact:null,sourcePartViewVerified:false,
   canonicalDecodedRGBSHA256:'1cd4c7f71ebbb00a27f769e46a438a03f19393bd6a6ba200af14a092d1461e3f'})
 ]);
@@ -43,6 +43,53 @@ const reject=reason=>Object.freeze({
 });
 const good=id=>VIEWS.find(v=>v.id===id);
 export const MET70759_GALLERY_VIEW_NOTES89=VIEWS;
+
+/**
+ * Explicit institutional-label-only accessor. The published object lists
+ * measurements of BOTH physical components a/b, but only museum-captioned
+ * image 2551406 as "a) front". It is UNSAFE to equate four photographs
+ * with two parts × two sides solely from array order or cloth patterns.
+ *
+ * Do not accept caller-provided museum captions/metadata as an authority.
+ * Never authorize backside geometry, complete sewn pattern, physical
+ * scale, fitting, or consumer 3D even for verified "a) front".
+ */
+export function assessMet70759PhotoPartViewEvidence89({
+ imageId,decodedRGBSHA256,originalMuseumObjectNumber
+}={}){
+ const v=good(imageId);
+ const valid=Boolean(v&&originalMuseumObjectNumber===MET&&
+  decodedRGBSHA256===v.canonicalDecodedRGBSHA256);
+ const institutionallyCaptioned=valid&&v.sourcePartViewVerified===true&&
+  v.catalogCaptionExact==='a) front'&&v.part==='a'&&
+  v.museumVerifiedSide==='front';
+ return Object.freeze({
+  schema:'M2-Met70759-original-gallery-authoritative-photo-role-gate/v1',
+  status:!valid?'ORIGINAL_SOURCE_PHOTO_ROLE_REFUSED':
+   institutionallyCaptioned?'ONLY_A_FRONT_CAPTION_MUSEUM_VERIFIED':
+   'IMAGE_PIXELS_VERIFIED_BUT_GARMENT_PART_AND_SIDE_UNVERIFIED',
+  objectNumber:MET,
+  originalMuseumImageId:valid?imageId:null,
+  museumCaptionVerified:institutionallyCaptioned,
+  museumExactCaption:institutionallyCaptioned?'a) front':null,
+  institutionallyVerifiedPart:institutionallyCaptioned?'a':null,
+  institutionallyVerifiedSide:institutionallyCaptioned?'front':null,
+  provisionalResearchPart:valid?v.provisionalPartForSourceResearch:null,
+  provisionalResearchViewLabel:valid?v.researchViewLabel:null,
+  noPartOrSideInferredFromGalleryOrder:!institutionallyCaptioned,
+  noCallerProvidedCaptionCanForgeOfficialSource:true,
+  catalogMeasurementsOfPartsCannotCertifyImagePart:!institutionallyCaptioned,
+  twoPartCatalogAndFourPhotosNotA3DViewPair:true,
+  backwardFacingOriginalTextileSurfaceQualified:false,
+  mayInferSewnBackOr360FromThisSource:false,
+  source2DPhotographAllowed:valid,
+  source2DPhotographFallbackRequired:true,
+  canCalibrateOriginalHonolulu5152_1:false,
+  approvedFull3DGarment:false,
+  consumer3DAdmitted:false,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
 
 /** A narrow, conservative chroma/dark fabric proxy, not real segmentation. */
 function colored(r,g,b){
@@ -138,7 +185,10 @@ export function measureMet70759ColorFabricProjection89({
   sourceImageRoleViewLabel:view.researchViewLabel,
   sourceMuseumExactCaption:view.catalogCaptionExact,
   photographicPartAndViewIndependentlyVerified:view.sourcePartViewVerified,
-  proposedPartForSourceResearch:view.part,
+  verifiedSourcePhotoPart:view.part,
+  verifiedSourcePhotoSide:view.museumVerifiedSide,
+  proposedPartForSourceResearch:view.provisionalPartForSourceResearch,
+  physicallyVerifiedReversePhotoForSamePart:false,
   partBOrReverseRoleRemainsProvisional:!view.sourcePartViewVerified,
   sourceImageCountInOfficialGallery:4,
   imageColorTextileProxyNotFullGarmentMask:true,
