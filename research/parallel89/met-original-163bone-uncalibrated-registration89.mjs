@@ -18,6 +18,8 @@ import {auditOriginalContactNumerics,controlledOriginalNumericReasonFixtures}
  from './original-contact-numeric-diagnostics89.mjs';
 import {originalFullIndexedAnatomyContactNegative}
  from './original-anatomy-contact-rejection89.mjs';
+import {cameraAxisOriginalPhotoBodyWitness}
+ from './original-camera-axis-body-contact89.mjs';
 
 if(!['127.0.0.1','localhost','[::1]'].includes(location.hostname))
  throw Error('source-anatomy-research-loopback-required');
@@ -616,6 +618,17 @@ function fullActualSkinnedIndexedSourceContact(x){
   bodyFaces,allPhotoFront,{
    maxPairs:8000000,maxExactAABBPairs:2000000
   });
+ // Original photographed front and genuine skinned anatomy: no XY rotation,
+ // no hand-picked triangle-normal reorientation, only optional research
+ // camera-direction depth along this same true source/body coordinate frame.
+ const actualCameraAxisSourceContact=cameraAxisOriginalPhotoBodyWitness(
+  bodyFaces,allPhotoFront,{photoCentroidSamples:96});
+ invariant(actualCameraAxisSourceContact.sourcePhotoFacesIndexed===
+  allPhotoFront.length&&
+  actualCameraAxisSourceContact.actualBodyFacesIndexed===bodyFaces.length&&
+  actualCameraAxisSourceContact.consumer3DAdmitted===false&&
+  actualCameraAxisSourceContact.noActualPhotographicCameraOrReferenceCalibration===true,
+  'genuine-source-camera-axis-geometry-missing-or-incorrectly-admitted');
  invariant(actualSourceContactRefusal.actualFullOriginalIndexedPhotoContactRefusal
   .contactDecision==='BLOCKED_ACTUAL_ORIGINAL_FRONT_BODY_CONTACT'&&
   actualSourceContactRefusal.consumer3DAdmitted===false,
@@ -635,6 +648,9 @@ function fullActualSkinnedIndexedSourceContact(x){
   ...result,
   genuineOriginalSourceFrontRigidAnatomicalContactRejection:
    actualSourceContactRefusal,
+  originalPhotoRealAnatomyCameraAxisDepthContactResearchOnly:
+   actualCameraAxisSourceContact,
+  originalUnmeasuredCameraAxisContactEligibilityGated:true,
   actualOriginalSourceAnatomicalNegativeVetoVerified:true,
   allOriginalFacePairNegativeAuditsStillNotPhysicallyFitted:true,
   originalSkinnedWorldPointsSeededFromActualGeometry:true,
