@@ -585,6 +585,21 @@ function cropClothingPhoto(item){
     throw Error('P88_CROP_ORIGINAL_SOURCE_CHANGED');
    if(photo.maskApplied!==undefined&&photo.maskApplied!==true)
     throw Error('P88_CROP_UNEXPECTED_FIELD');
+   // The crop rectangle is untrusted callback metadata. An invalid or
+   // overflowing normalized rectangle must never poison an owner-private
+   // wardrobe row even when the derived JPEG and original JPEG are valid.
+   // The native editor emits exactly x/y/width/height through bounds()/drag().
+   if(photo.cropBounds!==undefined){
+    const rect=photo.cropBounds,fields=['x','y','width','height'];
+    if(!rect||typeof rect!=='object'||Array.isArray(rect)||
+     Object.keys(rect).length!==4||
+     Object.keys(rect).some(k=>!fields.includes(k))||
+     !fields.every(k=>typeof rect[k]==='number'&&Number.isFinite(rect[k]))||
+     rect.x<0||rect.y<0||rect.width<0.04-1e-9||
+     rect.height<0.04-1e-9||rect.width>1+1e-9||rect.height>1+1e-9||
+     rect.x+rect.width>1+1e-9||rect.y+rect.height>1+1e-9)
+     throw Error('P88_CROP_INVALID_BOUNDS');
+   }
    const value={...structuredClone(item),image:photo.image,
     originalPhoto:structuredClone(item.originalPhoto||{image:cropSource88}),
     cropBounds:photo.cropBounds!==undefined?structuredClone(photo.cropBounds):item.cropBounds,
