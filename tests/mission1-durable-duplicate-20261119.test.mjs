@@ -14,7 +14,6 @@ function extract(first,last){
 }
 const native=[
  extract('function unit70Receipts(','function unit70OwnerEvidenceValid('),
- extract('function durableReviewedNewItemPeers88(','// P88: ordinary one-photo review'),
  extract('function savePiece(','// Saved-item edits'),
  extract('function saveSourceBoundPiece88(','// Mission 1 #88: unresolved')
 ].join('\n');
