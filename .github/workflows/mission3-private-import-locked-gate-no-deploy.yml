@@ -1,7 +1,7 @@
 name: Mission 3 private import locked UI and v4 bridge — NO DEPLOY
 on:
   push:
-    branches: [research/mission3-private-import-gate-and-v4-bridge-20261113-HOLD, research/mission3-linear-original-jpeg-20261118-HOLD]
+    branches: [research/mission3-private-import-gate-and-v4-bridge-20261113-HOLD, research/mission3-linear-original-jpeg-20261118-HOLD, research/mission3-release-evidence-convergence-20261119-HOLD]
   workflow_dispatch:
 permissions:
   contents: read
@@ -14,6 +14,22 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Exact immutable M3 #1460 parent and source-only #1136 evidence donor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=5aa4644d464f1633a00c766c21feed78f2195757
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          test "$(git hash-object research/mission3-release-evidence-gate/verify.mjs)" = 340b47d8f6c2bd12276cc69a3145f60a91e6d922
+          test "$(git hash-object tests/mission3-release-evidence-gate.test.mjs)" = a9559cecf6429fb3f1ee392be5dd8fae99dbe632
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ package.json package-lock.json
+          git diff --name-only "$BASE" HEAD | while read -r p; do
+            case "$p" in
+              research/mission3-release-evidence-gate/verify.mjs|tests/mission3-release-evidence-gate.test.mjs|research/mission3-release-evidence-gate/REPORT.md|.github/workflows/mission3-private-import-locked-gate-no-deploy.yml) ;;
+              *) echo "REFUSE M3 evidence adoption path: $p"; exit 1 ;;
+            esac
+          done
       - name: Exact PR1126 parent and ten-path no-deploy allowlist
         shell: bash
         run: |
@@ -23,7 +39,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|public/sw.js|scripts/build.mjs|research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs|scripts/test-mission3-edit-backup-owner-browser.mjs|tests/mission3-edit-backup-owner-lease.test.cjs|tests/mission3-private-import-locked-gate-v4-bridge.test.cjs|tests/mission3-legacy-atomic-import.test.mjs|research/mission3-private-import-locked-gate/REPORT.md|.github/workflows/mission3-private-import-locked-gate-no-deploy.yml) ;;
+              public/app.js|public/sw.js|scripts/build.mjs|research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs|scripts/test-mission3-edit-backup-owner-browser.mjs|tests/mission3-edit-backup-owner-lease.test.cjs|tests/mission3-private-import-locked-gate-v4-bridge.test.cjs|tests/mission3-legacy-atomic-import.test.mjs|research/mission3-private-import-locked-gate/REPORT.md|research/mission3-release-evidence-gate/verify.mjs|tests/mission3-release-evidence-gate.test.mjs|research/mission3-release-evidence-gate/REPORT.md|.github/workflows/mission3-private-import-locked-gate-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -31,6 +47,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          node --check research/mission3-release-evidence-gate/verify.mjs
+          node --check tests/mission3-release-evidence-gate.test.mjs
+          node --test tests/mission3-release-evidence-gate.test.mjs
+          node research/mission3-release-evidence-gate/verify.mjs --template > /tmp/mission3-owner-hold-evidence.json
+          if node research/mission3-release-evidence-gate/verify.mjs --verify /tmp/mission3-owner-hold-evidence.json > /tmp/mission3-owner-hold-result.json; then
+            echo "REFUSE: blank owner template incorrectly passed evidence preflight"; exit 1
+          else
+            test "$?" -eq 2
+          fi
+          node -e "const x=require('/tmp/mission3-owner-hold-result.json');if(x.status!=='BLOCKED'||x.releaseAuthorized!==false||x.familyAlpha!=='HOLD')process.exit(1)"
           node --check public/app.js
           node --check tests/mission3-private-import-locked-gate-v4-bridge.test.cjs
           node --test tests/mission3-private-import-locked-gate-v4-bridge.test.cjs
@@ -167,6 +193,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Exact immutable M3 #1460 parent and source-only #1136 evidence donor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=5aa4644d464f1633a00c766c21feed78f2195757
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          test "$(git hash-object research/mission3-release-evidence-gate/verify.mjs)" = 340b47d8f6c2bd12276cc69a3145f60a91e6d922
+          test "$(git hash-object tests/mission3-release-evidence-gate.test.mjs)" = a9559cecf6429fb3f1ee392be5dd8fae99dbe632
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ package.json package-lock.json
+          git diff --name-only "$BASE" HEAD | while read -r p; do
+            case "$p" in
+              research/mission3-release-evidence-gate/verify.mjs|tests/mission3-release-evidence-gate.test.mjs|research/mission3-release-evidence-gate/REPORT.md|.github/workflows/mission3-private-import-locked-gate-no-deploy.yml) ;;
+              *) echo "REFUSE M3 evidence adoption path: $p"; exit 1 ;;
+            esac
+          done
       - name: Strict PR1126 ten-path exact-parent diff gate
         shell: bash
         run: |
@@ -176,7 +218,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|public/sw.js|scripts/build.mjs|research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs|scripts/test-mission3-edit-backup-owner-browser.mjs|tests/mission3-edit-backup-owner-lease.test.cjs|tests/mission3-private-import-locked-gate-v4-bridge.test.cjs|tests/mission3-legacy-atomic-import.test.mjs|research/mission3-private-import-locked-gate/REPORT.md|.github/workflows/mission3-private-import-locked-gate-no-deploy.yml) ;;
+              public/app.js|public/sw.js|scripts/build.mjs|research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs|scripts/test-mission3-edit-backup-owner-browser.mjs|tests/mission3-edit-backup-owner-lease.test.cjs|tests/mission3-private-import-locked-gate-v4-bridge.test.cjs|tests/mission3-legacy-atomic-import.test.mjs|research/mission3-private-import-locked-gate/REPORT.md|research/mission3-release-evidence-gate/verify.mjs|tests/mission3-release-evidence-gate.test.mjs|research/mission3-release-evidence-gate/REPORT.md|.github/workflows/mission3-private-import-locked-gate-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
