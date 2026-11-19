@@ -75,6 +75,13 @@ change(browserHook,[
  "    if(path!=='/public/outfit-worker-p94.mjs')return;",
  "    this.addEventListener('message',event=>{",
  "     const d=event.data;",
+ "     if(d?.type==='diagnostic'&&d?.phase==='m249_model_failure'){",
+ "      const allowed=['wasm_memory_access','memory_allocation','wasm_compile','wasm_link','session','network_abort','network','other'];",
+ "      const names=['RuntimeError','Error','TypeError','RangeError','NetworkError','AbortError','CompileError','LinkError'];",
+ "      console.log('M251_ORIGINAL_MODEL_FAIL_CLASS '+JSON.stringify({",
+ "       category:allowed.includes(d.category)?d.category:'UNKNOWN',",
+ "       exceptionName:names.includes(d.errorName)?d.errorName:'UNKNOWN'}));return;",
+ "     }",
  "     if(d?.type!=='diagnostic'||d?.phase!=='m251_original_jsep_native_abi')return;",
  "     const safe={phase:'m251_original_jsep_native_abi',",
  "      optionsArgumentCount:d.optionsArgumentCount,originalNativeExportCalled:d.originalNativeExportCalled===true,",
@@ -107,6 +114,7 @@ change(pageStart,[
  pageStart,
  " page.on('console',msg=>{",
  "  const text=msg.text(),prefix='M251_ACTUAL_NATIVE_OPTIONS ';",
+ "  if(text.startsWith('M251_ORIGINAL_MODEL_FAIL_CLASS ')){console.log(text.slice(0,250));return;}",
  "  if(!text.startsWith(prefix))return;",
  "  try{const event=JSON.parse(text.slice(prefix.length));",
  "   if(event?.phase==='m251_original_jsep_native_abi'&&m251NativeEvents.length<8){",
@@ -136,6 +144,25 @@ change(originalReceipt,[
  " console.log('M251_PRODUCT_NATIVE_JSEP_OPTION_ABI',JSON.stringify(m251Result));",
  originalReceipt
 ].join('\n'));
+// A genuine original Worker WebKit RED must preserve same FAILING browser
+// network JSEP SHA (if readable), native option-call count and error taxonomy.
+const originalFailAnchor="}catch(e){\n console.error('M58_REAL_P88_WORKER_FAIL'";
+change(originalFailAnchor,originalFailAnchor.replace(" console.error('M58_REAL_P88_WORKER_FAIL'",[
+ " await Promise.race([Promise.allSettled(m251Pending),new Promise(ok=>setTimeout(ok,2500))]);",
+ " const observedWasm=m251ActualWasm;",
+ " const allJsep=observedWasm.length===1&&observedWasm[0].status===200&&",
+ "   observedWasm[0].sha256===ORIGINAL_JSEP_WASM_SHA;",
+ " console.log('M251_ORIGINAL_FAILED_BROWSER_BINARY_BOUNDARY',JSON.stringify({",
+ "  stage,originalEngine:engine,",
+ "  realOriginalJsepRequestCount:observedWasm.length,",
+ "  directFailedAttemptBrowserJsepShaVerified:allJsep,",
+ "  failedAttemptBrowserJsepBodyStatus:allJsep?'DIRECT_FAILING_BROWSER_SHA':'UNVERIFIED',",
+ "  sameProcessNativeJsepOptionsCallCount:m251NativeEvents.length,",
+ "  nativeCAllocatorRootCauseProven:false,permanentRepairProven:false,releaseAuthorized:false,hold:true",
+ " }));",
+ " console.error('M58_REAL_P88_WORKER_FAIL'"
+].join('\n')));
+
 assert.ok(src.includes('M61_GENUINE_P88_TO_PRIVATE_OWNER_V4_RESTORE_SAME_SESSION_PASS'));
 assert.ok(src.includes('M58_GENUINE_WORKER_SAVED_2D_OWNER_SWITCH_PRIVACY'));
 assert.ok(src.includes('M251_PRODUCT_NATIVE_JSEP_OPTION_ABI'));
@@ -165,7 +192,9 @@ try{
   const markers=['M251_PRODUCT_NATIVE_JSEP_OPTION_ABI ',
    'M61_GENUINE_P88_TO_PRIVATE_OWNER_V4_RESTORE_SAME_SESSION_PASS ',
    'M58_GENUINE_WORKER_SAVED_2D_OWNER_SWITCH_PRIVACY ',
-   'M251_NATIVE_EXPORT_ACTUAL_EVENT '];
+   'M251_NATIVE_EXPORT_ACTUAL_EVENT ',
+   'M251_ORIGINAL_MODEL_FAIL_CLASS ',
+   'M251_ORIGINAL_FAILED_BROWSER_BINARY_BOUNDARY '];
   for(const line of lines){
    if(markers.some(m=>line.startsWith(m)))console.log(line.slice(0,2200));
   }
