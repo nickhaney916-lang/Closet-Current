@@ -91,6 +91,10 @@ jobs:
           grep -Fq '"nestedEstimateRefused":true' /tmp/m1-native-idb
           grep -Fq '"rejectedMaskAdviceUnchanged":true' /tmp/m1-native-idb
           grep -Fq '"tentativeMaskAdviceRetained":true' /tmp/m1-native-idb
+          grep -Fq '"oldModelLabelsRevoked":true' /tmp/m1-native-idb
+          grep -Fq '"oldModelOriginalKept":true' /tmp/m1-native-idb
+          grep -Fq '"newCropRequiresReview":true' /tmp/m1-native-idb
+          grep -Fq '"savedOwnerLabelsIntact":true' /tmp/m1-native-idb
           grep -Fq 'M1_P88_BROWSER_CROP_TERMINAL_CONFLICT' /tmp/m1-native-idb
           grep -Fq '"code":"P88_SAVED_CROP_STORAGE_CHANGED"' /tmp/m1-native-idb
           grep -Fq '"code":"P88_CROP_DRAFT_STORAGE_CHANGED"' /tmp/m1-native-idb
