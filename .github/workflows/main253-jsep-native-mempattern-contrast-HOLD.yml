@@ -1,0 +1,99 @@
+name: MAIN253 original WebKit JSEP native memory-pattern TRUE vs FALSE HOLD
+on:
+  push:
+    branches: [research/main253-original-jsep-mempattern-onoff-native-contrast-HOLD]
+permissions:
+  contents: read
+jobs:
+  original-source-and-full-inherited:
+    name: M253 pinned native export source and all inherited source/private owner/security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: M253 exact frozen donor and only FOUR new no-deploy research files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=2ee136d3ee78f5a57554a022efb8ce943b8edf5c
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' \
+            '.github/workflows/main253-jsep-native-mempattern-contrast-HOLD.yml' \
+            'scripts/main253-jsep-contrast-helper.mjs' \
+            'scripts/test-main253-jsep-contrast-unit.mjs' \
+            'scripts/test-main253-original-jsep-contrast-browser.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main251-original-jsep-native-option-browser.mjs)" = 887e1e8fa6cc24919450f53612dc6b35b3a1aefe
+          test "$(git rev-parse HEAD:scripts/main251-original-jsep-abi-probe.mjs)" = c1061567b01ec9f6ceb60c7336d38294d6c3f8a4
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          node --check scripts/main253-jsep-contrast-helper.mjs
+          node --check scripts/test-main253-jsep-contrast-unit.mjs
+          node --check scripts/test-main253-original-jsep-contrast-browser.mjs
+      - name: Install exact original SegFormer/JSEP model development requirements
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Genuine original pinned JS/WASM export and adversarial FALSE-versus-TRUE source gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(npm view onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 dist.integrity)" = "sha512-0uS76OPgH0hWCPrFKlL8kYVV7ckM7t/36HfbgoFw6Nd0CZVVbQC4PkrR8mBX8LtNUFZO25IQBqV2Hx2ho3FlbQ=="
+          node --test scripts/test-main253-jsep-contrast-unit.mjs
+      - name: Entire original offline build and private owner/source/photo/v4/security tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  original-native-real-browser:
+    name: M253 REAL original JSEP ${{ matrix.engine }} ${{ matrix.width }} ${{ matrix.arm }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {engine: webkit, width: 320, arm: pattern_off, count: 2}
+          - {engine: webkit, width: 320, arm: pattern_on, count: 2}
+          - {engine: webkit, width: 390, arm: pattern_off, count: 2}
+          - {engine: webkit, width: 390, arm: pattern_on, count: 2}
+          - {engine: chromium, width: 390, arm: pattern_off, count: 1}
+          - {engine: chromium, width: 390, arm: pattern_on, count: 1}
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M253_ENGINE: ${{ matrix.engine }}
+      M253_ARM: ${{ matrix.arm }}
+      M253_WIDTH: ${{ matrix.width }}
+      M253_COUNT: ${{ matrix.count }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Frozen original real Worker/owner/JSEP and only isolated research
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main251-original-jsep-native-option-browser.mjs)" = 887e1e8fa6cc24919450f53612dc6b35b3a1aefe
+          node --check scripts/test-main253-original-jsep-contrast-browser.mjs
+      - name: Install pinned actual JSEP browser runtime and real model dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original TRUE-versus-FALSE native 10-ABI args and owner-private 2D/v4 journey
+        shell: bash
+        run: |
+          set -euo pipefail
+          M253_SOURCE_ONLY=1 node scripts/test-main253-original-jsep-contrast-browser.mjs
+          node scripts/test-main253-original-jsep-contrast-browser.mjs
