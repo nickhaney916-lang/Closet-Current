@@ -880,6 +880,38 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
      storedEstimate?.category==='Tops'&&
      storedEstimate?.itemType==='T-shirt';
 
+    // Real IndexedDB case: forged crop coordinate metadata must be rejected
+    // BEFORE modifying owner photo pixels, original source, or crop geometry.
+    // A valid normalized rectangle must still commit through native source.
+    const geometry={id:'actual-malformed-crop-bounds-88',image:oldImage,
+     originalPhoto:{image:raw},category:'Tops',itemType:'T-shirt',
+     color:'Blue',seasons:[],userAdjusted:true};
+    items=[geometry];batch=[];await put('items',geometry);
+    cropClothingPhoto(geometry);
+    let invalidBoundsRejected=0;
+    for(const cropBounds of [
+     null,
+     {x:0.9,y:0,width:0.4,height:1},
+     {x:0,y:0,width:0,height:1},
+     {x:0,y:0,width:NaN,height:1},
+     {x:0,y:0,width:1,height:1,ownerSourceReview88:true},
+     {x:'0',y:0,width:1,height:1}
+    ]){
+     try{await window.crop88Editor.save({image:newImage,cropBounds},null);}
+     catch(e){if(e.message==='P88_CROP_INVALID_BOUNDS')invalidBoundsRejected++;}
+    }
+    const denied=await get('items',geometry.id);
+    const invalidBoundsUntouched=invalidBoundsRejected===6&&
+     denied?.image===oldImage&&denied?.cropBounds===undefined&&
+     denied?.originalPhoto?.image===raw&&
+     denied?.category==='Tops'&&geometry.image===oldImage;
+    const validRect={x:0.125,y:0.25,width:0.75,height:0.5};
+    await window.crop88Editor.save({image:newImage,cropBounds:validRect},null);
+    const good=await get('items',geometry.id);
+    const validBoundsStored=good?.image===newImage&&
+     good?.originalPhoto?.image===raw&&
+     good?.cropBounds?.x===0.125&&good?.cropBounds?.width===0.75&&
+     good?.category==='Tops'&&good?.color==='Blue';
 
     const pending={id:'actual-pending-crop-88',image:oldImage,
      originalPhoto:{image:raw},name:'Pending original',category:'Tops',
@@ -960,7 +992,9 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     ownerDb.close();
     return {firstCropSaved,forgedOriginalUntouched,forgedRejected,
      savedModelRejected,ownerLabelsUntouched,savedUnknownRemainsUnknown,
-     savedEstimatedColorRetained,staleSavedRefused,correctionIntact,localSavedIntact,
+     savedEstimatedColorRetained,invalidBoundsRejected,
+     invalidBoundsUntouched,validBoundsStored,
+     staleSavedRefused,correctionIntact,localSavedIntact,
      savedCropCommitted,originalSaved,staleDraftRefused,otherPreserved,
      pendingRawPreserved,newCropSaved,otherStillPreserved,
      latePeerGuard,noAutoSaved};
@@ -969,6 +1003,7 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     firstCropSaved:true,forgedOriginalUntouched:true,forgedRejected:3,
     savedModelRejected:true,ownerLabelsUntouched:true,
     savedUnknownRemainsUnknown:true,savedEstimatedColorRetained:true,
+    invalidBoundsRejected:6,invalidBoundsUntouched:true,validBoundsStored:true,
     staleSavedRefused:true,correctionIntact:true,localSavedIntact:true,
     savedCropCommitted:true,originalSaved:true,staleDraftRefused:true,
     otherPreserved:true,pendingRawPreserved:true,
