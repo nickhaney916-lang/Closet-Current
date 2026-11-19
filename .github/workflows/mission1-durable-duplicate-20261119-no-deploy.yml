@@ -87,6 +87,10 @@ jobs:
           grep -Fq '"invalidBoundsRejected":6' /tmp/m1-native-idb
           grep -Fq '"invalidBoundsUntouched":true' /tmp/m1-native-idb
           grep -Fq '"validBoundsStored":true' /tmp/m1-native-idb
+          grep -Fq '"masklessEstimateRefused":true' /tmp/m1-native-idb
+          grep -Fq '"nestedEstimateRefused":true' /tmp/m1-native-idb
+          grep -Fq '"rejectedMaskAdviceUnchanged":true' /tmp/m1-native-idb
+          grep -Fq '"tentativeMaskAdviceRetained":true' /tmp/m1-native-idb
           grep -Fq 'M1_P88_BROWSER_CROP_TERMINAL_CONFLICT' /tmp/m1-native-idb
           grep -Fq '"code":"P88_SAVED_CROP_STORAGE_CHANGED"' /tmp/m1-native-idb
           grep -Fq '"code":"P88_CROP_DRAFT_STORAGE_CHANGED"' /tmp/m1-native-idb
