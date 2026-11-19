@@ -60,8 +60,8 @@ jobs:
       options: --shm-size=1gb
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
-      M243_${{ matrix.engine }}: ${{ matrix.engine }}
-      M243_PATTERN_${{ matrix.arm }}: ${{ matrix.arm }}
+      M243_ENGINE: ${{ matrix.engine }}
+      M243_PATTERN_ARM: ${{ matrix.arm }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -85,5 +85,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test "$M243_ENGINE" = "${{ matrix.engine }}"
+          test "$M243_PATTERN_ARM" = "${{ matrix.arm }}"
+          echo "M244_NATIVE_MATRIX_CONFIRMED engine=$M243_ENGINE arm=$M243_PATTERN_ARM"
           M244_SOURCE_ONLY=1 node scripts/test-main244-original-wasm-grow-attribution-browser.mjs
           node scripts/test-main244-original-wasm-grow-attribution-browser.mjs
