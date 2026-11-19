@@ -89,9 +89,9 @@ const in3=(p,tri)=>{
  return {inside:u>=-EPS&&w>=-EPS&&u+w<=1+EPS,
   strict:u>EPS&&w>EPS&&u+w<1-EPS};
 };
-export function classifyExactTriangleContact(a,b){
+export function classifyExactTriangleContact(a,b,alreadyAABBAttested=false){
  if(!allFinite(a)||!allFinite(b))return 'INDETERMINATE';
- if(!boxesOverlap(bbox(a),bbox(b)))return 'NONE';
+ if(!alreadyAABBAttested&&!boxesOverlap(bbox(a),bbox(b)))return 'NONE';
  const na=cross(vsub(a[1],a[0]),vsub(a[2],a[0])),
   nb=cross(vsub(b[1],b[0]),vsub(b[2],b[0])),
   la=len(na),lb=len(nb);
@@ -138,7 +138,7 @@ export function classifyExactTriangleContact(a,b){
   return 'CROSSING';
  return touching?'TOUCHING':'NONE';
 }
-export function evaluateFullIndexedContact(bodyFaces,frontFaces,{maxPairs=30000000}={}){
+export function evaluateFullIndexedContact(bodyFaces,frontFaces,{maxPairs=50000000}={}){
  if(!Array.isArray(bodyFaces)||!Array.isArray(frontFaces)||!bodyFaces.length||!frontFaces.length)
   throw Error('real-original-full-face-counts-required');
  // This checker may audit actual full geometry only. No skip/stride/cap of
@@ -188,13 +188,17 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{maxPairs=300000
      if(pairs>maxPairs)throw Error('original-full-indexed-audit-resource-bound-reached '+
       JSON.stringify({bodyFaces:bodyFaces.length,photoFaces:frontFaces.length,
        broadphaseCandidatePairs:pairs,actualAABBOverlaps:aabbPairs,
-       maxPairs,bvhNodes,visitedNodes:nodeVisits}));
+       maxPairs,bvhNodes,visitedNodes:nodeVisits,
+       lastFrontFaceIndex:i}));
      if(!boxesOverlap(box,bodyBoxes[j]))continue;
      aabbPairs++;
-     if(aabbPairs>3000000)throw Error('original-full-indexed-exact-contact-resource-bound '+
+     if(aabbPairs>30000000)throw Error('original-full-indexed-exact-contact-resource-bound '+
       JSON.stringify({bodyFaces:bodyFaces.length,photoFaces:frontFaces.length,
-       actualAABBOverlaps:aabbPairs,broadphaseCandidatePairs:pairs}));
-     const result=classifyExactTriangleContact(frontFaces[i],bodyFaces[j]);
+       actualAABBOverlaps:aabbPairs,broadphaseCandidatePairs:pairs,
+       lastFrontFaceIndex:i}));
+     // The hierarchy and exact AABB check already attest the box witness;
+     // do not recompute expensive per-triangle bounds for each narrow pair.
+     const result=classifyExactTriangleContact(frontFaces[i],bodyFaces[j],true);
      counts[result]++;
      if(result!=='NONE'&&!firstContact)
       firstContact={frontFace:i,bodyFace:j,class:result};
