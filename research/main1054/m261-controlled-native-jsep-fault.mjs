@@ -52,8 +52,9 @@ export function deriveM261(original) {
 }
 export function verifyM261Failure(log,exitCode,identity){
  if(typeof log!=='string'||log.length>8*1024*1024||
+   !identity||identity.runAttempt!==1||
    !Number.isInteger(exitCode)||exitCode<0||exitCode>255)
-  throw new TypeError('Invalid bounded genuine negative-run transcript');
+  throw new TypeError('Invalid first-attempt bounded genuine negative-run transcript');
  const tag='M261_CONTROLLED_JSEP_FAULT ';
  const rows=log.split(/\r?\n/).filter(line=>line.startsWith(tag));
  if(rows.length!==1)throw new Error('Missing/duplicate original-context interception marker');
