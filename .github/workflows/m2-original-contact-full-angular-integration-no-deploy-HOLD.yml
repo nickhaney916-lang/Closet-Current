@@ -29,7 +29,7 @@ jobs:
           git diff --exit-code 4da5c090df129f9e3a7e91530a85965263518ed9 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
           while IFS= read -r p; do
             case "$p" in
-              research/parallel89/donor-original-camera-axis-body-contact89.mjs|research/parallel89/contact-first-original-indexed-swept-veto89.mjs|research/parallel89/original-depth-full-swept-integration-addon89.mjs|tests/m2-original-depth-to-all-angular-contact-integration.test.mjs|scripts/test-m2-original-depth-angular-contact-native-browser.mjs|.github/workflows/m2-original-contact-full-angular-integration-no-deploy-HOLD.yml) ;;
+              research/parallel89/donor-original-camera-axis-body-contact89.mjs|research/parallel89/contact-first-original-indexed-swept-veto89.mjs|research/parallel89/original-depth-full-swept-integration-addon89.mjs|tests/m2-original-depth-to-all-angular-contact-integration.test.mjs|tests/m2-contact-first-original-indexed-swept-veto.test.mjs|scripts/test-m2-original-depth-angular-contact-native-browser.mjs|.github/workflows/m2-original-contact-full-angular-integration-no-deploy-HOLD.yml) ;;
               *) echo "UNEXPECTED other-mission, original rig or protected file: $p"; exit 1 ;;
             esac
           done < <(git diff --name-only 4da5c090df129f9e3a7e91530a85965263518ed9 HEAD)
