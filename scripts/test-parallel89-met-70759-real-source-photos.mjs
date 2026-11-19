@@ -41,8 +41,20 @@ for(const [i,url] of MET_70759_89.publishedPhotoEndpoints.entries()){
  assert.ok(Number.isInteger(m.width)&&m.width>=400&&m.width<=18000);
  assert.ok(Number.isInteger(m.height)&&m.height>=400&&m.height<=18000);
  const sha256=createHash('sha256').update(arr).digest('hex');
- assert.equal(sha256,MET_70759_89.publishedPhotoSHA256[i],
-  'museum original JPEG changed since pinned genuine source acquisition; refuse silent research image substitution');
+ const decoded=await sharp(arr,{failOn:'error'}).removeAlpha().raw().toBuffer({resolveWithObject:true});
+ assert.equal(decoded.info.width,m.width);
+ assert.equal(decoded.info.height,m.height);
+ assert.equal(decoded.info.channels,3);
+ const decodedRGBSHA256=createHash('sha256').update(decoded.data).digest('hex');
+ console.log('P89_MET_TRUE_SOURCE_JPEG_AND_DECODING '+JSON.stringify({
+  id:[2551408,2551409][i],sha256,decodedRGBSHA256,
+  byteIdenticalToFirstVerified:sha256===MET_70759_89.publishedPhotoSHA256[i]
+ }));
+ assert.equal(decodedRGBSHA256,MET_70759_89.publishedPhotoDecodedRGBSHA256[i],
+  'museum original decoded photo content changed even when original JPEG URL is unchanged');
+ // A CDN can use a different JPEG compression that decodes to the SAME
+ // exact 24-bit RGB pixels. Preserve actual byte hashes in the audit,
+ // refuse any image-content difference. No silent source substitution.
  assert.ok(!seen.has(sha256),'original images must be different public source photos');
  seen.add(sha256);
  // No source-original image is committed into repo. Source-only copy is
@@ -53,8 +65,9 @@ for(const [i,url] of MET_70759_89.publishedPhotoEndpoints.entries()){
   sourceUrl:url,responseOrigin:final.hostname,
   redirectedToNonMuseumHost:false,httpStatus:response.status,
   contentType:type,byteLength:arr.length,
-  sha256,widthPixels:m.width,heightPixels:m.height,
+  sha256,decodedRGBSHA256,widthPixels:m.width,heightPixels:m.height,
   jpegMagicVerified:true,actualBytesHashed:true,actualImageDecoded:true,
+  actualDecodedRGBHashIndependentlyChecked:true,
   photoPartExactHumanVerified:false,
   originalCameraCalibrationClaimed:false
  };

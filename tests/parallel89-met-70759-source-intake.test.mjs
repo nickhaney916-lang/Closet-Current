@@ -11,8 +11,10 @@ const fake=(id,sha)=>({
  responseOrigin:'collectionapi.metmuseum.org',redirectedToNonMuseumHost:false,
  httpStatus:200,contentType:'image/jpeg',byteLength:85555,
  widthPixels:1024,heightPixels:768,
- sha256:sha,jpegMagicVerified:true,actualBytesHashed:true,
- actualImageDecoded:true,photoPartExactHumanVerified:false,
+ sha256:sha,decodedRGBSHA256:catalogue.publishedPhotoDecodedRGBSHA256[id],
+ jpegMagicVerified:true,actualBytesHashed:true,
+ actualImageDecoded:true,actualDecodedRGBHashIndependentlyChecked:true,
+ photoPartExactHumanVerified:false,
  originalCameraCalibrationClaimed:false
 });
 function photos(){return [
@@ -48,6 +50,9 @@ test('two distinct separately SHA-attested source image receipts can seed only i
  assert.equal(a.sourceEligibleForNewIndependentBenchmark,true);
  assert.equal(a.actualPublishedImagesDifferentBytes,true);
  assert.equal(a.independentMetImageBytesAttested,true);
+ assert.equal(a.anyJPEGReencodedButPixelIdenticalToLockedPhoto,false);
+ assert.deepEqual(a.decodedImageContentDigests,
+  catalogue.publishedPhotoDecodedRGBSHA256);
  assert.equal(a.originalCatalogImageCount,2);
  assert.deepEqual(a.publishedPhotographIDsVerified,[2551408,2551409]);
  assert.equal(a.sourceImagePartAndFrontBackLabelRequiresIndependentInspection,true);
@@ -56,6 +61,30 @@ test('two distinct separately SHA-attested source image receipts can seed only i
  assert.equal(a.canUseMetMeasurementsToCalibrateHonolulu5152_1,false);
  assert.equal(a.consumer3DAdmitted,false);
  assert.equal(a.originalPhoto2DFallbackRequired,true);
+});
+test('previously observed alternative compression with IDENTICAL decoded RGB is research-only; forged pixel hashes fail',()=>{
+ const p=photos();
+ p[0].sha256='f2e83d99e39ef472e834189ef6541760973bc2ef2d6cc4786cc9123b58140c06';
+ const a=audit({images:p});
+ assert.equal(a.status,'MET_SAME_OBJECT_MEASUREMENTS_AND_TWO_PUBLISHED_JPEGS_ATTESTED_RESEARCH_ONLY');
+ assert.equal(a.anyJPEGReencodedButPixelIdenticalToLockedPhoto,true);
+ // A raw JPEG encoding not seen in advance is acceptable ONLY when the
+ // actual independent source decoder computes the same original full RGB.
+ const other=photos();other[0].sha256='a'.repeat(64);
+ const otherAudit=audit({images:other});
+ assert.equal(otherAudit.status,
+  'MET_SAME_OBJECT_MEASUREMENTS_AND_TWO_PUBLISHED_JPEGS_ATTESTED_RESEARCH_ONLY');
+ assert.equal(otherAudit.anyJPEGReencodedButPixelIdenticalToLockedPhoto,true);
+ assert.equal(otherAudit.consumer3DAdmitted,false);
+ assert.equal(a.sourceEligibleForNewIndependentBenchmark,true);
+ assert.equal(a.consumer3DAdmitted,false);
+ for(const tamper of [
+  x=>{x[0].decodedRGBSHA256='0'.repeat(64);},
+  x=>{x[0].actualDecodedRGBHashIndependentlyChecked=false;}
+ ]){
+  const q=photos();q[0].sha256=p[0].sha256;tamper(q);
+  assert.equal(audit({images:q}).status,'SOURCE_MATCHED_MET_INTAKE_REFUSED');
+ }
 });
 test('wrong Met catalog, Honolulu accession, unrelated object dimensions, or fake pasted plain JS catalog are rejected',()=>{
  for(const opts of [{catalog:{...catalogue}},
@@ -76,7 +105,9 @@ test('wrong image source, duplicate photo, corrupt digest, metadata or false app
   p=>p[0].sourceUrl= 'https://example.com/photo.jpg',
   p=>p[1].sourceUrl= p[0].sourceUrl,
   p=>p[1].sha256=p[0].sha256,
-  p=>p[0].sha256='a'.repeat(64),
+  p=>{p[0].sha256='a'.repeat(64);p[0].decodedRGBSHA256='0'.repeat(64);},
+  p=>p[1].decodedRGBSHA256='0'.repeat(64),
+  p=>p[1].actualDecodedRGBHashIndependentlyChecked=false,
   p=>p[1].sha256='0'.repeat(63),
   p=>p[1].contentType='text/html',
   p=>p[0].httpStatus=404,
