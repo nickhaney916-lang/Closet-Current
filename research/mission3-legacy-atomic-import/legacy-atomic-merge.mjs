@@ -7,7 +7,10 @@
 const own=(x,k)=>Object.prototype.hasOwnProperty.call(x,k);
 const plain=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const safeId=x=>typeof x==='string'&&x.length>0&&x.length<=100&&!/[\u0000-\u001f]/.test(x);
-const img=/^data:image\/jpeg;base64,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+const jpegPrefix='data:image/jpeg;base64,';
+// Linear-time alphabet check: a repeated {4} group can overflow V8's regexp
+// stack on genuine multi-megabyte camera originals.
+const base64Chars=/^[A-Za-z0-9+/]+={0,2}$/;
 const sha=/^[0-9a-f]{64}$/;
 function inspectTree(x,owner,depth=0,seen=new WeakSet()){
  if(depth>32)throw Error('LEGACY_ATOMIC_METADATA_DEPTH');
@@ -28,9 +31,19 @@ function inspectTree(x,owner,depth=0,seen=new WeakSet()){
  seen.delete(x);
 }
 async function verifyImage(image,hash=null,{maxEncoded=3_000_000,maxBytes=2_250_000}={}){
- if(typeof image!=='string'||image.length>maxEncoded||!img.test(image))
+ if(typeof image!=='string'||image.length>maxEncoded||!image.startsWith(jpegPrefix))
   throw Error('LEGACY_ATOMIC_INVALID_JPEG');
- const bytes=Uint8Array.from(atob(image.slice('data:image/jpeg;base64,'.length)),x=>x.charCodeAt(0));
+ const payload=image.slice(jpegPrefix.length);
+ // Decode only canonical, padded Base64 and preflight decoded size before
+ // allocating the original; keep the preview and camera-original limits.
+ if(payload.length%4!==0||!base64Chars.test(payload))
+  throw Error('LEGACY_ATOMIC_INVALID_JPEG');
+ const padding=payload.endsWith('==')?2:payload.endsWith('=')?1:0;
+ if(payload.length/4*3-padding>maxBytes)
+  throw Error('LEGACY_ATOMIC_INVALID_JPEG_BYTES');
+ let bytes;
+ try{bytes=Uint8Array.from(atob(payload),x=>x.charCodeAt(0));}
+ catch{throw Error('LEGACY_ATOMIC_INVALID_JPEG');}
  if(bytes.length<4||bytes.length>maxBytes||bytes[0]!==255||bytes[1]!==216)
   throw Error('LEGACY_ATOMIC_INVALID_JPEG_BYTES');
  if(hash){
