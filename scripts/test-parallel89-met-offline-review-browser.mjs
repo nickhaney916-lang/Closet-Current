@@ -8,6 +8,7 @@ import {readFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {chromium,webkit} from 'playwright';
+import {MET70759_GALLERY_VIEW_NOTES89 as gallery, assessMet70759PhotoPartViewEvidence89 as verifyRole} from '../research/parallel89/met-four-photo-chromatic-silhouette89.mjs';
 
 const engine=process.env.P89_BROWSER;
 assert.ok(['chromium','webkit'].includes(engine),'real browser engine required');
@@ -42,6 +43,42 @@ try{
  assert.equal(controls.assets,4);
  assert.equal(controls.originalUrls,true);
  assert.equal(controls.stillUnapproved,true);
+  // Genuine museum-original download/hash is verified independently by CI.
+  // Here the four original offline-review source images must agree with the
+  // institutional-caption gate. Provisional parts are never 3D authority.
+  const photoSources=await page.evaluate(()=>JSON.parse(
+   document.getElementById('source-packet').textContent)
+   .embeddedOriginalSourcePhotoAssets.map(x=>({
+    id:x.imageId,rgbSha:x.sourceOriginalDecodedRGBSHA256
+   })));
+  assert.deepEqual(photoSources.map(x=>x.id),[2551406,2551407,2551408,2551409]);
+  for(const photo of photoSources){
+   const view=gallery.find(v=>v.id===photo.id);
+   assert.equal(photo.rgbSha,view.canonicalDecodedRGBSHA256);
+   const v=verifyRole({
+    imageId:photo.id,decodedRGBSHA256:photo.rgbSha,
+    originalMuseumObjectNumber:'1983.21a, b',
+    actualOriginalJPEGAttested:true,
+    actualDecodedRGBHashIndependentlyChecked:true
+   });
+   assert.equal(v.museumCaptionVerified,photo.id===2551406);
+   assert.equal(v.institutionallyVerifiedPart,photo.id===2551406?'a':null);
+   assert.equal(v.institutionallyVerifiedSide,photo.id===2551406?'front':null);
+   assert.equal(v.source2DPhotographFallbackRequired,true);
+   assert.equal(v.consumer3DAdmitted,false);
+   assert.equal(v.releaseAuthorized,false);
+   const forged=verifyRole({
+    imageId:photo.id,decodedRGBSHA256:'0'.repeat(64),
+    originalMuseumObjectNumber:'1983.21a, b',
+    actualOriginalJPEGAttested:true,
+    actualDecodedRGBHashIndependentlyChecked:true,
+    catalogCaptionExact:'a) front',part:'a',museumVerifiedSide:'front'
+   });
+   assert.equal(forged.museumCaptionVerified,false);
+   assert.equal(forged.source2DPhotographAllowed,false);
+   assert.equal(forged.consumer3DAdmitted,false);
+  }
+
  assert.equal(controls.r.sourceOriginalRGBSHA256,
   'e0b7738db57ac4b7c27d4f03f724442f53c8e85f09f7a139839dfaa04c86cbec');
  // Source-attested original RGB and mask pixels, alternative machine method only.
