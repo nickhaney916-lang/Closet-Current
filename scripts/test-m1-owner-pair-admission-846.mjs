@@ -860,6 +860,26 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     const savedUnknownRemainsUnknown=afterEstimate?.image===newImage&&
      afterEstimate?.color===''&&afterEstimate?.colorSource===undefined;
 
+    // Saved owner inventory can contain a legacy estimated color. Unlike
+    // an UNSAVED draft's old pixel estimate, this stored label must survive
+    // a photo recrop and must retain its UNCONFIRMED provenance.
+    const estimated={id:'native-saved-estimated-color-88',
+     image:oldImage,originalPhoto:{image:raw},
+     category:'Tops',itemType:'T-shirt',color:'Blue',
+     colorSource:'photo-estimate',colorMethod:'garment-mask',
+     seasons:[],userAdjusted:true};
+    items=[estimated];batch=[];await put('items',estimated);
+    cropClothingPhoto(estimated);
+    await window.crop88Editor.save({image:newImage},null);
+    const storedEstimate=await get('items',estimated.id);
+    const savedEstimatedColorRetained=storedEstimate?.image===newImage&&
+     storedEstimate?.originalPhoto?.image===raw&&
+     storedEstimate?.color==='Blue'&&
+     storedEstimate?.colorSource==='photo-estimate'&&
+     estimated.color==='Blue'&&estimated.colorSource==='photo-estimate'&&
+     storedEstimate?.category==='Tops'&&
+     storedEstimate?.itemType==='T-shirt';
+
 
     const pending={id:'actual-pending-crop-88',image:oldImage,
      originalPhoto:{image:raw},name:'Pending original',category:'Tops',
@@ -940,7 +960,7 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     ownerDb.close();
     return {firstCropSaved,forgedOriginalUntouched,forgedRejected,
      savedModelRejected,ownerLabelsUntouched,savedUnknownRemainsUnknown,
-     staleSavedRefused,correctionIntact,localSavedIntact,
+     savedEstimatedColorRetained,staleSavedRefused,correctionIntact,localSavedIntact,
      savedCropCommitted,originalSaved,staleDraftRefused,otherPreserved,
      pendingRawPreserved,newCropSaved,otherStillPreserved,
      latePeerGuard,noAutoSaved};
@@ -948,7 +968,7 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    assert.deepEqual(cropCas88,{
     firstCropSaved:true,forgedOriginalUntouched:true,forgedRejected:3,
     savedModelRejected:true,ownerLabelsUntouched:true,
-    savedUnknownRemainsUnknown:true,
+    savedUnknownRemainsUnknown:true,savedEstimatedColorRetained:true,
     staleSavedRefused:true,correctionIntact:true,localSavedIntact:true,
     savedCropCommitted:true,originalSaved:true,staleDraftRefused:true,
     otherPreserved:true,pendingRawPreserved:true,
