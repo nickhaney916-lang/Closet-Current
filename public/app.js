@@ -557,10 +557,35 @@ function cropClothingPhoto(item){
    // the crop dialog remains open. Never recycle that mask with new pixels.
    if(hasSourceBoundMask88(item))throw Error('P88_SOURCE_MASK_CROP_FORBIDDEN');
    if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
-   const value={...structuredClone(item),...photo,userAdjusted:true,localAnalyzed:true,scanFailed:false,saveFailed:false,possibleDuplicate:false};
-   if(value.id!==item.id||hasSourceBoundMask88(value)||value.ownerSourceReview88||
-    Object.hasOwn(photo,'ownerDuplicateReview88')||
-    Object.hasOwn(photo,'exactSavedPhotoMatch88'))
+   // The photo editor emits ONLY derivative JPEG/PNG pixels, a rectangle
+   // and optional mask-derived color advice. Never spread an untrusted callback
+   // object over a private wardrobe row: source SHA, owner review, garment
+   // identity and 3D permissions are not crop metadata.
+   const cropKeys88=['image','originalPhoto','cropBounds','maskApplied','maskedColorEstimate'];
+   if(!photo||typeof photo!=='object'||Array.isArray(photo)||
+    Object.keys(photo).some(key=>!cropKeys88.includes(key))||
+    typeof photo.image!=='string'||!/^data:image\/(?:jpeg|png);base64,[A-Za-z0-9+/]+={0,2}$/.test(photo.image)||
+    photo.image.length>12000000)
+    throw Error('P88_CROP_UNEXPECTED_FIELD');
+   // On the FIRST crop the native editor sends the captured full-frame JPEG
+   // as originalPhoto. The old lease.original is undefined in that case:
+   // comparing only to it rejected genuine first crops. Bind to the exact
+   // captured source instead, without inheriting any caller-supplied hashes.
+   const cropSource88=lease.original||lease.image;
+   if(photo.originalPhoto!==undefined&&(
+    !photo.originalPhoto||typeof photo.originalPhoto!=='object'||
+    Array.isArray(photo.originalPhoto)||
+    Object.keys(photo.originalPhoto).some(key=>key!=='image')||
+    photo.originalPhoto.image!==cropSource88))
+    throw Error('P88_CROP_ORIGINAL_SOURCE_CHANGED');
+   if(photo.maskApplied!==undefined&&photo.maskApplied!==true)
+    throw Error('P88_CROP_UNEXPECTED_FIELD');
+   const value={...structuredClone(item),image:photo.image,
+    originalPhoto:structuredClone(item.originalPhoto||{image:cropSource88}),
+    cropBounds:photo.cropBounds!==undefined?structuredClone(photo.cropBounds):item.cropBounds,
+    userAdjusted:true,localAnalyzed:true,scanFailed:false,saveFailed:false,
+    possibleDuplicate:false};
+   if(value.id!==item.id||hasSourceBoundMask88(value)||value.ownerSourceReview88)
     throw Error('P88_CROP_CANNOT_REBIND_ID_OR_MASK');
    delete value.recognitionMemory;delete value.confirmedDetails;delete value.correctionReceipt72;delete value.learningReviewedWeek;delete value.weeklySuggestion;delete value.recognitionPhoto;delete value.colorMethod;
    if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}
@@ -574,6 +599,11 @@ function cropClothingPhoto(item){
    delete value.localChoices;delete value.indexedAt;
    if(choice){applyLocalChoice(value,choice,true);Object.assign(value,ClothingDetails.fill(value,choice,choice.details,true));value.indexedAt=new Date().toISOString();}
    value.localStatus=choice?'Crop checked. Suggested details applied.':'Crop saved. Check recognition or adjust the clothing details.';
+   // Recognition-derived suggestions and color estimates must never mint
+   // verified original/source/owner/physical/3D permission during a crop.
+   if(ordinarySourceEvidence88(value)!==lease.evidenceRevision||
+    value.originalPhoto?.image!==cropSource88)
+    throw Error('P88_CROP_SOURCE_EVIDENCE_CHANGED');
    if(hasSourceBoundMask88(item))throw Error('P88_MASK_REVISION_CHANGED_BEFORE_WRITE');
    if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
    // Recheck INSIDE the shared cloud-beforeWrite queue. Commit only into
@@ -582,7 +612,8 @@ function cropClothingPhoto(item){
    await queued(()=>{
     if(hasSourceBoundMask88(item)||hasSourceBoundMask88(value)||
      !cropLive88()||value.id!==item.id||value.ownerSourceReview88||
-     value.originalPhoto?.image!==lease.original)
+     value.originalPhoto?.image!==cropSource88||
+     ordinarySourceEvidence88(value)!==lease.evidenceRevision)
      throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
     // A new crop invalidates previously reviewed duplicate-photo permission.
     if(value.image!==lease.image){
@@ -608,7 +639,8 @@ function cropClothingPhoto(item){
       const current=target.get(lease.wasDraft?'draft':item.id);
       const commit=()=>{
        if(!cropLive88()||JSON.stringify(batch)!==liveBatchRevision||
-        value.originalPhoto?.image!==lease.original||
+        value.originalPhoto?.image!==cropSource88||
+        ordinarySourceEvidence88(value)!==lease.evidenceRevision||
         hasSourceBoundMask88(item)||hasSourceBoundMask88(value))
         throw Error('P88_CROP_OWNER_OR_SOURCE_CHANGED');
        if(lease.wasDraft){
