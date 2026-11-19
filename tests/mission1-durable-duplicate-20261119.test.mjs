@@ -158,3 +158,50 @@ test('missing durable read capability fails closed: no saved replacement or draf
  assert.equal(c.state.draft.length,1);
  assert.equal(c.state.aborts,1);
 });
+
+
+test('different crops of one durable original are not silently added from a stale tab',async()=>{
+ const prior={id:'saved-original-crop',image:'saved-crop-image',
+  originalPhoto:{image:'original-88'}};
+ const c=runCase({persisted:[prior]});
+ await assert.rejects(c.promise,/P88_DURABLE_REVIEWED_DUPLICATE_CHANGED/);
+ assert.equal(c.state.savedCalls,0);
+ assert.equal(c.state.addCalls,0);
+ assert.equal(c.state.draft.length,1,'newly cropped original remains pending');
+ assert.equal(c.state.items[0].id,prior.id);
+});
+
+test('a prior legacy saved full-frame image counts as the same new cropped original',async()=>{
+ const c=runCase({persisted:[{id:'legacy-full-frame',image:'original-88'}]});
+ await assert.rejects(c.promise,/P88_DURABLE_REVIEWED_DUPLICATE_CHANGED/);
+ assert.equal(c.state.savedCalls,0);
+ assert.equal(c.state.draft.length,1);
+});
+
+test('owner-reviewed distinct physical regions of one original can remain separate after explicit peer approval',async()=>{
+ const peer={id:'already-confirmed-crop',image:'other-reviewed-crop',
+  originalPhoto:{image:'original-88'}};
+ const c=runCase({persisted:[peer],knownPeers:[{id:peer.id,image:peer.image,
+  original:peer.originalPhoto.image}]});
+ await c.promise;
+ assert.equal(c.state.savedCalls,1,'a shared original is not proof of the same physical item');
+ assert.equal(c.state.draft.length,0);
+});
+
+test('a saved peer whose original changed after owner approval revokes that approval',async()=>{
+ const peer={id:'edited-peer',image:'jpeg-duplicate-88',
+  originalPhoto:{image:'different-original-after-review'}};
+ const c=runCase({persisted:[peer],knownPeers:[{id:peer.id,image:peer.image,
+  original:'original-88'}]});
+ await assert.rejects(c.promise,/P88_DURABLE_REVIEWED_DUPLICATE_CHANGED/);
+ assert.equal(c.state.savedCalls,0);
+ assert.equal(c.state.draft.length,1);
+});
+
+test('unrelated original and unrelated crop still admit normal owner-reviewed garment',async()=>{
+ const c=runCase({persisted:[{id:'existing-unrelated',image:'unrelated-crop',
+  originalPhoto:{image:'other-original'}}]});
+ await c.promise;
+ assert.equal(c.state.savedCalls,1);
+ assert.equal(c.state.draft.length,0);
+});
