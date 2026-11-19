@@ -63,7 +63,13 @@ function active(getSession){
    s.privateDbRef.name!==s.privateDbName||
    !generation(s.operationEpoch))
   issue('signed owner session and private database required');
- try{s.authRef.assertCurrent?.();}catch{
+ // Missing assertCurrent is NOT a live authenticated owner-session proof.
+ // Refuse before the first private wardrobe read; keep auth errors sanitized.
+ try{
+  if(typeof s.authRef.assertCurrent!=='function')
+   throw Error('missing current-session assertion');
+  s.authRef.assertCurrent();
+ }catch{
   issue('signed owner session and private database required');
  }
  // Return object references only in ephemeral local lease; never in result,

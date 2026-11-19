@@ -1,0 +1,94 @@
+name: MAIN1054 M254 signed owner preflight fail-closed NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m254-signed-outfit-lease-assert-HOLD]
+  pull_request:
+    branches: [research/main1054-m58-real-p88-browser-worker-HOLD]
+    paths:
+      - public/native-outfit-source-plan-p99.mjs
+      - tests/main1054-m254-signed-outfit-lease.test.mjs
+      - .github/workflows/main1054-m254-signed-lease-no-deploy.yml
+permissions:
+  contents: read
+jobs:
+  exact-head-inherited-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact M254 source ancestry, restricted scope and protected byte invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=f2befed4c776786dc11843b98fafec72f2d9c202
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse HEAD:public/native-2d-preview-p99.mjs)" = 52d2b6d8834f27d9114e022fe8574947eda85206
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = b8ed5ebe18e81ec3f8f5659257289b8217a6877b
+          test "$(git rev-parse HEAD:public/app.js)" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
+            case "$path" in
+              public/native-outfit-source-plan-p99.mjs|tests/main1054-m254-signed-outfit-lease.test.mjs|.github/workflows/main1054-m254-signed-lease-no-deploy.yml) ;;
+              *) echo "M254 UNAUTHORIZED SCOPE: $path"; exit 1;;
+            esac
+          done
+          node --check public/native-outfit-source-plan-p99.mjs
+          node --check tests/main1054-m254-signed-outfit-lease.test.mjs
+      - name: M254 strict first-owner-read regression (no retries)
+        run: node --test tests/main1054-m254-signed-outfit-lease.test.mjs
+      - name: Install offline test runner dependencies (no paid or hosted services)
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build real no-deploy PWA and all inherited security/privacy/backup Node tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  actual-native-ui-browser:
+    needs: exact-head-inherited-node
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P99_WIDTH: '390'
+      P99_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Installed PWA prerequisites, no deploy
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node scripts/build.mjs
+      - name: True native user-interface original-source 2D/backup/owner isolation at 390 px
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/test-parallel99-normal-app-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m254-${{ matrix.engine }}-normal-native-research-390px-HOLD
+          path: benchmark/parallel99-normal-journey/${{ matrix.engine }}/390/**/*.json
+          retention-days: 14
+          if-no-files-found: warn
