@@ -40,6 +40,15 @@ export const MET_70759_89=Object.freeze({
  // IIIF CDN can deliver byte-different but pixel-identical JPEG encodings.
  // Never silently accept an unverified replacement. The real CI must
  // calculate BOTH actual JPEG and decoded RGB digests, independent of caller.
+ publishedPhotoAcceptedObservedJPEGEncodings:Object.freeze([
+  Object.freeze([
+   '59c0e6568000b68678efb067a5cdd2f95eee3c1407b9927df82ac89af0124ec2',
+   'f2e83d99e39ef472e834189ef6541760973bc2ef2d6cc4786cc9123b58140c06'
+  ]),
+  Object.freeze([
+   '239c547f950cc28475fb860357b0173d7670a0fe5210637db5f54fb88ff4b515'
+  ])
+ ]),
  publishedPhotoDecodedRGBSHA256:Object.freeze([
   'dddbda448c32667a0ab5c1b90a43d139b5917c1b9955dc428987beec035e06c0',
   '1cd4c7f71ebbb00a27f769e46a438a03f19393bd6a6ba200af14a092d1461e3f'
@@ -59,15 +68,14 @@ const failure=reason=>Object.freeze({
  photoDerivedWearable3DAuthorized:false,consumer3DAdmitted:false,
  originalPhoto2DFallbackRequired:true,releaseAuthorized:false,familyAlpha:'HOLD'
 });
-const safePhoto=(item,expected,originalExpectedSHA,originalExpectedRGBSHA)=>{
+const safePhoto=(item,expected,originalExpectedSHA,originalExpectedRGBSHA,observedJPEGEncodings)=>{
  if(!item||item.sourceObjectId!==70759||item.sourceObjectNumber!=='1983.21a, b'||
   item.sourceUrl!==expected||
   !['collectionapi.metmuseum.org','images.metmuseum.org'].includes(item.responseOrigin)||
   item.redirectedToNonMuseumHost===true||
   item.httpStatus!==200||item.contentType!=='image/jpeg'||
   item.decodedRGBSHA256!==originalExpectedRGBSHA||
-  (item.sha256!==originalExpectedSHA&&
-   item.actualDecodedRGBHashIndependentlyChecked!==true)||
+  !observedJPEGEncodings.includes(item.sha256)||
   !Number.isSafeInteger(item.byteLength)||item.byteLength<10000||
   item.byteLength>40000000||!hex(item.sha256)||
   !Number.isSafeInteger(item.widthPixels)||item.widthPixels<400||
@@ -135,7 +143,8 @@ export function assessMet70759IndependentSource89({
  if(!Array.isArray(images)||images.length!==2||
   !images.every((x,i)=>safePhoto(x,catalog.publishedPhotoEndpoints[i],
    catalog.publishedPhotoSHA256[i],
-   catalog.publishedPhotoDecodedRGBSHA256[i]))||
+   catalog.publishedPhotoDecodedRGBSHA256[i],
+   catalog.publishedPhotoAcceptedObservedJPEGEncodings[i]))||
   images[0].sha256===images[1].sha256||
   images[0].sourceUrl===images[1].sourceUrl)
   return failure('real-distinct-same-met-object-two-source-jpegs-required');
