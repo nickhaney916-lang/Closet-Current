@@ -171,6 +171,9 @@ function assertModelUnchanged(model){
  return true;
 }
 async function select(kind,index=1,rotation=0){
+ // A trial skeleton must not outlive its exact original CC0 avatar, body
+ // pose or source admission. Never leave borrowed skeleton materials behind.
+ clearSourceSkinResearchTrial();
  invariant(['female','male'].includes(kind),'unsupported-avatar');
  invariant(Number.isSafeInteger(index)&&index>=0&&index<scales.length,
   'unlicensed-original-photo-to-body-registration-scale');
@@ -235,8 +238,179 @@ async function select(kind,index=1,rotation=0){
    'scale '+scales[index]+' ONLY as UNCALIBRATED research display; NOT FITTED.';
  return witness;
 }
+/*
+ * M2 true-original photo FRONT → genuine 163-bone skeleton motion study.
+ *
+ * The source mesh is constructed as an ACTUAL THREE.SkinnedMesh bound to
+ * the SHA-attested original body's skeleton; two REAL documented MakeHuman
+ * spine bones (spine03/spine04) receive explicitly PROVISIONAL y-gradient
+ * weights. These are NOT source-observed physical weights, contact,
+ * garment body dimensions, rear drape, owner approval or consumer clothing.
+ *
+ * Original photograph RGBA / UV / mask / raw source POSITION buffers remain
+ * unchanged. Only an independent research geometry COPY is mapped into the
+ * original body's native bone space. Real original GLB bone poses are
+ * reversibly applied; screenshots prove genuine bone-linked deformation.
+ */
+let sourceSkinResearch=null;
+const round6=n=>Math.round(n*1000000)/1000000;
+function clearSourceSkinResearchTrial(){
+ const x=sourceSkinResearch;
+ if(!x)return;
+ x.posedBone.quaternion.copy(x.originalPose);
+ x.model.root.updateMatrixWorld(true);
+ x.body.skeleton.update();
+ x.mesh.removeFromParent();
+ x.mesh.geometry.dispose();
+ sourceSkinResearch=null;
+ if(!imageMesh.parent)scene.add(imageMesh);
+}
+const actualSkinnedPhotoPoint=(x,index)=>{
+ x.model.root.updateMatrixWorld(true);
+ x.body.skeleton.update();
+ x.mesh.updateWorldMatrix(true,false);
+ const p=x.mesh.applyBoneTransform(index,new THREE.Vector3());
+ return p.applyMatrix4(x.mesh.matrixWorld);
+};
+function sourceSkinProvenanceUnchanged(){
+ const a=geometry.getAttribute('position').array,
+  u=geometry.getAttribute('uv').array;
+ invariant(a.length===positions.length&&u.length===uvs.length,
+  'actual original source photo vertex arrays changed size');
+ for(let i=0;i<a.length;i++)if(a[i]!==positions[i])
+  throw Error('original source photograph positions mutated');
+ for(let i=0;i<u.length;i++)if(u[i]!==uvs[i])
+  throw Error('original source photograph UV mutated');
+ return true;
+}
+async function startSourceSkinnedMotionTrial(kind){
+ await select(kind,1,0);
+ const model=activeModel;
+ const body=model.snapshots.map(x=>x.mesh).sort((a,b)=>
+  b.geometry.getAttribute('position').count-a.geometry.getAttribute('position').count)[0];
+ invariant(body?.isSkinnedMesh&&body.skeleton.bones.length===163,
+  'actual licensed original 163bone skinned body required');
+ const names=body.skeleton.bones.map(x=>x.name.replaceAll('.',''));
+ const lower=names.indexOf('spine03'),upper=names.indexOf('spine04');
+ invariant(lower>=0&&upper>=0&&upper!==lower,
+  'original licensed 163bone spine03 and spine04 both required');
+ const lowerBone=body.skeleton.bones[lower],
+  upperBone=body.skeleton.bones[upper];
+ invariant(lowerBone.isBone&&upperBone.isBone,
+  'actual skeletal named anatomical bones required');
+ const originalPose=upperBone.quaternion.clone();
+ imageMesh.updateWorldMatrix(true,false);
+ body.updateWorldMatrix(true,false);
+ const fromWorldToBody=body.matrixWorld.clone().invert();
+ const derived=geometry.clone();
+ const attrs=derived.getAttribute('position');
+ const pBody=new Float32Array(attrs.array.length),
+  boneIndex=new Uint16Array(attrs.count*4),
+  boneWeight=new Float32Array(attrs.count*4);
+ const yHeight=photoBBox.max.y-photoBBox.min.y;
+ invariant(yHeight>.2,'true original source photo silhouette not observed');
+ for(let i=0;i<attrs.count;i++){
+  const original=new THREE.Vector3(
+   positions[3*i],positions[3*i+1],positions[3*i+2]);
+  const inBody=original.clone().applyMatrix4(imageMesh.matrixWorld)
+   .applyMatrix4(fromWorldToBody);
+  pBody.set(inBody.toArray(),3*i);
+  // Provisional normalized image row interpolation; NOT material-to-bone
+  // physical correspondence. The two indices are ACTUAL GLB skeleton bones.
+  const t=Math.max(0,Math.min(1,(original.y-photoBBox.min.y)/yHeight));
+  boneIndex.set([upper,lower,0,0],i*4);
+  boneWeight.set([t,1-t,0,0],i*4);
+ }
+ derived.setAttribute('position',new THREE.BufferAttribute(pBody,3));
+ derived.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(boneIndex,4));
+ derived.setAttribute('skinWeight',new THREE.Float32BufferAttribute(boneWeight,4));
+ derived.computeBoundingBox();
+ const mesh=new THREE.SkinnedMesh(derived,[photoMaterial,backMaterial,sideMaterial]);
+ mesh.name='P89-ACTUAL-MET-ORIGINAL-163BONE-SKINNED-UNAPPROVED';
+ mesh.renderOrder=2;mesh.frustumCulled=false;
+ mesh.position.copy(body.position);mesh.quaternion.copy(body.quaternion);
+ mesh.scale.copy(body.scale);
+ body.parent.add(mesh);mesh.bind(body.skeleton,body.bindMatrix);
+ invariant(mesh.skeleton===body.skeleton&&mesh.skeleton.bones.length===163,
+  'true original dual 163bone skeleton binding not proven');
+ scene.remove(imageMesh);
+ const photoFrontN=positions.length/6;
+ let first=0,last=0;
+ for(let i=1;i<photoFrontN;i++){
+  if(positions[i*3+1]<positions[first*3+1])first=i;
+  if(positions[i*3+1]>positions[last*3+1])last=i;
+ }
+ const middle=Math.floor(photoFrontN/2);
+ const x={model,body,mesh,lowerBone,posedBone:upperBone,
+  lowerName:names[lower],upperName:names[upper],lowerIndex:lower,
+  upperIndex:upper,originalPose,kind,sourceFrontN:photoFrontN,
+  samples:[first,middle,last],rest:[],lastPose:'rest'};
+ sourceSkinResearch=x;
+ try{
+  model.root.updateMatrixWorld(true);body.skeleton.update();
+  x.rest=x.samples.map(i=>actualSkinnedPhotoPoint(x,i));
+  invariant(x.rest.every(p=>p.toArray().every(Number.isFinite)),
+   'real-source-skinned-mesh-rest-witness-not-finite');
+  sourceSkinProvenanceUnchanged();
+  assertModelUnchanged(model);
+  render();
+  const witness={
+   status:'REAL_163BONE_ORIGINAL_PHOTO_SOURCE_SKIN_DEFORMATION_RESEARCH_ONLY',
+   avatar:kind,exactOriginalPublicGLBSHA256:model.sha256,
+   actualOriginalBoneCount:body.skeleton.bones.length,
+   realOriginalSkinReuse:mesh.skeleton===body.skeleton,
+   actualTwoNamedSourceBones:[names[lower],names[upper]],
+   sourceOriginalFullDecodedRGBSHA256:required.sourceRGB,
+   sourceOriginalJPEGByteSHA256:payload.originalJPEGByteSHA256,
+   sourceOriginalMaskPNG_SHA256:required.conservativeMaskPNG,
+   sourceFrontRGBTextureSHA256:required.sourceTextureRGBA,
+   originalPhotoVerticesUnmodified:true,originalPhotoUVUnmodified:true,
+   originalBodySkinIndicesAndWeightsUnmodified:true,
+   trueSourceFrontAndNeutralReverseMaterialGroups:3,
+   actualTHREESkinnedMesh:true,provisionalBindWeights:true,
+   physicalSourceGarmentSizeUnmeasured:true,realCameraCalibrationMissing:true,
+   noGenuineReversePhoto:true,noHumanApprovedMask:true,
+   noClothDrapeOrContactSafetyClaim:true,
+   ownerGarment3DNotAdmitted:true,consumer3DAdmitted:false,
+   sourceOriginalPhoto2DFallbackRequired:true,releaseAuthorized:false,
+   familyAlpha:'HOLD'
+  };
+  return witness;
+ }catch(e){clearSourceSkinResearchTrial();throw e;}
+}
+function setSourceSkinnedMotionTrialPose(stage){
+ invariant(['rest','bend'].includes(stage),'research-pose-unverified');
+ const x=sourceSkinResearch;
+ invariant(x?.mesh?.isSkinnedMesh&&x.body.skeleton===x.mesh.skeleton,
+  'no-original-163bone-source-skinned-mesh');
+ // Real named spine04 joint is intentionally used to exhibit deformation
+ // with authored 12-degree research pose; neither physically calibrated
+ // nor accepted as a normal animation/garment clearance test.
+ x.posedBone.quaternion.copy(x.originalPose);
+ if(stage==='bend')x.posedBone.rotateZ(12*Math.PI/180);
+ x.model.root.updateMatrixWorld(true);
+ x.body.skeleton.update();
+ const now=x.samples.map(i=>actualSkinnedPhotoPoint(x,i));
+ const deltas=now.map((p,i)=>p.distanceTo(x.rest[i]));
+ sourceSkinProvenanceUnchanged();assertModelUnchanged(x.model);
+ angle=0;render();x.lastPose=stage;
+ return {
+  stage,actualNamedOriginalJoint:x.upperName,
+  trueSkeletonBoneCount:x.mesh.skeleton.bones.length,
+  actualOriginalJointPoseChanged:stage==='bend',
+  actualSourceSkinnedPhotoMesh:true,
+  originalSourcePositionAndUVStillImmutable:true,
+  threeOriginalPhotoVertexDisplacements:deltas.map(round6),
+  maximumMeasuredOriginalPhotoSourceVertexDisplacement:round6(Math.max(...deltas)),
+  actualMeasuredBodyClothIntersection:false,
+  physicalContactOrDrapeCleared:false,
+  owner3DApproved:false,consumer3DAdmitted:false,
+  sourceOriginalPhoto2DFallbackRequired:true,familyAlpha:'HOLD'
+ };
+}
 window.__M2RealRigPhotoTrial={
- select,getProof:()=>proof,
+ select,startSourceSkinnedMotionTrial,setSourceSkinnedMotionTrialPose,
+ getProof:()=>proof,
  getFlags:()=>({
   ready:!!proof,rig:proof?.actualLicensedRig||null,
   consumer3DAdmitted:false,releaseAuthorized:false,

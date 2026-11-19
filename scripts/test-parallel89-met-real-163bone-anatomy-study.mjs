@@ -215,6 +215,84 @@ try{
    });
   }
  }
+ // NEXT ACTUAL SOURCE-to-REAL-163BONE RESEARCH MILESTONE:
+ // real original institutional RGB-front mesh becomes a THREE.SkinnedMesh,
+ // bound to the original licensed male/female skeleton, and its original
+ // source geometry/UV is sampled at rest / genuine named-spine bend / rest.
+ // No physical-size, fit, body collision, or owner admission is asserted.
+ const skeletonPoseEvidence=[];
+ for(const kind of ['female','male']){
+  const accept=await page.evaluate(async kind=>
+   window.__M2RealRigPhotoTrial.startSourceSkinnedMotionTrial(kind),kind);
+  assert.equal(accept.avatar,kind);
+  assert.equal(accept.status,
+   'REAL_163BONE_ORIGINAL_PHOTO_SOURCE_SKIN_DEFORMATION_RESEARCH_ONLY');
+  assert.equal(accept.actualOriginalBoneCount,163);
+  assert.equal(accept.realOriginalSkinReuse,true);
+  assert.equal(accept.actualTHREESkinnedMesh,true);
+  assert.deepEqual(accept.actualTwoNamedSourceBones,['spine03','spine04']);
+  assert.equal(accept.originalPhotoVerticesUnmodified,true);
+  assert.equal(accept.originalPhotoUVUnmodified,true);
+  assert.equal(accept.originalBodySkinIndicesAndWeightsUnmodified,true);
+  assert.equal(accept.trueSourceFrontAndNeutralReverseMaterialGroups,3);
+  assert.equal(accept.sourceOriginalFullDecodedRGBSHA256,shell.originalDecodedRGBSHA256);
+  assert.equal(accept.sourceFrontRGBTextureSHA256,shell.sourceMaskedOriginalRGBTexSHA256);
+  assert.equal(accept.provisionalBindWeights,true);
+  assert.equal(accept.noClothDrapeOrContactSafetyClaim,true);
+  assert.equal(accept.consumer3DAdmitted,false);
+  assert.equal(accept.familyAlpha,'HOLD');
+  const rest=await page.evaluate(()=>window.__M2RealRigPhotoTrial
+   .setSourceSkinnedMotionTrialPose('rest'));
+  assert.equal(rest.actualSourceSkinnedPhotoMesh,true);
+  assert.equal(rest.trueSkeletonBoneCount,163);
+  assert.ok(rest.threeOriginalPhotoVertexDisplacements.every(x=>x<=.00001),
+   'original bound source 3D not stable in true source rest');
+  const shot1=await page.locator('#scene').screenshot();
+  assert.ok(shot1.length>9000);
+  await writeFile(resultDir+browserName+'-'+kind+
+   '-ORIGINAL-MET-SOURCE-SKINNED-REST-163bone-HOLD.png',shot1);
+  const posed=await page.evaluate(()=>window.__M2RealRigPhotoTrial
+   .setSourceSkinnedMotionTrialPose('bend'));
+  assert.equal(posed.actualNamedOriginalJoint,'spine04');
+  assert.equal(posed.actualOriginalJointPoseChanged,true);
+  assert.equal(posed.trueSkeletonBoneCount,163);
+  assert.ok(posed.maximumMeasuredOriginalPhotoSourceVertexDisplacement>.001,
+   'true original photo front MUST ACTUALLY DEFORM with original source joint');
+  assert.ok(posed.threeOriginalPhotoVertexDisplacements.some(x=>x>.001),
+   'source original photopanel has no skeletal deformation witness');
+  assert.equal(posed.originalSourcePositionAndUVStillImmutable,true);
+  assert.equal(posed.consumer3DAdmitted,false);
+  assert.equal(posed.physicalContactOrDrapeCleared,false);
+  const shot2=await page.locator('#scene').screenshot();
+  assert.ok(shot2.length>9000);
+  assert.notEqual(hash(shot1),hash(shot2),
+   'real CC0 skeleton motion must visibly change original-photo-posed GL render');
+  await writeFile(resultDir+browserName+'-'+kind+
+   '-ORIGINAL-MET-SOURCE-SKINNED-SPINE04-BEND-163bone-HOLD.png',shot2);
+  const restored=await page.evaluate(()=>window.__M2RealRigPhotoTrial
+   .setSourceSkinnedMotionTrialPose('rest'));
+  assert.equal(restored.stage,'rest');
+  assert.ok(restored.threeOriginalPhotoVertexDisplacements.every(x=>x<=.00001),
+   'original 163bone pose failed to restore source photo vertices exactly');
+  const shot3=await page.locator('#scene').screenshot();
+  assert.equal(hash(shot3),hash(shot1),
+   'restored genuine source skeleton should return to same native raster');
+  assert.equal(restored.consumer3DAdmitted,false);
+  skeletonPoseEvidence.push({avatar:kind,boneCount:163,
+   originalGLBSHA256:rigHashes[kind],
+   genuineSourceJPEG_SHA256:hash(image),
+   authenticPhotoRGBA_SHA256:shell.sourceMaskedOriginalRGBTexSHA256,
+   trueOriginalNamedSpine04AngleDegrees:12,
+   observedPhotoSkinnedMaxWorldVertexMove:
+    posed.maximumMeasuredOriginalPhotoSourceVertexDisplacement,
+   originalRestFrameSHA256:hash(shot1),originalPosedFrameSHA256:hash(shot2),
+   originalRestoredFrameSHA256:hash(shot3),
+   originalRestRestoredRasterIdentical:hash(shot1)===hash(shot3),
+   photoUVRGBAAndOriginalRigWeightsUnmodified:true,
+   realOriginalSkeletonBinding:true,provisionalNotPhysicallyFitted:true,
+   noCollisionSafetyOrDrapeProved:true,consumer3DAdmitted:false});
+ }
+ assert.equal(skeletonPoseEvidence.length,2);
  assert.equal(sourceRows.length,6);
  assert.equal(new Set(pngHash.map(x=>x.sha256)).size,6,
   'genuine original anatomy/render image must vary across 2 rigs and rotations');
@@ -228,6 +306,7 @@ try{
   originalPhotoTextureRGBA_SHA256:shell.sourceMaskedOriginalRGBTexSHA256,
   genuineRealMaleFemaleRigSHA256:rigHashes,
   sourceRows,originalRenderedScreenshotSHA256:pngHash,
+  trueOriginalLicensedBoneSkinnedSourcePhotoResearch:skeletonPoseEvidence,
   noRealSourceCameraCalibration:true,noOriginalMetricScale:true,
   noActualBodySourceGarmentFitClaim:true,noBVHBodyClothSafetyAcceptance:true,
   sourceUnknownReverseAndUnknownClothDrape:true,
@@ -240,6 +319,8 @@ try{
  console.log('M2_TRUE_MET_ORIGINAL_SOURCE_BOTH_163BONE_NO_PHYSICAL_CALIBRATION '+JSON.stringify({
   engine:browserName,rigs:['female','male'],samples:sourceRows.length,
   distinctActualRenderedScreenshots:pngHash.length,
+  originalReal163boneSkinnedAndReversiblyPosedAvatars:skeletonPoseEvidence.length,
+  genuineOriginalSourceSkinnedVertexDisplacementProved:true,
   originalMaskedRGBVerified:true,originalRigBytesAndSkinsUnmodified:true,
   physicallyFitted:false,collisionCleared:false,
   browserErrors:failures.length,externalHTTP:0,
