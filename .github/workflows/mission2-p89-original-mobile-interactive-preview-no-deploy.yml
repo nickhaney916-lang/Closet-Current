@@ -1,0 +1,110 @@
+name: "M2 P89 real original photo interactive mobile 2D 3D preview NO DEPLOY HOLD"
+on:
+  push:
+    branches:
+      - research/mission2-p89-interactive-source-viewer-mobile-20261118-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  native-original-source-input-and-private-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Frozen verified original photo shell parent plus exactly 4 limited source/research paths only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor bec42338eb24d884c074351e69149aae03e85987 HEAD
+          git diff --exit-code bec42338eb24d884c074351e69149aae03e85987 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          while IFS= read -r p; do
+            case "$p" in
+              research/parallel89/interactive-original-source-preview89.html|research/parallel89/met-original-mask-rgb-uv-front89.mjs|scripts/test-parallel89-interactive-source-mobile89.mjs|.github/workflows/mission2-p89-original-mobile-interactive-preview-no-deploy.yml) ;;
+              *) echo "Other team/product/hosted/locked photo file modified: $p"; exit 1 ;;
+            esac
+          done < <(git diff --name-only bec42338eb24d884c074351e69149aae03e85987 HEAD)
+      - name: Install pinned original photo decoder, browser and inherited original owner regression deps
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Source-viewer independent JavaScript syntax parsing
+        run: node --check scripts/test-parallel89-interactive-source-mobile89.mjs
+      - name: Fetch actual four original museum HTTPS JPEGs and check full original RGB SHA-256
+        run: node scripts/test-parallel89-met-four-original-photo-silhouettes.mjs
+      - name: Pinned disposable ORIGINAL source conservative mask generator
+        run: |
+          python -m venv .m2-met-mask-env
+          .m2-met-mask-env/bin/python -m pip install --no-cache-dir --disable-pip-version-check numpy==1.26.4 opencv-python-headless==4.11.0.86 scipy==1.14.1
+      - name: Reproduce 4 original museum photo full masks from actual decoded RGB, NEVER human approved
+        run: .m2-met-mask-env/bin/python scripts/test-parallel89-met-four-real-full-masks.py
+      - name: Verify true licensed JPEG, mask original SHA, real source 3D preview geometry and original 2D gates
+        run: node scripts/test-parallel89-interactive-source-mobile89.mjs
+      - name: Build original held app without staging/production access
+        run: node scripts/build.mjs
+      - name: Entire inherited no-deploy private original photo, owner, backup and source contracts
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: No owner app, signed auth/cloud, source photos or production diff
+        run: git diff --exit-code bec42338eb24d884c074351e69149aae03e85987 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M2-P89-actual-Met-original-source-and-unreviewed-mask-interactive-research-HOLD
+          path: |
+            benchmark/parallel89-met70759-four-photo-research/
+            benchmark/parallel89-met70759-full-alpha-proposals/
+            benchmark/parallel89-interactive-source-2d-3d-HOLD/
+          retention-days: 7
+          if-no-files-found: error
+
+  real-chromium-webkit-mobile-preview-acceptance:
+    needs: native-original-source-input-and-private-regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P89_BROWSER: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Frozen exact parent source and unmodified app/owner/photo constraints
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor bec42338eb24d884c074351e69149aae03e85987 HEAD
+          git diff --exit-code bec42338eb24d884c074351e69149aae03e85987 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+      - uses: actions/download-artifact@v4
+        with:
+          name: M2-P89-actual-Met-original-source-and-unreviewed-mask-interactive-research-HOLD
+          path: benchmark/
+      - name: Pinned real native original image decoder and browser
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1
+      - name: Actual ${{ matrix.engine }} source-locked mobile 320 390 430 interactive 2D GPU proof and fail-closed
+        run: node scripts/test-parallel89-interactive-source-mobile89.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M2-P89-genuine-${{ matrix.engine }}-interactive-original-2D-3D-research-screenshots-HOLD
+          path: benchmark/parallel89-interactive-source-2d-3d-HOLD/
+          retention-days: 14
+          if-no-files-found: warn

@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Closet Current | Original-photo research preview (HOLD)</title>
+<style>
+:root{color-scheme:light;--ink:#202c35;--sub:#526370;--line:#cad3d9;--accent:#2a6174;--back:#f6f7f7}
+*{box-sizing:border-box}body{margin:0;background:var(--back);color:var(--ink);
+ font:16px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:clamp(12px,4vw,28px)}
+h1{font-size:clamp(21px,5vw,29px);line-height:1.22;margin:6px 0 8px}
+p{margin:7px 0 12px}small,.quiet{font-size:13px;color:var(--sub)}
+header{margin-bottom:13px}.tag{display:inline-block;font-size:12px;font-weight:700;
+ letter-spacing:.04em;border:1px solid #a97034;border-radius:20px;padding:3px 9px;color:#83591e}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+button{font:inherit;min-height:44px;border:1.5px solid var(--accent);border-radius:9px;
+ color:var(--accent);background:white;padding:8px 15px;cursor:pointer;font-weight:650}
+button[aria-pressed="true"]{background:var(--accent);color:white}
+button:disabled{opacity:.50;cursor:not-allowed}button:focus-visible,input:focus-visible{
+ outline:3px solid #b97822;outline-offset:3px}
+.frame{width:100%;max-width:430px;aspect-ratio:1/1;margin:0 auto;
+ background:#eceef0;display:flex;align-items:center;justify-content:center;
+ border:1px solid var(--line);border-radius:12px;overflow:hidden;touch-action:pan-y}
+.frame>img,.frame>canvas{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}
+.frame>canvas{touch-action:none}
+[hidden]{display:none!important}
+.slider{display:grid;gap:3px;margin:14px auto 5px;max-width:430px}
+.slider label{font-size:15px;font-weight:650}
+.slider input{width:100%;height:40px;accent-color:var(--accent)}
+.status{max-width:430px;margin:9px auto 0;background:white;border:1px solid var(--line);
+ padding:10px 13px;border-radius:9px;min-height:46px}
+.note{border-top:1px solid var(--line);padding-top:11px;margin-top:19px}
+.note strong{color:#804b18}
+@media(max-width:360px){.controls button{flex:1 1 130px;padding-inline:8px}.frame{border-radius:8px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<span class="tag">RESEARCH ONLY · FAMILY ALPHA HOLD</span>
+<h1>Original garment photograph and 3D research shell</h1>
+<p class="quiet">The photographed front is authentic institutional source imagery.
+The reverse and edge walls in 3D are <strong>unobserved placeholders</strong>, not reconstructed fabric.
+This prototype does not fit a body, measure cloth, or authorize a wearable 3D item.</p>
+</header>
+<nav class="controls" aria-label="Research preview mode">
+<button id="original" type="button" aria-pressed="true">Original photo 2D</button>
+<button id="shell" type="button" aria-pressed="false" disabled>Unapproved 3D research</button>
+</nav>
+<section aria-label="Source photograph and research mesh">
+<div class="frame" id="frame">
+<img id="photo" alt="Original museum garment photograph, source 2551406 front view" hidden>
+<canvas id="gl" width="320" height="320" aria-label="Rotatable research-only original-photo front with neutral inferred reverse" hidden></canvas>
+</div>
+<div class="slider">
+<label for="rotation">Rotate research shell: <output id="angle" for="rotation">0°</output></label>
+<input id="rotation" type="range" min="0" max="180" step="1" value="0" disabled
+ aria-describedby="view-status">
+</div>
+<p id="view-status" class="status" role="status" aria-live="polite">
+Verifying original photograph; 2D mode only until evidence is checked.
+</p>
+</section>
+<p class="note quiet"><strong>Not approved for a family test.</strong>
+Only photograph 2551406 has a source-verified “a) front” caption.
+Original-mask proposals remain unreviewed; unknown garment back, physical depth,
+skeleton fit, cloth collisions, drape and human realism are not established.
+If evidence or GPU capability fails, this interface stays in source-original 2D.</p>
+</main>
+<script type="module">
+const ALLOWED_SOURCE_JPEG_SHA=new Set([
+ '780b082ff1408bc838d525364d95f455139e4c3c817fc39fe5dc1b756caca5c6',
+ '528f5105194df3c92dcc3e4c415f7d357069c7ca0a28bbec29ba4a5ec1741ee5'
+]);
+const el=id=>document.getElementById(id);
+const original=el('original'),shellButton=el('shell'),photo=el('photo'),canvas=el('gl');
+const slider=el('rotation'),angleText=el('angle'),status=el('view-status');
+let gl=null,graphics=null,mesh=null,verified=false,mode='photo',angle=0,
+ sourceObjectUrl=null,contextFailed=false,errorCode=null,sourceVerifiedJPEGHash=null;
+const b64Digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),
+ n=>n.toString(16).padStart(2,'0')).join('');
+function message(text){status.textContent=text}
+function displayPhoto(text){
+ mode='photo';photo.hidden=!sourceObjectUrl;canvas.hidden=true;
+ original.setAttribute('aria-pressed','true');shellButton.setAttribute('aria-pressed','false');
+ slider.disabled=true;
+ if(text)message(text);
+}
+function prevent3D(reason){
+ errorCode=reason;verified=false;shellButton.disabled=true;
+ displayPhoto('Original photograph 2D only — '+reason+'.');
+}
+function buildGL(){
+ const ctx=canvas.getContext('webgl2',{alpha:true,antialias:false,
+  preserveDrawingBuffer:true,premultipliedAlpha:false});
+ if(!ctx)throw Error('native-WebGL2-unavailable');
+ function shader(type,source){
+  const sh=ctx.createShader(type);ctx.shaderSource(sh,source);ctx.compileShader(sh);
+  if(!ctx.getShaderParameter(sh,ctx.COMPILE_STATUS))
+   throw Error('WebGL-compile-invalid');
+  return sh;
+ }
+ const vert=shader(ctx.VERTEX_SHADER,`#version 300 es
+ in vec3 p;in vec2 t;out vec2 texUV;uniform float theta;
+ void main(){float c=cos(theta),s=sin(theta);
+ vec3 v=vec3(p.x*c+p.z*s,p.y,-p.x*s+p.z*c);
+ gl_Position=vec4(v.xy*1.38,-v.z*.9,1.);texUV=t;}`);
+ const frag=shader(ctx.FRAGMENT_SHADER,`#version 300 es
+ precision highp float;in vec2 texUV;out vec4 pixel;
+ uniform sampler2D sourceRGB;uniform int region;
+ void main(){pixel=region==0?texture(sourceRGB,vec2(texUV.x,1.-texUV.y)):
+ region==1?vec4(12./255.,193./255.,221./255.,1.):
+ vec4(244./255.,181./255.,77./255.,1.);}`);
+ const program=ctx.createProgram();ctx.attachShader(program,vert);
+ ctx.attachShader(program,frag);ctx.linkProgram(program);
+ if(!ctx.getProgramParameter(program,ctx.LINK_STATUS))throw Error('WebGL-link-invalid');
+ ctx.useProgram(program);
+ function attrib(name,values,size){
+  const buf=ctx.createBuffer();ctx.bindBuffer(ctx.ARRAY_BUFFER,buf);
+  ctx.bufferData(ctx.ARRAY_BUFFER,new Float32Array(values),ctx.STATIC_DRAW);
+  const loc=ctx.getAttribLocation(program,name);
+  if(loc<0)throw Error('WebGL-attribute-'+name);
+  ctx.enableVertexAttribArray(loc);
+  ctx.vertexAttribPointer(loc,size,ctx.FLOAT,false,0,0);
+ }
+ attrib('p',mesh.positions,3);attrib('t',mesh.uv,2);
+ ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER,ctx.createBuffer());
+ ctx.bufferData(ctx.ELEMENT_ARRAY_BUFFER,new Uint32Array(mesh.indices),ctx.STATIC_DRAW);
+ const texture=ctx.createTexture();ctx.activeTexture(ctx.TEXTURE0);
+ ctx.bindTexture(ctx.TEXTURE_2D,texture);
+ for(const [p,v] of [[ctx.TEXTURE_MIN_FILTER,ctx.NEAREST],
+  [ctx.TEXTURE_MAG_FILTER,ctx.NEAREST],[ctx.TEXTURE_WRAP_S,ctx.CLAMP_TO_EDGE],
+  [ctx.TEXTURE_WRAP_T,ctx.CLAMP_TO_EDGE]])ctx.texParameteri(ctx.TEXTURE_2D,p,v);
+ ctx.pixelStorei(ctx.UNPACK_ALIGNMENT,1);
+ ctx.texImage2D(ctx.TEXTURE_2D,0,ctx.RGBA,mesh.textureDimensions[0],mesh.textureDimensions[1],
+  0,ctx.RGBA,ctx.UNSIGNED_BYTE,new Uint8Array(mesh.sourceRGBA));
+ ctx.uniform1i(ctx.getUniformLocation(program,'sourceRGB'),0);
+ ctx.enable(ctx.DEPTH_TEST);ctx.depthFunc(ctx.LESS);
+ return {ctx,program};
+}
+function measurePixels(){
+ if(!gl||mode!=='shell')return null;
+ const pixels=new Uint8Array(320*320*4);gl.readPixels(0,0,320,320,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
+ let originalPixels=0,neutralBackPixels=0,inferredWallPixels=0,opaque=0;
+ for(let i=0;i<pixels.length;i+=4)if(pixels[i+3]){
+  opaque++;
+  if(pixels[i]===12&&pixels[i+1]===193&&pixels[i+2]===221)neutralBackPixels++;
+  else if(pixels[i]===244&&pixels[i+1]===181&&pixels[i+2]===77)inferredWallPixels++;
+  else originalPixels++;
+ }
+ return {originalPixels,neutralBackPixels,inferredWallPixels,opaque,gpuError:gl.getError()};
+}
+function render(){
+ if(!gl||mode!=='shell'||!verified)return;
+ gl.useProgram(graphics.program);
+ gl.uniform1f(gl.getUniformLocation(graphics.program,'theta'),angle*Math.PI/180);
+ gl.viewport(0,0,320,320);gl.clearColor(0,0,0,0);gl.clearDepth(1);
+ gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+ for(const [name,region] of [['sourcePhotoFront',0],['unobservedNeutralBack',1],
+  ['inferredNeutralSideWalls',2]]){
+  const group=mesh.ranges[name];
+  gl.uniform1i(gl.getUniformLocation(graphics.program,'region'),region);
+  gl.drawElements(gl.TRIANGLES,group.count,gl.UNSIGNED_INT,group.start*4);
+ }
+ gl.finish();
+ if(gl.getError()!==gl.NO_ERROR){prevent3D('WebGL-render-failed');return;}
+ angleText.value=angle+'°';
+ if(angle<=45)message('Source photograph: verified front image. Rear remains unobserved.');
+ else if(angle>=135)message('REVERSE IS UNKNOWN: cyan is a neutral placeholder, not original clothing.');
+ else message('Oblique research view: gold edge and cyan reverse are inferred, not photographed.');
+}
+function setAngle(value){
+ if(!verified||mode!=='shell')return;
+ angle=Math.max(0,Math.min(180,Math.round(Number(value))));
+ if(!Number.isFinite(angle))angle=0;
+ slider.value=String(angle);render();
+}
+function showShell(){
+ if(!verified||contextFailed||!mesh)return;
+ try{
+  if(!graphics){graphics=buildGL();gl=graphics.ctx;}
+  mode='shell';canvas.hidden=false;photo.hidden=true;
+  original.setAttribute('aria-pressed','false');shellButton.setAttribute('aria-pressed','true');
+  slider.disabled=false;render();
+ }catch{prevent3D('WebGL-init-failed');}
+}
+original.addEventListener('click',()=>displayPhoto('Original institutional source photograph. No wearable 3D admission.'));
+shellButton.addEventListener('click',showShell);
+slider.addEventListener('input',()=>setAngle(slider.value));
+let dragX=null,dragAngle=0;
+canvas.addEventListener('pointerdown',e=>{
+ if(mode!=='shell')return;dragX=e.clientX;dragAngle=angle;
+ canvas.setPointerCapture?.(e.pointerId);
+});
+canvas.addEventListener('pointermove',e=>{
+ if(dragX===null)return;setAngle(dragAngle+(e.clientX-dragX)*.9);
+});
+for(const ev of ['pointerup','pointercancel'])canvas.addEventListener(ev,()=>{dragX=null;});
+canvas.addEventListener('webglcontextlost',e=>{
+ e.preventDefault();contextFailed=true;prevent3D('WebGL-context-lost');
+});
+const readiness=async()=>{
+ try{
+  const [manifestResponse,imageResponse]=await Promise.all([
+   fetch('/source-locked-preview.json',{cache:'no-store'}),
+   fetch('/original-source.jpg',{cache:'no-store'})
+  ]);
+  if(!imageResponse.ok)throw Error('original-source-JPEG-missing');
+  const originalBytes=await imageResponse.arrayBuffer();
+  const jpgHash=await b64Digest(originalBytes);
+  if(!ALLOWED_SOURCE_JPEG_SHA.has(jpgHash))
+   throw Error('original-source-JPEG-byte-identity-invalid');
+  // Independently verified original JPEG remains available in 2D even if
+  // the separate derived 3D manifest is missing, corrupt or unapproved.
+  sourceVerifiedJPEGHash=jpgHash;
+  sourceObjectUrl=URL.createObjectURL(new Blob([originalBytes],{type:'image/jpeg'}));
+  photo.src=sourceObjectUrl;await photo.decode();
+  if(photo.naturalWidth!==1200||photo.naturalHeight!==933)
+   throw Error('original-source-2d-dimensions-invalid');
+  displayPhoto('Verified original 2D photograph. Checking unapproved research shell.');
+  if(!manifestResponse.ok)throw Error('research-3D-manifest-missing');
+  const signed=await manifestResponse.json();
+  if(signed.originalJPEG_SHA256!==jpgHash||
+   signed.sourceOriginalDecodedRGB_SHA256!=='e0b7738db57ac4b7c27d4f03f724442f53c8e85f09f7a139839dfaa04c86cbec'||
+   signed.sourceMaskPNG_SHA256!=='34a93a1a8a2ea58f92a560703936a83b390e92a50d7103ff7ff1586ffe0841aa'||
+   signed.imageId!==2551406||signed.exactMuseumCaption!=='a) front'||
+   signed.sourcePhoto2DFallbackRequired!==true||
+   signed.consumer3DAdmitted!==false||signed.releaseAuthorized!==false||
+   signed.familyAlpha!=='HOLD'||signed.verifiedFrontOnly!==true||
+   signed.unknownReverseNeutral!==true)
+   throw Error('source-identity-or-approval-contract-rejected');
+  if(!Array.isArray(signed.positions)||!Array.isArray(signed.uv)||
+   !Array.isArray(signed.indices)||!Array.isArray(signed.sourceRGBA)||
+   signed.positions.length>600000||signed.indices.length>500000||
+   signed.indices.length<1000||signed.sourceRGBA.length!==signed.textureDimensions[0]*signed.textureDimensions[1]*4||
+   !Number.isSafeInteger(signed.textureDimensions[0])||!Number.isSafeInteger(signed.textureDimensions[1])||
+   signed.uv.length/2!==signed.positions.length/3||
+   !Number.isSafeInteger(signed.ranges?.sourcePhotoFront?.count)||
+   !Number.isSafeInteger(signed.ranges?.unobservedNeutralBack?.count)||
+   !Number.isSafeInteger(signed.ranges?.inferredNeutralSideWalls?.count)||
+   signed.ranges.sourcePhotoFront.start!==0||
+   signed.ranges.unobservedNeutralBack.start!==signed.ranges.sourcePhotoFront.count||
+   signed.ranges.inferredNeutralSideWalls.start!==signed.ranges.unobservedNeutralBack.start+
+    signed.ranges.unobservedNeutralBack.count||
+   signed.ranges.inferredNeutralSideWalls.start+signed.ranges.inferredNeutralSideWalls.count!==
+    signed.indices.length)
+   throw Error('source-geometry-contract-rejected');
+  const rgbaHash=await b64Digest(new Uint8Array(signed.sourceRGBA));
+  if(rgbaHash!==signed.sourceRGBA_SHA256||
+    rgbaHash!=='b8adb2fbd644203341051d6475788c69c1954868e5c2e8942f2fed0a3d8f116d')
+   throw Error('original-source-RGBA-tampered');
+  mesh={
+   positions:signed.positions,uv:signed.uv,indices:signed.indices,
+   sourceRGBA:signed.sourceRGBA,ranges:signed.ranges,
+   textureDimensions:signed.textureDimensions
+  };
+  verified=true;shellButton.disabled=false;
+  displayPhoto('Verified original 2D photograph. 3D research shell is optional and unapproved.');
+ }catch(e){
+  prevent3D(e instanceof Error?e.message:'source-verification-failed');
+ }
+};
+window.__m2PreviewEvidence={
+ getSnapshot:()=>({verified,mode,angle,contextFailed,errorCode,
+  originalImageVisible:!photo.hidden,previewVisible:!canvas.hidden,
+  sourceSHA256:verified?sourceVerifiedJPEGHash:null,
+  consumer3DAdmitted:false,familyAlpha:'HOLD'}),
+ getPixelCounts:()=>measurePixels()
+};
+await readiness();
+</script>
+</body>
+</html>

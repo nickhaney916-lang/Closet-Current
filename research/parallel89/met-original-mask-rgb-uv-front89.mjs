@@ -17,7 +17,8 @@ import {assessMet70759PhotoPartViewEvidence89 as roleGate}
 const sha=x=>createHash('sha256').update(x).digest('hex');
 const evidence=Object.freeze({
  2551406:Object.freeze({
-  observedOriginalJPEGByteSHA256:Object.freeze(["780b082ff1408bc838d525364d95f455139e4c3c817fc39fe5dc1b756caca5c6"]),
+  observedOriginalJPEGByteSHA256:Object.freeze(["780b082ff1408bc838d525364d95f455139e4c3c817fc39fe5dc1b756caca5c6",
+   "528f5105194df3c92dcc3e4c415f7d357069c7ca0a28bbec29ba4a5ec1741ee5"]),
   h:933,decoded:'e0b7738db57ac4b7c27d4f03f724442f53c8e85f09f7a139839dfaa04c86cbec',
   maskPNG:'34a93a1a8a2ea58f92a560703936a83b390e92a50d7103ff7ff1586ffe0841aa',
   maskRaw:'757b7c16161de68151c98d514907a6a1004259ae43fcfb7c1a8aa1fa72febfd4',
