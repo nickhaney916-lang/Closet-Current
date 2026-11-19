@@ -70,7 +70,7 @@ test('missing, duplicate, malformed and oversize output cannot certify private s
   complete+'\n'+complete.split('\n')[0],
   complete.replace('M61_GENUINE_P88_TO_PRIVATE_OWNER_V4_RESTORE_SAME_SESSION_PASS {',
    'M61_GENUINE_P88_TO_PRIVATE_OWNER_V4_RESTORE_SAME_SESSION_PASS {invalid,'),
-  complete+'\nJUNK'.repeat(1500000)
+  complete+'\nJUNK'.repeat(2500000)
  ]){
   if(changed.length>8*1024*1024)
    assert.throws(()=>assess(changed),TypeError);
