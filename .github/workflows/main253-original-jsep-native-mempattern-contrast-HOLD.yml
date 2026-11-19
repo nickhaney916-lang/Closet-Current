@@ -1,0 +1,93 @@
+name: MAIN253 original JSEP native true-vs-default-off contrast HOLD
+on:
+  push:
+    branches: [research/main253-original-jsep-native-mempattern-contrast-HOLD]
+permissions:
+  contents: read
+jobs:
+  source-and-regression:
+    name: M253 original source locked / full inherited no-deploy security tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact verified M251 native donor, only four additional research paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=2ee136d3ee78f5a57554a022efb8ce943b8edf5c
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' \
+            '.github/workflows/main253-original-jsep-native-mempattern-contrast-HOLD.yml' \
+            'scripts/main253-original-jsep-native-mempattern-contrast.mjs' \
+            'scripts/test-main253-original-jsep-native-mempattern-contrast-browser.mjs' \
+            'tests/main253-original-jsep-native-mempattern-contrast.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main251-original-jsep-native-option-browser.mjs)" = 887e1e8fa6cc24919450f53612dc6b35b3a1aefe
+          test "$(git rev-parse HEAD:scripts/main251-original-jsep-abi-probe.mjs)" = c1061567b01ec9f6ceb60c7336d38294d6c3f8a4
+          node --check scripts/main253-original-jsep-native-mempattern-contrast.mjs
+          node --check scripts/test-main253-original-jsep-native-mempattern-contrast-browser.mjs
+          node --check tests/main253-original-jsep-native-mempattern-contrast.test.mjs
+      - name: Install pinned original JSEP and test-only runtime dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Pinned original native bridge, precommitted falsification and source-only contract
+        run: |
+          set -euo pipefail
+          node scripts/main251-original-jsep-abi-probe.mjs
+          node --test tests/main253-original-jsep-native-mempattern-contrast.test.mjs
+      - name: Entire inherited original application build and private owner security/backup Node suite
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+
+  real-native-original-jsep:
+    name: M253 real ${{ matrix.engine }} original P94 JSEP ${{ matrix.arm }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {engine: webkit, arm: baseline}
+          - {engine: webkit, arm: pattern_off}
+          - {engine: webkit, arm: pattern_on}
+          - {engine: chromium, arm: pattern_on}
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M253_ENGINE: ${{ matrix.engine }}
+      M253_ARM: ${{ matrix.arm }}
+      M253_SOURCE_ONLY: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Ensure original shipped Worker, M251 donor and binary source boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main251-original-jsep-native-option-browser.mjs)" = 887e1e8fa6cc24919450f53612dc6b35b3a1aefe
+          node --check scripts/test-main253-original-jsep-native-mempattern-contrast-browser.mjs
+      - name: Pinned original JSEP real WebKit/Chromium and model libraries
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: One genuine original model+source-owner journey; record actual compiled native bit and preserve RED
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/test-main253-original-jsep-native-mempattern-contrast-browser.mjs
