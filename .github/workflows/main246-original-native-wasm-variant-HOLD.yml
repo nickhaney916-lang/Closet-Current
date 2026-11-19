@@ -1,0 +1,86 @@
+name: MAIN246 real original graph native WASM asset identity HOLD
+on:
+  push:
+    branches: [research/main246-actual-original-graph-wasm-asset-HOLD]
+  pull_request:
+    branches: [research/main245-original-worker-jsep-runtime-asset-identity-HOLD]
+permissions:
+  contents: read
+jobs:
+  original-source-security:
+    name: M246 immutable source and entire original owner privacy regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exactly four new research paths and original real native graph/worker fixed
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=7b0d11a859e6636d4f5d6e3bfac1fc8d12b4423d
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' '.github/workflows/main246-original-native-wasm-variant-HOLD.yml' 'scripts/main246-original-graph-loaded-wasm-asset.mjs' 'scripts/test-main246-original-native-model-wasm-identity-browser.mjs' 'tests/main246-actual-native-original-wasm-asset.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main243-original-segformer-native-session-browser.mjs)" = fdfb979ca3783cb362cb5eb909612902af0c3b70
+          node --check scripts/main246-original-graph-loaded-wasm-asset.mjs
+          node --check scripts/test-main246-original-native-model-wasm-identity-browser.mjs
+          node --test tests/main246-actual-native-original-wasm-asset.test.mjs
+          M246_SOURCE_ONLY=1 node scripts/test-main246-original-native-model-wasm-identity-browser.mjs
+      - name: Install original pinned published runtime and offline privacy dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original npm integrity, offline build and all inherited photo owner security tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(npm view onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 dist.integrity)" = "sha512-0uS76OPgH0hWCPrFKlL8kYVV7ckM7t/36HfbgoFw6Nd0CZVVbQC4PkrR8mBX8LtNUFZO25IQBqV2Hx2ho3FlbQ=="
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  original-native-browser:
+    name: M246 true original SegFormer ${{ matrix.engine }} ABI and actually loaded WASM ${{ matrix.arm }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [webkit, chromium]
+        arm: [baseline, pattern_off]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M246_ENGINE: ${{ matrix.engine }}
+      M246_ARM: ${{ matrix.arm }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original SegFormer/native source and negative fake/duplicate WASM gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 7b0d11a859e6636d4f5d6e3bfac1fc8d12b4423d HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main243-original-segformer-native-session-browser.mjs)" = fdfb979ca3783cb362cb5eb909612902af0c3b70
+          node --test tests/main246-actual-native-original-wasm-asset.test.mjs
+          M246_SOURCE_ONLY=1 node scripts/test-main246-original-native-model-wasm-identity-browser.mjs
+      - name: Install exact native original model WASM and Playwright research-only
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original pinned graph real browser native model with exact served WASM hash
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/test-main246-original-native-model-wasm-identity-browser.mjs
