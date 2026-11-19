@@ -44,6 +44,29 @@ try{
  assert.equal(controls.stillUnapproved,true);
  assert.equal(controls.r.sourceOriginalRGBSHA256,
   'e0b7738db57ac4b7c27d4f03f724442f53c8e85f09f7a139839dfaa04c86cbec');
+ // Source-attested original RGB and mask pixels, alternative machine method only.
+ const labOriginal=await page.evaluate(()=>{
+  const p=JSON.parse(document.getElementById('source-packet').textContent);
+  return p.embeddedOriginalSourcePhotoAssets.map(x=>({
+   id:x.imageId,diag:x.independentSourceLabBoundary}));
+ });
+ assert.deepEqual(labOriginal.filter(x=>x.diag).map(x=>x.id),[2551406,2551408]);
+ const d6=labOriginal.find(x=>x.id===2551406).diag;
+ assert.equal(d6.sourceOriginalRGBSHA256,controls.r.sourceOriginalRGBSHA256);
+ assert.equal(d6.sourceOriginalCoreMaskSHA256,controls.r.originalMaskCoreSHA256);
+ assert.equal(d6.originalRegionId,'2551406-region-1');
+ assert.equal(d6.originalConnectedDisputedPixelCount,13180);
+ assert.equal(d6.allSmoothingClothVotePixels,2);
+ assert.equal(d6.allSmoothingBackgroundVotePixels,11777);
+ assert.equal(d6.smoothingSensitiveMixedVotePixels,1401);
+ assert.equal(d6.humanAlphaBoundaryApproved,false);
+ assert.equal(d6.consumer3DAdmitted,false);
+ assert.equal(d6.releaseAuthorized,false);
+ assert.equal(d6.fourScalesSameAlgorithmNotIndependentModelVotes,true);
+ assert.equal(d6.coreAndExteriorPriorsNotIndependentExpertGroundTruth,true);
+ await page.waitForFunction(()=>document.getElementById('labStats').textContent.includes('13180 disputed px'));
+ assert.match(await page.locator('#labStats').innerText(),/NO expert truth, NO accepted pixels or 3D/);
+ assert.ok(await page.locator('#lab').evaluate(c=>c.height>0));
  await page.locator('#decision').selectOption('propose_add_garment_fabric');
  await page.locator('#comment').fill('Original source region appears to need a drawn contour; review only.');
  const clicks=await page.evaluate(()=>{
@@ -83,6 +106,20 @@ try{
  await page.locator('#photo').selectOption('2551408');
  await page.waitForFunction(()=>document.getElementById('region').value==='2551408-region-1');
  assert.match(await page.locator('#metrics').innerText(),/not independently verified/);
+ const d8=labOriginal.find(x=>x.id===2551408).diag;
+ assert.equal(d8.originalRegionId,'2551408-region-1');
+ assert.equal(d8.originalConnectedDisputedPixelCount,549);
+ assert.equal(d8.allSmoothingClothVotePixels,168);
+ assert.equal(d8.allSmoothingBackgroundVotePixels,214);
+ assert.equal(d8.smoothingSensitiveMixedVotePixels,167);
+ await page.waitForFunction(()=>document.getElementById('labStats').textContent.includes('549 disputed px'));
+ assert.match(await page.locator('#labStats').innerText(),/168 cloth-like, 214 background-like, 167 unstable/);
+ await page.locator('#photo').selectOption('2551407');
+ await page.waitForFunction(()=>document.getElementById('labStats').textContent.includes('No alternative Lab method evaluated'));
+ assert.equal(labOriginal.find(x=>x.id===2551407).diag,null);
+ assert.equal(labOriginal.find(x=>x.id===2551409).diag,null);
+ await page.locator('#photo').selectOption('2551408');
+ await page.waitForFunction(()=>document.getElementById('labStats').textContent.includes('549 disputed px'));
  await page.locator('#decision').selectOption('uncertain_request_more_evidence');
  await page.locator('#comment').fill('Original waist seam needs independent qualified pixel review');
  await page.locator('#save').click();
@@ -136,6 +173,8 @@ try{
   exportedSourceBoundProposals:2,
   importedExactSourceProposalPreviewPixels:proposed,
   adversarialForgedHumanAndWrongPhotoImportsRejected:2,
+   original1406And1408LabDisagreementsRendered:true,
+   unstudiedMuseumPhotosNeverInferred:true,
   originalMaskAndUncertaintyUnionUnmodified:true,
   externalRequests:external.length,
   originalGarmentMaskModified:false,sourceMaskHumanApproved:false,

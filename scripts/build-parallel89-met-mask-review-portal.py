@@ -25,6 +25,7 @@ from met_review_handoff89 import (
  SOURCE_RGB_SHA,SOURCE_HEIGHTS,require_source_review_manifest,
  build_source_review_packet)
 from met_full_mask_proposal89 import propose_full_mask
+from met_local_lab_boundary_stability89 import audit_real_met_boundary_stability89
 
 REVIEW=ROOT/"benchmark"/"parallel89-met70759-boundary-review-UNAPPROVED"
 RGB=ROOT/"benchmark"/"parallel89-met70759-four-photo-research"
@@ -64,6 +65,50 @@ for photo_id,rec in sorted(verified.items()):
     if (not np.array_equal(candidate,source_core) or
         hashlib.sha256(source_union.tobytes()).hexdigest()!=rec["uncertaintyUnionSHA256"]):
         raise ValueError("source-photo-uncertainty-union-must-match-reviewed-true-original")
+    # A separate method using SHA-verified original museum pixels and original
+    # machine priors, NOT expert ground truth or approved garment geometry.
+    lab_diagnostic=None
+    if photo_id in (2551406,2551408):
+        lab_maps,lab_receipt=audit_real_met_boundary_stability89(
+          np.ascontiguousarray(rgb),source_core,source_union,rec,photo_id)
+        original_regions=next(
+          x["regions"] for x in packet["images"] if x["imageId"]==photo_id)
+        matches=[r for r in original_regions
+                 if r["bboxOriginalPixels"]==
+                      lab_receipt["originalPhotoSourceBBoxPixels"]
+                 and r["disputedPixelCount"]==
+                      lab_receipt["originalConnectedDisputedPixelCount"]]
+        if len(matches)!=1:
+            raise ValueError("LAB-dispute-must-match-exact-source-review-region")
+        source_overlay=cv2.cvtColor(rgb.copy(),cv2.COLOR_RGB2BGR)
+        # BGR: background-orange, cloth-cyan, unstable-magenta; no mask edit.
+        source_overlay[lab_maps["all_background"]>0]=(20,165,240)
+        source_overlay[lab_maps["all_cloth"]>0]=(235,220,30)
+        source_overlay[lab_maps["mixed"]>0]=(220,40,190)
+        lab_ok,lab_png=cv2.imencode(".png",source_overlay)
+        if not lab_ok:
+            raise ValueError("LAB-source-diagnostic-PNG-encode-failed")
+        lab_diagnostic={
+          "sourceOriginalRGBSHA256":SOURCE_RGB_SHA[photo_id],
+          "sourceOriginalCoreMaskSHA256":rec["originalMaskCoreSHA256"],
+          "originalRegionId":matches[0]["id"],
+          "originalConnectedDisputedPixelCount":
+              lab_receipt["originalConnectedDisputedPixelCount"],
+          "allSmoothingClothVotePixels":
+              lab_receipt["allSmoothingClothVotePixels"],
+          "allSmoothingBackgroundVotePixels":
+              lab_receipt["allSmoothingBackgroundVotePixels"],
+          "smoothingSensitiveMixedVotePixels":
+              lab_receipt["smoothingSensitiveMixedVotePixels"],
+          "fourScalesSameAlgorithmNotIndependentModelVotes":True,
+          "coreAndExteriorPriorsNotIndependentExpertGroundTruth":True,
+          "sourceOnlyResearchVoteOverlayPNG":"data:image/png;base64,"+
+              base64.b64encode(lab_png.tobytes()).decode("ascii"),
+          "humanAlphaBoundaryApproved":False,
+          "sourcePhoto2DFallbackRequired":True,
+          "consumer3DAdmitted":False,
+          "releaseAuthorized":False
+        }
     ok,sourceUnionPNG=cv2.imencode(".png",source_union)
     if not ok:
         raise ValueError("original-source-uncertainty-union-png-encoding-failed")
@@ -79,6 +124,7 @@ for photo_id,rec in sorted(verified.items()):
         base64.b64encode(maskPNG.tobytes()).decode("ascii"),
       "sourceUncertaintyUnionMaskPNG":"data:image/png;base64,"+
         base64.b64encode(sourceUnionPNG.tobytes()).decode("ascii"),
+      "independentSourceLabBoundary":lab_diagnostic,
       "sourcePhotoAndMaskStillUnreviewed":True
     })
 packet["embeddedOriginalSourcePhotoAssets"]=photos
@@ -160,7 +206,10 @@ footer{margin-top:14px;color:#52606d;font-size:.85rem}
 <div class="canvases">
 <div class="canvascol"><h2>Source photo — draw polygon here</h2><canvas id="original" aria-label="Original photograph crop; click to add correction polygon"></canvas></div>
 <div class="canvascol"><h2>Automated uncertainty overlay</h2><canvas id="overlay" aria-label="Mask uncertainty cropped from original photograph"></canvas></div>
-<div class="canvascol"><h2>UNAPPROVED proposed pixels only</h2>
+<div class="canvascol"><h2>Source Lab comparison — machine-only</h2>
+    <canvas id="lab" aria-label="Original-photo local Lab vote sensitivity image"></canvas>
+    <p id="labStats" class="note">No independently labelled ground truth available.</p></div>
+    <div class="canvascol"><h2>UNAPPROVED proposed pixels only</h2>
 <canvas id="candidate" aria-label="Unapproved proposed additions, never original accepted garment mask"></canvas>
 <p id="previewStats" class="note">Zero proposed pixels admitted to the original mask.</p></div>
 </div>
@@ -189,7 +238,10 @@ async function loadPhoto(id){
   makeImage(a.originalSourceLosslessPNG),
   makeImage(a.sourceBoundaryResearchOverlayPNG),
   makeImage(a.sourceConservativeCandidateMaskPNG),
-  makeImage(a.sourceUncertaintyUnionMaskPNG)]));
+  makeImage(a.sourceUncertaintyUnionMaskPNG),
+   a.independentSourceLabBoundary?
+    makeImage(a.independentSourceLabBoundary.sourceOnlyResearchVoteOverlayPNG):
+    Promise.resolve(null)]));
  }
  return loaded.get(id);
 }
@@ -202,7 +254,7 @@ function range(r,img){
 async function render(){
  if(!current)return;
  const r=regions.get(current),image=photos.get(r.imageId);
- const [source,over,coreMask,unionMask]=await loadPhoto(r.imageId);crop=range(r,image);
+ const [source,over,coreMask,unionMask,labOverlay]=await loadPhoto(r.imageId);crop=range(r,image);
  const sc=Math.min(700/crop.w,480/crop.h),w=Math.max(1,Math.round(crop.w*sc)),
   h=Math.max(1,Math.round(crop.h*sc));
  for(const [name,img] of [["original",source],["overlay",over]]){
@@ -223,7 +275,25 @@ async function render(){
    vertices.forEach(p=>ctx.fillRect((p[0]-crop.x)*w/crop.w-3,(p[1]-crop.y)*h/crop.h-3,6,6));}
   }
  }
- // A proposed foreground never bypasses the exact source original
+ // Original photo Lab classes share machine mask priors, not human truth.
+  const labCanvas=byId("lab");labCanvas.width=w;labCanvas.height=h;
+  labCanvas.getContext("2d").drawImage(labOverlay||source,
+    crop.x,crop.y,crop.w,crop.h,0,0,w,h);
+  const labInfo=assets.get(r.imageId).independentSourceLabBoundary;
+  if(labInfo&&labInfo.originalRegionId===current){
+   byId("labStats").textContent=
+    "Original "+labInfo.originalConnectedDisputedPixelCount+
+    " disputed px: "+labInfo.allSmoothingClothVotePixels+
+    " cloth-like, "+labInfo.allSmoothingBackgroundVotePixels+
+    " background-like, "+labInfo.smoothingSensitiveMixedVotePixels+
+    " unstable (cyan / orange / magenta). Four source smoothings, "+
+    "same machine priors, NO expert truth, NO accepted pixels or 3D.";
+  }else{
+   byId("labStats").textContent=
+    "No alternative Lab method evaluated this specific original region; "+
+    "no inference about a human-approved garment boundary.";
+  }
+  // A proposed foreground never bypasses the exact source original
  // uncertainty-mask set difference. Calculate a disposable visualization
  // from *original* mask and union pixels, never mutate embedded source.
  const canvas=byId("candidate");canvas.width=w;canvas.height=h;
@@ -438,6 +508,8 @@ manifest={
  "sourceIndependentOnlyCaption":"2551406 a) front",
  "machineRegionCount":sum(len(x["regions"]) for x in packet["images"]),
  "localHtmlSHA256":hashlib.sha256(html.encode("utf-8")).hexdigest(),
+  "originalSourceLabRegionsReverified":[2551406,2551408],
+  "sourceLabClassesOnlyMachineHypotheses":True,
  "sourceOriginalRGBReencodedLosslesslyForDisplay":True,
  "noWebRequestsOrUploads":True,
  "sourceOnlyHumanAnnotationProposalNotTrustedMask":True,
@@ -451,6 +523,7 @@ print("M2_MET_GENUINE_OFFLINE_BOUNDARY_CORRECTION_PORTAL_HOLD "+json.dumps({
  "sourceBoundReviewRegions":manifest["machineRegionCount"],
  "losslessOriginalSourceDisplay":True,
  "allHumanCorrectionsStillPending":True,
+  "twoOriginalPhotosLabOverlaysNotAlphaApproval":True,
  "offlineLocalOnly":True,
  "humanApproved":False,"consumer3DAdmitted":False,"familyAlpha":"HOLD"
 },sort_keys=True))
