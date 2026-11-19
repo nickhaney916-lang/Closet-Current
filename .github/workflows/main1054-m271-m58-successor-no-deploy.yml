@@ -1,0 +1,92 @@
+name: MAIN1054 M271 M58 verified-candidate original browser successor NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m271-m58-gate-successor-HOLD]
+permissions:
+  contents: read
+jobs:
+  m271-source-and-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin verifier itself and prove additive exact M183 candidate lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:scripts/main1054-m271-m58-gate.mjs)" = f99298e9a7616c04e3d5353df71ac44eed708830
+          node scripts/main1054-m271-m58-gate.mjs
+          node --check scripts/main1054-m271-m58-gate.mjs
+      - name: Adversarial source and checkout falsification (no private data)
+        run: node --test tests/main1054-m271-m58-gate.test.mjs
+      - name: Original M58 native owner-lease and source provenance unit tests
+        run: |
+          node --test tests/outfit-capture.test.cjs tests/main1054-m254-signed-outfit-lease.test.mjs tests/parallel105-closeout.test.mjs tests/main1054-m256-negative-attempt-quarantine.test.mjs tests/parallel106-source-gate.test.mjs
+      - name: Install pinned no-deploy test runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: No-deploy app build and full original-source, account, backup, privacy regression suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  m271-original-browser:
+    needs: m271-source-and-regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+        width: [320, 390, 430]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P91_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: ${{ matrix.width }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove actual unchanged M58 Worker, original P94 and strict source candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:scripts/main1054-m271-m58-gate.mjs)" = f99298e9a7616c04e3d5353df71ac44eed708830
+          node scripts/main1054-m271-m58-gate.mjs
+      - name: Install unchanged native browser fixture dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Actual browser IndexedDB owner mutation and cancellation P91
+        run: node scripts/test-browser-owner-mutation91.mjs
+      - name: Actual unchanged P88 WASM source-worker NO-SILENT-SAVE browser regression
+        run: node scripts/test-main58-actual-p88-wasm-browser.mjs
+      - name: Genuine original SegFormer/JSEP model plus synthetic owner-private original-photo 2D and v4 restore
+        run: node scripts/test-parallel94-native-p88-browser.mjs
+      - name: Archive only scoped, nonprivate source/owner receipts even after genuine failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m271-m58-${{ matrix.engine }}-${{ matrix.width }}-NO-DEPLOY-HOLD
+          path: |
+            benchmark/main58-real-p88-browser-worker/${{ matrix.engine }}/*.json
+            benchmark/parallel94-native-p88-browser/${{ matrix.engine }}/${{ matrix.width }}/*.json
+          retention-days: 7
+          if-no-files-found: ignore
