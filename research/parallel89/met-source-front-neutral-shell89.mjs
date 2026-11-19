@@ -47,7 +47,7 @@ const twoIncidence=indices=>{
 export async function buildMetSourceFrontNeutralBackShell89(input={}){
  const front=await sourceFront(input);
  if(front.status!=='REAL_ORIGINAL_PHOTO_SOURCE_MASK_TEXTURED_FRONT_RESEARCH_UNAPPROVED')
-  return refusal('actual-source-photo-and-original-mask-not-attested');
+  return refusal('source-front-rejected:'+String(front.reason||front.status||'unknown').slice(0,160));
  if(front.imageId!==2551406||front.institutionallyVerifiedPart!=='a'||
   front.institutionallyVerifiedSide!=='front'||front.museumCaptionVerified!==true)
   return refusal('only-verified-original-museum-a-front-can-be-shell-anchor');
