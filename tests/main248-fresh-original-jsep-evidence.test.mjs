@@ -39,8 +39,8 @@ const marker=(m,v)=>m+' '+JSON.stringify(v);
 const records=(t=trace(),o=owner(),p=privacy())=>[
  marker('M247_REAL_ORIGINAL_JSEP_PHASE',t),
  marker('M214_REAL_P94_WORKER_OUTCOME',{engine:t.engine,width:t.width}),
- marker('M61_GENUINE_P88_TO_PRIVATE_OWNER_V4_RESTORE_SAME_SESSION_PASS',o),
- marker('M58_GENUINE_WORKER_SAVED_2D_OWNER_SWITCH_PRIVACY',p)
+ ...(o?[marker('M61_GENUINE_P88_TO_PRIVATE_OWNER_V4_RESTORE_SAME_SESSION_PASS',o)]:[]),
+ ...(p?[marker('M58_GENUINE_WORKER_SAVED_2D_OWNER_SWITCH_PRIVACY',p)]:[])
 ].join('\n');
 const sample=(input={})=>classifyFreshOriginalAttempt({
  engine:'webkit',width:320,shard:0,attempt:1,exitCode:0,
