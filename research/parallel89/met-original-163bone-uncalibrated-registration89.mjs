@@ -547,14 +547,17 @@ function fullActualSkinnedIndexedSourceContact(x){
  const allPhotoFront=posedTriangleArray(x.mesh,indexed,
   range.sourcePhotoFront.start,range.sourcePhotoFront.count);
  const result=evaluateFullIndexedContact(bodyFaces,allPhotoFront,{
-  stopAtFirstVerifiedContact:true});
+  stopAtFirstVerifiedContact:true,reportResourceBlockerInsteadOfThrow:true});
  invariant(result.originalBodyIndexedFacesAudited===
   bodyMeshCoverage.reduce((sum,x)=>sum+x.actualIndexedTrianglesAudited,0)&&
   result.originalPhotoFrontIndexedFacesAudited===range.sourcePhotoFront.count/3&&
   result.allOriginalBodyIndexedFacesPresentInBVH===true&&
   (result.fullOriginalIndexedScopeEvaluated===true||
    (result.definitiveCollisionRejection===true&&
-    result.pairEnumerationStoppedAfterRealContact===true)),
+    result.pairEnumerationStoppedAfterRealContact===true)||
+   (result.resourceBoundReached===true&&
+    result.contactDecision==='BLOCKED_INCOMPLETE_ORIGINAL_INDEXED_AUDIT'&&
+    result.consumer3DAdmitted===false)),
   'full-original-indexed-collision-gate-has-neither-complete-negative-audit-nor-positive-rejection');
  return {
   ...result,originalBodySkinnedMeshComponentsAudited:bodyMeshCoverage.length,
