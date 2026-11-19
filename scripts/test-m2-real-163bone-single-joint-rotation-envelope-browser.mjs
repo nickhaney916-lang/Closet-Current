@@ -31,7 +31,7 @@ assert.equal(sha(addon),pins.addon,
 
 // These inserts exist ONLY in a disposable generated script: no protected
 // research files are edited, no consumer or other parallel assignment touched.
-const routeAnchor="  await page.goto(origin,{waitUntil:'load'});";
+const routeAnchor=" await page.goto(origin,{waitUntil:'load'});";
 const routeLines=[
  "  await page.route('**/research/parallel89/met-original-163bone-uncalibrated-registration89.mjs',",
  "   async route=>{",
@@ -44,7 +44,7 @@ const routeLines=[
  "   });",
  routeAnchor
 ].join('\n');
-const poseAnchor="   const rest=await page.evaluate(()=>window.__M2RealRigPhotoTrial\n    .setSourceSkinnedMotionTrialPose('rest'));";
+const poseAnchor="  const rest=await page.evaluate(()=>window.__M2RealRigPhotoTrial\n   .setSourceSkinnedMotionTrialPose('rest'));";
 const verifyLines=[
  "   const rotationAudit=await page.evaluate(()=>window.__M2RealRigPhotoTrial",
  "    .verifyGenuineSpine04AngularEnvelope());",
