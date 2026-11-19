@@ -172,6 +172,7 @@ export function assessPhysicalFitEvidence(input={}){
   positive(material.bendingStiffnessNm));
  const measuredScaleMmPerPixel=
   positive(ref.spanPixels)&&positive(ref.spanMm)&&
+   sha(input.originalPhotoSHA256)&&
   ref.sourcePhotoSHA256===input.originalPhotoSHA256&&
   ref.sameGarmentPlane===true?ref.spanMm/ref.spanPixels:null;
  const minimumChestEaseMm=
