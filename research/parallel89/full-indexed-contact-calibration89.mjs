@@ -139,7 +139,8 @@ export function classifyExactTriangleContact(a,b,alreadyAABBAttested=false){
  return touching?'TOUCHING':'NONE';
 }
 export function evaluateFullIndexedContact(bodyFaces,frontFaces,{
- maxPairs=50000000,stopAtFirstVerifiedContact=false,
+ maxPairs=50000000,maxExactAABBPairs=30000000,
+ stopAtFirstVerifiedContact=false,
  reportResourceBlockerInsteadOfThrow=false}={}){
  if(!Array.isArray(bodyFaces)||!Array.isArray(frontFaces)||!bodyFaces.length||!frontFaces.length)
   throw Error('real-original-full-face-counts-required');
@@ -214,6 +215,8 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{
   pairEnumerationStoppedAfterRealContact:false,
   resourceBoundReached:true,
   resourceBoundKind:kind,lastOriginalFrontFaceIndexChecked:lastFrontFaceIndex,
+  configuredBroadphasePairLimit:maxPairs,
+  configuredExactAABBPairLimit:maxExactAABBPairs,
   numberOfAABBOverlapsNotYetClassifiedAtLimit:
    kind==='EXACT_AABB_CONTACT_BUDGET'?1:0,
   unresolvedDegenerateOrNearParallelPairs:counts.INDETERMINATE,
@@ -245,7 +248,7 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{
      }
      if(!boxesOverlap(box,bodyBoxes[j]))continue;
      aabbPairs++;
-     if(aabbPairs>30000000){
+     if(aabbPairs>maxExactAABBPairs){
       if(reportResourceBlockerInsteadOfThrow)
        return blockedIncomplete('EXACT_AABB_CONTACT_BUDGET',i);
       throw Error('original-full-indexed-exact-contact-resource-bound '+
