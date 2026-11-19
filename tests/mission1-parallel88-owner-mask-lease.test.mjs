@@ -534,7 +534,7 @@ test('P88 recropping a source with existing trusted original SHA leaves SHA and 
  assert.equal(item.originalPhoto.sha256,'a'.repeat(64));
  assert.equal(item.image,'data:image/jpeg;base64,U0VDT05ELUNST1A=');
 });
-test('P88 changed cropped photo clears old exact-JPEG duplicate marker so owner may review new source',async()=>{
+test('P88 recropped preview of SAME saved original still requires separate physical garment review',async()=>{
  const original=sampleSource88();
  const peer={id:'saved-identical',image:original.image};
  const item={...sampleSource88(),exactSavedPhotoMatch88:{savedItemId:peer.id},
@@ -542,16 +542,19 @@ test('P88 changed cropped photo clears old exact-JPEG duplicate marker so owner 
  const c=cropHarness88({peers:[peer]});
  c.cropClothingPhoto(item);
  await c.editor.save({image:'data:image/jpeg;base64,TkVXUElYRUxT'},null);
+ const crop=c.written[0].value.batch[0];
  assert.equal(c.written.length,1);
  assert.equal(c.written[0].store,'state');
- assert.equal(c.written[0].value.batch[0].exactSavedPhotoMatch88,undefined);
- assert.equal(c.written[0].value.batch[0].ownerDuplicateReview88,undefined);
- assert.equal(c.written[0].value.batch[0].possibleDuplicate,false);
- assert.equal(item.exactSavedPhotoMatch88,undefined,'in-memory old duplicate proof must also be removed');
+ assert.equal(crop.ownerDuplicateReview88,undefined);
+ assert.equal(crop.originalPhoto?.image,original.image);
+ assert.equal(crop.exactSavedPhotoMatch88.savedItemId,peer.id);
+ assert.equal(crop.possibleDuplicate,true);
+ assert.equal(crop.requiresOwnershipConfirmation,true);
+ assert.match(crop.localStatus,/shares a complete original with a saved closet item/);
  assert.equal(item.image,'data:image/jpeg;base64,TkVXUElYRUxT');
- const lease=c.reviewedSaveLease88(item);
- assert.equal(c.reviewedDistinctPhotoReceiptValid88({...item},lease),true,
-  'a genuinely new cropped source is not permanently stuck on the stale match');
+ assert.equal(item.exactSavedPhotoMatch88.savedItemId,peer.id);
+ assert.equal(c.reviewedDistinctPhotoReceiptValid88({...item},c.reviewedSaveLease88(item)),false,
+  'recropping cannot erase the need to distinguish physical garments sharing an original JPEG');
  assert.equal(c.writeCount,1);
 });
 test('P88 crop changing a saved duplicate-attested image revokes stale identical-byte attestation',async()=>{
