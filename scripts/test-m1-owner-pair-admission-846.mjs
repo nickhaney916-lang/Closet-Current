@@ -30,6 +30,10 @@ const source=extract('function savePiece(', 'function node(')+
  // test alias for the new IndexedDB transactional backup acceptance.
  extract('function persistDraft()', 'function readDraft()')
   .replace('function persistDraft(){','function realPersistDraft88(){');
+// Browser-only exception witness: never silently turn a rejected review into
+// a 30s timeout or a fake success. The actual consumer source stays unchanged.
+const checkedSource=source.replace('}catch{\\n  saveInFlight=false;',
+ '}catch(error){window.p846LastSaveError=String(error?.message||error);\\n  saveInFlight=false;');
 const harness=[
  "const categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];",
  "let items=[],batch=[],stream=null,cameraOpening=false,busy=false,localReady=true,session=0;",
@@ -110,7 +114,7 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto(origin+'/');
    assert.equal(await page.evaluate(()=>isSecureContext&&!!crypto.subtle),true,'real browser SHA-256 must be available');
-   for(const s of [taxonomy,details,harness,source])await page.addScriptTag({content:s});
+   for(const s of [taxonomy,details,harness,checkedSource])await page.addScriptTag({content:s});
    const approve=async()=>page.getByRole('checkbox',{name:/I checked the clothing photo/}).check();
    const submit=async(times=1)=>page.locator('dialog[open] form').evaluate((form,n)=>{
     for(let i=0;i<n;i++)form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
@@ -132,7 +136,11 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    await approve();await submit(2);
    // SHA-256 is asynchronous. Wait for actual source-bound IDB arrival, not
    // merely for synchronous form dispatch to return.
-   await page.waitForFunction(()=>window.writeCount===1,{timeout:10000});
+   await page.waitForFunction(()=>window.writeCount===1||!!window.p846LastSaveError,{timeout:10000});
+   const sourceSaveDebug=await page.evaluate(()=>({writeCount:window.writeCount,
+    failure:window.p846LastSaveError||null,ownerMessage:window.messageText||null}));
+   assert.equal(sourceSaveDebug.failure,null,
+    'P846 real source owner review failed: '+JSON.stringify(sourceSaveDebug));
    assert.equal(await page.evaluate(()=>window.writeCount),1);
    assert.equal(await page.getByRole('button',{name:'Saving…'}).isDisabled(),true);
    await page.evaluate(()=>window.completions.shift().resolve());
