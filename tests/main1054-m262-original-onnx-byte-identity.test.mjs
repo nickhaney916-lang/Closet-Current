@@ -130,7 +130,13 @@ test('mixed valid model body and non-200 model request are PARTIAL, never fully 
  assert.equal(r.originalModelBytesCorrectlyHashed,1);
  assert.equal(r.redirectedOrNon200ModelResponses,1);
  assert.equal(r.sourceEvidenceGate,'BLOCKED');
- assert.throws(()=>verifyM262(log,identity()),/acceptance incomplete/);
+ // Real WebKit may receive an HTTP 307 then the correct SHA-verified
+ // 200 response. The owner journey can PASS, but the mixed response chain
+ // stays PARTIAL and is never promoted to native model attestation.
+ const healthy=verifyM262(log,identity());
+ assert.equal(healthy.originalJourneyGate,'PASS');
+ assert.equal(healthy.originalModelNetworkGate,'PARTIAL');
+ assert.equal(healthy.browserContextHashIsNotNativeAttestation,true);
  assert.equal(verifyM262(rawLog({engine:'chromium',non200:true}),
   identity({engine:'chromium'})).originalModelNetworkGate,'PARTIAL');
 });
