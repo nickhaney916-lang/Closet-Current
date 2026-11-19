@@ -49,6 +49,8 @@ for(const view of gallery){
  assert.equal(raw.info.width,1200,'source-genuine four original gallery images require 1200-pixel JPEG');
  assert.ok(raw.info.height>=900&&raw.info.height<=1000);
  const decodedRGBSHA256=digest(raw.data);
+ assert.ok(observedExactEncodings[id].includes(jpegSHA256),
+  'museum original JPEG compression changed beyond explicitly source-verified variants');
  console.log('MET_GALLERY_SOURCE_JPEG_RECEIPT '+JSON.stringify({
   id,jpegSHA256,decodedRGBSHA256,expectedDecodedRGBSHA256:view.canonicalDecodedRGBSHA256,
   jpegEncodingPreviouslyObserved:observedExactEncodings[id].includes(jpegSHA256),
