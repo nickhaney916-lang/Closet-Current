@@ -547,9 +547,16 @@ function cropClothingPhoto(item){
     }
     return new Promise((resolve,reject)=>{
      const tx=lease.ownerDb.transaction(lease.wasDraft?'state':'items','readwrite');
-     if(lease.wasDraft)tx.objectStore('state').put({id:'draft',batch:structuredClone(batch.map(x=>x===item?value:x))});
+     const updatedDraft88=lease.wasDraft?structuredClone(batch.map(x=>x===item?value:x)):null;
+     if(lease.wasDraft)tx.objectStore('state').put({id:'draft',batch:updatedDraft88});
      else tx.objectStore('items').put(value);
-     tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+     tx.oncomplete=()=>{
+      // Crop writes state directly (outside persistDraft); advance the local
+      // durable revision so an immediately subsequent reviewed Save can compare
+      // the actual new crop bytes instead of a stale earlier source.
+      if(lease.wasDraft&&cropLive88())draftStoreRevision88=JSON.stringify(updatedDraft88);
+      resolve();
+     };tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
     });
    });
    if(!cropLive88())return; // Old owner's completed write cannot paint B's UI.
