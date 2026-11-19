@@ -76,3 +76,6 @@ jobs:
           grep -Fq '"staleSavedRefused":true' /tmp/m1-native-idb
           grep -Fq '"staleDraftRefused":true' /tmp/m1-native-idb
           grep -Fq '"latePeerGuard":true' /tmp/m1-native-idb
+          grep -Fq '"firstCropSaved":true' /tmp/m1-native-idb
+          grep -Fq '"forgedOriginalUntouched":true' /tmp/m1-native-idb
+          grep -Fq '"forgedRejected":3' /tmp/m1-native-idb
