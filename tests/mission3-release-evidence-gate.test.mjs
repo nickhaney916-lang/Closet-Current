@@ -346,3 +346,42 @@ test('below-cap original export with ordinary informational diagnostics still re
  assert.equal(result.releaseAuthorized,false);
  assert.equal(result.familyAlpha,'HOLD');
 });
+
+test('SHA-matched cloud report must not be reused with a later manifest cloud test time',()=>{
+ const f=fixture();
+ f.manifest.cloud.testedAt='2026-11-18T03:20:00Z';
+ const result=check(f);
+ assert.equal(result.status,'BLOCKED',
+  'Changing only the unsigned manifest time must not reuse old cloud proof bytes');
+ assert.ok(result.issues.some(x=>x.includes('cloud.report: test time mismatch')));
+ assert.equal(result.releaseAuthorized,false);
+ assert.equal(result.familyAlpha,'HOLD');
+});
+
+test('SHA-matched integration report must not be reused with changed integrated test time',()=>{
+ const f=fixture();
+ f.manifest.integration.testedAt='2026-11-18T03:20:00Z';
+ const result=check(f);
+ assert.equal(result.status,'BLOCKED');
+ assert.ok(result.issues.some(x=>x.includes('integration.report: test time mismatch')));
+ assert.equal(result.releaseAuthorized,false);
+ assert.equal(result.familyAlpha,'HOLD');
+});
+
+test('old cloud evidence must not be replayed under a different source head',()=>{
+ const f=fixture(),newHead='d'.repeat(40);
+ f.manifest.sourceHead=newHead;
+ f.manifest.integration.sourceHead=newHead;
+ const name=f.manifest.integration.reportFile;
+ const integrated=JSON.parse(f.files.get(name));
+ integrated.sourceHead=newHead;
+ const bytes=Buffer.from(JSON.stringify(integrated));
+ f.files.set(name,bytes);
+ f.manifest.integration.reportSha256=sha(bytes);
+ // The cloud report bytes and digest are deliberately unchanged.
+ const result=check(f);
+ assert.equal(result.status,'BLOCKED');
+ assert.ok(result.issues.some(x=>x.includes('cloud.report: different source head')));
+ assert.equal(result.releaseAuthorized,false);
+ assert.equal(result.familyAlpha,'HOLD');
+});
