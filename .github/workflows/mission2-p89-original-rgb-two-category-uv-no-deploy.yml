@@ -1,0 +1,81 @@
+name: "M2 P89 genuine original JPEG RGB to two-category FRONT UV WebGL NO DEPLOY"
+on:
+  push:
+    branches:
+      - research/mission2-p89-original-rgb-uv-two-categories-20261118-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  exact-original-node-and-adversarial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact verified P89 donor and four-path RESEARCH ONLY allowlist
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor b92c868c1079cf43654e41d67f220a8a6ede8776 HEAD
+          git diff --exit-code b92c868c1079cf43654e41d67f220a8a6ede8776 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          while IFS= read -r p; do
+            case "$p" in
+              research/parallel89/source-original-texture-transfer89.mjs|tests/parallel89-source-original-texture-transfer.test.mjs|scripts/test-parallel89-original-rgb-uv-webgl.mjs|.github/workflows/mission2-p89-original-rgb-two-category-uv-no-deploy.yml) ;;
+              *) echo "Unexpected consumer/research path: $p"; exit 1 ;;
+            esac
+          done < <(git diff --name-only b92c868c1079cf43654e41d67f220a8a6ede8776 HEAD)
+      - name: Install pinned disposable offline photo/geometry regression packages
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Parse genuine original RGB transfer and WebGL test
+        run: |
+          node --check research/parallel89/source-original-texture-transfer89.mjs
+          node --check tests/parallel89-source-original-texture-transfer.test.mjs
+          node --check scripts/test-parallel89-original-rgb-uv-webgl.mjs
+      - name: Actual licensed original JPEG shirt + jeans RGB/UV and falsification tests
+        run: node --test tests/parallel89-source-original-texture-transfer.test.mjs tests/parallel89-source-contract.test.mjs
+      - name: Build held consumer app offline, NO deployment
+        run: node scripts/build.mjs
+      - name: Entire inherited original private owner/photo and source research regressions
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Immutable original photos, signed owner app and hosted data stay untouched
+        run: git diff --exit-code b92c868c1079cf43654e41d67f220a8a6ede8776 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+
+  genuine-native-original-front-rgb-webgl2:
+    needs: exact-original-node-and-adversarial
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P89_BROWSER: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable parent / no deployed or owner source mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor b92c868c1079cf43654e41d67f220a8a6ede8776 HEAD
+          git diff --exit-code b92c868c1079cf43654e41d67f220a8a6ede8776 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+      - name: Install pinned disposable REAL source JPEG decode and browser driver
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1
+      - name: Genuine ${{ matrix.engine }} WebGL2 draw of TWO original JPEG source-locked photo front panel textures
+        run: node scripts/test-parallel89-original-rgb-uv-webgl.mjs
