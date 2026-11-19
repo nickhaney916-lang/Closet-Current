@@ -1,0 +1,106 @@
+name: MAIN253 original JSEP WebKit natural RED same-attempt cohort HOLD
+on:
+  push:
+    branches: [research/main253-original-jsep-native-failure-attempt-cohort-HOLD]
+permissions:
+  contents: read
+jobs:
+  original-source-security-and-evidence:
+    name: M253 original sources / first-attempt evidence / entire Node suite
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exactly FOUR new research paths and original shipped Worker unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=2ee136d3ee78f5a57554a022efb8ce943b8edf5c
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' \
+            '.github/workflows/main253-original-jsep-natural-red-HOLD.yml' \
+            'scripts/main253-natural-jsep-native-failure-cohort.mjs' \
+            'scripts/run-main253-original-jsep-natural-red-browsers.mjs' \
+            'scripts/test-main253-natural-jsep-receipts.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main251-original-jsep-native-option-browser.mjs)" = 887e1e8fa6cc24919450f53612dc6b35b3a1aefe
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          node --check scripts/main253-natural-jsep-native-failure-cohort.mjs
+          node --check scripts/test-main253-natural-jsep-receipts.test.mjs
+          node --check scripts/run-main253-original-jsep-natural-red-browsers.mjs
+          node --test scripts/test-main253-natural-jsep-receipts.test.mjs
+      - name: Install pinned original public JSEP browser and owner-test dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original WASM export and derived WebKit/Chromium source-only verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/main251-original-jsep-abi-probe.mjs
+          M253_SOURCE_ONLY=1 M253_ENGINE=webkit M253_WIDTH=320 M253_COUNT=8 node scripts/run-main253-original-jsep-natural-red-browsers.mjs
+          M253_SOURCE_ONLY=1 M253_ENGINE=webkit M253_WIDTH=430 M253_COUNT=8 node scripts/run-main253-original-jsep-natural-red-browsers.mjs
+          M253_SOURCE_ONLY=1 M253_ENGINE=chromium M253_WIDTH=390 M253_COUNT=2 node scripts/run-main253-original-jsep-natural-red-browsers.mjs
+      - name: Entire original offline build and inherited private-owner/photo/backup/security
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  native-original-fresh-model-owner-cohort:
+    name: M253 genuine original ${{ matrix.engine }} ${{ matrix.width }} first attempts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {engine: webkit, width: 320, count: 8}
+          - {engine: webkit, width: 390, count: 8}
+          - {engine: webkit, width: 430, count: 8}
+          - {engine: chromium, width: 320, count: 2}
+          - {engine: chromium, width: 390, count: 2}
+          - {engine: chromium, width: 430, count: 2}
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M253_ENGINE: ${{ matrix.engine }}
+      M253_WIDTH: ${{ matrix.width }}
+      M253_COUNT: ${{ matrix.count }}
+      M247_SOURCE_ONLY: '0'
+      M251_ARM: baseline
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original production source unchanged and precommitted test sample
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$M253_ENGINE" = "${{ matrix.engine }}"
+          test "$M253_WIDTH" = "${{ matrix.width }}"
+          test "$M253_COUNT" = "${{ matrix.count }}"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main251-original-jsep-native-option-browser.mjs)" = 887e1e8fa6cc24919450f53612dc6b35b3a1aefe
+          node --test scripts/test-main253-natural-jsep-receipts.test.mjs
+      - name: Exact original pinned native browser/model dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: First-attempt real native original JSEP/owner receipts including true RED
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          M253_SOURCE_ONLY=1 node scripts/run-main253-original-jsep-natural-red-browsers.mjs
+          node scripts/run-main253-original-jsep-natural-red-browsers.mjs
