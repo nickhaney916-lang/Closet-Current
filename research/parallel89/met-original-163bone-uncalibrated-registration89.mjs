@@ -342,9 +342,10 @@ function strictSegmentIntoTriangle(a,b,p,q,r){
  if(!Number.isFinite(det)||Math.abs(det)<crossingEPS)return false;
  const inv=1/det,s=a.clone().sub(p),u=s.dot(cross)*inv;
  if(!(u>crossingEPS&&u<1-crossingEPS))return false;
- const v=direction.clone().cross(s).dot(edge2)*inv;
+ const edgeNormal=s.clone().cross(edge1);
+ const v=direction.dot(edgeNormal)*inv;
  if(!(v>crossingEPS&&u+v<1-crossingEPS))return false;
- const t=edge2.dot(direction.clone().cross(s))*inv;
+ const t=edge2.dot(edgeNormal)*inv;
  return Number.isFinite(t)&&t>crossingEPS&&t<1-crossingEPS;
 }
 function strictTwoTriangleCrossing(a,b){
