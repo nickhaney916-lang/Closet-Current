@@ -21,8 +21,8 @@ function replaceOne(a,b){
  assert.equal(source.split(a).length,2,'M249 exact research donor anchor missing/ambiguous: '+a.slice(0,75));
  source=source.replace(a,b);
 }
-const imports="import assert from 'node:assert/strict';";
-replaceOne(imports,imports+"\nimport {addM249OriginalErrorWitness,summarizeM249Failure} from './main249-original-failed-jsep-source-witness.mjs';");
+const imports="import assert from 'node:assert/strict';\nimport {readFile,writeFile,rm}";
+replaceOne(imports,"import assert from 'node:assert/strict';\nimport {addM249OriginalErrorWitness,summarizeM249Failure} from './main249-original-failed-jsep-source-witness.mjs';\nimport {readFile,writeFile,rm}");
 const worker="const observedWorker=deriveOriginalP94JsepObserver(originalWorker.toString('utf8'));";
 replaceOne(worker,"const observedWorker=addM249OriginalErrorWitness(deriveOriginalP94JsepObserver(originalWorker.toString('utf8')));");
 const oldListener=" \"     if(d?.type!=='diagnostic'||d?.phase!=='m247_jsep_memory')return;\",";
