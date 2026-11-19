@@ -536,7 +536,7 @@ test('P88 new saved peer matching the crop during cloud wait cannot enter closet
  const item=sampleSource88(),newPhoto='data:image/jpeg;base64,TkVXUElYRUxT';
  const c=cropHarness88();
  c.cropClothingPhoto(item);
- c.beforeWrite=async()=>{c.items.push({id:'saved-while-cropping',image:newPhoto});};
+ c.beforeWrite=async()=>{const peer={id:'saved-while-cropping',image:newPhoto};c.items.push(peer);c.durableItems.set(peer.id,structuredClone(peer));};
  await c.editor.save({image:newPhoto},null);
  const updated=c.written[0].value.batch[0];
  assert.equal(updated.exactSavedPhotoMatch88.savedItemId,'saved-while-cropping');
