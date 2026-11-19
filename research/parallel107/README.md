@@ -1,0 +1,24 @@
+# Parallel 107 garment photo calibration
+
+Open `/research/parallel107/` on a localhost static server from the repository root. The demo accepts one front JPEG. It previews and downloads the same bytes, hashes them with SHA-256 and records raw JPEG dimensions and EXIF orientation. It keeps files and measurements in memory and makes no upload, storage or account calls. Clearing or selecting another file invalidates pending decode, the record and its object URL. Use only synthetic or licensed public photos. The JSON contains the image digest and measurement claims and should be handled as source-linked data.
+
+## Operator checklist
+
+1. Measure and photograph one flat, stationary garment. Leave space around every visible edge and shoot directly overhead. Use two independently known ruler spans near opposite edges in the same plane as the garment. Record the actual marked distance, unit and reading uncertainty. A card-like shape is insufficient.
+2. Measure the actual garment across the named seam landmarks and record the instrument and uncertainty. For circumference, measure the complete garment directly. Flat width cannot substitute for circumference.
+3. Preserve any original side and rear photographs in the source owner's workflow. In this front-only demo side and back remain unknown. A future side/rear receipt needs its own original hash, source-owner association, orientation and human review.
+4. Record the source plane and camera calibration with an independently checked target. A reference span checks local scale along that segment. It does not measure perspective across the garment, body dimensions, mask accuracy, the hidden silhouette or fabric behavior.
+
+## Record and opt-in handoff
+
+`calibration.mjs` accepts exact version-1 JSON keys, independently rehashed original metadata, and an optional lease passed from trusted caller state. In account-backed use the caller must supply the active owner, session, source revision and expiry from the existing authorization boundary. In the anonymous demo the lease is null. The lease comparison is a consistency check and carries no authentication authority. Reference endpoints use original raw pixels with upper-left origin. Orientation 2–8 is retained in the preview and blocks reference calibration. Unit conversion retains the declared provenance and uncertainty. Version 1 accepts `top`, `dress`, `trousers` and `skirt`.
+
+See `fixtures.mjs` and `calibration.test.mjs` for complete record examples. The analytic reference check uses `(d-u)/(p+4)` and `(d+u)/(p-4)` for ruler distance d, declared uncertainty u and pixel span p. Four pixels represent two pixels of endpoint placement error each. Both ruler intervals must overlap. Owner review records crop, multiple garments, camera alignment and coplanarity as claims. Only a trusted synthetic harness can expose the arithmetic as a synthetic pass. Arbitrary user coordinates or labels cannot create independently attested calibration. Manual measurements are carried as claims. Real calibration always returns `NOT_VERIFIED` in this implementation.
+
+The documented fit-gate target is `assessPhysicalFitEvidence` in `research/parallel89/swept-contact-calibrated-fabric89.mjs` at #1495 head `b3559684e51bbaa479d3646a5cb9c812d3b73b54`. The safe compatible subset contains only `originalPhotoSHA256` after source and lease checks. The separate evidence envelope carries declared dimensions and synthetic ruler intervals. #1495 needs single-span `spanPixels`/`spanMm` with reviewed coplanarity and a matching digest, camera focal length/distance/axis, reviewed original mask, observed reverse, wearer and garment chest circumference with uncertainty, and independently measured material properties. The adapter leaves those fields absent. #1497 should require independent source-frame-to-rig registration and keep the original front floating until real fit evidence is available. #89 should attach reviewed masks and source-matched side/rear JPEG receipts before lifting the unknown-side result.
+
+## Verification
+
+From repository root, install `sharp@0.34.3` for Node tests and `playwright@1.56.1` plus `axe-core@4.10.3` for browser tests. Run `node --test research/parallel107/calibration.test.mjs`. With matching installed Playwright browsers, run `P107_BROWSER=chromium node research/parallel107/browser.mjs` and repeat with `webkit`. The browser harness serves only demo code and the accessibility checker over loopback and loads the photograph through the file chooser.
+
+The negative real-photo fixture is the existing locked Wikimedia Commons benchmark JPEG `commons-0053`, with license/attribution in `benchmark/locked-photo-sources.json`. The benchmark JPEG digest describes the exact selected benchmark bytes. The positive owner-measured scenario is synthetic. Independent measurements of a real garment, physical phone runs, and assistive technology user trials require additional evidence.
