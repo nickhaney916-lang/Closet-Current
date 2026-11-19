@@ -87,6 +87,7 @@ export function auditOriginalContactNumerics(bodyFaces,frontFaces,
    visitedFronts++;
    if(!finite(frontFaces[fi]))continue;
    const sourceBox=box(frontFaces[fi]);
+   let observedThisFace=0;
    for(let bi=0;bi<bodyFaces.length;bi++){
     if(!overlap(sourceBox,bodyBoxes[bi]))continue;
     const x=numericalContactReason(frontFaces[fi],bodyFaces[bi]);
@@ -96,8 +97,9 @@ export function auditOriginalContactNumerics(bodyFaces,frontFaces,
      frontDoubleArea:x.frontDoubleArea??null,
      bodyDoubleArea:x.bodyDoubleArea??null,
      normalCrossMagnitude:x.normalCrossMagnitude??null};
-    observed++;
+    observed++;observedThisFace++;
     if(observed>=maxObservedPairs)break outer;
+    if(observedThisFace>=32)break;
    }
   }
  }
