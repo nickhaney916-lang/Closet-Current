@@ -137,3 +137,35 @@ test('no-gravity cloth remains at original neutral plane and invalid fabric data
  ])assert.throws(()=>simulateResearchFabricPatch(bad),
   /fabric-physics-parameters-invalid/);
 });
+
+
+test('physical reference must be bound to a valid source SHA, not undefined equals undefined',()=>{
+ const incomplete=assessPhysicalFitEvidence({
+  physicalReference:{spanPixels:200,spanMm:400,sameGarmentPlane:true}
+ });
+ assert.equal(incomplete.measuredReferenceScaleMmPerPixel,null);
+ assert.ok(incomplete.missingEvidence.includes('originalPhotoSHA256'));
+ assert.ok(incomplete.missingEvidence.includes('photoAlignedPhysicalReference'));
+ assert.equal(incomplete.physicalFitCertified,false);
+});
+
+test('synthetic sphere proxy projects vertices without certifying real body-face collision',()=>{
+ const sphere={centerM:[.3,.95,.3],radiusM:.3,clearanceM:.005};
+ const cloth=simulateResearchFabricPatch({collisionSphere:sphere});
+ assert.ok(cloth.proxySphereVertexCorrections>0);
+ assert.equal(cloth.proxySphereVertexOnlyConstraint,true);
+ assert.ok(cloth.approximateBendingSpringNPerM>0);
+ assert.equal(cloth.pinnedEdgeUnchanged,true);
+ assert.equal(cloth.originalBodyTriangleContactsProved,false);
+ assert.equal(cloth.referenceMaterialMeasurementsVerified,false);
+ for(let i=7;i<cloth.positionsM.length;i++){
+  const p=cloth.positionsM[i];
+  assert.ok(Math.hypot(...p.map((v,k)=>v-sphere.centerM[k]))>=
+   sphere.radiusM+sphere.clearanceM-1e-6);
+ }
+ assert.equal(cloth.realisticDrapeCertified,false);
+ assert.equal(cloth.consumer3DAdmitted,false);
+ assert.throws(()=>simulateResearchFabricPatch({
+  collisionSphere:{centerM:[0,0,0],radiusM:NaN}
+ }),/fabric-proxy-collider-invalid/);
+});
