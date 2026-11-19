@@ -8,6 +8,8 @@ const source=between('function node(','function cropClothingPhoto(')+between('fu
 const harness=`
 const categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];
 let items=[],batch=[],stream=null,cameraOpening=false,session=0,localReady=false;const localPending=new Set(),sessionCapturedIds=new Set();
+// The real P88 Adjust now verifies owner-scoped IDB even in the P82 model-policy fixture.
+let db={name:'closet-current-user-synthetic-owner-82'};
 const video=document.createElement('video'),canvas=document.createElement('canvas');video.muted=true;video.playsInline=true;document.body.append(video);video.hidden=true;
 const $=id=>{let e=document.getElementById(id);if(!e){e=document.createElement(id==='lastCaptureImage'?'img':'div');e.id=id;document.body.append(e);}return e;};
 window.closetAuth={user:{id:'synthetic-owner-82'}};window.writes=0;window.queued=0;window.lastMessage='';

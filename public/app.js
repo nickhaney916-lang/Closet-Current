@@ -17,7 +17,10 @@ const recognitionState={phase:'idle',percent:null,activeId:null};
 let writes=Promise.resolve();
 function queued(work){const result=writes.then(async()=>{await window.closetCloud?.beforeWrite(db);return work();});writes=result.catch(()=>{});result.then(()=>window.closetCloud?.changed()).catch(()=>{});return result;}
 let db,items=[],batch=[],stream,timer,busy=false,lastPixels=null,lastSaved=null,stable=0,lastCapture=0,session=0,audio,cadence;
-let cameraMode=null,cameraOpening=false,cameraRequest=0;
+// Latest durable private draft-list revision for this signed DB session.
+// undefined until the initial IDB load; null (JSON string) means no saved row.
+let draftStoreRevision88;
+let cameraMode=null,cameraOpening=false,cameraRequest=0,cameraOwnerLease88=null;
 // P845 brings in #73 ephemeral pixel advice, source-bound and opt-in only.
 // This must never become persisted clothing or authorize automatic admission.
 const photoQualityHints73=new Map();
@@ -38,10 +41,268 @@ function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open('
 function readAll(){return new Promise((resolve,reject)=>{const r=db.transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
 function writeAll(values){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');for(const v of values)tx.objectStore('items').put(v);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
 function removeItem(id){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');tx.objectStore('items').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);}));}
-function persistDraft(){if(!db)return;const snapshot=structuredClone(batch);return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'draft',batch:snapshot});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);})).catch(()=>message('Your unfinished scan could not be backed up. Keep this page open and save or export your pieces.'));}
-function readDraft(){return new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
-function savePiece(value,nextBatch){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction(['items','state'],'readwrite');tx.objectStore('items').put(value);tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
+// P88: camera drafts contain private original JPEGs. A queued backup must
+// never follow a replacement auth session/IDB while cloud.beforeWrite waits.
+// Read the *live* same-owner batch at transaction time, not a stale snapshot
+// taken before a new photo, crop, cancellation or owner-confirmed save.
+function persistDraft(){
+ const owner=window.closetAuth?.user,ownerId=owner?.id,ownerDb=db;
+ if(!ownerId||!ownerDb||ownerDb.name!=='closet-current-user-'+ownerId)return;
+ const live=()=>window.closetAuth?.user===owner&&owner.id===ownerId&&
+  db===ownerDb&&ownerDb.name==='closet-current-user-'+ownerId;
+ return queued(()=>{
+  if(!live())throw Error('P88_REVOKED_DRAFT_BACKUP');
+  const snapshot=structuredClone(batch),expected=draftStoreRevision88;
+  if(!live())throw Error('P88_REVOKED_DRAFT_BACKUP');
+  if(typeof expected!=='string')throw Error('P88_DRAFT_STORAGE_NOT_LOADED');
+  return new Promise((resolve,reject)=>{
+   let tx,reason=null;
+   try{
+    tx=ownerDb.transaction('state','readwrite');
+    const store=tx.objectStore('state');
+    const read=store.get('draft');
+    read.onsuccess=()=>{
+     try{
+      if(!live()||draftStoreRevision88!==expected||
+       JSON.stringify(read.result?.batch??null)!==expected||
+       JSON.stringify(batch)!==JSON.stringify(snapshot))
+       throw Error('P88_DRAFT_STORAGE_CHANGED');
+      store.put({id:'draft',batch:snapshot});
+     }catch(e){reason=e;try{tx.abort();}catch{reject(reason);}}
+    };
+    read.onerror=()=>{reason=read.error||Error('P88_DRAFT_STORAGE_READ_FAIL');};
+    tx.oncomplete=()=>{
+     if(!live())return reject(Error('P88_REVOKED_DRAFT_BACKUP'));
+     draftStoreRevision88=JSON.stringify(snapshot);resolve();
+    };
+    tx.onabort=()=>reject(reason||tx.error||Error('P88_DRAFT_STORAGE_CHANGED'));
+    tx.onerror=()=>{}; // transaction abort reports the original storage failure
+   }catch(e){reject(e);}
+  });
+ }).catch(()=>{if(live())message('Your unfinished scan could not be backed up. Keep this page open and save or export your pieces.');});
+}
+function readDraft(){
+ const signedOwner=window.closetAuth?.user,ownerDb=db;
+ return new Promise((resolve,reject)=>{
+  const r=ownerDb.transaction('state').objectStore('state').get('draft');
+  r.onsuccess=()=>{
+   // Never let an old owner's delayed read replace a newer account's revision.
+   if(window.closetAuth?.user===signedOwner&&db===ownerDb)
+    draftStoreRevision88=JSON.stringify(r.result?.batch??null);
+   resolve(r.result?.batch||[]);
+  };
+  r.onerror=()=>reject(r.error);
+ });
+}
+// P88: ordinary one-photo review must not save into a replacement account
+// while cloud.beforeWrite waits. Freeze source bytes, draft identity and IDB.
+function savePiece(value,nextBatch,lease){
+ if(!reviewedSaveLeaseLive88(lease))
+  return Promise.reject(Error('P88_STALE_REVIEWED_OWNER'));
+ // This transaction creates a NEW wardrobe item from a reviewed unsaved draft.
+ // Existing closet edits use saveExistingPiece88; never replace an existing ID.
+ if(lease.wasDraft!==true)
+  return Promise.reject(Error('P88_REVIEWED_DRAFT_INSERT_ONLY'));
+ if(!reviewedDistinctPhotoReceiptValid88(value,lease))
+  return Promise.reject(Error('P88_DISTINCT_OWNER_DECISION_REQUIRED'));
+ return queued(()=>{
+  if(!reviewedSaveLeaseLive88(lease)||value.id!==lease.item.id||
+   value.image!==lease.image||value.originalPhoto?.image!==lease.original||
+   value.recognitionPhoto?.image!==lease.recognition||
+   value.outfitSourceId!==lease.sourceId||
+   JSON.stringify(value.segmentHint??null)!==lease.maskRevision||
+   JSON.stringify(value.cropBounds??null)!==lease.cropRevision||
+   !lease.evidenceRevision||
+   ordinarySourceEvidence88(value)!==lease.evidenceRevision||
+   !reviewedDistinctPhotoReceiptValid88(value,lease))
+   throw Error('P88_REVOKED_REVIEWED_SAVE');
+  // Compare the other tab's durable original-photo draft list inside the
+  // SAME atomic items+state transaction as wardrobe admission. Never erase a
+  // newly captured, cropped or corrected private photo from another tab.
+  const liveRemaining=lease.wasDraft?batch.filter(x=>x!==lease.item):batch;
+  const liveBatchRevision=JSON.stringify(batch),expected=draftStoreRevision88;
+  if(typeof expected!=='string')throw Error('P88_DRAFT_STORAGE_NOT_LOADED');
+  return new Promise((resolve,reject)=>{
+   let tx,reason=null;
+   try{
+    tx=lease.ownerDb.transaction(['items','state'],'readwrite');
+    const itemStore=tx.objectStore('items'),stateStore=tx.objectStore('state');
+    const read=stateStore.get('draft');
+    read.onsuccess=()=>{
+     try{
+      if(!reviewedSaveLeaseLive88(lease)||
+       draftStoreRevision88!==expected||
+       JSON.stringify(read.result?.batch??null)!==expected||
+       JSON.stringify(batch)!==liveBatchRevision||
+       !reviewedDistinctPhotoReceiptValid88(value,lease))
+       throw Error('P88_DRAFT_STORAGE_CHANGED');
+      // This remains CREATE-only; an existing item ID collision aborts both
+      // stores, including removal of the unsaved original.
+      itemStore.add(value);
+      stateStore.put({id:'draft',batch:structuredClone(liveRemaining)});
+     }catch(e){reason=e;try{tx.abort();}catch{reject(reason);}}
+    };
+    read.onerror=()=>{reason=read.error||Error('P88_DRAFT_STORAGE_READ_FAIL');};
+    tx.oncomplete=()=>{
+     if(!reviewedSaveLeaseLive88(lease))return reject(Error('P88_REVOKED_REVIEWED_SAVE'));
+     draftStoreRevision88=JSON.stringify(liveRemaining);resolve();
+    };
+    tx.onabort=()=>reject(reason||tx.error||Error('P88_DRAFT_STORAGE_CHANGED'));
+    tx.onerror=()=>{}; // failed item add automatically aborts both stores
+   }catch(e){reject(e);}
+  });
+ });
+}
+// Saved-item edits must be scoped to the exact signed owner and private IDB,
+// including AFTER the asynchronous cloud.beforeWrite queue. A model or
+// manual source-claim must never be minted by changing only clothing details.
+// An editor may be open while another tab corrects a garment, restores a
+// private backup or deletes/replaces that same item ID. The signed owner lease
+// alone cannot protect the durable row: check the ENTIRE captured saved record
+// inside the same readwrite transaction as the edit/delete. No await is allowed
+// between the IDB get success and the conditional put/delete.
+function saveExistingPiece88(value,lease){
+ const live=()=>Boolean(lease&&!lease.wasDraft&&reviewedSaveLeaseLive88(lease)&&
+  value?.id===lease.item.id&&value.image===lease.image&&
+  value.originalPhoto?.image===lease.original&&
+  value.recognitionPhoto?.image===lease.recognition&&
+  value.outfitSourceId===lease.sourceId&&
+  JSON.stringify(value.segmentHint??null)===lease.maskRevision&&
+  JSON.stringify(value.cropBounds??null)===lease.cropRevision&&
+  JSON.stringify(value.exactSavedPhotoMatch88??null)===lease.exactSavedMarker88&&
+  JSON.stringify(value.ownerDuplicateReview88??null)===lease.duplicateReviewRevision88&&
+  !!lease.evidenceRevision&&ordinarySourceEvidence88(value)===lease.evidenceRevision);
+ if(!live())return Promise.reject(Error('P88_STALE_SAVED_EDITOR_OWNER_OR_SOURCE'));
+ return queued(()=>{
+  if(!live())throw Error('P88_REVOKED_SAVED_EDITOR_OWNER_OR_SOURCE');
+  return mutateSavedOwnerRow88(lease,live,value,'P88_SAVED_EDITOR_STORAGE_CHANGED');
+ });
+}
+// A stale open closet tab must not delete a newer garment revision, including
+// an owner-corrected subtype or a different physical item using the same ID.
+function removeExistingPiece88(lease){
+ const live=()=>Boolean(lease&&!lease.wasDraft&&reviewedSaveLeaseLive88(lease));
+ if(!live())return Promise.reject(Error('P88_STALE_SAVED_DELETE_OWNER_OR_SOURCE'));
+ return queued(()=>{
+  if(!live())throw Error('P88_REVOKED_SAVED_DELETE_OWNER_OR_SOURCE');
+  return mutateSavedOwnerRow88(lease,live,null,'P88_SAVED_DELETE_STORAGE_CHANGED');
+ });
+}
+function mutateSavedOwnerRow88(lease,live,value,reason){
+ return new Promise((resolve,reject)=>{
+  let tx,abortReason=null;
+  const abort=()=>{
+   abortReason=Error(reason);
+   try{tx.abort();}catch{reject(abortReason);}
+  };
+  try{
+   tx=lease.ownerDb.transaction('items','readwrite');
+   const store=tx.objectStore('items'),read=store.get(lease.item.id);
+   read.onsuccess=()=>{
+    try{
+     // Check actual persisted row *inside* the write transaction, after all
+     // queued cloud work. If another tab changed even unsurfaced metadata,
+     // preserve its correction and require this editor to reload.
+     if(!live()||!read.result||
+        JSON.stringify(read.result)!==lease.savedRowRevision88){
+      abort();return;
+     }
+     if(value===null)store.delete(lease.item.id);
+     else store.put(value); // only existing same-ID edits may replace a row
+     // Revocation immediately after the request must abort the transaction.
+     if(!live())abort();
+    }catch{abort();}
+   };
+   read.onerror=abort;
+   tx.oncomplete=()=>live()?resolve():reject(Error(reason));
+   tx.onabort=()=>reject(abortReason||tx.error||Error(reason));
+   tx.onerror=()=>{}; // errors settle via the transaction abort
+  }catch{reject(Error(reason));}
+ });
+}
 function node(tag,text,className){const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;}
+// Keep exact-owner review helpers in the actual native Adjust source segment
+// also exercised by isolated P82/P846 Chromium and WebKit harnesses.
+// An exact JPEG match is neither proof of one physical item nor proof of two.
+// Freeze all saved same-image peers for explicit owner confirmation.
+function reviewedExactPhotoPeers88(item){
+ return items.filter(x=>x&&x!==item&&x.id!==item?.id&&x.image===item?.image);
+}
+function reviewedDistinctPhotoReceipt88(lease){
+ return {schema:'p88-distinct-physical-owner-attestation/v1',
+  ownerId:lease.ownerId,reviewedPhotoId:lease.item.id,
+  identicalSavedPhotoItemIds:lease.exactPhotoPeers88.map(x=>x.id),
+  identicalSourceBytesObserved:true,ownerAttestedDistinctPhysicalItem:true,
+  independentPhysicalItemVerified:false,singleGarmentVerified:false,threeDReady:false};
+}
+function reviewedDistinctPhotoReceiptValid88(value,lease){
+ if(!lease?.wasDraft)return true;
+ const peers=lease.exactPhotoPeers88||[],marked=lease.exactSavedMarker88!=='null';
+ if(!marked&&!peers.length)return value.ownerDuplicateReview88==null;
+ const r=value.ownerDuplicateReview88;
+ return Boolean(peers.length&&r&&r.schema==='p88-distinct-physical-owner-attestation/v1'&&
+  r.ownerId===lease.ownerId&&r.reviewedPhotoId===lease.item.id&&
+  r.identicalSourceBytesObserved===true&&r.ownerAttestedDistinctPhysicalItem===true&&
+  r.independentPhysicalItemVerified===false&&r.singleGarmentVerified===false&&
+  r.threeDReady===false&&Array.isArray(r.identicalSavedPhotoItemIds)&&
+  r.identicalSavedPhotoItemIds.length===peers.length&&
+  peers.every((p,i)=>r.identicalSavedPhotoItemIds[i]===p.id));
+}
+function reviewedSaveLease88(item){
+ const user=window.closetAuth?.user;
+ return {item,user,ownerId:user?.id,ownerDb:db,wasDraft:batch.includes(item),
+  image:item?.image,original:item?.originalPhoto?.image,
+  recognition:item?.recognitionPhoto?.image,sourceId:item?.outfitSourceId,
+  maskRevision:JSON.stringify(item?.segmentHint??null),
+  cropRevision:JSON.stringify(item?.cropBounds??null),
+  exactSavedMarker88:JSON.stringify(item?.exactSavedPhotoMatch88??null),
+  duplicateReviewRevision88:JSON.stringify(item?.ownerDuplicateReview88??null),
+  // Full private saved-row revision: no second-tab correction may be lost.
+  savedRowRevision88:batch.includes(item)?null:JSON.stringify(item),
+  exactPhotoPeers88:reviewedExactPhotoPeers88(item).map(x=>({item:x,id:x.id,image:x.image})),
+  evidenceRevision:ordinarySourceEvidence88(item)};
+}
+// A manual photo review permits category/type/color edits; it is not
+// independent provenance of a single physical garment or 3D geometry.
+// Preserve any existing source claims exactly; never manufacture new ones.
+function ordinarySourceEvidence88(item){
+ try{return JSON.stringify({
+  ownerId:item?.ownerId??null,userId:item?.userId??null,accountId:item?.accountId??null,
+  sourceKind:item?.sourceKind??null,sourceSHA256:item?.sourceSHA256??null,
+  ownerReviewed:item?.ownerReviewed??null,sourcePhotoOriginal:item?.sourcePhotoOriginal??null,
+  sourceHashVerified:item?.sourceHashVerified??null,
+  singleGarmentVerified:item?.singleGarmentVerified??null,
+  independentPhysicalItemVerified:item?.independentPhysicalItemVerified??null,
+  threeDReady:item?.threeDReady??null,originalSha256:item?.originalPhoto?.sha256??null,
+  originalVerified:item?.originalPhoto?.verified??null,
+  ownerSourceReview88:item?.ownerSourceReview88??null,
+  reconciliation70:item?.reconciliation70??null,
+  reconciliation70Status:item?.reconciliation70Status??null,
+  shoePair:item?.shoePair??null,combinedFragments70:item?.combinedFragments70??null
+ });}catch{return null;}
+}
+function reviewedSaveLeaseLive88(lease){
+ try{
+  const user=window.closetAuth?.user,item=lease?.item;
+  return Boolean(user&&lease?.user===user&&lease.ownerId===user.id&&
+   lease.ownerDb&&db===lease.ownerDb&&
+   db.name==='closet-current-user-'+lease.ownerId&&
+   (lease.wasDraft?batch.includes(item):items.includes(item))&&
+   (lease.wasDraft||lease.savedRowRevision88===JSON.stringify(item))&&
+   item.image===lease.image&&item.originalPhoto?.image===lease.original&&
+   item.recognitionPhoto?.image===lease.recognition&&
+   item.outfitSourceId===lease.sourceId&&
+   JSON.stringify(item.segmentHint??null)===lease.maskRevision&&
+   JSON.stringify(item.cropBounds??null)===lease.cropRevision&&
+   !!lease.evidenceRevision&&ordinarySourceEvidence88(item)===lease.evidenceRevision&&
+   JSON.stringify(item.exactSavedPhotoMatch88??null)===lease.exactSavedMarker88&&
+   JSON.stringify(item.ownerDuplicateReview88??null)===lease.duplicateReviewRevision88&&
+   reviewedExactPhotoPeers88(item).length===lease.exactPhotoPeers88.length&&
+   reviewedExactPhotoPeers88(item).every((x,i)=>x===lease.exactPhotoPeers88[i].item&&
+    x.id===lease.exactPhotoPeers88[i].id&&x.image===lease.exactPhotoPeers88[i].image));
+ }catch{return false;}
+}
+
 function empty(grid,title,subtitle){const n=node('div',null,'empty');n.append(node('h3',title),node('p',subtitle));grid.append(n);}
 function field(body,title,value,type='input'){const label=node('label',title),input=node(type);input.setAttribute('aria-label',title);if(type==='select'){for(const c of categories){const o=node('option',c);o.value=c;input.append(o);}}input.value=value||'';if(type==='input')input.maxLength=120;if(type==='textarea')input.maxLength=500;label.append(input);body.append(label);return input;}
 function choice(body,title,value,options){const label=node('label',title),select=node('select');select.setAttribute('aria-label',title);for(const option of options)select.append(node('option',option));select.value=options.includes(value)?value:options[0];label.append(select);body.append(label);return select;}
@@ -85,31 +346,58 @@ async function confirmedLearningValue72(value,consent,scope,reviewedKeys=['categ
 }
 function clothingFields(body,item,onChange=()=>{}){
  Object.assign(item,normalizeClothing(item));
+ // Source-bound model suggestions must not silently replace later owner edits.
+ // Each Await captures the same signed user, private IDB, original JPEG,
+ // optional recognition/mask pixels and the exact field-review revision.
+ let reviewRevision88=0;
+ const edited88=key=>{reviewRevision88++;onChange(key);};
+ const photoFieldLease88=()=>({
+  user:typeof window==='undefined'?null:window.closetAuth?.user,
+  ownerDb:typeof db==='undefined'?null:db,
+  image:item.image,recognition:item.recognitionPhoto?.image,
+  mask:JSON.stringify(item.segmentHint??null),revision:reviewRevision88
+ });
+ const photoFieldLive88=lease=>{
+  const browser=typeof window!=='undefined'&&Boolean(window.document);
+  return Boolean(body.isConnected&&reviewRevision88===lease.revision&&
+   item.image===lease.image&&item.recognitionPhoto?.image===lease.recognition&&
+   JSON.stringify(item.segmentHint??null)===lease.mask&&
+   (!browser||(lease.user?.id&&window.closetAuth?.user===lease.user&&
+    db===lease.ownerDb&&lease.ownerDb?.name==='closet-current-user-'+lease.user.id)));
+ };
  if(item.image){const reference=node('figure',null,'clothing-reference'),photo=node('img'),caption=node('figcaption',item.name||'Garment photo');photo.src=item.image;photo.alt=item.name||'Garment being edited';caption.title=item.name||'Garment photo';reference.append(photo,caption);body.append(reference);}
  const completion=node('p',null,'fine'),fillPhoto=node('button','Fill missing details from photo','secondary');fillPhoto.type='button';
  const refreshCompletion=()=>{const missing=ClothingDetails.missing(item);completion.textContent=(item.colorSource==='photo-estimate'?'Color estimated from photo · confirm '+item.color+'. ':'')+(missing.length?'Details to confirm: '+missing.join(', ')+'.':'Core details complete. Brand, size and fabric can be added from the label.');};refreshCompletion();body.append(completion);
  if(item.image){body.append(fillPhoto,node('p','Confirm seasons for how you wear it. Enter brand, size and fabric from the label.','fine'));}
- if(typeof ClothingMemory!=='undefined'&&!learningMode72()){const suggestion=ClothingMemory.suggest(item,items)||ClothingMemory.weekly(item);if(suggestion){const memory=node('details',null,'clothing-details');memory.append(node('summary',suggestion.sourceIds?.length?'Suggestions from your confirmed clothes':'Recognition review suggestions'),node('p',(suggestion.sourceIds?.length?'Similar pieces suggest: ':'A fresh recognition check suggests: ')+Object.entries(suggestion.fields).map(([k,v])=>v).join(' · ')+'. Compare with this photo before using them.','fine'));const use=node('button','Use suggested details','secondary');use.type='button';use.onclick=()=>{Object.assign(item,ClothingMemory.apply(item,suggestion));fields.category.value=item.category;fields.itemType.replaceChildren(...['Unknown',...(clothingSchema.types[item.category]||[])].map(x=>node('option',x)));for(const [key,input]of Object.entries(fields))input.value=item[key]||'';refreshCompletion();onChange();use.disabled=true;};memory.append(use);body.append(memory);}}
+ if(typeof ClothingMemory!=='undefined'&&!learningMode72()){const suggestionLease88=photoFieldLease88();const suggestion=ClothingMemory.suggest(item,items)||ClothingMemory.weekly(item);if(suggestion){const memory=node('details',null,'clothing-details');memory.append(node('summary',suggestion.sourceIds?.length?'Suggestions from your confirmed clothes':'Recognition review suggestions'),node('p',(suggestion.sourceIds?.length?'Similar pieces suggest: ':'A fresh recognition check suggests: ')+Object.entries(suggestion.fields).map(([k,v])=>v).join(' · ')+'. Compare with this photo before using them.','fine'));const use=node('button','Use suggested details','secondary');use.type='button';use.onclick=()=>{if(!photoFieldLive88(suggestionLease88))return;Object.assign(item,ClothingMemory.apply(item,suggestion));fields.category.value=item.category;fields.itemType.replaceChildren(...['Unknown',...(clothingSchema.types[item.category]||[])].map(x=>node('option',x)));for(const [key,input]of Object.entries(fields))input.value=item[key]||'';refreshCompletion();edited88();use.disabled=true;};memory.append(use);body.append(memory);}}
  if(typeof ClothingMemory!=='undefined'&&learningMode72()&&learningScope72()){
   const scope=learningScope72();
+  const suggestionLease88=photoFieldLease88();
   ClothingMemory.suggest72(item,items,scope).then(suggestion=>{
    // The offline SHA digest can finish before the editor is attached; append
    // to the same detached form, which will be shown only if still open.
-   if(!suggestion||scope!==learningScope72()||!body.isConnected)return;
+   if(!suggestion||scope!==learningScope72()||!photoFieldLive88(suggestionLease88))return;
    const memory=node('details',null,'clothing-details');
    memory.open=true; // The source-confirmed suggestion needs a visible review action.
    memory.append(node('summary','Owner-confirmed local learning (review only)'),
     node('p','Previously reviewed garments suggest: '+Object.values(suggestion.fields).join(' · ')+'. Verify against the original photo before applying.','fine'));
    const use=node('button','Use owner-confirmed suggestion','secondary');
    use.type='button';use.onclick=async()=>{
+    // Suggestions remain review-only and may not replace a later owner's edit
+    // or cross the exact source-photo, IDB, mask and signed-session boundary.
+    if(!photoFieldLive88(suggestionLease88)||scope!==learningScope72())return;
     use.disabled=true;
-    const updated=await ClothingMemory.apply72(item,suggestion,scope,{ownerChecked:true});
-    if(scope!==learningScope72()||!body.isConnected)return;
-    Object.assign(item,updated);
-    fields.category.value=item.category;
-    fields.itemType.replaceChildren(...['Unknown',...(clothingSchema.types[item.category]||[])].map(x=>node('option',x)));
-    for(const [key,input]of Object.entries(fields))input.value=item[key]||'';
-    refreshCompletion();onChange();
+    try{
+     const updated=await ClothingMemory.apply72(item,suggestion,scope,{ownerChecked:true});
+     if(scope!==learningScope72()||!photoFieldLive88(suggestionLease88))return;
+     Object.assign(item,updated);
+     fields.category.value=item.category;
+     fields.itemType.replaceChildren(...['Unknown',...(clothingSchema.types[item.category]||[])].map(x=>node('option',x)));
+     for(const [key,input]of Object.entries(fields))input.value=item[key]||'';
+     refreshCompletion();edited88();
+    }catch{
+     // A rejected private suggestion never becomes a user-visible correction.
+    }finally{use.disabled=false;}
    };
    memory.append(use);body.append(memory);
   }).catch(()=>{}); // No diagnostic source identity or embeddings in UI/logs
@@ -122,31 +410,163 @@ function clothingFields(body,item,onChange=()=>{}){
  fields.pattern=choice(details,'Pattern',item.pattern,clothingSchema.pattern);
  fields.fit=choice(details,'Fit',item.fit,clothingSchema.fit);
  const seasons=node('fieldset',null,'season-picker');seasons.append(node('legend','Seasons · choose all that apply'));const checks=[];
- for(const season of clothingSchema.seasons){const label=node('label'),input=node('input');input.type='checkbox';input.value=season;input.checked=item.seasons.includes(season);label.append(input,document.createTextNode(season));seasons.append(label);checks.push(input);input.onchange=()=>{if(input.checked){for(const other of checks)if(other!==input&&(season==='All seasons'||other.value==='All seasons'))other.checked=false;}item.seasons=checks.filter(x=>x.checked).map(x=>x.value);refreshCompletion();onChange('seasons');};}details.append(seasons);
+ for(const season of clothingSchema.seasons){const label=node('label'),input=node('input');input.type='checkbox';input.value=season;input.checked=item.seasons.includes(season);label.append(input,document.createTextNode(season));seasons.append(label);checks.push(input);input.onchange=()=>{if(input.checked){for(const other of checks)if(other!==input&&(season==='All seasons'||other.value==='All seasons'))other.checked=false;}item.seasons=checks.filter(x=>x.checked).map(x=>x.value);refreshCompletion();edited88('seasons');};}details.append(seasons);
  const extra=node('details',null,'optional-details');extra.append(node('summary','Brand, size & other details'));details.append(extra);
  for(const [key,title]of [['brand','Brand'],['size','Size'],['material','Material'],['occasion','Occasion']])fields[key]=field(extra,title,item[key]);
  fields.notes=field(extra,'Notes',item.notes,'textarea');
- for(const [key,el]of Object.entries(fields))el.oninput=()=>{item[key]=el.value;if(key==='color')item.colorSource='user';if(key==='category'){const types=['Unknown',...(clothingSchema.types[item.category]||[])];fields.itemType.replaceChildren(...types.map(x=>node('option',x)));item.itemType='Unknown';fields.itemType.value='Unknown';if(['Shoes','Accessories','Bottoms'].includes(item.category)){item.sleeveLength='Not applicable';fields.sleeveLength.value='Not applicable';}else if(item.sleeveLength==='Not applicable'){item.sleeveLength='Unknown';fields.sleeveLength.value='Unknown';}}refreshCompletion();onChange(key);};
- fillPhoto.onclick=async()=>{fillPhoto.disabled=true;completion.textContent='Checking color, then garment identity…';try{const quality=await checkPhoto(item.image);if(!fillPhoto.isConnected)return;Object.assign(item,ClothingDetails.fillColor(item,quality.colorEstimate));fields.color.value=item.color||'';refreshCompletion();if(!localReady)await enableLocal();const result=await localRequest('classify',item.recognitionPhoto?.image||item.image,null,item.segmentHint),choice=result.choices?.[0];if(!fillPhoto.isConnected)return;if((!result.strong&&!result.categoryConfirmed)||!choice||!segmentationAllows(item,choice)){completion.textContent=(item.color?'Color kept. ':'')+'Garment identity needs confirmation. Optional details can stay blank.';return;}if(item.category!=='Uncategorized'&&item.category!==choice.category){completion.textContent='Photo suggests '+choice.category+' · '+choice.itemType+'. Use Crop photo to review and change the category.';return;}applyLocalChoice(item,choice);Object.assign(item,ClothingDetails.fill(item,choice,result.details));fields.category.value=item.category;fields.itemType.replaceChildren(...['Unknown',...(clothingSchema.types[item.category]||[])].map(x=>node('option',x)));for(const [key,input]of Object.entries(fields))input.value=item[key]||'';refreshCompletion();onChange();}catch{if(fillPhoto.isConnected)completion.textContent=(item.color?'Color kept. ':'')+'Garment recognition is unavailable. Your details are kept; optional fields can stay blank.';}finally{fillPhoto.disabled=false;}};
- if(item.image&&(!item.color||item.color==='Unknown'))checkPhoto(item.image).then(quality=>{if(!fields.color.isConnected||item.colorSource==='user')return;const updated=ClothingDetails.fillColor(item,quality.colorEstimate);if(updated!==item){Object.assign(item,updated);fields.color.value=item.color||'';if(!fillPhoto.disabled)refreshCompletion();onChange();}}).catch(()=>{});
+ for(const [key,el]of Object.entries(fields))el.oninput=()=>{item[key]=el.value;if(key==='color')item.colorSource='user';if(key==='category'){const types=['Unknown',...(clothingSchema.types[item.category]||[])];fields.itemType.replaceChildren(...types.map(x=>node('option',x)));item.itemType='Unknown';fields.itemType.value='Unknown';if(['Shoes','Accessories','Bottoms'].includes(item.category)){item.sleeveLength='Not applicable';fields.sleeveLength.value='Not applicable';}else if(item.sleeveLength==='Not applicable'){item.sleeveLength='Unknown';fields.sleeveLength.value='Unknown';}}refreshCompletion();edited88(key);};
+ fillPhoto.onclick=async()=>{
+  const lease=photoFieldLease88();
+  fillPhoto.disabled=true;completion.textContent='Checking color, then garment identity…';
+  try{
+   const quality=await checkPhoto(lease.image);
+   if(!fillPhoto.isConnected||!photoFieldLive88(lease))return;
+   const priorColor=JSON.stringify([item.color,item.colorSource]);
+   Object.assign(item,ClothingDetails.fillColor(item,quality.colorEstimate));
+   fields.color.value=item.color||'';
+   refreshCompletion();
+   if(JSON.stringify([item.color,item.colorSource])!==priorColor){
+    // The model just altered the photo-review fields: revoke any previous
+    // category/color acknowledgement, then continue with the new revision.
+    edited88('color');lease.revision=reviewRevision88;
+   }
+   if(!localReady)await enableLocal();
+   if(!fillPhoto.isConnected||!photoFieldLive88(lease))return;
+   const result=await localRequest('classify',lease.recognition||lease.image,null,item.segmentHint);
+   if(!fillPhoto.isConnected||!photoFieldLive88(lease))return;
+   const choice=result.choices?.[0];
+   if((!result.strong&&!result.categoryConfirmed)||!choice||!segmentationAllows(item,choice)){
+    completion.textContent=(item.color?'Color kept. ':'')+'Garment identity needs confirmation. Optional details can stay blank.';
+    return;
+   }
+   if(item.category!=='Uncategorized'&&item.category!==choice.category){
+    completion.textContent='Photo suggests '+choice.category+' · '+choice.itemType+'. Use Crop photo to review and change the category.';
+    return;
+   }
+   applyLocalChoice(item,choice);
+   Object.assign(item,ClothingDetails.fill(item,choice,result.details));
+   fields.category.value=item.category;
+   fields.itemType.replaceChildren(...['Unknown',...(clothingSchema.types[item.category]||[])].map(x=>node('option',x)));
+   for(const [key,input]of Object.entries(fields))input.value=item[key]||'';
+   refreshCompletion();edited88();
+  }catch{
+   if(fillPhoto.isConnected&&photoFieldLive88(lease))
+    completion.textContent=(item.color?'Color kept. ':'')+'Garment recognition is unavailable. Your details are kept; optional fields can stay blank.';
+  }finally{fillPhoto.disabled=false;}
+ };
+ if(item.image&&(!item.color||item.color==='Unknown')){
+  const lease=photoFieldLease88();
+  checkPhoto(lease.image).then(quality=>{
+   if(!fields.color.isConnected||!photoFieldLive88(lease)||item.colorSource==='user')return;
+   const updated=ClothingDetails.fillColor(item,quality.colorEstimate);
+   if(updated!==item){Object.assign(item,updated);fields.color.value=item.color||'';if(!fillPhoto.disabled)refreshCompletion();edited88('color');}
+  }).catch(()=>{});
+ }
  return ()=>normalizeClothing(item);
 }
+// P88: an owner photo crop edits displayed JPEG pixels, but the frozen P70
+// worker's mask SHA-256 refers to an *older* region. Such a crop cannot keep
+// that signed mask/unit receipt; request a new single-garment capture instead.
+// Applies to pending drafts and previously saved source-bound garments.
+function hasSourceBoundMask88(item){
+ return Boolean(item?.reconciliation70||item?.reconciliation70Status||
+  item?.shoePair||item?.combinedFragments70||
+  item?.segmentHint?.componentReviewStatus);
+}
 function cropClothingPhoto(item){
+ if(hasSourceBoundMask88(item)){
+  message('This garment is bound to its original segmented mask. Capture a new single-garment photo rather than changing these source-bound pixels.');
+  return;
+ }
  if(localPending.has(item.id)||busy)return;
+ // P88: unlike a read-only crop preview, a crop replacement writes private
+ // JPEG bytes. Freeze owner/session object, IDB, exact item, source and mask
+ // revision BEFORE opening an editor or awaiting photo analysis.
+ const lease=reviewedSaveLease88(item);
+ const cropLive88=()=>reviewedSaveLeaseLive88(lease)&&!hasSourceBoundMask88(item);
+ if(!cropLive88()){
+  message('This photo belongs to a different signed session or changed garment. Reopen Crop for the current owner.');
+  return;
+ }
  if(stream||cameraOpening)stopCamera();
  openPhotoCrop(item,{
-  async analyze(image){if(!localReady)await enableLocal();const result=await localRequest('classify',image,null);return (result.strong||result.categoryConfirmed)&&result.choices?.[0]&&segmentationAllows(item,result.choices[0])?{...result.choices[0],details:ClothingDetails.recognizedFields(result.choices[0],result.details)}:null;},
+  async analyze(image){
+   if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
+   if(!localReady)await enableLocal();
+   if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
+   const result=await localRequest('classify',image,null);
+   if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
+   return (result.strong||result.categoryConfirmed)&&result.choices?.[0]&&segmentationAllows(item,result.choices[0])?{...result.choices[0],details:ClothingDetails.recognizedFields(result.choices[0],result.details)}:null;
+  },
   async save(photo,choice){
+   // A previously unsegmented photo can acquire a source-bound mask while
+   // the crop dialog remains open. Never recycle that mask with new pixels.
+   if(hasSourceBoundMask88(item))throw Error('P88_SOURCE_MASK_CROP_FORBIDDEN');
+   if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
    const value={...structuredClone(item),...photo,userAdjusted:true,localAnalyzed:true,scanFailed:false,saveFailed:false,possibleDuplicate:false};
-   delete value.recognitionMemory;delete value.confirmedDetails;delete value.correctionReceipt72;delete value.learningReviewedWeek;delete value.weeklySuggestion;delete value.recognitionPhoto;delete value.colorMethod;if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}const quality=await checkPhoto(photo.image);Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')value.colorMethod='garment-mask';delete value.maskedColorEstimate;delete value.maskApplied;value.visualSignature=quality.signature;value.visualAspect=quality.aspect;delete value.localChoices;delete value.indexedAt;
+   if(value.id!==item.id||hasSourceBoundMask88(value)||value.ownerSourceReview88||
+    Object.hasOwn(photo,'ownerDuplicateReview88')||
+    Object.hasOwn(photo,'exactSavedPhotoMatch88'))
+    throw Error('P88_CROP_CANNOT_REBIND_ID_OR_MASK');
+   delete value.recognitionMemory;delete value.confirmedDetails;delete value.correctionReceipt72;delete value.learningReviewedWeek;delete value.weeklySuggestion;delete value.recognitionPhoto;delete value.colorMethod;
+   if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}
+   const quality=await checkPhoto(photo.image);
+   if(hasSourceBoundMask88(item))throw Error('P88_STALE_MASK_AFTER_PHOTO_CHECK');
+   if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
+   Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));
+   if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')value.colorMethod='garment-mask';
+   delete value.maskedColorEstimate;delete value.maskApplied;
+   value.visualSignature=quality.signature;value.visualAspect=quality.aspect;
+   delete value.localChoices;delete value.indexedAt;
    if(choice){applyLocalChoice(value,choice,true);Object.assign(value,ClothingDetails.fill(value,choice,choice.details,true));value.indexedAt=new Date().toISOString();}
    value.localStatus=choice?'Crop checked. Suggested details applied.':'Crop saved. Check recognition or adjust the clothing details.';
-   if(items.some(x=>x.id===item.id))await writeAll([value]);else await queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'draft',batch:batch.map(x=>x.id===item.id?value:x)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));
-   Object.assign(item,value);for(const key of ['visualSignature','visualAspect','localChoices','indexedAt','recognitionPhoto','colorMethod','recognitionMemory','confirmedDetails','correctionReceipt72','learningReviewedWeek','weeklySuggestion'])if(!(key in value))delete item[key];render();
+   if(hasSourceBoundMask88(item))throw Error('P88_MASK_REVISION_CHANGED_BEFORE_WRITE');
+   if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
+   // Recheck INSIDE the shared cloud-beforeWrite queue. Commit only into
+   // the captured owner's original IDB. A new camera draft added during the
+   // wait must be kept, not wiped by an early batch snapshot.
+   await queued(()=>{
+    if(hasSourceBoundMask88(item)||hasSourceBoundMask88(value)||
+     !cropLive88()||value.id!==item.id||value.ownerSourceReview88)
+     throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
+    // Changing photo bytes invalidates old exact-JPEG duplicate consent.
+    // Another photo may have been saved during cloud.beforeWrite, so inspect
+    // saved peers INSIDE the exact-owner queued transaction boundary.
+    if(value.image!==lease.image){
+     delete value.ownerDuplicateReview88;
+     delete value.exactSavedPhotoMatch88;
+     if(lease.wasDraft){
+      const peer=items.find(x=>x!==item&&x.id!==item.id&&x.image===value.image);
+      if(peer){
+       value.exactSavedPhotoMatch88={savedItemId:peer.id};
+       value.possibleDuplicate=true;
+       value.requiresOwnershipConfirmation=true;
+       value.localStatus='This crop exactly matches another saved closet photo. Keep it unsaved and compare the physical garments in Adjust before adding.';
+      }
+     }
+    }
+    return new Promise((resolve,reject)=>{
+     const tx=lease.ownerDb.transaction(lease.wasDraft?'state':'items','readwrite');
+     const updatedDraft88=lease.wasDraft?structuredClone(batch.map(x=>x===item?value:x)):null;
+     if(lease.wasDraft)tx.objectStore('state').put({id:'draft',batch:updatedDraft88});
+     else tx.objectStore('items').put(value);
+     tx.oncomplete=()=>{
+      // Crop writes state directly (outside persistDraft); advance the local
+      // durable revision so an immediately subsequent reviewed Save can compare
+      // the actual new crop bytes instead of a stale earlier source.
+      if(lease.wasDraft&&cropLive88())draftStoreRevision88=JSON.stringify(updatedDraft88);
+      resolve();
+     };tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+    });
+   });
+   if(!cropLive88())return; // Old owner's completed write cannot paint B's UI.
+   Object.assign(item,value);
+   for(const key of ['visualSignature','visualAspect','localChoices','indexedAt','recognitionPhoto','colorMethod','recognitionMemory','confirmedDetails','correctionReceipt72','learningReviewedWeek','weeklySuggestion','ownerDuplicateReview88','exactSavedPhotoMatch88'])if(!(key in value))delete item[key];
+   render();
   }
  }).catch(()=>message('Could not open this photo for cropping. Your saved photo is kept.'));
 }
-function cropButton(item){const button=node('button','Crop photo','secondary');button.type='button';button.disabled=localPending.has(item.id)||!!item.shoePair||!!item.combinedFragments70;button.onclick=()=>cropClothingPhoto(item);return button;}
+function cropButton(item){const button=node('button','Crop photo','secondary');button.type='button';button.disabled=localPending.has(item.id)||!!item?.reconciliation70||!!item?.reconciliation70Status||!!item?.shoePair||!!item?.combinedFragments70||!!item?.segmentHint?.componentReviewStatus;button.onclick=()=>cropClothingPhoto(item);return button;}
 // P846: owner's two confirmed photo regions may represent one physical item;
 // never infer that source/mask evidence or a machine suggestion is ownership.
 function unit70Receipts(item){
@@ -176,6 +596,219 @@ function unit70OwnerEvidenceValid(item){
  if((item.reconciliation70Status==='paired_confirmed'||item.reconciliation70Status==='fragments_confirmed')&&!companion)return false;
  return true;
 }
+// P88: Adjust of an owner-reviewed P70 region can await learning/hash work and
+// the queued cloud preflight. Bind the final closet transaction to the SAME
+// signed user object, database, draft object, original JPEG and mask receipt.
+// A matching text owner ID alone cannot authorize a replaced login session.
+// A paired shoe/combined fragment contains a nested second source and mask.
+// Object-identity equality alone misses in-place edits to companion receipts.
+// Freeze the complete owner-visible physical-group evidence, not just the
+// outer object reference, while Adjust and queued cloud checks may yield.
+function sourceGroupRevision88(item){
+ const group=item?.shoePair||item?.combinedFragments70;
+ if(!group)return null;
+ try{return JSON.stringify({
+  kind:item.shoePair?'shoe':'fragments',confirmed:group.confirmedByOwner,
+  componentIds:group.componentIds,companion:group.companion
+ });}catch{return '';} // cyclic/unserializable nested evidence fails closed
+}
+function sourceSaveLease88(item){
+ if(!item?.reconciliation70)return null;
+ const user=window.closetAuth?.user;
+ return {item,user,ownerId:user?.id,ownerDb:db,wasDraft:batch.includes(item),
+  sourceId:item.outfitSourceId,source:item.reconciliation70.sourceSha256,
+  mask:item.reconciliation70.maskSha256,receipt:item.reconciliation70,
+  receiptRevision:JSON.stringify(item.reconciliation70),
+  status:item.reconciliation70Status,
+  original:item.originalPhoto?.image,image:item.image,
+  review:item.recognitionPhoto?.image,shoe:item.shoePair,fragments:item.combinedFragments70,
+  cropRevision:JSON.stringify(item.cropBounds??null),
+  hintRevision:JSON.stringify(item.segmentHint??null),
+  groupRevision:sourceGroupRevision88(item)};
+}
+function sourceSaveLeaseLive88(lease){
+ const item=lease?.item,user=window.closetAuth?.user;
+ return Boolean(lease?.user&&lease.ownerId&&lease.ownerDb&&
+  user===lease.user&&user.id===lease.ownerId&&
+  db===lease.ownerDb&&db.name==='closet-current-user-'+lease.ownerId&&
+  (lease.wasDraft?batch.includes(item):items.includes(item))&&
+  item.outfitSourceId===lease.sourceId&&
+  item.reconciliation70===lease.receipt&&
+  JSON.stringify(item.reconciliation70)===lease.receiptRevision&&
+  item.reconciliation70?.sourceSha256===lease.source&&
+  item.reconciliation70?.maskSha256===lease.mask&&
+  item.reconciliation70?.ownerId===lease.ownerId&&
+  item.reconciliation70Status===lease.status&&
+  ['paired_confirmed','fragments_confirmed','separate_confirmed'].includes(lease.status)&&
+  item.originalPhoto?.image===lease.original&&item.image===lease.image&&
+  item.recognitionPhoto?.image===lease.review&&
+  item.shoePair===lease.shoe&&item.combinedFragments70===lease.fragments&&
+  JSON.stringify(item.cropBounds??null)===lease.cropRevision&&
+  JSON.stringify(item.segmentHint??null)===lease.hintRevision&&
+  lease.groupRevision!==''&&sourceGroupRevision88(item)===lease.groupRevision);
+}
+// Source-derived display bytes are distinct from raw model mask pixels.
+// Hash the exact JPEG/PNG crop that the owner reviewed and will save. A
+// successful digest proves BYTE identity only, not one physical garment.
+async function ownerCropPhotoDigest88(image){
+ if(typeof image!=='string'||image.length>12000000||!crypto?.subtle||
+  !/^data:image\/(?:jpeg|png);base64,[A-Za-z0-9+/]+={0,2}$/.test(image))return null;
+ try{
+  const jpeg=image.startsWith('data:image/jpeg;');
+  const raw=atob(image.slice(image.indexOf(',')+1));
+  const bytes=new Uint8Array(raw.length);
+  for(let k=0;k<raw.length;k++)bytes[k]=raw.charCodeAt(k);
+  if(jpeg){
+   if(bytes.length<4||bytes[0]!==255||bytes[1]!==216||
+    bytes[bytes.length-2]!==255||bytes[bytes.length-1]!==217)return null;
+  }else if(bytes.length<8||[137,80,78,71,13,10,26,10].some((n,k)=>bytes[k]!==n))
+   return null;
+  const digest=await crypto.subtle.digest('SHA-256',bytes);
+  return [...new Uint8Array(digest)].map(n=>n.toString(16).padStart(2,'0')).join('');
+ }catch{return null;}
+}
+async function sourceSavePhotoVerified88(lease){
+ if(!sourceSaveLeaseLive88(lease)||typeof lease.original!=='string'||
+  lease.original.length>12000000||
+  !/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(lease.original)||
+  !/^[a-f0-9]{64}$/.test(lease.source)||!crypto?.subtle)return false;
+ try{
+  // Verify JPEG framing, not just a hash of arbitrarily labeled bytes.
+  // Pixel/content semantics still require independent human evidence.
+  const actual=await ownerCropPhotoDigest88(lease.original);
+  if(actual!==lease.source||!sourceSaveLeaseLive88(lease))return false;
+  const cropDigest=await ownerCropPhotoDigest88(lease.image);
+  if(!cropDigest||!sourceSaveLeaseLive88(lease))return false;
+  // A reviewed second shoe/fragment image needs its OWN byte digest.
+  const companion=lease.item?.shoePair?.companion||
+   lease.item?.combinedFragments70?.companion;
+  const companionDigest=companion?
+   await ownerCropPhotoDigest88(companion.image):null;
+  if((companion&&!companionDigest)||!sourceSaveLeaseLive88(lease))return false;
+  lease.derivedImageSha256=cropDigest;
+  lease.companionImageSha256=companionDigest;
+  return true;
+ }catch{return false;}
+}
+// A personally confirmed source/crop/physical-unit decision is not a blind
+// independent model score or a M4 certified-single/3D admission token.
+// Retain that distinction in the saved per-item provenance shape.
+function reviewedSourceReceipt88(value,lease){
+ const companion=value.shoePair?.companion||value.combinedFragments70?.companion;
+ return {schema:'p88-owner-source-review/v1',ownerId:lease.ownerId,
+  itemId:value.id,sourceId:lease.sourceId,originalPhotoSha256:lease.source,
+  // Independently rehashed SAVED crop bytes, NOT the original semantic mask.
+  derivedImageSha256:lease.derivedImageSha256||null,
+  derivedImageBytesVerified:Boolean(lease.derivedImageSha256),
+  companionImageSha256:lease.companionImageSha256||null,
+  companionImageBytesVerified:companion?Boolean(lease.companionImageSha256):false,
+  rawMaskPixelsIndependentlyVerified:false,
+  selectedMaskSha256:lease.mask,
+  companionMaskSha256:companion?.reconciliation70?.maskSha256||null,
+  cropBounds:structuredClone(value.cropBounds??null),
+  category:value.category,itemType:value.itemType||'Unknown',color:value.color,
+  physicalUnitDecision:value.reconciliation70Status,
+  ownerReviewed:true,sourcePhotoOriginal:true,
+  independentPhysicalItemVerified:false,singleGarmentVerified:false,
+  threeDReady:false};
+}
+function reviewedSourceReceiptValid88(value,lease){
+ const r=value.ownerSourceReview88;
+ const companion=value.shoePair?.companion||value.combinedFragments70?.companion;
+ return Boolean(r?.schema==='p88-owner-source-review/v1'&&
+  r.ownerReviewed===true&&r.sourcePhotoOriginal===true&&
+  r.singleGarmentVerified===false&&r.threeDReady===false&&
+  r.independentPhysicalItemVerified===false&&
+  r.derivedImageBytesVerified===true&&
+  r.rawMaskPixelsIndependentlyVerified===false&&
+  /^[a-f0-9]{64}$/.test(r.derivedImageSha256||'')&&
+  r.derivedImageSha256===lease.derivedImageSha256&&
+  r.companionImageSha256===(companion?lease.companionImageSha256:null)&&
+  r.companionImageBytesVerified===Boolean(companion)&&
+  (!companion||/^[a-f0-9]{64}$/.test(r.companionImageSha256||''))&&
+  r.ownerId===lease.ownerId&&r.itemId===value.id&&r.sourceId===lease.sourceId&&
+  r.originalPhotoSha256===lease.source&&r.selectedMaskSha256===lease.mask&&
+  r.companionMaskSha256===(companion?.reconciliation70?.maskSha256||null)&&
+  JSON.stringify(r.cropBounds??null)===lease.cropRevision&&
+  r.category===value.category&&r.itemType===(value.itemType||'Unknown')&&
+  r.color===value.color&&r.physicalUnitDecision===lease.status);
+}
+function saveSourceBoundPiece88(value,nextBatch,lease){
+ // The source-bound unit is also a newly reviewed unsaved original. It must
+ // NEVER replace another private item on an ID collision and must not erase a
+ // different tab's unfinished original when clearing this reviewed draft.
+ if(!sourceSaveLeaseLive88(lease))return Promise.reject(Error('P88_STALE_SOURCE_OWNER'));
+ if(lease.wasDraft!==true)return Promise.reject(Error('P88_SOURCE_REVIEW_INSERT_ONLY'));
+ return queued(()=>{
+  if(!sourceSaveLeaseLive88(lease)||
+   value.id!==lease.item.id||
+   value.originalPhoto?.image!==lease.original||value.image!==lease.image||
+   value.recognitionPhoto?.image!==lease.review||
+   JSON.stringify(value.cropBounds??null)!==lease.cropRevision||
+   JSON.stringify(value.segmentHint??null)!==lease.hintRevision||
+   JSON.stringify(value.reconciliation70??null)!==lease.receiptRevision||
+   // Owner review never certifies independent garment physical identity.
+   value.singleGarmentVerified===true||value.threeDReady===true||
+   value.independentPhysicalItemVerified===true||
+   value.segmentHint?.verified===true||
+   value.segmentHint?.ownerReviewedInstance===true||
+   value.reconciliation70?.sourceSha256!==lease.source||
+   value.reconciliation70?.maskSha256!==lease.mask||
+   value.reconciliation70?.ownerId!==lease.ownerId||
+   value.reconciliation70Status!==lease.status||
+   value.outfitSourceId!==lease.sourceId||
+   sourceGroupRevision88(value)!==lease.groupRevision||
+   !reviewedSourceReceiptValid88(value,lease)||
+   !unit70OwnerEvidenceValid({...lease.item,category:value.category})||
+   duplicateUnit70InCloset(value,items))
+   throw Error('P88_REVOKED_SOURCE_SAVE');
+  const liveRemaining=batch.filter(x=>x.id!==lease.item.id);
+  const liveBatchRevision=JSON.stringify(batch),expected=draftStoreRevision88;
+  if(typeof expected!=='string')throw Error('P88_DRAFT_STORAGE_NOT_LOADED');
+  return new Promise((resolve,reject)=>{
+   let tx,reason=null;
+   try{
+    tx=lease.ownerDb.transaction(['items','state'],'readwrite');
+    const itemStore=tx.objectStore('items'),stateStore=tx.objectStore('state');
+    const read=stateStore.get('draft');
+    read.onsuccess=()=>{
+     try{
+      if(!sourceSaveLeaseLive88(lease)||
+       draftStoreRevision88!==expected||
+       JSON.stringify(read.result?.batch??null)!==expected||
+       JSON.stringify(batch)!==liveBatchRevision||
+       duplicateUnit70InCloset(value,items))
+       throw Error('P88_SOURCE_DRAFT_STORAGE_CHANGED');
+      itemStore.add(value); // insert-only; transaction aborts on item-ID collision
+      stateStore.put({id:'draft',batch:structuredClone(liveRemaining)});
+     }catch(e){reason=e;try{tx.abort();}catch{reject(reason);}}
+    };
+    read.onerror=()=>{reason=read.error||Error('P88_SOURCE_DRAFT_READ_FAIL');};
+    tx.oncomplete=()=>{
+     if(!sourceSaveLeaseLive88(lease))return reject(Error('P88_REVOKED_SOURCE_SAVE'));
+     draftStoreRevision88=JSON.stringify(liveRemaining);resolve();
+    };
+    tx.onabort=()=>reject(reason||tx.error||Error('P88_SOURCE_DRAFT_STORAGE_CHANGED'));
+    tx.onerror=()=>{}; // a duplicate item key aborts both stores
+   }catch(e){reject(e);}
+  });
+ });
+}
+// Mission 1 #88: unresolved SegFormer fragments are not one verified
+// physical garment. A checkbox cannot resolve mixed/fragmented source pixels.
+// A new single-garment capture is required; original unsaved photo is kept.
+function ownerMaySaveSourceGroup88(item){
+ const status=item?.segmentHint?.componentReviewStatus;
+ if(status===undefined)return true;
+ // Model separation is never proof of how many owned garments exist.
+ // Do not permit a mere category/color checkbox to convert a shoe pair
+ // or fractured same-class garment into independently saved inventory.
+ if(status==='owner_must_confirm_garment_units')
+  return Boolean(item?.reconciliation70&&
+   ['paired_confirmed','fragments_confirmed','separate_confirmed'].includes(item.reconciliation70Status));
+ // Unknown status and unresolved small/noisy fragments both fail closed.
+ return false;
+}
 function adjustPhoto(item){
  if(stream||cameraOpening)stopCamera();
  const dialog=document.createElement('dialog');dialog.className='photo-adjust clothing-editor';
@@ -199,20 +832,27 @@ function adjustPhoto(item){
  // #77 OFF by default. Comparison may ONLY inspect this owner's loaded
  // local wardrobe. "Same" creates an unpersisted intent, never a second item.
  let cross77Pending=false,cross77Proposal=null,cross77Decision=null,cross77Scope=null;
- let confirmReview=null,save=null,reviewStatus=null,learningCheck72=null;
+ let confirmReview=null,save=null,reviewStatus=null,learningCheck72=null,distinctPhotoCheck88=null;
  const reviewedKeys72=new Set(['category','itemType']);
  const form=node('form'),draft=structuredClone(item);
+ const sourceLease88=sourceSaveLease88(item);
+ const reviewLease88=reviewedSaveLease88(item);
+ const distinctPhotoRequired88=Boolean(pendingDraft&&
+  (reviewLease88.exactPhotoPeers88.length||item.exactSavedPhotoMatch88));
  const reviewedCore=()=>{
   const color=String(draft.color||'').trim();
   return categories.includes(draft.category)&&draft.category!=='Uncategorized'&&
    Boolean(color)&&color.toLowerCase()!=='unknown'&&
+   ownerMaySaveSourceGroup88(item)&&
    item.reconciliation70Status!=='unresolved'&&
    ((!item.reconciliation70&&!item.reconciliation70Status)||unit70OwnerEvidenceValid({...item,category:draft.category}))&&
    (!item.reconciliation70||!duplicateUnit70InCloset(item,items));
  };
  const canSaveReview=()=>{
   if(!explicitReview)return true;
-  const valid=Boolean(confirmReview?.checked&&reviewedCore()&&!cross77Pending&&(!cross77Scope||CrossCaptureDuplicate77.valid(cross77Scope))&&(!cross77Proposal||cross77Decision?.action==='different'));
+  const valid=Boolean(confirmReview?.checked&&reviewedCore()&&
+   (!distinctPhotoRequired88||(distinctPhotoCheck88?.checked&&
+    reviewedSaveLeaseLive88(reviewLease88)&&reviewLease88.exactPhotoPeers88.length>0))&&!cross77Pending&&(!cross77Scope||CrossCaptureDuplicate77.valid(cross77Scope))&&(!cross77Proposal||cross77Decision?.action==='different'));
   if(save)save.disabled=saveInFlight||!valid;
   if(reviewStatus)reviewStatus.textContent=reviewedCore()?
    'Confirm that the category, specific type (or Unknown), and color match the garment photo.':
@@ -224,10 +864,20 @@ function adjustPhoto(item){
   // programmatically, so the optional model panel must clear immediately.
   dual82Panel?.invalidate();
   if(confirmReview)confirmReview.checked=false;
+  if(distinctPhotoCheck88)distinctPhotoCheck88.checked=false;
   if(learningCheck72)learningCheck72.checked=false;
   if(['pattern','sleeveLength','fit'].includes(key))reviewedKeys72.add(key);
   canSaveReview();
  });
+ if(sourceLease88?.original){
+  // Show the original outfit as well as the cutout; only the owner can
+  // attest whether the crop is one real garment, fragments, or a shoe pair.
+  const proof=node('figure',null,'clothing-reference'),image=node('img');
+  image.src=sourceLease88.original;
+  image.alt='Original complete outfit photo for physical garment comparison';
+  proof.append(image,node('figcaption','Original complete photo · compare with the cropped garment before confirming its physical identity'));
+  form.prepend(proof);
+ }
  const evidence=item.recognitionDiagnostics?.outerwearRecovery;
  if(evidence?.outerwearReviewSuggested&&draft.category!=='Outerwear'){
   const suggestion=node('div',null,'recognition-review-suggestion');
@@ -251,6 +901,10 @@ function adjustPhoto(item){
   proof.append(second,node('figcaption','Second source region · owner grouping confirmed'));
   form.prepend(proof);
  }
+ if(item.segmentHint?.componentReviewStatus==='unresolved_fragments_keep_source_mask')
+  form.prepend(node('p','This photo contains unresolved garment fragments. The original is kept, but this combined mask cannot be saved as one verified item. Photograph the garment separately, then review again.','fine'));
+ if(item.segmentHint?.componentReviewStatus==='owner_must_confirm_garment_units'&&!item.reconciliation70)
+  form.prepend(node('p','This separated garment is not yet verified as one physical wardrobe item. Use a single-garment photo, or first enable and finish the owner-reviewed outfit-piece grouping flow. Do not save unpaired footwear as separate purchases.','fine'));
  if(item.reconciliation70Status==='unresolved')form.prepend(node('p','Resolve shoe pairing or garment fragments under Your outfit pieces before saving.','fine'));
  save=node('button','Save changes','primary');
  const cancel=node('button','Cancel','secondary'),remove=node('button','Remove photo','secondary');
@@ -258,10 +912,30 @@ function adjustPhoto(item){
   const approval=node('label',null,'review-acknowledgement');
   confirmReview=node('input');confirmReview.type='checkbox';confirmReview.required=true;
   confirmReview.setAttribute('aria-label','I checked the clothing photo and confirmed the category type and color');
-  approval.append(confirmReview,document.createTextNode('I checked the garment photo and confirmed its category, specific type (or Unknown), and color.'));
+  approval.append(confirmReview,document.createTextNode(sourceLease88?
+   'I compared the original complete photo with the crop, confirmed its physical garment or shoe-pair grouping, and checked the category, specific type (or Unknown), and color.':
+   'I checked the garment photo and confirmed its category, specific type (or Unknown), and color.'));
   reviewStatus=node('p',null,'fine');
   confirmReview.onchange=canSaveReview;
   form.append(approval,reviewStatus);canSaveReview();
+ }
+ if(distinctPhotoRequired88){
+  const panel=node('section',null,'duplicate-review-88');
+  panel.setAttribute('aria-label','Exact saved photograph physical garment decision');
+  panel.append(node('p',
+   reviewLease88.exactPhotoPeers88.length+
+   ' saved closet item(s) use this exact photo. A matching picture cannot prove another physical garment. Compare the real items and leave this photo unsaved if uncertain.','fine'));
+  if(reviewLease88.exactPhotoPeers88[0]){
+   const matching=node('img');matching.src=reviewLease88.exactPhotoPeers88[0].image;
+   matching.alt='Already saved photograph exactly matching this new photo';panel.append(matching);
+  }
+  const label=node('label',null,'review-acknowledgement');
+  distinctPhotoCheck88=node('input');distinctPhotoCheck88.type='checkbox';
+  distinctPhotoCheck88.setAttribute('aria-label','I physically checked this is a different owned garment from every matching saved item');
+  label.append(distinctPhotoCheck88,document.createTextNode(
+   'I checked my actual clothing and confirm this is a physically different garment from every saved item using this exact photo. This is my decision, not independent model verification.'));
+  distinctPhotoCheck88.onchange=canSaveReview;
+  panel.append(label);form.prepend(panel);canSaveReview();
  }
  learningCheck72=attachLearningConsent72(form,learningScope72());
  // The experimental flow requires a deliberate URL opt-in and a live, exact
@@ -302,7 +976,24 @@ function adjustPhoto(item){
  }
  cancel.type=remove.type='button';cancel.onclick=()=>{if(!saveInFlight)dialog.close();};
  const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);item.userAdjusted=true;
- remove.onclick=async()=>{if(saveInFlight){message('This photo is currently being saved.');return;}try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
+ remove.onclick=async()=>{
+  if(saveInFlight){message('This photo is currently being saved.');return;}
+  const owner88=window.closetAuth?.user,db88=db;
+  try{
+   const saved=items.find(x=>x.id===item.id);
+   if(saved){
+    if(saved!==item)throw Error('P88_WRONG_SAVED_ITEM_DELETE');
+    const deleteLease=reviewedSaveLease88(item);
+    await removeExistingPiece88(deleteLease);
+    if(!reviewedSaveLeaseLive88(deleteLease))return;
+   }else if(!batch.includes(item))throw Error('P88_REMOVED_REVIEW_ITEM');
+   if(window.closetAuth?.user!==owner88||db!==db88)return;
+   items=items.filter(x=>x!==item);batch=batch.filter(x=>x!==item);
+   sessionCapturedIds.delete(item.id);await persistDraft();
+   if(window.closetAuth?.user!==owner88||db!==db88)return;
+   dialog.close();render();
+  }catch{message('Could not remove this photo. Try again.');}
+ };
  form.onsubmit=async event=>{
   event.preventDefault();
   // A disabled submit button is not a transaction lock: a scripted event or a
@@ -310,6 +1001,7 @@ function adjustPhoto(item){
   if(saveInFlight){message('This photo is already being saved.');return;}
   if(dual82Enabled&&((window.closetAuth?.user!==dual82Owner||window.closetAuth?.user?.id!==dual82OwnerId)||dual82Panel&&!dual82Panel.valid())){message('This comparison belongs to a different photo or signed session. Reopen Adjust.');return;}
   if(subtype80Enabled&&((window.closetAuth?.user!==subtype80Owner||window.closetAuth?.user?.id!==subtype80OwnerId)||subtype80Panel&&!subtype80Panel.valid())){message('This subtype review belongs to a different photo or signed session. Reopen Adjust.');return;}
+  if(!ownerMaySaveSourceGroup88(item)){message('The original photo has unresolved garment fragments. Retake a single-garment photo before saving this draft.');return;}
   if(item.reconciliation70Status==='unresolved'||
    ((item.reconciliation70||item.reconciliation70Status)&&!unit70OwnerEvidenceValid({...item,category:draft.category}))||
    (item.reconciliation70&&duplicateUnit70InCloset(item,items))){
@@ -318,6 +1010,11 @@ function adjustPhoto(item){
   if((cross77Scope&&!CrossCaptureDuplicate77.valid(cross77Scope))||
      cross77Pending||(cross77Proposal&&cross77Decision?.action!=='different')){
    message('Resolve the possible owned-garment comparison for this signed owner first, or keep the original unsaved.');
+   return;
+  }
+  if(distinctPhotoRequired88&&(!distinctPhotoCheck88?.checked||
+   !reviewedSaveLeaseLive88(reviewLease88)||!reviewLease88.exactPhotoPeers88.length)){
+   message('This photo matches a saved item. Compare the actual garments and explicitly confirm this is a different owned item.');
    return;
   }
   if(explicitReview&&!canSaveReview()){
@@ -352,6 +1049,11 @@ function adjustPhoto(item){
     throw Error('P77_STALE_DECISION');
   }
   const reviewed72=await confirmedLearningValue72(value,consent72,scope72,[...reviewedKeys72]);
+  // A matching JPEG decision is owner attestation, never a 3D-ready mask.
+  if(!sourceLease88&&distinctPhotoRequired88){
+   if(!distinctPhotoCheck88?.checked)throw Error('P88_DUPLICATE_OWNER_DECISION_REVOKED');
+   reviewed72.ownerDuplicateReview88=reviewedDistinctPhotoReceipt88(reviewLease88);
+  }
   if(learningMode72()&&(!dialog.open||scope72!==learningScope72()||
     source72!==item.image||origin72!==item.recognitionPhoto?.image||
     unit72!==item.reconciliation70?.maskSha256||
@@ -381,9 +1083,24 @@ function adjustPhoto(item){
   }
   if(subtype80Enabled&&((window.closetAuth?.user!==subtype80Owner||window.closetAuth?.user?.id!==subtype80OwnerId)||!dialog.open||!batch.some(x=>x===item)||subtype80Panel&&!subtype80Panel.valid()))throw Error('P80_STALE_SAVE_SCOPE');
   if(dual82Enabled&&((window.closetAuth?.user!==dual82Owner||window.closetAuth?.user?.id!==dual82OwnerId)||!dialog.open||!batch.some(x=>x===item)||dual82Panel&&!dual82Panel.valid()))throw Error('P82_STALE_SAVE_SCOPE');
-  await savePiece(reviewed72,batch.filter(x=>x.id!==item.id));
+  // P88: even a fully checked form cannot bypass a replaced same-ID owner,
+  // mutated original JPEG or swapped source-bound mask during asynchronous work.
+  if(!reviewedSaveLeaseLive88(reviewLease88))throw Error('P88_REVIEW_OWNER_OR_PHOTO_CHANGED');
+  if(sourceLease88&&!(await sourceSavePhotoVerified88(sourceLease88)))
+   throw Error('P88_ORIGINAL_JPEG_OR_OWNER_CHANGED');
+  if(sourceLease88){
+   reviewed72.ownerSourceReview88=reviewedSourceReceipt88(reviewed72,sourceLease88);
+   await saveSourceBoundPiece88(reviewed72,batch.filter(x=>x.id!==item.id),sourceLease88);
+  }else await savePiece(reviewed72,batch.filter(x=>x.id!==item.id),reviewLease88);
+  // If the authenticated session changed while IDB committed, do not mutate
+  // the newly active owner's in-memory wardrobe after the old transaction.
+  if(!reviewedSaveLeaseLive88(reviewLease88)||
+     (sourceLease88&&!sourceSaveLeaseLive88(sourceLease88))){dialog.close();return;}
   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,reviewed72);else items.push(reviewed72);
-  batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
+  batch=batch.filter(x=>x.id!==item.id);
+  // Both reviewed saves already committed items + the live draft atomically.
+  // A second queued persistDraft could write into a newly switched account.
+  dialog.close();render();scheduleMemoryReview();
  }catch{
   saveInFlight=false;
   for(const field of lockedFields)field.input.disabled=field.disabled;
@@ -590,6 +1307,7 @@ function render(){
   const dialog=document.createElement('dialog');dialog.className='clothing-editor';
   dialog.style.cssText='border:1px solid #d9ddd2;border-radius:8px;max-width:440px;width:90%;padding:24px';
   const f=node('form'),draft=structuredClone(item);
+  const savedDetailsLease88=reviewedSaveLease88(item);
   let saveInFlight847=false,reviewSaved72=null,learnSaved72=null;
   const reviewedKeys72=new Set(['category','itemType']);
   const collect=clothingFields(f,draft,key=>{
@@ -625,7 +1343,9 @@ function render(){
     if(learningMode72()&&(!dialog.open||scope!==learningScope72()||
       item.image!==source||item.recognitionPhoto?.image!==recognition||
       !items.some(x=>x===item)))throw Error('P847_STALE_SAVED_EDITOR');
-    await writeAll([recorded]);
+    await saveExistingPiece88(recorded,savedDetailsLease88);
+    // Never paint the previous owner's saved item into the replacement UI.
+    if(!reviewedSaveLeaseLive88(savedDetailsLease88)){dialog.close();return;}
     Object.assign(item,recorded);dialog.close();render();scheduleMemoryReview();
    }catch{
     saveInFlight847=false;ok.disabled=false;cancel.disabled=false;
@@ -638,7 +1358,15 @@ function render(){
   dialog.oncancel=e=>{if(saveInFlight847)e.preventDefault();};
   f.append(ok,cancel);dialog.append(f);document.body.append(dialog);
   dialog.onclose=()=>dialog.remove();dialog.showModal();
- };del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id);items=items.filter(x=>x.id!==item.id);render();}catch{message('Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));actions.append(edit,cropButton(item),del);body.append(actions);card.append(im,body);if(typeof enableClosetDrag==='function')enableClosetDrag(im,item);cg.append(card);}
+ };del.onclick=async()=>{
+  if(!confirm('Delete this closet piece?'))return;
+  const deleteLease=reviewedSaveLease88(item);
+  try{
+   await removeExistingPiece88(deleteLease);
+   if(!reviewedSaveLeaseLive88(deleteLease))return;
+   items=items.filter(x=>x!==item);render();
+  }catch{message('Could not delete the piece.');}
+ };if(typeof closetWearButton==='function')actions.append(closetWearButton(item));actions.append(edit,cropButton(item),del);body.append(actions);card.append(im,body);if(typeof enableClosetDrag==='function')enableClosetDrag(im,item);cg.append(card);}
  if(typeof renderClosetBrowser==='function')renderClosetBrowser();
  if(typeof renderTrendMatches==='function')renderTrendMatches();if(typeof renderOutfitBoard==='function')renderOutfitBoard();if(typeof renderStyledCollection==='function')renderStyledCollection();if(typeof renderHomePieces==='function')renderHomePieces();if(typeof renderOutfitCapture==='function')renderOutfitCapture();
 }
@@ -649,12 +1377,37 @@ function difference(a,b){if(!a||!b)return 255;let total=0;for(let i=0;i<a.length
 function snap(){if(!video.videoWidth||video.readyState<2)throw Error('The camera has not provided a usable frame yet.');const scale=Math.min(1,2048/Math.max(video.videoWidth,video.videoHeight));canvas.width=Math.max(1,Math.round(video.videoWidth*scale));canvas.height=Math.max(1,Math.round(video.videoHeight*scale));canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.94);}
 function beep(){if(!$('sound').checked||!audio)return;try{const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=740;g.gain.value=.04;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.12);}catch{}}
 function candidate(image,options={}){
- if([...items,...batch].some(item=>item.image===image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');message('Exact duplicate skipped. Show the next garment.');return false;}
- const item=normalizeClothing({id:crypto.randomUUID(),image,name:'',category:'Uncategorized',color:'',notes:'',localStatus:'Reading photo…'});
- if(typeof recordDeviceEvent==='function')recordDeviceEvent('photo_queued');
+ // P88: do not silently lose a newly photographed physical item merely
+ // because its JPEG bytes equal a photo already SAVED in this owner's closet.
+ // Identical pending frames are still coalesced to avoid auto-camera floods:
+ // ask for a fresh angle if this is a genuinely separate garment.
+ if(batch.some(item=>item.image===image)){
+  if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_pending_frame_awaits_review');
+  message('That exact frame is already waiting in Photo results. If this is a different physical garment, take its own photo from another angle.');
+  return false;
+ }
+ const exactSavedItem=items.find(item=>item.image===image);
+ const exactSaved=Boolean(exactSavedItem);
+ // Preserve inherited legacy automatic-indexing behavior in non-review mode;
+ // actual native Mission 1 review-first mode must retain intentional rescans.
+ if(exactSaved&&!(typeof reviewFirst836!=='undefined'&&reviewFirst836)){
+  if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');
+  message('Exact duplicate skipped. Show the next garment.');return false;
+ }
+ const item=normalizeClothing({id:crypto.randomUUID(),image,name:'',category:'Uncategorized',color:'',notes:'',
+  localStatus:exactSaved?'This original photo exactly matches a saved closet photo. Original kept unsaved for owner comparison. Confirm whether it is a different physical garment or remove this new draft.':'Reading photo…'});
+ if(typeof recordDeviceEvent==='function')recordDeviceEvent(exactSaved?'exact_saved_photo_retained_for_review':'photo_queued');
  if(options.outfitSourceId){item.outfitSourceId=options.outfitSourceId;item.requiresOwnershipConfirmation=true;item.segmentHint=options.segmentHint;item.recognitionPhoto=options.recognitionPhoto;item.originalPhoto=options.originalPhoto;item.cropBounds=options.cropBounds;if(options.reconciliation70){item.reconciliation70=options.reconciliation70;item.reconciliation70Status=options.reconciliation70Status||'unresolved';}if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}}
+ if(exactSaved){
+  item.exactSavedPhotoMatch88={savedItemId:exactSavedItem.id};
+  // No unverified classifier/model decision may resolve two identical JPEGs
+  // into distinct owned garments; preserve the raw source for a PERSON.
+  item.possibleDuplicate=true;item.requiresOwnershipConfirmation=true;
+  item.localAnalyzed=true;
+ }
  batch.push(item);sessionCapturedIds.add(item.id);persistDraft();session++;$('sessionCount').textContent=session;$('reviewCount').textContent=batch.length;$('lastCaptureImage').src=image;$('lastCaptureImage').hidden=false;
- queueAutomatic(item);return true;
+ if(!exactSaved)queueAutomatic(item);
+ return true;
 }
 function queueAutomatic(item){
  // An older queued photo may have been replaced by another object with this
@@ -681,8 +1434,19 @@ async function drainAutomatic(){
   }
  }}finally{automaticRunning=false;render();scheduleMemoryReview();}
 }
+// The exact signed account and per-owner storage are bound BEFORE permission,
+// audio resume and video playback. No old-session camera frame may become B's
+// private draft after sign-out, renewed same-ID login, or IDB replacement.
+function cameraOwnerLive88(lease=cameraOwnerLease88){
+ const browser=typeof window!=='undefined'&&Boolean(window.document);
+ return !browser||Boolean(lease?.owner?.id&&cameraOwnerLease88===lease&&
+  window.closetAuth?.user===lease.owner&&
+  lease.owner.id===lease.ownerId&&db===lease.ownerDb&&
+  lease.ownerDb?.name==='closet-current-user-'+lease.ownerId);
+}
 function stopCamera(){
- cameraRequest++;cameraOpening=false;clearInterval(timer);timer=null;
+ if(cameraOpening)busy=false;
+ cameraRequest++;cameraOwnerLease88=null;cameraOpening=false;clearInterval(timer);timer=null;
  if(stream)stream.getTracks().forEach(t=>t.stop());
  stream=null;cameraMode=null;video.srcObject=null;video.classList.remove('visible');
  $('placeholder').hidden=false;$('cameraChoices').hidden=false;$('cameraActions').hidden=true;
@@ -690,6 +1454,7 @@ function stopCamera(){
 }
 function controls(disabled){for(const id of ['start','startAuto','upload','interval','clothingPhotos','outfitCamera','outfitUpload','outfitRetry','captureSingle','captureOutfit'])$(id).disabled=disabled;}
 function finishScan(){
+ if(typeof window!=='undefined'&&window.document&&!cameraOwnerLive88()){stopCamera();return;}
  const wasManual=cameraMode==='manual';
  if(!wasManual&&stream&&session===0&&video.readyState>=2&&video.videoWidth){try{candidate(snap());}catch{}}
  stopCamera();
@@ -699,6 +1464,7 @@ function finishScan(){
 }
 function captureTick(now=Date.now()){
  if(!stream||cameraMode!=='auto')return;
+ if(typeof window!=='undefined'&&window.document&&!cameraOwnerLive88()){stopCamera();return;}
  const ready=video.readyState>=2&&video.videoWidth>0;
  if(!cadence.due(now,ready)){
   if(!ready)$('captureState').textContent='Waiting for camera images…';
@@ -711,22 +1477,38 @@ function captureTick(now=Date.now()){
 }
 function takePhoto(){
  if(!stream||cameraMode!=='manual')return;
+ if(typeof window!=='undefined'&&window.document&&!cameraOwnerLive88()){stopCamera();return;}
  try{candidate(snap());beep();$('captureState').textContent=`${session} photos taken · ready for the next piece`;if(session>=60){finishScan();message('60 photos collected. Review this batch before continuing.');}}
  catch{message('The camera is still getting ready. Wait a moment, then tap Take photo again.');}
 }
 async function startCamera(mode){
  if(busy||stream)return;
- const request=++cameraRequest;cameraOpening=true;busy=true;controls(true);
+ const browser=typeof window!=='undefined'&&Boolean(window.document);
+ const owner=browser?window.closetAuth?.user:null,ownerDb=typeof db==='undefined'?null:db;
+ const lease={owner,ownerId:owner?.id,ownerDb};
+ if(browser&&(!owner?.id||ownerDb?.name!=='closet-current-user-'+owner.id))return;
+ const request=++cameraRequest;cameraOwnerLease88=lease;
+ cameraOpening=true;busy=true;controls(true);
  $('captureState').textContent='Opening camera…';
  try{audio=new(window.AudioContext||window.webkitAudioContext)();await audio.resume();}catch{}
+ if(request!==cameraRequest||(browser&&!cameraOwnerLive88(lease))){
+  if(request===cameraRequest)stopCamera();
+  return;
+ }
  try{
   if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access unavailable. Choose saved photos or a closet video instead.');
   const acquired=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
-  if(request!==cameraRequest){acquired.getTracks().forEach(track=>track.stop());return;}
+  if(request!==cameraRequest||(browser&&!cameraOwnerLive88(lease))){
+   acquired.getTracks().forEach(track=>track.stop());
+   if(request===cameraRequest)stopCamera();
+   return;
+  }
   stream=acquired;cameraMode=mode;
   video.removeAttribute('src');video.srcObject=stream;video.classList.add('visible');$('placeholder').hidden=true;
-  await video.play();session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
+  await video.play();
   if(request!==cameraRequest)return;
+  if(browser&&!cameraOwnerLive88(lease)){stopCamera();return;}
+  session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
   cameraOpening=false;$('cameraChoices').hidden=true;$('cameraActions').hidden=false;$('takePhoto').hidden=mode!=='manual';
   if(mode==='auto'){
    cadence=new CaptureCadence(Number($('interval').value)*1000,Date.now());
@@ -737,22 +1519,138 @@ async function startCamera(mode){
    message('Take each photo at your own pace. Tap Done when you are finished.');
   }
  }catch(e){
-  if(request===cameraRequest){stopCamera();message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));}
+  if(request===cameraRequest){
+   const stillOwner=!browser||cameraOwnerLive88(lease);
+   stopCamera();
+   if(stillOwner)message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));
+  }
  }
- finally{busy=false;if(!stream)controls(false);}
+ finally{if(request===cameraRequest){busy=false;if(!stream)controls(false);}}
 }
 $('start').onclick=()=>startCamera('manual');
 $('startAuto').onclick=()=>startCamera('auto');
 $('takePhoto').onclick=takePhoto;
 $('stop').onclick=finishScan;
 function waitEvent(target,event,timeout=15000){return new Promise((resolve,reject)=>{let t;const clean=()=>{clearTimeout(t);target.removeEventListener(event,ok);target.removeEventListener('error',fail);};const ok=()=>{clean();resolve();},fail=()=>{clean();reject(Error('This video could not be read. Try an MP4 recorded by your phone.'));};target.addEventListener(event,ok,{once:true});target.addEventListener('error',fail,{once:true});t=setTimeout(fail,timeout);});}
-async function upload(file){if(!file||busy)return;if(file.size>150*1024*1024)return message('Choose a video smaller than 150 MB. Short batches work best.');stopCamera();busy=true;controls(true);let url;const startLength=batch.length;try{url=URL.createObjectURL(file);video.src=url;video.classList.add('visible');$('placeholder').hidden=true;const loaded=waitEvent(video,'loadedmetadata');video.load();await loaded;if(!Number.isFinite(video.duration)||video.duration<=0)throw Error('Video duration could not be read. Try a regular MP4.');if(video.duration>180)throw Error('Please trim this video to 3 minutes or less.');session=0;const interval=Number($('interval').value);for(let t=Math.min(.1,video.duration/2);t<video.duration;t+=interval){const seek=waitEvent(video,'seeked');video.currentTime=t;await seek;candidate(snap());const progress=Math.round(t/video.duration*100);$('captureState').textContent=`Collecting images · ${progress}%`;}message('');switchView('review');}catch(e){render();if(batch.length>startLength){message(`${session} images recovered before processing stopped. ${e.message}`);switchView('review');}else message(e.message);}finally{busy=false;controls(false);video.removeAttribute('src');video.load();if(url)URL.revokeObjectURL(url);$('captureState').textContent='Ready for another batch';}}
+// Video decode/seek awaits belong to the original signed owner and IDB.
+// An old owner's frames must never be captured into a replacement session.
+async function upload(file){
+ if(!file||busy)return;
+ if(file.size>150*1024*1024)return message('Choose a video smaller than 150 MB. Short batches work best.');
+ const browser=typeof window!=='undefined'&&Boolean(window.document);
+ const owner=browser?window.closetAuth?.user:null,ownerDb=typeof db==='undefined'?null:db;
+ const live=()=>!browser||Boolean(owner?.id&&window.closetAuth?.user===owner&&
+  db===ownerDb&&ownerDb?.name==='closet-current-user-'+owner.id);
+ if(!live())return;
+ stopCamera();busy=true;controls(true);
+ let url;
+ const startLength=batch.length;
+ try{
+  url=URL.createObjectURL(file);
+  if(!live())return;
+  video.src=url;video.classList.add('visible');$('placeholder').hidden=true;
+  const loaded=waitEvent(video,'loadedmetadata');
+  video.load();await loaded;
+  if(!live())return;
+  if(!Number.isFinite(video.duration)||video.duration<=0)
+   throw Error('Video duration could not be read. Try a regular MP4.');
+  if(video.duration>180)throw Error('Please trim this video to 3 minutes or less.');
+  session=0;
+  const interval=Number($('interval').value);
+  for(let t=Math.min(.1,video.duration/2);t<video.duration;t+=interval){
+   if(!live())return;
+   const seek=waitEvent(video,'seeked');
+   video.currentTime=t;await seek;
+   if(!live())return;
+   // snap() derives bytes from the decoded video element. Check again before
+   // adding the frame, even if a sign-out happened during video.seeked.
+   const image=snap();
+   if(!live())return;
+   candidate(image);
+   $('captureState').textContent=`Collecting images · ${Math.round(t/video.duration*100)}%`;
+  }
+  if(!live())return;
+  message('');switchView('review');
+ }catch(e){
+  // Never paint A's stale video error, photo count or private review onto B.
+  if(!live())return;
+  render();
+  if(batch.length>startLength){
+   message(`${session} images recovered before processing stopped. ${e.message}`);
+   switchView('review');
+  }else message(e.message);
+ }finally{
+  busy=false;controls(false);
+  // Only revoke our own decoded video. A newer operation may have changed it.
+  if(url&&video.src===url){video.removeAttribute('src');video.load();}
+  if(url)URL.revokeObjectURL(url);
+  if(live())$('captureState').textContent='Ready for another batch';
+ }
+}
 $('upload').onchange=e=>{upload(e.target.files[0]);e.target.value='';};
 $('discard').onclick=()=>{if(batch.length&&confirm('Discard all unsaved images in this batch?')){batch=[];photoQualityHints73.clear();persistDraft();session=0;render();}};
 $('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await outfitBoardReady;if(!items.length&&(typeof inspirationLooks==='undefined'||!inspirationLooks.length))return message('Save a closet piece or inspiration look before exporting.');const blob=new Blob([JSON.stringify({format:'closet-current',version:3,items,looks:typeof inspirationLooks!=='undefined'?inspirationLooks:[],outfitBoard:typeof boardBackup==='function'?boardBackup():undefined})],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='closet-current-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Backup downloaded. Keep it somewhere you can find again.');};
 $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(!db)return message('Browser storage is unavailable.');if(file.size>100*1024*1024)return message('Backup must be smaller than 100 MB.');try{const data=JSON.parse(await file.text());if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}if(!confirm(`Import ${valid.length} pieces? Matching IDs will update existing pieces.`))return;await writeAll(valid);items=(await readAll()).map(normalizeClothing);if(data.looks)await importLooks(data.looks);if(data.outfitBoard&&typeof importBoardBackup==='function')await importBoardBackup(data.outfitBoard);render();message('Backup imported.');}catch(err){message(err.message||'Import failed.');}};
 window.addEventListener('pagehide',stopCamera);window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});document.addEventListener('visibilitychange',()=>{if(document.hidden&&(stream||cameraOpening)){stopCamera();message('Camera stopped while the app was in the background. Your photos are ready to review.');}});
-const closetReady=(async()=>{await window.closetAuth.ready;try{db=await openDB();items=(await readAll()).map(normalizeClothing);batch=(await readDraft()).map(normalizeClothing);for(const item of batch)if(item.outfitSourceId&&item.requiresOwnershipConfirmation){item.requiresOwnershipConfirmation=false;item.localAnalyzed=false;}if(batch.length)message(`${batch.length} unfinished photos are waiting in More → Photo results.`);}catch{message('Browser storage is unavailable. Use a regular browser to save your closet.');}render();for(const item of batch)if(!item.localAnalyzed)queueAutomatic(item);})();
+// A source-bound region, grouped shoe pair or suspected duplicate is not a
+// new physical garment merely because the application reopened. In
+// particular, NEVER revoke an owner's previous review requirement or reset
+// their edited/category-corrected draft into a machine decision on reload.
+// Leave the original pending JPEG and source/segmentation receipts intact.
+function restoreMission1Draft88(item){
+ const ownerReviewRequired=Boolean(item?.outfitSourceId||item?.reconciliation70||
+  item?.reconciliation70Status||item?.segmentHint?.componentReviewStatus||
+  item?.shoePair||item?.combinedFragments70||item?.exactSavedPhotoMatch88||
+  item?.ownerDuplicateReview88||item?.possibleDuplicate);
+ if(ownerReviewRequired){
+  item.requiresOwnershipConfirmation=true;
+  if(!item.localAnalyzed&&!item.userAdjusted)
+   item.localStatus='Restored source-bound or duplicate photograph. Original kept unsaved. Review its physical garment, category and color in Adjust.';
+  return false;
+ }
+ // Ordinary camera photographs with no physical-unit or duplicate decision
+ // may resume local inference; already owner-edited photos never auto-repeat.
+ return !item.localAnalyzed&&!item.userAdjusted;
+}
+// Never let an asynchronously restored A-account private photo or closet
+// list appear inside B's replacement session. OpenDB, readAll and readDraft
+// each await a user-owned IndexedDB operation; validate the exact signed user
+// object and database after EVERY await, before changing visible app state.
+// Review restoration itself remains owner-only and cannot auto-admit clothing.
+const closetReady=(async()=>{
+ await window.closetAuth.ready;
+ const owner=window.closetAuth?.user,ownerId=owner?.id;
+ const live=()=>Boolean(ownerId&&window.closetAuth?.user===owner&&owner.id===ownerId);
+ let ownerDb=null;
+ const revoked=()=>{
+  if(db===ownerDb)db=undefined;
+  try{ownerDb?.close?.();}catch{}
+ };
+ if(!live())return;
+ try{
+  ownerDb=await openDB();
+  if(!live()){revoked();return;}
+  if(ownerDb?.name!=='closet-current-user-'+ownerId)throw Error('P88_WRONG_OWNER_BOOT_DB');
+  db=ownerDb;
+  const loadedItems=await readAll();
+  if(!live()||db!==ownerDb){revoked();return;}
+  const loadedBatch=await readDraft();
+  if(!live()||db!==ownerDb){revoked();return;}
+  // Atomic in-memory reveal: both reads must belong to the same still-live
+  // signed user, not a mixed A wardrobe/B unfinished photo capture.
+  items=loadedItems.map(normalizeClothing);
+  batch=loadedBatch.map(normalizeClothing);
+  if(batch.length)message(`${batch.length} unfinished photos are waiting in More → Photo results.`);
+ }catch{
+  // A genuine same-owner storage failure should still be surfaced. Only an
+  // owner/session/IDB replacement suppresses the old owner's warning.
+  if(!live()||(ownerDb&&db!==ownerDb)){revoked();return;}
+  message('Browser storage is unavailable. Use a regular browser to save your closet.');
+ }
+ if(!live()||db!==ownerDb){revoked();return;}
+ const toResume=batch.filter(restoreMission1Draft88);
+ render();for(const item of toResume)queueAutomatic(item);
+})();
 
 for(const c of categories.slice(1))$('batchCategory').append(node('option',c));
 $('applyCategory').onclick=()=>{const category=$('batchCategory').value;if(!category)return message('Choose a category for this batch.');let count=0;for(const item of batch)if(item.category==='Uncategorized'){item.category=category;Object.assign(item,normalizeClothing(item));count++;}persistDraft();render();message(`Category applied to ${count} uncategorized candidates.`);};
@@ -838,7 +1736,8 @@ function automaticAdmissionCore842(item){
   (typeof categories!=='undefined'&&categories.includes(item?.category)&&item.category!=='Uncategorized');
  return Boolean(item?.image&&knownCategory&&color&&color.toLowerCase()!=='unknown'&&
   !item.possibleDuplicate&&!item.requiresOwnershipConfirmation&&
-  !item.outfitSourceId&&!item.reconciliation70Status&&!item.segmentHint?.clipped);
+  !item.outfitSourceId&&!item.reconciliation70Status&&!item.segmentHint?.clipped&&
+  !item.segmentHint?.componentReviewStatus);
 }
 async function saveIndexed(item){
  const value={...normalizeClothing(item),name:item.name.trim()||'Closet piece',savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()};
@@ -976,13 +1875,23 @@ async function recognizeItem(item){
   else{item.localStatus=error.message||'Automatic indexing stopped. Retry or adjust details.';}
   $('localStatus').textContent=item.localStatus;return false;
  }finally{
+  // P88 opt-in: a finished background scan must not queue a stale whole-draft
+  // backup while an owner's physical pairing/unpairing decision is still
+  // waiting on cloud.beforeWrite or IndexedDB. Waiting here does NOT enqueue
+  // a second DB transaction and therefore cannot deadlock the decision.
+  // A selected item may have been replaced by an owner-confirmed clone;
+  // in that case the owner transaction already persisted its replacement.
+  const unitDecisionFence88=typeof outfitUnits70!=='undefined'&&outfitUnits70&&
+   !!item.outfitSourceId&&typeof unit70Pending88!=='undefined'&&unit70Pending88>0;
+  if(unitDecisionFence88)await unit70DecisionTail88;
   // Never clear a new owner's or newer same-ID scanner lease. P854 still
   // forbids old-owner persistence, even if the new owner's item IDs collide.
   if(sameOwner854()&&(!lease859||pendingScanLease859.get(item.id)===lease859)){
    if(lease859)pendingScanLease859.delete(item.id);
    localPending.delete(item.id);
    if(recognitionState.activeId===item.id)recognitionState.activeId=null;
-   persistDraft();render();
+   if(!unitDecisionFence88||live854())persistDraft();
+   render();
    // If this exact owner replaced/cropped the photo during async inference,
    // refresh the still-unreviewed current draft rather than strand it.
    const current=batch.find(x=>x.id===item.id);
@@ -999,48 +1908,140 @@ async function recognizeBatch(){
 $('recognizeBatch').onclick=recognizeBatch;
 $('retryRecognition').onclick=recognizeBatch;
 
+// A local file can take seconds to decode on a phone. Do not admit an
+// A-account JPEG into the B-account pending batch after await Image.decode().
 async function importClothingPhotos(files){
  if(busy||!files.length)return;
  if(files.length>20)return message('Choose up to 20 clothing photos per batch.');
+ const browser=typeof window!=='undefined'&&Boolean(window.document);
+ const owner=browser?window.closetAuth?.user:null,ownerDb=typeof db==='undefined'?null:db;
+ const live=()=>!browser||Boolean(owner?.id&&window.closetAuth?.user===owner&&
+  db===ownerDb&&ownerDb?.name==='closet-current-user-'+owner.id);
+ if(!live())return;
  stopCamera();busy=true;controls(true);session=0;
  try{
-  const result=await readPhotoBatch(files,photoToJPEG,(image,file)=>{const accepted=candidate(image);if(accepted){const item=batch.at(-1);if(item)item.importFilename=file.name;}return accepted;});
+  const result=await readPhotoBatch(files,async file=>{
+   if(!live())throw Error('P88_REVOKED_PHOTO_IMPORT_OWNER');
+   const image=await photoToJPEG(file);
+   if(!live())throw Error('P88_REVOKED_PHOTO_IMPORT_OWNER');
+   return image;
+  },(image,file)=>{
+   if(!live())return false;
+   const accepted=candidate(image);
+   if(accepted){
+    const item=batch.at(-1);
+    if(item)item.importFilename=file.name;
+   }
+   return accepted;
+  });
+  if(!live())return;
   if(typeof window!=='undefined')window.__lastPhotoImportResult=result;
   if(result.added){switchView('review');message(result.errors.length?result.errors.join('; '):'');}
-  else message(result.errors.length?'No photos could be imported. '+result.errors.join('; '):'Exact duplicate photos were skipped; they are already in your closet or review batch.');
+  else message(result.errors.length?'No photos could be imported. '+result.errors.join('; '):
+   'Exact duplicate photos were skipped; they are already in your closet or review batch.');
  }finally{busy=false;controls(false);}
 }
 $('clothingPhotos').onchange=event=>{const files=Array.from(event.target.files);event.target.value='';importClothingPhotos(files);};
 
+// P88: a background learning suggestion cannot cross auth, IDB, or source
+// revisions while model inference, cloud preflight or IDB read is pending.
 let memoryReviewTimer=null,memoryReviewRunning=false;
 function scheduleMemoryReview(){
  if(typeof ClothingMemory==='undefined'||memoryReviewTimer||memoryReviewRunning)return;
  memoryReviewTimer=setTimeout(()=>{memoryReviewTimer=null;reviewRecognitionMemory().catch(()=>{});},1500);
 }
+function memoryOwnerLease88(){
+ const owner=window.closetAuth?.user,id=owner?.id,ownerDb=db;
+ return id&&ownerDb?.name==='closet-current-user-'+id?{owner,id,ownerDb}:null;
+}
+function memoryOwnerLive88(lease){
+ return Boolean(lease?.owner&&window.closetAuth?.user===lease.owner&&
+  lease.owner.id===lease.id&&db===lease.ownerDb&&
+  lease.ownerDb.name==='closet-current-user-'+lease.id);
+}
+function memorySourceSame88(a,b){
+ return Boolean(a&&b&&a.id===b.id&&a.image===b.image&&
+  a.originalPhoto?.image===b.originalPhoto?.image&&
+  a.recognitionPhoto?.image===b.recognitionPhoto?.image&&
+  a.outfitSourceId===b.outfitSourceId&&a.category===b.category&&
+  a.itemType===b.itemType&&a.color===b.color&&
+  JSON.stringify(a.segmentHint??null)===JSON.stringify(b.segmentHint??null)&&
+  JSON.stringify(a.cropBounds??null)===JSON.stringify(b.cropBounds??null)&&
+  JSON.stringify(a.ownerSourceReview88??null)===JSON.stringify(b.ownerSourceReview88??null));
+}
 async function reviewRecognitionMemory(){
  if(typeof ClothingMemory==='undefined'||!db||memoryReviewRunning||busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))return;
+ const lease=memoryOwnerLease88();
+ if(!memoryOwnerLive88(lease))return;
  const week=ClothingMemory.week(),targets=items.filter(x=>(x.confirmedDetails||ClothingMemory.valid(x.recognitionMemory))&&(x.learningReviewedWeek!==week||!ClothingMemory.valid(x.recognitionMemory))).slice(0,8);
  if(!targets.length)return;
  memoryReviewRunning=true;let completed=0;
- try{if(!localReady)await enableLocal();for(const target of targets){
-  if(busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))break;
-  const before=JSON.stringify(target),image=target.recognitionPhoto?.image||target.image;let result;
-  try{result=await localRequest(target.itemType==='Unknown'||!target.color?'classify':'features',image,null,target.segmentHint);}catch{break;}
-  const current=items.find(x=>x.id===target.id);if(!current||JSON.stringify(current)!==before)continue;
-  if(!ClothingMemory.valid(result.recognitionMemory))continue;
-  const value={...current,recognitionMemory:result.recognitionMemory,learningReviewedWeek:week};delete value.weeklySuggestion;const choice=result.choices?.[0];if(result.strong&&choice&&segmentationAllows(current,choice)&&current.category===choice.category){const fields={itemType:choice.itemType,...ClothingDetails.recognizedFields(choice,result.details)};delete fields.color;value.weeklySuggestion={fields,requiresConfirmation:true,week};}const saved=await saveMemoryReview(value);if(saved&&(current.recognitionPhoto?.image||current.image)===image){completed++;current.recognitionMemory=saved.recognitionMemory;current.learningReviewedWeek=saved.learningReviewedWeek;if(saved.weeklySuggestion)current.weeklySuggestion=saved.weeklySuggestion;else delete current.weeklySuggestion;}
+ try{
+  if(!localReady)await enableLocal();
+  if(!memoryOwnerLive88(lease))return;
+  for(const target of targets){
+   if(!memoryOwnerLive88(lease)||busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))break;
+   const before=JSON.stringify(target),image=target.recognitionPhoto?.image||target.image;let result;
+   try{result=await localRequest(target.itemType==='Unknown'||!target.color?'classify':'features',image,null,target.segmentHint);}catch{break;}
+   if(!memoryOwnerLive88(lease))break;
+   const current=items.find(x=>x===target);
+   if(!current||JSON.stringify(current)!==before)continue;
+   if(!ClothingMemory.valid(result.recognitionMemory))continue;
+   const value={...current,recognitionMemory:result.recognitionMemory,learningReviewedWeek:week};
+   delete value.weeklySuggestion;
+   const choice=result.choices?.[0];
+   if(result.strong&&choice&&segmentationAllows(current,choice)&&current.category===choice.category){
+    const fields={itemType:choice.itemType,...ClothingDetails.recognizedFields(choice,result.details)};
+    delete fields.color;
+    value.weeklySuggestion={fields,requiresConfirmation:true,week};
+   }
+   const saved=await saveMemoryReview(value,lease);
+   if(!memoryOwnerLive88(lease))break;
+   if(saved&&items.includes(current)&&memorySourceSame88(current,saved)&&
+      (current.recognitionPhoto?.image||current.image)===image){
+    completed++;current.recognitionMemory=saved.recognitionMemory;
+    current.learningReviewedWeek=saved.learningReviewedWeek;
+    if(saved.weeklySuggestion)current.weeklySuggestion=saved.weeklySuggestion;
+    else delete current.weeklySuggestion;
+   }
+  }
+ }finally{
+  memoryReviewRunning=false;
+  if(memoryOwnerLive88(lease)){
+   render();
+   if(completed===8&&!memoryReviewTimer)memoryReviewTimer=setTimeout(()=>{memoryReviewTimer=null;reviewRecognitionMemory().catch(()=>{});},20000);
+  }
  }
- }finally{memoryReviewRunning=false;render();if(completed===8&&!memoryReviewTimer)memoryReviewTimer=setTimeout(()=>{memoryReviewTimer=null;reviewRecognitionMemory().catch(()=>{});},20000);}
 }
 closetReady.then(scheduleMemoryReview);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleMemoryReview();});
-
-function saveMemoryReview(value){return queued(()=>new Promise((resolve,reject)=>{
- let saved=null;const tx=db.transaction('items','readwrite'),store=tx.objectStore('items'),read=store.get(value.id);
- read.onsuccess=()=>{const current=read.result;if(!current||(current.recognitionPhoto?.image||current.image)!==(value.recognitionPhoto?.image||value.image))return;
- saved={...current,recognitionMemory:value.recognitionMemory,learningReviewedWeek:value.learningReviewedWeek};delete saved.weeklySuggestion;
- if(current.category===value.category&&value.weeklySuggestion)saved.weeklySuggestion=value.weeklySuggestion;store.put(saved);
- };tx.oncomplete=()=>resolve(saved);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
-}));}
-
+// The full inherited clothing-memory suite source-executes ONLY this single
+// function without a Window, auth, or browser IndexedDB. Preserve that
+// nonbrowser fixture's prior image-only merge behavior; never use this
+// compatibility route in the real browser application.
+function saveMemoryReview(value,lease){
+ const native=typeof window!=='undefined'&&Boolean(window.document);
+ if(native&&!memoryOwnerLive88(lease))return Promise.resolve(null);
+ return queued(()=>{
+  if(native&&!memoryOwnerLive88(lease))return null;
+  return new Promise((resolve,reject)=>{
+   let saved=null;
+   const ownerDb=native?lease.ownerDb:db;
+   const tx=ownerDb.transaction('items','readwrite'),store=tx.objectStore('items'),read=store.get(value.id);
+   read.onsuccess=()=>{
+    if(native&&!memoryOwnerLive88(lease))return;
+    const current=read.result;
+    if(native?!memorySourceSame88(current,value):
+      !current||(current.recognitionPhoto?.image||current.image)!==(value.recognitionPhoto?.image||value.image))return;
+    saved={...current,recognitionMemory:value.recognitionMemory,learningReviewedWeek:value.learningReviewedWeek};
+    delete saved.weeklySuggestion;
+    if(current.category===value.category&&value.weeklySuggestion)saved.weeklySuggestion=value.weeklySuggestion;
+    store.put(saved);
+   };
+   tx.oncomplete=()=>resolve(saved);
+   tx.onerror=()=>reject(tx.error);
+   tx.onabort=()=>reject(tx.error);
+  });
+ });
+}
 setInterval(scheduleMemoryReview,60*60*1000);
