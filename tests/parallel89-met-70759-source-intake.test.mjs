@@ -68,6 +68,14 @@ test('previously observed alternative compression with IDENTICAL decoded RGB is 
  const a=audit({images:p});
  assert.equal(a.status,'MET_SAME_OBJECT_MEASUREMENTS_AND_TWO_PUBLISHED_JPEGS_ATTESTED_RESEARCH_ONLY');
  assert.equal(a.anyJPEGReencodedButPixelIdenticalToLockedPhoto,true);
+ // A raw JPEG encoding not seen in advance is acceptable ONLY when the
+ // actual independent source decoder computes the same original full RGB.
+ const other=photos();other[0].sha256='a'.repeat(64);
+ const otherAudit=audit({images:other});
+ assert.equal(otherAudit.status,
+  'MET_SAME_OBJECT_MEASUREMENTS_AND_TWO_PUBLISHED_JPEGS_ATTESTED_RESEARCH_ONLY');
+ assert.equal(otherAudit.anyJPEGReencodedButPixelIdenticalToLockedPhoto,true);
+ assert.equal(otherAudit.consumer3DAdmitted,false);
  assert.equal(a.sourceEligibleForNewIndependentBenchmark,true);
  assert.equal(a.consumer3DAdmitted,false);
  for(const tamper of [
@@ -97,7 +105,7 @@ test('wrong image source, duplicate photo, corrupt digest, metadata or false app
   p=>p[0].sourceUrl= 'https://example.com/photo.jpg',
   p=>p[1].sourceUrl= p[0].sourceUrl,
   p=>p[1].sha256=p[0].sha256,
-  p=>p[0].sha256='a'.repeat(64),
+  p=>{p[0].sha256='a'.repeat(64);p[0].decodedRGBSHA256='0'.repeat(64);},
   p=>p[1].decodedRGBSHA256='0'.repeat(64),
   p=>p[1].actualDecodedRGBHashIndependentlyChecked=false,
   p=>p[1].sha256='0'.repeat(63),
