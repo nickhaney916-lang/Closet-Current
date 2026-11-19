@@ -133,6 +133,37 @@ window.__M2RealRigPhotoTrial.verifyAllOriginalIndexedSpine04SweptBVH=()=>{
     actualLicensedRigSHA256:model.sha256
    }
   });
+  // Unmeasured, explicitly COUNTERFACTUAL placement band: original
+  // museum front is depth-shifted only in temporary numerical copies,
+  // with all 35,262 front and all 109,064 licensed anatomical indices.
+  // Never pretend the [-.5,0] values were independently photographed,
+  // measured in cm, or approved for wearer fitting.
+  const unmeasuredDepthIntervalRigUnits=[-.5,0];
+  const depthUncertainty=evaluateAllIndexedOriginalSpine04AngularBroadphase({
+   frontPoses,bodyPoses,frontIndices:frontIndex,
+   bodyIndices,deltaRadians:24*Math.PI/180,
+   expectedFrontFaces:35262,expectedBodyFaces:109064,
+   sourceFrontDepthShiftIntervalRigUnits:unmeasuredDepthIntervalRigUnits,
+   maxBodyBVHVisits:3000000,maxLeafPairTests:500000,
+   maxNarrowphasePairs:60000,maxTotalFaces:200000,
+   maxTotalVertices:250000,
+   sourceWitness:{
+    actualRigBoneCount:163,singleMovingNamedBone:'spine04',
+    allOtherBoneLocalTransformsFrozen:allOtherLocalPosesFrozen(),
+    sourceCoordinatesReadFromOriginalPositionAttribute:true,
+    originalSourceSkinnedMesh:x.mesh.isSkinnedMesh,
+    originalJPEG_SHA256:payload.originalJPEGByteSHA256,
+    actualLicensedRigSHA256:model.sha256
+   }
+  });
+  invariant(depthUncertainty.consumer3DAdmitted===false&&
+   depthUncertainty.familyAlpha==='HOLD'&&
+   depthUncertainty.originalFrontFaceCount===35262&&
+   depthUncertainty.originalBodyFaceCount===109064&&
+   depthUncertainty.allOriginalBodyFacesPresentInSweptBVH===true,
+   'all original face depth interval must fail closed, no body skipped');
+  invariant(depthUncertainty.decision.startsWith('BLOCKED_'),
+   'unmeasured depth band must never be misrepresented as safe fitted garment');
   sourceSkinProvenanceUnchanged();
   assertModelUnchanged(model);
   invariant(result.consumer3DAdmitted===false&&result.familyAlpha==='HOLD',
@@ -158,6 +189,10 @@ window.__M2RealRigPhotoTrial.verifyAllOriginalIndexedSpine04SweptBVH=()=>{
    trueOriginalSourceAndRigXYZUsedNotZeroVectors:true,
    provenanceOriginalJPEGAndGLBExternallySHAProvedByNativeHarness:true,
    actualAllOriginalIndexedAngularBroadphase:result,
+   unmeasuredCameraAxisDepthIntervalRigUnits:[-.5,0],
+   actualAllOriginalIndexedDepthUncertaintySweptBVH:depthUncertainty,
+   unmeasuredCounterfactualDepthNotCameraCalibrated:true,
+   fullPhysicalGarmentContactFitNotProved:true,
    sourceCameraScaleMetricUnknown:true,
    originalGarmentActualBackUnseen:true,
    noApprovedGarmentAlpha:true,noMeasuredFabricSample:true,
