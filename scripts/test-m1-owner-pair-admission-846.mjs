@@ -961,6 +961,61 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     await put('state',{id:'draft',batch:[]});
     batch=[];items=[];draftStoreRevision88=JSON.stringify(batch);
 
+    // A newly selected crop is a DIFFERENT image, so old classifier fields
+    // and evidence for the prior image must not masquerade as a fresh result.
+    // Exercise real native app.js callback + real owner IndexedDB transaction.
+    const oldGuess={id:'native-old-model-new-crop-88',image:oldImage,
+     originalPhoto:{image:raw},category:'Dresses',itemType:'Casual dress',
+     color:'Red',colorSource:'recognition',name:'Red dress',
+     sleeveLength:'Short sleeve',fit:'Fitted',pattern:'Floral',
+     indexingLevel:'specific-type',indexedAt:'2026-11-18',
+     recognitionDiagnostics:{reason:'prior pixels',
+      outerwearRecovery:{outerwearReviewSuggested:true}},
+     seasons:[],userAdjusted:false,requiresOwnershipConfirmation:false};
+    batch=[oldGuess];items=[];await put('state',{id:'draft',batch:[oldGuess]});
+    draftStoreRevision88=JSON.stringify(batch);
+    cropClothingPhoto(oldGuess);
+    await window.crop88Editor.save({image:newImage},null);
+    const newDraft=(await get('state','draft'))?.batch?.find(x=>x.id===oldGuess.id);
+    const oldModelLabelsRevoked=newDraft?.image===newImage&&
+     newDraft?.category==='Uncategorized'&&newDraft?.itemType==='Unknown'&&
+     newDraft?.name===''&&newDraft?.color===''&&
+     newDraft?.colorSource===undefined&&
+     newDraft?.sleeveLength==='Unknown'&&newDraft?.fit==='Unknown'&&
+     newDraft?.pattern==='Unknown'&&
+     newDraft?.recognitionDiagnostics===undefined&&
+     newDraft?.indexingLevel===undefined&&newDraft?.indexedAt===undefined;
+    const oldModelOriginalKept=newDraft?.originalPhoto?.image===raw&&
+     oldGuess?.originalPhoto?.image===raw;
+    const newCropRequiresReview=newDraft?.requiresOwnershipConfirmation===true&&
+     oldGuess.requiresOwnershipConfirmation===true&&
+     (await get('items',oldGuess.id))===undefined;
+    await put('state',{id:'draft',batch:[]});
+    batch=[];items=[];draftStoreRevision88=JSON.stringify(batch);
+    // Existing owned labels, unlike unsaved model suggestions, stay intact.
+    const ownedPriorModel={id:'native-saved-old-model-crop-88',image:oldImage,
+     originalPhoto:{image:raw},category:'Tops',itemType:'T-shirt',
+     color:'Blue',name:'Blue T-shirt',userAdjusted:true,
+     recognitionDiagnostics:{reason:'previous source pixels'},seasons:[]};
+    items=[ownedPriorModel];batch=[];await put('items',ownedPriorModel);
+    cropClothingPhoto(ownedPriorModel);
+    await window.crop88Editor.save({image:newImage},null);
+    const ownedAfter=await get('items',ownedPriorModel.id);
+    const savedOwnerLabelsIntact=ownedAfter?.image===newImage&&
+     ownedAfter?.originalPhoto?.image===raw&&
+     ownedAfter?.category==='Tops'&&ownedAfter?.itemType==='T-shirt'&&
+     ownedAfter?.color==='Blue'&&ownedAfter?.name==='Blue T-shirt'&&
+     ownedAfter?.recognitionDiagnostics===undefined&&
+     ownedPriorModel.recognitionDiagnostics===undefined;
+    await new Promise((resolve,reject)=>{
+     const tx=db.transaction('items','readwrite');
+     tx.objectStore('items').delete(ownedPriorModel.id);
+     tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+     tx.onabort=()=>reject(tx.error);
+    });
+    if(await get('items',ownedPriorModel.id))throw Error('P88_BROWSER_OLD_MODEL_FIXTURE_LEAK');
+    items=[];batch=[];
+
     const pending={id:'actual-pending-crop-88',image:oldImage,
      originalPhoto:{image:raw},name:'Pending original',category:'Tops',
      itemType:'T-shirt',color:'Blue',seasons:[],userAdjusted:false};
@@ -1044,6 +1099,8 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
      invalidBoundsUntouched,validBoundsStored,
      masklessEstimateRefused,nestedEstimateRefused,
      rejectedMaskAdviceUnchanged,tentativeMaskAdviceRetained,
+     oldModelLabelsRevoked,oldModelOriginalKept,newCropRequiresReview,
+     savedOwnerLabelsIntact,
      staleSavedRefused,correctionIntact,localSavedIntact,
      savedCropCommitted,originalSaved,staleDraftRefused,otherPreserved,
      pendingRawPreserved,newCropSaved,otherStillPreserved,
@@ -1056,6 +1113,8 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     invalidBoundsRejected:6,invalidBoundsUntouched:true,validBoundsStored:true,
     masklessEstimateRefused:true,nestedEstimateRefused:true,
     rejectedMaskAdviceUnchanged:true,tentativeMaskAdviceRetained:true,
+    oldModelLabelsRevoked:true,oldModelOriginalKept:true,
+    newCropRequiresReview:true,savedOwnerLabelsIntact:true,
     staleSavedRefused:true,correctionIntact:true,localSavedIntact:true,
     savedCropCommitted:true,originalSaved:true,staleDraftRefused:true,
     otherPreserved:true,pendingRawPreserved:true,
