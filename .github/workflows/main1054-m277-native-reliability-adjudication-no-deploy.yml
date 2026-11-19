@@ -1,0 +1,118 @@
+name: MAIN1054 M277 cross-branch original model vs native RED evidence HOLD
+on:
+  push:
+    branches: [research/main1054-m277-native-reliability-adjudication-HOLD]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  m277-source-and-inherited:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin exact reviewed source and independent sibling M275/M276 evidence scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:scripts/main1054-m277-native-reliability-adjudication.mjs)" = 417a3d0301463bb99c653a79698d751f99648b67
+          node scripts/main1054-m277-native-reliability-adjudication.mjs source
+          node --check scripts/main1054-m277-native-reliability-adjudication.mjs
+      - name: First-attempt adversarial source and true WebKit RED reconciliation negatives
+        run: node --test tests/main1054-m277-native-reliability-adjudication.test.mjs
+      - name: Inherited signed-owner source and original Worker security negative checks
+        run: node --test tests/main1054-m271-m58-gate.test.mjs tests/main1054-m272-m173-source-gate.test.mjs tests/main1054-m273-m180-source-gate.test.mjs tests/main1054-m274-m181-source-gate.test.mjs tests/main1054-m254-signed-outfit-lease.test.mjs
+      - name: Install original pinned offline test-only dependencies, no hosted writes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Offline native app build and entire inherited owner privacy backup regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  m277-reconcile-readonly-first-attempt-evidence:
+    needs: m277-source-and-inherited
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify immutable source before retrieving external GitHub CI evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:scripts/main1054-m277-native-reliability-adjudication.mjs)" = 417a3d0301463bb99c653a79698d751f99648b67
+          node scripts/main1054-m277-native-reliability-adjudication.mjs source
+      - name: Read only the first-attempt original M275, M276 and failed historical run metadata
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/m277"
+          mkdir -p "$d"
+          chmod 700 "$d"
+          base="https://api.github.com/repos/nickhaney916-lang/Closet-Current"
+          get() {
+            curl --fail --silent --show-error --location --retry 2 --retry-delay 2 --max-time 140 \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" "$base/$1" -o "$d/$2"
+          }
+          get actions/runs/44625384381 green-run.json
+          get actions/runs/44627097683 red-run.json
+          get actions/runs/44610116084 old-run.json
+          get actions/jobs/135864150426 old-job.json
+          get 'actions/runs/44625384381/jobs?per_page=100' green-jobs.json
+          get 'actions/runs/44627097683/jobs?per_page=100' red-jobs.json
+          for id in 135919127480 135919127420 135919127564 135919127344 135919127500 135919127513 135923812650; do
+            get "actions/jobs/$id/logs" "$id.bin"
+          done
+          # All unredacted original job logs stay transient in the runner.
+          # Do not echo, print or archive raw log bytes or signed download URLs.
+      - name: Fail closed on verified green original model AND documented historical native session RED
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/main1054-m277-native-reliability-adjudication.mjs reconcile "$RUNNER_TEMP/m277"
+          test -s "$RUNNER_TEMP/m277/m277-sanitized.json"
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          const x=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/m277/m277-sanitized.json','utf8'));
+          if(x.m275.originalModelFirstAttemptPass.webkit!==24||
+             x.m275.originalModelFirstAttemptPass.chromium!==12||
+             x.m276.nativeHistoricalFirstAttemptRed!==1||
+             x.permanentWebKitJsepRepair!=='BLOCKED_REAL_NATIVE_RED'||
+             x.redBeforeGreenAfterFix!==false||
+             x.releaseAllowed!==false||x.familyAlpha!=='HOLD')
+            throw Error('M277 original live CI evidence cannot authorize native WebKit fix or release');
+          console.log('M277_ORIGINAL_GREEN_AND_TRUE_RED_COEXIST_HOLD',JSON.stringify({
+            webkitFinitePass:24,chromiumFinitePass:12,
+            originalOrtCreateSessionRed:1,nativeCausalRepair:false,
+            releaseAllowed:false,familyAlpha:'HOLD'
+          }));
+          JS
+      - name: Archive bounded sanitized decision only, never private content or raw job logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m277-genuine-positive-plus-original-native-red-no-release-HOLD
+          path: ${{ runner.temp }}/m277/m277-sanitized.json
+          retention-days: 7
+          if-no-files-found: ignore
