@@ -43,6 +43,7 @@ const failure=reason=>Object.freeze({
  status:'SOURCE_MATCHED_MET_INTAKE_REFUSED',reason,
  sourceEligibleForNewIndependentBenchmark:false,
  mayCalibrateOriginalCommons0043:false,
+ canUseMetMeasurementsToCalibrateHonolulu5152_1:false,
  photoDerivedWearable3DAuthorized:false,consumer3DAdmitted:false,
  originalPhoto2DFallbackRequired:true,releaseAuthorized:false,familyAlpha:'HOLD'
 });
