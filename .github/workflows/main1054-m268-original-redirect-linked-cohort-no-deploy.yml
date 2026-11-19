@@ -3,7 +3,7 @@ on:
   push:
     branches: [research/main1054-m268-redirect-linked-original-fresh-cohort-HOLD]
   pull_request:
-    branches: [research/main1054-m267-original-redirect-chain-HOLD]
+    branches: [research/main1054-m267-native-model-redirect-lineage-HOLD]
 permissions:
   contents: read
 jobs:
