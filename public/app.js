@@ -581,36 +581,91 @@ function cropClothingPhoto(item){
    // wait must be kept, not wiped by an early batch snapshot.
    await queued(()=>{
     if(hasSourceBoundMask88(item)||hasSourceBoundMask88(value)||
-     !cropLive88()||value.id!==item.id||value.ownerSourceReview88)
+     !cropLive88()||value.id!==item.id||value.ownerSourceReview88||
+     value.originalPhoto?.image!==lease.original)
      throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
-    // Changing photo bytes invalidates old exact-JPEG duplicate consent.
-    // Another photo may have been saved during cloud.beforeWrite, so inspect
-    // saved peers INSIDE the exact-owner queued transaction boundary.
+    // A new crop invalidates previously reviewed duplicate-photo permission.
     if(value.image!==lease.image){
      delete value.ownerDuplicateReview88;
      delete value.exactSavedPhotoMatch88;
-     if(lease.wasDraft){
-      const peer=items.find(x=>x!==item&&x.id!==item.id&&x.image===value.image);
-      if(peer){
-       value.exactSavedPhotoMatch88={savedItemId:peer.id};
-       value.possibleDuplicate=true;
-       value.requiresOwnershipConfirmation=true;
-       value.localStatus='This crop exactly matches another saved closet photo. Keep it unsaved and compare the physical garments in Adjust before adding.';
-      }
-     }
     }
+    const liveBatchRevision=JSON.stringify(batch);
+    const expectedDraftRevision=draftStoreRevision88;
+    if(lease.wasDraft&&typeof expectedDraftRevision!=='string')
+     throw Error('P88_CROP_DRAFT_STORAGE_NOT_LOADED');
     return new Promise((resolve,reject)=>{
-     const tx=lease.ownerDb.transaction(lease.wasDraft?'state':'items','readwrite');
-     const updatedDraft88=lease.wasDraft?structuredClone(batch.map(x=>x===item?value:x)):null;
-     if(lease.wasDraft)tx.objectStore('state').put({id:'draft',batch:updatedDraft88});
-     else tx.objectStore('items').put(value);
-     tx.oncomplete=()=>{
-      // Crop writes state directly (outside persistDraft); advance the local
-      // durable revision so an immediately subsequent reviewed Save can compare
-      // the actual new crop bytes instead of a stale earlier source.
-      if(lease.wasDraft&&cropLive88())draftStoreRevision88=JSON.stringify(updatedDraft88);
-      resolve();
-     };tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+     let tx,reason=null,updatedDraft88=null;
+     const abort=e=>{
+      reason=e||Error('P88_CROP_STORAGE_CHANGED');
+      try{tx.abort();}catch{reject(reason);}
+     };
+     try{
+      // Compare and write under one native IDB write lock. The previous
+      // put-only crop path could overwrite another tab's corrected saved item
+      // or erase another tab's pending raw JPEG from the draft list.
+      tx=lease.ownerDb.transaction(lease.wasDraft?['state','items']:['items'],'readwrite');
+      const target=tx.objectStore(lease.wasDraft?'state':'items');
+      const current=target.get(lease.wasDraft?'draft':item.id);
+      const commit=()=>{
+       if(!cropLive88()||JSON.stringify(batch)!==liveBatchRevision||
+        value.originalPhoto?.image!==lease.original||
+        hasSourceBoundMask88(item)||hasSourceBoundMask88(value))
+        throw Error('P88_CROP_OWNER_OR_SOURCE_CHANGED');
+       if(lease.wasDraft){
+        updatedDraft88=structuredClone(batch.map(x=>x===item?value:x));
+        target.put({id:'draft',batch:updatedDraft88});
+       }else target.put(value);
+      };
+      current.onsuccess=()=>{
+       try{
+        if(!cropLive88())throw Error('P88_CROP_OWNER_OR_SOURCE_CHANGED');
+        if(lease.wasDraft){
+         if(draftStoreRevision88!==expectedDraftRevision||
+          JSON.stringify(current.result?.batch??null)!==expectedDraftRevision)
+          throw Error('P88_CROP_DRAFT_STORAGE_CHANGED');
+         // The same readwrite transaction also checks actual saved peers;
+         // another tab can save the same PHOTO while crop quality runs.
+         const savedRead=tx.objectStore('items').getAll();
+         savedRead.onsuccess=()=>{
+          try{
+           if(!Array.isArray(savedRead.result))
+            throw Error('P88_CROP_SAVED_PEERS_UNAVAILABLE');
+           const original=value.originalPhoto?.image||value.image;
+           const peer=savedRead.result.find(x=>x&&x.id!==value.id&&(
+            (typeof value.image==='string'&&!!value.image&&x.image===value.image)||
+            (typeof original==='string'&&!!original&&
+             (x.originalPhoto?.image||x.image)===original)));
+           if(peer){
+            value.exactSavedPhotoMatch88={savedItemId:peer.id};
+            value.possibleDuplicate=true;
+            value.requiresOwnershipConfirmation=true;
+            value.localStatus=peer.image===value.image?
+             'This crop exactly matches another saved closet photo. Keep it unsaved and compare the physical garments in Adjust before adding.':
+             'This crop shares a complete original with a saved closet item. Keep it unsaved and compare the physical garments in Adjust before adding.';
+           }
+           commit();
+          }catch(e){abort(e);}
+         };
+         savedRead.onerror=()=>abort(savedRead.error||Error('P88_CROP_PEER_READ_FAILED'));
+        }else{
+         // Saved-item edits may NEVER clobber a different tab's entire
+         // source/metadata revision even when this tab retains the ID.
+         if(!current.result||
+          JSON.stringify(current.result)!==lease.savedRowRevision88)
+          throw Error('P88_SAVED_CROP_STORAGE_CHANGED');
+         commit();
+        }
+       }catch(e){abort(e);}
+      };
+      current.onerror=()=>abort(current.error||Error('P88_CROP_STORAGE_READ_FAILED'));
+      tx.oncomplete=()=>{
+       if(!cropLive88())return reject(Error('P88_CROP_OWNER_OR_SOURCE_CHANGED'));
+       if(lease.wasDraft)draftStoreRevision88=JSON.stringify(updatedDraft88);
+       resolve();
+      };
+      tx.onabort=()=>reject(reason||tx.error||Error('P88_CROP_STORAGE_CHANGED'));
+      tx.onerror=()=>{}; // native request errors cause transaction abort
+     }catch(e){reject(e);}
     });
    });
    if(!cropLive88())return; // Old owner's completed write cannot paint B's UI.
