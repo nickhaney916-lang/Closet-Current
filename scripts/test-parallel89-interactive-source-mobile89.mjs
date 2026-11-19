@@ -106,6 +106,11 @@ const server=createServer((req,res)=>{
  }
  if(url==='/original-source.jpg'){
   res.setHeader('Content-Type','image/jpeg');
+  if((req.headers.cookie||'').includes('corrupt-jpeg=1')){
+   // Actual altered JPEG bytes must fail SHA before they reach the decoder.
+   const changed=Buffer.from(image);changed[changed.length-17]^=0x02;
+   res.end(changed);return;
+  }
   if((req.headers.cookie||'').includes('oversize-jpeg=1')){
    // Actual chunked HTTP stream with no advertised Content-Length.
    // Never let a claimed original photograph allocate unlimited phone RAM.
@@ -394,6 +399,50 @@ try{
  assert.equal(stalledSource.consumer3DAdmitted,false);
  assert.equal(await stalledJPEGPage.locator('#shell').isDisabled(),true);
  await stalledJPEG.close();
+ // Exact genuine original JPEG bytes with a purposely misbehaving decoder.
+ // A cryptographically approved corrupt JPEG cannot be simulated without
+ // changing the source allowlist, so these are controlled browser faults.
+ async function assertUntrustedOriginalAfterDecode(context,reason){
+  const page=await context.newPage();
+  let optional3DRequests=0;
+  page.on('request',r=>{
+   if(r.url().includes('/source-locked-preview.json'))optional3DRequests++;
+  });
+  page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(origin+'/viewer',{waitUntil:'commit'});
+  await page.waitForFunction(expected=>
+   window.__m2PreviewEvidence?.getSnapshot().errorCode===expected,
+   reason,{timeout:20000});
+  const state=await snapshot(page);
+  assert.equal(state.errorCode,reason);
+  assert.equal(state.mode,'photo');
+  assert.equal(state.verified,false);
+  assert.equal(state.sourceSHA256,null,'no promotion from hash alone');
+  assert.equal(state.originalImageVisible,false,'failed decoded source is NOT usable 2D');
+  assert.equal(state.previewVisible,false);
+  assert.equal(state.consumer3DAdmitted,false);
+  assert.equal(await page.locator('#photo').getAttribute('src'),null,
+   'decoder rejection must revoke and detach provisional blob');
+  assert.equal(await page.locator('#shell').isDisabled(),true);
+  assert.match(await page.locator('#view-status').textContent(),/Original photograph unavailable/);
+  assert.equal(optional3DRequests,0,'no optional 3D fetch before source decode');
+  await context.close();
+ }
+ const rejectingDecoder=await browser.newContext({viewport:{width:390,height:760}});
+ await rejectingDecoder.addInitScript(()=>{
+  HTMLImageElement.prototype.decode=function(){
+   return Promise.reject(new Error('TEST_ONLY_FORCED_DECODE_REJECTION'));
+  };
+ });
+ await assertUntrustedOriginalAfterDecode(rejectingDecoder,'original-source-JPEG-decode-failed');
+ const stalledDecoder=await browser.newContext({viewport:{width:390,height:760}});
+ await stalledDecoder.addInitScript(()=>{
+  HTMLImageElement.prototype.decode=function(){return new Promise(()=>{});};
+ });
+ await assertUntrustedOriginalAfterDecode(stalledDecoder,'original-source-JPEG-decode-timeout');
+ const badHashJPEG=await browser.newContext({viewport:{width:390,height:760}});
+ await badHashJPEG.addCookies([{name:'corrupt-jpeg',value:'1',url:origin}]);
+ await assertUntrustedOriginalAfterDecode(badHashJPEG,'original-source-JPEG-byte-identity-invalid');
  assert.deepEqual(errors,[],'native browser page errors');
  console.log('M2_INTERACTIVE_ORIGINAL_SOURCE_MOBILE_BROWSER_RESEARCH_PASS '+JSON.stringify({
   engine,realNativeBrowser:true,devicePhysical:false,
@@ -403,6 +452,7 @@ try{
   pointerDragRotationVerified:true,contextLoss2DFallbackVerified:true,
   corrupt3DManifestPreservesGenuine2DVerified:true,
   stalled3DManifestTimeoutPreservesGenuine2DVerified:true,
+  forcedDecoderRejectAndStallSafelyRefused:true,alteredSourceHashRefused:true,
   testedMobileWidths:[320,390,430],widthResults,
   browserErrors:errors.length,consumer3DAdmitted:false,
   fittedAnatomy163Bone:false,photorealismHumanApproved:false,
