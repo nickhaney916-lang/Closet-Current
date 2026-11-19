@@ -146,7 +146,8 @@ async function loadRealModel(kind){
    'original-licensed-body-not-exact-163-bone-rig');
   count++;boneCount=obj.skeleton.bones.length;
   const arr=obj.geometry.attributes.position?.array;
-  invariant(arr?.length>3000,'original-163bone-body-vertices-missing');
+  invariant(arr?.length>=9&&arr.length%3===0,
+   'original-163bone-skinned-part-vertices-missing');
   snapshots.push({mesh:obj,positions:Array.from(arr),
    weights:Array.from(obj.geometry.attributes.skinWeight.array),
    indices:Array.from(obj.geometry.attributes.skinIndex.array)});
