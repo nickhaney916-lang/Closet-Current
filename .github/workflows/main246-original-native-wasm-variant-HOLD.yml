@@ -1,0 +1,80 @@
+name: MAIN246 original native runtime WASM variant identity HOLD
+on:
+  push:
+    branches: [research/main246-original-native-ort-wasm-variant-proof-HOLD]
+permissions:
+  contents: read
+jobs:
+  original-source-security:
+    name: M246 immutable source and full inherited privacy/security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source and no-consumer-change proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=7b0d11a859e6636d4f5d6e3bfac1fc8d12b4423d
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' \
+            '.github/workflows/main246-original-native-wasm-variant-HOLD.yml' \
+            'scripts/main246-local-ort-wasm-identity.mjs' \
+            'scripts/test-main246-real-native-wasm-variant-browser.mjs' \
+            'tests/main246-original-local-native-wasm-variant.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main243-original-segformer-native-session-browser.mjs)" = fdfb979ca3783cb362cb5eb909612902af0c3b70
+          node --check scripts/main246-local-ort-wasm-identity.mjs
+          node --check scripts/test-main246-real-native-wasm-variant-browser.mjs
+          node --test tests/main246-original-local-native-wasm-variant.test.mjs
+          M246_SOURCE_ONLY=1 node scripts/test-main246-real-native-wasm-variant-browser.mjs
+      - name: Install original pinned research dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original offline build and entire inherited Node suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(npm view onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 dist.integrity)" = "sha512-0uS76OPgH0hWCPrFKlL8kYVV7ckM7t/36HfbgoFw6Nd0CZVVbQC4PkrR8mBX8LtNUFZO25IQBqV2Hx2ho3FlbQ=="
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  actual-native-browsers:
+    name: M246 original SegFormer native runtime WebKit plus Chromium
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original source and strict false-proof tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-main243-original-segformer-native-session-browser.mjs)" = fdfb979ca3783cb362cb5eb909612902af0c3b70
+          node --test tests/main246-original-local-native-wasm-variant.test.mjs
+          M246_SOURCE_ONLY=1 node scripts/test-main246-real-native-wasm-variant-browser.mjs
+      - name: Install pinned original SegFormer/ORT and browser dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Genuine native source-attested SegFormer WebKit and Chromium no substitution
+        shell: bash
+        run: |
+          set -euo pipefail
+          M246_ENGINE=webkit M246_ARM=baseline node scripts/test-main246-real-native-wasm-variant-browser.mjs
+          M246_ENGINE=chromium M246_ARM=baseline node scripts/test-main246-real-native-wasm-variant-browser.mjs
