@@ -451,6 +451,59 @@ function cropHarness88({saved=false,checkPhoto=null,peers=[]}={}){
 }
 const sampleSource88=()=>({id:'garment',image:'data:image/jpeg;base64,T1JJR0lOQUw=',category:'Tops',color:'Blue',
   itemType:'T-shirt',name:'Source photo',seasons:[]});
+test('P88 saved wardrobe crop cannot silently replace owner-confirmed subtype/color from model suggestion',async()=>{
+ const c=cropHarness88({saved:true}),item={...sampleSource88(),
+  color:'Blue',category:'Tops',itemType:'T-shirt',userAdjusted:true};
+ c.cropClothingPhoto(item);
+ const model={category:'Dresses',itemType:'Dress',color:'Red',
+  details:{color:'Red',fit:'Loose'},label:'a dress'};
+ await assert.rejects(
+  c.editor.save({image:'data:image/jpeg;base64,TkVXLUNST1A='},model),
+  /P88_SAVED_CROP_MODEL_SUGGESTION_REQUIRES_ADJUST/,
+  'a generic Crop > Use suggestion checkbox cannot silently override owned garment truth');
+ assert.equal(c.written.length,0);
+ assert.equal(c.durableItems.get(item.id).category,'Tops');
+ assert.equal(c.durableItems.get(item.id).itemType,'T-shirt');
+ assert.equal(c.durableItems.get(item.id).color,'Blue');
+ assert.equal(item.image,sampleSource88().image);
+});
+test('P88 saved crop with no suggestion must not silently fill an unknown owner color',async()=>{
+ const c=cropHarness88({saved:true,checkPhoto:async()=>({
+  colorEstimate:{color:'Red',source:'photo-estimate'},signature:[],aspect:1
+ })}),item={...sampleSource88(),color:''};
+ // Reproduce real ClothingDetails.fillColor behavior on a missing color.
+ c.ClothingDetails.fillColor=(value,estimate)=>estimate?.color?
+  {...value,color:estimate.color,colorSource:'photo-estimate'}:value;
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,TkVXLUNST1A='},null);
+ assert.equal(c.written.length,1);
+ assert.equal(c.durableItems.get(item.id).image,'data:image/jpeg;base64,TkVXLUNST1A=');
+ assert.equal(c.durableItems.get(item.id).color,'',
+  'unknown saved color remains unknown until owner edits it in Adjust');
+ assert.equal(c.durableItems.get(item.id).colorSource,undefined);
+});
+test('P88 unsaved crop may still prefill model details without automatic wardrobe admission',async()=>{
+ const c=cropHarness88(),item={...sampleSource88(),
+  category:'Uncategorized',itemType:'Unknown',color:'',
+  requiresOwnershipConfirmation:true};
+ c.applyLocalChoice=(value,choice)=>{
+  value.category=choice.category;value.itemType=choice.itemType;
+ };
+ c.ClothingDetails.fill=(value,choice)=>({...value,
+  color:choice.color,colorSource:'recognition'});
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,TkVXLUNST1A='},{
+  category:'Tops',itemType:'Blouse',color:'Red',details:{color:'Red'},
+  label:'a blouse'
+ });
+ assert.equal(c.written.length,1);
+ assert.equal(c.written[0].store,'state');
+ assert.equal(c.written[0].value.batch[0].category,'Tops');
+ assert.equal(c.written[0].value.batch[0].itemType,'Blouse');
+ assert.equal(c.written[0].value.batch[0].color,'Red');
+ assert.equal(c.written[0].value.batch[0].requiresOwnershipConfirmation,true);
+ assert.equal(c.durableItems.size,0,'unreviewed model guesses must remain pending drafts');
+});
 test('P88 source-bound P70 photo is not crop-editable even through a direct function call',()=>{
  const c=cropHarness88();
  for(const bound of [
