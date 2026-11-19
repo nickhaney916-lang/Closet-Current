@@ -17,12 +17,14 @@ import {assessMet70759PhotoPartViewEvidence89 as roleGate}
 const sha=x=>createHash('sha256').update(x).digest('hex');
 const evidence=Object.freeze({
  2551406:Object.freeze({
+  observedOriginalJPEGByteSHA256:Object.freeze(["780b082ff1408bc838d525364d95f455139e4c3c817fc39fe5dc1b756caca5c6"]),
   h:933,decoded:'e0b7738db57ac4b7c27d4f03f724442f53c8e85f09f7a139839dfaa04c86cbec',
   maskPNG:'34a93a1a8a2ea58f92a560703936a83b390e92a50d7103ff7ff1586ffe0841aa',
   maskRaw:'757b7c16161de68151c98d514907a6a1004259ae43fcfb7c1a8aa1fa72febfd4',
   corePixels:689892,uncertainPixels:13913
  }),
  2551408:Object.freeze({
+  observedOriginalJPEGByteSHA256:Object.freeze(["59c0e6568000b68678efb067a5cdd2f95eee3c1407b9927df82ac89af0124ec2","f2e83d99e39ef472e834189ef6541760973bc2ef2d6cc4786cc9123b58140c06"]),
   h:978,decoded:'dddbda448c32667a0ab5c1b90a43d139b5917c1b9955dc428987beec035e06c0',
   maskPNG:'c16a1610430c76fbeca0a2bb8f6dd1f667853a6c40df01857ee816406cc1b0a5',
   maskRaw:'5bdacf5496d6502f867864bdcfacca009922d11491f0bf30bf57c5845efe9002',
@@ -60,6 +62,8 @@ export async function buildMetOriginalMaskTexturedFront89({
   return refusal('bounded-photo-front-sampling-required');
  try{
   const jpegSHA256=sha(originalJPEGBytes);
+  if(!rec.observedOriginalJPEGByteSHA256.includes(jpegSHA256))
+   return refusal('original-institutional-JPEG-byte-encoding-not-independently-attested');
   const {data:rgb,info:src}=await sharp(originalJPEGBytes,{
    failOn:'error',limitInputPixels:1500000
   }).removeAlpha().raw().toBuffer({resolveWithObject:true});
