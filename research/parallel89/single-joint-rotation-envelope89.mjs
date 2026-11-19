@@ -109,8 +109,7 @@ export function evaluateFixedAxisLbsRotationalEnvelope({
   reportedOriginalBodyFaceCount:totalOriginalBodyFaces,
   allOriginalFrontFacesSubmitted:frontComplete,
   allOriginalBodyFacesSubmitted:bodyComplete,
-  sourceWitnessSelfReportedNotCryptographicallyAuthenticated:
-   !originalSourceAuthenticated,
+  sourceWitnessSelfReportedNotCryptographicallyAuthenticated:true,
   originalRigContractStructurallyChecked:originalSourceAuthenticated,
   maximumQuarterPoseHarmonicResidualRigUnits:maxResidual,
   maximumConservativePerCoordinateInflationRigUnits:maxInflation,
@@ -184,8 +183,8 @@ export function evaluateFixedAxisLbsRotationalEnvelope({
    completeEvaluated:true,
    reason:'subset or self-reported rig source cannot certify original full surface'
   });
- return summary('CONDITIONALLY_CLEAR_ORIGINAL_SINGLE_AXIS_LBS_ENVELOPES_ONLY',{
+ return summary('RESEARCH_ONLY_COMPLETE_SUBMITTED_ROTATIONAL_ENVELOPES_SEPARATED',{
   completeEvaluated:true,
-  reason:'requires externally enforced single-rotating-joint LBS contract, not cloth fit'
+  reason:'self-reported source witness is not an independent proof of actual source or bone motion; no fit certification'
  });
 }
