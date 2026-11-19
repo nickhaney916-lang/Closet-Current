@@ -46,11 +46,13 @@ function fixture(){
  const testAccounts=['tester-1','tester-2','tester-3','tester-4'];
  const cloudReport={
   format:'closet-current-mission3-cloud-check',version:1,
-  environment:'authorized-hosted',testAccounts,passedCases:[...CLOUD_CASES]
+  environment:'authorized-hosted',testAccounts,sourceHead:head,
+  testedAt:'2026-11-14T03:20:00Z',passedCases:[...CLOUD_CASES]
  };
  const integrationReport={
   format:'closet-current-mission3-integration',version:1,
-  sourceHead:head,passedCases:[...INTEGRATION_CASES]
+  sourceHead:head,testedAt:'2026-11-14T03:20:00Z',
+  passedCases:[...INTEGRATION_CASES]
  };
  const manifest={
   schema:1,sourceHead:head,appAssetRelease:release,devices,
@@ -384,4 +386,51 @@ test('old cloud evidence must not be replayed under a different source head',()=
  assert.ok(result.issues.some(x=>x.includes('cloud.report: different source head')));
  assert.equal(result.releaseAuthorized,false);
  assert.equal(result.familyAlpha,'HOLD');
+});
+
+test('forged cloud report source remains blocked even after valid SHA recomputation',()=>{
+ const f=fixture(),name=f.manifest.cloud.reportFile;
+ const report=JSON.parse(f.files.get(name));
+ report.sourceHead='e'.repeat(40);
+ const bytes=Buffer.from(JSON.stringify(report));
+ f.files.set(name,bytes);
+ f.manifest.cloud.reportSha256=sha(bytes);
+ const result=check(f);
+ assert.equal(result.status,'BLOCKED');
+ assert.ok(result.issues.some(x=>x.includes('cloud.report: different source head')));
+ assert.equal(result.releaseAuthorized,false);
+ assert.equal(result.familyAlpha,'HOLD');
+});
+
+test('missing cloud report provenance is blocked even with a valid SHA and all PASS cases',()=>{
+ const f=fixture(),name=f.manifest.cloud.reportFile;
+ const report=JSON.parse(f.files.get(name));
+ delete report.sourceHead;
+ delete report.testedAt;
+ const bytes=Buffer.from(JSON.stringify(report));
+ f.files.set(name,bytes);
+ f.manifest.cloud.reportSha256=sha(bytes);
+ const result=check(f);
+ assert.equal(result.status,'BLOCKED');
+ assert.ok(result.issues.some(x=>x.includes('cloud.report: different source head')));
+ assert.ok(result.issues.some(x=>x.includes('cloud.report: test time mismatch')));
+});
+
+test('missing or relabeled integration report time never becomes same-head approval',()=>{
+ const f=fixture(),name=f.manifest.integration.reportFile;
+ const report=JSON.parse(f.files.get(name));
+ report.testedAt='2026-11-15T03:20:00Z';
+ const bytes=Buffer.from(JSON.stringify(report));
+ f.files.set(name,bytes);
+ f.manifest.integration.reportSha256=sha(bytes);
+ let result=check(f);
+ assert.equal(result.status,'BLOCKED');
+ assert.ok(result.issues.some(x=>x.includes('integration.report: test time mismatch')));
+ delete report.testedAt;
+ const missing=Buffer.from(JSON.stringify(report));
+ f.files.set(name,missing);
+ f.manifest.integration.reportSha256=sha(missing);
+ result=check(f);
+ assert.equal(result.status,'BLOCKED');
+ assert.ok(result.issues.some(x=>x.includes('integration.report: test time mismatch')));
 });
