@@ -4,22 +4,23 @@ import {readFile} from 'node:fs/promises';
 import {splitCallArguments,extractNativeSessionCalls,classifyPosition,EXPECTED} from '../scripts/main242-pinned-ort-abi-argument-audit.mjs';
 
 test('M242 extracts the position of the actual call, not a mere option text marker',()=>{
- const source='const flag=options.enableMemPattern; export const create=x=>wasm._OrtCreateSessionOptions(99,!!options.enableMemPattern,true,call(3,4));';
+ const source='const flag=options.enableMemPattern; export const create=x=>wasm._OrtCreateSessionOptions(99,!!options.enableCpuMemArena,!!options.enableMemPattern,call(3,4));';
  const calls=extractNativeSessionCalls(source);
  assert.equal(calls.length,1);
  assert.equal(calls[0].args.length,4);
- assert.equal(calls[0].args[1],'!!options.enableMemPattern');
+ assert.equal(calls[0].args[2],'!!options.enableMemPattern');
  assert.equal(classifyPosition(calls[0].args),
-  'static-wasm-export-argument-1-source-verified-native-value-unobserved');
+  'static-wasm-export-argument-2-source-verified-native-value-unobserved');
 });
 test('M242 nesting, quoted commas and comments do not fabricate native argument positions',()=>{
- const code="module._OrtCreateSessionOptions(10, !!opts.enableMemPattern, call('a,b',{nested:[1,2]}), /* c,d */ compute(1,2));";
+ const code="module._OrtCreateSessionOptions(10, !!opts.enableCpuMemArena, !!opts.enableMemPattern, call('a,b',{nested:[1,2]}));";
  const call=extractNativeSessionCalls(code)[0];
  assert.equal(call.args.length,4);
- assert.ok(call.args[2].includes("nested:[1,2]"));
+ assert.ok(call.args[3].includes("nested:[1,2]"));
  assert.equal(classifyPosition(call.args),
-  'static-wasm-export-argument-1-source-verified-native-value-unobserved');
- assert.equal(classifyPosition(['g','h','enableMemPattern']), 'static-wasm-export-argument-other-or-ambiguous');
+  'static-wasm-export-argument-2-source-verified-native-value-unobserved');
+ assert.equal(classifyPosition(['graph','!!opts.enableMemPattern','x']),'static-wasm-export-argument-other-or-ambiguous');
+ assert.equal(classifyPosition(['graph','other','!!opts.enableMemPattern']),'static-wasm-export-argument-other-or-ambiguous');
 });
 test('M242 fails rather than inventing a native call when only API declaration is present',()=>{
  assert.deepEqual(extractNativeSessionCalls("const enableMemPattern=true; function foo() {}"),[]);
