@@ -105,7 +105,16 @@ const server=createServer((req,res)=>{
   res.setHeader('Content-Type','text/html; charset=utf-8');res.end(html);return;
  }
  if(url==='/original-source.jpg'){
-  res.setHeader('Content-Type','image/jpeg');res.end(image);return;
+  res.setHeader('Content-Type','image/jpeg');
+  if((req.headers.cookie||'').includes('oversize-jpeg=1')){
+   // Actual chunked HTTP stream with no advertised Content-Length.
+   // Never let a claimed original photograph allocate unlimited phone RAM.
+   res.setHeader('Transfer-Encoding','chunked');
+   const chunk=Buffer.alloc(1024*1024,0x20);
+   for(let i=0;i<9;i++)res.write(chunk);
+   res.end();return;
+  }
+  res.end(image);return;
  }
  if(url==='/source-locked-preview.json'){
   res.setHeader('Content-Type','application/json');
@@ -343,6 +352,48 @@ try{
   '1200x933');
  await stalledPage.screenshot({path:out+'/'+engine+'-390-3D-MANIFEST-STALL-TIMEOUT-ORIGINAL-2D.png'});
  await stalled3D.close();
+ // Untrusted bytes on the REQUIRED original image endpoint are distinct
+ // from optional 3D failures: with no SHA-approved JPEG, neither 2D nor 3D
+ // is authorized. Exercise actual HTTP streaming without Content-Length.
+ const oversizedJPEG=await browser.newContext({viewport:{width:390,height:760}});
+ await oversizedJPEG.addCookies([{name:'oversize-jpeg',value:'1',url:origin}]);
+ const oversizedJPEGPage=await oversizedJPEG.newPage();
+ oversizedJPEGPage.on('pageerror',e=>errors.push(e.message));
+ await oversizedJPEGPage.goto(origin+'/viewer',{waitUntil:'commit'});
+ await oversizedJPEGPage.waitForFunction(()=>
+  window.__m2PreviewEvidence?.getSnapshot().errorCode==='original-source-JPEG-too-large',
+  null,{timeout:30000});
+ const tooLarge=await snapshot(oversizedJPEGPage);
+ assert.equal(tooLarge.mode,'photo');
+ assert.equal(tooLarge.verified,false);
+ assert.equal(tooLarge.sourceSHA256,null);
+ assert.equal(tooLarge.originalImageVisible,false,'unverified huge bytes are not a 2D fallback');
+ assert.equal(tooLarge.previewVisible,false);
+ assert.equal(tooLarge.consumer3DAdmitted,false);
+ assert.equal(await oversizedJPEGPage.locator('#shell').isDisabled(),true);
+ assert.match(await oversizedJPEGPage.locator('#view-status').textContent(),/Original photograph unavailable/);
+ await oversizedJPEG.close();
+ // A required JPEG fetch that never sends headers must also settle. 3D is
+ // forbidden; there is no source-authenticated photo to display or save.
+ const stalledJPEG=await browser.newContext({viewport:{width:390,height:760}});
+ await stalledJPEG.route('**/original-source.jpg',async()=>{
+  await new Promise(()=>{});
+ });
+ const stalledJPEGPage=await stalledJPEG.newPage();
+ stalledJPEGPage.on('pageerror',e=>errors.push(e.message));
+ await stalledJPEGPage.goto(origin+'/viewer',{waitUntil:'commit'});
+ await stalledJPEGPage.waitForFunction(()=>
+  window.__m2PreviewEvidence?.getSnapshot().errorCode==='original-source-JPEG-timeout',
+  null,{timeout:15000});
+ const stalledSource=await snapshot(stalledJPEGPage);
+ assert.equal(stalledSource.mode,'photo');
+ assert.equal(stalledSource.verified,false);
+ assert.equal(stalledSource.sourceSHA256,null);
+ assert.equal(stalledSource.originalImageVisible,false);
+ assert.equal(stalledSource.previewVisible,false);
+ assert.equal(stalledSource.consumer3DAdmitted,false);
+ assert.equal(await stalledJPEGPage.locator('#shell').isDisabled(),true);
+ await stalledJPEG.close();
  assert.deepEqual(errors,[],'native browser page errors');
  console.log('M2_INTERACTIVE_ORIGINAL_SOURCE_MOBILE_BROWSER_RESEARCH_PASS '+JSON.stringify({
   engine,realNativeBrowser:true,devicePhysical:false,
