@@ -26,12 +26,13 @@ jobs:
           git diff --name-only e182b72c6ee457836251cd7aa927181f3b11c757 HEAD > /tmp/m1-paths
           while IFS= read -r file; do
             case "$file" in
-              public/app.js|tests/mission1-durable-duplicate-20261119.test.mjs|tests/mission1-parallel88-owner-mask-lease.test.mjs|scripts/test-m1-owner-pair-admission-846.mjs|.github/workflows/mission1-durable-duplicate-20261119-no-deploy.yml) ;;
+              public/app.js|public/photo-crop-editor.js|tests/mission1-durable-duplicate-20261119.test.mjs|tests/mission1-parallel88-owner-mask-lease.test.mjs|scripts/test-m1-owner-pair-admission-846.mjs|.github/workflows/mission1-durable-duplicate-20261119-no-deploy.yml) ;;
               *) echo "M1_UNAUTHORIZED_FILE $file"; exit 1 ;;
             esac
           done < /tmp/m1-paths
           grep -Fq 'durableReviewedNewItemPeers88' public/app.js
           node --check public/app.js
+          node --check public/photo-crop-editor.js
           node --check tests/mission1-durable-duplicate-20261119.test.mjs
       - name: Execute true native reviewed-save code with synthetic second-tab IDB
         run: |
