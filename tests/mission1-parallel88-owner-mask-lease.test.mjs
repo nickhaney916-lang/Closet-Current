@@ -391,7 +391,7 @@ function cropHarness88({saved=false,checkPhoto=null,peers=[]}={}){
   message(s){c.messages.push(s);},openPhotoCrop(_,callbacks){c.editor=callbacks;return Promise.resolve();},
   structuredClone,checkPhoto:checkPhoto||(async()=>({colorEstimate:null,signature:[],aspect:1})),
   ClothingDetails:{fillColor:()=>({})},
-  items:[],batch:[],writeCount:0,written:[],render(){c.renderCount++;},renderCount:0,
+  items:[],batch:[],draftStoreRevision88:'null',writeCount:0,written:[],render(){c.renderCount++;},renderCount:0,
   queued:async fn=>{await c.beforeWrite?.();const result=fn();c.writeCount++;return result;},
   db:{name:'closet-current-user-owner-A',transaction(stores,mode){
    assert.equal(mode,'readwrite');
@@ -416,6 +416,7 @@ function cropHarness88({saved=false,checkPhoto=null,peers=[]}={}){
  c.cropClothingPhoto=item=>{
   // Match the exact object identity of the native saved closet or draft.
   if(saved){c.items=[item,...peers];c.batch=[];}else{c.items=[...peers];c.batch=[item];}
+  c.draftStoreRevision88=JSON.stringify(c.batch);
   return nativeCrop(item);
  };
  return c;
