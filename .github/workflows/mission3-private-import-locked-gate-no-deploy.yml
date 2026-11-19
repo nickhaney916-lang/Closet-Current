@@ -22,9 +22,9 @@ jobs:
           BASE=5aa4644d464f1633a00c766c21feed78f2195757
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           test "$(git rev-parse "2a40f1db1a29b00e152700c538aa04dc2ddfbfc8:research/mission3-release-evidence-gate/verify.mjs")" = 340b47d8f6c2bd12276cc69a3145f60a91e6d922
-          test "$(git hash-object research/mission3-release-evidence-gate/verify.mjs)" = ae39299c273db8dab29ba1a583744033bc9a4732
+          test "$(git hash-object research/mission3-release-evidence-gate/verify.mjs)" = 79f875e19fdd74367f2db3035bc503da733eeca1
           test "$(git rev-parse "2a40f1db1a29b00e152700c538aa04dc2ddfbfc8:tests/mission3-release-evidence-gate.test.mjs")" = a9559cecf6429fb3f1ee392be5dd8fae99dbe632
-          test "$(git hash-object tests/mission3-release-evidence-gate.test.mjs)" = fb14ce394ce8a1c08ff2701ee30300120a23a803
+          test "$(git hash-object tests/mission3-release-evidence-gate.test.mjs)" = c199702225fb54019e2b1b5dbd39e5789c07c2ea
           # Research-only successor: preserve all protections and the real RED
           # quarantine at the frozen, first-attempt-green #1471 head.
           PRIOR=702b4f1e9eb6a040f7285c6ef18bf937cb10f640
@@ -218,9 +218,9 @@ jobs:
           BASE=5aa4644d464f1633a00c766c21feed78f2195757
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           test "$(git rev-parse "2a40f1db1a29b00e152700c538aa04dc2ddfbfc8:research/mission3-release-evidence-gate/verify.mjs")" = 340b47d8f6c2bd12276cc69a3145f60a91e6d922
-          test "$(git hash-object research/mission3-release-evidence-gate/verify.mjs)" = ae39299c273db8dab29ba1a583744033bc9a4732
+          test "$(git hash-object research/mission3-release-evidence-gate/verify.mjs)" = 79f875e19fdd74367f2db3035bc503da733eeca1
           test "$(git rev-parse "2a40f1db1a29b00e152700c538aa04dc2ddfbfc8:tests/mission3-release-evidence-gate.test.mjs")" = a9559cecf6429fb3f1ee392be5dd8fae99dbe632
-          test "$(git hash-object tests/mission3-release-evidence-gate.test.mjs)" = fb14ce394ce8a1c08ff2701ee30300120a23a803
+          test "$(git hash-object tests/mission3-release-evidence-gate.test.mjs)" = c199702225fb54019e2b1b5dbd39e5789c07c2ea
           # Research-only successor: preserve all protections and the real RED
           # quarantine at the frozen, first-attempt-green #1471 head.
           PRIOR=702b4f1e9eb6a040f7285c6ef18bf937cb10f640
