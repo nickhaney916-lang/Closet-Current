@@ -86,7 +86,7 @@ test('actual maximum-face cap explicitly denies full coverage rather than sampli
  assert.equal(x.decision,'BLOCKED_ORIGINAL_ALL_FACE_CAP_OR_COUNT');
 });
 test('genuine exact leaf collision pair budget refuses rather than silent skipping',()=>{
- const cfg=config(stationary(0),stationary(0));
+ const cfg=config(seq(a=>plane(3*Math.sin(a))),stationary(.1));
  cfg.frontIndices=Uint32Array.from([0,1,2,0,1,2]);
  cfg.bodyIndices=Uint32Array.from([0,1,2,0,1,2]);
  cfg.expectedFrontFaces=2;cfg.expectedBodyFaces=2;
@@ -107,7 +107,7 @@ test('five genuine harmonic rotated original vertices yield finite true angular 
  assert.ok(x.minimumOriginalFrontDoubleAreaRigUnitsSquared>.9);
 });
 test('resource caps on body BVH queries cannot silently claim contact safety',()=>{
- const cfg=config(stationary(0),stationary(0));
+ const cfg=config(seq(a=>plane(3*Math.sin(a))),stationary(.1));
  cfg.frontIndices=Uint32Array.from([0,1,2,0,1,2]);
  cfg.expectedFrontFaces=2;cfg.maxBodyBVHVisits=1;
  const x=evaluate(cfg);
