@@ -24,6 +24,7 @@ sys.path.insert(0,str(ROOT/"research"/"parallel89"))
 from met_review_handoff89 import (
  SOURCE_RGB_SHA,SOURCE_HEIGHTS,require_source_review_manifest,
  build_source_review_packet)
+from met_full_mask_proposal89 import propose_full_mask
 
 REVIEW=ROOT/"benchmark"/"parallel89-met70759-boundary-review-UNAPPROVED"
 RGB=ROOT/"benchmark"/"parallel89-met70759-four-photo-research"
@@ -59,6 +60,13 @@ for photo_id,rec in sorted(verified.items()):
     _,originalPNG=cv2.imencode(".png",cv2.cvtColor(rgb,cv2.COLOR_RGB2BGR))
     _,overlayPNG=cv2.imencode(".png",overlay)
     _,maskPNG=cv2.imencode(".png",candidate)
+    source_core,source_union,_=propose_full_mask(np.ascontiguousarray(rgb),photo_id)
+    if (not np.array_equal(candidate,source_core) or
+        hashlib.sha256(source_union.tobytes()).hexdigest()!=rec["uncertaintyUnionSHA256"]):
+        raise ValueError("source-photo-uncertainty-union-must-match-reviewed-true-original")
+    ok,sourceUnionPNG=cv2.imencode(".png",source_union)
+    if not ok:
+        raise ValueError("original-source-uncertainty-union-png-encoding-failed")
     photos.append({
       "imageId":photo_id,
       "sourceOriginalDecodedRGBSHA256":SOURCE_RGB_SHA[photo_id],
@@ -69,6 +77,8 @@ for photo_id,rec in sorted(verified.items()):
         base64.b64encode(overlayPNG.tobytes()).decode("ascii"),
       "sourceConservativeCandidateMaskPNG":"data:image/png;base64,"+
         base64.b64encode(maskPNG.tobytes()).decode("ascii"),
+      "sourceUncertaintyUnionMaskPNG":"data:image/png;base64,"+
+        base64.b64encode(sourceUnionPNG.tobytes()).decode("ascii"),
       "sourcePhotoAndMaskStillUnreviewed":True
     })
 packet["embeddedOriginalSourcePhotoAssets"]=photos
@@ -138,6 +148,9 @@ footer{margin-top:14px;color:#52606d;font-size:.85rem}
 </fieldset>
 <button id="save">Save this proposed decision</button>
 <button id="export">Export source-locked JSON</button>
+<label for="importFile">Import a prior proposed-review JSON for source-locked preview</label>
+<input id="importFile" type="file" accept=".json,application/json">
+<button id="importReview" class="secondary">Validate and preview local review proposal</button>
 <div id="status" role="status" class="status">No decisions saved. Original mask is unchanged.</div>
 <p class="note" id="progress">0 regions annotated</p>
 </aside>
@@ -147,6 +160,9 @@ footer{margin-top:14px;color:#52606d;font-size:.85rem}
 <div class="canvases">
 <div class="canvascol"><h2>Source photo — draw polygon here</h2><canvas id="original" aria-label="Original photograph crop; click to add correction polygon"></canvas></div>
 <div class="canvascol"><h2>Automated uncertainty overlay</h2><canvas id="overlay" aria-label="Mask uncertainty cropped from original photograph"></canvas></div>
+<div class="canvascol"><h2>UNAPPROVED proposed pixels only</h2>
+<canvas id="candidate" aria-label="Unapproved proposed additions, never original accepted garment mask"></canvas>
+<p id="previewStats" class="note">Zero proposed pixels admitted to the original mask.</p></div>
 </div>
 <h2>Safety / source provenance</h2>
 <p id="metrics" class="note"></p>
@@ -169,7 +185,11 @@ function makeImage(src){return new Promise((resolve,reject)=>{const i=new Image(
 async function loadPhoto(id){
  if(!loaded.has(id)){
   const a=assets.get(id);
-  loaded.set(id,await Promise.all([makeImage(a.originalSourceLosslessPNG),makeImage(a.sourceBoundaryResearchOverlayPNG)]));
+  loaded.set(id,await Promise.all([
+  makeImage(a.originalSourceLosslessPNG),
+  makeImage(a.sourceBoundaryResearchOverlayPNG),
+  makeImage(a.sourceConservativeCandidateMaskPNG),
+  makeImage(a.sourceUncertaintyUnionMaskPNG)]));
  }
  return loaded.get(id);
 }
@@ -182,7 +202,7 @@ function range(r,img){
 async function render(){
  if(!current)return;
  const r=regions.get(current),image=photos.get(r.imageId);
- const [source,over]=await loadPhoto(r.imageId);crop=range(r,image);
+ const [source,over,coreMask,unionMask]=await loadPhoto(r.imageId);crop=range(r,image);
  const sc=Math.min(700/crop.w,480/crop.h),w=Math.max(1,Math.round(crop.w*sc)),
   h=Math.max(1,Math.round(crop.h*sc));
  for(const [name,img] of [["original",source],["overlay",over]]){
@@ -203,6 +223,44 @@ async function render(){
    vertices.forEach(p=>ctx.fillRect((p[0]-crop.x)*w/crop.w-3,(p[1]-crop.y)*h/crop.h-3,6,6));}
   }
  }
+ // A proposed foreground never bypasses the exact source original
+ // uncertainty-mask set difference. Calculate a disposable visualization
+ // from *original* mask and union pixels, never mutate embedded source.
+ const canvas=byId("candidate");canvas.width=w;canvas.height=h;
+ const ctx=canvas.getContext("2d");
+ ctx.drawImage(source,crop.x,crop.y,crop.w,crop.h,0,0,w,h);
+ const accepted=answers.get(current);
+ let previewAdded=0;
+ if(accepted?.decision==="propose_add_garment_fabric" &&
+    accepted.polygonOriginalPixels.length>=3){
+  const off=document.createElement("canvas");off.width=crop.w;off.height=crop.h;
+  const o=off.getContext("2d",{willReadFrequently:true});
+  o.beginPath();
+  accepted.polygonOriginalPixels.forEach(([x,y],i)=>{
+   if(!i)o.moveTo(x-crop.x,y-crop.y);else o.lineTo(x-crop.x,y-crop.y);
+  });o.closePath();o.fillStyle="#fff";o.fill();
+  const drawn=o.getImageData(0,0,crop.w,crop.h).data;
+  o.clearRect(0,0,crop.w,crop.h);
+  o.drawImage(coreMask,crop.x,crop.y,crop.w,crop.h,0,0,crop.w,crop.h);
+  const corePixels=o.getImageData(0,0,crop.w,crop.h).data;
+  o.clearRect(0,0,crop.w,crop.h);
+  o.drawImage(unionMask,crop.x,crop.y,crop.w,crop.h,0,0,crop.w,crop.h);
+  const unionPixels=o.getImageData(0,0,crop.w,crop.h).data;
+  const pix=o.createImageData(crop.w,crop.h);
+  for(let j=0;j<crop.w*crop.h;j++){
+   const k=j*4;
+   // Only original photo uncertainty union-minus-conservative-core.
+   if(drawn[k+3]>0 && unionPixels[k]>=128 && corePixels[k]<128){
+    pix.data[k]=200;pix.data[k+1]=40;pix.data[k+2]=150;
+    pix.data[k+3]=225;previewAdded++;
+   }
+  }
+  o.putImageData(pix,0,0);
+  ctx.drawImage(off,0,0,w,h);
+ }
+ byId("previewStats").textContent=
+   previewAdded+" proposed photographed uncertainty-only pixel(s) colored pink. "+
+   "ZERO original mask pixels changed; NOT ACCEPTED / NOT 3D.";
  byId("pointCount").textContent=vertices.length+" original-pixel polygon points";
 }
 function count(){byId("progress").textContent=answers.size+" / "+regions.size+" regions annotated (not approved)";}
@@ -261,7 +319,7 @@ byId("save").addEventListener("click",()=>{
   decision,comment,polygonOriginalPixels:vertices.map(x=>[...x])
  });
  status("Saved proposed interpretation for "+current+". No original pixels or masks changed.");
- count();
+ count();render();
 });
 byId("export").addEventListener("click",()=>{
  if(!answers.size){status("Save at least one proposed review decision first.");return;}
@@ -285,6 +343,69 @@ byId("export").addEventListener("click",()=>{
  document.body.appendChild(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1000);
  status("Exported local proposed corrections, not expert verification or mask approval.");
+});
+function validateImportedReview(doc){
+ if(!doc||doc.schema!=="M2-met70759-original-photo-boundary-review-proposal/v1" ||
+  doc.sourceMuseumObjectNumber!=="1983.21a, b"||
+  doc.qualifiedReviewerVerified!==false||doc.sourceMaskHumanApproved!==false||
+  doc.consumer3DAdmitted!==false||doc.releaseAuthorized!==false||
+  doc.familyAlpha!=="HOLD"||
+  !Array.isArray(doc.proposedRegionDecisions)||
+  doc.proposedRegionDecisions.length>regions.size)
+  throw Error("Source review import is not an unapproved exact-object proposal");
+ const imported=new Map();
+ for(const item of doc.proposedRegionDecisions){
+  const r=regions.get(item?.regionId);
+  if(!r||imported.has(r.id)||item.imageId!==r.imageId||
+   item.originalRGBSHA256!==r.sourceOriginalRGBSHA256||
+   item.originalMaskSHA256!==r.originalMaskCoreSHA256||
+   JSON.stringify(item.bboxOriginalPixels)!==JSON.stringify(r.bboxOriginalPixels)||
+   !["retain_excluded_background","propose_add_garment_fabric",
+     "uncertain_request_more_evidence","request_manual_redraw"].includes(item.decision)||
+   typeof item.comment!=="string"||item.comment.length>2500||
+   !Array.isArray(item.polygonOriginalPixels)||item.polygonOriginalPixels.length>500)
+   throw Error("Imported correction does not match this original photo+mask+ROI");
+  const pts=item.polygonOriginalPixels,b=r.bboxOriginalPixels;
+  if(pts.some(p=>!Array.isArray(p)||p.length!==2||
+      !p.every(Number.isInteger)||p[0]<b[0]-35||p[0]>b[2]+35||
+      p[1]<b[1]-35||p[1]>b[3]+35))
+   throw Error("Imported polygon not within original photographed review region");
+  if(["propose_add_garment_fabric","request_manual_redraw"].includes(item.decision)&&
+      (pts.length<3||!item.comment.trim()))
+   throw Error("Corrections require an original-pixel polygon and explanation");
+  imported.set(r.id,{
+   regionId:r.id,imageId:r.imageId,
+   originalRGBSHA256:r.sourceOriginalRGBSHA256,
+   originalMaskSHA256:r.originalMaskCoreSHA256,
+   bboxOriginalPixels:[...b],
+   decision:item.decision,comment:item.comment,
+   polygonOriginalPixels:pts.map(p=>[...p])
+  });
+ }
+ return imported;
+}
+byId("importReview").addEventListener("click",async()=>{
+ const f=byId("importFile").files?.[0];
+ if(!f){status("Choose a local source-locked JSON proposal first.");return;}
+ if(f.size>262144){status("Source review file exceeds 256 KiB.");return;}
+ try{
+  const imported=validateImportedReview(JSON.parse(await f.text()));
+  answers.clear();
+  for(const [id,v] of imported)answers.set(id,v);
+  count();
+  if(imported.size){
+   const first=[...imported.keys()][0];
+   byId("photo").value=String(regions.get(first).imageId);
+   populateRegions();
+   byId("region").value=first;
+   await openRegion(first);
+  }else await render();
+  status("Imported "+imported.size+
+   " source-locked proposal(s). Only disputed pixels are pink preview; "+
+   "ZERO original mask edits, NO expert approval or 3D release.");
+ }catch(e){
+  status("REJECTED proposed review import: "+String(e.message||e));
+ }
 });
 byId("photo").addEventListener("change",populateRegions);
 byId("region").addEventListener("change",()=>openRegion(byId("region").value));
