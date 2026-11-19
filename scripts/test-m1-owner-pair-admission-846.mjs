@@ -389,6 +389,77 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     browser:browserName,width,unresolvedBlocked:true,crossOwnerBlocked:true,
     companionDuplicateBlocked:true,pairedOneClosetUnit:true,sourceMasksRetained:true,
     repeatedSubmitBlocked:true,originalSourceShown:true,unpromotedOwnerReceipt:true,pageErrors:0}));
+   // Actual native Chromium/WebKit IndexedDB isolation (synthetic owner/photos).
+   // Never count a facade-only check as durable row compare-and-write evidence.
+   const durableRow88=await page.evaluate(async()=>{
+    window.beforeWriteTest=null;window.closetAuth.user={id:'owner-A'};
+    const opened=indexedDB.open('closet-current-user-owner-A',2);
+    const ownerDb=await new Promise((resolve,reject)=>{
+     opened.onupgradeneeded=()=>{
+      if(!opened.result.objectStoreNames.contains('items'))
+       opened.result.createObjectStore('items',{keyPath:'id'});
+     };
+     opened.onsuccess=()=>resolve(opened.result);
+     opened.onerror=()=>reject(opened.error);
+    });
+    db=ownerDb;
+    const put=record=>new Promise((resolve,reject)=>{
+     const tx=db.transaction('items','readwrite');
+     tx.objectStore('items').put(structuredClone(record));
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+    const get=id=>new Promise((resolve,reject)=>{
+     const request=db.transaction('items','readonly').objectStore('items').get(id);
+     request.onsuccess=()=>resolve(request.result);
+     request.onerror=()=>reject(request.error);
+    });
+    const first={id:'native-88',image:originalSource88,
+     originalPhoto:{image:originalSource88},
+     recognitionPhoto:{image:originalSource88},
+     ownerId:'owner-A',category:'Tops',itemType:'T-shirt',color:'Blue',
+     ownerSourceReview88:{ownerReviewed:true,singleGarmentVerified:false,
+      threeDReady:false},seasons:[],notes:'original'};
+    await put(first);
+    const local=structuredClone(first);items=[local];batch=[];
+    await saveExistingPiece88({...local,color:'Green'},reviewedSaveLease88(local));
+    const accepted=await get(first.id);
+    const staleLease=reviewedSaveLease88(local);
+    let deniedEdit=false;
+    try{await saveExistingPiece88({...local,color:'Purple'},staleLease);}
+    catch(e){deniedEdit=/P88_SAVED_EDITOR_STORAGE_CHANGED/.test(e.message);}
+    const preservedEdit=(await get(first.id))?.color==='Green';
+    items=[accepted];
+    const deletionLease=reviewedSaveLease88(accepted);
+    await put({...accepted,itemType:'Blouse'});
+    let deniedDelete=false;
+    try{await removeExistingPiece88(deletionLease);}
+    catch(e){deniedDelete=/P88_SAVED_DELETE_STORAGE_CHANGED/.test(e.message);}
+    const preservedDelete=(await get(first.id))?.itemType==='Blouse';
+    items=[structuredClone(accepted)];
+    const deletedLease=reviewedSaveLease88(items[0]);
+    await new Promise((resolve,reject)=>{
+     const tx=db.transaction('items','readwrite');
+     tx.objectStore('items').delete(first.id);
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+    let deniedResurrection=false;
+    try{await saveExistingPiece88({...items[0],color:'Yellow'},deletedLease);}
+    catch(e){deniedResurrection=/P88_SAVED_EDITOR_STORAGE_CHANGED/.test(e.message);}
+    const remainedDeleted=(await get(first.id))===undefined;
+    ownerDb.close();
+    return {accepted:accepted?.color==='Green',deniedEdit,preservedEdit,
+     deniedDelete,preservedDelete,deniedResurrection,remainedDeleted};
+   });
+   assert.deepEqual(durableRow88,{accepted:true,deniedEdit:true,preservedEdit:true,
+    deniedDelete:true,preservedDelete:true,deniedResurrection:true,
+    remainedDeleted:true},'native IDB must preserve newer corrections');
+   console.log('M1_P88_ACTUAL_BROWSER_IDB_SAVED_ROW_CAS',JSON.stringify({
+    browser:browserName,width,durableUpdatedEdit:true,
+    staleCrossTabCorrectionDenied:true,staleDeleteDenied:true,
+    deletedRowCannotResurrect:true,syntheticOwner:true,physicalDevice:false,
+    pageErrors:errors.length
+   }));
+   assert.deepEqual(errors,[]);
    await page.close();
   }
  }finally{await browser.close();}
