@@ -666,6 +666,93 @@ test('P88 genuine masked crop may retain tentative color without owner confirmat
  assert.equal(after.threeDReady,undefined);
  assert.equal(c.durableItems.size,0);
 });
+test('P88 recropping an unsaved recognized garment removes old-model type, color and subtype diagnostics',async()=>{
+ const original=sampleSource88().image;
+ const item={...sampleSource88(),category:'Dresses',itemType:'Casual dress',
+  name:'Red casual dress',color:'Red',colorSource:'recognition',
+  sleeveLength:'Short sleeve',fit:'Regular',pattern:'Floral',
+  indexingLevel:'specific-type',indexedAt:'2026-11-18T21:10:00.000Z',
+  recognitionDiagnostics:{mission1SubtypeSafety:{ownerSubtypeReviewRequired:true},
+   outerwearRecovery:{outerwearReviewSuggested:true}},userAdjusted:false,
+  requiresOwnershipConfirmation:false,originalPhoto:{image:original}};
+ const c=cropHarness88();
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,TkVXUEhPVE9DR0VPTUVUUlk='},null);
+ const draft=c.durableDraft.batch[0];
+ assert.equal(draft.image,'data:image/jpeg;base64,TkVXUEhPVE9DR0VPTUVUUlk=');
+ assert.equal(draft.originalPhoto.image,original);
+ assert.equal(draft.category,'Uncategorized');
+ assert.equal(draft.itemType,'Unknown');
+ assert.equal(draft.name,'');
+ assert.equal(draft.color,'');
+ assert.equal(draft.colorSource,undefined);
+ assert.equal(draft.sleeveLength,'Unknown');
+ assert.equal(draft.fit,'Unknown');
+ assert.equal(draft.pattern,'Unknown');
+ assert.equal(draft.indexingLevel,undefined);
+ assert.equal(draft.indexedAt,undefined);
+ assert.equal(draft.recognitionDiagnostics,undefined);
+ assert.equal(draft.requiresOwnershipConfirmation,true);
+ assert.equal(c.durableItems.size,0,'new crop must stay in pending review');
+});
+test('P88 a second unsaved crop cannot reuse the unchecked suggestion from a first crop',async()=>{
+ const item={...sampleSource88(),userAdjusted:true,
+  category:'Dresses',itemType:'Casual dress',color:'Red',
+  colorSource:'recognition',name:'Red dress',indexedAt:'2026-11-18',
+  recognitionDiagnostics:{reason:'earlier-source-only'}};
+ const c=cropHarness88();
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,U0VDT05ELUNST1A='},null);
+ const draft=c.durableDraft.batch[0];
+ assert.equal(draft.category,'Uncategorized');
+ assert.equal(draft.itemType,'Unknown');
+ assert.equal(draft.color,'');
+ assert.equal(draft.recognitionDiagnostics,undefined);
+ assert.equal(draft.requiresOwnershipConfirmation,true);
+});
+test('P88 new crop suggestion may prefill tentative draft fields but never preserve the older diagnostic or auto-save',async()=>{
+ const item={...sampleSource88(),category:'Dresses',itemType:'Casual dress',
+  color:'Red',colorSource:'recognition',fit:'Fitted',pattern:'Floral',
+  name:'Red dress',recognitionDiagnostics:{reason:'old pixels'},userAdjusted:false};
+ const c=cropHarness88();
+ c.applyLocalChoice=(value,choice,overwrite)=>{
+  assert.equal(overwrite,true);
+  value.category=choice.category;value.itemType=choice.itemType;
+  value.name=choice.label;
+ };
+ c.ClothingDetails.fill=(value,choice,details,overwrite)=>{
+  assert.equal(overwrite,true);
+  return {...value,color:details.color,colorSource:'recognition'};
+ };
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,TkVXQkxPVVNFSU1BR0U='},{
+  category:'Tops',itemType:'Blouse',label:'Blue blouse',details:{color:'Blue'}
+ });
+ const draft=c.durableDraft.batch[0];
+ assert.equal(draft.category,'Tops');
+ assert.equal(draft.itemType,'Blouse');
+ assert.equal(draft.color,'Blue');
+ assert.equal(draft.pattern,'Unknown');
+ assert.equal(draft.fit,'Unknown');
+ assert.equal(draft.recognitionDiagnostics,undefined);
+ assert.equal(draft.requiresOwnershipConfirmation,true);
+ assert.equal(c.durableItems.size,0);
+});
+test('P88 saved recrop retains the owner classification while dropping stale photo-specific model diagnostics',async()=>{
+ const item={...sampleSource88(),userAdjusted:true,
+  recognitionDiagnostics:{reason:'old model',mission1SubtypeSafety:{ownerSubtypeReviewRequired:true}},
+  originalPhoto:{image:sampleSource88().image}};
+ const c=cropHarness88({saved:true});
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,TkVXU0FWRURDQVNFXzE='},null);
+ const row=c.durableItems.get(item.id);
+ assert.equal(row.category,'Tops');
+ assert.equal(row.itemType,'T-shirt');
+ assert.equal(row.color,'Blue');
+ assert.equal(row.originalPhoto.image,sampleSource88().image);
+ assert.equal(row.recognitionDiagnostics,undefined);
+ assert.equal(item.recognitionDiagnostics,undefined,'native current card must not display old model scores');
+});
 test('P88 real crop editor first crop preserves complete original JPEG while saving derived pixels',async()=>{
  const c=cropHarness88(),item=sampleSource88(),raw=item.image;
  c.cropClothingPhoto(item);
