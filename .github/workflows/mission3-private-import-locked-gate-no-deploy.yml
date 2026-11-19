@@ -1,7 +1,7 @@
 name: Mission 3 private import locked UI and v4 bridge — NO DEPLOY
 on:
   push:
-    branches: [research/mission3-private-import-gate-and-v4-bridge-20261113-HOLD, research/mission3-linear-original-jpeg-20261118-HOLD, research/mission3-release-evidence-convergence-20261119-HOLD, research/mission3-device-failure-evidence-quarantine-20261119-HOLD]
+    branches: [research/mission3-private-import-gate-and-v4-bridge-20261113-HOLD, research/mission3-linear-original-jpeg-20261118-HOLD, research/mission3-release-evidence-convergence-20261119-HOLD, research/mission3-device-failure-evidence-quarantine-20261119-HOLD, research/mission3-device-event-cap-failclosed-20261119-HOLD]
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,9 +22,13 @@ jobs:
           BASE=5aa4644d464f1633a00c766c21feed78f2195757
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           test "$(git rev-parse "2a40f1db1a29b00e152700c538aa04dc2ddfbfc8:research/mission3-release-evidence-gate/verify.mjs")" = 340b47d8f6c2bd12276cc69a3145f60a91e6d922
-          test "$(git hash-object research/mission3-release-evidence-gate/verify.mjs)" = 2232cdba92f22abe0f024a7853dd522e2b4084ac
+          test "$(git hash-object research/mission3-release-evidence-gate/verify.mjs)" = ae39299c273db8dab29ba1a583744033bc9a4732
           test "$(git rev-parse "2a40f1db1a29b00e152700c538aa04dc2ddfbfc8:tests/mission3-release-evidence-gate.test.mjs")" = a9559cecf6429fb3f1ee392be5dd8fae99dbe632
-          test "$(git hash-object tests/mission3-release-evidence-gate.test.mjs)" = fb35a1ffc2639838d0152815d5ba94856e5086fb
+          test "$(git hash-object tests/mission3-release-evidence-gate.test.mjs)" = d20c104cae92440d1481c62d86a554009d959562
+          # Research-only successor: preserve all protections and the real RED
+          # quarantine at the frozen, first-attempt-green #1471 head.
+          PRIOR=702b4f1e9eb6a040f7285c6ef18bf937cb10f640
+          test "$(git merge-base "$PRIOR" HEAD)" = "$PRIOR"
           CHILD=2a40f1db1a29b00e152700c538aa04dc2ddfbfc8
           test "$(git merge-base "$CHILD" HEAD)" = "$CHILD"
           git diff --name-only "$CHILD" HEAD | while read -r p; do
@@ -211,9 +215,13 @@ jobs:
           BASE=5aa4644d464f1633a00c766c21feed78f2195757
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           test "$(git rev-parse "2a40f1db1a29b00e152700c538aa04dc2ddfbfc8:research/mission3-release-evidence-gate/verify.mjs")" = 340b47d8f6c2bd12276cc69a3145f60a91e6d922
-          test "$(git hash-object research/mission3-release-evidence-gate/verify.mjs)" = 2232cdba92f22abe0f024a7853dd522e2b4084ac
+          test "$(git hash-object research/mission3-release-evidence-gate/verify.mjs)" = ae39299c273db8dab29ba1a583744033bc9a4732
           test "$(git rev-parse "2a40f1db1a29b00e152700c538aa04dc2ddfbfc8:tests/mission3-release-evidence-gate.test.mjs")" = a9559cecf6429fb3f1ee392be5dd8fae99dbe632
-          test "$(git hash-object tests/mission3-release-evidence-gate.test.mjs)" = fb35a1ffc2639838d0152815d5ba94856e5086fb
+          test "$(git hash-object tests/mission3-release-evidence-gate.test.mjs)" = d20c104cae92440d1481c62d86a554009d959562
+          # Research-only successor: preserve all protections and the real RED
+          # quarantine at the frozen, first-attempt-green #1471 head.
+          PRIOR=702b4f1e9eb6a040f7285c6ef18bf937cb10f640
+          test "$(git merge-base "$PRIOR" HEAD)" = "$PRIOR"
           CHILD=2a40f1db1a29b00e152700c538aa04dc2ddfbfc8
           test "$(git merge-base "$CHILD" HEAD)" = "$CHILD"
           git diff --name-only "$CHILD" HEAD | while read -r p; do
