@@ -43,3 +43,27 @@ jobs:
           set -euo pipefail
           node --test tests/mission1-parallel88-owner-mask-lease.test.mjs tests/mission1-parallel88-instance-conservation.test.mjs tests/outfit-unit-reconciliation-70.test.mjs | tee /tmp/m1-inherited
           grep -Eq '^# fail 0$' /tmp/m1-inherited
+
+  actual-chromium-webkit-IDB-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 38
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install exact inherited original owner review browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Install genuine desktop browser engines
+        run: npx playwright install --with-deps chromium webkit
+      - name: Execute original owner reviewed-save source on actual browser IndexedDB
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/test-m1-owner-pair-admission-846.mjs | tee /tmp/m1-native-idb
+          grep -Fq 'M1_P88_ACTUAL_BROWSER_DURABLE_NEW_DUPLICATE' /tmp/m1-native-idb
+          grep -Fq '"staleDuplicateDenied":true' /tmp/m1-native-idb
+          grep -Fq '"uniqueCommitted":true' /tmp/m1-native-idb
