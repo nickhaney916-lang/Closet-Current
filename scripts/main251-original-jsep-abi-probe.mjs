@@ -51,6 +51,62 @@ export async function probeM251NativeGlue(){
   originalModelAndPhotoUnchanged:true,actualNativeAbiCallNotYetObserved:true,
   nativeCAllocatorNotObserved:true,releaseAuthorized:false,familyAlphaHold:true};
 }
+
+export const M251_ABI_BRIDGE="e._OrtCreateSessionOptions=(a,b,c,d,f,g,h,l,m,p)=>(e._OrtCreateSessionOptions=K.Ha)(a,b,c,d,f,g,h,l,m,p);";
+export const M251_RESEARCH_NATIVE_BRIDGE=[
+ "e._OrtCreateSessionOptions=(a,b,c,d,f,g,h,l,m,p)=>{",
+ // K.Ha is actual compiled wasm export. Native ABI args are forwarded
+ // unchanged; the result handle is the actual returned numeric handle.
+ " const result=(e._OrtCreateSessionOptions=K.Ha)(a,b,c,d,f,g,h,l,m,p);",
+ " try{self.postMessage({type:'diagnostic',phase:'m251_native_option',",
+ " actualExportCalled:true,argCount:10,cpuArena:b,memPattern:c,",
+ " handleReturned:Number.isInteger(result)&&result>0});}catch{}",
+ " return result;",
+ "};"
+].join('');
+export function deriveM251NativeAbiJsep(source){
+ assert.equal(typeof source,'string');
+ assert.equal(sha(Buffer.from(source)),PINNED_JS,'Pinned original public JSEP source SHA changed');
+ assert.equal(source.split(M251_ABI_BRIDGE).length,2,
+  'Actual pinned JSEP WASM export ABI bridge absent/duplicate');
+ const modified=source.replace(M251_ABI_BRIDGE,M251_RESEARCH_NATIVE_BRIDGE);
+ assert.equal(modified.includes(M251_ABI_BRIDGE),false,'Uninstrumented original ABI bridge retained');
+ assert.ok(modified.includes('K.Ha)(a,b,c,d,f,g,h,l,m,p)'),
+  'Original actual WASM native ABI arguments/body changed');
+ assert.equal(modified.split("phase:'m251_native_option'").length,2);
+ return modified;
+}
+export async function instrumentM251OriginalJsepGlue(){
+ const bytes=await readFile('node_modules/@huggingface/transformers/dist/ort-wasm-simd-threaded.jsep.mjs');
+ return deriveM251NativeAbiJsep(bytes.toString('utf8'));
+}
+export function verifyM251OriginalNativeOptionReceipt(record,{engine,arm}){
+ assert.ok(['webkit','chromium'].includes(engine));
+ assert.ok(['baseline','pattern_off'].includes(arm));
+ assert.equal(record?.phase,'m251_native_option');
+ assert.equal(record.actualExportCalled,true);
+ assert.equal(record.argCount,10);
+ assert.equal(record.handleReturned,true);
+ assert.equal(record.cpuArena,true,'Original default native CPU arena changed');
+ assert.equal(record.memPattern,arm==='baseline',
+  'Original JSEP native ABI memPattern argument differs from requested arm');
+ return {
+  schema:'M251_ORIGINAL_JSEP_NATIVE_OPTIONS_ABI/v1',
+  engine,arm,realWasmExportInvoked:true,
+  originalPinnedOrtExportName:'_OrtCreateSessionOptions',
+  nativeMemPatternFlag:record.memPattern,
+  nativeCpuArenaFlag:record.cpuArena,
+  genuineReturnedOptionsHandle:true,
+  originalPinnedJsepGlueSourceSha256:PINNED_JS,
+  researchOnlyLoaderInstrumentation:true,
+  pinnedOriginalBinaryUnchanged:true,
+  actualNativeCppMemoryPolicyObserved:false,
+  originalJsepMemoryFailureFixed:false,
+  permanentRepairProven:false,
+  releaseAuthorized:false,familyAlphaHold:true
+ };
+}
+
 if(process.argv[1]?.endsWith('main251-original-jsep-abi-probe.mjs')){
  const data=await probeM251NativeGlue();
  console.log('M251_ORIGINAL_JSEP_PUBLIC_ABI_PREFLIGHT',JSON.stringify(data));
