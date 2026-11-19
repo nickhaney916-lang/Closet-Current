@@ -40,7 +40,7 @@ for(const [name,match,change,regex] of [
  ['untrusted candidate app file',a=>a[0]==='diff-tree'&&a.at(-1)===head,v=>v+'M\0public/app.js\0',/unexpected source/],
  ['unreviewed sibling P94 Worker change',a=>a[0]==='diff-tree'&&a.at(-1)===c.green.head,v=>v+'M\0public/outfit-worker-p94.mjs\0',/unexpected source/],
  ['removed sibling native RED gate',a=>a[0]==='diff-tree'&&a.at(-1)===c.red.head,()=>'',/unexpected source/],
- ['forged old compiled P94 Worker',a=>a[0]==='rev-parse'&&a[1]===head+':public/outfit-worker-p94.mjs',()=> 'f'.repeat(40),/source drift/],
+ ['forged old compiled P94 Worker',a=>a[0]==='rev-parse'&&a[1]===head+':public/outfit-worker-p94.mjs',()=> 'f'.repeat(40),/original candidate drift/],
  ['changed source lease on M275',a=>a[0]==='rev-parse'&&a[1]===c.green.head+':public/native-outfit-source-plan-p99.mjs',()=> 'f'.repeat(40),/source changed/],
  ['changed M276 native evidence parser',a=>a[0]==='rev-parse'&&a[1]===c.red.head+':scripts/main1054-m276-ortcreate-session-evidence.mjs',()=> 'f'.repeat(40),/witness code/],
  ['symlinked gate',a=>a[0]==='ls-tree',()=> '120000 blob x',/nonregular/],
