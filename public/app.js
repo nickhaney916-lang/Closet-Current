@@ -593,7 +593,13 @@ function cropClothingPhoto(item){
    if(value.id!==item.id||hasSourceBoundMask88(value)||value.ownerSourceReview88)
     throw Error('P88_CROP_CANNOT_REBIND_ID_OR_MASK');
    delete value.recognitionMemory;delete value.confirmedDetails;delete value.correctionReceipt72;delete value.learningReviewedWeek;delete value.weeklySuggestion;delete value.recognitionPhoto;delete value.colorMethod;
-   if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}
+   // Unsaved drafts must not reuse pixel color guessed from their PREVIOUS
+   // crop. But an already-saved closet row is owner data: never erase its
+   // existing unconfirmed estimated color just because its photo was cropped.
+   // Keep colorSource='photo-estimate' (not 'user') until explicit Adjust.
+   if(lease.wasDraft&&value.colorSource==='photo-estimate'){
+    value.color='';delete value.colorSource;
+   }
    const quality=await checkPhoto(photo.image);
    if(hasSourceBoundMask88(item))throw Error('P88_STALE_MASK_AFTER_PHOTO_CHECK');
    if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
