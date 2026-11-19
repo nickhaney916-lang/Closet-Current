@@ -1,0 +1,137 @@
+name: MAIN1054 M258 original-browser terminal-RED reconciliation NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m258-evidence-review-fix-HOLD]
+  pull_request:
+    branches: [research/main1054-m257-real-browser-evidence-ingestion-HOLD]
+permissions:
+  contents: read
+jobs:
+  m258-source-and-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify unchanged original model source, M255/M256 donor, and four added paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          PARENT=ff2cea72eba17b159f9f729b27b2832d92a5982c
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          git merge-base --is-ancestor "$PARENT" HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:research/parallel105/closeout.mjs)" = ea8732b5e0cc32388c4c4a9b7e0f39a4395858e2
+          test "$(git rev-parse HEAD:research/main1054/m256-negative-attempt-quarantine.mjs)" = 1ba5db3af45a3fdb9cb665b823fa07f3dda45929
+          test "$(git rev-parse HEAD:.github/workflows/main1054-m255-combined-no-deploy.yml)" = ca67f4f9da15997cef60e66b7298a33979db9527
+          git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/main1054/m257-real-runner-evidence.mjs|tests/main1054-m258-review-falsification.test.mjs|.github/workflows/main1054-m258-review-no-deploy.yml) ;;
+              *) echo "M257 unexpected changed path: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$PARENT" HEAD -- public/ scripts/ supabase/ benchmark/ research/parallel105/ research/main1054/m256-negative-attempt-quarantine.mjs
+          node --check research/main1054/m257-real-runner-evidence.mjs
+      - name: Test original M256 and M257 falsification (no fake browser PASS)
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/parallel105-closeout.test.mjs tests/main1054-m256-negative-attempt-quarantine.test.mjs tests/main1054-m257-real-runner-evidence.test.mjs tests/main1054-m258-review-falsification.test.mjs
+      - name: Install locked no-deploy test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build and run entire inherited source/private-wardrobe/security/backup suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+
+  m258-original:
+    needs: m258-source-and-node
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+        width: [320, 390, 430]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: ${{ matrix.width }}
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify frozen original P94 installed worker and runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Run unchanged original WebKit or Chromium model journey and preserve genuine return code
+        shell: bash
+        run: |
+          set +e
+          node scripts/test-parallel94-native-p88-browser.mjs 2>&1 | tee m258-original.log
+          model_exit="${PIPESTATUS[0]}"
+          set -e
+          MODEL_EXIT="$model_exit" node research/main1054/m257-real-runner-evidence.mjs attempt m258-original.log "receipt-${M58_ENGINE}-${P94_WIDTH}.json"
+          test "$model_exit" -eq 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m258-original-${{ matrix.engine }}-${{ matrix.width }}-HOLD
+          path: receipt-${{ matrix.engine }}-${{ matrix.width }}.json
+          retention-days: 14
+          if-no-files-found: warn
+
+  m258-aggregate:
+    needs: [m258-source-and-node, m258-original]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: m258-original-*-HOLD
+          path: m257-receipts
+          merge-multiple: true
+      - name: Strict six-cell first-attempt original browser evidence adjudication
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          node research/main1054/m257-real-runner-evidence.mjs aggregate m257-receipts
+          echo "M257 owner journey accepted for research only; same-process model/JSEP SHA remains BLOCKED; Family Alpha HOLD"
