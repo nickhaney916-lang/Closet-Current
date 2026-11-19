@@ -129,9 +129,9 @@ test('no positive result without original native pointer/owner receipt',()=>{
  assert.throws(()=>adjudicateProcess(entry+originalPositive,0,meta),/invented/);
 });
 for(const [name,changes,match] of [
- ['wrong original count',{modelLength:15199745,originalFP32ModelLengthMatches:false},/invented/],
+ ['wrong original count',{modelLength:15199745,originalFP32ModelLengthMatches:false},/inconsistent native pointer arithmetic/],
  ['out of bounds model range',{modelRangeWithinLiveMemory:false},/invented/],
- ['missing model pointer',{modelPointer:null},/invented/],
+ ['missing model pointer',{modelPointer:null},/original native input mutated/],
  ['unknown ABI argc',{argc:2},/argument count/]
 ]){
  test(name,()=>assert.throws(()=>adjudicateProcess(
