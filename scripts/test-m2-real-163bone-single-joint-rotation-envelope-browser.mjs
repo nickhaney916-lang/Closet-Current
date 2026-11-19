@@ -12,7 +12,7 @@ import {spawnSync} from 'node:child_process';
 const pins={
  runner:'5f999c1dc440539cec143f7c7de48b8fe88dd91e',
  registration:'2e22aa7202043dba7a85981c115bd6620da1107b',
- addon:'570784d2e1b72793116f1ca59ebc5c441e01adb4'
+ addon:'e129737af316be81100ef2d95e8922ff2f8c62d6'
 };
 const sha=b=>createHash('sha1').update('blob '+Buffer.byteLength(b)+'\0')
  .update(b).digest('hex');
@@ -39,7 +39,7 @@ const routeLines=[
  "    const addonSource=await readFile('research/parallel89/original-163bone-spine04-angular-witness-addon89.mjs','utf8');",
  "    const blobSha=t=>createHash('sha1').update('blob '+Buffer.byteLength(t)+'\\0').update(t).digest('hex');",
  "    assert.equal(blobSha(originalSource),'2e22aa7202043dba7a85981c115bd6620da1107b');",
- "    assert.equal(blobSha(addonSource),'570784d2e1b72793116f1ca59ebc5c441e01adb4');",
+ "    assert.equal(blobSha(addonSource),'e129737af316be81100ef2d95e8922ff2f8c62d6');",
  "    await route.fulfill({status:200,contentType:'text/javascript',body:originalSource+'\\n'+addonSource});",
  "   });",
  routeAnchor
