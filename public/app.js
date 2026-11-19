@@ -94,6 +94,19 @@ function readDraft(){
   r.onerror=()=>reject(r.error);
  });
 }
+// A reviewed draft was compared against this tab's closet at editor-open time.
+// Another tab can commit the same original or physical source/mask before Save.
+// Recheck the durable owner's items INSIDE the atomic items+draft transaction.
+// Owner attestation for identical photos authorizes only the exact peer IDs
+// seen at review time; it never gives a new unseen peer automatic permission.
+function durableReviewedNewItemPeers88(value,lease,rows){
+ if(!Array.isArray(rows)||duplicateUnit70InCloset(value,rows))return false;
+ if(!Array.isArray(lease?.exactPhotoPeers88))return true; // P70 mask identity above
+ const expected=lease.exactPhotoPeers88;
+ const actual=rows.filter(x=>x&&x.id!==value.id&&x.image===value.image);
+ return actual.length===expected.length&&actual.every(peer=>
+  expected.some(old=>old.id===peer.id&&old.image===peer.image));
+}
 // P88: ordinary one-photo review must not save into a replacement account
 // while cloud.beforeWrite waits. Freeze source bytes, draft identity and IDB.
 function savePiece(value,nextBatch,lease){
@@ -136,10 +149,22 @@ function savePiece(value,nextBatch,lease){
        JSON.stringify(batch)!==liveBatchRevision||
        !reviewedDistinctPhotoReceiptValid88(value,lease))
        throw Error('P88_DRAFT_STORAGE_CHANGED');
-      // This remains CREATE-only; an existing item ID collision aborts both
-      // stores, including removal of the unsaved original.
-      itemStore.add(value);
-      stateStore.put({id:'draft',batch:structuredClone(liveRemaining)});
+      // Another tab may have inserted an identical JPEG while the owner
+      // reviewed this draft. getAll and add run under the SAME IDB write lock.
+      const savedRead=itemStore.getAll();
+      savedRead.onsuccess=()=>{
+       try{
+        if(!reviewedSaveLeaseLive88(lease)||
+         draftStoreRevision88!==expected||
+         JSON.stringify(batch)!==liveBatchRevision||
+         !reviewedDistinctPhotoReceiptValid88(value,lease)||
+         !durableReviewedNewItemPeers88(value,lease,savedRead.result))
+         throw Error('P88_DURABLE_REVIEWED_DUPLICATE_CHANGED');
+        itemStore.add(value); // CREATE only; no colliding saved ID overwrite
+        stateStore.put({id:'draft',batch:structuredClone(liveRemaining)});
+       }catch(e){reason=e;try{tx.abort();}catch{reject(reason);}}
+      };
+      savedRead.onerror=()=>{reason=savedRead.error||Error('P88_DURABLE_PEER_READ_FAIL');try{tx.abort();}catch{reject(reason);}};
      }catch(e){reason=e;try{tx.abort();}catch{reject(reason);}}
     };
     read.onerror=()=>{reason=read.error||Error('P88_DRAFT_STORAGE_READ_FAIL');};
@@ -779,8 +804,22 @@ function saveSourceBoundPiece88(value,nextBatch,lease){
        JSON.stringify(batch)!==liveBatchRevision||
        duplicateUnit70InCloset(value,items))
        throw Error('P88_SOURCE_DRAFT_STORAGE_CHANGED');
-      itemStore.add(value); // insert-only; transaction aborts on item-ID collision
-      stateStore.put({id:'draft',batch:structuredClone(liveRemaining)});
+      // P70 reconciliation also checks the persisted physical masks, not
+      // just this tab's possibly stale in-memory saved items.
+      const savedRead=itemStore.getAll();
+      savedRead.onsuccess=()=>{
+       try{
+        if(!sourceSaveLeaseLive88(lease)||
+         draftStoreRevision88!==expected||
+         JSON.stringify(batch)!==liveBatchRevision||
+         duplicateUnit70InCloset(value,items)||
+         !durableReviewedNewItemPeers88(value,lease,savedRead.result))
+         throw Error('P88_DURABLE_PHYSICAL_UNIT_ALREADY_SAVED');
+        itemStore.add(value); // insert-only, same write transaction
+        stateStore.put({id:'draft',batch:structuredClone(liveRemaining)});
+       }catch(e){reason=e;try{tx.abort();}catch{reject(reason);}}
+      };
+      savedRead.onerror=()=>{reason=savedRead.error||Error('P88_DURABLE_UNIT_READ_FAIL');try{tx.abort();}catch{reject(reason);}};
      }catch(e){reason=e;try{tx.abort();}catch{reject(reason);}}
     };
     read.onerror=()=>{reason=read.error||Error('P88_SOURCE_DRAFT_READ_FAIL');};
