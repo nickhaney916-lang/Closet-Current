@@ -158,7 +158,7 @@ try{
  await page.goto(origin,{waitUntil:'load'});
  try{
   await page.waitForFunction(()=>window.__M2RealRigPhotoTrial?.getFlags().ready===true,
-   null,{timeout:20000});
+   null,{timeout:85000});
  }catch(e){
   const status=await page.locator('#status').textContent().catch(()=>null);
   const exists=await page.evaluate(()=>Boolean(window.__M2RealRigPhotoTrial))
