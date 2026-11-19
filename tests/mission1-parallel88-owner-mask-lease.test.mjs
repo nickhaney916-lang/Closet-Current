@@ -1572,12 +1572,31 @@ function privateDraftBackupHarness88(){
  assert.ok(start>=0&&end>start,'native signed-owner persistDraft found');
  const writes=[],alerts=[],user={id:'owner-A'},state={
   window:{closetAuth:{user}},db:null,batch:[],structuredClone,
-  message:msg=>alerts.push(msg)
+  draftStoreRevision88:'null',message:msg=>alerts.push(msg)
  };
+ let stored=null;
  const idb={name:'closet-current-user-owner-A',transaction(store,mode){
   assert.equal(store,'state');assert.equal(mode,'readwrite');
-  const tx={objectStore(name){assert.equal(name,'state');return {put(v){writes.push(structuredClone(v));}}}};
-  queueMicrotask(()=>tx.oncomplete?.());return tx;
+  let aborted=false;
+  const tx={objectStore(name){
+   assert.equal(name,'state');
+   return {
+    get(id){
+     assert.equal(id,'draft');
+     const req={result:stored?structuredClone(stored):undefined};
+     queueMicrotask(()=>{
+      req.onsuccess?.();
+      if(!aborted)queueMicrotask(()=>tx.oncomplete?.());
+     });
+     return req;
+    },
+    put(v){writes.push(structuredClone(v));stored=structuredClone(v);}
+   };
+  },abort(){
+   aborted=true;
+   queueMicrotask(()=>tx.onabort?.());
+  }};
+  return tx;
  }};
  state.db=idb;
  let waiting=null;
@@ -1592,7 +1611,9 @@ function privateDraftBackupHarness88(){
   waiting=new Promise(resolve=>{release=resolve;entered();});
   return {started,release:()=>{waiting=null;release();}};
  };
- return {state,user,idb,writes,alerts,pause};
+ return {state,user,idb,writes,alerts,pause,
+  getStored:()=>structuredClone(stored),
+  changeStored:change=>{stored=change?structuredClone(change):null;}};
 }
 test('P88 queued private backup must not persist prior-owner photo to account B',async()=>{
  const h=privateDraftBackupHarness88();
@@ -1641,6 +1662,41 @@ test('P88 queued private backup honors an owner-approved removal while queued',a
  assert.equal(h.writes.length,1);
  assert.equal(h.writes[0].batch.length,0,'removed photo cannot return after slow queued backup');
 });
+test('P88 other tab adding an unfinished original cannot be overwritten by stale draft backup',async()=>{
+ const h=privateDraftBackupHarness88();
+ const mine={id:'photo-A',image:'data:image/jpeg;base64,QUFB'};
+ const theirs={id:'photo-B',image:'data:image/jpeg;base64,QkJC'};
+ h.state.batch=[mine];
+ const first=await h.state.persistDraft();
+ assert.equal(first,undefined);
+ const original=structuredClone(h.getStored());
+ // Another browser tab appends a private original after this tab read its old revision.
+ h.changeStored({id:'draft',batch:[mine,theirs]});
+ h.state.batch=[{...mine,color:'Blue'}];
+ await h.state.persistDraft();
+ assert.deepEqual(h.getStored().batch,[mine,theirs],
+  'current tab cannot silently destroy the other tab original photo');
+ assert.equal(h.writes.length,1,'no second state.put after storage revision mismatch');
+ assert.ok(h.alerts.some(s=>s.includes('could not be backed up')),
+  'owner should be warned the current draft backup was blocked');
+ assert.notDeepEqual(h.getStored(),original);
+});
+test('P88 other tab correcting or removing a photo blocks stale draft backup',async()=>{
+ for(const changed of [
+  [{id:'same-id',image:'data:image/jpeg;base64,TkVX'}],
+  []
+ ]){
+  const h=privateDraftBackupHarness88();
+  const original={id:'same-id',image:'data:image/jpeg;base64,T0xE'};
+  h.state.batch=[original];await h.state.persistDraft();
+  h.changeStored({id:'draft',batch:changed});
+  h.state.batch=[{...original,color:'Red'}];
+  await h.state.persistDraft();
+  assert.deepEqual(h.getStored().batch,changed);
+  assert.equal(h.writes.length,1);
+ }
+});
+
 // Execute the actual native camera candidate source. The test simulates
 // already-saved ORIGINAL JPEG bytes, not any model acceptance/accuracy metric.
 function exactSavedPhotoCaptureHarness88({reviewFirst=true}={}){
@@ -3141,6 +3197,7 @@ test('P88 ordinary reviewed draft ID collision preserves existing closet row and
  const owner={id:'owner-A'},savedRows=new Map([[saved.id,structuredClone(saved)]]);
  let savedDraft={id:'draft',batch:[structuredClone(source)]};
  const operations=[];
+ const draftStoreRevision88=JSON.stringify(savedDraft.batch);
  const db={name:'closet-current-user-owner-A',transaction(stores,mode){
   assert.deepEqual(Array.from(stores),['items','state']);
   assert.equal(mode,'readwrite');
@@ -3151,16 +3208,20 @@ test('P88 ordinary reviewed draft ID collision preserves existing closet row and
      savedRows.set(value.id,structuredClone(value));},
     put(value){operations.push('items.put');savedRows.set(value.id,structuredClone(value));}
    };
-   if(name==='state')return {put(value){
-    operations.push('state.put');savedDraft=structuredClone(value);
-   }};
+   if(name==='state')return {
+    get(key){assert.equal(key,'draft');
+     const req={result:structuredClone(savedDraft)};
+     queueMicrotask(()=>req.onsuccess?.());
+     return req;},
+    put(value){operations.push('state.put');savedDraft=structuredClone(value);}
+   };
    throw Error('Unexpected store');
   }};
-  queueMicrotask(()=>tx.oncomplete?.());
+  queueMicrotask(()=>queueMicrotask(()=>tx.oncomplete?.()));
   return tx;
  }};
  const c={window:{closetAuth:{user:owner}},db,items:[saved],batch:[source],
-  structuredClone,queued:async fn=>fn()};
+  structuredClone,draftStoreRevision88,queued:async fn=>fn()};
  vm.createContext(c);vm.runInContext(native,c);
  const lease=c.reviewedSaveLease88(source);
  await assert.rejects(c.savePiece({...source},[],lease),/ConstraintError/);
@@ -3168,6 +3229,42 @@ test('P88 ordinary reviewed draft ID collision preserves existing closet row and
  assert.deepEqual(savedRows.get(saved.id),previous,'existing owner garment remains intact');
  assert.deepEqual(savedDraft.batch,[draftBefore],'unsaved reviewed source remains recoverable');
 });
+test('P88 reviewed original cannot erase another tab new private draft during save',async()=>{
+ const start=appSource.indexOf('function savePiece('),stop=appSource.indexOf('function node(',start);
+ const begin=appSource.indexOf('function reviewedExactPhotoPeers88(');
+ const end=appSource.indexOf('function empty(',begin);
+ const old={id:'reviewed-A',image:'data:image/jpeg;base64,QUFB',
+  category:'Tops',itemType:'T-shirt',color:'Blue'};
+ const other={id:'second-owner-photo',image:'data:image/jpeg;base64,QkJC'};
+ const user={id:'owner-A'},writes=[],savedRows=new Map();
+ let remote={id:'draft',batch:[old]};
+ const db={name:'closet-current-user-owner-A',transaction(stores){
+  assert.deepEqual(Array.from(stores),['items','state']);
+  let aborted=false;
+  const tx={objectStore(name){
+   if(name==='items')return {add(v){writes.push(v);savedRows.set(v.id,v);}};
+   if(name==='state')return {
+    get(key){assert.equal(key,'draft');
+     const req={result:structuredClone(remote)};
+     queueMicrotask(()=>{req.onsuccess?.();if(!aborted)queueMicrotask(()=>tx.oncomplete?.());});
+     return req;},
+    put(v){remote=structuredClone(v);}
+   };
+  },abort(){aborted=true;queueMicrotask(()=>tx.onabort?.());}};
+  return tx;
+ }};
+ const c={window:{closetAuth:{user}},db,items:[],batch:[old],
+  draftStoreRevision88:JSON.stringify(remote.batch),
+  structuredClone,queued:async fn=>fn()};
+ vm.createContext(c);vm.runInContext(appSource.slice(start,stop)+appSource.slice(begin,end),c);
+ const lease=c.reviewedSaveLease88(old);
+ remote={id:'draft',batch:[old,other]}; // different tab captured a new photo
+ await assert.rejects(c.savePiece({...old},[],lease),
+  /P88_DRAFT_STORAGE_CHANGED/);
+ assert.equal(writes.length,0,'original not admitted after unsaved list divergence');
+ assert.deepEqual(remote.batch,[old,other],'new second-tab photo stays recoverable');
+});
+
 test('P88 ordinary fresh-ID reviewed save inserts rather than overwrites a closet row',async()=>{
  const start=appSource.indexOf('function savePiece('),stop=appSource.indexOf('function node(',start);
  const helpers=appSource.indexOf('function reviewedExactPhotoPeers88(');
@@ -3175,15 +3272,19 @@ test('P88 ordinary fresh-ID reviewed save inserts rather than overwrites a close
  const source={id:'new-id',image:'data:image/jpeg;base64,TkVX',
   category:'Tops',itemType:'T-shirt',color:'Blue'};
  const owner={id:'owner-A'},operations=[];
+ let savedDraft={id:'draft',batch:[structuredClone(source)]};
  const db={name:'closet-current-user-owner-A',transaction(){
   const tx={oncomplete:null,onabort:null,onerror:null,objectStore(name){
    return {add(value){operations.push(name+'.add:'+value.id);},
-    put(value){operations.push(name+'.put:'+value.id);}};
+    get(id){assert.equal(id,'draft');const req={result:structuredClone(savedDraft)};
+     queueMicrotask(()=>req.onsuccess?.());return req;},
+    put(value){operations.push(name+'.put:'+value.id);
+     if(name==='state')savedDraft=structuredClone(value);}};
   }};
-  queueMicrotask(()=>tx.oncomplete?.());return tx;
+  queueMicrotask(()=>queueMicrotask(()=>tx.oncomplete?.()));return tx;
  }};
  const c={window:{closetAuth:{user:owner}},db,items:[],batch:[source],
-  structuredClone,queued:async fn=>fn()};
+  structuredClone,draftStoreRevision88:JSON.stringify(savedDraft.batch),queued:async fn=>fn()};
  vm.createContext(c);vm.runInContext(appSource.slice(start,stop)+appSource.slice(helpers,end),c);
  await c.savePiece({...source},[],c.reviewedSaveLease88(source));
  assert.deepEqual(operations,['items.add:new-id','state.put:draft'],
