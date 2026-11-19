@@ -122,3 +122,15 @@ test('safe handling of strict malformed delta and declared counts',()=>{
  assert.throws(()=>evaluate({...config(),frontPoses:[]}),
   /original-all-face-angular-sweep-unsafe-input/);
 });
+
+test('angular padding is added ONCE per true vertex, not repeatedly per three face corners',()=>{
+ // A fixed pair 0.00025 rig units apart is outside the symmetric 0.0001
+ // per-vertex numerical margins. A historic face-loop implementation
+ // erroneously added the same margin three times, inventing BVH overlaps.
+ const x=evaluate(config(stationary(.00025),stationary(0)));
+ assert.equal(x.decision,'RESEARCH_ONLY_FULL_INDEXED_ANGULAR_ENVELOPES_DISJOINT');
+ assert.equal(x.overlappingOriginalAngularEnvelopes,0);
+ assert.equal(x.maxConservativeEnvelopeInflationRigUnits,.0001);
+ assert.equal(x.fullAllOriginalFrontAndBodyAngularBroadphaseCompleted,true);
+ assert.equal(x.consumer3DAdmitted,false);
+});
