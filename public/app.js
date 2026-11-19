@@ -17,6 +17,9 @@ const recognitionState={phase:'idle',percent:null,activeId:null};
 let writes=Promise.resolve();
 function queued(work){const result=writes.then(async()=>{await window.closetCloud?.beforeWrite(db);return work();});writes=result.catch(()=>{});result.then(()=>window.closetCloud?.changed()).catch(()=>{});return result;}
 let db,items=[],batch=[],stream,timer,busy=false,lastPixels=null,lastSaved=null,stable=0,lastCapture=0,session=0,audio,cadence;
+// Latest durable private draft-list revision for this signed DB session.
+// undefined until the initial IDB load; null (JSON string) means no saved row.
+let draftStoreRevision88;
 let cameraMode=null,cameraOpening=false,cameraRequest=0,cameraOwnerLease88=null;
 // P845 brings in #73 ephemeral pixel advice, source-bound and opt-in only.
 // This must never become persisted clothing or authorize automatic admission.
@@ -49,16 +52,48 @@ function persistDraft(){
   db===ownerDb&&ownerDb.name==='closet-current-user-'+ownerId;
  return queued(()=>{
   if(!live())throw Error('P88_REVOKED_DRAFT_BACKUP');
-  const snapshot=structuredClone(batch);
+  const snapshot=structuredClone(batch),expected=draftStoreRevision88;
   if(!live())throw Error('P88_REVOKED_DRAFT_BACKUP');
+  if(typeof expected!=='string')throw Error('P88_DRAFT_STORAGE_NOT_LOADED');
   return new Promise((resolve,reject)=>{
-   const tx=ownerDb.transaction('state','readwrite');
-   tx.objectStore('state').put({id:'draft',batch:snapshot});
-   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+   let tx,reason=null;
+   try{
+    tx=ownerDb.transaction('state','readwrite');
+    const store=tx.objectStore('state');
+    const read=store.get('draft');
+    read.onsuccess=()=>{
+     try{
+      if(!live()||draftStoreRevision88!==expected||
+       JSON.stringify(read.result?.batch??null)!==expected||
+       JSON.stringify(batch)!==JSON.stringify(snapshot))
+       throw Error('P88_DRAFT_STORAGE_CHANGED');
+      store.put({id:'draft',batch:snapshot});
+     }catch(e){reason=e;try{tx.abort();}catch{reject(reason);}}
+    };
+    read.onerror=()=>{reason=read.error||Error('P88_DRAFT_STORAGE_READ_FAIL');};
+    tx.oncomplete=()=>{
+     if(!live())return reject(Error('P88_REVOKED_DRAFT_BACKUP'));
+     draftStoreRevision88=JSON.stringify(snapshot);resolve();
+    };
+    tx.onabort=()=>reject(reason||tx.error||Error('P88_DRAFT_STORAGE_CHANGED'));
+    tx.onerror=()=>{}; // transaction abort reports the original storage failure
+   }catch(e){reject(e);}
   });
  }).catch(()=>{if(live())message('Your unfinished scan could not be backed up. Keep this page open and save or export your pieces.');});
 }
-function readDraft(){return new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
+function readDraft(){
+ const signedOwner=window.closetAuth?.user,ownerDb=db;
+ return new Promise((resolve,reject)=>{
+  const r=ownerDb.transaction('state').objectStore('state').get('draft');
+  r.onsuccess=()=>{
+   // Never let an old owner's delayed read replace a newer account's revision.
+   if(window.closetAuth?.user===signedOwner&&db===ownerDb)
+    draftStoreRevision88=JSON.stringify(r.result?.batch??null);
+   resolve(r.result?.batch||[]);
+  };
+  r.onerror=()=>reject(r.error);
+ });
+}
 // P88: ordinary one-photo review must not save into a replacement account
 // while cloud.beforeWrite waits. Freeze source bytes, draft identity and IDB.
 function savePiece(value,nextBatch,lease){
@@ -81,16 +116,40 @@ function savePiece(value,nextBatch,lease){
    ordinarySourceEvidence88(value)!==lease.evidenceRevision||
    !reviewedDistinctPhotoReceiptValid88(value,lease))
    throw Error('P88_REVOKED_REVIEWED_SAVE');
-  // Compute the surviving drafts after cloud preflight. An older save must
-  // never drop an unrelated garment captured while that await was pending.
+  // Compare the other tab's durable original-photo draft list inside the
+  // SAME atomic items+state transaction as wardrobe admission. Never erase a
+  // newly captured, cropped or corrected private photo from another tab.
   const liveRemaining=lease.wasDraft?batch.filter(x=>x!==lease.item):batch;
+  const liveBatchRevision=JSON.stringify(batch),expected=draftStoreRevision88;
+  if(typeof expected!=='string')throw Error('P88_DRAFT_STORAGE_NOT_LOADED');
   return new Promise((resolve,reject)=>{
-   const tx=lease.ownerDb.transaction(['items','state'],'readwrite');
-   // IndexedDB add() refuses a colliding item key and aborts BOTH stores.
-   // put() would silently overwrite an existing physical closet garment.
-   tx.objectStore('items').add(value);
-   tx.objectStore('state').put({id:'draft',batch:structuredClone(liveRemaining)});
-   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+   let tx,reason=null;
+   try{
+    tx=lease.ownerDb.transaction(['items','state'],'readwrite');
+    const itemStore=tx.objectStore('items'),stateStore=tx.objectStore('state');
+    const read=stateStore.get('draft');
+    read.onsuccess=()=>{
+     try{
+      if(!reviewedSaveLeaseLive88(lease)||
+       draftStoreRevision88!==expected||
+       JSON.stringify(read.result?.batch??null)!==expected||
+       JSON.stringify(batch)!==liveBatchRevision||
+       !reviewedDistinctPhotoReceiptValid88(value,lease))
+       throw Error('P88_DRAFT_STORAGE_CHANGED');
+      // This remains CREATE-only; an existing item ID collision aborts both
+      // stores, including removal of the unsaved original.
+      itemStore.add(value);
+      stateStore.put({id:'draft',batch:structuredClone(liveRemaining)});
+     }catch(e){reason=e;try{tx.abort();}catch{reject(reason);}}
+    };
+    read.onerror=()=>{reason=read.error||Error('P88_DRAFT_STORAGE_READ_FAIL');};
+    tx.oncomplete=()=>{
+     if(!reviewedSaveLeaseLive88(lease))return reject(Error('P88_REVOKED_REVIEWED_SAVE'));
+     draftStoreRevision88=JSON.stringify(liveRemaining);resolve();
+    };
+    tx.onabort=()=>reject(reason||tx.error||Error('P88_DRAFT_STORAGE_CHANGED'));
+    tx.onerror=()=>{}; // failed item add automatically aborts both stores
+   }catch(e){reject(e);}
   });
  });
 }
