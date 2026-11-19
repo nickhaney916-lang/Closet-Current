@@ -9,6 +9,8 @@ import {evaluateAllIndexedOriginalSpine04AngularBroadphase}
  from './all-indexed-original-angular-bvh89.mjs';
 import {cameraAxisOriginalPhotoBodyWitness}
  from './donor-original-camera-axis-body-contact89.mjs';
+import {checkOriginalIndexedContactBeforeSweptBVH}
+ from './contact-first-original-indexed-swept-veto89.mjs';
 
 window.__M2RealRigPhotoTrial.verifyAllOriginalIndexedSpine04SweptBVH=()=>{
  const x=sourceSkinResearch;
@@ -153,6 +155,30 @@ window.__M2RealRigPhotoTrial.verifyAllOriginalIndexedSpine04SweptBVH=()=>{
    .trueOriginalDepthContactWitness.chosenExactDepthTranslationRigUnits;
   invariant(Number.isFinite(originalDepth)&&originalDepth>=0&&
    originalDepth<=3,'measured-rig-coordinate-depth-invalid');
+  const trueOriginalContactFirst=checkOriginalIndexedContactBeforeSweptBVH({
+   frontPoses,bodyPoses,frontIndices:frontIndex,bodyIndices,
+   expectedFrontFaces:35262,expectedBodyFaces:109064,
+   originalFrontFace:cameraAxisPositive.originalSelectedPhotoFace,
+   originalBodyFace:cameraAxisPositive.originalSelectedBodyFace,
+   rigDepthShift:originalDepth,witnessPoseIndex:2,
+   sourceWitness:{
+    originalJPEG_SHA256:payload.originalJPEGByteSHA256,
+    originalLicensedRigSHA256:model.sha256,actualRigBoneCount:163,
+    correctedPositionAttributeWorldSkinning:true,
+    oneNamedJointOnly:'spine04',
+    otherBoneLocalPosesFrozen:allOtherLocalPosesFrozen()
+   }
+  });
+  invariant(trueOriginalContactFirst.decision===
+   'BLOCKED_TRUE_ORIGINAL_INDEXED_CONTACT_BEFORE_BVH'&&
+   trueOriginalContactFirst.actualVerifiedOriginalIndexedFaceContact===true&&
+   trueOriginalContactFirst.soundEarlyExitRequiresNoAdditionalPairs===true&&
+   trueOriginalContactFirst.fullOriginalAngularBroadphaseCompleted===false&&
+   trueOriginalContactFirst.consumer3DAdmitted===false,
+   'true-authentic-original-contact-witness-not-sufficient-for-sound-veto');
+  // This is the canonical safety verdict. The full BVH run BELOW is only
+  // research diagnostics, because a positive original/source/body contact
+  // already vetoes wearability without ever needing every other pair.
   const depthShiftedOriginalFrontPoses=frontPoses.map(values=>{
    const moved=new Float64Array(values);
    for(let i=2;i<moved.length;i+=3)moved[i]-=originalDepth;
@@ -203,6 +229,9 @@ window.__M2RealRigPhotoTrial.verifyAllOriginalIndexedSpine04SweptBVH=()=>{
    sourcePhotoRGBUVGeometrySkinsStillImmutable:true,
    actualFiveGenuineSpine04AnglesDegrees:originalSpineAngles,
    wholeOriginalFrontAndBodyPosedVertexBuffersIncluded:true,
+   soundContactFirstOriginalIndexedVeto:true,
+   canonicalTrueOriginalContactSafetyDecision:trueOriginalContactFirst.decision,
+   contactFirstOriginalFaceVeto:trueOriginalContactFirst,
    followupEntireAngularBVH:contactAtRealPose,
    originalPhotographCameraFocalLengthPixels:null,
    actualGarmentBodyReferenceScaleMmPerPixel:null,
