@@ -38,6 +38,17 @@ const checkedSource=source.replace(
   saveInFlight=false;`
 );
 if(checkedSource===source)throw Error('P846 native save error handler changed');
+// Diagnostic only: extract all fields from the real transactional guard. Keep
+// its refusal intact rather than weakening the app to satisfy a mock fixture.
+const instrumentedSource=checkedSource.replace(
+ "throw Error('P88_SOURCE_DRAFT_STORAGE_CHANGED');",
+ `window.p846DraftCAS={live:sourceSaveLeaseLive88(lease),
+  known:draftStoreRevision88,expected,
+  persisted:JSON.stringify(read.result?.batch??null),
+  liveBatch:JSON.stringify(batch),captured:liveBatchRevision,
+  duplicate:duplicateUnit70InCloset(value,items)};
+  throw Error('P88_SOURCE_DRAFT_STORAGE_CHANGED');`
+);
 const harness=[
  "const categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];",
  "let items=[],batch=[],stream=null,cameraOpening=false,busy=false,localReady=true,session=0;",
@@ -118,7 +129,7 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto(origin+'/');
    assert.equal(await page.evaluate(()=>isSecureContext&&!!crypto.subtle),true,'real browser SHA-256 must be available');
-   for(const s of [taxonomy,details,harness,checkedSource])await page.addScriptTag({content:s});
+   for(const s of [taxonomy,details,harness,instrumentedSource])await page.addScriptTag({content:s});
    const approve=async()=>page.getByRole('checkbox',{name:/I checked the clothing photo/}).check();
    const submit=async(times=1)=>page.locator('dialog[open] form').evaluate((form,n)=>{
     for(let i=0;i<n;i++)form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
@@ -142,7 +153,7 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    // merely for synchronous form dispatch to return.
    await page.waitForFunction(()=>window.writeCount===1||!!window.p846LastSaveError,{timeout:10000});
    const sourceSaveDebug=await page.evaluate(()=>({writeCount:window.writeCount,
-    failure:window.p846LastSaveError||null,ownerMessage:window.messageText||null}));
+    failure:window.p846LastSaveError||null,ownerMessage:window.messageText||null,cas:window.p846DraftCAS||null}));
    assert.equal(sourceSaveDebug.failure,null,
     'P846 real source owner review failed: '+JSON.stringify(sourceSaveDebug));
    assert.equal(await page.evaluate(()=>window.writeCount),1);
