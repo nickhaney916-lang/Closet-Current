@@ -90,7 +90,8 @@ function displayPhoto(text){
 }
 function prevent3D(reason){
  errorCode=reason;verified=false;shellButton.disabled=true;
- displayPhoto('Original photograph 2D only — '+reason+'.');
+ displayPhoto(sourceObjectUrl?'Original photograph 2D only — '+reason+'.':
+  'Original photograph unavailable — '+reason+'.');
 }
 function buildGL(){
  const ctx=canvas.getContext('webgl2',{alpha:true,antialias:false,
@@ -206,9 +207,44 @@ const readiness=async()=>{
   // Original JPEG is the authoritative 2D fallback. Fetch and verify it
   // independently: a rejected/aborted research 3D manifest request must
   // never prevent a good source photograph from being displayed.
-  const imageResponse=await fetch('/original-source.jpg',{cache:'no-store'});
-  if(!imageResponse.ok)throw Error('original-source-JPEG-missing');
-  const originalBytes=await imageResponse.arrayBuffer();
+  // The original source is essential; unlike optional 3D it must never be
+  // displayed as verified if an unbounded or stalled response was received.
+  const jpegAbort=new AbortController();
+  let jpegTimedOut=false;
+  const jpegDeadline=setTimeout(()=>{jpegTimedOut=true;jpegAbort.abort();},4000);
+  let originalBytes;
+  try{
+   const imageResponse=await fetch('/original-source.jpg',{
+    cache:'no-store',signal:jpegAbort.signal
+   });
+   if(!imageResponse.ok)throw Error('original-source-JPEG-missing');
+   const maxJpegBytes=8*1024*1024;
+   const claimed=imageResponse.headers.get('content-length');
+   if(claimed!==null&&(!/^\d+$/.test(claimed)||Number(claimed)>maxJpegBytes))
+    throw Error('original-source-JPEG-too-large');
+   if(!imageResponse.body)throw Error('original-source-JPEG-stream-unavailable');
+   const reader=imageResponse.body.getReader();
+   const chunks=[];let total=0;
+   try{
+    while(true){
+     const {done,value}=await reader.read();
+     if(done)break;
+     total+=value.byteLength;
+     if(total>maxJpegBytes)throw Error('original-source-JPEG-too-large');
+     chunks.push(value);
+    }
+   }finally{
+    if(total>maxJpegBytes)jpegAbort.abort();
+    reader.releaseLock();
+   }
+   originalBytes=new Uint8Array(total);let offset=0;
+   for(const chunk of chunks){originalBytes.set(chunk,offset);offset+=chunk.byteLength;}
+  }catch(e){
+   if(jpegTimedOut)throw Error('original-source-JPEG-timeout');
+   throw e;
+  }finally{
+   clearTimeout(jpegDeadline);
+  }
   const jpgHash=await b64Digest(originalBytes);
   if(!ALLOWED_SOURCE_JPEG_SHA.has(jpgHash))
    throw Error('original-source-JPEG-byte-identity-invalid');
