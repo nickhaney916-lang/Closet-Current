@@ -1,0 +1,32 @@
+name: MAIN251 exact original JSEP native option ABI transport HOLD
+on:
+  push:
+    branches: [research/main251-original-jsep-native-option-transport-HOLD]
+permissions:
+  contents: read
+jobs:
+  pinned-original-jsep-glue-preflight:
+    name: M251 exact original public JSEP native ABI source preflight (research)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original protected source immutable
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=f85aa3eda38c5be2eb3762c296504f9f45e3c11a
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          node --check scripts/main251-original-jsep-abi-probe.mjs
+      - name: Install exact original Transformers and ORT npm runtime
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Discover actual original JSEP native ABI hooks in pinned PUBLIC glue
+        run: node scripts/main251-original-jsep-abi-probe.mjs
