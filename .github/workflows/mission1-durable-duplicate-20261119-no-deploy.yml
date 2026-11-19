@@ -69,3 +69,6 @@ jobs:
           grep -Fq '"uniqueCommitted":true' /tmp/m1-native-idb
           grep -Fq 'M1_P88_BROWSER_SHARED_ORIGINAL_DIFFERENT_CROP' /tmp/m1-native-idb
           grep -Fq '"changedPeerBlocked":true' /tmp/m1-native-idb
+          grep -Fq 'M1_P88_BROWSER_STALE_OWNER_REVIEW_RECOVERY' /tmp/m1-native-idb
+          grep -Fq '"staleButtonDisabled":true' /tmp/m1-native-idb
+          grep -Fq '"scriptedRetryBlocked":true' /tmp/m1-native-idb
