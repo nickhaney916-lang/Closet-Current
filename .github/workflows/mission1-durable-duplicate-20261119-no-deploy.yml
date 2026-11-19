@@ -1,0 +1,45 @@
+name: "Mission 1 durable duplicate owner-review gate — NO DEPLOY"
+'on':
+  push:
+    branches:
+      - research/mission1-durable-duplicate-20261119-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  source-and-guard-regression-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin immutable Mission 1 parent and bound changed files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor e182b72c6ee457836251cd7aa927181f3b11c757 HEAD
+          git diff --name-only e182b72c6ee457836251cd7aa927181f3b11c757 HEAD > /tmp/m1-paths
+          while IFS= read -r file; do
+            case "$file" in
+              public/app.js|tests/mission1-durable-duplicate-20261119.test.mjs|.github/workflows/mission1-durable-duplicate-20261119-no-deploy.yml) ;;
+              *) echo "M1_UNAUTHORIZED_FILE $file"; exit 1 ;;
+            esac
+          done < /tmp/m1-paths
+          grep -Fq 'durableReviewedNewItemPeers88' public/app.js
+          node --check public/app.js
+          node --check tests/mission1-durable-duplicate-20261119.test.mjs
+      - name: Execute true native reviewed-save code with synthetic second-tab IDB
+        run: |
+          set -euo pipefail
+          node --test tests/mission1-durable-duplicate-20261119.test.mjs | tee /tmp/m1-source
+          grep -Eq '^# fail 0$' /tmp/m1-source
+      - name: Preserve inherited owner/photo/pair and source lease regressions
+        run: |
+          set -euo pipefail
+          node --test tests/mission1-parallel88-owner-mask-lease.test.mjs tests/mission1-parallel88-instance-conservation.test.mjs tests/outfit-unit-reconciliation-70.test.mjs | tee /tmp/m1-inherited
+          grep -Eq '^# fail 0$' /tmp/m1-inherited
