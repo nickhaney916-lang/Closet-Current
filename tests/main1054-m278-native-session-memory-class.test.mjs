@@ -30,7 +30,7 @@ for(const [name,where,mutate,regex] of [
  ['reject changed original tracing module',(c,x)=>c==='rev-parse'&&x===head+':research/main1054/original-ort-native-trace.mjs',()=> '0'.repeat(40),/original/],
  ['reject swapped P94 owner runner',(c,x)=>c==='rev-parse'&&x===head+':scripts/test-parallel94-native-p88-browser.mjs',()=> '0'.repeat(40),/original/],
  ['reject missing source',(c)=>c==='diff-tree',()=>'',/unexpected/],
- ['reject symlinked workflow',(c)=>c==='ls-tree',()=> '120000 blob x',/file mode/],
+ ['reject symlinked workflow',(c)=>c==='ls-tree',()=> '120000 blob x',/unsafe new path mode/],
  ['reject wrong ancestor',(c)=>c==='merge-base',()=> 'not ancestor',/ancestry/],
 ])test(name,()=>assert.throws(()=>sourceGate(wrap(where,mutate),event),regex));
 test('categorize native WASM bounds distinctly from allocation/abort without revealing message',()=>{
