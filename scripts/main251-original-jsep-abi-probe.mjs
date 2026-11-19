@@ -87,7 +87,7 @@ export function verifyM251OriginalNativeOptionReceipt(record,{engine,arm}){
  assert.equal(record.actualExportCalled,true);
  assert.equal(record.argCount,10);
  assert.equal(record.handleReturned,true);
- assert.equal(record.cpuArena,true,'Original default native CPU arena changed');
+ assert.equal(record.cpuArena,false,'Observed original P94 JSEP native CPU arena changed');
  assert.equal(record.memPattern,arm==='baseline',
   'Original JSEP native ABI memPattern argument differs from requested arm');
  return {
