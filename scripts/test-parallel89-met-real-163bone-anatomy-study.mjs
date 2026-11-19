@@ -238,6 +238,11 @@ try{
   assert.equal(accept.sourceOriginalFullDecodedRGBSHA256,shell.originalDecodedRGBSHA256);
   assert.equal(accept.sourceFrontRGBTextureSHA256,shell.sourceMaskedOriginalRGBTexSHA256);
   assert.equal(accept.provisionalBindWeights,true);
+  assert.equal(accept.provisionalActualBodyBoneAnchorWeights,true);
+  assert.equal(accept.weightRule,
+   'actual-rest-spine03-spine04-segment-smooth-projection');
+  assert.ok(accept.genuineSpineSegmentLengthRigUnits>.001,
+   'authentic original spine joint separation must be measured');
   assert.equal(accept.noClothDrapeOrContactSafetyClaim,true);
   assert.equal(accept.consumer3DAdmitted,false);
   assert.equal(accept.familyAlpha,'HOLD');
@@ -247,6 +252,27 @@ try{
   assert.equal(rest.trueSkeletonBoneCount,163);
   assert.ok(rest.threeOriginalPhotoVertexDisplacements.every(x=>x<=.00001),
    'original bound source 3D not stable in true source rest');
+  const checkGap=pose=>{
+   const gap=pose.originalRigBodySurfaceGapResearchOnly;
+   assert.equal(gap.measuredUnsignedSampledTriangleSurfaceProximity,true);
+   assert.equal(gap.actualPoseDeformedSourceFrontVerticesSampled,24);
+   assert.ok(gap.actualPoseDeformedBodySurfaceTrianglesSampled>=128);
+   assert.ok(gap.actualPoseDeformedBodySurfaceTrianglesSampled<=1536);
+   assert.ok(Number.isFinite(gap.minimumUnsignedSampledBodyClothGapRigUnits));
+   assert.ok(Number.isFinite(gap.medianUnsignedSampledBodyClothGapRigUnits));
+   assert.ok(gap.minimumUnsignedSampledBodyClothGapRigUnits>=0);
+   assert.ok(gap.medianUnsignedSampledBodyClothGapRigUnits>=
+    gap.minimumUnsignedSampledBodyClothGapRigUnits);
+   assert.ok(gap.nearSurfaceSampleCountAt005RigUnits>=0);
+   assert.ok(gap.nearSurfaceSampleCountAt005RigUnits<=24);
+   assert.equal(gap.fullIndexedTriangleCoverage,false);
+   assert.equal(gap.signedInteriorOrTriangleIntersectionEstablished,false);
+   assert.equal(gap.physicalCollisionOrSweptClearanceEstablished,false);
+   assert.equal(pose.actualMeasuredBodyClothIntersection,false);
+   assert.equal(pose.physicalContactOrDrapeCleared,false);
+   return gap;
+  };
+  const restGap=checkGap(rest);
   const shot1=await page.locator('#scene').screenshot();
   assert.ok(shot1.length>9000);
   await writeFile(resultDir+browserName+'-'+kind+
@@ -263,6 +289,7 @@ try{
   assert.equal(posed.originalSourcePositionAndUVStillImmutable,true);
   assert.equal(posed.consumer3DAdmitted,false);
   assert.equal(posed.physicalContactOrDrapeCleared,false);
+  const bentGap=checkGap(posed);
   const shot2=await page.locator('#scene').screenshot();
   assert.ok(shot2.length>9000);
   assert.notEqual(hash(shot1),hash(shot2),
@@ -278,6 +305,8 @@ try{
   assert.equal(hash(shot3),hash(shot1),
    'restored genuine source skeleton should return to same native raster');
   assert.equal(restored.consumer3DAdmitted,false);
+  assert.deepEqual(checkGap(restored),restGap,
+   'original signed-free body/cloth proximity must restore exactly');
   skeletonPoseEvidence.push({avatar:kind,boneCount:163,
    originalGLBSHA256:rigHashes[kind],
    genuineSourceJPEG_SHA256:hash(image),
@@ -290,6 +319,12 @@ try{
    originalRestRestoredRasterIdentical:hash(shot1)===hash(shot3),
    photoUVRGBAAndOriginalRigWeightsUnmodified:true,
    realOriginalSkeletonBinding:true,provisionalNotPhysicallyFitted:true,
+   realBodyBoneAnchoredWeightsButUnapproved:true,
+   originalSpineBoneAnchorDistanceRigUnits:
+    accept.genuineSpineSegmentLengthRigUnits,
+   actualSkinnedSourceToBodySampledUnsignedGapAtRest:restGap,
+   actualSkinnedSourceToBodySampledUnsignedGapAtBend:bentGap,
+   fullSurfaceOrSweptIntersectionNotProved:true,
    noCollisionSafetyOrDrapeProved:true,consumer3DAdmitted:false});
  }
  assert.equal(skeletonPoseEvidence.length,2);
@@ -310,6 +345,9 @@ try{
   noRealSourceCameraCalibration:true,noOriginalMetricScale:true,
   noActualBodySourceGarmentFitClaim:true,noBVHBodyClothSafetyAcceptance:true,
   sourceUnknownReverseAndUnknownClothDrape:true,
+  realSpineBoneAnchoredResearchWeights:true,
+  actualSkinnedBodyTriangleProximitySampled:true,
+  unsignedDistanceNotIntersectionProof:true,
   noActualHumanMaskReview:true,noPhysicalMobileDevice:true,
   sourceOriginalPhoto2DFallbackRequired:true,consumer3DAdmitted:false,
   releaseAuthorized:false,familyAlpha:'HOLD'
@@ -323,6 +361,8 @@ try{
   genuineOriginalSourceSkinnedVertexDisplacementProved:true,
   originalMaskedRGBVerified:true,originalRigBytesAndSkinsUnmodified:true,
   physicallyFitted:false,collisionCleared:false,
+  genuineBodyBoneAnchorWeightsButNotFitted:true,
+  actualTriangleProximityMeasuredButNotCollisionCertified:true,
   browserErrors:failures.length,externalHTTP:0,
   consumer3DAdmitted:false,familyAlpha:'HOLD'
  }));

@@ -243,8 +243,9 @@ async function select(kind,index=1,rotation=0){
  *
  * The source mesh is constructed as an ACTUAL THREE.SkinnedMesh bound to
  * the SHA-attested original body's skeleton; two REAL documented MakeHuman
- * spine bones (spine03/spine04) receive explicitly PROVISIONAL y-gradient
- * weights. These are NOT source-observed physical weights, contact,
+ * spine bones (spine03/spine04) receive explicitly PROVISIONAL
+ * bone-segment-projected smooth weights tied to the real rest-pose joints.
+ * These are NOT source-observed physical weights or measured cloth contact,
  * garment body dimensions, rear drape, owner approval or consumer clothing.
  *
  * Original photograph RGBA / UV / mask / raw source POSITION buffers remain
@@ -272,6 +273,57 @@ const actualSkinnedPhotoPoint=(x,index)=>{
  const p=x.mesh.applyBoneTransform(index,new THREE.Vector3());
  return p.applyMatrix4(x.mesh.matrixWorld);
 };
+// Rebuild a bounded sample of actual original *skinned body triangles* in each
+// genuine pose. Closest-point distances are UNSIGNED and sampled, not proof
+// of no penetration, physical clearance, continuous collision, or cloth fit.
+function sampleOriginalBodyTriangleSurfaceGap(x){
+ x.model.root.updateMatrixWorld(true);
+ x.body.skeleton.update();
+ x.body.updateWorldMatrix(true,false);
+ const bodyGeo=x.body.geometry,bodyIndices=bodyGeo.getIndex(),
+  nTriangles=Math.floor((bodyIndices?bodyIndices.count:
+   bodyGeo.getAttribute('position').count)/3);
+ invariant(nTriangles>=128,'original-body-surface-triangles-unavailable');
+ const nBody=Math.min(1536,nTriangles),nPhoto=Math.min(24,x.sourceFrontN);
+ invariant(nPhoto>=3,'original-source-front-vertices-unavailable');
+ const triangles=[];
+ for(let j=0;j<nBody;j++){
+  const face=Math.floor((j+.5)*nTriangles/nBody),offset=face*3;
+  const vi=k=>bodyIndices?bodyIndices.getX(offset+k):offset+k;
+  const p=k=>x.body.applyBoneTransform(vi(k),new THREE.Vector3())
+   .applyMatrix4(x.body.matrixWorld);
+  triangles.push(new THREE.Triangle(p(0),p(1),p(2)));
+ }
+ const target=new THREE.Vector3(),gaps=[];
+ for(let i=0;i<nPhoto;i++){
+  const index=Math.floor((i+.5)*x.sourceFrontN/nPhoto);
+  const sourcePoint=actualSkinnedPhotoPoint(x,index);
+  let min2=Infinity;
+  for(const triangle of triangles){
+   const closest=triangle.closestPointToPoint(sourcePoint,target);
+   const distance2=sourcePoint.distanceToSquared(closest);
+   if(distance2<min2)min2=distance2;
+  }
+  invariant(Number.isFinite(min2)&&min2>=0,
+   'actual-source-to-original-triangle-sample-invalid');
+  gaps.push(Math.sqrt(min2));
+ }
+ gaps.sort((a,b)=>a-b);
+ return {
+  actualPoseDeformedBodySurfaceTrianglesSampled:nBody,
+  actualPoseDeformedSourceFrontVerticesSampled:nPhoto,
+  minimumUnsignedSampledBodyClothGapRigUnits:round6(gaps[0]),
+  medianUnsignedSampledBodyClothGapRigUnits:
+   round6((gaps[Math.floor((gaps.length-1)/2)]+
+    gaps[Math.floor(gaps.length/2)])/2),
+  nearSurfaceSampleCountAt005RigUnits:
+   gaps.filter(distance=>distance<=.05).length,
+  measuredUnsignedSampledTriangleSurfaceProximity:true,
+  fullIndexedTriangleCoverage:false,
+  signedInteriorOrTriangleIntersectionEstablished:false,
+  physicalCollisionOrSweptClearanceEstablished:false
+ };
+}
 function sourceSkinProvenanceUnchanged(){
  const a=geometry.getAttribute('position').array,
   u=geometry.getAttribute('uv').array;
@@ -302,24 +354,36 @@ async function startSourceSkinnedMotionTrial(kind){
  imageMesh.updateWorldMatrix(true,false);
  body.updateWorldMatrix(true,false);
  const fromWorldToBody=body.matrixWorld.clone().invert();
+ // Use independently real original spine joints rather than fabricated
+ // image-space Y endpoints. These are still heuristic registration weights.
+ const lowerJoint=lowerBone.getWorldPosition(new THREE.Vector3())
+  .applyMatrix4(fromWorldToBody);
+ const upperJoint=upperBone.getWorldPosition(new THREE.Vector3())
+  .applyMatrix4(fromWorldToBody);
+ const boneAxis=upperJoint.clone().sub(lowerJoint),boneSpan2=boneAxis.lengthSq();
+ invariant(Number.isFinite(boneSpan2)&&boneSpan2>.000001,
+  'actual-licensed-spine-bone-anchor-separation-unverifiable');
  const derived=geometry.clone();
  const attrs=derived.getAttribute('position');
  const pBody=new Float32Array(attrs.array.length),
   boneIndex=new Uint16Array(attrs.count*4),
   boneWeight=new Float32Array(attrs.count*4);
- const yHeight=photoBBox.max.y-photoBBox.min.y;
- invariant(yHeight>.2,'true original source photo silhouette not observed');
+ invariant(photoBBox.max.y-photoBBox.min.y>.2,
+  'true original source photo silhouette not observed');
  for(let i=0;i<attrs.count;i++){
   const original=new THREE.Vector3(
    positions[3*i],positions[3*i+1],positions[3*i+2]);
   const inBody=original.clone().applyMatrix4(imageMesh.matrixWorld)
    .applyMatrix4(fromWorldToBody);
   pBody.set(inBody.toArray(),3*i);
-  // Provisional normalized image row interpolation; NOT material-to-bone
-  // physical correspondence. The two indices are ACTUAL GLB skeleton bones.
-  const t=Math.max(0,Math.min(1,(original.y-photoBBox.min.y)/yHeight));
+  // Provisional projection on the ACTUAL anatomical spine joint segment;
+  // no inferred image-row joint locations or physically accepted skinning.
+  const projection=inBody.clone().sub(lowerJoint).dot(boneAxis)/boneSpan2;
+  invariant(Number.isFinite(projection),'unverifiable-source-bone-projection');
+  const t=Math.max(0,Math.min(1,projection));
+  const w=t*t*(3-2*t);
   boneIndex.set([upper,lower,0,0],i*4);
-  boneWeight.set([t,1-t,0,0],i*4);
+  boneWeight.set([w,1-w,0,0],i*4);
  }
  derived.setAttribute('position',new THREE.BufferAttribute(pBody,3));
  derived.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(boneIndex,4));
@@ -344,6 +408,8 @@ async function startSourceSkinnedMotionTrial(kind){
  const x={model,body,mesh,lowerBone,posedBone:upperBone,
   lowerName:names[lower],upperName:names[upper],lowerIndex:lower,
   upperIndex:upper,originalPose,kind,sourceFrontN:photoFrontN,
+  originalSpineSegmentLengthRigUnits:round6(Math.sqrt(boneSpan2)),
+  provisionalWeightMethod:'actual-rest-spine03-spine04-segment-smooth-projection',
   samples:[first,middle,last],rest:[],lastPose:'rest'};
  sourceSkinResearch=x;
  try{
@@ -368,6 +434,9 @@ async function startSourceSkinnedMotionTrial(kind){
    originalBodySkinIndicesAndWeightsUnmodified:true,
    trueSourceFrontAndNeutralReverseMaterialGroups:3,
    actualTHREESkinnedMesh:true,provisionalBindWeights:true,
+   provisionalActualBodyBoneAnchorWeights:true,
+   genuineSpineSegmentLengthRigUnits:x.originalSpineSegmentLengthRigUnits,
+   weightRule:x.provisionalWeightMethod,
    physicalSourceGarmentSizeUnmeasured:true,realCameraCalibrationMissing:true,
    noGenuineReversePhoto:true,noHumanApprovedMask:true,
    noClothDrapeOrContactSafetyClaim:true,
@@ -392,6 +461,7 @@ function setSourceSkinnedMotionTrialPose(stage){
  x.body.skeleton.update();
  const now=x.samples.map(i=>actualSkinnedPhotoPoint(x,i));
  const deltas=now.map((p,i)=>p.distanceTo(x.rest[i]));
+ const actualBodySurfaceGap=sampleOriginalBodyTriangleSurfaceGap(x);
  sourceSkinProvenanceUnchanged();assertModelUnchanged(x.model);
  angle=0;render();x.lastPose=stage;
  return {
@@ -402,6 +472,7 @@ function setSourceSkinnedMotionTrialPose(stage){
   originalSourcePositionAndUVStillImmutable:true,
   threeOriginalPhotoVertexDisplacements:deltas.map(round6),
   maximumMeasuredOriginalPhotoSourceVertexDisplacement:round6(Math.max(...deltas)),
+  originalRigBodySurfaceGapResearchOnly:actualBodySurfaceGap,
   actualMeasuredBodyClothIntersection:false,
   physicalContactOrDrapeCleared:false,
   owner3DApproved:false,consumer3DAdmitted:false,
