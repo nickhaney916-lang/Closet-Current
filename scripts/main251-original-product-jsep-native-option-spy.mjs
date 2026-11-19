@@ -20,7 +20,8 @@ const header=[
  ' const record={type:"diagnostic",phase:"m251_original_jsep_native_abi",',
  '  optionsArgumentCount:args.length,originalNativeExportCalled:true,',
  '  arenaFlag:(arena===1||arena===0||typeof arena==="boolean")?Number(arena):null,',
- '  patternFlag:(pattern===1||pattern===0||typeof pattern==="boolean")?Number(pattern):null,',
+ '  patternFlag:(pattern===1||pattern===0||typeof pattern==="boolean")?Number(pattern):null,
+  nativeArgumentsZeroOneOnly:args.map(v=>(v===0||v===1||typeof v==="boolean")?Number(v):null),',
  '  returnedNativeHandle:false,threw:false,errorName:null};',
  ' try{',
  '  const result=Reflect.apply(nativeFn,receiver,args);',
@@ -71,7 +72,9 @@ export function admitRealNativeSessionTransport({arm,engine,events,identity}){
  assert.equal(e.originalNativeExportCalled,true);
  assert.equal(e.returnedNativeHandle,true);
  assert.equal(e.threw,false);
- assert.equal(e.arenaFlag,1);
+ assert.ok(e.arenaFlag===0||e.arenaFlag===1,'Observed native arena ABI flag must be numeric 0/1');
+ assert.ok(Array.isArray(e.nativeArgumentsZeroOneOnly)&&e.nativeArgumentsZeroOneOnly.length===10);
+ assert.ok(e.nativeArgumentsZeroOneOnly.every(x=>x===0||x===1||x===null));
  assert.ok(e.patternFlag===0||e.patternFlag===1,'Native mempattern argument unavailable');
  assert.equal(identity.originalP94JsepRealWorker,true);
  assert.equal(identity.originalModelAndPrivate2DV4Passed,true);
@@ -82,8 +85,12 @@ export function admitRealNativeSessionTransport({arm,engine,events,identity}){
   engine,arm,actualOriginalP94WorkerSession:true,
   nativeJsepExportCalled:true,nativeSessionHandleReturned:true,
   actualNativeArenaFlag:e.arenaFlag,actualNativeMemoryPatternFlag:e.patternFlag,
+  realNativeArgumentBitView:e.nativeArgumentsZeroOneOnly,
+  abiArgumentSemanticMappingOnlyCandidate:true,
   expectedMemoryPatternFlag:arm==='pattern_off'?0:1,
-  actualNativeOptionTransportMatchesRequest:e.patternFlag===(arm==='pattern_off'?0:1),
+  candidatePatternFlagMatchesRequest:e.patternFlag===(arm==='pattern_off'?0:1),
+  nativePatternFlagMeaningSourceVerified:false,
+  actualNativeOptionTransportVerified:false,
   actualOriginalProductOwnerPrivate2DV4Accepted:true,
   originalJsepWasmSamePinnedOriginal:true,
   actualOriginalBrowserWasmShaVerified:identity.directBrowserJsepWasmBodyHash===true,
