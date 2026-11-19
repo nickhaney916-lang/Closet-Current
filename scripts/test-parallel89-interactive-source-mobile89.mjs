@@ -113,6 +113,16 @@ const server=createServer((req,res)=>{
    const forged={...payload,sourceRGBA_SHA256:'0'.repeat(64)};
    res.end(Buffer.from(JSON.stringify(forged)));return;
   }
+  if((req.headers.cookie||'').includes('bad-geometry=1')){
+   const forged={...payload,indices:payload.indices.slice()};
+   forged.indices[0]=payload.positions.length/3+7;
+   res.end(Buffer.from(JSON.stringify(forged)));return;
+  }
+  if((req.headers.cookie||'').includes('bad-geometry=2')){
+   const forged={...payload,positions:payload.positions.slice()};
+   forged.positions[3]=null; // JSON representation of a non-finite coordinate
+   res.end(Buffer.from(JSON.stringify(forged)));return;
+  }
   res.end(json);return;
  }
  res.writeHead(404);res.end('not found');
@@ -230,6 +240,25 @@ try{
  assert.equal(await bad.locator('#photo').evaluate(e=>e.naturalWidth),1200);
  await bad.screenshot({path:out+'/'+engine+'-390-CORRUPT-3D-EVIDENCE-FALLBACK-ORIGINAL-2D.png'});
  await badContext.close();
+ // Authentic source photo must remain visible after invalid geometry payloads.
+ // No new source/photo hash, consumer admission or browser WebGL permission.
+ for(const [cookie,kind] of [['1','index-out-of-range'],['2','nonfinite-vertex']]){
+  const context=await browser.newContext({viewport:{width:390,height:760}});
+  await context.addCookies([{name:'bad-geometry',value:cookie,url:origin}]);
+  const page=await context.newPage();
+  page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(origin+'/viewer');
+  await page.waitForFunction(()=>window.__m2PreviewEvidence?.getSnapshot().errorCode!==null,
+   null,{timeout:30000});
+  const state=await snapshot(page);
+  assert.equal(state.errorCode,'source-geometry-values-rejected',kind);
+  assert.equal(state.mode,'photo',kind);
+  assert.equal(state.originalImageVisible,true,kind);
+  assert.equal(state.previewVisible,false,kind);
+  assert.equal(state.consumer3DAdmitted,false,kind);
+  assert.equal(await page.locator('#shell').isDisabled(),true,kind);
+  await context.close();
+ }
  assert.deepEqual(errors,[],'native browser page errors');
  console.log('M2_INTERACTIVE_ORIGINAL_SOURCE_MOBILE_BROWSER_RESEARCH_PASS '+JSON.stringify({
   engine,realNativeBrowser:true,devicePhysical:false,
