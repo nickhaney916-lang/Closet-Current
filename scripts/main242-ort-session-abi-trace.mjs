@@ -16,10 +16,10 @@ export const ORIGINAL_WORKER_GIT_BLOB='d66651b616de54c51eb7ef986324b30f1580888f'
 export const SOURCE_FILE='node_modules/onnxruntime-web/dist/ort.wasm.mjs';
 export const TARGET='._OrtCreateSessionOptions(';
 const sha256=b=>createHash('sha256').update(b).digest('hex');
-const blob=b=>createHash('sha1').update('blob '+b.length+'\\0').update(b).digest('hex');
+const blob=b=>createHash('sha1').update('blob '+b.length+'\0').update(b).digest('hex');
 
 export function locateActualAbiCall(source){
- const matches=[...source.matchAll(/\\b([A-Za-z_$][\\w$]*)\\._OrtCreateSessionOptions\\(/g)];
+ const matches=[...source.matchAll(/\b([A-Za-z_$][\w$]*)\._OrtCreateSessionOptions\(/g)];
  assert.equal(matches.length,1,'Expected exactly one genuine pinned WASM session-options ABI call');
  const m=matches[0];
  const instance=m[1];
@@ -28,7 +28,7 @@ export function locateActualAbiCall(source){
   const c=source[pos];
   if(quote){
    if(escaped){escaped=false;continue;}
-   if(c==='\\\\'){escaped=true;continue;}
+   if(c==='\\'){escaped=true;continue;}
    if(c===quote){quote=null;}continue;
   }
   if(c==='"'||c==="'"||c==='`'){quote=c;continue;}
