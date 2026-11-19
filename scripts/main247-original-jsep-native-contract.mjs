@@ -23,9 +23,14 @@ export function attestJsepOriginalGraph({engine,arm,model,identity,session,esmSh
  assert.equal(model?.bytes,15199746,'Original ONNX model changed');
  assert.ok(identity&&identity.localRuntimeName===JSEP_WASM,'Original JSEP asset not actually served');
  assert.equal(identity.localRuntimeSha256,P94_JSEP,'JSEP bytes differ from original P94 Worker');
- assert.equal(identity.actualBrowserResponseBodyShaVerified,true,'No verified actual browser WASM bytes');
- assert.equal(identity.matchesP94OriginalWebkitJsepBinary,true);
- assert.equal(identity.installedOriginalPinnedBinaryExactMatch,true);
+ assert.equal(identity.actualBrowserWasmHttp200,true,'Actual browser WASM response missing or non-200');
+ assert.equal(identity.matchesP94OriginalWebkitJsepBinary,true,'Locally served JSEP runtime source mismatch');
+ assert.equal(identity.installedOriginalPinnedBinaryExactMatch,true,'Local JSEP server bytes not pinned to installed runtime');
+ const browserBytesVerified=identity.actualBrowserResponseBodyShaVerified===true;
+ // Real Chromium Playwright can expose the HTTP200 JSEP request but not
+ // response.body(). This is NOT direct original received-byte evidence.
+ // WebKit's direct original runtime SHA remains a required positive gate.
+ if(engine==='webkit')assert.equal(browserBytesVerified,true,'WebKit requires actual received JSEP WASM body SHA');
  assert.equal(session?.success,true,'Original model native session genuinely RED');
  assert.equal(session?.nativeCalls?.length,1,'Real native session export missing');
  assert.equal(session.nativeCalls[0].actualNativeExportCalled,true);
@@ -36,7 +41,12 @@ export function attestJsepOriginalGraph({engine,arm,model,identity,session,esmSh
  assert.notEqual(P94_JSEP,PINNED_LOCAL_NON_JSEP,'JSEP/non-JSEP identity conflated');
  return {schema:'M247_ORIGINAL_SEGFORMER_JSEP_NATIVE/v1',engine,arm,
   pinnedOriginalGraph:true,verifiedRealModelSession:true,
-  runtimeBinarySameAsOriginalWebkitP94:true,sourceESMSha256:esmSha256,
+  // Local installed/server binary is exactly the same JSEP as original P94.
+  // Browser-received bytes are directly proven ONLY when browserBytesVerified.
+  localServerJsepBinarySameAsOriginalP94:true,
+  actualBrowserJsepBytesVerified:browserBytesVerified,
+  actualBrowserJsepBytesStatus:browserBytesVerified?'DIRECT_BROWSER_SHA':'UNVERIFIED_BROWSER_BODY',
+  realBrowserWasmHttp200:true,sourceESMSha256:esmSha256,
   originalGraphSha256:model.sha256,originalGraphBytes:model.bytes,
   runtimeSha256:identity.localRuntimeSha256,
   originalOwnerWorkerNotExercised:true,
