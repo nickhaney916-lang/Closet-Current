@@ -1712,7 +1712,7 @@ function exactDuplicateOwnerSaveHarness88(){
  const records=[],user={id:'owner-A'};
  const ownerDb={name:'closet-current-user-owner-A',transaction(){
   const tx={objectStore(store){
-   return {put(value){records.push({store,value:structuredClone(value)});}};
+   return {add(value){records.push({store,value:structuredClone(value)});},put(value){records.push({store,value:structuredClone(value)});}};
   }};
   queueMicrotask(()=>tx.oncomplete?.());return tx;
  }};
@@ -1817,7 +1817,7 @@ test('P88 ordinary review save holds exact owner, image and IDB after cloud pref
   const written={};
   const database={name:'closet-current-user-owner-A',transaction(){
    const tx={objectStore(store){
-    return {put(value){writeCount++;written[store]=structuredClone(value);}};
+    return {add(value){writeCount++;written[store]=structuredClone(value);},put(value){writeCount++;written[store]=structuredClone(value);}};
    }};
    queueMicrotask(()=>tx.oncomplete?.());
    return tx;
@@ -3016,4 +3016,72 @@ test('P88 cancelled audio resume cannot release a newer import busy state',async
  gate.resolve();await task;
  assert.equal(h.c.busy,true);assert.equal(h.el('upload').disabled,true);
  assert.equal(h.permissions,0);assert.equal(h.photos.length,0);
+});
+
+
+// P88 reviewed draft commits are CREATE-only. A stale or colliding draft ID
+// cannot replace an existing physical closet record via IndexedDB put().
+// This source-executed test uses a synthetic IDB collision, NOT live accounts.
+test('P88 ordinary reviewed draft ID collision preserves existing closet row and unsaved photo',async()=>{
+ const start=appSource.indexOf('function savePiece('),stop=appSource.indexOf('function node(',start);
+ const helpers=appSource.indexOf('function reviewedExactPhotoPeers88(');
+ const end=appSource.indexOf('function empty(',helpers);
+ assert.ok(start>=0&&stop>start&&helpers>stop&&end>helpers);
+ const native=appSource.slice(start,stop)+appSource.slice(helpers,end);
+ const photo='data:image/jpeg;base64,TkVX';
+ const saved={id:'captured-id',image:'data:image/jpeg;base64,T0xE',
+  category:'Outerwear',itemType:'Jacket',color:'Red'};
+ const source={id:'captured-id',image:photo,category:'Tops',
+  itemType:'T-shirt',color:'Blue',userAdjusted:true};
+ const previous=structuredClone(saved),draftBefore=structuredClone(source);
+ const owner={id:'owner-A'},savedRows=new Map([[saved.id,structuredClone(saved)]]);
+ let savedDraft={id:'draft',batch:[structuredClone(source)]};
+ const operations=[];
+ const db={name:'closet-current-user-owner-A',transaction(stores,mode){
+  assert.deepEqual(Array.from(stores),['items','state']);
+  assert.equal(mode,'readwrite');
+  const tx={oncomplete:null,onabort:null,onerror:null,objectStore(name){
+   if(name==='items')return {
+    add(value){operations.push('items.add');
+     if(savedRows.has(value.id))throw Error('ConstraintError: key already exists');
+     savedRows.set(value.id,structuredClone(value));},
+    put(value){operations.push('items.put');savedRows.set(value.id,structuredClone(value));}
+   };
+   if(name==='state')return {put(value){
+    operations.push('state.put');savedDraft=structuredClone(value);
+   }};
+   throw Error('Unexpected store');
+  }};
+  queueMicrotask(()=>tx.oncomplete?.());
+  return tx;
+ }};
+ const c={window:{closetAuth:{user:owner}},db,items:[saved],batch:[source],
+  structuredClone,queued:async fn=>fn()};
+ vm.createContext(c);vm.runInContext(native,c);
+ const lease=c.reviewedSaveLease88(source);
+ await assert.rejects(c.savePiece({...source},[],lease),/ConstraintError/);
+ assert.deepEqual(operations,['items.add'],'draft collision must not run state write');
+ assert.deepEqual(savedRows.get(saved.id),previous,'existing owner garment remains intact');
+ assert.deepEqual(savedDraft.batch,[draftBefore],'unsaved reviewed source remains recoverable');
+});
+test('P88 ordinary fresh-ID reviewed save inserts rather than overwrites a closet row',async()=>{
+ const start=appSource.indexOf('function savePiece('),stop=appSource.indexOf('function node(',start);
+ const helpers=appSource.indexOf('function reviewedExactPhotoPeers88(');
+ const end=appSource.indexOf('function empty(',helpers);
+ const source={id:'new-id',image:'data:image/jpeg;base64,TkVX',
+  category:'Tops',itemType:'T-shirt',color:'Blue'};
+ const owner={id:'owner-A'},operations=[];
+ const db={name:'closet-current-user-owner-A',transaction(){
+  const tx={oncomplete:null,onabort:null,onerror:null,objectStore(name){
+   return {add(value){operations.push(name+'.add:'+value.id);},
+    put(value){operations.push(name+'.put:'+value.id);}};
+  }};
+  queueMicrotask(()=>tx.oncomplete?.());return tx;
+ }};
+ const c={window:{closetAuth:{user:owner}},db,items:[],batch:[source],
+  structuredClone,queued:async fn=>fn()};
+ vm.createContext(c);vm.runInContext(appSource.slice(start,stop)+appSource.slice(helpers,end),c);
+ await c.savePiece({...source},[],c.reviewedSaveLease88(source));
+ assert.deepEqual(operations,['items.add:new-id','state.put:draft'],
+  'new item ID must be insert-only; the captured draft is cleared atomically');
 });
