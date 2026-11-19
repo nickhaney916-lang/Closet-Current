@@ -36,7 +36,7 @@ export function deriveM262(source,{corrupt=false}={}){
   'const m259Rows=[],m259Pending=[];\nlet m262OnnxInterceptions=0;');
  const injection=[
   ' // M262: only ONNX model GET, after unchanged original browser egress guard.',
-  ' await context.route(/\/Xenova\/segformer_b0_clothes\/.*[.]onnx(?:[?].*)?$/i,route=>{',
+  ' await context.route(new RegExp("Xenova[/]segformer_b0_clothes[/].*[.]onnx(?:[?].*)?$","i"),route=>{',
   "  if(route.request().method()!=='GET') return route.abort();",
   '  m262OnnxInterceptions++;',
   "  return route.fulfill({status:200,contentType:'application/octet-stream',",
