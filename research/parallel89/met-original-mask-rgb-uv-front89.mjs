@@ -68,7 +68,7 @@ export async function buildMetOriginalMaskTexturedFront89({
    return refusal('institutional-JPEG-decoded-RGB-source-identity-wrong');
   const {data:mask,info:mi}=await sharp(conservativeMaskPNGBytes,{
    failOn:'error',limitInputPixels:1500000
-  }).removeAlpha().raw().toBuffer({resolveWithObject:true});
+  }).greyscale().raw().toBuffer({resolveWithObject:true});
   if(mi.width!==1200||mi.height!==rec.h||mi.channels!==1||
     mask.length!==1200*rec.h||sha(mask)!==rec.maskRaw)
    return refusal('original-full-resolution-alpha-proposal-not-bitwise-verified');
