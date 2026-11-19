@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - research/mission2-p89-full-face-contact-calibration-20261119-HOLD
+      - research/mission2-p89-complete-face-contact-budget-repair-20261119-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read

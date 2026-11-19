@@ -18,6 +18,18 @@ import {controlledFullContactFixtures,classifyExactTriangleContact,
 import {buildMetSourceFrontNeutralBackShell89 as build}
  from '../research/parallel89/met-source-front-neutral-shell89.mjs';
 const hash=b=>createHash('sha256').update(b).digest('hex');
+// Safety negative gates must remain strict even when rejecting genuine
+// original body/front contact early instead of enumerating every pair.
+const controlledTri=[[0,0,0],[1,0,0],[0,1,0]];
+assert.throws(()=>evaluateFullIndexedContact(
+ [controlledTri],[[[0,0,0],[Infinity,0,0],[0,1,0]]]),
+ /full-indexed-contact-original-face-nonfinite/);
+assert.throws(()=>evaluateFullIndexedContact(
+ [controlledTri],[controlledTri],{maxPairs:NaN}),
+ /full-indexed-contact-invalid-resource-budget/);
+assert.throws(()=>evaluateFullIndexedContact(
+ [controlledTri,controlledTri],[controlledTri],{maxPairs:1}),
+ /original-full-indexed-audit-resource-bound-reached/);
 const fullFixture=controlledFullContactFixtures();
 assert.equal(fullFixture.cases.crossing,'CROSSING');
 assert.equal(fullFixture.cases.separated,'NONE');
@@ -38,7 +50,7 @@ assert.equal(fullFixture.indexedResult.garmentPhysicalFitCertified,false);
 assert.throws(()=>evaluateFullIndexedContact([],[]),/full-face-counts-required/);
 assert.throws(()=>evaluateFullIndexedContact([[[0,0,0],[0,1,0],[0,0,1]]],
  [[[0,0,0],[0,1,0],[0,0,1]]],{maxPairs:0}),
- /resource-bound-reached/);
+ /full-indexed-contact-invalid-resource-budget/);
 console.log('M2_FULL_INDEXED_ADVERSARIAL_GEOMETRY_NODES_PASS '+JSON.stringify(fullFixture.cases));
 const rigHashes=Object.freeze({
  female:'a571a5872a5f9d75c013ce6d88b3484436cf2109bf133fbc31e42c41f52389f1',
