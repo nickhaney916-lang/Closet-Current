@@ -13,7 +13,7 @@ const sha=b=>createHash('sha256').update(b).digest('hex');
 const blob=b=>createHash('sha1').update('blob '+b.length+'\0').update(b).digest('hex');
 const receipt=(arm='baseline')=>({
  phase:'m251_native_option',actualExportCalled:true,
- memPattern:arm==='baseline',cpuArena:false,argCount:10,handleReturned:true
+ memPattern:false,cpuArena:false,argCount:10,handleReturned:true
 });
 test('M251 shipped original source and full original JSEP JS/WASM SHA locked',async()=>{
  const w=await readFile('public/outfit-worker-p94.mjs');
@@ -49,7 +49,7 @@ test('M251 observed WASM native bridge flag baseline must be actual TRUE and opt
  for(const arm of ['baseline','pattern_off']){
   const proof=verifyM251OriginalNativeOptionReceipt(receipt(arm),{engine:'webkit',arm});
   assert.equal(proof.realWasmExportInvoked,true);
-  assert.equal(proof.nativeMemPatternFlag,arm==='baseline');
+  assert.equal(proof.nativeMemPatternFlag,false);
   assert.equal(proof.nativeCpuArenaFlag,false);
   assert.equal(proof.genuineReturnedOptionsHandle,true);
   assert.equal(proof.originalPinnedJsepGlueSourceSha256,PINNED_JS);
@@ -60,11 +60,21 @@ test('M251 observed WASM native bridge flag baseline must be actual TRUE and opt
   assert.equal(proof.familyAlphaHold,true);
  }
 });
+test('M251 ORIGINAL P94 JSEP native default already OFF; request-OFF has no native value difference',()=>{
+ const a=verifyM251OriginalNativeOptionReceipt(receipt('baseline'),{engine:'webkit',arm:'baseline'});
+ const b=verifyM251OriginalNativeOptionReceipt(receipt('pattern_off'),{engine:'webkit',arm:'pattern_off'});
+ assert.equal(a.nativeMemPatternFlag,false);
+ assert.equal(b.nativeMemPatternFlag,false);
+ assert.equal(a.originalDefaultMemPatternFlagWasAlreadyFalse,true);
+ assert.equal(b.requestedMemPatternOff,true);
+ assert.equal(a.actualNativeCppMemoryPolicyObserved,false);
+ assert.equal(b.permanentRepairProven,false);
+});
 test('M251 strict falsification rejects missing/duplicate native return values or wrong native arm',()=>{
  for(const arm of ['baseline','pattern_off']){
   for(const edit of [
    x=>{x.phase='fake';},x=>{x.actualExportCalled=false;},
-   x=>{x.memPattern=!x.memPattern;},x=>{x.memPattern=null;},
+   x=>{x.memPattern=true;},x=>{x.memPattern=null;},
    x=>{x.cpuArena=true;},x=>{x.cpuArena=null;},
    x=>{x.argCount=9;},x=>{x.argCount=11;},
    x=>{x.handleReturned=false;}
