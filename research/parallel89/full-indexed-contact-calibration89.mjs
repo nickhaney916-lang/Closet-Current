@@ -138,7 +138,7 @@ export function classifyExactTriangleContact(a,b){
   return 'CROSSING';
  return touching?'TOUCHING':'NONE';
 }
-export function evaluateFullIndexedContact(bodyFaces,frontFaces,{maxPairs=4000000}={}){
+export function evaluateFullIndexedContact(bodyFaces,frontFaces,{maxPairs=30000000}={}){
  if(!Array.isArray(bodyFaces)||!Array.isArray(frontFaces)||!bodyFaces.length||!frontFaces.length)
   throw Error('real-original-full-face-counts-required');
  // This checker may audit actual full geometry only. No skip/stride/cap of
@@ -151,7 +151,10 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{maxPairs=400000
  for(const box of all)for(let a=0;a<3;a++){
   min[a]=Math.min(min[a],box.min[a]);max[a]=Math.max(max[a],box.max[a]);
  }
- const shape=[18,28,14],ranges=shape.map((n,a)=>Math.max((max[a]-min[a])/n,EPS*100)),
+ // High resolution bounding-box hash limits same-cell false candidate pairs.
+ // It does NOT skip a single original body or front face; all original
+ // skinned vertices and all exact indexed triangles still participate.
+ const shape=[36,56,30],ranges=shape.map((n,a)=>Math.max((max[a]-min[a])/n,EPS*100)),
   index=(p,a)=>Math.max(0,Math.min(shape[a]-1,Math.floor((p-min[a])/ranges[a]))),
   key=(i,j,k)=>(i*shape[1]+j)*shape[2]+k,
   grid=new Array(shape[0]*shape[1]*shape[2]);
@@ -180,9 +183,15 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{maxPairs=400000
      for(const j of grid[key(a,b,c)]||[]){
       if(used[j]===stamp)continue;
       used[j]=stamp;pairs++;
-      if(pairs>maxPairs)throw Error('original-full-indexed-audit-resource-bound-reached');
+      if(pairs>maxPairs)throw Error('original-full-indexed-audit-resource-bound-reached '+
+       JSON.stringify({bodyFaces:bodyFaces.length,photoFaces:frontFaces.length,
+        broadphaseCandidatePairs:pairs,actualAABBOverlaps:aabbPairs,
+        maxPairs,gridShape:shape}));
       if(!boxesOverlap(frontBoxes[i],bodyBoxes[j]))continue;
       aabbPairs++;
+      if(aabbPairs>3000000)throw Error('original-full-indexed-exact-contact-resource-bound '+
+       JSON.stringify({bodyFaces:bodyFaces.length,photoFaces:frontFaces.length,
+        actualAABBOverlaps:aabbPairs,broadphaseCandidatePairs:pairs}));
       const result=classifyExactTriangleContact(frontFaces[i],bodyFaces[j]);
       counts[result]++;
       if(result!=='NONE'&&!firstContact)firstContact={frontFace:i,bodyFace:j,class:result};
