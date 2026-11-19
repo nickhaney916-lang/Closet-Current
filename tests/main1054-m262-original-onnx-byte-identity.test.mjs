@@ -1,6 +1,9 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {spawnSync} from 'node:child_process';
 import {bindM260OriginalAttempt} from '../research/main1054/m260-bind-original-network-evidence.mjs';
 import {
  assessM262,verifyM262,deriveM262,EXPECTED_ONNX_SHA256,
@@ -66,6 +69,13 @@ test('the unchanged original P94 source produces a derived positive/negative run
  assert.match(negative,/M262_ONNX_INJECTION_OBSERVED/);
  assert.match(negative,/segformer_b0_clothes/);
  assert.match(negative,/M262_INTENTIONALLY_INVALID_ONNX_WEIGHTS/);
+ const temp=mkdtempSync(join(tmpdir(),'m262-derived-check-'));
+ try{
+  const path=join(temp,'original-derived.mjs');
+  writeFileSync(path,negative);
+  const result=spawnSync(process.execPath,['--check',path],{encoding:'utf8'});
+  assert.equal(result.status,0,'Derived real browser script must compile: '+result.stderr);
+ }finally{rmSync(temp,{recursive:true,force:true});}
  assert.doesNotMatch(original,/M262_ONNX_INJECTION_OBSERVED/);
  assert.throws(()=>deriveM262(original+'//changed'),/Original P94 source changed/);
 });
