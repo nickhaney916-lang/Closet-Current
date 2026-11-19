@@ -174,9 +174,16 @@ function durableReviewedNewItemPeers88(value,lease,rows){
  if(!Array.isArray(rows))return false; // P70 mask checks run separately in source-bound saves
  if(!Array.isArray(lease?.exactPhotoPeers88))return true; // P70 mask identity above
  const expected=lease.exactPhotoPeers88;
- const actual=rows.filter(x=>x&&x.id!==value.id&&x.image===value.image);
+ // Same full-size original may yield several *different* crops. An owner
+ // must review that relationship even if display JPEGs are unequal.
+ const original=value.originalPhoto?.image||value.image;
+ const actual=rows.filter(x=>x&&x.id!==value.id&&(
+  (typeof value.image==='string'&&!!value.image&&x.image===value.image)||
+  (typeof original==='string'&&!!original&&
+   (x.originalPhoto?.image||x.image)===original)));
  return actual.length===expected.length&&actual.every(peer=>
-  expected.some(old=>old.id===peer.id&&old.image===peer.image));
+  expected.some(old=>old.id===peer.id&&old.image===peer.image&&
+   old.original===peer.originalPhoto?.image));
 }
 // Saved-item edits must be scoped to the exact signed owner and private IDB,
 // including AFTER the asynchronous cloud.beforeWrite queue. A model or
@@ -251,7 +258,14 @@ function node(tag,text,className){const n=document.createElement(tag);if(text)n.
 // An exact JPEG match is neither proof of one physical item nor proof of two.
 // Freeze all saved same-image peers for explicit owner confirmation.
 function reviewedExactPhotoPeers88(item){
- return items.filter(x=>x&&x!==item&&x.id!==item?.id&&x.image===item?.image);
+ // The raw photo is the stable identity when the reviewed preview was
+ // independently cropped. Neither shared bytes nor a model mask proves one
+ // physical item; the owner must compare their actual garments.
+ const original=item?.originalPhoto?.image||item?.image;
+ return items.filter(x=>x&&x!==item&&x.id!==item?.id&&(
+  (typeof item?.image==='string'&&!!item.image&&x.image===item.image)||
+  (typeof original==='string'&&!!original&&
+   (x.originalPhoto?.image||x.image)===original)));
 }
 function reviewedDistinctPhotoReceipt88(lease){
  return {schema:'p88-distinct-physical-owner-attestation/v1',
@@ -284,7 +298,8 @@ function reviewedSaveLease88(item){
   duplicateReviewRevision88:JSON.stringify(item?.ownerDuplicateReview88??null),
   // Full private saved-row revision: no second-tab correction may be lost.
   savedRowRevision88:batch.includes(item)?null:JSON.stringify(item),
-  exactPhotoPeers88:reviewedExactPhotoPeers88(item).map(x=>({item:x,id:x.id,image:x.image})),
+  exactPhotoPeers88:reviewedExactPhotoPeers88(item).map(x=>({
+   item:x,id:x.id,image:x.image,original:x.originalPhoto?.image})),
   evidenceRevision:ordinarySourceEvidence88(item)};
 }
 // A manual photo review permits category/type/color edits; it is not
@@ -324,7 +339,8 @@ function reviewedSaveLeaseLive88(lease){
    JSON.stringify(item.ownerDuplicateReview88??null)===lease.duplicateReviewRevision88&&
    reviewedExactPhotoPeers88(item).length===lease.exactPhotoPeers88.length&&
    reviewedExactPhotoPeers88(item).every((x,i)=>x===lease.exactPhotoPeers88[i].item&&
-    x.id===lease.exactPhotoPeers88[i].id&&x.image===lease.exactPhotoPeers88[i].image));
+    x.id===lease.exactPhotoPeers88[i].id&&x.image===lease.exactPhotoPeers88[i].image&&
+    x.originalPhoto?.image===lease.exactPhotoPeers88[i].original));
  }catch{return false;}
 }
 
@@ -960,19 +976,19 @@ function adjustPhoto(item){
  }
  if(distinctPhotoRequired88){
   const panel=node('section',null,'duplicate-review-88');
-  panel.setAttribute('aria-label','Exact saved photograph physical garment decision');
+  panel.setAttribute('aria-label','Saved photo or shared-original physical garment decision');
   panel.append(node('p',
    reviewLease88.exactPhotoPeers88.length+
-   ' saved closet item(s) use this exact photo. A matching picture cannot prove another physical garment. Compare the real items and leave this photo unsaved if uncertain.','fine'));
+   ' saved closet item(s) share this cropped photo or its complete original photograph. Multiple crops do not prove separate physical garments. Compare the real items and leave this photo unsaved if uncertain.','fine'));
   if(reviewLease88.exactPhotoPeers88[0]){
    const matching=node('img');matching.src=reviewLease88.exactPhotoPeers88[0].image;
-   matching.alt='Already saved photograph exactly matching this new photo';panel.append(matching);
+   matching.alt='Previously saved garment photo with matching crop or shared original';panel.append(matching);
   }
   const label=node('label',null,'review-acknowledgement');
   distinctPhotoCheck88=node('input');distinctPhotoCheck88.type='checkbox';
   distinctPhotoCheck88.setAttribute('aria-label','I physically checked this is a different owned garment from every matching saved item');
   label.append(distinctPhotoCheck88,document.createTextNode(
-   'I checked my actual clothing and confirm this is a physically different garment from every saved item using this exact photo. This is my decision, not independent model verification.'));
+   ' I checked my actual clothing and confirm this is a physically different garment from every saved item sharing this crop or complete original photo. This is my decision, not independent model verification.'));
   distinctPhotoCheck88.onchange=canSaveReview;
   panel.append(label);form.prepend(panel);canSaveReview();
  }
