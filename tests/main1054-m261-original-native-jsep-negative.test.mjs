@@ -71,6 +71,29 @@ test('two legitimate JSEP fetches are counted while repeated/too many requests a
  assert.throws(()=>verifyM261Failure(log('',{interceptedJsepRequests:9}),1,id()));
  assert.throws(()=>verifyM261Failure(log()+'\n'+marker(),1,id()),/Missing\/duplicate/);
 });
+test('unreadable Chromium JSEP response remains UNKNOWN while one invalid body SHA is genuine',()=>{
+ const originallyTwo=log('',{interceptedJsepRequests:2});
+ const oneInvalid=JSON.stringify({
+  kind:'jsep-wasm',status:'invalid-wasm-magic',sha256:wasmSha,size:45
+ });
+ const mixed=originallyTwo.replace(oneInvalid,
+  JSON.stringify({kind:'jsep-wasm',status:'body-unavailable'}));
+ const result=verifyM261Failure(mixed,1,id());
+ assert.equal(result.injectionInterceptCount,2);
+ assert.equal(result.invalidJsepResponseSHAObserved,1);
+ assert.equal(result.unreadableJsepResponseBodies,1);
+ assert.equal(result.originalJourneyGate,'FAIL');
+ assert.equal(result.sourceEvidenceGate,'FAIL');
+});
+test('never treat solely unreadable response bodies as a verified invalid JSEP',()=>{
+ const baseline=log('',{interceptedJsepRequests:2});
+ const invalid=JSON.stringify({
+  kind:'jsep-wasm',status:'invalid-wasm-magic',sha256:wasmSha,size:45
+ });
+ const unknown=JSON.stringify({kind:'jsep-wasm',status:'body-unavailable'});
+ const bothUnknown=baseline.replaceAll(invalid,unknown);
+ assert.throws(()=>verifyM261Failure(bothUnknown,1,id()),/do not match/);
+});
 test('a forged or missing actual invalid-response witness cannot be accepted',()=>{
  assert.throws(()=>verifyM261Failure(badBrowser()+'\n'+marker(),1,id()),/response witness/);
  assert.throws(()=>verifyM261Failure(log().replaceAll(wasmSha,'f'.repeat(64)),1,id()),/do not match/);
