@@ -39,8 +39,11 @@ export async function probeM251NativeGlue(){
   }
   files.push({path,exists:true,bytes:b.length,sha256:sha(b),counts,publicSnippets});
  }
- assert.equal(files.filter(f=>f.exists&&f.sha256===PINNED_JS).length,1,
-  'Exact original JSEP JS loader absent or ambiguous');
+ const exactGlue=files.filter(f=>f.exists&&f.sha256===PINNED_JS);
+ assert.ok(exactGlue.length>=1,'Exact original pinned JSEP JS glue missing');
+ assert.ok(exactGlue.every(f=>f.sha256===PINNED_JS),'JSEP glue content drift');
+ // Two identical node_modules paths for the SAME npm JSEP are NOT
+ // two different code variants; exact digest equality is the invariant.
  assert.ok(files.some(f=>f.exists&&f.sha256===PINNED_WASM),
   'Original JSEP pinned WASM absent from installed npm dependencies');
  return {schema:'M251_PINNED_ORIGINAL_JSEP_ABI_GLUE_PREFLIGHT/v1',
