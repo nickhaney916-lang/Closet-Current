@@ -33,7 +33,7 @@ function runCase({kind='plain',persisted=[],knownPeers=[],missingGetAll=false}={
   savedCalls:0,addCalls:0,readCalls:0,aborts:0};
  const ownerDb={name:'closet-current-user-owner-A',transaction(stores,mode){
   assert.equal(mode,'readwrite');
-  assert.deepEqual(stores,['items','state']);
+  assert.equal(JSON.stringify(stores),'["items","state"]');
   const tx={aborted:false,error:null,objectStore(name){
    if(name==='state')return {
     get(key){
