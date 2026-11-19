@@ -1,6 +1,9 @@
 /**
  * Mission 2 all-indexed ORIGINAL PHOTO FRONT / licensed CC0 anatomical BODY:
- * fixed-axis spine04 research-only conservative continuous angular broadphase.
+ * fixed-axis spine03 OR spine04 research-only conservative angular broadphase.
+ * Every call MUST vary one named joint only, leaving the other 162 local
+ * joints absolutely fixed. A simultaneous two-joint path is NOT validated
+ * by this change: a separately continuity-checked sequential wrapper is required.
  * Source coordinates and geometry MUST be independently SHA-verified by
  * original native browser owner; this pure module cannot authenticate input.
  *
@@ -102,7 +105,7 @@ export function evaluateAllIndexedOriginalSpine04AngularBroadphase({
   }
  }
  const structuralWitness=sourceWitness?.actualRigBoneCount===163&&
-  sourceWitness?.singleMovingNamedBone==='spine04'&&
+  ['spine03','spine04'].includes(sourceWitness?.singleMovingNamedBone)&&
   sourceWitness?.allOtherBoneLocalTransformsFrozen===true&&
   sourceWitness?.sourceCoordinatesReadFromOriginalPositionAttribute===true&&
   sourceWitness?.originalSourceSkinnedMesh===true&&
