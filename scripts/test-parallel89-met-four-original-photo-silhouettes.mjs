@@ -39,10 +39,13 @@ for(const id of ids){
   id,sha256:digest,width:meta.width,height:meta.height,
   bytes:bytes.length,host,expectedPinnedSha256:known[id]??null
  }));
+ // Retain the mismatching variant only in disposable CI so its decoded
+ // pixels can be independently compared against the prior byte-pinned
+ // museum artifact. Never silently promote it to a new accepted input.
+ await writeFile(out+'/met-70759-gallery-'+id+'.jpg',bytes);
  if(known[id])assert.equal(digest,known[id],
   'existing pinned original museum image source unexpectedly changed');
  assert.ok(!receipts.some(r=>r.sha256===digest),'distinct Met gallery photos expected');
- await writeFile(out+'/met-70759-gallery-'+id+'.jpg',bytes);
  receipts.push({id,sha256:digest,bytes:bytes.length,width:meta.width,
   height:meta.height,sourceUrl:url,sourceHost:host,actualJpegDecoded:true,
   originalCollectionObjectId:70759,originalMuseumAccession:'1983.21a, b',
