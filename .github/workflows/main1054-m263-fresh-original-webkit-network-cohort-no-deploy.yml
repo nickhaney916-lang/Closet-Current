@@ -1,0 +1,130 @@
+name: MAIN1054 M263 fresh original P94 WebKit network cohort NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m263-first-attempt-original-webkit-network-cohort-HOLD]
+  pull_request:
+    branches: [research/main1054-m262-original-onnx-byte-identity-HOLD]
+permissions:
+  contents: read
+jobs:
+  source-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source-only branch scope, unchanged original Worker and model runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          PARENT=5f594d7f7a32ec0718393afc0290b6ee01af2809
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$GITHUB_RUN_ATTEMPT" = 1
+          git merge-base --is-ancestor "$PARENT" HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:research/main1054/m262-original-onnx-byte-identity.mjs)" = 4baa8f19ad880b3d4b9f43fc8c663cf355620d8e
+          git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/main1054/m263-fresh-original-webkit-network-cohort.mjs|tests/main1054-m263-fresh-original-webkit-network-cohort.test.mjs|.github/workflows/main1054-m263-fresh-original-webkit-network-cohort-no-deploy.yml) ;;
+              *) echo "M263 scope violation: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$PARENT" HEAD -- public/ scripts/ supabase/ benchmark/ research/parallel106/ research/mission3-release-evidence-gate/
+          node --check research/main1054/m263-fresh-original-webkit-network-cohort.mjs
+          node --test tests/main1054-m263-fresh-original-webkit-network-cohort.test.mjs
+          node research/main1054/m263-fresh-original-webkit-network-cohort.mjs verify-original-runner
+      - name: Install no-deploy dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Full inherited original/private owner/security/backup Node and PWA build
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  original-browser-fresh:
+    needs: source-node
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - engine: webkit
+            width: 320
+            count: 8
+          - engine: webkit
+            width: 390
+            count: 8
+          - engine: webkit
+            width: 430
+            count: 8
+          - engine: chromium
+            width: 320
+            count: 2
+          - engine: chromium
+            width: 390
+            count: 2
+          - engine: chromium
+            width: 430
+            count: 2
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: ${{ matrix.width }}
+      M263_COUNT: ${{ matrix.count }}
+      M262_CASE: healthy
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original first-attempt browser model cohort with preserved natural RED
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$GITHUB_RUN_ATTEMPT" = 1
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node research/main1054/m263-fresh-original-webkit-network-cohort.mjs verify-original-runner
+          node research/main1054/m262-original-onnx-byte-identity.mjs prepare
+          node --check scripts/.m262-original-onnx-network-study.mjs
+          mkdir -p m263-receipts
+          for ordinal in $(seq 1 "$M263_COUNT"); do
+            echo "M263 attempt $ordinal engine=$M58_ENGINE width=$P94_WIDTH original-fresh-browser"
+            set +e
+            timeout -s TERM 180s node scripts/.m262-original-onnx-network-study.mjs > m263-attempt.log 2>&1
+            code=$?
+            set -e
+            M263_ORDINAL="$ordinal" node research/main1054/m263-fresh-original-webkit-network-cohort.mjs verify m263-attempt.log "m263-receipts/receipt-$ordinal.json" "$code"
+            rm -f m263-attempt.log
+          done
+          node research/main1054/m263-fresh-original-webkit-network-cohort.mjs aggregate m263-receipts m263-receipts/summary.json
+      - name: Publish sanitized receipt only, never original model/browser raw log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m263-original-${{ matrix.engine }}-${{ matrix.width }}-research-HOLD
+          path: m263-receipts/
+          if-no-files-found: warn
+          retention-days: 7
