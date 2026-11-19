@@ -133,7 +133,14 @@ test('natural original P94 Worker RED is FAIL even with correct original resourc
  assert.equal(r.originalResult,'FAIL');
  assert.equal(r.naturalOriginalWorkerRedCandidate,true);
  assert.equal(r.originalWorkerTerminalRedCount,1);
- assert.equal(r.sameBrowserContextCanonicalRedirectChainsVerified,true);
+ assert.equal(r.originalNetworkChainGate,'LINKED');
+ assert.equal(r.originalModelCanonicalBodies,1);
+ assert.equal(r.originalJsepCanonicalBodies,1);
+ // The HTTP response chain is observed, but a failed original Worker must
+ // NOT be promoted into a source-attested original model success.
+ assert.equal(r.sameBrowserContextCanonicalRedirectChainsVerified,false);
+ assert.equal(r.originalOnnxNetworkSHA256,null);
+ assert.equal(r.originalJsepNetworkSHA256,null);
  assert.equal(r.sourceEvidenceGate,'FAIL');
  assert.equal(r.causalPermanentWebKitFixProven,false);
 });
