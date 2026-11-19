@@ -1,0 +1,51 @@
+name: MAIN242 source-pinned ORT WASM session ABI arg audit NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main242-pinned-ort-wasm-abi-evidence-HOLD]
+  pull_request:
+    branches: [research/main241-pinned-ort-option-path-audit-HOLD]
+permissions:
+  contents: read
+jobs:
+  immutable-native-abi-proof-boundary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict three-path source-only research and original Worker unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=ff4d60fe9a4710f4b626ab22873e232e32a080a5
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' '.github/workflows/main242-ort-wasm-abi-argument-HOLD.yml' 'scripts/main242-pinned-ort-abi-argument-audit.mjs' 'tests/main242-pinned-ort-abi-argument.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = ad8ab0eb33322a34f8cc3f45a1fe26feff87b2ab
+          test "$(git rev-parse HEAD:scripts/main239-grow-target-memory-fixture.mjs)" = 3afb59500cdf7e51b2baf828abe6c5590bccd899
+          node --check scripts/main242-pinned-ort-abi-argument-audit.mjs
+          node --test tests/main242-pinned-ort-abi-argument.test.mjs
+      - name: Pinned original packages and offline regression dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Verify pinned package integrity and source-level native ABI argument
+        shell: bash
+        run: |
+          set -euo pipefail
+          ORT_INTEGRITY="$(npm view onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 dist.integrity)"
+          test "$ORT_INTEGRITY" = "sha512-0uS76OPgH0hWCPrFKlL8kYVV7ckM7t/36HfbgoFw6Nd0CZVVbQC4PkrR8mBX8LtNUFZO25IQBqV2Hx2ho3FlbQ=="
+          node scripts/main242-pinned-ort-abi-argument-audit.mjs
+      - name: Immutable original app build and inherited full source-owner privacy tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
