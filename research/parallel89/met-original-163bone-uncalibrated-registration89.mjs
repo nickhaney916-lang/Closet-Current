@@ -14,6 +14,8 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {evaluateFullIndexedContact,controlledFullContactFixtures}
  from './full-indexed-contact-calibration89.mjs';
+import {auditOriginalContactNumerics,controlledOriginalNumericReasonFixtures}
+ from './original-contact-numeric-diagnostics89.mjs';
 
 if(!['127.0.0.1','localhost','[::1]'].includes(location.hostname))
  throw Error('source-anatomy-research-loopback-required');
@@ -546,6 +548,17 @@ function fullActualSkinnedIndexedSourceContact(x){
  const indexed=new THREE.BufferAttribute(faces,1);
  const allPhotoFront=posedTriangleArray(x.mesh,indexed,
   range.sourcePhotoFront.start,range.sourcePhotoFront.count);
+ // Diagnose actual source and real licensed body per-face numerical reasons
+ // WITHOUT claiming that these bounded AABB pairs certify full contact.
+ const numericalRootCause=auditOriginalContactNumerics(bodyFaces,allPhotoFront,{
+  maxObservedPairs:512,prefixFront:12,distributedFront:12});
+ invariant(numericalRootCause.originalFrontFaceProfile.actualIndexedFaces===
+  allPhotoFront.length&&
+  numericalRootCause.originalBodyFaceProfile.actualIndexedFaces===
+  bodyFaces.length&&
+  numericalRootCause.consumer3DAdmitted===false&&
+  numericalRootCause.diagnosticSamplesOnly===true,
+  'authentic-original-numeric-root-trace-not-attested');
  // A responsive original-source browser must not spend minutes enumerating
  // every non-contact pair in already uncalibrated, unapproved geometry.
  // The strict budget is a FAIL-CLOSED outcome, never a fit certificate.
@@ -564,7 +577,8 @@ function fullActualSkinnedIndexedSourceContact(x){
     result.consumer3DAdmitted===false)),
   'full-original-indexed-collision-gate-has-neither-complete-negative-audit-nor-positive-rejection');
  return {
-  ...result,originalBodySkinnedMeshComponentsAudited:bodyMeshCoverage.length,
+  ...result,realOriginalFaceNumericRootCauseResearchOnly:numericalRootCause,
+  originalBodySkinnedMeshComponentsAudited:bodyMeshCoverage.length,
   originalBodyComponentTriangleCounts:bodyMeshCoverage.map(x=>x.actualIndexedTrianglesAudited),
   originalPhotoSourceJPEGByteSHA256:payload.originalJPEGByteSHA256,
   sourceOriginalRGBSHA256:required.sourceRGB,
@@ -738,6 +752,7 @@ window.__M2RealRigPhotoTrial={
  select,startSourceSkinnedMotionTrial,setSourceSkinnedMotionTrialPose,
  getControlledTriangleCrossingKernelProof:controlledCrossingKernelProbe,
  getFullContactControlProof:controlledFullContactFixtures,
+ getContactNumericControlProof:controlledOriginalNumericReasonFixtures,
  sampleFiveAuthenticSpinePoseCrossings,
  getProof:()=>proof,
  getFlags:()=>({
