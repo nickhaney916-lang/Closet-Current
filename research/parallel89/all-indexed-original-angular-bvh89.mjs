@@ -66,6 +66,7 @@ function area2(tri){
 export function evaluateAllIndexedOriginalSpine04AngularBroadphase({
  frontPoses,bodyPoses,frontIndices,bodyIndices,deltaRadians,
  expectedFrontFaces,expectedBodyFaces,
+ sourceFrontDepthShiftIntervalRigUnits=[0,0],
  sourceWitness=null,kinematicModel='one-fixed-axis-LBS-joint',
  maxBodyBVHVisits=3000000,maxLeafPairTests=500000,
  maxNarrowphasePairs=60000,maxTotalFaces=200000,
@@ -79,6 +80,20 @@ export function evaluateAllIndexedOriginalSpine04AngularBroadphase({
   ![maxBodyBVHVisits,maxLeafPairTests,maxNarrowphasePairs,
     maxTotalFaces,maxTotalVertices].every(safe))
   throw Error('original-all-face-angular-sweep-unsafe-input');
+ // Depth candidates are ORIGINAL RIG UNITS, never physically calibrated
+ // cm, and applied ONLY to temporary bounds/temporary exact-triangle copies.
+ // Any unverified value/interval must BLOCK before BVH generation.
+ if(!Array.isArray(sourceFrontDepthShiftIntervalRigUnits)||
+  sourceFrontDepthShiftIntervalRigUnits.length!==2||
+  !sourceFrontDepthShiftIntervalRigUnits.every(finite)||
+  sourceFrontDepthShiftIntervalRigUnits[0]>
+   sourceFrontDepthShiftIntervalRigUnits[1]||
+  sourceFrontDepthShiftIntervalRigUnits.some(z=>Math.abs(z)>3.5))
+  return forbid('BLOCKED_UNVERIFIED_SOURCE_DEPTH_INTERVAL');
+ const [frontDepthLower,frontDepthUpper]=
+  sourceFrontDepthShiftIntervalRigUnits;
+ const depths=frontDepthLower===frontDepthUpper?[frontDepthLower]:
+  [frontDepthLower,(frontDepthLower+frontDepthUpper)/2,frontDepthUpper];
  const nf=frontIndices.length/3,nb=bodyIndices.length/3,
   vf=frontPoses[0].length/3,vb=bodyPoses[0].length/3;
  if(!Number.isSafeInteger(nf)||!Number.isSafeInteger(nb)||
@@ -153,6 +168,13 @@ export function evaluateAllIndexedOriginalSpine04AngularBroadphase({
  const fVertices=vertices(frontPoses),bVertices=vertices(bodyPoses);
  if(!fVertices||!bVertices)
   return forbid('BLOCKED_NONFINITE_TRUE_ORIGINAL_VERTEX_TRAJECTORY');
+ // Apply interval endpoints after constructing the ONE per-vertex angular
+ // envelope. Do not add depth uncertainty at each triangle corner, and
+ // do not modify original photographed source position or skin weights.
+ for(let vi=0;vi<vf;vi++){
+  fVertices[6*vi+2]+=frontDepthLower;
+  fVertices[6*vi+5]+=frontDepthUpper;
+ }
  const common={originalFrontFaceCount:nf,originalBodyFaceCount:nb,
   originalFrontVertexCount:vf,originalBodyVertexCount:vb,
   sourceWitnessSelfReportedNotIndependentAuthentication:true,
@@ -163,6 +185,10 @@ export function evaluateAllIndexedOriginalSpine04AngularBroadphase({
   maxConservativeEnvelopeInflationRigUnits:maxInflation,
   maxOriginalVertexCoordinateRigUnits:maxOriginalVertexCoordinate,
   exactFiveSamplesNotContinuousNarrowphase:true,
+  researchSourceFrontDepthIntervalRigUnits:[frontDepthLower,frontDepthUpper],
+  depthIntervalIsUnmeasuredCounterfactual:true,
+  depthOnlyOriginalSilhouetteXYAndUVUnchanged:true,
+  sampledDepthPlacementsNotContinuousDepthNarrowphase:true,
   genuinePhysicalCameraScaleUnknown:true,
   originalPhotographReverseNotObserved:true};
  if(maxResidual>1e-5)
@@ -259,15 +285,22 @@ export function evaluateAllIndexedOriginalSpine04AngularBroadphase({
      return summary('BLOCKED_ANGULAR_EXACT_SAMPLE_BUDGET',{
       lastFrontFaceIndex:fi,complete:false});
     for(let t=0;t<5;t++){
-     const cls=classifyExactTriangleContact(
-      faceTriangle(frontPoses,frontIndices,fi,t),
-      faceTriangle(bodyPoses,bodyIndices,bi,t));
-     exactSamplesTested++;
-     if(['CROSSING','TOUCHING','COPLANAR_OVERLAP'].includes(cls))
-      return summary('BLOCKED_ACTUAL_TRUE_ORIGINAL_DISCRETE_CONTACT',{
-       witness:{frontFace:fi,bodyFace:bi,normalizedTime:times[t],
-        contactClass:cls},complete:false});
-     if(cls==='INDETERMINATE')unknownExactSamples++;
+     const body=faceTriangle(bodyPoses,bodyIndices,bi,t);
+     const front=faceTriangle(frontPoses,frontIndices,fi,t);
+     for(const sourceShift of depths){
+      // This is a TRANSFORMED COPY of the true photographed source
+      // geometry, not owner-measured garment placement or mesh mutation.
+      const shifted=front.map(([xx,yy,zz])=>[xx,yy,zz+sourceShift]);
+      const cls=classifyExactTriangleContact(shifted,body);
+      exactSamplesTested++;
+      if(['CROSSING','TOUCHING','COPLANAR_OVERLAP'].includes(cls))
+       return summary('BLOCKED_ACTUAL_TRUE_ORIGINAL_DISCRETE_CONTACT',{
+        witness:{frontFace:fi,bodyFace:bi,normalizedTime:times[t],
+         sourceDepthShiftRigUnits:sourceShift,
+         transformedOriginalSourceCopyOnly:true,
+         contactClass:cls},complete:false});
+      if(cls==='INDETERMINATE')unknownExactSamples++;
+     }
     }
    }
   }
@@ -275,9 +308,10 @@ export function evaluateAllIndexedOriginalSpine04AngularBroadphase({
  if(envelopeOverlaps)
   return summary('BLOCKED_UNRESOLVED_FULL_INDEXED_ANGULAR_CONTACT',{
    complete:true,
-   reason:'all original indexed angular envelopes checked but possible in-between contact unresolved'});
+   reason:'all original indexed angular and depth-uncertainty envelopes checked; possible contact between time/depth samples unresolved'
+  });
  return summary('RESEARCH_ONLY_FULL_INDEXED_ANGULAR_ENVELOPES_DISJOINT',{
   complete:true,
-  reason:'all original supplied front+body bounds disjoint only for fixed-axis one-joint skinning; FLOATING uncalibrated photo front is NOT worn clothing'
+  reason:'all original supplied front+body angular and candidate depth-interval bounds disjoint; original photo is NOT physically calibrated to be worn'
  });
 }
