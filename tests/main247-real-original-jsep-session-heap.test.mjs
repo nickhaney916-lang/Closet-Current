@@ -69,7 +69,7 @@ test('M247 model loader must retain actual original JS Memory hook and no grow e
  const badGrow=event();badGrow.growErrors=1;
  assert.throws(()=>verifySameOriginalJsepModelBoundary([badGrow],asset(),'webkit'),/Native memory grow threw/);
  const noRefs=event();noRefs.validTargets=0;
- assert.throws(()=>verifySameOriginalJsepModelBoundary([noRefs],asset(),'webkit'),/false == true/);
+ assert.throws(()=>verifySameOriginalJsepModelBoundary([noRefs],asset(),'webkit'),/falsy value|false == true/);
 });
 test('M247 sanitize discards owner/photo/model/request details and unexpected event',()=>{
  const source={type:'diagnostic',phase:'m247_jsep_memory',outcome:'ready',
