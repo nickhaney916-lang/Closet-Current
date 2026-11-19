@@ -60,6 +60,8 @@ export function auditIndexedClosedSurface89(positions,indices){
  }
  for(const e of edges.values())if(e.faces.length!==2)
   return rejection('open-boundary-edge');
+ const vertexEdges=Array.from({length:n},()=>[]);
+ for(const e of edges.values()){vertexEdges[e.from].push(e);vertexEdges[e.to].push(e);}
  let components=0;
  const roots=new Set();
  for(let v=0;v<n;v++){
@@ -69,8 +71,7 @@ export function auditIndexedClosedSurface89(positions,indices){
   // vertex while every indexed edge still has exactly two incident faces.
   const faceList=incident[v],local=new Map(faceList.map((f,j)=>[f,j]));
   const ring=dsu(faceList.length),degree=new Uint8Array(faceList.length);
-  for(const e of edges.values()){
-   if(e.from!==v&&e.to!==v)continue;
+  for(const e of vertexEdges[v]){
    const f0=local.get(e.faces[0]),f1=local.get(e.faces[1]);
    if(f0===undefined||f1===undefined)return rejection('vertex-edge-face-incidence-mismatch');
    ring.join(f0,f1);degree[f0]++;degree[f1]++;
