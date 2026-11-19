@@ -704,6 +704,87 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     syntheticOwnerAndPhoto:true,actualIndexedDB:true,physicalDevice:false,
     pageErrors:errors.length
    }));
+   // A native owner UI refusal from a second tab is not a generic retry.
+   // Reusing the old owner checkboxes must remain disabled until refresh.
+   const prepareStaleOwnerReview=await page.evaluate(async()=>{
+    const req=indexedDB.open('closet-current-user-owner-A');
+    const ownerDb=await new Promise((resolve,reject)=>{
+     req.onsuccess=()=>resolve(req.result);
+     req.onerror=()=>reject(req.error);
+    });
+    db=ownerDb;window.closetAuth.user={id:'owner-A'};
+    const raw='data:image/jpeg;base64,T1JJR0lOQUwtSkRFUA==';
+    const draft={id:'new-owner-review-conflict-88',
+     image:'data:image/jpeg;base64,TkVXLUNST1A=',
+     originalPhoto:{image:raw},name:'Red shirt',
+     category:'Tops',itemType:'T-shirt',color:'Red',
+     seasons:[],userAdjusted:false,requiresOwnershipConfirmation:true};
+    batch=[draft];items=[];window.messageText='';
+    window.beforeWriteTest=null;
+    await new Promise((resolve,reject)=>{
+     const tx=db.transaction('state','readwrite');
+     tx.objectStore('state').put({id:'draft',batch:structuredClone(batch)});
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+    draftStoreRevision88=JSON.stringify(batch);
+    adjustPhoto(draft);
+    return {raw,draftId:draft.id};
+   });
+   const staleOwnerDialog=page.locator('dialog[open]');
+   await staleOwnerDialog.getByRole('checkbox',{
+    name:/I checked the clothing photo and confirmed/
+   }).check();
+   assert.equal(await staleOwnerDialog.getByRole('button',{name:'Save changes'}).isEnabled(),true);
+   await page.evaluate(async raw=>{
+    // A second tab just inserted a different crop from the SAME original.
+    await new Promise((resolve,reject)=>{
+     const tx=db.transaction('items','readwrite');
+     tx.objectStore('items').add({
+      id:'late-other-tab-owner-review-88',
+      image:'data:image/jpeg;base64,T0xELUNST1A=',
+      originalPhoto:{image:raw},category:'Tops',itemType:'T-shirt',color:'Blue'
+     });
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+   },prepareStaleOwnerReview.raw);
+   await submit();
+   await page.waitForFunction(()=>window.messageText.includes('Close Adjust')&&
+    window.messageText.includes('refresh'));
+   const staleOwnerUi=await page.evaluate(async draftId=>{
+    const dlg=document.querySelector('dialog[open]');
+    const save=dlg.querySelector('button.primary');
+    const confirmed=[...dlg.querySelectorAll('input[type="checkbox"]')]
+      .filter(x=>x.getAttribute('aria-label')?.includes('I checked the clothing photo'))
+      .every(x=>x.checked===false);
+    const stored=await new Promise((resolve,reject)=>{
+     const req=db.transaction('items','readonly').objectStore('items').get(draftId);
+     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+    });
+    const draft=await new Promise((resolve,reject)=>{
+     const req=db.transaction('state','readonly').objectStore('state').get('draft');
+     req.onsuccess=()=>resolve(req.result?.batch||[]);
+     req.onerror=()=>reject(req.error);
+    });
+    return {disabled:save?.disabled===true,
+     confirmedCleared:confirmed,
+     draftPreserved:draft.some(x=>x.id===draftId),noNewRow:stored===undefined,
+     guidance:window.messageText};
+   },prepareStaleOwnerReview.draftId);
+   assert.equal(staleOwnerUi.disabled,true,'outdated review must not re-enable retry');
+   assert.equal(staleOwnerUi.confirmedCleared,true);
+   assert.equal(staleOwnerUi.draftPreserved,true);
+   assert.equal(staleOwnerUi.noNewRow,true);
+   assert.match(staleOwnerUi.guidance,/same complete original|same original/i);
+   // Dispatching submit directly must also be blocked, not just the button.
+   const beforeRetry=staleOwnerUi.guidance;
+   await submit();
+   assert.match(await page.evaluate(()=>window.messageText),/outdated|refresh/i);
+   console.log('M1_P88_BROWSER_STALE_OWNER_REVIEW_RECOVERY',JSON.stringify({
+    browser:browserName,width,blocked:true,photoKept:true,
+    staleButtonDisabled:true,scriptedRetryBlocked:true,syntheticOwner:true,
+    realBrowserIndexedDB:true,physicalDevice:false,pageErrors:errors.length
+   }));
+   await page.evaluate(()=>db.close());
    assert.deepEqual(errors,[]);
    await page.close();
   }
