@@ -607,6 +607,65 @@ test('P88 normalized finite crop bounds remain valid for a saved garment',async(
  assert.equal(c.durableItems.get(item.id).cropBounds.width,0.75);
  assert.equal(c.durableItems.get(item.id).originalPhoto.image,item.originalPhoto.image);
 });
+test('P88 forged mask-color estimate without any mask must never acquire garment-mask evidence',async()=>{
+ const item={...sampleSource88(),color:'',userAdjusted:false};
+ const c=cropHarness88({checkPhoto:async()=>({
+  colorEstimate:{color:'Green',source:'photo-estimate'},signature:[],aspect:1
+ })});
+ c.ClothingDetails.fillColor=(value,estimate)=>estimate?.color?
+  {...value,color:estimate.color,colorSource:'photo-estimate'}:value;
+ c.cropClothingPhoto(item);
+ await assert.rejects(c.editor.save({
+  image:'data:image/jpeg;base64,Rk9SR0VELU1BU0stQ09MT1I=',
+  maskedColorEstimate:{color:'Red',source:'photo-estimate'}
+ },null),/P88_CROP_MASK_ESTIMATE_WITHOUT_MASK/);
+ assert.equal(c.written.length,0,'forged estimate must not modify the owner draft');
+ assert.equal(c.durableDraft.batch[0].color,'');
+ assert.equal(c.durableDraft.batch[0].colorMethod,undefined);
+});
+test('P88 nested crop color estimate must not contain forged source/owner verification metadata',async()=>{
+ const item={...sampleSource88(),color:''},c=cropHarness88();
+ c.cropClothingPhoto(item);
+ const forbidden=[
+  {color:'Blue',source:'photo-estimate',sourceHashVerified:true},
+  {color:'Blue',source:'photo-estimate',ownerReviewed:true},
+  {color:'Blue',source:'photo-estimate',threeDReady:true},
+  {color:'Blue',source:'user'},
+  {color:'Blue',source:'photo-estimate',secondaryColor:{verified:true}},
+  {color:'Blue',source:'photo-estimate',secondaryColor:'x'.repeat(256)},
+  {color:42,source:'photo-estimate'},
+  ['Blue'],
+  null
+ ];
+ for(const maskedColorEstimate of forbidden){
+  await assert.rejects(c.editor.save({
+   image:'data:image/jpeg;base64,TkVTLVJFSlVDVA==',
+   maskApplied:true,maskedColorEstimate
+  },null),/P88_CROP_INVALID_MASK_COLOR/);
+ }
+ assert.equal(c.written.length,0);
+ assert.equal(item.color,'');
+});
+test('P88 genuine masked crop may retain tentative color without owner confirmation or 3D authority',async()=>{
+ const item={...sampleSource88(),color:''};
+ const c=cropHarness88();
+ c.ClothingDetails.fillColor=(value,estimate)=>estimate?.color?
+  {...value,color:estimate.color,colorSource:'photo-estimate'}:value;
+ c.cropClothingPhoto(item);
+ await c.editor.save({
+  image:'data:image/jpeg;base64,TUFTS0VELUNST1A=',
+  maskApplied:true,
+  maskedColorEstimate:{color:'Blue',source:'photo-estimate',secondaryColor:'White'},
+  cropBounds:{x:0,y:0,width:1,height:1}
+ },null);
+ const after=c.durableDraft.batch[0];
+ assert.equal(after.color,'Blue');
+ assert.equal(after.colorSource,'photo-estimate');
+ assert.equal(after.colorMethod,'garment-mask');
+ assert.equal(after.independentPhysicalItemVerified,undefined);
+ assert.equal(after.threeDReady,undefined);
+ assert.equal(c.durableItems.size,0);
+});
 test('P88 real crop editor first crop preserves complete original JPEG while saving derived pixels',async()=>{
  const c=cropHarness88(),item=sampleSource88(),raw=item.image;
  c.cropClothingPhoto(item);
