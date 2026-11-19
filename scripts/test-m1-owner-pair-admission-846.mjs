@@ -925,6 +925,42 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     });
     if(await get('items',geometry.id))throw Error('P88_BROWSER_FIXTURE_NOT_ISOLATED');
 
+    // The genuine app-source crop callback must never assert mask-derived
+    // color evidence when the native editor reports no applied mask.
+    const paletteProbe={id:'actual-masked-estimate-provenance-88',
+     image:oldImage,originalPhoto:{image:raw},
+     category:'Tops',itemType:'T-shirt',color:'',seasons:[],
+     requiresOwnershipConfirmation:true};
+    items=[];batch=[paletteProbe];
+    await put('state',{id:'draft',batch:[paletteProbe]});
+    draftStoreRevision88=JSON.stringify(batch);
+    cropClothingPhoto(paletteProbe);
+    let masklessEstimateRefused=false,nestedEstimateRefused=false;
+    try{await window.crop88Editor.save({image:newImage,
+     maskedColorEstimate:{color:'Red',source:'photo-estimate'}},null);}
+    catch(e){masklessEstimateRefused=e.message==='P88_CROP_MASK_ESTIMATE_WITHOUT_MASK';}
+    try{await window.crop88Editor.save({image:newImage,maskApplied:true,
+     maskedColorEstimate:{color:'Red',source:'photo-estimate',threeDReady:true}},null);}
+    catch(e){nestedEstimateRefused=e.message==='P88_CROP_INVALID_MASK_COLOR';}
+    const beforeAdvice=(await get('state','draft'))?.batch?.find(x=>x.id===paletteProbe.id);
+    const rejectedMaskAdviceUnchanged=masklessEstimateRefused&&nestedEstimateRefused&&
+     beforeAdvice?.image===oldImage&&beforeAdvice?.color===''&&
+     beforeAdvice?.colorMethod===undefined;
+    await window.crop88Editor.save({image:newImage,maskApplied:true,
+     maskedColorEstimate:{color:'Red',source:'photo-estimate',secondaryColor:null}},null);
+    const afterAdvice=(await get('state','draft'))?.batch?.find(x=>x.id===paletteProbe.id);
+    const tentativeMaskAdviceRetained=afterAdvice?.color==='Red'&&
+     afterAdvice?.colorSource==='photo-estimate'&&
+     afterAdvice?.colorMethod==='garment-mask'&&
+     afterAdvice?.requiresOwnershipConfirmation===true&&
+     afterAdvice?.threeDReady!==true&&
+     (await get('items',paletteProbe.id))===undefined&&
+     afterAdvice?.originalPhoto?.image===raw;
+    // The mask-provenance fixture must not appear as a separate photo or
+    // copied saved garment in any of the inherited duplicate-owner tests.
+    await put('state',{id:'draft',batch:[]});
+    batch=[];items=[];draftStoreRevision88=JSON.stringify(batch);
+
     const pending={id:'actual-pending-crop-88',image:oldImage,
      originalPhoto:{image:raw},name:'Pending original',category:'Tops',
      itemType:'T-shirt',color:'Blue',seasons:[],userAdjusted:false};
@@ -1006,6 +1042,8 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
      savedModelRejected,ownerLabelsUntouched,savedUnknownRemainsUnknown,
      savedEstimatedColorRetained,invalidBoundsRejected,
      invalidBoundsUntouched,validBoundsStored,
+     masklessEstimateRefused,nestedEstimateRefused,
+     rejectedMaskAdviceUnchanged,tentativeMaskAdviceRetained,
      staleSavedRefused,correctionIntact,localSavedIntact,
      savedCropCommitted,originalSaved,staleDraftRefused,otherPreserved,
      pendingRawPreserved,newCropSaved,otherStillPreserved,
@@ -1016,6 +1054,8 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     savedModelRejected:true,ownerLabelsUntouched:true,
     savedUnknownRemainsUnknown:true,savedEstimatedColorRetained:true,
     invalidBoundsRejected:6,invalidBoundsUntouched:true,validBoundsStored:true,
+    masklessEstimateRefused:true,nestedEstimateRefused:true,
+    rejectedMaskAdviceUnchanged:true,tentativeMaskAdviceRetained:true,
     staleSavedRefused:true,correctionIntact:true,localSavedIntact:true,
     savedCropCommitted:true,originalSaved:true,staleDraftRefused:true,
     otherPreserved:true,pendingRawPreserved:true,
