@@ -1,0 +1,108 @@
+name: MAIN1054 M265 original JSEP HTTP failure versus native allocator NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m265-original-jsep-http-trust-HOLD]
+  pull_request:
+    branches: [research/main1054-m264-redirect-vs-http-model-fault-HOLD]
+permissions:
+  contents: read
+jobs:
+  source-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check first source ancestry, immutable original code, and ONLY isolated research diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          PARENT=a3f7bc4d101985a953478ac7a9eada63b8c58581
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          git merge-base --is-ancestor "$PARENT" HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:research/main1054/m264-model-http-redirect-truth.mjs)" = 46de4f845a5aa83a3bd57ac1655fdcb67680e367
+          git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/main1054/m265-original-jsep-http-truth.mjs|tests/main1054-m265-original-jsep-http.test.mjs|.github/workflows/main1054-m265-original-jsep-http-no-deploy.yml) ;;
+              *) echo "M264 out-of-scope change: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$PARENT" HEAD -- public/ scripts/ supabase/ benchmark/ research/parallel106/
+          node --check research/main1054/m265-original-jsep-http-truth.mjs
+          node --test tests/main1054-m265-original-jsep-http.test.mjs
+      - name: Pinned test-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Full original offline app build and complete inherited private source/backup tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+
+  original-browser:
+    needs: source-node
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - engine: webkit
+            mode: healthy
+          - engine: chromium
+            mode: healthy
+          - engine: webkit
+            mode: jsep-404
+          - engine: chromium
+            mode: jsep-404
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: 390
+      M265_CASE: ${{ matrix.mode }}
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original P94 and Worker byte pins, actual native browser, fail-closed exact-first-attempt receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node research/main1054/m265-original-jsep-http-truth.mjs prepare
+          node --check scripts/.m265-original-jsep-http-study.mjs
+          set +e
+          set -o pipefail
+          node scripts/.m265-original-jsep-http-study.mjs 2>&1 | tee m265-original.log
+          model_exit=$?
+          set -e
+          if test "$M265_CASE" = jsep-404; then
+            test "$model_exit" -ne 0
+          else
+            test "$model_exit" -eq 0
+          fi
+          MODEL_EXIT="$model_exit" node research/main1054/m265-original-jsep-http-truth.mjs verify m265-original.log
