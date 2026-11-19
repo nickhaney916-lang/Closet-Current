@@ -859,19 +859,58 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     draftStoreRevision88=JSON.stringify(batch);
     cropClothingPhoto(newest);
     await put('items',peer);
-    await window.crop88Editor.save({image:newest.image,notes:'reviewed crop'},null);
+    await window.crop88Editor.save({image:newest.image,cropBounds:{x:0,y:0,width:1,height:1}},null);
     const flagged=(await get('state','draft'))?.batch?.find(x=>x.id===newest.id);
     const latePeerGuard=flagged?.exactSavedPhotoMatch88?.savedItemId===peer.id&&
      flagged?.possibleDuplicate===true&&
      flagged?.requiresOwnershipConfirmation===true;
     const noAutoSaved=(await get('items',newest.id))===undefined;
+    // Real Crop editor includes originalPhoto on first crop. Preserve the
+    // exact original source and reject photo-callback forged 3D credentials.
+    const firstRaw='data:image/jpeg;base64,RklSU1QtUkFXLUpQRUc=';
+    const first={id:'native-first-crop-original-88',image:firstRaw,
+     category:'Tops',itemType:'T-shirt',color:'Blue',
+     seasons:[],userAdjusted:false};
+    items=[];batch=[first];await put('state',{id:'draft',batch:[first]});
+    draftStoreRevision88=JSON.stringify(batch);
+    cropClothingPhoto(first);
+    const firstCropImage='data:image/jpeg;base64,RklSU1QtREVSSVZFRC1KUEVH';
+    await window.crop88Editor.save({image:firstCropImage,
+     originalPhoto:{image:firstRaw},cropBounds:{x:0,y:0,width:1,height:1}},null);
+    const firstCropRow=(await get('state','draft'))?.batch?.find(x=>x.id===first.id);
+    const firstCropSaved=firstCropRow?.image===firstCropImage&&
+     firstCropRow?.originalPhoto?.image===firstRaw&&
+     first.originalPhoto?.image===firstRaw;
+
+    const guardedRaw='data:image/jpeg;base64,R1VBUkRFRC1PUklHSU5BTA==';
+    const guarded={id:'native-forged-crop-credential-88',
+     image:'data:image/jpeg;base64,R1VBUkRFRC1QUkVWSUVX',
+     originalPhoto:{image:guardedRaw},category:'Tops',
+     itemType:'T-shirt',color:'Blue',seasons:[],userAdjusted:false};
+    items=[];batch=[guarded];await put('state',{id:'draft',batch:[guarded]});
+    draftStoreRevision88=JSON.stringify(batch);cropClothingPhoto(guarded);
+    let forgedRejected=0;
+    for(const extra of [
+     {threeDReady:true},{sourceHashVerified:true},
+     {originalPhoto:{image:guardedRaw,sha256:'f'.repeat(64),verified:true}}
+    ]){
+     try{await window.crop88Editor.save({image:firstCropImage,...extra},null);}
+     catch(e){if(/P88_CROP_UNEXPECTED_FIELD/.test(e.message))forgedRejected++;}
+    }
+    const unchanged=(await get('state','draft'))?.batch?.find(x=>x.id===guarded.id);
+    const forgedOriginalUntouched=forgedRejected===3&&
+     unchanged?.image===guarded.image&&
+     unchanged?.threeDReady!==true&&unchanged?.sourceHashVerified!==true&&
+     unchanged?.originalPhoto?.verified!==true;
     ownerDb.close();
-    return {staleSavedRefused,correctionIntact,localSavedIntact,
+    return {firstCropSaved,forgedOriginalUntouched,forgedRejected,
+     staleSavedRefused,correctionIntact,localSavedIntact,
      savedCropCommitted,originalSaved,staleDraftRefused,otherPreserved,
      pendingRawPreserved,newCropSaved,otherStillPreserved,
      latePeerGuard,noAutoSaved};
    });
    assert.deepEqual(cropCas88,{
+    firstCropSaved:true,forgedOriginalUntouched:true,forgedRejected:3,
     staleSavedRefused:true,correctionIntact:true,localSavedIntact:true,
     savedCropCommitted:true,originalSaved:true,staleDraftRefused:true,
     otherPreserved:true,pendingRawPreserved:true,
