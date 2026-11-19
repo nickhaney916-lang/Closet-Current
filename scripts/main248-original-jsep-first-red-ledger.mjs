@@ -60,7 +60,8 @@ export function classifyOriginalFailure(evidence,status,engine,attempt){
   actualMemoryGrowErrors:Number.isInteger(event?.growErrors)?event.growErrors:null,
   firstMemoryPages:Number.isInteger(event?.firstPages)?event.firstPages:null,
   terminalMemoryPages:Number.isInteger(event?.terminalPages)?event.terminalPages:null,
-  failureCategory:category,originalNativeMemoryRedProven:actualNativeRed,
+  failureCategory:category,possibleOriginalNativeMemoryRed:actualNativeRed,
+  originalNativeMemoryRedProven:false,
   rawFailurePrivateDataStored:false,actualFirstAttemptFailed:true,
   noRetry:true,noSilentWrongSave:true,releaseAuthorized:false,familyAlphaHold:true
  };
