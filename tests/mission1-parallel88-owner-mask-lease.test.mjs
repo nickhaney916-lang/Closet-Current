@@ -1768,15 +1768,15 @@ function exactDuplicateOwnerSaveHarness88(){
  const records=[],user={id:'owner-A'};
  const ownerDb={name:'closet-current-user-owner-A',transaction(){
   const tx={objectStore(store){
-   return {add(value){records.push({store,value:structuredClone(value)});},put(value){records.push({store,value:structuredClone(value)});}};
+   return {get(key){assert.equal(key,'draft');const req={result:{id:'draft',batch:[structuredClone(current)]}};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){records.push({store,value:structuredClone(value)});},put(value){records.push({store,value:structuredClone(value)});}};
   }};
-  queueMicrotask(()=>tx.oncomplete?.());return tx;
+  queueMicrotask(()=>queueMicrotask(()=>tx.oncomplete?.()));return tx;
  }};
  const photo='data:image/jpeg;base64,UEhPVE8=',existing={id:'already-owned',image:photo,category:'Tops'},
   current={id:'new-capture',image:photo,category:'Tops',itemType:'T-shirt',color:'Blue',
    exactSavedPhotoMatch88:{savedItemId:existing.id}};
  const c={window:{closetAuth:{user}},items:[existing],batch:[current],db:ownerDb,
-  structuredClone,queued:async fn=>{await c.beforeWrite?.();return fn();}};
+  structuredClone,draftStoreRevision88:JSON.stringify([current]),queued:async fn=>{await c.beforeWrite?.();return fn();}};
  vm.createContext(c);
  vm.runInContext(appSource.slice(saveBegin,saveEnd)+appSource.slice(helpers,end),c);
  const lease=c.reviewedSaveLease88(current);
@@ -1873,9 +1873,9 @@ test('P88 ordinary review save holds exact owner, image and IDB after cloud pref
   const written={};
   const database={name:'closet-current-user-owner-A',transaction(){
    const tx={objectStore(store){
-    return {add(value){writeCount++;written[store]=structuredClone(value);},put(value){writeCount++;written[store]=structuredClone(value);}};
+    return {get(key){assert.equal(key,'draft');const req={result:{id:'draft',batch:[structuredClone(item)]}};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){writeCount++;written[store]=structuredClone(value);},put(value){writeCount++;written[store]=structuredClone(value);}};
    }};
-   queueMicrotask(()=>tx.oncomplete?.());
+   queueMicrotask(()=>queueMicrotask(()=>tx.oncomplete?.()));
    return tx;
   }};
   const user={id:'owner-A'};
@@ -1883,7 +1883,7 @@ test('P88 ordinary review save holds exact owner, image and IDB after cloud pref
    category:'Tops',itemType:'T-Shirt',color:'Blue',
    segmentHint:{categories:['Tops']},cropBounds:{x:0,y:0,width:1,height:1}};
   const c={window:{closetAuth:{user}},db:database,batch:[item],items:[],
-   structuredClone,queued:async cb=>{await gate;return cb();}};
+   draftStoreRevision88:JSON.stringify([item]),structuredClone,queued:async cb=>{await gate;return cb();}};
   vm.createContext(c);vm.runInContext(native,c);
   const lease=vm.runInContext('reviewedSaveLease88(batch[0])',c);
   return {c,lease,item,user,database,written,releaseGate,
@@ -3201,7 +3201,8 @@ test('P88 ordinary reviewed draft ID collision preserves existing closet row and
  const db={name:'closet-current-user-owner-A',transaction(stores,mode){
   assert.deepEqual(Array.from(stores),['items','state']);
   assert.equal(mode,'readwrite');
-  const tx={oncomplete:null,onabort:null,onerror:null,objectStore(name){
+  let aborted=false;
+  const tx={oncomplete:null,onabort:null,onerror:null,abort(){aborted=true;queueMicrotask(()=>tx.onabort?.());},objectStore(name){
    if(name==='items')return {
     add(value){operations.push('items.add');
      if(savedRows.has(value.id))throw Error('ConstraintError: key already exists');
@@ -3217,7 +3218,7 @@ test('P88 ordinary reviewed draft ID collision preserves existing closet row and
    };
    throw Error('Unexpected store');
   }};
-  queueMicrotask(()=>queueMicrotask(()=>tx.oncomplete?.()));
+  queueMicrotask(()=>queueMicrotask(()=>{if(!aborted)tx.oncomplete?.();}));
   return tx;
  }};
  const c={window:{closetAuth:{user:owner}},db,items:[saved],batch:[source],
