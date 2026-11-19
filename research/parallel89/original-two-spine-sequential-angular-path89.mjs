@@ -174,7 +174,7 @@ export function evaluateOriginalFullIndexedSequentialTwoSpinePath({
   maximumHarmonicQuarterPoseResidualRigUnits:maximumHarmonicResidual,
   completeAllThreeSequentialOriginalSweptSegments:
    completedSegments===3&&budgetBlockedSegments===0&&
-   actualContactSegments===0,
+   actualContactSegments===0&&unresolvedSegments===0,
   oneJointAtATimeOnlyNotSimultaneousOrWearerFitted:true,
   originalPhotographCameraMetricScaleUnknown:true,
   originalGarmentActualReverseUnobserved:true
