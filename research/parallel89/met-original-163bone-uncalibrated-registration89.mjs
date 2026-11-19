@@ -16,6 +16,8 @@ import {evaluateFullIndexedContact,controlledFullContactFixtures}
  from './full-indexed-contact-calibration89.mjs';
 import {auditOriginalContactNumerics,controlledOriginalNumericReasonFixtures}
  from './original-contact-numeric-diagnostics89.mjs';
+import {originalFullIndexedAnatomyContactNegative}
+ from './original-anatomy-contact-rejection89.mjs';
 
 if(!['127.0.0.1','localhost','[::1]'].includes(location.hostname))
  throw Error('source-anatomy-research-loopback-required');
@@ -605,6 +607,19 @@ function fullActualSkinnedIndexedSourceContact(x){
  const result=evaluateFullIndexedContact(bodyFaces,allPhotoFront,{
   maxPairs:8000000,maxExactAABBPairs:2000000,
   stopAtFirstVerifiedContact:true,reportResourceBlockerInsteadOfThrow:true});
+ // Independent actual-real-contact NEGATIVE control. Unlike source-floating
+ // no-contact, the SOURCE FRONT and real posed original body are both
+ // observed geometry. Only a temporary RIGID copy of the whole photo front
+ // is aligned to an actual anatomical triangle; the true original RGB/UV,
+ // source layout, GLB, mask and rig skeleton remain UNTOUCHED.
+ const actualSourceContactRefusal=originalFullIndexedAnatomyContactNegative(
+  bodyFaces,allPhotoFront,{
+   maxPairs:8000000,maxExactAABBPairs:2000000
+  });
+ invariant(actualSourceContactRefusal.actualFullOriginalIndexedPhotoContactRefusal
+  .contactDecision==='BLOCKED_ACTUAL_ORIGINAL_FRONT_BODY_CONTACT'&&
+  actualSourceContactRefusal.consumer3DAdmitted===false,
+  'actual-public-photo-to-genuine-163bone-contact-cannot-be-admitted');
  invariant(result.originalBodyIndexedFacesAudited===
   bodyMeshCoverage.reduce((sum,x)=>sum+x.actualIndexedTrianglesAudited,0)&&
   result.originalPhotoFrontIndexedFacesAudited===range.sourcePhotoFront.count/3&&
@@ -618,6 +633,10 @@ function fullActualSkinnedIndexedSourceContact(x){
   'full-original-indexed-collision-gate-has-neither-complete-negative-audit-nor-positive-rejection');
  return {
   ...result,
+  genuineOriginalSourceFrontRigidAnatomicalContactRejection:
+   actualSourceContactRefusal,
+  actualOriginalSourceAnatomicalNegativeVetoVerified:true,
+  allOriginalFacePairNegativeAuditsStillNotPhysicallyFitted:true,
   originalSkinnedWorldPointsSeededFromActualGeometry:true,
   actualSourceWorldPointErrorFromZeroSeedMeasuredRigUnits:
    round6(maximumZeroSeedErrorRigUnits),
