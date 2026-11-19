@@ -79,6 +79,8 @@ change(browserHook,[
  "     const safe={phase:'m251_original_jsep_native_abi',",
  "      optionsArgumentCount:d.optionsArgumentCount,originalNativeExportCalled:d.originalNativeExportCalled===true,",
  "      arenaFlag:d.arenaFlag,patternFlag:d.patternFlag,",
+ "      nativeArgumentsZeroOneOnly:Array.isArray(d.nativeArgumentsZeroOneOnly)&&d.nativeArgumentsZeroOneOnly.length===10?",
+ "        d.nativeArgumentsZeroOneOnly.map(v=>v===0||v===1?v:null):null,",
  "      returnedNativeHandle:d.returnedNativeHandle===true,threw:d.threw===true,",
  "      errorName:['RuntimeError','Error','TypeError','RangeError','LinkError','other'].includes(d.errorName)?d.errorName:null};",
  "     console.log('M251_ACTUAL_NATIVE_OPTIONS '+JSON.stringify(safe));",
