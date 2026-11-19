@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);
+const {deviceCheckReport}=require('../public/device-check-engine.js');
 import {mkdtemp,writeFile,readFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
@@ -288,4 +291,58 @@ test('a new clean owner device report can be considered for review only after lo
  assert.equal(status.status,'EVIDENCE_READY_FOR_INDEPENDENT_REVIEW');
  assert.equal(status.releaseAuthorized,false);
  assert.equal(status.familyAlpha,'HOLD');
+});
+
+test('a saturated 40-event device export blocks even when every retained event is benign',()=>{
+ const f=fixture(),device=f.manifest.devices[0],name=device.reportFile;
+ const report=JSON.parse(f.files.get(name));
+ report.events=Array.from({length:40},(_,i)=>
+  i===0?{type:'recognized_saved'}:{type:'scanner_progress',percent:50});
+ const bytes=Buffer.from(JSON.stringify(report));
+ f.files.set(name,bytes);device.reportSha256=sha(bytes);
+ const result=check(f);
+ assert.equal(result.status,'BLOCKED');
+ assert.ok(result.issues.some(x=>x.includes('40-event device diagnostic cap')));
+ assert.equal(result.releaseAuthorized,false);
+ assert.equal(result.familyAlpha,'HOLD');
+});
+
+test('actual shipped exporter can evict an earlier genuine failure; saturated preflight refuses false PASS',()=>{
+ const f=fixture(),device=f.manifest.devices[1],name=device.reportFile;
+ const initial=JSON.parse(f.files.get(name));
+ const sourceEvents=[
+  {type:'scanner_error',code:'runtime',stage:'runtime'},
+  ...Array.from({length:40},(_,i)=>
+   i===0?{type:'recognized_saved'}:{type:'scanner_progress',percent:50})
+ ];
+ const exported=deviceCheckReport(
+  {steps:initial.steps,events:sourceEvents},
+  release,'iPhone/iPad');
+ assert.equal(exported.events.length,40);
+ assert.equal(exported.events.some(e=>e.type==='scanner_error'),false,
+  'Source exporter really evicted the earlier genuine failure');
+ assert.equal(exported.events.some(e=>e.type==='recognized_saved'),true);
+ const bytes=Buffer.from(JSON.stringify(exported));
+ f.files.set(name,bytes);device.reportSha256=sha(bytes);
+ const result=check(f);
+ assert.equal(result.status,'BLOCKED');
+ assert.ok(result.issues.some(x=>x.includes('40-event device diagnostic cap')));
+ assert.equal(result.releaseAuthorized,false);
+ assert.equal(result.familyAlpha,'HOLD');
+});
+
+test('below-cap original export with ordinary informational diagnostics still remains review-only',()=>{
+ const f=fixture(),device=f.manifest.devices[1],name=device.reportFile;
+ const original=JSON.parse(f.files.get(name));
+ const source=deviceCheckReport({
+  steps:original.steps,
+  events:[{type:'recognized_saved'},{type:'scanner_progress',percent:50},
+   {type:'duplicate_review'},{type:'not_recognized'}]
+ },release,'iPhone/iPad');
+ const bytes=Buffer.from(JSON.stringify(source));
+ f.files.set(name,bytes);device.reportSha256=sha(bytes);
+ const result=check(f);
+ assert.equal(result.status,'EVIDENCE_READY_FOR_INDEPENDENT_REVIEW');
+ assert.equal(result.releaseAuthorized,false);
+ assert.equal(result.familyAlpha,'HOLD');
 });
