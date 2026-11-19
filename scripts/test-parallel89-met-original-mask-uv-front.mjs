@@ -32,7 +32,7 @@ for(const id of [2551406,2551408]){
  assert.equal(entry.maskNotHumanOrCuratorApproved,true);
  assert.equal(entry.independentExpertBoundaryReviewRequired,true);
  assert.equal(entry.outputMaskPngSHA256,sha(png));
- assert.equal(entry.sourceOriginalRGBSHA256||entry.originalSourceRGBSHA256||entry.sourceRGBSHA256,
+ assert.equal(entry.originalFullDecodedRGBSHA256,
   sha(origRaw),'source original RGB must match its generated mask receipt');
  const result=await build({imageId:id,originalJPEGBytes:bytes,conservativeMaskPNGBytes:png});
  assert.equal(result.status,'REAL_ORIGINAL_PHOTO_SOURCE_MASK_TEXTURED_FRONT_RESEARCH_UNAPPROVED',id+': '+result.reason);
