@@ -21,6 +21,8 @@ function fabric(){
 }
 function sample(x={}){return audit({
  imageId:2551408,sourceSHA256:SHA,expectedSourceSHA256:SHA,
+ decodedRGBSHA256:views[2].canonicalDecodedRGBSHA256,
+ actualDecodedRGBHashIndependentlyChecked:true,
  originalMuseumObjectNumber:'1983.21a, b',actualOriginalJPEGAttested:true,
  ...fabric(),...x
 });}
@@ -56,7 +58,8 @@ test('museum expressly captions only first gallery view as a) front, all other r
  assert.equal(views[0].sourcePartViewVerified,true);
  assert.ok(views.slice(1).every(v=>
   v.catalogCaptionExact===null&&v.sourcePartViewVerified===false));
- const x=sample({imageId:2551406});
+ const x=sample({imageId:2551406,
+  decodedRGBSHA256:views[0].canonicalDecodedRGBSHA256});
  assert.equal(x.status,'ORIGINAL_MUSEUM_TEXTILE_COLOR_REGION_MEASURED_RESEARCH_ONLY');
  assert.equal(x.sourceMuseumExactCaption,'a) front');
  assert.equal(x.photographicPartAndViewIndependentlyVerified,true);
@@ -69,6 +72,8 @@ test('byte digest / museum object ID / original attestation spoof cannot manufac
   {sourceSHA256:'0'.repeat(64)},
   {sourceSHA256:SHA.toUpperCase()},
   {expectedSourceSHA256:'a'.repeat(64)},
+  {decodedRGBSHA256:'0'.repeat(64)},
+  {actualDecodedRGBHashIndependentlyChecked:false},
   {actualOriginalJPEGAttested:false},
   {actualOriginalJPEGAttested:'true'},
   {originalMuseumObjectNumber:'5152.1'},
