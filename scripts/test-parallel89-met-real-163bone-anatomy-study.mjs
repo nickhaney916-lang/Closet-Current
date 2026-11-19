@@ -39,6 +39,17 @@ assert.throws(()=>evaluateFullIndexedContact([],[]),/full-face-counts-required/)
 assert.throws(()=>evaluateFullIndexedContact([[[0,0,0],[0,1,0],[0,0,1]]],
  [[[0,0,0],[0,1,0],[0,0,1]]],{maxPairs:0}),
  /resource-bound-reached/);
+const limited=evaluateFullIndexedContact(
+ [[[0,0,0],[0,1,0],[0,0,1]]],
+ [[[0,0,0],[0,1,0],[0,0,1]]],
+ {maxPairs:0,reportResourceBlockerInsteadOfThrow:true});
+assert.equal(limited.resourceBoundReached,true);
+assert.equal(limited.contactDecision,'BLOCKED_INCOMPLETE_ORIGINAL_INDEXED_AUDIT');
+assert.equal(limited.fullOriginalIndexedScopeEvaluated,false);
+assert.equal(limited.garmentPhysicalFitCertified,false);
+assert.equal(limited.consumer3DAdmitted,false);
+assert.equal(limited.sourceOriginalPhoto2DFallbackRequired,true);
+assert.equal(limited.familyAlpha,'HOLD');
 console.log('M2_FULL_INDEXED_ADVERSARIAL_GEOMETRY_NODES_PASS '+JSON.stringify(fullFixture.cases));
 const rigHashes=Object.freeze({
  female:'a571a5872a5f9d75c013ce6d88b3484436cf2109bf133fbc31e42c41f52389f1',
@@ -396,8 +407,10 @@ try{
    const full=trial.everyIndexedBodyComponentAndSourceFrontContact;
    assert.ok(full.fullOriginalIndexedScopeEvaluated===true||
     (full.definitiveCollisionRejection===true&&
-     full.pairEnumerationStoppedAfterRealContact===true),
-    'original complete negative audit OR genuine exact contact must reject');
+     full.pairEnumerationStoppedAfterRealContact===true)||
+    (full.resourceBoundReached===true&&
+     full.contactDecision==='BLOCKED_INCOMPLETE_ORIGINAL_INDEXED_AUDIT'),
+    'genuine full negative OR actual contact OR explicit blocked resource required');
    assert.equal(full.allOriginalBodyIndexedFacesPresentInBVH,true);
    assert.ok(full.originalBodyBVHNodes>=full.originalBodyBVHLeaves);
    assert.ok(full.originalBodyBVHLeaves>0);
@@ -406,6 +419,18 @@ try{
     assert.equal(full.contactDecision,'BLOCKED_ACTUAL_ORIGINAL_FRONT_BODY_CONTACT');
     assert.ok(full.firstObservedContactFaceIndices);
     assert.equal(full.strictGeometricContactObserved,true);
+   }else if(full.resourceBoundReached){
+    assert.equal(full.fullOriginalIndexedScopeEvaluated,false);
+    assert.equal(full.definitiveCollisionRejection,false);
+    assert.equal(full.contactDecision,'BLOCKED_INCOMPLETE_ORIGINAL_INDEXED_AUDIT');
+    assert.ok(['EXACT_AABB_CONTACT_BUDGET','BROADPHASE_BUDGET']
+     .includes(full.resourceBoundKind));
+    assert.ok(full.lastOriginalFrontFaceIndexChecked>=0);
+    assert.ok(full.lastOriginalFrontFaceIndexChecked<
+     full.originalPhotoFrontIndexedFacesAudited);
+    assert.equal(full.entireOriginalFrontAndBodyDataIndexedButNotAllPairsExamined,true);
+    assert.ok(full.numberOfAABBOverlapsNotYetClassifiedAtLimit===0||
+     full.numberOfAABBOverlapsNotYetClassifiedAtLimit===1);
    }else{
     assert.equal(full.fullOriginalIndexedScopeEvaluated,true);
     assert.ok(['BLOCKED_ACTUAL_ORIGINAL_FRONT_BODY_CONTACT',
@@ -438,7 +463,8 @@ try{
    assert.ok(['CROSSING','COPLANAR_OVERLAP','TOUCHING','INDETERMINATE','NONE']
     .every(key=>Number.isSafeInteger(counts[key])&&counts[key]>=0));
    assert.equal(Object.values(counts).reduce((a,b)=>a+b,0),
-    full.actualAABBOverlappingPairs);
+    full.actualAABBOverlappingPairs-
+     (full.numberOfAABBOverlapsNotYetClassifiedAtLimit||0));
    assert.ok(full.fullBroadphaseUniqueCandidatePairs>=full.actualAABBOverlappingPairs);
    assert.equal(full.strictGeometricContactObserved,
     counts.CROSSING+counts.COPLANAR_OVERLAP+counts.TOUCHING>0);
@@ -482,7 +508,7 @@ try{
    sampledOriginalBodyPhotoNonCoplanarCrossingsAtBend:bentCrossing,
    fiveOriginalRealSpinePoseBodyPhotoFaceCrossingStudies:fiveDiscretePoses,
    originalFrontBodyEveryIndexedFaceIndexedAndGatedInFivePoses:true,
-   originalFullNegativeOrActualEarlyContactDecisions:completeEvidence,
+   originalFullNegativeActualContactOrBlockedResourceDecisions:completeEvidence,
    physicalCalibrationEvidenceStillMissing:calibration,
    trueContactControlsWithCoplanarTouchAndUnknown:true,
    nativeTriangleCrossingPositiveAndSeparatedControlsPassed:true,
@@ -515,6 +541,7 @@ try{
   controlledPositiveSeparatedAndCoplanarKernelOutcomes:true,
   realBodyFrontOnlyFiveDiscretePoseTrials:true,
   fullSurfaceAndContinuousCollisionNotProved:true,
+  fullExhaustiveOriginalContactMayRemainResourceBlocked:true,
   allOriginalFaceDataIndexedForFailClosedGateAcrossFiveDiscretePoses:true,
   positiveContactMayShortCircuitBeforeAllPairs:true,
   coplanarAndTouchingAndIndeterminateExercised:true,
@@ -540,6 +567,7 @@ try{
   realFullIndexedOriginalFaceFailClosedContactGateBothLicensedRigs:true,
   coplanarAndTouchingControlVerified:true,
   actualPhysicalScaleAndCameraNotInvented:true,
+  originalContactEligibilityFailsClosedOnUnfinishedResourceAudits:true,
   browserErrors:failures.length,externalHTTP:0,
   consumer3DAdmitted:false,familyAlpha:'HOLD'
  }));
