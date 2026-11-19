@@ -912,6 +912,18 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
      good?.originalPhoto?.image===raw&&
      good?.cropBounds?.x===0.125&&good?.cropBounds?.width===0.75&&
      good?.category==='Tops'&&good?.color==='Blue';
+    // Test isolation: this new saved geometry row shares the old test's
+    // synthetic source/derived JPEG. Remove only the added fixture from
+    // native IDB before running the inherited late-peer duplicate scenario.
+    // Never weaken the existing late-peer guard to accommodate test pollution.
+    await new Promise((resolve,reject)=>{
+     const tx=db.transaction('items','readwrite');
+     tx.objectStore('items').delete(geometry.id);
+     tx.oncomplete=resolve;
+     tx.onerror=()=>reject(tx.error);
+     tx.onabort=()=>reject(tx.error);
+    });
+    if(await get('items',geometry.id))throw Error('P88_BROWSER_FIXTURE_NOT_ISOLATED');
 
     const pending={id:'actual-pending-crop-88',image:oldImage,
      originalPhoto:{image:raw},name:'Pending original',category:'Tops',
