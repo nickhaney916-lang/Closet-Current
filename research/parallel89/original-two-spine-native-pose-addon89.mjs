@@ -128,8 +128,10 @@ window.__M2RealRigPhotoTrial.verifyOriginalTwoSpineSequentialFullFaces=()=>{
    for(const deg of spec.anglesDegrees){
     const lowerDeg=spec.movingJoint==='spine03'?deg:spec.fixedDegrees,
      upperDeg=spec.movingJoint==='spine04'?deg:spec.fixedDegrees;
-    x.lowerBone.quaternion.copy(lowerRest).rotateZ(lowerDeg*Math.PI/180);
-    x.posedBone.quaternion.copy(upperRest).rotateZ(upperDeg*Math.PI/180);
+    x.lowerBone.quaternion.copy(lowerRest);
+    x.lowerBone.rotateZ(lowerDeg*Math.PI/180);
+    x.posedBone.quaternion.copy(upperRest);
+    x.posedBone.rotateZ(upperDeg*Math.PI/180);
     invariant(checkOther161(),'other-original-161-licensed-joint-local-pose-mutated');
     const hold=spec.fixedJoint==='spine03'?
      x.lowerBone.quaternion:x.posedBone.quaternion;
