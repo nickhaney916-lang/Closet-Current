@@ -566,6 +566,47 @@ test('P88 unsegmented single-photo crop still works with original owner-edit wor
  assert.equal(item.image,'data:image/jpeg;base64,TkVXUElYRUxT');
  assert.equal(c.messages.length,0);
 });
+test('P88 malformed crop geometry cannot be persisted into a saved original-photo record',async()=>{
+ const item={...sampleSource88(),originalPhoto:{image:sampleSource88().image}};
+ const c=cropHarness88({saved:true});
+ c.cropClothingPhoto(item);
+ const invalid=[
+  null,
+  {x:0,y:0,width:0,height:1},
+  {x:0,y:0,width:0.02,height:1},
+  {x:0.72,y:0,width:0.4,height:1},
+  {x:-0.01,y:0,width:1,height:1},
+  {x:0,y:0,width:1.01,height:1},
+  {x:0,y:0,width:NaN,height:1},
+  {x:0,y:0,width:Infinity,height:1},
+  {x:'0',y:0,width:1,height:1},
+  {x:0,y:0,width:1,height:1,sourceHashVerified:true},
+  [0,0,1,1],
+  {x:0,y:0,width:1}
+ ];
+ for(const bounds of invalid){
+  await assert.rejects(c.editor.save({
+   image:'data:image/jpeg;base64,TkVXQ09PUkRJTkFURVM=',cropBounds:bounds
+  },null),/P88_CROP_INVALID_BOUNDS/);
+ }
+ assert.equal(c.written.length,0,'invalid geometry must not enter owner IndexedDB');
+ assert.equal(c.durableItems.get(item.id).image,item.image);
+ assert.equal(item.cropBounds,undefined,'saved row must not be modified in memory');
+ assert.equal(item.originalPhoto.image,sampleSource88().image);
+});
+test('P88 normalized finite crop bounds remain valid for a saved garment',async()=>{
+ const item={...sampleSource88(),originalPhoto:{image:sampleSource88().image}};
+ const c=cropHarness88({saved:true});
+ c.cropClothingPhoto(item);
+ const valid={x:0.125,y:0.25,width:0.75,height:0.5};
+ await c.editor.save({
+  image:'data:image/jpeg;base64,VkFMSURDQVNFMjE=',cropBounds:valid
+ },null);
+ assert.equal(c.written.length,1);
+ assert.equal(c.durableItems.get(item.id).cropBounds.x,0.125);
+ assert.equal(c.durableItems.get(item.id).cropBounds.width,0.75);
+ assert.equal(c.durableItems.get(item.id).originalPhoto.image,item.originalPhoto.image);
+});
 test('P88 real crop editor first crop preserves complete original JPEG while saving derived pixels',async()=>{
  const c=cropHarness88(),item=sampleSource88(),raw=item.image;
  c.cropClothingPhoto(item);
