@@ -400,7 +400,7 @@ try{
   assert.equal(calibration.familyAlpha,'HOLD');
   assert.deepEqual(fiveDiscretePoses.samples.map(x=>x.degrees),
    [-12,-6,0,6,12]);
-  const completeEvidence=[];
+  const completeEvidence=[],genuineDepthContactEvidence=[];
   for(const trial of fiveDiscretePoses.samples){
    checkCrossing({originalRigPhotoFrontBodyFaceCrossingResearchOnly:
     trial.actualPosePhotoFrontBodyCrossings});
@@ -491,6 +491,56 @@ try{
    assert.equal(actualPositive.consumer3DAdmitted,false);
    assert.equal(actualPositive.sourceOriginalPhoto2DFallbackRequired,true);
    assert.equal(actualPositive.familyAlpha,'HOLD');
+   assert.equal(full.originalUnmeasuredCameraAxisContactEligibilityGated,true);
+   const depth=full.originalPhotoRealAnatomyCameraAxisDepthContactResearchOnly;
+   assert.equal(depth.sourcePhotoFacesIndexed,full.originalPhotoFrontIndexedFacesAudited);
+   assert.equal(depth.actualBodyFacesIndexed,full.originalBodyIndexedFacesAudited);
+   assert.equal(depth.entireOriginalBodyFacesIncludedIn2DProjectionGrid,true);
+   assert.deepEqual(depth.sourceOriginalCameraDirection,[0,0,-1]);
+   assert.equal(depth.cameraAxisDirectionAssumedNotMeasured,true);
+   assert.equal(depth.sourceOriginalGarmentSizeNotMeasured,true);
+   assert.equal(depth.noActualPhotographicCameraOrReferenceCalibration,true);
+   assert.equal(depth.originalPhotoFrontOnlyBackStillUnobserved,true);
+   assert.equal(depth.noSourcePhotoReconstructionOrReskinning,true);
+   assert.equal(depth.temporaryCopyOnlyNoSourceOrRigMutation,true);
+   assert.equal(depth.consumer3DAdmitted,false);
+   assert.equal(depth.originalPhoto2DFallbackRequired,true);
+   assert.equal(depth.familyAlpha,'HOLD');
+   assert.ok(depth.sampledSourceCentroidRays>0);
+   assert.ok(depth.actualRaysInsideOriginalBodyProjectedBoundingExtent>0);
+   assert.ok(depth.originalBody2DProjectionCandidateFaces>=0);
+   assert.equal(depth.decision,'BLOCKED_ACTUAL_PHOTO_FRONT_ANATOMY_CAMERA_AXIS_CONTACT',
+    'genuine original photo-front to actual original bone-anatomy depth-only contact not demonstrated');
+   assert.equal(depth.trueOriginalContactProducedWithoutPhotoRotation,true);
+   const witness=depth.trueOriginalDepthContactWitness;
+   assert.ok(Number.isSafeInteger(witness.sourceFaceIndex));
+   assert.ok(Number.isSafeInteger(witness.originalBodyFaceIndex));
+   assert.ok(witness.photoFrontToActualBodyDepthRigUnits>=0);
+   assert.ok(witness.chosenExactDepthTranslationRigUnits>=0);
+   assert.ok(witness.chosenExactDepthTranslationRigUnits<=3);
+   assert.ok(['CROSSING','COPLANAR_OVERLAP','TOUCHING'].includes(
+    witness.genuineSourceBodyTriangleContact));
+   const veto=depth.fullOriginalIndexedRealContactRefusal;
+   assert.equal(veto.originalBodyIndexedFacesAudited,full.originalBodyIndexedFacesAudited);
+   assert.equal(veto.originalPhotoFrontIndexedFacesAudited,full.originalPhotoFrontIndexedFacesAudited);
+   assert.equal(veto.contactDecision,'BLOCKED_ACTUAL_ORIGINAL_FRONT_BODY_CONTACT');
+   assert.equal(veto.definitiveCollisionRejection,true);
+   assert.equal(veto.strictGeometricContactObserved,true);
+   assert.equal(veto.pairEnumerationStoppedAfterRealContact,true);
+   assert.equal(veto.fullOriginalIndexedScopeEvaluated,false);
+   assert.equal(depth.genuineBodyClothPhysicalFitCertified,false);
+   assert.equal(depth.genuineContinuousMotionCollisionCertified,false);
+   genuineDepthContactEvidence.push({
+    degrees:trial.degrees,sourceFace:witness.sourceFaceIndex,
+    realBodyFace:witness.originalBodyFaceIndex,
+    normalizedDepthRigUnits:witness.chosenExactDepthTranslationRigUnits,
+    actualContactClass:witness.genuineSourceBodyTriangleContact,
+    strictOriginalFullBodyGateResult:veto.contactDecision,
+    totalOriginalFrontFaces:depth.sourcePhotoFacesIndexed,
+    totalOriginalBodyFaces:depth.actualBodyFacesIndexed,
+    observedRays:depth.actualRaysInsideOriginalBodyProjectedBoundingExtent,
+    uncalibratedCameraAndMaterial:true,consumer3DAdmitted:false
+   });
    assert.equal(full.originalPhotoSourceJPEGByteSHA256,hash(image));
    assert.equal(full.sourceOriginalRGBSHA256,shell.originalDecodedRGBSHA256);
    assert.equal(full.actualRigOriginalGLBSHA256,rigHashes[kind]);
@@ -552,6 +602,8 @@ try{
    fiveOriginalRealSpinePoseBodyPhotoFaceCrossingStudies:fiveDiscretePoses,
    originalFrontBodyEveryIndexedFaceIndexedAndGatedInFivePoses:true,
    actualOriginalPhotoRigidbodyNegativeContactControlsAcrossFivePoses:true,
+   actualCameraAxisSourceToOriginalBodyContactProvedInFivePoses:true,
+   unmeasuredCameraAxisTrueOriginalCollisionWitnesses:genuineDepthContactEvidence,
    realOriginalAnatomicalPositiveRejectionPerPose:
     completeEvidence.map(x=>({
      sourceFace:x.genuineOriginalSourceFrontRigidAnatomicalContactRejection
@@ -625,6 +677,8 @@ try{
   actualPhysicalScaleAndCameraNotInvented:true,
   originalContactEligibilityFailsClosedOnUnfinishedResourceAudits:true,
   actualOriginalMaleFemaleRigidPhotoFrontAnatomicalContactVetoProved:true,
+  originalPhotoCameraAxisTrueBodyContactVetoPerPoseNative:true,
+  originalPhotoUncalibratedCameraAndPhysicalFitStillBlocked:true,
   originalPhotoRGBUVAndGLBImmutableAfterPositiveCollisionTests:true,
   browserErrors:failures.length,externalHTTP:0,
   consumer3DAdmitted:false,familyAlpha:'HOLD'
