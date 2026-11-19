@@ -281,6 +281,40 @@ try{
   '1200x933');
  await originalOnly.screenshot({path:out+'/'+engine+'-390-3D-NETWORK-ABORT-ORIGINAL-2D.png'});
  await offline3D.close();
+ // A connection that never returns a 3D manifest is different from a rejected
+ // request: the original photo must remain visible, the 3D control must be
+ // disabled after the bounded deadline, and the UI must stop waiting.
+ const stalled3D=await browser.newContext({viewport:{width:390,height:760}});
+ await stalled3D.route('**/source-locked-preview.json',async()=>{
+  // Deliberately leave the optional request unresolved until AbortController
+  // cancels it; no fabricated HTTP failure or replacement JPEG is supplied.
+  await new Promise(()=>{});
+ });
+ const stalledPage=await stalled3D.newPage();
+ stalledPage.on('pageerror',e=>errors.push(e.message));
+ await stalledPage.goto(origin+'/viewer',{waitUntil:'commit'});
+ await stalledPage.waitForFunction(()=>{
+  const s=window.__m2PreviewEvidence?.getSnapshot();
+  return s?.originalImageVisible===true&&s.errorCode===null;
+ },null,{timeout:15000});
+ const pending=await snapshot(stalledPage);
+ assert.equal(pending.mode,'photo');
+ assert.equal(pending.previewVisible,false);
+ assert.equal(await stalledPage.locator('#photo').evaluate(e=>e.naturalWidth),1200);
+ await stalledPage.waitForFunction(()=>
+  window.__m2PreviewEvidence?.getSnapshot().errorCode==='research-3D-manifest-timeout',
+  null,{timeout:15000});
+ const timedOut=await snapshot(stalledPage);
+ assert.equal(timedOut.verified,false);
+ assert.equal(timedOut.mode,'photo');
+ assert.equal(timedOut.originalImageVisible,true);
+ assert.equal(timedOut.previewVisible,false);
+ assert.equal(timedOut.consumer3DAdmitted,false);
+ assert.equal(await stalledPage.locator('#shell').isDisabled(),true);
+ assert.equal(await stalledPage.locator('#photo').evaluate(e=>[e.naturalWidth,e.naturalHeight].join('x')),
+  '1200x933');
+ await stalledPage.screenshot({path:out+'/'+engine+'-390-3D-MANIFEST-STALL-TIMEOUT-ORIGINAL-2D.png'});
+ await stalled3D.close();
  assert.deepEqual(errors,[],'native browser page errors');
  console.log('M2_INTERACTIVE_ORIGINAL_SOURCE_MOBILE_BROWSER_RESEARCH_PASS '+JSON.stringify({
   engine,realNativeBrowser:true,devicePhysical:false,
@@ -289,6 +323,7 @@ try{
   previewModeUserSelectionVerified:true,keyboardRotationVerified:true,
   pointerDragRotationVerified:true,contextLoss2DFallbackVerified:true,
   corrupt3DManifestPreservesGenuine2DVerified:true,
+  stalled3DManifestTimeoutPreservesGenuine2DVerified:true,
   testedMobileWidths:[320,390,430],widthResults,
   browserErrors:errors.length,consumer3DAdmitted:false,
   fittedAnatomy163Bone:false,photorealismHumanApproved:false,

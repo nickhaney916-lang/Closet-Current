@@ -220,9 +220,27 @@ const readiness=async()=>{
   if(photo.naturalWidth!==1200||photo.naturalHeight!==933)
    throw Error('original-source-2d-dimensions-invalid');
   displayPhoto('Verified original 2D photograph. Checking unapproved research shell.');
-  const manifestResponse=await fetch('/source-locked-preview.json',{cache:'no-store'});
-  if(!manifestResponse.ok)throw Error('research-3D-manifest-missing');
-  const signed=await manifestResponse.json();
+  // Optional research 3D must never hold a verified original photograph in
+  // an endless loading state. Bound both the response and its JSON body read;
+  // aborting the request is NOT permission to display or save 3D geometry.
+  const manifestAbort=new AbortController();
+  let manifestTimedOut=false;
+  const manifestDeadline=setTimeout(()=>{
+   manifestTimedOut=true;manifestAbort.abort();
+  },4000);
+  let signed;
+  try{
+   const manifestResponse=await fetch('/source-locked-preview.json',{
+    cache:'no-store',signal:manifestAbort.signal
+   });
+   if(!manifestResponse.ok)throw Error('research-3D-manifest-missing');
+   signed=await manifestResponse.json();
+  }catch(e){
+   if(manifestTimedOut)throw Error('research-3D-manifest-timeout');
+   throw e;
+  }finally{
+   clearTimeout(manifestDeadline);
+  }
   if(signed.originalJPEG_SHA256!==jpgHash||
    signed.sourceOriginalDecodedRGB_SHA256!=='e0b7738db57ac4b7c27d4f03f724442f53c8e85f09f7a139839dfaa04c86cbec'||
    signed.sourceMaskPNG_SHA256!=='34a93a1a8a2ea58f92a560703936a83b390e92a50d7103ff7ff1586ffe0841aa'||
