@@ -1,0 +1,88 @@
+name: "M2 measured-fit and continuous-contact research ONLY HOLD"
+on:
+  push:
+    branches:
+      - research/mission2-p89-swept-contact-calibrated-cloth-20261119-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  strict-original-source-scope-and-research-geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact immutable M2 donor and no private or consumer mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 56231ca92dc38a59a880786998a7df2af4f3d222 HEAD
+          git diff --exit-code 56231ca92dc38a59a880786998a7df2af4f3d222 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          while IFS= read -r path; do
+            case "$path" in
+              research/parallel89/swept-contact-calibrated-fabric89.mjs|tests/m2-swept-contact-calibrated-fabric.test.mjs|scripts/test-m2-swept-calibrated-fabric-browser.mjs|.github/workflows/mission2-p89-swept-fit-fabric-no-deploy.yml) ;;
+              *) echo "UNEXPECTED protected or parallel path: $path"; exit 1 ;;
+            esac
+          done < <(git diff --name-only 56231ca92dc38a59a880786998a7df2af4f3d222 HEAD)
+          node --check research/parallel89/swept-contact-calibrated-fabric89.mjs
+          node --check tests/m2-swept-contact-calibrated-fabric.test.mjs
+          node --check scripts/test-m2-swept-calibrated-fabric-browser.mjs
+      - name: Prove swept conservatism, physical-fit evidence veto and fabric mechanics
+        run: node --test tests/m2-swept-contact-calibrated-fabric.test.mjs
+
+  inherited-original-owner-security-photo-regressions:
+    needs: strict-original-source-scope-and-research-geometry
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned isolated no-deploy test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Original offline protected build unchanged
+        run: node scripts/build.mjs
+      - name: Entire inherited Node owner/security/photo/backup/3D safety regression
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+
+  genuine-native-research-algorithm-browser:
+    needs: strict-original-source-scope-and-research-geometry
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M2_BROWSER: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned actual browser test runner only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Genuine native browser source classifier on controlled synthetic motion only
+        run: node scripts/test-m2-swept-calibrated-fabric-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M2-P89-synthetic-only-swept-fabric-${{ matrix.engine }}-HOLD
+          path: benchmark/m2-p89-swept-contact-fabric-HOLD/
+          retention-days: 7
+          if-no-files-found: warn
