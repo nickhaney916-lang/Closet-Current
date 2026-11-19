@@ -66,7 +66,7 @@ try{
  });
  if(run.error)throw run.error;
  if(sourceOnly){
-  assert.equal(run.status,0,'Real original research Worker/native ABI source derivation RED');
+  assert.equal(run.status,0,'Real original research Worker/native ABI source derivation RED: '+String(run.stderr||'').slice(0,950));
   assert.ok((run.stdout||'').includes('M250_SESSION_ARM_SOURCE_LOCKED'),
    'M251 exact source-only proof missing');
   console.log('M251_ORIGINAL_JSEP_NATIVE_ABI_SOURCE_READY',JSON.stringify({
