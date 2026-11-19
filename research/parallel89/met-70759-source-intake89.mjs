@@ -36,6 +36,14 @@ export const MET_70759_89=Object.freeze({
   '59c0e6568000b68678efb067a5cdd2f95eee3c1407b9927df82ac89af0124ec2',
   '239c547f950cc28475fb860357b0173d7670a0fe5210637db5f54fb88ff4b515'
  ]),
+ // Pixel digests of genuinely decoded museum source images; the museum's
+ // IIIF CDN can deliver byte-different but pixel-identical JPEG encodings.
+ // Never silently accept an unverified replacement. The real CI must
+ // calculate BOTH actual JPEG and decoded RGB digests, independent of caller.
+ publishedPhotoDecodedRGBSHA256:Object.freeze([
+  'dddbda448c32667a0ab5c1b90a43d139b5917c1b9955dc428987beec035e06c0',
+  '1cd4c7f71ebbb00a27f769e46a438a03f19393bd6a6ba200af14a092d1461e3f'
+ ]),
  publishedImageIDsNotProofOfExactGarmentPartOrViewAngle:true,
  physicalOriginalGarmentBackViewIndependentHumanVerified:false,
  cameraParametersPublished:false
@@ -51,20 +59,24 @@ const failure=reason=>Object.freeze({
  photoDerivedWearable3DAuthorized:false,consumer3DAdmitted:false,
  originalPhoto2DFallbackRequired:true,releaseAuthorized:false,familyAlpha:'HOLD'
 });
-const safePhoto=(item,expected,originalExpectedSHA)=>{
+const safePhoto=(item,expected,originalExpectedSHA,originalExpectedRGBSHA)=>{
  if(!item||item.sourceObjectId!==70759||item.sourceObjectNumber!=='1983.21a, b'||
   item.sourceUrl!==expected||
   !['collectionapi.metmuseum.org','images.metmuseum.org'].includes(item.responseOrigin)||
   item.redirectedToNonMuseumHost===true||
   item.httpStatus!==200||item.contentType!=='image/jpeg'||
-  item.sha256!==originalExpectedSHA||
+  item.decodedRGBSHA256!==originalExpectedRGBSHA||
+  (item.sha256!==originalExpectedSHA&&
+   item.actualDecodedRGBHashIndependentlyChecked!==true)||
   !Number.isSafeInteger(item.byteLength)||item.byteLength<10000||
   item.byteLength>40000000||!hex(item.sha256)||
   !Number.isSafeInteger(item.widthPixels)||item.widthPixels<400||
   !Number.isSafeInteger(item.heightPixels)||item.heightPixels<400||
   item.widthPixels>18000||item.heightPixels>18000||
   item.jpegMagicVerified!==true||item.actualBytesHashed!==true||
-  item.actualImageDecoded!==true||item.photoPartExactHumanVerified===true||
+  item.actualImageDecoded!==true||
+  item.actualDecodedRGBHashIndependentlyChecked!==true||
+  item.photoPartExactHumanVerified===true||
   item.originalCameraCalibrationClaimed===true)
   return false;
  return true;
@@ -122,7 +134,8 @@ export function assessMet70759IndependentSource89({
   });
  if(!Array.isArray(images)||images.length!==2||
   !images.every((x,i)=>safePhoto(x,catalog.publishedPhotoEndpoints[i],
-   catalog.publishedPhotoSHA256[i]))||
+   catalog.publishedPhotoSHA256[i],
+   catalog.publishedPhotoDecodedRGBSHA256[i]))||
   images[0].sha256===images[1].sha256||
   images[0].sourceUrl===images[1].sourceUrl)
   return failure('real-distinct-same-met-object-two-source-jpegs-required');
@@ -132,6 +145,9 @@ export function assessMet70759IndependentSource89({
   originalCatalogImageCount:2,
   actualPublishedImagesDifferentBytes:true,
   imageDigests:Object.freeze(images.map(x=>x.sha256)),
+  decodedImageContentDigests:Object.freeze(images.map(x=>x.decodedRGBSHA256)),
+  anyJPEGReencodedButPixelIdenticalToLockedPhoto:images.some((x,i)=>
+   x.sha256!==catalog.publishedPhotoSHA256[i]),
   recordedPublishedPixelDimensions:Object.freeze(images.map(x=>
    Object.freeze([x.widthPixels,x.heightPixels]))),
   sourceImagePartAndFrontBackLabelRequiresIndependentInspection:true,
