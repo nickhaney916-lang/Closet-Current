@@ -1,0 +1,158 @@
+/**
+ * Met 70759 original four-gallery image chromatic textile projection benchmark.
+ * This is a measured 2D color-fabric REGION, NOT a complete garment alpha
+ * silhouette: cream/off-white waistband, shadows and dark low-saturation
+ * threads may be omitted; photograph geometry is not physically calibrated.
+ *
+ * Image 2551406 is explicitly captioned "a) front" on the museum record.
+ * Other image roles/parts are VISUAL PROVISIONAL interpretations of gallery
+ * order and embroidery vs plain-fabric appearance. A "rear-looking" image
+ * never proves a full original 360° sewing pattern or physical drape.
+ *
+ * The external original JPEG must be checked by Node CI for exact ID, museum
+ * host, expected SHA-256 and JPEG decode BEFORE passing RGB samples here.
+ */
+import {MET_70759_89} from './met-70759-source-intake89.mjs';
+const MET='1983.21a, b';
+const VIEWS=Object.freeze([
+ Object.freeze({id:2551406,part:'a',
+  researchViewLabel:'a-front-museum-first-caption',
+  catalogCaptionExact:'a) front',sourcePartViewVerified:true}),
+ Object.freeze({id:2551407,part:'a',
+  researchViewLabel:'a-other-side-candidate',
+  catalogCaptionExact:null,sourcePartViewVerified:false}),
+ Object.freeze({id:2551408,part:'b',
+  researchViewLabel:'b-decorated-side-candidate',
+  catalogCaptionExact:null,sourcePartViewVerified:false}),
+ Object.freeze({id:2551409,part:'b',
+  researchViewLabel:'b-less-decorated-side-candidate',
+  catalogCaptionExact:null,sourcePartViewVerified:false})
+]);
+const frozen=a=>Object.freeze(a.map(x=>Object.freeze(x)));
+const reject=reason=>Object.freeze({
+ schema:'M2-Met70759-real-four-gallery-color-fabric-projection/v1',
+ status:'MET_FOUR_GALLERY_COLOR_ENVELOPE_UNVERIFIABLE',reason,
+ source2DPhotographRetained:true,consumer3DAdmitted:false,
+ mayCalibrateOriginalHonoluluGarment:false,physicalClothFitCertified:false,
+ releaseAuthorized:false,familyAlpha:'HOLD'
+});
+const good=id=>VIEWS.find(v=>v.id===id);
+export const MET70759_GALLERY_VIEW_NOTES89=VIEWS;
+
+/** A narrow, conservative chroma/dark fabric proxy, not real segmentation. */
+function colored(r,g,b){
+ const hi=Math.max(r,g,b),lo=Math.min(r,g,b),mean=(r+g+b)/3;
+ return (hi-lo>=34&&mean<230&&lo<216)||
+  (mean<85&&hi-lo>=13);
+}
+function percentile(hist,total,portion){
+ const goal=Math.max(1,Math.ceil(total*portion));
+ let n=0;
+ for(let x=0;x<hist.length;x++){
+  n+=hist[x];if(n>=goal)return x;
+ }
+ return hist.length-1;
+}
+/**
+ * Offline 2D diagnosis ONLY, on RGB extracted from a photo whose real JPEG
+ * bytes passed the per-photo SHA gate in Node CI. It counts conservative
+ * chromatic garment-like pixels by horizontal bands; a white waistband is
+ * deliberately outside its measurement definition.
+ */
+export function measureMet70759ColorFabricProjection89({
+ imageId,sourceSHA256,expectedSourceSHA256,
+ originalMuseumObjectNumber,actualOriginalJPEGAttested,
+ width,height,rgb
+}={}){
+ const view=good(imageId);
+ if(!view||originalMuseumObjectNumber!==MET||
+  actualOriginalJPEGAttested!==true||
+  typeof sourceSHA256!=='string'||!/^[a-f0-9]{64}$/.test(sourceSHA256)||
+  sourceSHA256!==expectedSourceSHA256||
+  !Number.isSafeInteger(width)||!Number.isSafeInteger(height)||
+  width<90||height<90||width>18000||height>18000||
+  !(rgb instanceof Uint8Array)&&!(rgb instanceof Uint8ClampedArray))
+  return reject('exact-source-image-and-decodable-rgb-provenance-required');
+ if(rgb.length!==width*height*3)
+  return reject('original-published-image-rgb-dimensions-inconsistent');
+ const perRow=new Uint32Array(height);
+ let chromaticPixels=0;
+ const xLo=Math.ceil(width*.025),xHi=Math.floor(width*.975);
+ const yLo=Math.ceil(height*.04),yHi=Math.floor(height*.97);
+ for(let y=yLo;y<yHi;y++)for(let x=xLo;x<xHi;x++){
+  const k=(y*width+x)*3;
+  if(colored(rgb[k],rgb[k+1],rgb[k+2])){
+   perRow[y]++;chromaticPixels++;
+  }
+ }
+ const activeMin=Math.max(8,Math.floor(width*.055));
+ const active=[];
+ for(let y=yLo;y<yHi;y++)if(perRow[y]>=activeMin)active.push(y);
+ if(active.length<Math.floor(height*.30)||chromaticPixels<width*height*.045)
+  return reject('measured-real-photo-textile-chroma-coverage-insufficient');
+ const first=active[0],last=active[active.length-1],range=last-first;
+ if(range<height*.32)return reject('observed-textile-color-vertical-span-insufficient');
+ const bands=[];
+ const sampleAt=Object.freeze([.10,.23,.36,.50,.64,.77,.90]);
+ for(const t of sampleAt){
+  const y=Math.round(first+t*range);
+  const radius=Math.max(2,Math.round(range*.024));
+  const hist=new Uint32Array(width);
+  let count=0;
+  for(let yy=Math.max(yLo,y-radius);yy<=Math.min(yHi-1,y+radius);yy++)
+   for(let x=xLo;x<xHi;x++){
+    const k=(yy*width+x)*3;
+    if(colored(rgb[k],rgb[k+1],rgb[k+2])){hist[x]++;count++;}
+   }
+  if(count<Math.max(50,Math.floor(width*.1)))
+   return reject('source-chromatic-ink-band-insufficient-for-projection');
+  const l=percentile(hist,count,.02),r=percentile(hist,count,.98);
+  if(r<=l||r-l>=width)
+   return reject('source-chromatic-band-horizontal-span-invalid');
+  bands.push({
+   bandIndex:bands.length,sampledSourceY:y,chromaticPixelCount:count,
+   lowerTwoPercentileSourceX:l,upperNinetyEightPercentileSourceX:r,
+   observedColorFabricWidthPixels:r-l,
+   observedColorFabricWidthFraction:(r-l)/width
+  });
+ }
+ const firstWidth=bands[0].observedColorFabricWidthPixels;
+ const lastWidth=bands[6].observedColorFabricWidthPixels;
+ return Object.freeze({
+  schema:'M2-Met70759-real-four-gallery-color-fabric-projection/v1',
+  status:'ORIGINAL_MUSEUM_TEXTILE_COLOR_REGION_MEASURED_RESEARCH_ONLY',
+  museumObjectNumber:MET,museumObjectId:70759,imageId,
+  originalImageSHA256:sourceSHA256,
+  sourcePixelDimensions:Object.freeze([width,height]),
+  sourceImageRoleViewLabel:view.researchViewLabel,
+  sourceMuseumExactCaption:view.catalogCaptionExact,
+  photographicPartAndViewIndependentlyVerified:view.sourcePartViewVerified,
+  proposedPartForSourceResearch:view.part,
+  partBOrReverseRoleRemainsProvisional:!view.sourcePartViewVerified,
+  sourceImageCountInOfficialGallery:4,
+  imageColorTextileProxyNotFullGarmentMask:true,
+  creamWaistbandMayBeExcluded:true,
+  backgroundShadowOrColoredNonGarmentPixelsCanInfluenceEnvelope:true,
+  chromaticTextileCandidatePixelCount:chromaticPixels,
+  colorFabricFirstSourcePixelRow:first,
+  colorFabricLastSourcePixelRow:last,
+  sevenMeasuredChromaticImageBands:frozen(bands),
+  bottomToUpperColorRegionWidthRatio:lastWidth/firstWidth,
+  immutableCatalogPartMeasurementsMm:MET_70759_89.parts.map(p=>Object.freeze({
+   part:p.part,recordedLengthMm:p.lengthInches*25.4,
+   recordedWidthAtBottomMm:p.widthAtBottomInches*25.4,
+   recordedWaistbandFlatWidthExcludingFastenerMm:
+    p.waistbandWidthWithoutLoopButtonInches*25.4,
+   notAVerifiedPhotographicPixelScale:true
+  })),
+  noOriginalSourcePartMixedWithHonolulu:true,
+  catalogDimensionCannotConvertObservedPixelsWithoutCameraAndFlattening:true,
+  fullGarmentAlphaOrDepthNotObserved:true,
+  sourcePhotographsNotPerspectiveRectified:true,
+  originalCameraFocalAndExtrinsicCalibrationMissing:true,
+  originalGarmentPhysicalBodyFitNotProven:true,
+  source2DPhotographRetained:true,consumer3DAdmitted:false,
+  mayCalibrateOriginalHonoluluGarment:false,
+  physicalClothFitCertified:false,releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
