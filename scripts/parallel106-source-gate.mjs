@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 export const candidate = 'a16f55d2230afab907957ddffa8c5af968b39f20';
 export const branch = 'refs/heads/research/parallel106-m4-gate-migration-HOLD';
 export const workflow = '.github/workflows/parallel106-m183-no-deploy.yml';
+const firstMigration = '256f75d8cd7b7e0edc846addc593e54964d88759';
 const workflowBlob = '4f2db5c8750088cb041a49d899d4a4a8c4ab48c5';
 const additions = [
   workflow,
@@ -34,8 +35,16 @@ export function verifySourceGate(git, event) {
   requireMatch(event.attempt === '1', 'Only first attempts qualify');
   const head = git('rev-parse', 'HEAD');
   requireMatch(event.head === head, 'Checkout does not match event head');
-  requireMatch(git('rev-list', '--parents', '-n', '1', head) === `${head} ${candidate}`,
-    'Expected exactly one additive commit on the frozen M256 head');
+  requireMatch(git('rev-list', '--parents', '-n', '1', head) === `${head} ${firstMigration}`,
+    'Expected the single reviewed follow-up to the frozen first migration');
+  requireMatch(git('rev-list', '--parents', '-n', '1', firstMigration) === `${firstMigration} ${candidate}`,
+    'Unexpected first migration parent');
+  requireMatch(git('diff-tree', '--no-commit-id', '-r', '--no-renames', '--name-status', '-z',
+    firstMigration, head) === [
+    'research/parallel106/README.md',
+    'scripts/parallel106-source-gate.mjs',
+    'tests/parallel106-source-gate.test.mjs',
+  ].map(path => `M\0${path}\0`).join(''), 'Unexpected follow-up changes');
 
   for (let index = 1; index < lineage.length; index++) {
     git('merge-base', '--is-ancestor', lineage[index - 1], lineage[index]);
