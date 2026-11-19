@@ -107,8 +107,10 @@ change(pageStart,[
  "  const text=msg.text(),prefix='M251_ACTUAL_NATIVE_OPTIONS ';",
  "  if(!text.startsWith(prefix))return;",
  "  try{const event=JSON.parse(text.slice(prefix.length));",
- "   if(event?.phase==='m251_original_jsep_native_abi'&&m251NativeEvents.length<8)",
+ "   if(event?.phase==='m251_original_jsep_native_abi'&&m251NativeEvents.length<8){",
  "    m251NativeEvents.push(event);",
+ "    console.log('M251_NATIVE_EXPORT_ACTUAL_EVENT '+JSON.stringify(event));",
+ "   }",
  "  }catch{}",
  " });"
 ].join('\n'));
@@ -160,9 +162,32 @@ try{
   const lines=(run.stdout||'').split(/\r?\n/);
   const markers=['M251_PRODUCT_NATIVE_JSEP_OPTION_ABI ',
    'M61_GENUINE_P88_TO_PRIVATE_OWNER_V4_RESTORE_SAME_SESSION_PASS ',
-   'M58_GENUINE_WORKER_SAVED_2D_OWNER_SWITCH_PRIVACY '];
+   'M58_GENUINE_WORKER_SAVED_2D_OWNER_SWITCH_PRIVACY ',
+   'M251_NATIVE_EXPORT_ACTUAL_EVENT '];
   for(const line of lines){
    if(markers.some(m=>line.startsWith(m)))console.log(line.slice(0,2200));
+  }
+  if(run.status!==0){
+   // Classify only the ORIGINAL browser's own RED. NEVER output error text,
+   // private paths, owner IDs, model URLs, photos or raw stderr.
+   const originalErr=(run.stderr||'').split(/\r?\n/).find(x=>x.startsWith('M58_REAL_P88_WORKER_FAIL '));
+   let phase='unavailable',kind='unclassified';
+   try{
+    const e=JSON.parse(originalErr?.slice('M58_REAL_P88_WORKER_FAIL '.length)||'{}');
+    const allow=['startup','sign-in','genuine worker original JPEG and live SegFormer'];
+    phase=allow.includes(e.stage)?e.stage:'other_after_model_or_owner';
+    const msg=typeof e.error==='string'?e.error:'';
+    kind=['RuntimeError','ReferenceError','TypeError','SyntaxError','AssertionError','NetworkError']
+     .find(name=>msg.includes(name))||'other';
+   }catch{}
+   const observed=lines.filter(x=>x.startsWith('M251_NATIVE_EXPORT_ACTUAL_EVENT '));
+   const positive=lines.filter(x=>x.startsWith('M251_PRODUCT_NATIVE_JSEP_OPTION_ABI '));
+   console.log('M251_REAL_ORIGINAL_BROWSER_RED_BOUNDARY',JSON.stringify({
+    engine,arm,width,phase,errorKind:kind,originalChildExitCode:run.status,
+    nativeSessionOptionsEvents:observed.length,ownerAndOriginalNativePositiveCount:positive.length,
+    originalModelRedPreserved:true,originalNativeCAllocatorCauseProven:false,
+    productionWorkerUnchanged:true,releaseAuthorized:false,hold:true
+   }));
   }
   assert.equal(run.status,0,'Genuine original JSEP native ABI or owner/privacy journey failed; preserve RED');
   const records=lines.filter(x=>x.startsWith(markers[0]));
