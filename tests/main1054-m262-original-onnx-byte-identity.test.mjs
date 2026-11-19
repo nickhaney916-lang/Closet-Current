@@ -189,18 +189,18 @@ test('negative test cannot misstate intercepted count or mix original/corrupt mo
  const raw=rawLog({modelSha:CORRUPT_ONNX_SHA256,
   modelBytes:CORRUPT_ONNX_BYTES.length,includeSuccess:false,fail:true,inject:true});
  const tag='M259_CONTEXT_NETWORK_WITNESS ';
- const lines=raw.split('\\n');
+ const lines=raw.split('\n');
  const wi=lines.findIndex(x=>x.startsWith(tag));
  const orig=JSON.parse(lines[wi].slice(tag.length));
  const wrongCount=raw.replace('"intercepted":1','"intercepted":2');
  assert.throws(()=>verifyM262(wrongCount,identity({exitCode:1}),{corrupt:true}),
-  /interception\\/body-count/);
+  /interception.*body-count/);
  orig.rows.push({kind:'model-onnx',status:'body-observed',
   sha256:EXPECTED_ONNX_SHA256,size:EXPECTED_ONNX_BYTES});
- const mixed=lines.map((x,i)=>i===wi?tag+JSON.stringify(orig):x).join('\\n')
+ const mixed=lines.map((x,i)=>i===wi?tag+JSON.stringify(orig):x).join('\n')
   .replace('"intercepted":1','"intercepted":2');
  assert.throws(()=>verifyM262(mixed,identity({exitCode:1}),{corrupt:true}),
-  /interception\\/body-count/);
+  /interception.*body-count/);
  const unseen=raw.replace('"intercepted":1','"intercepted":0');
  assert.throws(()=>verifyM262(unseen,identity({exitCode:1}),{corrupt:true}),
   /injection absent/);
