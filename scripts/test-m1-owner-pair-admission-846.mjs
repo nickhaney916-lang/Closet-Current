@@ -784,6 +784,105 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     realBrowserIndexedDB:true,physicalDevice:false,pageErrors:errors.length
    }));
    await page.evaluate(()=>db.close());
+
+   // True browser-IDB crop CAS, not the synthetic IDB harness. The original
+   // crop handler used a bare .put on saved wardrobe rows or the full draft,
+   // silently losing second-tab corrections and pending raw JPEGs.
+   const cropCas88=await page.evaluate(async()=>{
+    const opened=indexedDB.open('closet-current-user-owner-A');
+    const ownerDb=await new Promise((resolve,reject)=>{
+     opened.onsuccess=()=>resolve(opened.result);
+     opened.onerror=()=>reject(opened.error);
+    });
+    db=ownerDb;window.closetAuth.user={id:'owner-A'};window.beforeWriteTest=null;
+    const put=(store,row)=>new Promise((resolve,reject)=>{
+     const tx=db.transaction(store,'readwrite');
+     tx.objectStore(store).put(structuredClone(row));
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+    const get=(store,id)=>new Promise((resolve,reject)=>{
+     const req=db.transaction(store,'readonly').objectStore(store).get(id);
+     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+    });
+    const raw='data:image/jpeg;base64,T1JJR0lOQUwtQ1JPUC1PQVNJUw==';
+    const oldImage='data:image/jpeg;base64,T0xELU9XTkVSLUNST1A=';
+    const newImage='data:image/jpeg;base64,TkVXLU9XTkVSLUNST1A=';
+    const base={id:'actual-saved-crop-revision-88',image:oldImage,
+     originalPhoto:{image:raw},category:'Tops',itemType:'T-shirt',
+     color:'Blue',seasons:[],userAdjusted:false};
+    items=[base];batch=[];await put('items',base);
+    cropClothingPhoto(base);
+    const corrected={...base,color:'Green',itemType:'Blouse'};
+    await put('items',corrected);
+    let staleSavedRefused=false;
+    try{await window.crop88Editor.save({image:newImage},null);}
+    catch(e){staleSavedRefused=/P88_SAVED_CROP_STORAGE_CHANGED/.test(e.message);}
+    const correctionIntact=(await get('items',base.id))?.color==='Green'&&
+     (await get('items',base.id))?.image===oldImage;
+    const localSavedIntact=base.image===oldImage;
+    await put('items',base);
+    cropClothingPhoto(base);
+    await window.crop88Editor.save({image:newImage},null);
+    const savedCropCommitted=(await get('items',base.id))?.image===newImage;
+    const originalSaved=(await get('items',base.id))?.originalPhoto?.image===raw;
+
+    const pending={id:'actual-pending-crop-88',image:oldImage,
+     originalPhoto:{image:raw},name:'Pending original',category:'Tops',
+     itemType:'T-shirt',color:'Blue',seasons:[],userAdjusted:false};
+    const other={id:'later-tab-pending-88',
+     image:'data:image/jpeg;base64,TEFURVItUEhPVE8='};
+    items=[];batch=[pending];await put('state',{id:'draft',batch:[pending]});
+    draftStoreRevision88=JSON.stringify(batch);
+    cropClothingPhoto(pending);
+    await put('state',{id:'draft',batch:[pending,other]});
+    let staleDraftRefused=false;
+    try{await window.crop88Editor.save({image:newImage},null);}
+    catch(e){staleDraftRefused=/P88_CROP_DRAFT_STORAGE_CHANGED/.test(e.message);}
+    const afterRefusal=(await get('state','draft'))?.batch||[];
+    const otherPreserved=afterRefusal.some(x=>x.id===other.id&&x.image===other.image);
+    const pendingRawPreserved=afterRefusal.some(x=>x.id===pending.id&&x.image===oldImage);
+    batch=[pending,other];draftStoreRevision88=JSON.stringify(batch);
+    cropClothingPhoto(pending);
+    await window.crop88Editor.save({image:newImage},null);
+    const afterReview=(await get('state','draft'))?.batch||[];
+    const newCropSaved=afterReview.some(x=>x.id===pending.id&&x.image===newImage&&
+     x.originalPhoto?.image===raw);
+    const otherStillPreserved=afterReview.some(x=>x.id===other.id&&x.image===other.image);
+
+    // A late saved matching preview must be found in durable IDB even when
+    // this tab has not refreshed its stale in-memory items list.
+    const newest={...pending,id:'actual-late-peer-new-crop-88',
+     image:'data:image/jpeg;base64,TkVXLUxBVEUtQ1JPUA=='};
+    const peer={id:'actual-other-tab-new-peer-88',image:newest.image,
+     category:'Tops',itemType:'T-shirt',color:'Blue'};
+    items=[];batch=[newest];await put('state',{id:'draft',batch:[newest]});
+    draftStoreRevision88=JSON.stringify(batch);
+    cropClothingPhoto(newest);
+    await put('items',peer);
+    await window.crop88Editor.save({image:newest.image,notes:'reviewed crop'},null);
+    const flagged=(await get('state','draft'))?.batch?.find(x=>x.id===newest.id);
+    const latePeerGuard=flagged?.exactSavedPhotoMatch88?.savedItemId===peer.id&&
+     flagged?.possibleDuplicate===true&&
+     flagged?.requiresOwnershipConfirmation===true;
+    const noAutoSaved=(await get('items',newest.id))===undefined;
+    ownerDb.close();
+    return {staleSavedRefused,correctionIntact,localSavedIntact,
+     savedCropCommitted,originalSaved,staleDraftRefused,otherPreserved,
+     pendingRawPreserved,newCropSaved,otherStillPreserved,
+     latePeerGuard,noAutoSaved};
+   });
+   assert.deepEqual(cropCas88,{
+    staleSavedRefused:true,correctionIntact:true,localSavedIntact:true,
+    savedCropCommitted:true,originalSaved:true,staleDraftRefused:true,
+    otherPreserved:true,pendingRawPreserved:true,
+    newCropSaved:true,otherStillPreserved:true,
+    latePeerGuard:true,noAutoSaved:true
+   },'genuine native IDB crop CAS must protect saved and pending originals');
+   console.log('M1_P88_ACTUAL_BROWSER_CROP_SAVED_AND_DRAFT_CAS',JSON.stringify({
+    browser:browserName,width,...cropCas88,
+    realBrowserIndexedDB:true,syntheticOwner:true,
+    physicalDevice:false,pageErrors:errors.length
+   }));
    assert.deepEqual(errors,[]);
    await page.close();
   }
