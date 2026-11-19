@@ -15,7 +15,10 @@ const fake=(id,sha)=>({
  actualImageDecoded:true,photoPartExactHumanVerified:false,
  originalCameraCalibrationClaimed:false
 });
-function photos(){return [fake(0,'a'.repeat(64)),fake(1,'b'.repeat(64))];}
+function photos(){return [
+ fake(0,catalogue.publishedPhotoSHA256[0]),
+ fake(1,catalogue.publishedPhotoSHA256[1])
+];}
 test('source-matched museum measurements remain separate a/b and not circumference, with no images initially',()=>{
  const a=audit();
  assert.equal(a.status,'MET_OBJECT_PHYSICAL_CATALOG_FOUND_IMAGES_NOT_BYTE_ATTESTED');
@@ -73,6 +76,7 @@ test('wrong image source, duplicate photo, corrupt digest, metadata or false app
   p=>p[0].sourceUrl= 'https://example.com/photo.jpg',
   p=>p[1].sourceUrl= p[0].sourceUrl,
   p=>p[1].sha256=p[0].sha256,
+  p=>p[0].sha256='a'.repeat(64),
   p=>p[1].sha256='0'.repeat(63),
   p=>p[1].contentType='text/html',
   p=>p[0].httpStatus=404,
