@@ -239,7 +239,7 @@ const readiness=async()=>{
    // BEFORE JSON.parse; Content-Length is only an early advisory rejection.
    const maxManifestBytes=32*1024*1024;
    const claimed=manifestResponse.headers.get('content-length');
-   if(claimed!==null&&(/^\\d+$/.test(claimed)===false||
+   if(claimed!==null&&(/^\d+$/.test(claimed)===false||
     Number(claimed)>maxManifestBytes))
     throw Error('research-3D-manifest-too-large');
    if(!manifestResponse.body)throw Error('research-3D-manifest-stream-unavailable');
