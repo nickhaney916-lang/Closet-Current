@@ -96,10 +96,14 @@ source=source.replace(routeLocal,[
 
 const page=" const page=await context.newPage();";
 once(page,'original browser context page');
-source=source.replace(page,page+"\n"+
+source=source.replace(page," const m247NativeEvents=[];\n"+page+"\n"+
  " page.on('console',msg=>{const v=msg.text();"+
- "if(v.startsWith('M247_ORIGINAL_JSEP_MODEL_MEMORY_EVENT '))"+
- " console.log(v.slice(0,850));});");
+ "if(v.startsWith('M247_ORIGINAL_JSEP_MODEL_MEMORY_EVENT ')){"+
+ " console.log(v.slice(0,850));"+
+ " try{const parsed=JSON.parse(v.slice('M247_ORIGINAL_JSEP_MODEL_MEMORY_EVENT '.length));"+
+ " const safe=sanitizeRealWorkerJsepMessage({type:'diagnostic',...parsed});"+
+ " if(safe&&m247NativeEvents.length<12)m247NativeEvents.push(safe);}catch{}"+
+ " }});");
 
 const stage=" assert.ok(/unverified region/.test(state.status),'Never call the proposals confirmed');";
 once(stage,'original genuine model-positive review stage');
@@ -110,8 +114,8 @@ const evidence=[
  " for(const item of m247PublicAssets.filter(x=>x.kind==='onnx-wasm'&&x.status===200))",
  "  independent.push(await independentlyFetchPinnedWasm(item.name));",
  " const realJsep=attestP94LoadedRuntime(m247PublicAssets,localOrt,independent);",
- " const nativeEvents=await page.evaluate(()=>window.__m247JsepEvents||[]);",
- " const safeEvents=nativeEvents.map(sanitizeRealWorkerJsepMessage).filter(Boolean);",
+ " // Node-side original browser console event capture survives app page reloads.",
+ " const safeEvents=m247NativeEvents;",
  " const m247Receipt=verifySameOriginalJsepModelBoundary(safeEvents,realJsep,engine);",
  " assert.equal(realJsep.observedPublicResources.filter(x=>x.kind==='onnx-wasm').length,1);",
  " console.log('M247_REAL_ORIGINAL_P94_JSEP_BOUNDARY',JSON.stringify({...m247Receipt,",
