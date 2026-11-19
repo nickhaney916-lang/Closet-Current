@@ -1,0 +1,134 @@
+name: MAIN1054 M276 authenticated original WebKit native RED NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m276-native-session-evidence-HOLD]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  m276-source-and-parser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source pin candidate and unchanged original model and source controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:scripts/main1054-m276-ortcreate-session-evidence.mjs)" = cdf5f6f946cbb61b9e9f1402fc23dfc45afc24ed
+          node scripts/main1054-m276-ortcreate-session-evidence.mjs source
+          node --check scripts/main1054-m276-ortcreate-session-evidence.mjs
+          node --check public/outfit-worker-p94.mjs
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Reject stale source and forged native success or hidden historical RED
+        run: node --test tests/main1054-m276-ortcreate-session-evidence.test.mjs
+      - name: Inherited M271 through M274 source-integrity negative tests
+        run: node --test tests/main1054-m271-m58-gate.test.mjs tests/main1054-m272-m173-source-gate.test.mjs tests/main1054-m273-m180-source-gate.test.mjs tests/main1054-m274-m181-source-gate.test.mjs
+  m276-replay-authentic-old-red:
+    needs: m276-source-and-parser
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify first-attempt exact source before evidence retrieval
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:scripts/main1054-m276-ortcreate-session-evidence.mjs)" = cdf5f6f946cbb61b9e9f1402fc23dfc45afc24ed
+          node scripts/main1054-m276-ortcreate-session-evidence.mjs source
+      - name: Read historical failed first-attempt public GitHub job and run only
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          base="https://api.github.com/repos/nickhaney916-lang/Closet-Current"
+          curl --fail --silent --show-error --location --retry 2 --max-time 100 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "$base/actions/runs/44610116084" -o "$RUNNER_TEMP/m276-run.json"
+          curl --fail --silent --show-error --location --retry 2 --max-time 100 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "$base/actions/jobs/135864150426" -o "$RUNNER_TEMP/m276-job.json"
+          curl --fail --silent --show-error --location --retry 2 --max-time 130 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "$base/actions/jobs/135864150426/logs" -o "$RUNNER_TEMP/m276-original-log.bin"
+          # Never print/upload raw original job logs.
+      - name: Extract transient original diagnostic log without exposing raw details
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          import {join} from 'node:path';
+          const root=process.env.RUNNER_TEMP;
+          const path=join(root,'m276-original-log.bin');
+          const raw=readFileSync(path);
+          if(raw.length<100||raw.length>3_000_000)throw Error('Original logs missing or oversized');
+          let log;
+          if(raw[0]===0x50&&raw[1]===0x4b){
+            const filenames=execFileSync('unzip',['-Z','-1',path],{encoding:'utf8'})
+              .split(/\r?\n/).filter(x=>/\.txt$|\.log$/i.test(x)).sort();
+            if(!filenames.length||filenames.length>40)throw Error('Untrusted downloaded job-log archive format');
+            log=filenames.map(name=>execFileSync('unzip',['-p',path,name],{
+              encoding:'utf8',maxBuffer:3_000_000
+            })).join('\n');
+          }else log=raw.toString('utf8');
+          if(!log.includes('CC_NATIVE_ORT_TRACE')||!log.includes('ORIGINAL_JOURNEY_FAIL'))
+            throw Error('Original diagnostic job evidence missing; refuse substitute');
+          if(log.length>3_000_000)throw Error('Original job log exceeds bounded evidence limit');
+          writeFileSync(join(root,'m276-original-job.txt'),log,{mode:0o600});
+          console.log('M276_HISTORICAL_JOB_LOG_RETRIEVED',JSON.stringify({
+            job:135864150426,run:44610116084,transientOnly:true,rawArchived:false
+          }));
+          JS
+      - name: Preserve authentic original WebKit OrtCreateSession RED with first-attempt status
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/main1054-m276-ortcreate-session-evidence.mjs attest \
+            "$RUNNER_TEMP/m276-original-job.txt" \
+            "$RUNNER_TEMP/m276-run.json" \
+            "$RUNNER_TEMP/m276-job.json" \
+            "$RUNNER_TEMP/m276-sanitized.json"
+          test -s "$RUNNER_TEMP/m276-sanitized.json"
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/m276-sanitized.json'));
+          if(r.originalGenuineNativeRed!==1||r.originalGenuineNativePassed!==4||
+             r.nativeFailureOperation!=='OrtCreateSession'||r.wasmFramesFromFailingThrow!==0||
+             r.causeIdentified!==false||r.allocatorBugVerified!==false||
+             r.permanentWebKitFixProven!==false||r.releaseAllowed!==false||r.familyAlpha!=='HOLD')
+            throw Error('M276 native RED truth or HOLD status violated');
+          console.log('M276_ORIGINAL_NATIVE_RED_AUTHENTICATED');
+          JS
+      - name: Archive only sanitized bounded native error evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m276-original-ortcreatesession-red-sanitized-HOLD
+          path: ${{ runner.temp }}/m276-sanitized.json
+          retention-days: 7
+          if-no-files-found: ignore
