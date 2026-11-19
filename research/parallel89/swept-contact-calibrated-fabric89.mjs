@@ -156,7 +156,8 @@ export function assessPhysicalFitEvidence(input={}){
  need('humanReviewedSourceMask',input.humanReviewedSourceMask===true);
  need('observedOriginalReverse',input.observedOriginalReverse===true);
  need('photoAlignedPhysicalReference',positive(ref.spanPixels)&&
-  positive(ref.spanMm)&&ref.sourcePhotoSHA256===input.originalPhotoSHA256&&
+  positive(ref.spanMm)&&
+   sha(input.originalPhotoSHA256)&&ref.sourcePhotoSHA256===input.originalPhotoSHA256&&
   ref.sameGarmentPlane===true);
  need('cameraIntrinsicExtrinsicEvidence',positive(camera.focalLengthPixels)&&
   positive(camera.distanceMm)&&camera.opticalAxisReviewed===true);
@@ -200,15 +201,25 @@ export function assessPhysicalFitEvidence(input={}){
  * Small, explicitly research-only gravity/strain prototype. The patch is
  * rectangular, front-surface-only, and pinned along one edge, with
  * position-based structural/shear/bending constraints in SI units.
- * It has no anatomical collisions, seams, friction, layering or unseen back.
+ * Optional sphere-vertex proxy contact is NOT real anatomical collision;
+ * no face/edge sweep, seams, friction, layering or observed reverse exists.
  * Material values must be independently measured before representing source.
  */
 export function simulateResearchFabricPatch({
  widthM=.6,depthM=.6,columns=7,rows=7,
  arealDensityKgM2=.25,stretchStiffnessNPerM=650,
  bendingStiffnessNm=.05,dampingRatio=.025,
- gravityMS2=9.81,dtSeconds=1/120,steps=120,iterations=10
+ gravityMS2=9.81,dtSeconds=1/120,steps=120,iterations=10,
+ collisionSphere=null
 }={}){
+ if(collisionSphere!==null&&(
+  !Array.isArray(collisionSphere.centerM)||
+  collisionSphere.centerM.length!==3||
+  !collisionSphere.centerM.every(finite)||
+  !positive(collisionSphere.radiusM)||
+  !finite(collisionSphere.clearanceM??0)||
+  (collisionSphere.clearanceM??0)<0))
+  throw Error('fabric-proxy-collider-invalid');
  if(![widthM,depthM,arealDensityKgM2,stretchStiffnessNPerM,
   bendingStiffnessNm,dtSeconds].every(positive)||
   ![columns,rows,steps,iterations].every(Number.isSafeInteger)||
@@ -225,7 +236,12 @@ export function simulateResearchFabricPatch({
   points.push(p);prev.push(p.slice());
  }
  const mass=arealDensityKgM2*widthM*depthM/n,
-  invMass=1/mass,links=[];
+  invMass=1/mass,links=[],
+  cellLengthM=Math.min(widthM/(columns-1),depthM/(rows-1)),
+  // Approximate conversion: Nm bending coefficient to N/m distance
+  // constraint via squared local grid spacing, NOT a shell-element solver.
+  approximateBendingSpringNPerM=bendingStiffnessNm/(cellLengthM*cellLengthM);
+ let proxyVertexCorrections=0;
  const add=(i,j,k)=>{
   const a=points[i],b=points[j];
   links.push({i,j,k,rest:Math.hypot(...a.map((v,c)=>v-b[c]))});
@@ -238,8 +254,8 @@ export function simulateResearchFabricPatch({
    add(i,index(x+1,y+1),stretchStiffnessNPerM*.45);
    add(index(x+1,y),index(x,y+1),stretchStiffnessNPerM*.45);
   }
-  if(x+2<columns)add(i,index(x+2,y),bendingStiffnessNm);
-  if(y+2<rows)add(i,index(x,y+2),bendingStiffnessNm);
+  if(x+2<columns)add(i,index(x+2,y),approximateBendingSpringNPerM);
+  if(y+2<rows)add(i,index(x,y+2),approximateBendingSpringNPerM);
  }
  const pinned=i=>i<columns;
  for(let step=0;step<steps;step++){
@@ -262,6 +278,20 @@ export function simulateResearchFabricPatch({
     b[k]-=wb*correction*d[k];
    }
   }
+  // Optional vertex-to-sphere projection AFTER mechanical constraints.
+  // Geometry/face penetration remains UNKNOWN: not real anatomy or drape.
+  if(collisionSphere){
+   const center=collisionSphere.centerM,
+    target=collisionSphere.radiusM+(collisionSphere.clearanceM??0);
+   for(let i=columns;i<n;i++){
+    const p=points[i],delta=p.map((v,k)=>v-center[k]),
+     distance=Math.hypot(...delta);
+    if(distance>=target)continue;
+    const unit=distance>1e-9?delta.map(v=>v/distance):[0,1,0];
+    for(let k=0;k<3;k++)p[k]=center[k]+unit[k]*target;
+    proxyVertexCorrections++;
+   }
+  }
   if(!points.every(p=>p.every(finite)))throw Error('fabric-simulation-diverged');
  }
  let maxStructuralStrain=0;
@@ -276,6 +306,10 @@ export function simulateResearchFabricPatch({
   maximumStructuralStrain:maxStructuralStrain,
   pinnedEdgeUnchanged:points.slice(0,columns).every(p=>p[1]===1.2),
   patchFaceCount:(columns-1)*(rows-1)*2,
+  approximateBendingSpringNPerM,
+  proxySphereVertexCorrections:proxyVertexCorrections,
+  proxySphereVertexOnlyConstraint:collisionSphere!==null,
+  originalBodyTriangleContactsProved:false,
   simulatedSteps:steps,simulatedTimeSeconds:steps*dtSeconds,
   materialParameterUnits:'kg/m2;N/m;Nm;seconds;meters',
   referenceMaterialMeasurementsVerified:false,
