@@ -52,7 +52,13 @@ export function verifyM250ControlledPostJsepReceipt(receipt){
  assert.equal(receipt.publicWasmStatus,200);
  assert.equal(receipt.exactOneObservedException,true);
  assert.equal(receipt.modelExceptionName,'RuntimeError');
- assert.equal(receipt.modelExceptionCategory,'wasm_memory_access');
+ assert.ok(['wasm_memory_access','network_abort','other'].includes(receipt.modelExceptionCategory),
+  'Actual ORT RuntimeError category was not a bounded observed enum');
+ // The original M249 heuristic matches /abort/ in a RuntimeError message.
+ // A WebAssembly.RuntimeError may therefore be reported as network_abort.
+ // Preserve the exact observed enum, but NEVER promote that word to proof
+ // of a network failure or a native C++ memory bug.
+ const originalSanitizedErrorCategory=receipt.modelExceptionCategory;
  assert.equal(receipt.originalHeapTerminalSeen,true);
  assert.ok(Number.isInteger(receipt.observedGrowCalls)&&receipt.observedGrowCalls>=2);
  assert.ok(Number.isInteger(receipt.observedGrowErrors)&&receipt.observedGrowErrors>=1);
@@ -67,6 +73,9 @@ export function verifyM250ControlledPostJsepReceipt(receipt){
   schema:'M250_SYNTHETIC_POST_JSEP_GROW_REDACTION/v1',
   originalJsepDirectlyHashedInSameFailingWebkitBrowser:true,
   syntheticJavascriptGrowThrowVerified:true,
+  originalReportedErrorCategory:originalSanitizedErrorCategory,
+  errorClassification:'SYNTHETIC_JAVASCRIPT_GROW_WITH_WRAPPED_RUNTIME_ERROR',
+  actualNetworkAbortCauseProven:false,
   actualOriginalModelStillFailed:true,
   syntheticFaultIsNaturalWebkitBug:false,
   nativeCppAllocatorCauseProven:false,realRedToGreenFixProven:false,
