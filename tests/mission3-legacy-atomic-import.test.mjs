@@ -467,3 +467,64 @@ test('unverified legacy original with no SHA still imports without inventing att
   assert.equal(saved.sourceSHA256,undefined);
  }finally{f.close();}
 });
+
+
+test('full decoded original JPEG with >4 MB benign APP15 metadata commits atomically without regexp overflow',async()=>{
+ const f=await fixture();
+ try{
+  // Real independently decodable synthetic 2x2 JPEG, with legal 64 KiB APP15
+  // segments before its image data. This simulates large camera metadata, not
+  // private family photographs or a human garment recognition fixture.
+  const sharp=require('sharp');
+  const base=await sharp({create:{width:2,height:2,channels:3,
+   background:{r:25,g:70,b:110}}}).jpeg().toBuffer();
+  const app15=Buffer.alloc(65537,0x41);
+  app15[0]=0xff;app15[1]=0xef;app15[2]=0xff;app15[3]=0xff;
+  const source=Buffer.concat([base.subarray(0,2),
+   ...Array.from({length:80},()=>app15),base.subarray(2)]);
+  assert.ok(source.length>4*1024*1024);
+  assert.ok(source.length<8*1024*1024);
+  assert.equal((await sharp(source).metadata()).width,2);
+  const encoded='data:image/jpeg;base64,'+source.toString('base64');
+  const digest=createHash('sha256').update(source).digest('hex');
+  const raw=backup(f.owner);
+  raw.items[0].sourceSHA256=digest;
+  raw.items[0].sourceHashVerified=true;
+  raw.items[0].originalPhoto={image:encoded,sha256:digest,ownerId:f.owner};
+  const plan=await prep(f,raw);
+  assert.equal(plan.releaseAuthorized,false);
+  const result=await commit(f,plan);
+  assert.equal(result.committed,true);
+  const s=await snapshot(f.db),saved=s.items.find(x=>x.id==='new-top');
+  assert.equal(saved.originalPhoto.image,encoded);
+  assert.equal(saved.sourceSHA256,digest);
+  assert.equal(s.state.find(x=>x.id==='outfit-board').saved[0].slots.top,'new-top');
+  assert.equal(s.state.find(x=>x.id==='cloud-sync').localRevision,8);
+ }finally{f.close();}
+});
+
+test('malformed original Base64 and non-canonical padding fail before any private owner write',async()=>{
+ const f=await fixture();
+ try{
+  const before=await snapshot(f.db);
+  const malformed=[jpeg+'=',jpeg.slice(0,-1),jpeg+'!',
+   'data:image/jpeg;base64,A===','data:image/jpeg;base64,AB=C',
+   'data:image/jpeg;base64,/9j/2Q==\\n'];
+  for(const candidate of malformed){
+   const raw=backup(f.owner);
+   raw.items[0].originalPhoto={image:candidate};
+   await assert.rejects(prep(f,raw),/LEGACY_ATOMIC_INVALID_JPEG/);
+   assert.deepEqual(await snapshot(f.db),before);
+  }
+ }finally{f.close();}
+});
+
+test('oversized encoded original is refused before Base64 allocation and leaves both stores intact',async()=>{
+ const f=await fixture();
+ try{
+  const before=await snapshot(f.db),raw=backup(f.owner);
+  raw.items[0].originalPhoto={image:'data:image/jpeg;base64,'+'A'.repeat(11_200_004)};
+  await assert.rejects(prep(f,raw),/LEGACY_ATOMIC_INVALID_JPEG/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
