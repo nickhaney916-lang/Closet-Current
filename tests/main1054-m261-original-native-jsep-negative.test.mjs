@@ -20,8 +20,19 @@ const marker=(extra={})=>'M261_CONTROLLED_JSEP_FAULT '+JSON.stringify({
 const badBrowser=(extra={})=>'M58_REAL_P88_WORKER_FAIL '+JSON.stringify({
  stage:'true-original-model-init',error:'controlled-research-fault',...extra
 });
-const log=(over='',m={})=>badBrowser()+'\n'+marker(m)+'\n'+over;
-test('disposable original P94 derivation injects only one targeted JSEP response',()=>{
+const wasmSha='4a333b50e854cbe7946e70d8a1d715a4c86f5fee16a3c2f4d6bf2e8ee46ebe01';
+const network=(count=1)=>'M259_CONTEXT_NETWORK_WITNESS '+JSON.stringify({
+ schema:'M259_CONTEXT_NETWORK_V1',engine:'webkit',width:390,
+ rows:Array.from({length:count},()=>({
+  kind:'jsep-wasm',status:'invalid-wasm-magic',sha256:wasmSha,size:45
+ })),
+ wasmNetworkMatch:false,modelNetworkObserved:false,
+ compiledWasmAttested:false,loadedModelAttested:false,
+ sameNativeProcessProven:false,sourceEvidenceGate:'BLOCKED',familyAlpha:'HOLD'
+});
+const log=(over='',m={})=>badBrowser()+'\n'+marker(m)+'\n'+
+ network(m.interceptedJsepRequests??1)+(over?'\n'+over:'');
+test('disposable original P94 derivation targets only pinned JSEP WASM response kind',()=>{
  const original=readFileSync('scripts/test-parallel94-native-p88-browser.mjs','utf8');
  const derived=deriveM261(original);
  assert.ok(derived.length>original.length);
@@ -49,14 +60,20 @@ test('successful original child exit cannot be called a controlled RED',()=>{
  assert.throws(()=>verifyM261Failure(log(),0,id({exitCode:0})),/did not fail/);
 });
 test('no actual original M58 terminal failure marker refuses synthetic fail claims',()=>{
- assert.throws(()=>verifyM261Failure(marker(),1,id()),/did not fail/);
+ assert.throws(()=>verifyM261Failure(marker()+'\n'+network(),1,id()),/did not fail/);
 });
 test('no actual intercepted original WASM response refuses fabricated failure',()=>{
  assert.throws(()=>verifyM261Failure(log('',{interceptedJsepRequests:0}),1,id()),/not independently observed/);
 });
-test('duplicated corrupt responses and repeated marker are rejected',()=>{
- assert.throws(()=>verifyM261Failure(log('',{interceptedJsepRequests:2}),1,id()));
+test('two legitimate JSEP fetches are counted while repeated/too many requests are rejected',()=>{
+ const two=verifyM261Failure(log('',{interceptedJsepRequests:2}),1,id());
+ assert.equal(two.injectionInterceptCount,2);
+ assert.throws(()=>verifyM261Failure(log('',{interceptedJsepRequests:9}),1,id()));
  assert.throws(()=>verifyM261Failure(log()+'\n'+marker(),1,id()),/Missing\/duplicate/);
+});
+test('a forged or missing actual invalid-response witness cannot be accepted',()=>{
+ assert.throws(()=>verifyM261Failure(badBrowser()+'\n'+marker(),1,id()),/response witness/);
+ assert.throws(()=>verifyM261Failure(log().replaceAll(wasmSha,'f'.repeat(64)),1,id()),/do not match/);
 });
 test('a positive P91 or owner A save marker after negative JSEP must be rejected',()=>{
  for(const success of [
