@@ -63,6 +63,26 @@ function attest({session,core}, worker,m250){
  const window=code.slice(location,location+650);
  assert.match(window,/!!sessionOptions\.enableMemPattern\s*,/,'Pinned memory option must be passed as boolean argument');
  assert.match(window,/!!sessionOptions\.enableCpuMemArena\s*,\s*!!sessionOptions\.enableMemPattern\s*,/,'Memory option ABI argument order changed');
+ // Pin the original WASM *default* before accepting M250 as a real A/B.
+ // An option omitted in original Worker and an explicit false may both map
+ // to the SAME native boolean. A green 14/14 comparison is then not
+ // evidence of a changed allocator policy, even when a real model ran.
+ const appendStart=code.indexOf('const appendDefaultOptions');
+ const appendEnd=code.indexOf('const setExecutionProviders',appendStart);
+ assert.ok(appendStart>=0&&appendEnd>appendStart,'Unknown installed ORT default-option normalization');
+ const appendDefault=code.slice(appendStart,appendEnd);
+ assert.ok(!/enableMemPattern\\s*(?:=|\\?\\?=)\\s*true/.test(appendDefault),
+  'Default session options force memory patterns on; M250 baseline/false may differ');
+ const nativeCallPatterns=[...code.matchAll(/enableMemPattern/g)].length;
+ assert.ok(nativeCallPatterns>=1&&nativeCallPatterns<=2,
+  'Unexpected additional session memory-pattern rewrites; original baseline value UNKNOWN');
+ if(appendDefault.includes('enableMemPattern')){
+  assert.ok(appendDefault.includes('webgpu')&&appendDefault.includes('= false'),
+   'Unproven default memory-pattern mutation outside WebGPU explicit disable');
+ }
+ assert.ok(code.includes('appendDefaultOptions(sessionOptions)'),
+  'No proof native session options are normalized at expected call');
+ assert.equal(Boolean(undefined),Boolean(false),'Omitted option unexpectedly differs from explicit false');
  assert.ok(core.content.includes('setSessionOptions('),'Actual native core does not construct ONNX WASM session options');
  assert.ok(core.content.includes('_OrtCreateSession'),'Actual native core does not create WASM model session');
  return Object.freeze({
@@ -74,6 +94,8 @@ function attest({session,core}, worker,m250){
   researchPatternOffToWasmAbiBooleanSourceProven:true,
   trueJavascriptOptionProducesBooleanFalse:true,
   defaultJavascriptUndefinedProducesBooleanFalse:true,
+  omittedBaselineAndExplicitFalseSameWasmNativeBoolean:true,
+  oldM250BaselineVsPatternOffWasNotAnAllocatorA_B:true,
   // WARNING: an undefined default is NOT necessarily the desired ORT default.
   // This test never asserts it means C++ memory-pattern policy is off.
   actualWasmExportCallObserved:false,
@@ -94,6 +116,7 @@ test('M252 exact installed pinned ORT source map routes option boolean into nati
  const receipt=attest(source,worker,m250);
  assert.equal(receipt.installedNativeSessionOptionsCallStaticVerified,true);
  assert.equal(receipt.actualWasmExportCallObserved,false);
+ assert.equal(receipt.omittedBaselineAndExplicitFalseSameWasmNativeBoolean,true);
  assert.equal(receipt.actualNativeAllocatorOptionStateRead,false);
  console.log('M252_INSTALLED_ORT_NATIVE_ABI_SOURCE',JSON.stringify({...receipt,sourceMapCount:source.foundMaps}));
 });
@@ -114,6 +137,14 @@ test('M252 rejects tampered native mem option, swapped allocator ABI and fake na
  }
  assert.throws(()=>attest(source,worker.replace("dtype:'fp32'","dtype:'q8'"),m250));
  assert.throws(()=>attest(source,worker,m250.replace('session_options:{enableMemPattern:false}','session_options:{}')));
+ const fakeNativeDefault={...source,session:{...source.session,
+  content:source.session.content.replace(
+   'appendDefaultOptions(sessionOptions)',
+   'appendDefaultOptions(sessionOptions);sessionOptions.enableMemPattern = true'
+  )}};
+ // Synthetic default injection cannot be allowed to count as equivalent.
+ assert.throws(()=>attest(fakeNativeDefault,worker,m250));
+ assert.equal(base.oldM250BaselineVsPatternOffWasNotAnAllocatorA_B,true);
  assert.equal(base.actualWasmExportCallObserved,false);
  assert.equal(base.actualNaturalWebkitRedToGreenProven,false);
 });
