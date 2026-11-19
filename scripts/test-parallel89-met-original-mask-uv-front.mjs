@@ -52,7 +52,7 @@ for(const id of [2551406,2551408]){
  assert.equal(result.sourceLayeredOutfitFitProved,false);
  assert.equal(result.releaseAuthorized,false);
  assert.equal(result.familyAlpha,'HOLD');
- const {data:fullMask,info}=await sharp(png).removeAlpha().raw().toBuffer({resolveWithObject:true});
+ const {data:fullMask,info}=await sharp(png).greyscale().raw().toBuffer({resolveWithObject:true});
  assert.equal(info.channels,1);
  const [w,h]=[result.downsampledWidth,result.downsampledHeight];
  let tested=0;
