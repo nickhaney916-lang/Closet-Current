@@ -149,18 +149,18 @@ export function adjudicateProcess(log,exit,metadata){
   demand(entry.argc===3,'unexpected native ABI argument count');
   for(const name of ['modelPointer','modelLength','modelEnd','liveLinearMemoryBytes','heapViewBytes','sessionOptionsPointer'])
    demand(entry[name]===null||Number.isSafeInteger(entry[name])&&entry[name]>=0,'invalid scalar '+name);
-  demand(entry.originalFP32ModelLengthMatches===true&&entry.modelLength===expectedOriginalModelLength,
-   'not exact original SegFormer fp32 ONNX length');
-  demand(entry.modelRangeWithinLiveMemory===true&&entry.modelRangeWithinHeapView===true,
-   'original model input bytes not proven safely in heap');
+  // On a TRUE RED preserve unexpected pointer/length/bounds numerically.
+  // Only a positive model/owner result is eligible for an in-bounds assertion.
+  demand(entry.modelEnd===null||entry.modelPointer===null||entry.modelLength===null||
+   entry.modelEnd===entry.modelPointer+entry.modelLength,'inconsistent native pointer arithmetic');
  }
  if(exitRow){
   demand(entry!==null,'missing native entry witness');
   demand(exitRow.argc===3&&exitRow.modelPointer===entry.modelPointer&&
    exitRow.modelLength===entry.modelLength&&exitRow.modelEnd===entry.modelEnd,
    'original native input mutated during session');
-  demand(exitRow.modelRangeWithinLiveMemory===true,
-   'native model pointer not in live memory at terminal');
+  // A genuine OOB native failure MUST remain readable as evidence, not
+  // silently lost behind an over-strict positive-path receipt validator.
   demand(exitRow.phase==='throw'||exitRow.phase==='return','invalid native outcome');
   if(exitRow.phase==='throw'){
    demand(Array.isArray(exitRow.wasmFunctionOffsets)&&exitRow.wasmFunctionOffsets.length<=6&&
@@ -169,8 +169,13 @@ export function adjudicateProcess(log,exit,metadata){
   }
  }
  if(original.originalModelPositive){
-  demand(entry&&exitRow?.phase==='return'&&entry.modelRangeWithinLiveMemory===true&&
-   entry.modelLength===expectedOriginalModelLength,'invented real original native model positive');
+  demand(entry&&exitRow?.phase==='return'&&entry.modelPointer>0&&
+   entry.modelEnd===entry.modelPointer+entry.modelLength&&
+   entry.originalFP32ModelLengthMatches===true&&
+   entry.modelLength===expectedOriginalModelLength&&
+   entry.modelRangeWithinLiveMemory===true&&
+   entry.modelRangeWithinHeapView!==false&&
+   exitRow.modelRangeWithinLiveMemory===true,'invented real original native model positive');
  }
  if(original.nativeSessionThrew)
   demand(exitRow===null||exitRow.phase==='throw','original native throw relabeled successful');
