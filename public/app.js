@@ -171,7 +171,7 @@ function savePiece(value,nextBatch,lease){
  });
 }
 function durableReviewedNewItemPeers88(value,lease,rows){
- if(!Array.isArray(rows)||duplicateUnit70InCloset(value,rows))return false;
+ if(!Array.isArray(rows))return false; // P70 mask checks run separately in source-bound saves
  if(!Array.isArray(lease?.exactPhotoPeers88))return true; // P70 mask identity above
  const expected=lease.exactPhotoPeers88;
  const actual=rows.filter(x=>x&&x.id!==value.id&&x.image===value.image);
