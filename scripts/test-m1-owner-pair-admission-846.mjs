@@ -33,9 +33,8 @@ const source=extract('function savePiece(', 'function node(')+
 // Browser-only exception witness: never silently turn a rejected review into
 // a 30s timeout or a fake success. The actual consumer source stays unchanged.
 const checkedSource=source.replace(
- /}catch\{\n  saveInFlight=false;/,
- `}catch(error){window.p846LastSaveError=String(error?.message||error);
-  saveInFlight=false;`
+ "const conflictMessage88=ownerReviewedSaveConflict88(error);",
+ "window.p846LastSaveError=String(error?.message||error);\n  const conflictMessage88=ownerReviewedSaveConflict88(error);"
 );
 if(checkedSource===source)throw Error('P846 native save error handler changed');
 // Diagnostic only: extract all fields from the real transactional guard. Keep
