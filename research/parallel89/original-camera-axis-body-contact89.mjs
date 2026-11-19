@@ -81,10 +81,13 @@ export function cameraAxisOriginalPhotoBodyWitness(bodyFaces,frontFaces,{
  let occupied=0;
  for(let i=0;i<bodyFaces.length;i++){
   const box=bodyBoxes[i];
+  // Both lower AND upper edges use the identical global MIN origin;
+  // normalizing an upper edge against MAX silently omitted all XY cells
+  // except the origin and broke genuine body/photo source ray contacts.
   const xl=cell(box.minX,minX,stepx,gridW),
-   xh=cell(box.maxX,maxX,stepx,gridW),
+   xh=cell(box.maxX,minX,stepx,gridW),
    yl=cell(box.minY,minY,stepy,gridH),
-   yh=cell(box.maxY,maxY,stepy,gridH);
+   yh=cell(box.maxY,minY,stepy,gridH);
   for(let y=yl;y<=yh;y++)for(let x=xl;x<=xh;x++){
    grids[y*gridW+x].push(i);
    occupied++;
