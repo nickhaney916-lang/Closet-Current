@@ -149,7 +149,7 @@ assert.ok(source.includes("M58_REAL_P88_WORKER_FAIL"));
 // M251: original P94 browser test-only instrumentation; ONLY the exact pinned
 // public JSEP loader JS is derived. Same original WASM/network/model/photo,
 // unverified proposals, owner A/B and v4 journey remain unmodified.
-const originalImports="import assert from 'node:assert/strict';\nimport {createServer} from 'node:http';";
+const originalImports="import {mutateOwnerItem91} from './lib/owner-item-mutation91.mjs';";
 assert.equal(source.split(originalImports).length,2,'Original P94 native import drift');
 source=source.replace(originalImports,originalImports+
  "\nimport {instrumentM251OriginalJsepGlue,verifyM251OriginalNativeOptionReceipt} from './main251-original-jsep-abi-probe.mjs';"+
