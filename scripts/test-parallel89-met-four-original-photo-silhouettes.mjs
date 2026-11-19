@@ -101,6 +101,10 @@ for(const view of gallery){
   originalHonoluluFitOrCameraCalibrationAllowed:false
  };
  records.push(receipt);profiles.push(profile);
+ // Exact Sharp-decoded original RGB bytes for subsequent research-only
+ // independent mask estimator. Already SHA-256 authenticated above, and
+ // never handed to an app, user library, or persistent consumer asset.
+ await writeFile(out+'/met-70759-gallery-'+id+'.rgb',raw.data);
  await writeFile(out+'/met-70759-gallery-'+id+'.jpg',bytes);
 }
 assert.equal(records.length,4);
