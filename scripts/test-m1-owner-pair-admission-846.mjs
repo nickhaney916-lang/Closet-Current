@@ -898,7 +898,7 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
      {originalPhoto:{image:guardedRaw,sha256:'f'.repeat(64),verified:true}}
     ]){
      try{await window.crop88Editor.save({image:firstCropImage,...extra},null);}
-     catch(e){if(/P88_CROP_UNEXPECTED_FIELD/.test(e.message))forgedRejected++;}
+     catch(e){if(/P88_CROP_(?:UNEXPECTED_FIELD|ORIGINAL_SOURCE_CHANGED)/.test(e.message))forgedRejected++;}
     }
     const unchanged=(await get('state','draft'))?.batch?.find(x=>x.id===guarded.id);
     const forgedOriginalUntouched=forgedRejected===3&&
