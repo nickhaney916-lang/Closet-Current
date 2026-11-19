@@ -147,6 +147,22 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{
  if(bodyFaces.length>150000||frontFaces.length>150000)
   throw Error('original-face-scope-exceeds-safe-resource-budget');
  const bodyBoxes=bodyFaces.map(bbox),frontBoxes=frontFaces.map(bbox);
+ // A triangle-to-box contact requires its entire target box NOT to lie
+ // strictly on one side of the source triangle's support plane. This is
+ // conservative for all orientations, including arbitrary source poses.
+ const frontPlanes=frontFaces.map(t=>{
+  const n=cross(vsub(t[1],t[0]),vsub(t[2],t[0])),magnitude=len(n);
+  return magnitude>=EPS*EPS?{n,d:dot(n,t[0]),margin:EPS*magnitude}:null;
+ });
+ const boxOnWrongSideOfPhotoPlane=(plane,box)=>{
+  if(!plane)return false; // degenerate source stays UNKNOWN
+  let low=0,high=0;
+  for(let i=0;i<3;i++){
+   const a=plane.n[i]*box.min[i],b=plane.n[i]*box.max[i];
+   low+=Math.min(a,b);high+=Math.max(a,b);
+  }
+  return plane.d<low-plane.margin||plane.d>high+plane.margin;
+ };
  // A genuine bounded-volume hierarchy over EVERY original indexed body face.
  // Branch union boxes conservatively contain all descendants. Traversing
  // exact overlapping nodes cannot omit a contact, unlike stride/sampling.
@@ -177,12 +193,16 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{
  const counts={
   CROSSING:0,COPLANAR_OVERLAP:0,TOUCHING:0,INDETERMINATE:0,NONE:0
  };
- let pairs=0,aabbPairs=0,firstContact=null,bodySwept=0,nodeVisits=0;
+ let pairs=0,aabbPairs=0,firstContact=null,bodySwept=0,nodeVisits=0,
+  planePrunedNodes=0;
  for(let i=0;i<frontFaces.length;i++){
-  const box=frontBoxes[i],stack=[root];
+  const box=frontBoxes[i],plane=frontPlanes[i],stack=[root];
   while(stack.length){
    const node=stack.pop();nodeVisits++;
    if(!boxesOverlap(box,node.box))continue;
+   if(boxOnWrongSideOfPhotoPlane(plane,node.box)){
+    planePrunedNodes++;continue;
+   }
    if(node.faces){
     for(const j of node.faces){
      pairs++;
@@ -214,6 +234,7 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{
        originalPhotoFrontIndexedFacesAudited:frontFaces.length,
        allOriginalBodyIndexedFacesPresentInBVH:true,
        originalBodyBVHNodes:bvhNodes,originalBodyBVHLeaves:bvhLeaves,
+       conservativePlaneSeparatedBvhNodesPruned:planePrunedNodes,
        fullOriginalIndexedScopeEvaluated:false,
        originalBodyFaceSubsetUsed:false,originalPhotoFaceSubsetUsed:false,
        fullBroadphaseUniqueCandidatePairs:pairs,
@@ -240,6 +261,7 @@ export function evaluateFullIndexedContact(bodyFaces,frontFaces,{
   actualAABBOverlappingPairs:aabbPairs,
   allOriginalBodyIndexedFacesPresentInBVH:true,
   originalBodyBVHNodes:bvhNodes,originalBodyBVHLeaves:bvhLeaves,
+  conservativePlaneSeparatedBvhNodesPruned:planePrunedNodes,
   completeSourceFrontBVHVisits:nodeVisits,
   classifications:counts,
   firstObservedContactFaceIndices:firstContact,
