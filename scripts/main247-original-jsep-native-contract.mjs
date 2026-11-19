@@ -19,7 +19,7 @@ export function attestJsepOriginalGraph({engine,arm,model,identity,session,esmSh
  assert.ok(['chromium','webkit'].includes(engine),'Genuine engine required');
  assert.ok(['baseline','pattern_off'].includes(arm),'Single option A/B only');
  assert.match(esmSha256||'',/^[a-f0-9]{64}$/,'JSEP entry SHA unavailable');
- assert.equal(model?.sha256,'02e6f1545475bc549184b6710487555b4e70b08354cc3a480fb4fab1473a9d3'.replace('4e70','4ab'), 'Pinned original ONNX source SHA changed');
+ assert.equal(model?.sha256,'02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3', 'Pinned original ONNX source SHA changed');
  assert.equal(model?.bytes,15199746,'Original ONNX model changed');
  assert.ok(identity&&identity.localRuntimeName===JSEP_WASM,'Original JSEP asset not actually served');
  assert.equal(identity.localRuntimeSha256,P94_JSEP,'JSEP bytes differ from original P94 Worker');
