@@ -99,14 +99,6 @@ function readDraft(){
 // Recheck the durable owner's items INSIDE the atomic items+draft transaction.
 // Owner attestation for identical photos authorizes only the exact peer IDs
 // seen at review time; it never gives a new unseen peer automatic permission.
-function durableReviewedNewItemPeers88(value,lease,rows){
- if(!Array.isArray(rows)||duplicateUnit70InCloset(value,rows))return false;
- if(!Array.isArray(lease?.exactPhotoPeers88))return true; // P70 mask identity above
- const expected=lease.exactPhotoPeers88;
- const actual=rows.filter(x=>x&&x.id!==value.id&&x.image===value.image);
- return actual.length===expected.length&&actual.every(peer=>
-  expected.some(old=>old.id===peer.id&&old.image===peer.image));
-}
 // P88: ordinary one-photo review must not save into a replacement account
 // while cloud.beforeWrite waits. Freeze source bytes, draft identity and IDB.
 function savePiece(value,nextBatch,lease){
@@ -177,6 +169,14 @@ function savePiece(value,nextBatch,lease){
    }catch(e){reject(e);}
   });
  });
+}
+function durableReviewedNewItemPeers88(value,lease,rows){
+ if(!Array.isArray(rows)||duplicateUnit70InCloset(value,rows))return false;
+ if(!Array.isArray(lease?.exactPhotoPeers88))return true; // P70 mask identity above
+ const expected=lease.exactPhotoPeers88;
+ const actual=rows.filter(x=>x&&x.id!==value.id&&x.image===value.image);
+ return actual.length===expected.length&&actual.every(peer=>
+  expected.some(old=>old.id===peer.id&&old.image===peer.image));
 }
 // Saved-item edits must be scoped to the exact signed owner and private IDB,
 // including AFTER the asynchronous cloud.beforeWrite queue. A model or
@@ -813,7 +813,7 @@ function saveSourceBoundPiece88(value,nextBatch,lease){
          draftStoreRevision88!==expected||
          JSON.stringify(batch)!==liveBatchRevision||
          duplicateUnit70InCloset(value,items)||
-         !durableReviewedNewItemPeers88(value,lease,savedRead.result))
+         duplicateUnit70InCloset(value,savedRead.result))
          throw Error('P88_DURABLE_PHYSICAL_UNIT_ALREADY_SAVED');
         itemStore.add(value); // insert-only, same write transaction
         stateStore.put({id:'draft',batch:structuredClone(liveRemaining)});
