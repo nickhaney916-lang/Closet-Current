@@ -1,0 +1,94 @@
+name: MAIN247 original P94 JSEP model-session WebKit diagnostic HOLD
+on:
+  push:
+    branches: [research/main247-original-jsep-webkit-phase-evidence-HOLD]
+permissions:
+  contents: read
+jobs:
+  original-source-and-security:
+    name: M247 original source and inherited privacy backup security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Four research-only files and original product/test immutable
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=a4d4fd8b86db5b496d21d8649cb6b951cd6f0bce
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' \
+            '.github/workflows/main247-original-jsep-phase-HOLD.yml' \
+            'scripts/main247-original-jsep-phase-evidence.mjs' \
+            'scripts/test-main247-original-jsep-phase-browser.mjs' \
+            'tests/main247-original-jsep-phase-evidence.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = ad8ab0eb33322a34f8cc3f45a1fe26feff87b2ab
+          node --check scripts/main247-original-jsep-phase-evidence.mjs
+          node --check scripts/test-main247-original-jsep-phase-browser.mjs
+          node --test tests/main247-original-jsep-phase-evidence.test.mjs
+          M247_SOURCE_ONLY=1 node scripts/test-main247-original-jsep-phase-browser.mjs
+      - name: Install exact original research dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original offline build and entire inherited Node test suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(npm view onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 dist.integrity)" = "sha512-0uS76OPgH0hWCPrFKlL8kYVV7ckM7t/36HfbgoFw6Nd0CZVVbQC4PkrR8mBX8LtNUFZO25IQBqV2Hx2ho3FlbQ=="
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  original-native-browser:
+    name: M247 original P94 JSEP ${{ matrix.engine }} ${{ matrix.width }} ${{ matrix.fault }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {engine: webkit, width: 320, fault: none}
+          - {engine: webkit, width: 430, fault: none}
+          - {engine: chromium, width: 390, fault: none}
+          - {engine: webkit, width: 390, fault: model_weights_abort}
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M247_ENGINE: ${{ matrix.engine }}
+      M247_WIDTH: ${{ matrix.width }}
+      P101_TEST_FAULT: ${{ matrix.fault }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Real engine/fault matrix and exact original Worker immutable
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$M247_ENGINE" = "${{ matrix.engine }}"
+          test "$M247_WIDTH" = "${{ matrix.width }}"
+          test "$P101_TEST_FAULT" = "${{ matrix.fault }}"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = ad8ab0eb33322a34f8cc3f45a1fe26feff87b2ab
+          node --test tests/main247-original-jsep-phase-evidence.test.mjs
+          M247_SOURCE_ONLY=1 node scripts/test-main247-original-jsep-phase-browser.mjs
+      - name: Install original model/browser/private-owner research dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original WebKit/Chromium JSEP model and source-owner no-silent-save phase
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/test-main247-original-jsep-phase-browser.mjs
