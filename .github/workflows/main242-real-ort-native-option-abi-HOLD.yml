@@ -1,0 +1,93 @@
+name: MAIN242 real pinned ORT WASM session-option ABI call HOLD
+on:
+  push:
+    branches: [research/main242-real-ort-abi-option-call-HOLD]
+  pull_request:
+    branches: [research/main241-pinned-ort-option-path-audit-HOLD]
+permissions:
+  contents: read
+jobs:
+  pinned-source-and-security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Four test-only research paths, immutable pinned original P94 owner Worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=ff4d60fe9a4710f4b626ab22873e232e32a080a5
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD)" = "$(printf '%s\n' \
+            '.github/workflows/main242-real-ort-native-option-abi-HOLD.yml' \
+            'scripts/main242-ort-session-abi-trace.mjs' \
+            'scripts/test-main242-native-ort-option-browser.mjs' \
+            'tests/main242-ort-wasm-abi-receipt.test.mjs')"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          test "$(git rev-parse HEAD:scripts/test-parallel101-real-p94-model-init-stage-browser.mjs)" = ad8ab0eb33322a34f8cc3f45a1fe26feff87b2ab
+          node --check scripts/main242-ort-session-abi-trace.mjs
+          node --check scripts/test-main242-native-ort-option-browser.mjs
+          node --test tests/main242-ort-wasm-abi-receipt.test.mjs
+      - name: Install exact published model and native browser test dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Exact source SHA, published package provenance and ABI call inspection
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(npm view onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 dist.integrity)" = 'sha512-0uS76OPgH0hWCPrFKlL8kYVV7ckM7t/36HfbgoFw6Nd0CZVVbQC4PkrR8mBX8LtNUFZO25IQBqV2Hx2ho3FlbQ=='
+          node scripts/main241-pinned-ort-option-path-audit.mjs
+          node scripts/main242-ort-session-abi-trace.mjs
+          M242_SOURCE_ONLY=1 node scripts/test-main242-native-ort-option-browser.mjs
+      - name: Original offline app and all inherited owner privacy security tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  native-real-abi:
+    name: M242 real ONNX WASM ABI ${{ matrix.engine }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [webkit, chromium]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M242_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact branch source guard and deterministic Boolean/throw negatives
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor ff4d60fe9a4710f4b626ab22873e232e32a080a5 HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = d66651b616de54c51eb7ef986324b30f1580888f
+          node --test tests/main242-ort-wasm-abi-receipt.test.mjs
+      - name: Install exact pinned ORT and original test dependencies
+        run: npm install --onnxruntime-node-install-cuda=skip --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Real browser uses original pinned ESM ABI and true local WASM ONNX inference
+        shell: bash
+        run: |
+          set -euo pipefail
+          M242_SOURCE_ONLY=1 node scripts/test-main242-native-ort-option-browser.mjs
+          node scripts/test-main242-native-ort-option-browser.mjs
