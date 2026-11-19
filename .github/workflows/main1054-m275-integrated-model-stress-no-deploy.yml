@@ -1,0 +1,102 @@
+name: MAIN1054 M275 integrated original P94 WebKit reliability cohort NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m275-integrated-original-webkit-reliability-HOLD]
+permissions:
+  contents: read
+jobs:
+  m275-original-model-source-and-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact first-attempt source and pinned original model/owner M274 lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:scripts/main1054-m275-integrated-model-stress.mjs)" = aa73ea532363d207ede847e6c5e3834e6ccd3ae6
+          node scripts/main1054-m275-integrated-model-stress.mjs source
+          node --check scripts/main1054-m275-integrated-model-stress.mjs
+          node --check scripts/test-parallel94-native-p88-browser.mjs
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Fail-closed unit evidence parser and inherited owner/source adversarial tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/main1054-m275-integrated-model-stress.test.mjs
+          node --test tests/main1054-m274-m181-source-gate.test.mjs tests/main1054-m273-m180-source-gate.test.mjs tests/main1054-m272-m173-source-gate.test.mjs tests/main1054-m271-m58-gate.test.mjs tests/main1054-m254-signed-outfit-lease.test.mjs tests/outfit-capture.test.cjs
+      - name: Install existing pinned source-only test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Verify unchanged offline consumer build and entire inherited private/backup/owner Node tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  m275-fresh-original-native-positive:
+    needs: m275-original-model-source-and-node
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        include:
+          - {engine: webkit, width: 320, count: 8}
+          - {engine: webkit, width: 390, count: 8}
+          - {engine: webkit, width: 430, count: 8}
+          - {engine: chromium, width: 320, count: 4}
+          - {engine: chromium, width: 390, count: 4}
+          - {engine: chromium, width: 430, count: 4}
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M275_ENGINE: ${{ matrix.engine }}
+      M275_WIDTH: ${{ matrix.width }}
+      M275_COUNT: ${{ matrix.count }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fail-closed source check before each native original-model fresh-process cohort
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:scripts/main1054-m275-integrated-model-stress.mjs)" = aa73ea532363d207ede847e6c5e3834e6ccd3ae6
+          node scripts/main1054-m275-integrated-model-stress.mjs source
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Install unchanged pinned original native browser and WASM test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build genuine original native outfit PWA without deploying
+        run: node scripts/build.mjs
+      - name: 'Fresh original JSEP/SegFormer P94 processes: retain every original RED, no retries or fake success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/main1054-m275-integrated-model-stress.mjs cohort
+      - name: Preserve sanitized per-original-process proof including every genuine failed ordinal
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m275-original-${{ matrix.engine }}-${{ matrix.width }}-first-attempt-HOLD
+          path: benchmark/main275-original-integrated-model-stress/${{ matrix.engine }}/${{ matrix.width }}/*.json
+          retention-days: 14
+          if-no-files-found: ignore
