@@ -12,14 +12,16 @@ const accepted=()=>({
  engine:'webkit',arm:'baseline',esmSha256:sha,
  model:{sha256:MODEL,bytes:15199746},
  identity:{localRuntimeName:JSEP_WASM,localRuntimeSha256:P94_JSEP,
-  actualBrowserResponseBodyShaVerified:true,matchesP94OriginalWebkitJsepBinary:true,
+  actualBrowserWasmHttp200:true,actualBrowserResponseBodyShaVerified:true,matchesP94OriginalWebkitJsepBinary:true,
   installedOriginalPinnedBinaryExactMatch:true},
  session:{success:true,nativeCalls:[{actualNativeExportCalled:true,returnedHandle:true}],
   apiCalls:[{memPatternFlag:true,arenaFlag:true}]}
 });
 test('M247 strict original JSEP-only acceptance never implies a WebKit repair',()=>{
  const r=attestJsepOriginalGraph(accepted());
- assert.equal(r.runtimeBinarySameAsOriginalWebkitP94,true);
+ assert.equal(r.localServerJsepBinarySameAsOriginalP94,true);
+ assert.equal(r.actualBrowserJsepBytesVerified,true);
+ assert.equal(r.actualBrowserJsepBytesStatus,'DIRECT_BROWSER_SHA');
  assert.equal(r.verifiedRealModelSession,true);
  assert.equal(r.originalOwnerWorkerNotExercised,true);
  assert.equal(r.originalFailureReproduced,false);
@@ -35,6 +37,7 @@ test('M247 refuses local non-JSEP, faked network body, mismatched source and no 
   x=>{x.identity.localRuntimeSha256=PINNED_LOCAL_NON_JSEP;},
   x=>{x.identity.localRuntimeName='ort-wasm-simd-threaded.wasm';},
   x=>{x.identity.actualBrowserResponseBodyShaVerified=false;},
+  x=>{x.identity.actualBrowserWasmHttp200=false;},
   x=>{x.identity.installedOriginalPinnedBinaryExactMatch=false;},
   x=>{x.identity.matchesP94OriginalWebkitJsepBinary=false;},
   x=>{x.model.sha256='0'.repeat(64);},
@@ -51,6 +54,20 @@ test('M247 refuses local non-JSEP, faked network body, mismatched source and no 
   const x=structuredClone(input);edit(x);
   assert.throws(()=>attestJsepOriginalGraph(x),'Counterfeit native JSEP acceptance');
  }
+});
+test('M247 Chromium real HTTP200 with unreadable response-body remains explicitly UNKNOWN, never fake SHA',()=>{
+ const input=accepted();input.engine='chromium';
+ input.identity.actualBrowserResponseBodyShaVerified=false;
+ const result=attestJsepOriginalGraph(input);
+ assert.equal(result.verifiedRealModelSession,true);
+ assert.equal(result.localServerJsepBinarySameAsOriginalP94,true);
+ assert.equal(result.actualBrowserJsepBytesVerified,false);
+ assert.equal(result.actualBrowserJsepBytesStatus,'UNVERIFIED_BROWSER_BODY');
+ assert.equal(result.permanentWebkitRepairProven,false);
+ input.engine='webkit';
+ assert.throws(()=>attestJsepOriginalGraph(input),'WebKit must never accept unreadable actual JSEP browser body');
+ input.engine='chromium';input.identity.actualBrowserWasmHttp200=false;
+ assert.throws(()=>attestJsepOriginalGraph(input),'Chromium must not accept missing original HTTP200');
 });
 test('M247 native pattern-off must observe native option and refuse a swapped arm',()=>{
  const x=accepted();x.arm='pattern_off';x.session.apiCalls[0].memPatternFlag=false;
