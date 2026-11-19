@@ -559,6 +559,73 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     pageErrors:errors.length
    }));
    assert.deepEqual(errors,[]);
+   // Actual IndexedDB, NOT a stub: browser tab B commits a same-photo garment
+   // after tab A starts reviewing but BEFORE its atomic insert. Reject the
+   // unreviewed duplicate without losing A's original pending draft.
+   const durableNewDuplicate88=await page.evaluate(async()=>{
+    const opened=indexedDB.open('closet-current-user-owner-A');
+    const ownerDb=await new Promise((resolve,reject)=>{
+     opened.onsuccess=()=>resolve(opened.result);
+     opened.onerror=()=>reject(opened.error);
+    });
+    db=ownerDb;window.closetAuth.user={id:'owner-A'};window.beforeWriteTest=null;
+    const putItem=row=>new Promise((resolve,reject)=>{
+     const tx=db.transaction('items','readwrite');
+     tx.objectStore('items').put(structuredClone(row));
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+    const getItem=id=>new Promise((resolve,reject)=>{
+     const req=db.transaction('items','readonly').objectStore('items').get(id);
+     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+    });
+    const putDraft=photos=>new Promise((resolve,reject)=>{
+     const tx=db.transaction('state','readwrite');
+     tx.objectStore('state').put({id:'draft',batch:structuredClone(photos)});
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+    const getDraft=()=>new Promise((resolve,reject)=>{
+     const req=db.transaction('state','readonly').objectStore('state').get('draft');
+     req.onsuccess=()=>resolve(req.result?.batch||[]);
+     req.onerror=()=>reject(req.error);
+    });
+    const image='data:image/jpeg;base64,UkVBTC1URVNU';
+    const draft={id:'late-other-tab-draft-88',image,
+     category:'Tops',itemType:'T-shirt',color:'Blue'};
+    batch=[draft];items=[];
+    await putDraft([draft]);draftStoreRevision88=JSON.stringify(batch);
+    const lease=reviewedSaveLease88(draft);
+    // Simulates an independent tab writing the same physical photo.
+    const prior={id:'late-other-tab-saved-88',image,
+     category:'Tops',itemType:'T-shirt',color:'Blue'};
+    await putItem(prior);
+    let staleDuplicateDenied=false;
+    try{await savePiece({...draft},[],lease);}
+    catch(e){staleDuplicateDenied=/P88_DURABLE_REVIEWED_DUPLICATE_CHANGED/.test(e.message);}
+    const originalDraftSurvives=(await getDraft()).some(x=>x.id===draft.id&&x.image===image);
+    const noSecondSavedItem=(await getItem(draft.id))===undefined;
+    const firstSavedIntact=(await getItem(prior.id))?.image===image;
+    // Distinct JPEG is still allowed after the owner reviews and provides a
+    // new source photo; reject-all would not be a valid duplicate solution.
+    const unique={...draft,id:'new-unique-owner-photo-88',
+     image:'data:image/jpeg;base64,VU5JUVVFLVBIT1RP'};
+    batch=[unique];await putDraft([unique]);
+    draftStoreRevision88=JSON.stringify(batch);
+    await savePiece({...unique},[],reviewedSaveLease88(unique));
+    const uniqueCommitted=(await getItem(unique.id))?.image===unique.image;
+    const uniqueDraftCleared=(await getDraft()).length===0;
+    ownerDb.close();
+    return {staleDuplicateDenied,originalDraftSurvives,noSecondSavedItem,
+     firstSavedIntact,uniqueCommitted,uniqueDraftCleared};
+   });
+   assert.deepEqual(durableNewDuplicate88,{
+    staleDuplicateDenied:true,originalDraftSurvives:true,noSecondSavedItem:true,
+    firstSavedIntact:true,uniqueCommitted:true,uniqueDraftCleared:true
+   },'actual IDB must deny late duplicate photos and still permit fresh originals');
+   console.log('M1_P88_ACTUAL_BROWSER_DURABLE_NEW_DUPLICATE',JSON.stringify({
+    browser:browserName,width,...durableNewDuplicate88,syntheticOwner:true,
+    actualIndexedDB:true,physicalDevice:false,pageErrors:errors.length
+   }));
+   assert.deepEqual(errors,[]);
    await page.close();
   }
  }finally{await browser.close();}
