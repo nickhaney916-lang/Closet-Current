@@ -604,7 +604,7 @@ test('P88 crop editor cannot inject fabricated duplicate-owner attestation or sa
   {exactSavedPhotoMatch88:{savedItemId:'arbitrary'}}
  ]){
   await assert.rejects(c.editor.save({image:'data:image/jpeg;base64,TkVX',...field},null),
-   /P88_CROP_CANNOT_REBIND_ID_OR_MASK/);
+   /P88_CROP_UNEXPECTED_FIELD/);
  }
  assert.equal(c.writeCount,0);
  assert.equal(item.image,sampleSource88().image);
@@ -684,7 +684,7 @@ test('P88 Crop rejects forged target ID and extra physical mask metadata',async(
   {image:'data:image/jpeg;base64,TkVXUElYRUxT',reconciliation70Status:'separate_confirmed'},
   {image:'data:image/jpeg;base64,TkVXUElYRUxT',ownerSourceReview88:{ownerReviewed:true}}
  ]){
-  await assert.rejects(c.editor.save(forged,null),/P88_CROP_CANNOT_REBIND_ID_OR_MASK/);
+  await assert.rejects(c.editor.save(forged,null),/P88_CROP_UNEXPECTED_FIELD/);
  }
  assert.equal(c.written.length,0);
  assert.equal(item.image,sampleSource88().image);
