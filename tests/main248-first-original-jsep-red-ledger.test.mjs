@@ -39,7 +39,7 @@ test('M248 authentic first model+private owner receipts accepted only when compl
   assert.equal(proof.familyAlphaHold,true);
  }
 });
-test('M248 never treats failed original first attempt as positive, or retries',()=>{
+test('M248 never treats failed original first attempt as positive, or retries',async()=>{
  const evidence=parseOriginalEvidence(valid());
  assert.throws(()=>verifyPositiveOriginalFirstAttempt(evidence,1,'webkit','w01'),/Genuine first original-JSEP attempt nonzero/);
  assert.throws(()=>verifyPositiveOriginalFirstAttempt(evidence,null,'webkit','w01'),/Genuine first original-JSEP attempt nonzero/);
