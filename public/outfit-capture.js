@@ -91,7 +91,14 @@ function persistUnit70Decision88(lease){
   return new Promise((resolve,reject)=>{
    const tx=ownerDb.transaction('state','readwrite');
    tx.objectStore('state').put({id:'draft',batch:snapshot});
-   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+   tx.oncomplete=()=>{
+    // P70 owner decisions persist a draft revision directly, without calling
+    // persistDraft(); keep Mission 1's next reviewed-save CAS in sync.
+    // Research source-exec harnesses may not load app.js's revision global.
+    if(sameUnit70OwnerLease88(lease)&&db===ownerDb&&typeof draftStoreRevision88!=='undefined')
+     draftStoreRevision88=JSON.stringify(snapshot);
+    resolve();
+   };tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
   });
  });
 }
