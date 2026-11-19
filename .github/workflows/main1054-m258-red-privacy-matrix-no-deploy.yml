@@ -1,0 +1,143 @@
+name: MAIN1054 M258 six-cell original RED preservation and owner-B proof NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m258-six-cell-red-preservation-HOLD]
+  pull_request:
+    branches: [research/main1054-m257-real-browser-evidence-ingestion-HOLD]
+permissions:
+  contents: read
+jobs:
+  m258-immutable-source-and-full-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve #1453 six-cell gate and immutable native product/source with three added research paths only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=ff2cea72eba17b159f9f729b27b2832d92a5982c
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:research/main1054/m257-real-runner-evidence.mjs)" = a5589c65137ea87f527f862566a2512c74052592
+          test "$(git rev-parse HEAD:tests/main1054-m257-real-runner-evidence.test.mjs)" = d60726a984e4a9de7ef8b50db53012c1edee7476
+          test "$(git rev-parse HEAD:.github/workflows/main1054-m257-original-receipts-no-deploy.yml)" = 56c89379973cf2c226c66a1ad486c25b210db2ea
+          test "$(git rev-parse HEAD:research/main1054/m256-negative-attempt-quarantine.mjs)" = 1ba5db3af45a3fdb9cb665b823fa07f3dda45929
+          git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/main1054/m258-six-cell-red-preserving-adoption.mjs|tests/main1054-m258-six-cell-red-preserving-adoption.test.mjs|.github/workflows/main1054-m258-red-privacy-matrix-no-deploy.yml) ;;
+              *) echo "M258 UNAUTHORIZED changed path: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$BASE" HEAD -- public/ scripts/ supabase/ benchmark/ research/parallel105/ research/main1054/m256-negative-attempt-quarantine.mjs research/main1054/m257-real-runner-evidence.mjs
+          node --check research/main1054/m258-six-cell-red-preserving-adoption.mjs
+          node --check tests/main1054-m258-six-cell-red-preserving-adoption.test.mjs
+      - name: Baseline fail-open witness and additional new fail-closed M258 falsifications
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/main1054-m258-six-cell-red-preserving-adoption.test.mjs
+          node --test tests/main1054-m257-real-runner-evidence.test.mjs tests/main1054-m256-negative-attempt-quarantine.test.mjs tests/parallel105-closeout.test.mjs
+      - name: Install no-deploy offline test runner dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Actual app build and complete inherited owner/backup/security/source Node regression suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+
+  m258-original-model-and-owner-b-browser:
+    needs: m258-immutable-source-and-full-node
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+        width: [320, 390, 430]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: ${{ matrix.width }}
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify first-attempt exact original model/owner Worker script and install no-deploy dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Run genuine original model and owner-private 2D/v4 first attempt; reject hidden native RED and owner-B breach
+        shell: bash
+        run: |
+          set +e
+          LOG="$RUNNER_TEMP/m258-original-native.log"
+          node scripts/test-parallel94-native-p88-browser.mjs > "$LOG" 2>&1
+          original_exit=$?
+          set -e
+          MODEL_EXIT="$original_exit" node research/main1054/m258-six-cell-red-preserving-adoption.mjs attempt \
+            "$LOG" "receipt-${M58_ENGINE}-${P94_WIDTH}.json"
+          test "$original_exit" -eq 0
+          rm -f "$LOG"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m258-original-${{ matrix.engine }}-${{ matrix.width }}-HOLD
+          path: receipt-${{ matrix.engine }}-${{ matrix.width }}.json
+          retention-days: 14
+          if-no-files-found: warn
+
+  m258-aggregate-exact-head:
+    needs: [m258-immutable-source-and-full-node, m258-original-model-and-owner-b-browser]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: m258-original-*-HOLD
+          path: m258-receipts
+          merge-multiple: true
+      - name: Exact candidate and CI run six-cell owner-B and original RED-proof aggregation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          node research/main1054/m258-six-cell-red-preserving-adoption.mjs aggregate m258-receipts
+          echo "Original 6/6 browser journeys only. Model/JSEP byte attestation BLOCKED. Family Alpha HOLD."
