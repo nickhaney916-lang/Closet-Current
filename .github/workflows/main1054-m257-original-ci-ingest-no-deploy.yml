@@ -1,0 +1,129 @@
+name: MAIN1054 M257 genuine CI receipt ingestion and provenance quarantine NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m257-observed-browser-receipt-ingest-HOLD]
+  pull_request:
+    branches: [research/main1054-m256-negative-attempt-quarantine-HOLD]
+permissions:
+  contents: read
+jobs:
+  m257-source-and-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact original product, previous receipt guards and 3-only isolated paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          PARENT=a16f55d2230afab907957ddffa8c5af968b39f20
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          git merge-base --is-ancestor "$PARENT" HEAD
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:research/parallel105/closeout.mjs)" = ea8732b5e0cc32388c4c4a9b7e0f39a4395858e2
+          test "$(git rev-parse HEAD:research/main1054/m256-negative-attempt-quarantine.mjs)" = 1ba5db3af45a3fdb9cb665b823fa07f3dda45929
+          test "$(git rev-parse HEAD:.github/workflows/main1054-m256-negative-attempt-no-deploy.yml)" = ed13a21e0a148a0157c243a2b22a47d9d552092a
+          git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/main1054/m257-original-browser-ci-ingest.mjs|tests/main1054-m257-original-browser-ci-ingest.test.mjs|.github/workflows/main1054-m257-original-ci-ingest-no-deploy.yml) ;;
+              *) echo "M257 unauthorized changed path: $path"; exit 1;;
+            esac
+          done
+          git diff --exit-code "$PARENT" HEAD -- public/ scripts/ benchmark/ supabase/ research/parallel105/ research/main1054/m256-negative-attempt-quarantine.mjs
+          node --check research/main1054/m257-original-browser-ci-ingest.mjs
+          node --check tests/main1054-m257-original-browser-ci-ingest.test.mjs
+      - name: Negative-first bounded actual-CI-log and provenance fail-closed tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/main1054-m257-original-browser-ci-ingest.test.mjs
+          node --test tests/parallel105-closeout.test.mjs tests/main1054-m256-negative-attempt-quarantine.test.mjs
+      - name: Install pinned no-deploy suite dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Full original app offline build and inherited privacy/source/backup security regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+
+  m257-original-browser-and-actual-receipt:
+    needs: m257-source-and-regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: '390'
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin exact original P94 app Worker and original browser script without deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Run genuine first attempt; convert stdout into bounded honest same-SHA evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          LOG="$RUNNER_TEMP/m257-genuine-original-first-attempt.log"
+          set +e
+          node scripts/test-parallel94-native-p88-browser.mjs > "$LOG" 2>&1
+          original_status=$?
+          set -e
+          OUT="benchmark/main257-actual-browser/${M58_ENGINE}/${P94_WIDTH}/m257-receipt.json"
+          node research/main1054/m257-original-browser-ci-ingest.mjs \
+            --log "$LOG" --engine "$M58_ENGINE" --width "$P94_WIDTH" \
+            --exit "$original_status" --head "$EXPECTED_HEAD" --output "$OUT"
+          # No positive browser receipt ever establishes model/JSEP byte hash
+          # provenance; a genuinely missing source must remain BLOCKED.
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            import assert from "node:assert/strict";
+            const r=JSON.parse(readFileSync(process.argv[1],"utf8"));
+            assert.equal(r.originalJourney,"PASS");
+            assert.equal(r.browserReceiptPromotionGate,"BLOCKED");
+            assert.equal(r.sameBrowserProcessTripleSourceAttested,false);
+            assert.equal(r.originalOnnxWebkitPermanentRepairEstablished,false);
+            assert.equal(r.releaseAuthorized,false);
+            assert.equal(r.familyAlpha,"HOLD");
+          ' "$OUT"
+          rm -f "$LOG"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m257-sanitized-original-${{ matrix.engine }}-390-HOLD
+          path: benchmark/main257-actual-browser/${{ matrix.engine }}/390/m257-receipt.json
+          retention-days: 14
+          if-no-files-found: warn
