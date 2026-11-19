@@ -78,10 +78,19 @@ const el=id=>document.getElementById(id);
 const original=el('original'),shellButton=el('shell'),photo=el('photo'),canvas=el('gl');
 const slider=el('rotation'),angleText=el('angle'),status=el('view-status');
 let gl=null,graphics=null,mesh=null,verified=false,mode='photo',angle=0,
- sourceObjectUrl=null,contextFailed=false,errorCode=null,sourceVerifiedJPEGHash=null;
+ sourceObjectUrl=null,contextFailed=false,errorCode=null,sourceVerifiedJPEGHash=null,
+ sourceLost=false;
 const b64Digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),
  n=>n.toString(16).padStart(2,'0')).join('');
 function message(text){status.textContent=text}
+// An SHA match is not enough after the browser has dropped/replaced the
+// decoded original image resource. Check that the same decoded image is
+// still present whenever control returns from optional 3D to source 2D.
+function trustedOriginalVisible(){
+ return Boolean(!sourceLost&&sourceObjectUrl&&sourceVerifiedJPEGHash&&
+  photo.src===sourceObjectUrl&&photo.complete&&
+  photo.naturalWidth===1200&&photo.naturalHeight===933);
+}
 function displayPhoto(text){
  mode='photo';photo.hidden=!sourceObjectUrl;canvas.hidden=true;
  original.setAttribute('aria-pressed','true');shellButton.setAttribute('aria-pressed','false');
@@ -89,10 +98,26 @@ function displayPhoto(text){
  if(text)message(text);
 }
 function prevent3D(reason){
+ // A late optional 3D success/failure is NEVER permission to overwrite a
+ // now-lost original source with a reassuring fall-back status.
+ if(sourceLost)reason='original-source-resource-lost';
  errorCode=reason;verified=false;shellButton.disabled=true;
  displayPhoto(sourceObjectUrl?'Original photograph 2D only — '+reason+'.':
   'Original photograph unavailable — '+reason+'.');
 }
+function invalidateOriginalResource(){
+ if(!sourceObjectUrl)return; // provisional predecode image handled by readiness()
+ const stale=sourceObjectUrl;
+ sourceLost=true;sourceObjectUrl=null;sourceVerifiedJPEGHash=null;
+ verified=false;mesh=null;
+ photo.removeAttribute('src');photo.hidden=true;
+ URL.revokeObjectURL(stale);
+ prevent3D('original-source-resource-lost');
+}
+// A source image can fail AFTER a successful decode, e.g. resource
+// invalidation while hidden behind a research shell. Do not leave the 3D
+// button enabled or present a blank frame as a verified 2D fallback.
+photo.addEventListener('error',invalidateOriginalResource);
 function buildGL(){
  const ctx=canvas.getContext('webgl2',{alpha:true,antialias:false,
   preserveDrawingBuffer:true,premultipliedAlpha:false});
@@ -180,6 +205,7 @@ function setAngle(value){
 }
 function showShell(){
  if(!verified||contextFailed||!mesh)return;
+ if(!trustedOriginalVisible()){invalidateOriginalResource();return;}
  try{
   if(!graphics){graphics=buildGL();gl=graphics.ctx;}
   mode='shell';canvas.hidden=false;photo.hidden=true;
@@ -187,7 +213,16 @@ function showShell(){
   slider.disabled=false;render();
  }catch{prevent3D('WebGL-init-failed');}
 }
-original.addEventListener('click',()=>displayPhoto('Original institutional source photograph. No wearable 3D admission.'));
+original.addEventListener('click',()=>{
+ if(!sourceObjectUrl){
+  displayPhoto(errorCode?
+   'Original photograph unavailable — '+errorCode+'.':
+   'Verifying original photograph; original 2D is not yet available.');
+  return;
+ }
+ if(!trustedOriginalVisible()){invalidateOriginalResource();return;}
+ displayPhoto('Verified original institutional source photograph. No wearable 3D admission.');
+});
 shellButton.addEventListener('click',showShell);
 slider.addEventListener('input',()=>setAngle(slider.value));
 let dragX=null,dragAngle=0;
@@ -370,6 +405,9 @@ const readiness=async()=>{
   if(rgbaHash!==signed.sourceRGBA_SHA256||
     rgbaHash!=='b8adb2fbd644203341051d6475788c69c1954868e5c2e8942f2fed0a3d8f116d')
    throw Error('original-source-RGBA-tampered');
+  // An asynchronous 3D response may arrive AFTER an image resource error.
+  // Recheck the exact committed JPEG lease before 3D becomes interactive.
+  if(!trustedOriginalVisible())throw Error('original-source-resource-lost');
   mesh={
    positions:signed.positions,uv:signed.uv,indices:signed.indices,
    sourceRGBA:signed.sourceRGBA,ranges:signed.ranges,
@@ -384,7 +422,8 @@ const readiness=async()=>{
 window.__m2PreviewEvidence={
  getSnapshot:()=>({verified,mode,angle,contextFailed,errorCode,
   originalImageVisible:!photo.hidden,previewVisible:!canvas.hidden,
-  sourceSHA256:verified?sourceVerifiedJPEGHash:null,
+  sourceSHA256:trustedOriginalVisible()?sourceVerifiedJPEGHash:null,
+  originalSource2DVerified:trustedOriginalVisible(),
   consumer3DAdmitted:false,familyAlpha:'HOLD'}),
  getPixelCounts:()=>measurePixels()
 };

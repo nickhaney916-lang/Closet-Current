@@ -387,6 +387,12 @@ try{
  const stalledJPEGPage=await stalledJPEG.newPage();
  stalledJPEGPage.on('pageerror',e=>errors.push(e.message));
  await stalledJPEGPage.goto(origin+'/viewer',{waitUntil:'commit'});
+ // User can tap the 2D button while source bytes are still stalled. Before
+ // this correction it asserted an institutional photograph despite no image.
+ await stalledJPEGPage.waitForFunction(()=>Boolean(window.__m2PreviewEvidence),null,{timeout:15000});
+ await stalledJPEGPage.locator('#original').click();
+ assert.match(await stalledJPEGPage.locator('#view-status').textContent(),
+  /Verifying original photograph/, 'pending JPEG cannot be presented as available');
  await stalledJPEGPage.waitForFunction(()=>
   window.__m2PreviewEvidence?.getSnapshot().errorCode==='original-source-JPEG-timeout',
   null,{timeout:15000});
@@ -398,6 +404,9 @@ try{
  assert.equal(stalledSource.previewVisible,false);
  assert.equal(stalledSource.consumer3DAdmitted,false);
  assert.equal(await stalledJPEGPage.locator('#shell').isDisabled(),true);
+ await stalledJPEGPage.locator('#original').click();
+ assert.match(await stalledJPEGPage.locator('#view-status').textContent(),
+  /Original photograph unavailable/, '2D button cannot overwrite a verified source failure');
  await stalledJPEG.close();
  // Exact genuine original JPEG bytes with a purposely misbehaving decoder.
  // A cryptographically approved corrupt JPEG cannot be simulated without
@@ -443,6 +452,77 @@ try{
  const badHashJPEG=await browser.newContext({viewport:{width:390,height:760}});
  await badHashJPEG.addCookies([{name:'corrupt-jpeg',value:'1',url:origin}]);
  await assertUntrustedOriginalAfterDecode(badHashJPEG,'original-source-JPEG-byte-identity-invalid');
+ // A SHA-approved JPEG can decode successfully and THEN its browser blob
+ // resource can be lost during an optional 3D transition. Exercise an actual
+ // revoked blob URL, not a synthetic image-error dispatch, and require a
+ // complete fail-closed 2D/3D demotion.
+ const revokedContext=await browser.newContext({viewport:{width:390,height:760}});
+ const revokedPage=await revokedContext.newPage();
+ revokedPage.on('pageerror',e=>errors.push(e.message));
+ await revokedPage.goto(origin+'/viewer',{waitUntil:'commit'});
+ await revokedPage.waitForFunction(()=>
+  window.__m2PreviewEvidence?.getSnapshot().verified===true,
+  null,{timeout:45000});
+ await revokedPage.locator('#shell').click();
+ assert.equal((await snapshot(revokedPage)).mode,'shell');
+ await revokedPage.locator('#photo').evaluate(p=>{
+  const old=p.src;
+  URL.revokeObjectURL(old);
+  p.removeAttribute('src');
+  p.src=old+'#revoked-resource';
+ });
+ await revokedPage.waitForFunction(()=>
+  window.__m2PreviewEvidence?.getSnapshot().errorCode==='original-source-resource-lost',
+  null,{timeout:15000});
+ const revoked=await snapshot(revokedPage);
+ assert.equal(revoked.verified,false,'3D must lose authorization with original resource');
+ assert.equal(revoked.mode,'photo');
+ assert.equal(revoked.sourceSHA256,null);
+ assert.equal(revoked.originalImageVisible,false,'never display revoked photo as 2D');
+ assert.equal(revoked.previewVisible,false);
+ assert.equal(revoked.consumer3DAdmitted,false);
+ assert.equal(await revokedPage.locator('#shell').isDisabled(),true);
+ assert.match(await revokedPage.locator('#view-status').textContent(),/Original photograph unavailable/);
+ await revokedPage.locator('#original').click();
+ assert.match(await revokedPage.locator('#view-status').textContent(),/Original photograph unavailable/);
+ await revokedContext.close();
+ // A late *valid* optional 3D manifest must not resurrect shell admission
+ // after the source JPEG's postdecode blob URL disappears.
+ const lateContext=await browser.newContext({viewport:{width:390,height:760}});
+ let releaseManifest;
+ const waitForRelease=new Promise(resolve=>{releaseManifest=resolve;});
+ await lateContext.route('**/source-locked-preview.json',async route=>{
+  await waitForRelease;
+  await route.fulfill({status:200,contentType:'application/json',body:json});
+ });
+ const latePage=await lateContext.newPage();
+ latePage.on('pageerror',e=>errors.push(e.message));
+ await latePage.goto(origin+'/viewer',{waitUntil:'commit'});
+ await latePage.waitForFunction(()=>
+  window.__m2PreviewEvidence?.getSnapshot().originalImageVisible===true,
+  null,{timeout:15000});
+ await latePage.locator('#photo').evaluate(p=>{
+  const old=p.src;
+  URL.revokeObjectURL(old);
+  p.removeAttribute('src');
+  p.src=old+'#revoked-before-manifest';
+ });
+ await latePage.waitForFunction(()=>
+  window.__m2PreviewEvidence?.getSnapshot().errorCode==='original-source-resource-lost',
+  null,{timeout:15000});
+ const responseReceived=latePage.waitForResponse(r=>r.url().includes('source-locked-preview.json'),
+  {timeout:15000});
+ releaseManifest();
+ await responseReceived;
+ await latePage.waitForTimeout(400);
+ const late=await snapshot(latePage);
+ assert.equal(late.errorCode,'original-source-resource-lost');
+ assert.equal(late.verified,false);
+ assert.equal(late.sourceSHA256,null);
+ assert.equal(late.originalImageVisible,false);
+ assert.equal(late.previewVisible,false);
+ assert.equal(await latePage.locator('#shell').isDisabled(),true);
+ await lateContext.close();
  assert.deepEqual(errors,[],'native browser page errors');
  console.log('M2_INTERACTIVE_ORIGINAL_SOURCE_MOBILE_BROWSER_RESEARCH_PASS '+JSON.stringify({
   engine,realNativeBrowser:true,devicePhysical:false,
@@ -453,6 +533,8 @@ try{
   corrupt3DManifestPreservesGenuine2DVerified:true,
   stalled3DManifestTimeoutPreservesGenuine2DVerified:true,
   forcedDecoderRejectAndStallSafelyRefused:true,alteredSourceHashRefused:true,
+  postdecodeSourceRevocationDemoted:true,lateManifestResurrectionRefused:true,
+  pendingAndFailedOriginalReentryStaysHonest:true,
   testedMobileWidths:[320,390,430],widthResults,
   browserErrors:errors.length,consumer3DAdmitted:false,
   fittedAnatomy163Bone:false,photorealismHumanApproved:false,
