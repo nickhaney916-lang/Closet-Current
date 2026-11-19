@@ -185,6 +185,19 @@ function durableReviewedNewItemPeers88(value,lease,rows){
   expected.some(old=>old.id===peer.id&&old.image===peer.image&&
    old.original===peer.originalPhoto?.image));
 }
+// A cross-tab conflict is not a generic retryable save error. The original
+// remains pending and the old review decision must be reopened with a fresh
+// private wardrobe snapshot, never silently copied onto another item.
+function ownerReviewedSaveConflict88(error){
+ const code=String(error?.message||'');
+ if(code==='P88_DURABLE_REVIEWED_DUPLICATE_CHANGED')
+  return 'Another saved garment now uses this same photo or the same complete original. Your new photo is still unsaved. Close Adjust, refresh your closet, and compare the actual garments before saving.';
+ if(code==='P88_DURABLE_PHYSICAL_UNIT_ALREADY_SAVED')
+  return 'Another saved garment already uses this source and physical garment mask. Your new photo is still unsaved. Close Adjust, refresh your closet, and review the garment or shoe-pair grouping before saving.';
+ if(code==='P88_DRAFT_STORAGE_CHANGED'||code==='P88_SOURCE_DRAFT_STORAGE_CHANGED')
+  return 'Another tab changed your unsaved photos. This save was refused to protect the originals. Close Adjust, refresh your closet, and review the pending photos before saving.';
+ return null;
+}
 // Saved-item edits must be scoped to the exact signed owner and private IDB,
 // including AFTER the asynchronous cloud.beforeWrite queue. A model or
 // manual source-claim must never be minted by changing only clothing details.
@@ -879,6 +892,9 @@ function adjustPhoto(item){
  // owner-review path and also fence Cancel/Remove/Escape and field edits while
  // the private write is pending. This research branch is NOT deployed.
  let saveInFlight=false;
+ // A durable second-tab conflict invalidates this entire open review.
+ // No checkbox or scripted repeat submit may reuse its stale peer snapshot.
+ let reviewConflict88=false;
  let subtype80Panel=null,dual82Panel=null;
  const dual82Owner=window.closetAuth?.user,dual82OwnerId=dual82Owner?.id;
  const dual82Enabled=Boolean(pendingDraft&&new URLSearchParams(location.search).get('dual82')==='1'&&dual82OwnerId);
@@ -904,12 +920,14 @@ function adjustPhoto(item){
    (!item.reconciliation70||!duplicateUnit70InCloset(item,items));
  };
  const canSaveReview=()=>{
-  if(!explicitReview)return true;
-  const valid=Boolean(confirmReview?.checked&&reviewedCore()&&
+  if(!explicitReview)return !reviewConflict88;
+  const valid=Boolean(!reviewConflict88&&confirmReview?.checked&&reviewedCore()&&
    (!distinctPhotoRequired88||(distinctPhotoCheck88?.checked&&
     reviewedSaveLeaseLive88(reviewLease88)&&reviewLease88.exactPhotoPeers88.length>0))&&!cross77Pending&&(!cross77Scope||CrossCaptureDuplicate77.valid(cross77Scope))&&(!cross77Proposal||cross77Decision?.action==='different'));
   if(save)save.disabled=saveInFlight||!valid;
-  if(reviewStatus)reviewStatus.textContent=reviewedCore()?
+  if(reviewStatus)reviewStatus.textContent=reviewConflict88?
+   'This review is outdated. Refresh the closet and compare the saved garments before reopening this original.':
+   reviewedCore()?
    'Confirm that the category, specific type (or Unknown), and color match the garment photo.':
    'Choose a garment category and color, and resolve any garment pairing or duplicate warning, before confirming.';
   return valid;
@@ -1051,6 +1069,10 @@ function adjustPhoto(item){
  };
  form.onsubmit=async event=>{
   event.preventDefault();
+  if(reviewConflict88){
+   message('This review is outdated. Close Adjust and refresh your closet before saving this photo.');
+   return;
+  }
   // A disabled submit button is not a transaction lock: a scripted event or a
   // second mobile submit can enter again while IndexedDB/cloud work is pending.
   if(saveInFlight){message('This photo is already being saved.');return;}
@@ -1156,14 +1178,22 @@ function adjustPhoto(item){
   // Both reviewed saves already committed items + the live draft atomically.
   // A second queued persistDraft could write into a newly switched account.
   dialog.close();render();scheduleMemoryReview();
- }catch{
+ }catch(error){
+  // Late durable duplicate/mask/draft conflicts must never leave a previously
+  // checked Save button ready for a blind retry against stale peers.
+  const conflictMessage88=ownerReviewedSaveConflict88(error);
+  if(conflictMessage88){
+   reviewConflict88=true;
+   if(confirmReview)confirmReview.checked=false;
+   if(distinctPhotoCheck88)distinctPhotoCheck88.checked=false;
+  }
   saveInFlight=false;
   for(const field of lockedFields)field.input.disabled=field.disabled;
   cancel.disabled=false;remove.disabled=false;
   save.textContent='Save changes';
   if(learningCheck72)learningCheck72.checked=false; // consent must be deliberate again after a failed write
-  if(explicitReview)canSaveReview();else save.disabled=false;
-  message('Could not save changes. Try again.');
+  if(explicitReview)canSaveReview();else save.disabled=Boolean(reviewConflict88);
+  message(conflictMessage88||'Could not save changes. Try again.');
  }};
  dialog.oncancel=event=>{if(saveInFlight)event.preventDefault();};
  dialog.onclose=()=>{dual82Panel?.close();subtype80Panel?.close();if(cross77Scope)CrossCaptureDuplicate77.close(cross77Scope);if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
