@@ -41,6 +41,8 @@ for(const [i,url] of MET_70759_89.publishedPhotoEndpoints.entries()){
  assert.ok(Number.isInteger(m.width)&&m.width>=400&&m.width<=18000);
  assert.ok(Number.isInteger(m.height)&&m.height>=400&&m.height<=18000);
  const sha256=createHash('sha256').update(arr).digest('hex');
+ assert.equal(sha256,MET_70759_89.publishedPhotoSHA256[i],
+  'museum original JPEG changed since pinned genuine source acquisition; refuse silent research image substitution');
  assert.ok(!seen.has(sha256),'original images must be different public source photos');
  seen.add(sha256);
  // No source-original image is committed into repo. Source-only copy is
