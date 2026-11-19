@@ -1284,6 +1284,7 @@ test('P88 owner source lease independently hashes original JPEG before atomic pr
 });
 test('P88 source-bound garment create is insert-only and cannot replace saved same-ID wardrobe item',async()=>{
  const h=sourceSaveHarness88(),lease=h.c.sourceSaveLease88(h.item);
+ assert.equal(await h.c.sourceSavePhotoVerified88(lease),true);
  const existing={id:h.item.id,image:'data:image/jpeg;base64,T0xE',category:'Outerwear'};
  h.rows.set(existing.id,structuredClone(existing));
  const prior=h.readStored();
@@ -1297,6 +1298,7 @@ test('P88 source-bound garment create is insert-only and cannot replace saved sa
 });
 test('P88 source-bound reviewed item cannot erase a different tab source photo from private drafts',async()=>{
  const h=sourceSaveHarness88(),lease=h.c.sourceSaveLease88(h.item);
+ assert.equal(await h.c.sourceSavePhotoVerified88(lease),true);
  const other={id:'second-original',image:'data:image/jpeg;base64,U0VDT05E'};
  h.updateStored({id:'draft',batch:[structuredClone(h.item),other]});
  const reviewed=reviewedForSave88(h.c,{...h.item},lease);
@@ -1312,6 +1314,7 @@ test('P88 source-bound signed owner with reconciled latest draft revision saves 
  h.updateStored({id:'draft',batch:structuredClone(h.c.batch)});
  h.c.draftStoreRevision88=JSON.stringify(h.c.batch);
  const lease=h.c.sourceSaveLease88(h.item);
+ assert.equal(await h.c.sourceSavePhotoVerified88(lease),true);
  await h.c.saveSourceBoundPiece88(reviewedForSave88(h.c,{...h.item},lease),[],lease);
  assert.deepEqual(h.writes.map(x=>x.method),['add','put']);
  assert.deepEqual(h.readStored().batch,[other]);
