@@ -64,6 +64,7 @@ assertOne(derived,catchAnchor,'original fail-closed browser catch');
 derived=derived.replace(catchAnchor,
  "}catch(e){\n console.log('M245_ORIGINAL_FAILURE_ASSET_BOUNDARY',JSON.stringify({"+
  "engine,publicRuntimeResources:m245Assets.length,pendingCount:m245Pending.length,"+
+ "publicAssetReceipts:m245Assets.slice(0,12).map(x=>({kind:x.kind,name:x.name,status:x.status,available:x.available,bytes:x.bytes})),"+
  "hashedWasm:m245Assets.filter(x=>x.kind==='onnx-wasm'&&x.available).length,"+
  "originalBrowserFailure:true,causalFixProven:false,releaseAuthorized:false}));"+
  "\n console.error('M58_REAL_P88_WORKER_FAIL'");
