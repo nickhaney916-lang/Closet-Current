@@ -1,0 +1,102 @@
+name: "Mission 1 durable duplicate owner-review gate — NO DEPLOY"
+'on':
+  push:
+    branches:
+      - research/mission1-durable-duplicate-20261119-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  source-and-guard-regression-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin immutable Mission 1 parent and bound changed files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor e182b72c6ee457836251cd7aa927181f3b11c757 HEAD
+          git diff --name-only e182b72c6ee457836251cd7aa927181f3b11c757 HEAD > /tmp/m1-paths
+          while IFS= read -r file; do
+            case "$file" in
+              public/app.js|public/photo-crop-editor.js|tests/mission1-durable-duplicate-20261119.test.mjs|tests/mission1-parallel88-owner-mask-lease.test.mjs|scripts/test-m1-owner-pair-admission-846.mjs|.github/workflows/mission1-durable-duplicate-20261119-no-deploy.yml) ;;
+              *) echo "M1_UNAUTHORIZED_FILE $file"; exit 1 ;;
+            esac
+          done < /tmp/m1-paths
+          grep -Fq 'durableReviewedNewItemPeers88' public/app.js
+          node --check public/app.js
+          node --check public/photo-crop-editor.js
+          node --check tests/mission1-durable-duplicate-20261119.test.mjs
+      - name: Execute true native reviewed-save code with synthetic second-tab IDB
+        run: |
+          set -euo pipefail
+          node --test tests/mission1-durable-duplicate-20261119.test.mjs | tee /tmp/m1-source
+          grep -Eq '^# fail 0$' /tmp/m1-source
+      - name: Preserve inherited owner/photo/pair and source lease regressions
+        run: |
+          set -euo pipefail
+          node --test tests/mission1-parallel88-owner-mask-lease.test.mjs tests/mission1-parallel88-instance-conservation.test.mjs tests/outfit-unit-reconciliation-70.test.mjs | tee /tmp/m1-inherited
+          grep -Eq '^# fail 0$' /tmp/m1-inherited
+
+  actual-chromium-webkit-IDB-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 38
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install exact inherited original owner review browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Install genuine desktop browser engines
+        run: npx playwright install --with-deps chromium webkit
+      - name: Execute original owner reviewed-save source on actual browser IndexedDB
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/test-m1-owner-pair-admission-846.mjs | tee /tmp/m1-native-idb
+          grep -Fq 'M1_P88_ACTUAL_BROWSER_DURABLE_NEW_DUPLICATE' /tmp/m1-native-idb
+          grep -Fq '"staleDuplicateDenied":true' /tmp/m1-native-idb
+          grep -Fq '"uniqueCommitted":true' /tmp/m1-native-idb
+          grep -Fq 'M1_P88_BROWSER_SHARED_ORIGINAL_DIFFERENT_CROP' /tmp/m1-native-idb
+          grep -Fq '"changedPeerBlocked":true' /tmp/m1-native-idb
+          grep -Fq 'M1_P88_BROWSER_STALE_OWNER_REVIEW_RECOVERY' /tmp/m1-native-idb
+          grep -Fq '"staleButtonDisabled":true' /tmp/m1-native-idb
+          grep -Fq '"scriptedRetryBlocked":true' /tmp/m1-native-idb
+          grep -Fq 'M1_P88_ACTUAL_BROWSER_CROP_SAVED_AND_DRAFT_CAS' /tmp/m1-native-idb
+          grep -Fq '"staleSavedRefused":true' /tmp/m1-native-idb
+          grep -Fq '"staleDraftRefused":true' /tmp/m1-native-idb
+          grep -Fq '"latePeerGuard":true' /tmp/m1-native-idb
+          grep -Fq '"firstCropSaved":true' /tmp/m1-native-idb
+          grep -Fq '"forgedOriginalUntouched":true' /tmp/m1-native-idb
+          grep -Fq '"forgedRejected":3' /tmp/m1-native-idb
+          grep -Fq '"savedModelRejected":true' /tmp/m1-native-idb
+          grep -Fq '"ownerLabelsUntouched":true' /tmp/m1-native-idb
+          grep -Fq '"savedUnknownRemainsUnknown":true' /tmp/m1-native-idb
+          grep -Fq '"savedEstimatedColorRetained":true' /tmp/m1-native-idb
+          grep -Fq '"invalidBoundsRejected":6' /tmp/m1-native-idb
+          grep -Fq '"invalidBoundsUntouched":true' /tmp/m1-native-idb
+          grep -Fq '"validBoundsStored":true' /tmp/m1-native-idb
+          grep -Fq '"masklessEstimateRefused":true' /tmp/m1-native-idb
+          grep -Fq '"nestedEstimateRefused":true' /tmp/m1-native-idb
+          grep -Fq '"rejectedMaskAdviceUnchanged":true' /tmp/m1-native-idb
+          grep -Fq '"tentativeMaskAdviceRetained":true' /tmp/m1-native-idb
+          grep -Fq '"oldModelLabelsRevoked":true' /tmp/m1-native-idb
+          grep -Fq '"oldModelOriginalKept":true' /tmp/m1-native-idb
+          grep -Fq '"newCropRequiresReview":true' /tmp/m1-native-idb
+          grep -Fq '"savedOwnerLabelsIntact":true' /tmp/m1-native-idb
+          grep -Fq 'M1_P88_BROWSER_CROP_TERMINAL_CONFLICT' /tmp/m1-native-idb
+          grep -Fq '"code":"P88_SAVED_CROP_STORAGE_CHANGED"' /tmp/m1-native-idb
+          grep -Fq '"code":"P88_CROP_DRAFT_STORAGE_CHANGED"' /tmp/m1-native-idb
+          grep -Fq '"code":"P88_STALE_CROP_OWNER_OR_SOURCE"' /tmp/m1-native-idb
+          grep -Fq '"scriptedRetryBlocked":true' /tmp/m1-native-idb

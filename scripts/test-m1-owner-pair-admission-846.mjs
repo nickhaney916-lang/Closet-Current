@@ -16,6 +16,8 @@ const companionJpeg88=Buffer.from([255,216,255,224,21,22,23,255,217]);
 const companionPhoto88='data:image/jpeg;base64,'+companionJpeg88.toString('base64');
 const companionHash88=createHash('sha256').update(companionJpeg88).digest('hex');
 const app=await readFile('public/app.js','utf8'),
+ cropEngineSrc=await readFile('public/photo-crop-engine.js','utf8'),
+ cropEditorSrc=await readFile('public/photo-crop-editor.js','utf8'),
  taxonomy=await readFile('public/taxonomy.js','utf8'),
  details=await readFile('public/clothing-details.js','utf8');
 function extract(a,b){const i=app.indexOf(a),j=app.indexOf(b,i+a.length);
@@ -33,21 +35,20 @@ const source=extract('function savePiece(', 'function node(')+
 // Browser-only exception witness: never silently turn a rejected review into
 // a 30s timeout or a fake success. The actual consumer source stays unchanged.
 const checkedSource=source.replace(
- /}catch\{\n  saveInFlight=false;/,
- `}catch(error){window.p846LastSaveError=String(error?.message||error);
-  saveInFlight=false;`
+ "const conflictMessage88=ownerReviewedSaveConflict88(error);",
+ "window.p846LastSaveError=String(error?.message||error);\n  const conflictMessage88=ownerReviewedSaveConflict88(error);"
 );
 if(checkedSource===source)throw Error('P846 native save error handler changed');
 // Diagnostic only: extract all fields from the real transactional guard. Keep
 // its refusal intact rather than weakening the app to satisfy a mock fixture.
 const instrumentedSource=checkedSource.replace(
  "throw Error('P88_SOURCE_DRAFT_STORAGE_CHANGED');",
- `window.p846DraftCAS={live:sourceSaveLeaseLive88(lease),
+ `{window.p846DraftCAS={live:sourceSaveLeaseLive88(lease),
   known:draftStoreRevision88,expected,
   persisted:JSON.stringify(read.result?.batch??null),
   liveBatch:JSON.stringify(batch),captured:liveBatchRevision,
   duplicate:duplicateUnit70InCloset(value,items)};
-  throw Error('P88_SOURCE_DRAFT_STORAGE_CHANGED');`
+  throw Error('P88_SOURCE_DRAFT_STORAGE_CHANGED');}`
 );
 const harness=[
  "const categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];",
@@ -56,7 +57,7 @@ const harness=[
  "const reviewFirst836=true;const ui88={};const $=id=>(ui88[id]??={hidden:false,textContent:'',src:''});",
  // Keep the browser's original P846 native Adjust source, but provide the
  // same signed owner/IDB transaction boundary required by the new P88 guard.
- "let db={name:'closet-current-user-owner-A',transaction(stores,mode){if(mode!=='readwrite')throw Error('P88_EXPECTED_WRITE');const tx={objectStore(name){return {get(key){if(name!=='state'||key!=='draft')throw Error('P88_EXPECTED_DRAFT_READ');const req={result:structuredClone(window.p846StoredDraft??{id:'draft',batch:[]})};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){if(name!=='items')throw Error('P88_INSERT_ONLY_ITEMS');window.lastItemWriteMethod='add';window.writeCount++;tx.saved=structuredClone(value);},put(value){if(name==='items'){window.lastItemWriteMethod='put';window.writeCount++;tx.saved=structuredClone(value);}else if(name==='state')tx.next=structuredClone(value);else throw Error('UNKNOWN_STORE');}}}};window.completions.push({resolve(){if(tx.next){window.p846StoredDraft=structuredClone(tx.next);window.draftSnapshots.push(tx.next);}window.stored.push(tx.saved);tx.oncomplete?.();},reject(error){tx.error=error||Error('REJECT');tx.onabort?.();}});return tx;}};",
+ "let db={name:'closet-current-user-owner-A',transaction(stores,mode){if(mode!=='readwrite')throw Error('P88_EXPECTED_WRITE');const tx={objectStore(name){return {get(key){if(name!=='state'||key!=='draft')throw Error('P88_EXPECTED_DRAFT_READ');const req={result:structuredClone(window.p846StoredDraft??{id:'draft',batch:[]})};queueMicrotask(()=>req.onsuccess?.());return req;},getAll(){if(name!=='items')throw Error('P88_EXPECTED_SAVED_ITEMS');const req={result:structuredClone(items)};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){if(name!=='items')throw Error('P88_INSERT_ONLY_ITEMS');window.lastItemWriteMethod='add';window.writeCount++;tx.saved=structuredClone(value);},put(value){if(name==='items'){window.lastItemWriteMethod='put';window.writeCount++;tx.saved=structuredClone(value);}else if(name==='state')tx.next=structuredClone(value);else throw Error('UNKNOWN_STORE');}}}};window.completions.push({resolve(){if(tx.next){window.p846StoredDraft=structuredClone(tx.next);window.draftSnapshots.push(tx.next);}window.stored.push(tx.saved);tx.oncomplete?.();},reject(error){tx.error=error||Error('REJECT');tx.onabort?.();}});return tx;}};",
  "const queued=async fn=>{await window.beforeWriteTest?.();return fn();};",
  "const originalSource88="+JSON.stringify(originalSource88),
  "const sourceHash88="+JSON.stringify(originalHash88),
@@ -228,7 +229,7 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    // exact saved JPEGs. Main category, color and the general review checkbox
    // alone are not distinct physical-garment evidence.
    await page.evaluate(()=>adjustPhoto(batch[0]));
-   assert.equal(await page.getByAltText(/Already saved photograph exactly matching/).count(),1);
+   assert.equal(await page.getByAltText(/Previously saved garment photo with matching crop or shared original/).count(),1);
    const savedPreview=page.locator('dialog[open]');
    await savedPreview.getByLabel('Main category').selectOption('Tops');
    await savedPreview.locator('input[aria-label="Color"]').fill('Blue');
@@ -260,8 +261,8 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     duplicateStoredOnlyAfterSeparateAttestation:true,threeDAuthority:false,
     pageErrors:errors.length
    }));
-   // The actual native Crop flow must expire the old identical-JPEG
-   // marker when a pending duplicate photo is genuinely recropped.
+   // The preview crop changes, but the full-size source still matches an
+   // existing garment. Clear old attestations, not the physical duplicate gate.
    await page.evaluate(()=>window.setupCropDuplicate88());
    await page.evaluate(()=>{
     window.cropPromise88=window.crop88Editor.save({
@@ -276,22 +277,25 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     const v=batch[0],lease=reviewedSaveLease88(v);
     return {savedCount:items.length,pendingCount:batch.length,
      changedPhoto:v.image==='data:image/jpeg;base64,TkVXUElYRUxT',
-     clearedOldMatch:v.exactSavedPhotoMatch88===undefined,
+     stillSameOriginal:v.originalPhoto?.image===originalSource88,
+     sharedSourceMatch:v.exactSavedPhotoMatch88?.savedItemId==='saved-photo-exact',
      clearedOldAttestation:v.ownerDuplicateReview88===undefined,
      ownerReviewStillRequired:v.requiresOwnershipConfirmation===true,
-     newSourceAdmissibleForOwnerReview:reviewedDistinctPhotoReceiptValid88(v,lease)};
+     ownerDistinctReviewStillRequired:reviewedDistinctPhotoReceiptValid88(v,lease)===false};
    });
    assert.equal(cropDuplicate.savedCount,1);
    assert.equal(cropDuplicate.pendingCount,1);
    assert.equal(cropDuplicate.changedPhoto,true);
-   assert.equal(cropDuplicate.clearedOldMatch,true);
+   assert.equal(cropDuplicate.stillSameOriginal,true);
+   assert.equal(cropDuplicate.sharedSourceMatch,true);
    assert.equal(cropDuplicate.clearedOldAttestation,true);
    assert.equal(cropDuplicate.ownerReviewStillRequired,true);
-   assert.equal(cropDuplicate.newSourceAdmissibleForOwnerReview,true);
-   console.log('M1_P88_BROWSER_CROP_DUPLICATE_EVIDENCE_EXPIRY',JSON.stringify({
-    browser:browserName,width,oldMatchCleared:true,
-    newCropRetainedAsUnsaved:true,reviewStillRequired:true,
-    staleDuplicateGateUnblocked:true,pageErrors:errors.length
+   assert.equal(cropDuplicate.ownerDistinctReviewStillRequired,true);
+   console.log('M1_P88_BROWSER_CROP_SHARED_ORIGINAL_OWNER_GATE',JSON.stringify({
+    browser:browserName,width,rawOriginalPreserved:true,sharedSourceMatch:true,
+    oldAttestationCleared:true,newCropRetainedAsUnsaved:true,
+    reviewStillRequired:true,noAutomaticPhysicalDuplicateSave:true,
+    pageErrors:errors.length
    }));
    // Source-execute the actual native Crop controller in real Chromium and
    // WebKit. The crop editor transport and signed owner are synthetic; no
@@ -558,6 +562,628 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     privatePhotos:false,syntheticOwner:true,physicalDevice:false,
     pageErrors:errors.length
    }));
+   assert.deepEqual(errors,[]);
+   // Actual IndexedDB, NOT a stub: browser tab B commits a same-photo garment
+   // after tab A starts reviewing but BEFORE its atomic insert. Reject the
+   // unreviewed duplicate without losing A's original pending draft.
+   const durableNewDuplicate88=await page.evaluate(async()=>{
+    const opened=indexedDB.open('closet-current-user-owner-A');
+    const ownerDb=await new Promise((resolve,reject)=>{
+     opened.onsuccess=()=>resolve(opened.result);
+     opened.onerror=()=>reject(opened.error);
+    });
+    db=ownerDb;window.closetAuth.user={id:'owner-A'};window.beforeWriteTest=null;
+    const putItem=row=>new Promise((resolve,reject)=>{
+     const tx=db.transaction('items','readwrite');
+     tx.objectStore('items').put(structuredClone(row));
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+    const getItem=id=>new Promise((resolve,reject)=>{
+     const req=db.transaction('items','readonly').objectStore('items').get(id);
+     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+    });
+    const putDraft=photos=>new Promise((resolve,reject)=>{
+     const tx=db.transaction('state','readwrite');
+     tx.objectStore('state').put({id:'draft',batch:structuredClone(photos)});
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+    const getDraft=()=>new Promise((resolve,reject)=>{
+     const req=db.transaction('state','readonly').objectStore('state').get('draft');
+     req.onsuccess=()=>resolve(req.result?.batch||[]);
+     req.onerror=()=>reject(req.error);
+    });
+    const image='data:image/jpeg;base64,UkVBTC1URVNU';
+    const draft={id:'late-other-tab-draft-88',image,
+     category:'Tops',itemType:'T-shirt',color:'Blue'};
+    batch=[draft];items=[];
+    await putDraft([draft]);draftStoreRevision88=JSON.stringify(batch);
+    const lease=reviewedSaveLease88(draft);
+    // Simulates an independent tab writing the same physical photo.
+    const prior={id:'late-other-tab-saved-88',image,
+     category:'Tops',itemType:'T-shirt',color:'Blue'};
+    await putItem(prior);
+    let staleDuplicateDenied=false;
+    try{await savePiece({...draft},[],lease);}
+    catch(e){staleDuplicateDenied=/P88_DURABLE_REVIEWED_DUPLICATE_CHANGED/.test(e.message);}
+    const originalDraftSurvives=(await getDraft()).some(x=>x.id===draft.id&&x.image===image);
+    const noSecondSavedItem=(await getItem(draft.id))===undefined;
+    const firstSavedIntact=(await getItem(prior.id))?.image===image;
+    // Distinct JPEG is still allowed after the owner reviews and provides a
+    // new source photo; reject-all would not be a valid duplicate solution.
+    const unique={...draft,id:'new-unique-owner-photo-88',
+     image:'data:image/jpeg;base64,VU5JUVVFLVBIT1RP'};
+    batch=[unique];await putDraft([unique]);
+    draftStoreRevision88=JSON.stringify(batch);
+    await savePiece({...unique},[],reviewedSaveLease88(unique));
+    const uniqueCommitted=(await getItem(unique.id))?.image===unique.image;
+    const uniqueDraftCleared=(await getDraft()).length===0;
+    ownerDb.close();
+    return {staleDuplicateDenied,originalDraftSurvives,noSecondSavedItem,
+     firstSavedIntact,uniqueCommitted,uniqueDraftCleared};
+   });
+   assert.deepEqual(durableNewDuplicate88,{
+    staleDuplicateDenied:true,originalDraftSurvives:true,noSecondSavedItem:true,
+    firstSavedIntact:true,uniqueCommitted:true,uniqueDraftCleared:true
+   },'actual IDB must deny late duplicate photos and still permit fresh originals');
+   console.log('M1_P88_ACTUAL_BROWSER_DURABLE_NEW_DUPLICATE',JSON.stringify({
+    browser:browserName,width,...durableNewDuplicate88,syntheticOwner:true,
+    actualIndexedDB:true,physicalDevice:false,pageErrors:errors.length
+   }));
+   assert.deepEqual(errors,[]);
+
+   // Same RAW original can yield distinct cropped review images. This is
+   // not a new independent image nor evidence of two physical garments.
+   // Native IDB: without a current explicit owner decision, fail closed.
+   const sharedCroppedOriginal88=await page.evaluate(async()=>{
+    const request=indexedDB.open('closet-current-user-owner-A');
+    const ownerDb=await new Promise((resolve,reject)=>{
+     request.onsuccess=()=>resolve(request.result);
+     request.onerror=()=>reject(request.error);
+    });
+    db=ownerDb;window.closetAuth.user={id:'owner-A'};window.beforeWriteTest=null;
+    const putItem=v=>new Promise((resolve,reject)=>{
+     const tx=db.transaction('items','readwrite');
+     tx.objectStore('items').put(structuredClone(v));
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+    const getItem=id=>new Promise((resolve,reject)=>{
+     const req=db.transaction('items','readonly').objectStore('items').get(id);
+     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+    });
+    const setPending=values=>new Promise((resolve,reject)=>{
+     const tx=db.transaction('state','readwrite');
+     tx.objectStore('state').put({id:'draft',batch:structuredClone(values)});
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+    const getPending=()=>new Promise((resolve,reject)=>{
+     const req=db.transaction('state','readonly').objectStore('state').get('draft');
+     req.onsuccess=()=>resolve(req.result?.batch||[]);
+     req.onerror=()=>reject(req.error);
+    });
+    const raw='data:image/jpeg;base64,U0hBUkVELVJBVy1KUEVH';
+    const old={id:'shared-original-first-88',
+     image:'data:image/jpeg;base64,RklSU1QtQ1JPUA==',
+     originalPhoto:{image:raw},category:'Tops',itemType:'T-shirt',color:'Blue'};
+    const next={id:'shared-original-second-88',
+     image:'data:image/jpeg;base64,U0VDT05ELUNST1A=',
+     originalPhoto:{image:raw},category:'Tops',itemType:'T-shirt',color:'Red'};
+    await putItem(old);
+    batch=[next];items=[];await setPending([next]);
+    draftStoreRevision88=JSON.stringify(batch);
+    let staleCropBlocked=false;
+    try{await savePiece({...next},[],reviewedSaveLease88(next));}
+    catch(e){staleCropBlocked=/P88_DURABLE_REVIEWED_DUPLICATE_CHANGED/.test(e.message);}
+    const preservedBeforeReview=(await getPending()).some(x=>x.id===next.id);
+    items=[old];const lease=reviewedSaveLease88(next);
+    const localSourceLinked=lease.exactPhotoPeers88.length===1&&
+     lease.exactPhotoPeers88[0].id===old.id;
+    let unapprovedBlocked=false;
+    try{await savePiece({...next},[],lease);}
+    catch(e){unapprovedBlocked=/P88_DISTINCT_OWNER_DECISION_REQUIRED/.test(e.message);}
+    const ownerReceipt=reviewedDistinctPhotoReceipt88(lease);
+    const approved={...next,ownerDuplicateReview88:ownerReceipt};
+    // Simulated *explicit* owner decision; never independently certified.
+    await putItem({...old,originalPhoto:{image:'data:image/jpeg;base64,TkVXLVJBVw=='}});
+    let changedPeerBlocked=false;
+    try{await savePiece(approved,[],lease);}
+    catch(e){changedPeerBlocked=/P88_DURABLE_REVIEWED_DUPLICATE_CHANGED/.test(e.message);}
+    await putItem(old);
+    await savePiece(approved,[],lease);
+    const distinctSaved=(await getItem(next.id))?.image===next.image;
+    const untouchedOld=(await getItem(old.id))?.originalPhoto?.image===raw;
+    const draftCleared=(await getPending()).length===0;
+    const no3DCertification=(await getItem(next.id))?.ownerDuplicateReview88?.threeDReady===false;
+    ownerDb.close();
+    return {staleCropBlocked,preservedBeforeReview,localSourceLinked,
+     unapprovedBlocked,changedPeerBlocked,distinctSaved,untouchedOld,draftCleared,
+     no3DCertification};
+   });
+   assert.deepEqual(sharedCroppedOriginal88,{
+    staleCropBlocked:true,preservedBeforeReview:true,localSourceLinked:true,
+    unapprovedBlocked:true,changedPeerBlocked:true,distinctSaved:true,
+    untouchedOld:true,draftCleared:true,no3DCertification:true
+   },'actual IDB must require fresh approval for distinct crops of same raw original');
+   console.log('M1_P88_BROWSER_SHARED_ORIGINAL_DIFFERENT_CROP',JSON.stringify({
+    browser:browserName,width,...sharedCroppedOriginal88,
+    syntheticOwnerAndPhoto:true,actualIndexedDB:true,physicalDevice:false,
+    pageErrors:errors.length
+   }));
+   // A native owner UI refusal from a second tab is not a generic retry.
+   // Reusing the old owner checkboxes must remain disabled until refresh.
+   const prepareStaleOwnerReview=await page.evaluate(async()=>{
+    const req=indexedDB.open('closet-current-user-owner-A');
+    const ownerDb=await new Promise((resolve,reject)=>{
+     req.onsuccess=()=>resolve(req.result);
+     req.onerror=()=>reject(req.error);
+    });
+    db=ownerDb;window.closetAuth.user={id:'owner-A'};
+    const raw='data:image/jpeg;base64,T1JJR0lOQUwtSkRFUA==';
+    const draft={id:'new-owner-review-conflict-88',
+     image:'data:image/jpeg;base64,TkVXLUNST1A=',
+     originalPhoto:{image:raw},name:'Red shirt',
+     category:'Tops',itemType:'T-shirt',color:'Red',
+     seasons:[],userAdjusted:false,requiresOwnershipConfirmation:true};
+    batch=[draft];items=[];window.messageText='';
+    window.beforeWriteTest=null;
+    await new Promise((resolve,reject)=>{
+     const tx=db.transaction('state','readwrite');
+     tx.objectStore('state').put({id:'draft',batch:structuredClone(batch)});
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+    draftStoreRevision88=JSON.stringify(batch);
+    adjustPhoto(draft);
+    return {raw,draftId:draft.id};
+   });
+   const staleOwnerDialog=page.locator('dialog[open]');
+   await staleOwnerDialog.getByRole('checkbox',{
+    name:/I checked the clothing photo and confirmed/
+   }).check();
+   assert.equal(await staleOwnerDialog.getByRole('button',{name:'Save changes'}).isEnabled(),true);
+   await page.evaluate(async raw=>{
+    // A second tab just inserted a different crop from the SAME original.
+    await new Promise((resolve,reject)=>{
+     const tx=db.transaction('items','readwrite');
+     tx.objectStore('items').add({
+      id:'late-other-tab-owner-review-88',
+      image:'data:image/jpeg;base64,T0xELUNST1A=',
+      originalPhoto:{image:raw},category:'Tops',itemType:'T-shirt',color:'Blue'
+     });
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+   },prepareStaleOwnerReview.raw);
+   await submit();
+   await page.waitForFunction(()=>window.messageText.includes('Close Adjust')&&
+    window.messageText.includes('refresh'));
+   const staleOwnerUi=await page.evaluate(async draftId=>{
+    const dlg=document.querySelector('dialog[open]');
+    const save=dlg.querySelector('button.primary');
+    const confirmed=[...dlg.querySelectorAll('input[type="checkbox"]')]
+      .filter(x=>x.getAttribute('aria-label')?.includes('I checked the clothing photo'))
+      .every(x=>x.checked===false);
+    const stored=await new Promise((resolve,reject)=>{
+     const req=db.transaction('items','readonly').objectStore('items').get(draftId);
+     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+    });
+    const draft=await new Promise((resolve,reject)=>{
+     const req=db.transaction('state','readonly').objectStore('state').get('draft');
+     req.onsuccess=()=>resolve(req.result?.batch||[]);
+     req.onerror=()=>reject(req.error);
+    });
+    return {disabled:save?.disabled===true,
+     confirmedCleared:confirmed,
+     draftPreserved:draft.some(x=>x.id===draftId),noNewRow:stored===undefined,
+     guidance:window.messageText};
+   },prepareStaleOwnerReview.draftId);
+   assert.equal(staleOwnerUi.disabled,true,'outdated review must not re-enable retry');
+   assert.equal(staleOwnerUi.confirmedCleared,true);
+   assert.equal(staleOwnerUi.draftPreserved,true);
+   assert.equal(staleOwnerUi.noNewRow,true);
+   assert.match(staleOwnerUi.guidance,/same complete original|same original/i);
+   // Dispatching submit directly must also be blocked, not just the button.
+   const beforeRetry=staleOwnerUi.guidance;
+   await submit();
+   assert.match(await page.evaluate(()=>window.messageText),/outdated|refresh/i);
+   console.log('M1_P88_BROWSER_STALE_OWNER_REVIEW_RECOVERY',JSON.stringify({
+    browser:browserName,width,blocked:true,photoKept:true,
+    staleButtonDisabled:true,scriptedRetryBlocked:true,syntheticOwner:true,
+    realBrowserIndexedDB:true,physicalDevice:false,pageErrors:errors.length
+   }));
+   await page.evaluate(()=>db.close());
+
+   // True browser-IDB crop CAS, not the synthetic IDB harness. The original
+   // crop handler used a bare .put on saved wardrobe rows or the full draft,
+   // silently losing second-tab corrections and pending raw JPEGs.
+   const cropCas88=await page.evaluate(async()=>{
+    const opened=indexedDB.open('closet-current-user-owner-A');
+    const ownerDb=await new Promise((resolve,reject)=>{
+     opened.onsuccess=()=>resolve(opened.result);
+     opened.onerror=()=>reject(opened.error);
+    });
+    db=ownerDb;window.closetAuth.user={id:'owner-A'};window.beforeWriteTest=null;
+    const put=(store,row)=>new Promise((resolve,reject)=>{
+     const tx=db.transaction(store,'readwrite');
+     tx.objectStore(store).put(structuredClone(row));
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+    const get=(store,id)=>new Promise((resolve,reject)=>{
+     const req=db.transaction(store,'readonly').objectStore(store).get(id);
+     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+    });
+    const raw='data:image/jpeg;base64,T1JJR0lOQUwtQ1JPUC1PQVNJUw==';
+    const oldImage='data:image/jpeg;base64,T0xELU9XTkVSLUNST1A=';
+    const newImage='data:image/jpeg;base64,TkVXLU9XTkVSLUNST1A=';
+    const base={id:'actual-saved-crop-revision-88',image:oldImage,
+     originalPhoto:{image:raw},category:'Tops',itemType:'T-shirt',
+     color:'Blue',seasons:[],userAdjusted:false};
+    items=[base];batch=[];await put('items',base);
+    cropClothingPhoto(base);
+    const corrected={...base,color:'Green',itemType:'Blouse'};
+    await put('items',corrected);
+    let staleSavedRefused=false;
+    try{await window.crop88Editor.save({image:newImage},null);}
+    catch(e){staleSavedRefused=/P88_SAVED_CROP_STORAGE_CHANGED/.test(e.message);}
+    const correctionIntact=(await get('items',base.id))?.color==='Green'&&
+     (await get('items',base.id))?.image===oldImage;
+    const localSavedIntact=base.image===oldImage;
+    await put('items',base);
+    cropClothingPhoto(base);
+    await window.crop88Editor.save({image:newImage},null);
+    const savedCropCommitted=(await get('items',base.id))?.image===newImage;
+    const originalSaved=(await get('items',base.id))?.originalPhoto?.image===raw;
+    // Previously a saved item's Crop > Use suggested details could rewrite
+    // confirmed category and subtype without a separate Adjust approval.
+    cropClothingPhoto(base);
+    let savedModelRejected=false;
+    try{
+     await window.crop88Editor.save({image:oldImage},{
+      category:'Dresses',itemType:'Dress',color:'Red',label:'a dress',
+      details:{color:'Red',fit:'Loose'}
+     });
+    }catch(e){
+     savedModelRejected=/P88_SAVED_CROP_MODEL_SUGGESTION_REQUIRES_ADJUST/.test(e.message);
+    }
+    const savedAfterModel=await get('items',base.id);
+    const ownerLabelsUntouched=savedAfterModel?.category==='Tops'&&
+     savedAfterModel?.itemType==='T-shirt'&&savedAfterModel?.color==='Blue'&&
+     savedAfterModel?.image===newImage;
+
+    // Even a missing saved color cannot be silently filled by an estimated
+    // garment-mask palette during Crop. Only explicit Adjust can change it.
+    const unknown={id:'actual-saved-unknown-color-crop-88',
+     image:oldImage,category:'Tops',itemType:'T-shirt',color:'',
+     seasons:[],userAdjusted:true};
+    items=[unknown];batch=[];await put('items',unknown);
+    cropClothingPhoto(unknown);
+    await window.crop88Editor.save({image:newImage,maskApplied:true,
+     maskedColorEstimate:{color:'Red',source:'photo-estimate'}},null);
+    const afterEstimate=await get('items',unknown.id);
+    const savedUnknownRemainsUnknown=afterEstimate?.image===newImage&&
+     afterEstimate?.color===''&&afterEstimate?.colorSource===undefined;
+
+    // Saved owner inventory can contain a legacy estimated color. Unlike
+    // an UNSAVED draft's old pixel estimate, this stored label must survive
+    // a photo recrop and must retain its UNCONFIRMED provenance.
+    const estimated={id:'native-saved-estimated-color-88',
+     image:oldImage,originalPhoto:{image:raw},
+     category:'Tops',itemType:'T-shirt',color:'Blue',
+     colorSource:'photo-estimate',colorMethod:'garment-mask',
+     seasons:[],userAdjusted:true};
+    items=[estimated];batch=[];await put('items',estimated);
+    cropClothingPhoto(estimated);
+    await window.crop88Editor.save({image:newImage},null);
+    const storedEstimate=await get('items',estimated.id);
+    const savedEstimatedColorRetained=storedEstimate?.image===newImage&&
+     storedEstimate?.originalPhoto?.image===raw&&
+     storedEstimate?.color==='Blue'&&
+     storedEstimate?.colorSource==='photo-estimate'&&
+     estimated.color==='Blue'&&estimated.colorSource==='photo-estimate'&&
+     storedEstimate?.category==='Tops'&&
+     storedEstimate?.itemType==='T-shirt';
+
+    // Real IndexedDB case: forged crop coordinate metadata must be rejected
+    // BEFORE modifying owner photo pixels, original source, or crop geometry.
+    // A valid normalized rectangle must still commit through native source.
+    const geometry={id:'actual-malformed-crop-bounds-88',image:oldImage,
+     originalPhoto:{image:raw},category:'Tops',itemType:'T-shirt',
+     color:'Blue',seasons:[],userAdjusted:true};
+    items=[geometry];batch=[];await put('items',geometry);
+    cropClothingPhoto(geometry);
+    let invalidBoundsRejected=0;
+    for(const cropBounds of [
+     null,
+     {x:0.9,y:0,width:0.4,height:1},
+     {x:0,y:0,width:0,height:1},
+     {x:0,y:0,width:NaN,height:1},
+     {x:0,y:0,width:1,height:1,ownerSourceReview88:true},
+     {x:'0',y:0,width:1,height:1}
+    ]){
+     try{await window.crop88Editor.save({image:newImage,cropBounds},null);}
+     catch(e){if(e.message==='P88_CROP_INVALID_BOUNDS')invalidBoundsRejected++;}
+    }
+    const denied=await get('items',geometry.id);
+    const invalidBoundsUntouched=invalidBoundsRejected===6&&
+     denied?.image===oldImage&&denied?.cropBounds===undefined&&
+     denied?.originalPhoto?.image===raw&&
+     denied?.category==='Tops'&&geometry.image===oldImage;
+    const validRect={x:0.125,y:0.25,width:0.75,height:0.5};
+    await window.crop88Editor.save({image:newImage,cropBounds:validRect},null);
+    const good=await get('items',geometry.id);
+    const validBoundsStored=good?.image===newImage&&
+     good?.originalPhoto?.image===raw&&
+     good?.cropBounds?.x===0.125&&good?.cropBounds?.width===0.75&&
+     good?.category==='Tops'&&good?.color==='Blue';
+    // Test isolation: this new saved geometry row shares the old test's
+    // synthetic source/derived JPEG. Remove only the added fixture from
+    // native IDB before running the inherited late-peer duplicate scenario.
+    // Never weaken the existing late-peer guard to accommodate test pollution.
+    await new Promise((resolve,reject)=>{
+     const tx=db.transaction('items','readwrite');
+     tx.objectStore('items').delete(geometry.id);
+     tx.oncomplete=resolve;
+     tx.onerror=()=>reject(tx.error);
+     tx.onabort=()=>reject(tx.error);
+    });
+    if(await get('items',geometry.id))throw Error('P88_BROWSER_FIXTURE_NOT_ISOLATED');
+
+    // The genuine app-source crop callback must never assert mask-derived
+    // color evidence when the native editor reports no applied mask.
+    const paletteProbe={id:'actual-masked-estimate-provenance-88',
+     image:oldImage,originalPhoto:{image:raw},
+     category:'Tops',itemType:'T-shirt',color:'',seasons:[],
+     requiresOwnershipConfirmation:true};
+    items=[];batch=[paletteProbe];
+    await put('state',{id:'draft',batch:[paletteProbe]});
+    draftStoreRevision88=JSON.stringify(batch);
+    cropClothingPhoto(paletteProbe);
+    let masklessEstimateRefused=false,nestedEstimateRefused=false;
+    try{await window.crop88Editor.save({image:newImage,
+     maskedColorEstimate:{color:'Red',source:'photo-estimate'}},null);}
+    catch(e){masklessEstimateRefused=e.message==='P88_CROP_MASK_ESTIMATE_WITHOUT_MASK';}
+    try{await window.crop88Editor.save({image:newImage,maskApplied:true,
+     maskedColorEstimate:{color:'Red',source:'photo-estimate',threeDReady:true}},null);}
+    catch(e){nestedEstimateRefused=e.message==='P88_CROP_INVALID_MASK_COLOR';}
+    const beforeAdvice=(await get('state','draft'))?.batch?.find(x=>x.id===paletteProbe.id);
+    const rejectedMaskAdviceUnchanged=masklessEstimateRefused&&nestedEstimateRefused&&
+     beforeAdvice?.image===oldImage&&beforeAdvice?.color===''&&
+     beforeAdvice?.colorMethod===undefined;
+    await window.crop88Editor.save({image:newImage,maskApplied:true,
+     maskedColorEstimate:{color:'Red',source:'photo-estimate',secondaryColor:null}},null);
+    const afterAdvice=(await get('state','draft'))?.batch?.find(x=>x.id===paletteProbe.id);
+    const tentativeMaskAdviceRetained=afterAdvice?.color==='Red'&&
+     afterAdvice?.colorSource==='photo-estimate'&&
+     afterAdvice?.colorMethod==='garment-mask'&&
+     afterAdvice?.requiresOwnershipConfirmation===true&&
+     afterAdvice?.threeDReady!==true&&
+     (await get('items',paletteProbe.id))===undefined&&
+     afterAdvice?.originalPhoto?.image===raw;
+    // The mask-provenance fixture must not appear as a separate photo or
+    // copied saved garment in any of the inherited duplicate-owner tests.
+    await put('state',{id:'draft',batch:[]});
+    batch=[];items=[];draftStoreRevision88=JSON.stringify(batch);
+
+    // A newly selected crop is a DIFFERENT image, so old classifier fields
+    // and evidence for the prior image must not masquerade as a fresh result.
+    // Exercise real native app.js callback + real owner IndexedDB transaction.
+    const oldGuess={id:'native-old-model-new-crop-88',image:oldImage,
+     originalPhoto:{image:raw},category:'Dresses',itemType:'Casual dress',
+     color:'Red',colorSource:'recognition',name:'Red dress',
+     sleeveLength:'Short sleeve',fit:'Fitted',pattern:'Floral',
+     indexingLevel:'specific-type',indexedAt:'2026-11-18',
+     recognitionDiagnostics:{reason:'prior pixels',
+      outerwearRecovery:{outerwearReviewSuggested:true}},
+     seasons:[],userAdjusted:false,requiresOwnershipConfirmation:false};
+    batch=[oldGuess];items=[];await put('state',{id:'draft',batch:[oldGuess]});
+    draftStoreRevision88=JSON.stringify(batch);
+    cropClothingPhoto(oldGuess);
+    await window.crop88Editor.save({image:newImage},null);
+    const newDraft=(await get('state','draft'))?.batch?.find(x=>x.id===oldGuess.id);
+    const oldModelLabelsRevoked=newDraft?.image===newImage&&
+     newDraft?.category==='Uncategorized'&&newDraft?.itemType==='Unknown'&&
+     newDraft?.name===''&&newDraft?.color===''&&
+     newDraft?.colorSource===undefined&&
+     newDraft?.sleeveLength==='Unknown'&&newDraft?.fit==='Unknown'&&
+     newDraft?.pattern==='Unknown'&&
+     newDraft?.recognitionDiagnostics===undefined&&
+     newDraft?.indexingLevel===undefined&&newDraft?.indexedAt===undefined;
+    const oldModelOriginalKept=newDraft?.originalPhoto?.image===raw&&
+     oldGuess?.originalPhoto?.image===raw;
+    const newCropRequiresReview=newDraft?.requiresOwnershipConfirmation===true&&
+     oldGuess.requiresOwnershipConfirmation===true&&
+     (await get('items',oldGuess.id))===undefined;
+    await put('state',{id:'draft',batch:[]});
+    batch=[];items=[];draftStoreRevision88=JSON.stringify(batch);
+    // Existing owned labels, unlike unsaved model suggestions, stay intact.
+    const ownedPriorModel={id:'native-saved-old-model-crop-88',image:oldImage,
+     originalPhoto:{image:raw},category:'Tops',itemType:'T-shirt',
+     color:'Blue',name:'Blue T-shirt',userAdjusted:true,
+     recognitionDiagnostics:{reason:'previous source pixels'},seasons:[]};
+    items=[ownedPriorModel];batch=[];await put('items',ownedPriorModel);
+    cropClothingPhoto(ownedPriorModel);
+    await window.crop88Editor.save({image:newImage},null);
+    const ownedAfter=await get('items',ownedPriorModel.id);
+    const savedOwnerLabelsIntact=ownedAfter?.image===newImage&&
+     ownedAfter?.originalPhoto?.image===raw&&
+     ownedAfter?.category==='Tops'&&ownedAfter?.itemType==='T-shirt'&&
+     ownedAfter?.color==='Blue'&&ownedAfter?.name==='Blue T-shirt'&&
+     ownedAfter?.recognitionDiagnostics===undefined&&
+     ownedPriorModel.recognitionDiagnostics===undefined;
+    await new Promise((resolve,reject)=>{
+     const tx=db.transaction('items','readwrite');
+     tx.objectStore('items').delete(ownedPriorModel.id);
+     tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+     tx.onabort=()=>reject(tx.error);
+    });
+    if(await get('items',ownedPriorModel.id))throw Error('P88_BROWSER_OLD_MODEL_FIXTURE_LEAK');
+    items=[];batch=[];
+
+    const pending={id:'actual-pending-crop-88',image:oldImage,
+     originalPhoto:{image:raw},name:'Pending original',category:'Tops',
+     itemType:'T-shirt',color:'Blue',seasons:[],userAdjusted:false};
+    const other={id:'later-tab-pending-88',
+     image:'data:image/jpeg;base64,TEFURVItUEhPVE8='};
+    items=[];batch=[pending];await put('state',{id:'draft',batch:[pending]});
+    draftStoreRevision88=JSON.stringify(batch);
+    cropClothingPhoto(pending);
+    await put('state',{id:'draft',batch:[pending,other]});
+    let staleDraftRefused=false;
+    try{await window.crop88Editor.save({image:newImage},null);}
+    catch(e){staleDraftRefused=/P88_CROP_DRAFT_STORAGE_CHANGED/.test(e.message);}
+    const afterRefusal=(await get('state','draft'))?.batch||[];
+    const otherPreserved=afterRefusal.some(x=>x.id===other.id&&x.image===other.image);
+    const pendingRawPreserved=afterRefusal.some(x=>x.id===pending.id&&x.image===oldImage);
+    batch=[pending,other];draftStoreRevision88=JSON.stringify(batch);
+    cropClothingPhoto(pending);
+    await window.crop88Editor.save({image:newImage},null);
+    const afterReview=(await get('state','draft'))?.batch||[];
+    const newCropSaved=afterReview.some(x=>x.id===pending.id&&x.image===newImage&&
+     x.originalPhoto?.image===raw);
+    const otherStillPreserved=afterReview.some(x=>x.id===other.id&&x.image===other.image);
+
+    // A late saved matching preview must be found in durable IDB even when
+    // this tab has not refreshed its stale in-memory items list.
+    const newest={...pending,id:'actual-late-peer-new-crop-88',
+     image:'data:image/jpeg;base64,TkVXLUxBVEUtQ1JPUA=='};
+    const peer={id:'actual-other-tab-new-peer-88',image:newest.image,
+     category:'Tops',itemType:'T-shirt',color:'Blue'};
+    items=[];batch=[newest];await put('state',{id:'draft',batch:[newest]});
+    draftStoreRevision88=JSON.stringify(batch);
+    cropClothingPhoto(newest);
+    await put('items',peer);
+    await window.crop88Editor.save({image:newest.image,cropBounds:{x:0,y:0,width:1,height:1}},null);
+    const flagged=(await get('state','draft'))?.batch?.find(x=>x.id===newest.id);
+    const latePeerGuard=flagged?.exactSavedPhotoMatch88?.savedItemId===peer.id&&
+     flagged?.possibleDuplicate===true&&
+     flagged?.requiresOwnershipConfirmation===true;
+    const noAutoSaved=(await get('items',newest.id))===undefined;
+    // Real Crop editor includes originalPhoto on first crop. Preserve the
+    // exact original source and reject photo-callback forged 3D credentials.
+    const firstRaw='data:image/jpeg;base64,RklSU1QtUkFXLUpQRUc=';
+    const first={id:'native-first-crop-original-88',image:firstRaw,
+     category:'Tops',itemType:'T-shirt',color:'Blue',
+     seasons:[],userAdjusted:false};
+    items=[];batch=[first];await put('state',{id:'draft',batch:[first]});
+    draftStoreRevision88=JSON.stringify(batch);
+    cropClothingPhoto(first);
+    const firstCropImage='data:image/jpeg;base64,RklSU1QtREVSSVZFRC1KUEVH';
+    await window.crop88Editor.save({image:firstCropImage,
+     originalPhoto:{image:firstRaw},cropBounds:{x:0,y:0,width:1,height:1}},null);
+    const firstCropRow=(await get('state','draft'))?.batch?.find(x=>x.id===first.id);
+    const firstCropSaved=firstCropRow?.image===firstCropImage&&
+     firstCropRow?.originalPhoto?.image===firstRaw&&
+     first.originalPhoto?.image===firstRaw;
+
+    const guardedRaw='data:image/jpeg;base64,R1VBUkRFRC1PUklHSU5BTA==';
+    const guarded={id:'native-forged-crop-credential-88',
+     image:'data:image/jpeg;base64,R1VBUkRFRC1QUkVWSUVX',
+     originalPhoto:{image:guardedRaw},category:'Tops',
+     itemType:'T-shirt',color:'Blue',seasons:[],userAdjusted:false};
+    items=[];batch=[guarded];await put('state',{id:'draft',batch:[guarded]});
+    draftStoreRevision88=JSON.stringify(batch);cropClothingPhoto(guarded);
+    let forgedRejected=0;
+    for(const extra of [
+     {threeDReady:true},{sourceHashVerified:true},
+     {originalPhoto:{image:guardedRaw,sha256:'f'.repeat(64),verified:true}}
+    ]){
+     try{await window.crop88Editor.save({image:firstCropImage,...extra},null);}
+     catch(e){if(/P88_CROP_(?:UNEXPECTED_FIELD|ORIGINAL_SOURCE_CHANGED)/.test(e.message))forgedRejected++;}
+    }
+    const unchanged=(await get('state','draft'))?.batch?.find(x=>x.id===guarded.id);
+    const forgedOriginalUntouched=forgedRejected===3&&
+     unchanged?.image===guarded.image&&
+     unchanged?.threeDReady!==true&&unchanged?.sourceHashVerified!==true&&
+     unchanged?.originalPhoto?.verified!==true;
+    ownerDb.close();
+    return {firstCropSaved,forgedOriginalUntouched,forgedRejected,
+     savedModelRejected,ownerLabelsUntouched,savedUnknownRemainsUnknown,
+     savedEstimatedColorRetained,invalidBoundsRejected,
+     invalidBoundsUntouched,validBoundsStored,
+     masklessEstimateRefused,nestedEstimateRefused,
+     rejectedMaskAdviceUnchanged,tentativeMaskAdviceRetained,
+     oldModelLabelsRevoked,oldModelOriginalKept,newCropRequiresReview,
+     savedOwnerLabelsIntact,
+     staleSavedRefused,correctionIntact,localSavedIntact,
+     savedCropCommitted,originalSaved,staleDraftRefused,otherPreserved,
+     pendingRawPreserved,newCropSaved,otherStillPreserved,
+     latePeerGuard,noAutoSaved};
+   });
+   assert.deepEqual(cropCas88,{
+    firstCropSaved:true,forgedOriginalUntouched:true,forgedRejected:3,
+    savedModelRejected:true,ownerLabelsUntouched:true,
+    savedUnknownRemainsUnknown:true,savedEstimatedColorRetained:true,
+    invalidBoundsRejected:6,invalidBoundsUntouched:true,validBoundsStored:true,
+    masklessEstimateRefused:true,nestedEstimateRefused:true,
+    rejectedMaskAdviceUnchanged:true,tentativeMaskAdviceRetained:true,
+    oldModelLabelsRevoked:true,oldModelOriginalKept:true,
+    newCropRequiresReview:true,savedOwnerLabelsIntact:true,
+    staleSavedRefused:true,correctionIntact:true,localSavedIntact:true,
+    savedCropCommitted:true,originalSaved:true,staleDraftRefused:true,
+    otherPreserved:true,pendingRawPreserved:true,
+    newCropSaved:true,otherStillPreserved:true,
+    latePeerGuard:true,noAutoSaved:true
+   },'genuine native IDB crop CAS must protect saved and pending originals');
+   console.log('M1_P88_ACTUAL_BROWSER_CROP_SAVED_AND_DRAFT_CAS',JSON.stringify({
+    browser:browserName,width,...cropCas88,
+    realBrowserIndexedDB:true,syntheticOwner:true,
+    physicalDevice:false,pageErrors:errors.length
+   }));
+   assert.deepEqual(errors,[]);
+
+   // True Crop editor DOM + browser canvas, not the native-app callback stub.
+   // A concurrent stored-row or pending-draft rejection cannot be retried
+   // against the old captured owner/source/IDB lease. Show honest guidance,
+   // disable further saves and allow closing/reopening after a fresh review.
+   await page.addScriptTag({content:cropEngineSrc});
+   await page.addScriptTag({content:cropEditorSrc});
+   const canvasJpeg=await page.evaluate(()=>{
+    const c=document.createElement('canvas');c.width=320;c.height=320;
+    const g=c.getContext('2d');g.fillStyle='#f1f1f1';g.fillRect(0,0,320,320);
+    g.fillStyle='#2f6898';g.fillRect(80,45,160,240);
+    return c.toDataURL('image/jpeg',0.94);
+   });
+   const conflictCodes=[
+    'P88_SAVED_CROP_STORAGE_CHANGED',
+    'P88_CROP_DRAFT_STORAGE_CHANGED',
+    'P88_STALE_CROP_OWNER_OR_SOURCE'
+   ];
+   for(const code of conflictCodes){
+    await page.evaluate(async ({source,code})=>{
+     window.cropTerminalCalls88=0;
+     await window.openPhotoCrop({image:source},{
+      analyze:async()=>null,
+      save:async()=>{window.cropTerminalCalls88++;throw Error(code);}
+     });
+    },{source:canvasJpeg,code});
+    const dlg=page.locator('dialog.photo-crop-editor[open]');
+    await dlg.getByRole('button',{name:'Save crop'}).click();
+    await page.waitForFunction(()=>document.querySelector('dialog.photo-crop-editor[open] [role="status"]')
+     ?.textContent.includes('Close Crop'));
+    const output=await page.evaluate(async()=>{
+     const dlg=document.querySelector('dialog.photo-crop-editor[open]');
+     const buttons=[...dlg.querySelectorAll('button')];
+     const save=buttons.find(x=>x.textContent==='Save crop');
+     const check=buttons.find(x=>x.textContent==='Check recognition');
+     const cancel=buttons.find(x=>x.textContent==='Cancel');
+     const status=dlg.querySelector('[role="status"]')?.textContent||'';
+     // Direct scripted re-entry must be denied even if caller invokes onclick
+     // and bypasses the disabled DOM button.
+     await save.onclick();
+     return {guidance:status,saveDisabled:save.disabled,checkDisabled:check.disabled,
+      cancelEnabled:!cancel.disabled,scriptedRetryBlocked:window.cropTerminalCalls88===1};
+    });
+    assert.match(output.guidance,/Close Crop/);
+    assert.equal(output.saveDisabled,true);
+    assert.equal(output.checkDisabled,true);
+    assert.equal(output.cancelEnabled,true);
+    assert.equal(output.scriptedRetryBlocked,true);
+    if(code==='P88_CROP_DRAFT_STORAGE_CHANGED')assert.match(output.guidance,/original/);
+    console.log('M1_P88_BROWSER_CROP_TERMINAL_CONFLICT',JSON.stringify({
+     browser:browserName,width,code,blocked:true,scriptedRetryBlocked:true,
+     cancelStillAvailable:true,realCanvasJpeg:true,syntheticPhoto:true,
+     physicalDevice:false,pageErrors:errors.length
+    }));
+    await dlg.getByRole('button',{name:'Cancel'}).click();
+    await page.waitForFunction(()=>!document.querySelector('dialog.photo-crop-editor[open]'));
+   }
    assert.deepEqual(errors,[]);
    await page.close();
   }

@@ -391,14 +391,40 @@ function cropHarness88({saved=false,checkPhoto=null,peers=[]}={}){
   message(s){c.messages.push(s);},openPhotoCrop(_,callbacks){c.editor=callbacks;return Promise.resolve();},
   structuredClone,checkPhoto:checkPhoto||(async()=>({colorEstimate:null,signature:[],aspect:1})),
   ClothingDetails:{fillColor:()=>({})},
-  items:[],batch:[],draftStoreRevision88:'null',writeCount:0,written:[],render(){c.renderCount++;},renderCount:0,
+  items:[],batch:[],durableItems:new Map(),durableDraft:{id:'draft',batch:[]},
+  draftStoreRevision88:'null',writeCount:0,written:[],render(){c.renderCount++;},renderCount:0,
   queued:async fn=>{await c.beforeWrite?.();const result=fn();c.writeCount++;return result;},
   db:{name:'closet-current-user-owner-A',transaction(stores,mode){
    assert.equal(mode,'readwrite');
-   const tx={objectStore(store){return {put(value){
-    c.written.push({store,value:structuredClone(value)});
-   }}}};
-   queueMicrotask(()=>tx.oncomplete?.());return tx;
+   const allowed=Array.isArray(stores)?stores:[stores];
+   const tx={aborted:false,error:null,objectStore(store){
+    assert.ok(allowed.includes(store),'unexpected transaction store '+store);
+    return {
+     get(key){
+      const req={result:structuredClone(store==='state'?c.durableDraft:c.durableItems.get(key))};
+      queueMicrotask(()=>{if(!tx.aborted)req.onsuccess?.()});return req;
+     },
+     getAll(){
+      assert.equal(store,'items');
+      const req={result:structuredClone([...c.durableItems.values()])};
+      queueMicrotask(()=>{if(!tx.aborted)req.onsuccess?.()});return req;
+     },
+     put(value){
+      const row=structuredClone(value);
+      c.written.push({store,value:row});
+      queueMicrotask(()=>{
+       if(tx.aborted)return;
+       if(store==='state')c.durableDraft=structuredClone(row);
+       else c.durableItems.set(row.id,structuredClone(row));
+       tx.oncomplete?.();
+      });
+     }
+    };
+   },abort(){
+    if(tx.aborted)return;
+    tx.aborted=true;queueMicrotask(()=>tx.onabort?.());
+   }};
+   return tx;
   }},
   applyLocalChoice(){throw Error('unexpected suggestion')},
   window:{closetAuth:{user:{id:'owner-A'}}}
@@ -417,12 +443,100 @@ function cropHarness88({saved=false,checkPhoto=null,peers=[]}={}){
   // Match the exact object identity of the native saved closet or draft.
   if(saved){c.items=[item,...peers];c.batch=[];}else{c.items=[...peers];c.batch=[item];}
   c.draftStoreRevision88=JSON.stringify(c.batch);
+  c.durableItems=new Map(c.items.map(x=>[x.id,structuredClone(x)]));
+  c.durableDraft={id:'draft',batch:structuredClone(c.batch)};
   return nativeCrop(item);
  };
  return c;
 }
 const sampleSource88=()=>({id:'garment',image:'data:image/jpeg;base64,T1JJR0lOQUw=',category:'Tops',color:'Blue',
   itemType:'T-shirt',name:'Source photo',seasons:[]});
+test('P88 saved wardrobe crop cannot silently replace owner-confirmed subtype/color from model suggestion',async()=>{
+ const c=cropHarness88({saved:true}),item={...sampleSource88(),
+  color:'Blue',category:'Tops',itemType:'T-shirt',userAdjusted:true};
+ c.cropClothingPhoto(item);
+ const model={category:'Dresses',itemType:'Dress',color:'Red',
+  details:{color:'Red',fit:'Loose'},label:'a dress'};
+ await assert.rejects(
+  c.editor.save({image:'data:image/jpeg;base64,TkVXLUNST1A='},model),
+  /P88_SAVED_CROP_MODEL_SUGGESTION_REQUIRES_ADJUST/,
+  'a generic Crop > Use suggestion checkbox cannot silently override owned garment truth');
+ assert.equal(c.written.length,0);
+ assert.equal(c.durableItems.get(item.id).category,'Tops');
+ assert.equal(c.durableItems.get(item.id).itemType,'T-shirt');
+ assert.equal(c.durableItems.get(item.id).color,'Blue');
+ assert.equal(item.image,sampleSource88().image);
+});
+test('P88 re-cropping saved photo-estimated color retains color and its UNCONFIRMED source',async()=>{
+ const raw=sampleSource88().image;
+ const item={...sampleSource88(),color:'Blue',
+  colorSource:'photo-estimate',colorMethod:'garment-mask',
+  category:'Tops',itemType:'T-shirt',userAdjusted:true,
+  originalPhoto:{image:raw}};
+ const c=cropHarness88({saved:true});
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,U0FWRUQtUkVDUk9Q'},null);
+ const persisted=c.durableItems.get(item.id);
+ assert.equal(persisted.image,'data:image/jpeg;base64,U0FWRUQtUkVDUk9Q');
+ assert.equal(persisted.originalPhoto?.image,raw);
+ assert.equal(persisted.color,'Blue',
+  'cropping an already-owned garment must not erase an estimated color');
+ assert.equal(persisted.colorSource,'photo-estimate',
+  'cropping must not silently promote an estimate to owner-confirmed truth');
+ assert.equal(persisted.category,'Tops');
+ assert.equal(persisted.itemType,'T-shirt');
+ assert.equal(item.color,'Blue','the rendered owner closet entry retains color');
+ assert.equal(item.colorSource,'photo-estimate');
+ assert.equal(c.written.length,1);
+});
+test('P88 changing an unsaved draft crop still clears stale pixel color estimates',async()=>{
+ const item={...sampleSource88(),color:'Blue',colorSource:'photo-estimate'};
+ const c=cropHarness88();
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,VU5TQVZFRC1OQVQ='},null);
+ const draft=c.durableDraft.batch[0];
+ assert.equal(draft.color,'','an old crop-based unconfirmed color estimate must be reset');
+ assert.equal(draft.colorSource,undefined);
+ assert.equal(draft.originalPhoto.image,sampleSource88().image);
+ assert.equal(c.durableItems.size,0,'no silent wardrobe save');
+});
+test('P88 saved crop with no suggestion must not silently fill an unknown owner color',async()=>{
+ const c=cropHarness88({saved:true,checkPhoto:async()=>({
+  colorEstimate:{color:'Red',source:'photo-estimate'},signature:[],aspect:1
+ })}),item={...sampleSource88(),color:''};
+ // Reproduce real ClothingDetails.fillColor behavior on a missing color.
+ c.ClothingDetails.fillColor=(value,estimate)=>estimate?.color?
+  {...value,color:estimate.color,colorSource:'photo-estimate'}:value;
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,TkVXLUNST1A='},null);
+ assert.equal(c.written.length,1);
+ assert.equal(c.durableItems.get(item.id).image,'data:image/jpeg;base64,TkVXLUNST1A=');
+ assert.equal(c.durableItems.get(item.id).color,'',
+  'unknown saved color remains unknown until owner edits it in Adjust');
+ assert.equal(c.durableItems.get(item.id).colorSource,undefined);
+});
+test('P88 unsaved crop may still prefill model details without automatic wardrobe admission',async()=>{
+ const c=cropHarness88(),item={...sampleSource88(),
+  category:'Uncategorized',itemType:'Unknown',color:'',
+  requiresOwnershipConfirmation:true};
+ c.applyLocalChoice=(value,choice)=>{
+  value.category=choice.category;value.itemType=choice.itemType;
+ };
+ c.ClothingDetails.fill=(value,choice)=>({...value,
+  color:choice.color,colorSource:'recognition'});
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,TkVXLUNST1A='},{
+  category:'Tops',itemType:'Blouse',color:'Red',details:{color:'Red'},
+  label:'a blouse'
+ });
+ assert.equal(c.written.length,1);
+ assert.equal(c.written[0].store,'state');
+ assert.equal(c.written[0].value.batch[0].category,'Tops');
+ assert.equal(c.written[0].value.batch[0].itemType,'Blouse');
+ assert.equal(c.written[0].value.batch[0].color,'Red');
+ assert.equal(c.written[0].value.batch[0].requiresOwnershipConfirmation,true);
+ assert.equal(c.durableItems.size,0,'unreviewed model guesses must remain pending drafts');
+});
 test('P88 source-bound P70 photo is not crop-editable even through a direct function call',()=>{
  const c=cropHarness88();
  for(const bound of [
@@ -452,7 +566,248 @@ test('P88 unsegmented single-photo crop still works with original owner-edit wor
  assert.equal(item.image,'data:image/jpeg;base64,TkVXUElYRUxT');
  assert.equal(c.messages.length,0);
 });
-test('P88 changed cropped photo clears old exact-JPEG duplicate marker so owner may review new source',async()=>{
+test('P88 malformed crop geometry cannot be persisted into a saved original-photo record',async()=>{
+ const item={...sampleSource88(),originalPhoto:{image:sampleSource88().image}};
+ const c=cropHarness88({saved:true});
+ c.cropClothingPhoto(item);
+ const invalid=[
+  null,
+  {x:0,y:0,width:0,height:1},
+  {x:0,y:0,width:0.02,height:1},
+  {x:0.72,y:0,width:0.4,height:1},
+  {x:-0.01,y:0,width:1,height:1},
+  {x:0,y:0,width:1.01,height:1},
+  {x:0,y:0,width:NaN,height:1},
+  {x:0,y:0,width:Infinity,height:1},
+  {x:'0',y:0,width:1,height:1},
+  {x:0,y:0,width:1,height:1,sourceHashVerified:true},
+  [0,0,1,1],
+  {x:0,y:0,width:1}
+ ];
+ for(const bounds of invalid){
+  await assert.rejects(c.editor.save({
+   image:'data:image/jpeg;base64,TkVXQ09PUkRJTkFURVM=',cropBounds:bounds
+  },null),/P88_CROP_INVALID_BOUNDS/);
+ }
+ assert.equal(c.written.length,0,'invalid geometry must not enter owner IndexedDB');
+ assert.equal(c.durableItems.get(item.id).image,item.image);
+ assert.equal(item.cropBounds,undefined,'saved row must not be modified in memory');
+ assert.equal(item.originalPhoto.image,sampleSource88().image);
+});
+test('P88 normalized finite crop bounds remain valid for a saved garment',async()=>{
+ const item={...sampleSource88(),originalPhoto:{image:sampleSource88().image}};
+ const c=cropHarness88({saved:true});
+ c.cropClothingPhoto(item);
+ const valid={x:0.125,y:0.25,width:0.75,height:0.5};
+ await c.editor.save({
+  image:'data:image/jpeg;base64,VkFMSURDQVNFMjE=',cropBounds:valid
+ },null);
+ assert.equal(c.written.length,1);
+ assert.equal(c.durableItems.get(item.id).cropBounds.x,0.125);
+ assert.equal(c.durableItems.get(item.id).cropBounds.width,0.75);
+ assert.equal(c.durableItems.get(item.id).originalPhoto.image,item.originalPhoto.image);
+});
+test('P88 forged mask-color estimate without any mask must never acquire garment-mask evidence',async()=>{
+ const item={...sampleSource88(),color:'',userAdjusted:false};
+ const c=cropHarness88({checkPhoto:async()=>({
+  colorEstimate:{color:'Green',source:'photo-estimate'},signature:[],aspect:1
+ })});
+ c.ClothingDetails.fillColor=(value,estimate)=>estimate?.color?
+  {...value,color:estimate.color,colorSource:'photo-estimate'}:value;
+ c.cropClothingPhoto(item);
+ await assert.rejects(c.editor.save({
+  image:'data:image/jpeg;base64,Rk9SR0VELU1BU0stQ09MT1I=',
+  maskedColorEstimate:{color:'Red',source:'photo-estimate'}
+ },null),/P88_CROP_MASK_ESTIMATE_WITHOUT_MASK/);
+ assert.equal(c.written.length,0,'forged estimate must not modify the owner draft');
+ assert.equal(c.durableDraft.batch[0].color,'');
+ assert.equal(c.durableDraft.batch[0].colorMethod,undefined);
+});
+test('P88 nested crop color estimate must not contain forged source/owner verification metadata',async()=>{
+ const item={...sampleSource88(),color:''},c=cropHarness88();
+ c.cropClothingPhoto(item);
+ const forbidden=[
+  {color:'Blue',source:'photo-estimate',sourceHashVerified:true},
+  {color:'Blue',source:'photo-estimate',ownerReviewed:true},
+  {color:'Blue',source:'photo-estimate',threeDReady:true},
+  {color:'Blue',source:'user'},
+  {color:'Blue',source:'photo-estimate',secondaryColor:{verified:true}},
+  {color:'Blue',source:'photo-estimate',secondaryColor:'x'.repeat(256)},
+  {color:42,source:'photo-estimate'},
+  ['Blue'],
+  null
+ ];
+ for(const maskedColorEstimate of forbidden){
+  await assert.rejects(c.editor.save({
+   image:'data:image/jpeg;base64,TkVTLVJFSlVDVA==',
+   maskApplied:true,maskedColorEstimate
+  },null),/P88_CROP_INVALID_MASK_COLOR/);
+ }
+ assert.equal(c.written.length,0);
+ assert.equal(item.color,'');
+});
+test('P88 genuine masked crop may retain tentative color without owner confirmation or 3D authority',async()=>{
+ const item={...sampleSource88(),color:''};
+ const c=cropHarness88();
+ c.ClothingDetails.fillColor=(value,estimate)=>estimate?.color?
+  {...value,color:estimate.color,colorSource:'photo-estimate'}:value;
+ c.cropClothingPhoto(item);
+ await c.editor.save({
+  image:'data:image/jpeg;base64,TUFTS0VELUNST1A=',
+  maskApplied:true,
+  maskedColorEstimate:{color:'Blue',source:'photo-estimate',secondaryColor:'White'},
+  cropBounds:{x:0,y:0,width:1,height:1}
+ },null);
+ const after=c.durableDraft.batch[0];
+ assert.equal(after.color,'Blue');
+ assert.equal(after.colorSource,'photo-estimate');
+ assert.equal(after.colorMethod,'garment-mask');
+ assert.equal(after.independentPhysicalItemVerified,undefined);
+ assert.equal(after.threeDReady,undefined);
+ assert.equal(c.durableItems.size,0);
+});
+test('P88 recropping an unsaved recognized garment removes old-model type, color and subtype diagnostics',async()=>{
+ const original=sampleSource88().image;
+ const item={...sampleSource88(),category:'Dresses',itemType:'Casual dress',
+  name:'Red casual dress',color:'Red',colorSource:'recognition',
+  sleeveLength:'Short sleeve',fit:'Regular',pattern:'Floral',
+  indexingLevel:'specific-type',indexedAt:'2026-11-18T21:10:00.000Z',
+  recognitionDiagnostics:{mission1SubtypeSafety:{ownerSubtypeReviewRequired:true},
+   outerwearRecovery:{outerwearReviewSuggested:true}},userAdjusted:false,
+  requiresOwnershipConfirmation:false,originalPhoto:{image:original}};
+ const c=cropHarness88();
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,TkVXUEhPVE9DR0VPTUVUUlk='},null);
+ const draft=c.durableDraft.batch[0];
+ assert.equal(draft.image,'data:image/jpeg;base64,TkVXUEhPVE9DR0VPTUVUUlk=');
+ assert.equal(draft.originalPhoto.image,original);
+ assert.equal(draft.category,'Uncategorized');
+ assert.equal(draft.itemType,'Unknown');
+ assert.equal(draft.name,'');
+ assert.equal(draft.color,'');
+ assert.equal(draft.colorSource,undefined);
+ assert.equal(draft.sleeveLength,'Unknown');
+ assert.equal(draft.fit,'Unknown');
+ assert.equal(draft.pattern,'Unknown');
+ assert.equal(draft.indexingLevel,undefined);
+ assert.equal(draft.indexedAt,undefined);
+ assert.equal(draft.recognitionDiagnostics,undefined);
+ assert.equal(draft.requiresOwnershipConfirmation,true);
+ assert.equal(c.durableItems.size,0,'new crop must stay in pending review');
+});
+test('P88 a second unsaved crop cannot reuse the unchecked suggestion from a first crop',async()=>{
+ const item={...sampleSource88(),userAdjusted:true,
+  category:'Dresses',itemType:'Casual dress',color:'Red',
+  colorSource:'recognition',name:'Red dress',indexedAt:'2026-11-18',
+  recognitionDiagnostics:{reason:'earlier-source-only'}};
+ const c=cropHarness88();
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,U0VDT05ELUNST1A='},null);
+ const draft=c.durableDraft.batch[0];
+ assert.equal(draft.category,'Uncategorized');
+ assert.equal(draft.itemType,'Unknown');
+ assert.equal(draft.color,'');
+ assert.equal(draft.recognitionDiagnostics,undefined);
+ assert.equal(draft.requiresOwnershipConfirmation,true);
+});
+test('P88 new crop suggestion may prefill tentative draft fields but never preserve the older diagnostic or auto-save',async()=>{
+ const item={...sampleSource88(),category:'Dresses',itemType:'Casual dress',
+  color:'Red',colorSource:'recognition',fit:'Fitted',pattern:'Floral',
+  name:'Red dress',recognitionDiagnostics:{reason:'old pixels'},userAdjusted:false};
+ const c=cropHarness88();
+ c.applyLocalChoice=(value,choice,overwrite)=>{
+  assert.equal(overwrite,true);
+  value.category=choice.category;value.itemType=choice.itemType;
+  value.name=choice.label;
+ };
+ c.ClothingDetails.fill=(value,choice,details,overwrite)=>{
+  assert.equal(overwrite,true);
+  return {...value,color:details.color,colorSource:'recognition'};
+ };
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,TkVXQkxPVVNFSU1BR0U='},{
+  category:'Tops',itemType:'Blouse',label:'Blue blouse',details:{color:'Blue'}
+ });
+ const draft=c.durableDraft.batch[0];
+ assert.equal(draft.category,'Tops');
+ assert.equal(draft.itemType,'Blouse');
+ assert.equal(draft.color,'Blue');
+ assert.equal(draft.pattern,'Unknown');
+ assert.equal(draft.fit,'Unknown');
+ assert.equal(draft.recognitionDiagnostics,undefined);
+ assert.equal(draft.requiresOwnershipConfirmation,true);
+ assert.equal(c.durableItems.size,0);
+});
+test('P88 saved recrop retains the owner classification while dropping stale photo-specific model diagnostics',async()=>{
+ const item={...sampleSource88(),userAdjusted:true,
+  recognitionDiagnostics:{reason:'old model',mission1SubtypeSafety:{ownerSubtypeReviewRequired:true}},
+  originalPhoto:{image:sampleSource88().image}};
+ const c=cropHarness88({saved:true});
+ c.cropClothingPhoto(item);
+ await c.editor.save({image:'data:image/jpeg;base64,TkVXU0FWRURDQVNFXzE='},null);
+ const row=c.durableItems.get(item.id);
+ assert.equal(row.category,'Tops');
+ assert.equal(row.itemType,'T-shirt');
+ assert.equal(row.color,'Blue');
+ assert.equal(row.originalPhoto.image,sampleSource88().image);
+ assert.equal(row.recognitionDiagnostics,undefined);
+ assert.equal(item.recognitionDiagnostics,undefined,'native current card must not display old model scores');
+});
+test('P88 real crop editor first crop preserves complete original JPEG while saving derived pixels',async()=>{
+ const c=cropHarness88(),item=sampleSource88(),raw=item.image;
+ c.cropClothingPhoto(item);
+ await c.editor.save({
+  image:'data:image/jpeg;base64,TkVXLURFUklWRUQtQ1JPUA==',
+  originalPhoto:{image:raw},cropBounds:{x:0,y:0,width:1,height:1}
+ },null);
+ assert.equal(c.written.length,1);
+ assert.equal(item.image,'data:image/jpeg;base64,TkVXLURFUklWRUQtQ1JPUA==');
+ assert.equal(item.originalPhoto?.image,raw,
+  'normal crop editor must retain the captured original JPEG');
+ assert.equal(c.durableDraft.batch[0].originalPhoto?.image,raw);
+ assert.equal(c.durableDraft.batch[0].image,item.image);
+});
+test('P88 crop callback cannot mint source hash, independent physical identity or 3D verification',async()=>{
+ const c=cropHarness88({saved:true}),item={...sampleSource88(),
+  originalPhoto:{image:sampleSource88().image}};
+ c.cropClothingPhoto(item);
+ const forged=[
+  {sourceSHA256:'f'.repeat(64)},
+  {sourceHashVerified:true},
+  {ownerReviewed:true},
+  {sourcePhotoOriginal:true},
+  {singleGarmentVerified:true},
+  {independentPhysicalItemVerified:true},
+  {threeDReady:true},
+  {originalPhoto:{image:item.originalPhoto.image,sha256:'f'.repeat(64),verified:true}},
+  {originalPhoto:{image:'data:image/jpeg;base64,Rk9SR0VELVJBVw=='}}
+ ];
+ for(const extra of forged){
+  await assert.rejects(c.editor.save({
+   image:'data:image/jpeg;base64,TkVXLUNST1A=',...extra
+  },null),/P88_CROP_(?:UNEXPECTED_FIELD|ORIGINAL_SOURCE_CHANGED)/);
+ }
+ assert.equal(c.written.length,0);
+ assert.equal(c.durableItems.get(item.id).sourceHashVerified,undefined);
+ assert.equal(item.image,sampleSource88().image);
+});
+test('P88 recropping a source with existing trusted original SHA leaves SHA and verification untouched',async()=>{
+ const raw=sampleSource88().image;
+ const item={...sampleSource88(),originalPhoto:{
+  image:raw,sha256:'a'.repeat(64),verified:true
+ }};
+ const c=cropHarness88({saved:true});c.cropClothingPhoto(item);
+ await c.editor.save({
+  image:'data:image/jpeg;base64,U0VDT05ELUNST1A=',
+  originalPhoto:{image:raw},
+  cropBounds:{x:0.1,y:0.1,width:0.8,height:0.8}
+ },null);
+ assert.equal(c.durableItems.get(item.id).originalPhoto.sha256,'a'.repeat(64));
+ assert.equal(c.durableItems.get(item.id).originalPhoto.verified,true);
+ assert.equal(item.originalPhoto.sha256,'a'.repeat(64));
+ assert.equal(item.image,'data:image/jpeg;base64,U0VDT05ELUNST1A=');
+});
+test('P88 recropped preview of SAME saved original still requires separate physical garment review',async()=>{
  const original=sampleSource88();
  const peer={id:'saved-identical',image:original.image};
  const item={...sampleSource88(),exactSavedPhotoMatch88:{savedItemId:peer.id},
@@ -460,16 +815,19 @@ test('P88 changed cropped photo clears old exact-JPEG duplicate marker so owner 
  const c=cropHarness88({peers:[peer]});
  c.cropClothingPhoto(item);
  await c.editor.save({image:'data:image/jpeg;base64,TkVXUElYRUxT'},null);
+ const crop=c.written[0].value.batch[0];
  assert.equal(c.written.length,1);
  assert.equal(c.written[0].store,'state');
- assert.equal(c.written[0].value.batch[0].exactSavedPhotoMatch88,undefined);
- assert.equal(c.written[0].value.batch[0].ownerDuplicateReview88,undefined);
- assert.equal(c.written[0].value.batch[0].possibleDuplicate,false);
- assert.equal(item.exactSavedPhotoMatch88,undefined,'in-memory old duplicate proof must also be removed');
+ assert.equal(crop.ownerDuplicateReview88,undefined);
+ assert.equal(crop.originalPhoto?.image,original.image);
+ assert.equal(crop.exactSavedPhotoMatch88.savedItemId,peer.id);
+ assert.equal(crop.possibleDuplicate,true);
+ assert.equal(crop.requiresOwnershipConfirmation,true);
+ assert.match(crop.localStatus,/shares a complete original with a saved closet item/);
  assert.equal(item.image,'data:image/jpeg;base64,TkVXUElYRUxT');
- const lease=c.reviewedSaveLease88(item);
- assert.equal(c.reviewedDistinctPhotoReceiptValid88({...item},lease),true,
-  'a genuinely new cropped source is not permanently stuck on the stale match');
+ assert.equal(item.exactSavedPhotoMatch88.savedItemId,peer.id);
+ assert.equal(c.reviewedDistinctPhotoReceiptValid88({...item},c.reviewedSaveLease88(item)),false,
+  'recropping cannot erase the need to distinguish physical garments sharing an original JPEG');
  assert.equal(c.writeCount,1);
 });
 test('P88 crop changing a saved duplicate-attested image revokes stale identical-byte attestation',async()=>{
@@ -508,7 +866,7 @@ test('P88 new saved peer matching the crop during cloud wait cannot enter closet
  const item=sampleSource88(),newPhoto='data:image/jpeg;base64,TkVXUElYRUxT';
  const c=cropHarness88();
  c.cropClothingPhoto(item);
- c.beforeWrite=async()=>{c.items.push({id:'saved-while-cropping',image:newPhoto});};
+ c.beforeWrite=async()=>{const peer={id:'saved-while-cropping',image:newPhoto};c.items.push(peer);c.durableItems.set(peer.id,structuredClone(peer));};
  await c.editor.save({image:newPhoto},null);
  const updated=c.written[0].value.batch[0];
  assert.equal(updated.exactSavedPhotoMatch88.savedItemId,'saved-while-cropping');
@@ -522,7 +880,7 @@ test('P88 crop editor cannot inject fabricated duplicate-owner attestation or sa
   {exactSavedPhotoMatch88:{savedItemId:'arbitrary'}}
  ]){
   await assert.rejects(c.editor.save({image:'data:image/jpeg;base64,TkVX',...field},null),
-   /P88_CROP_CANNOT_REBIND_ID_OR_MASK/);
+   /P88_CROP_UNEXPECTED_FIELD/);
  }
  assert.equal(c.writeCount,0);
  assert.equal(item.image,sampleSource88().image);
@@ -602,7 +960,7 @@ test('P88 Crop rejects forged target ID and extra physical mask metadata',async(
   {image:'data:image/jpeg;base64,TkVXUElYRUxT',reconciliation70Status:'separate_confirmed'},
   {image:'data:image/jpeg;base64,TkVXUElYRUxT',ownerSourceReview88:{ownerReviewed:true}}
  ]){
-  await assert.rejects(c.editor.save(forged,null),/P88_CROP_CANNOT_REBIND_ID_OR_MASK/);
+  await assert.rejects(c.editor.save(forged,null),/P88_CROP_UNEXPECTED_FIELD/);
  }
  assert.equal(c.written.length,0);
  assert.equal(item.image,sampleSource88().image);
@@ -1209,6 +1567,8 @@ function sourceSaveHarness88(){
     abort(){aborted=true;queueMicrotask(()=>tx.onabort?.());},
     objectStore(name){
      if(name==='items')return {
+      getAll(){const req={result:[...rows.values()].map(x=>structuredClone(x))};
+       queueMicrotask(()=>req.onsuccess?.());return req;},
       add(value){
        if(rows.has(value.id))throw Error('ConstraintError: saved item ID exists');
        writes.push({name,method:'add',value:structuredClone(value)});
@@ -1833,9 +2193,9 @@ function exactDuplicateOwnerSaveHarness88(){
  const records=[],user={id:'owner-A'};
  const ownerDb={name:'closet-current-user-owner-A',transaction(){
   const tx={objectStore(store){
-   return {get(key){assert.equal(key,'draft');const req={result:{id:'draft',batch:[structuredClone(current)]}};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){records.push({store,value:structuredClone(value)});},put(value){records.push({store,value:structuredClone(value)});}};
+   return {getAll(){assert.equal(store,'items');const req={result:[structuredClone(existing)]};queueMicrotask(()=>req.onsuccess?.());return req;},get(key){assert.equal(key,'draft');const req={result:{id:'draft',batch:[structuredClone(current)]}};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){records.push({store,value:structuredClone(value)});},put(value){records.push({store,value:structuredClone(value)});if(store==='state')queueMicrotask(()=>tx.oncomplete?.());}};
   }};
-  queueMicrotask(()=>queueMicrotask(()=>tx.oncomplete?.()));return tx;
+  return tx;
  }};
  const photo='data:image/jpeg;base64,UEhPVE8=',existing={id:'already-owned',image:photo,category:'Tops'},
   current={id:'new-capture',image:photo,category:'Tops',itemType:'T-shirt',color:'Blue',
@@ -1938,9 +2298,8 @@ test('P88 ordinary review save holds exact owner, image and IDB after cloud pref
   const written={};
   const database={name:'closet-current-user-owner-A',transaction(){
    const tx={objectStore(store){
-    return {get(key){assert.equal(key,'draft');const req={result:{id:'draft',batch:[structuredClone(item)]}};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){writeCount++;written[store]=structuredClone(value);},put(value){writeCount++;written[store]=structuredClone(value);}};
+    return {getAll(){assert.equal(store,'items');const req={result:[]};queueMicrotask(()=>req.onsuccess?.());return req;},get(key){assert.equal(key,'draft');const req={result:{id:'draft',batch:[structuredClone(item)]}};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){writeCount++;written[store]=structuredClone(value);},put(value){writeCount++;written[store]=structuredClone(value);if(store==='state')queueMicrotask(()=>tx.oncomplete?.());}};
    }};
-   queueMicrotask(()=>queueMicrotask(()=>tx.oncomplete?.()));
    return tx;
   }};
   const user={id:'owner-A'};
@@ -3269,6 +3628,8 @@ test('P88 ordinary reviewed draft ID collision preserves existing closet row and
   let aborted=false;
   const tx={oncomplete:null,onabort:null,onerror:null,abort(){aborted=true;queueMicrotask(()=>tx.onabort?.());},objectStore(name){
    if(name==='items')return {
+    getAll(){const req={result:[...savedRows.values()].map(x=>structuredClone(x))};
+     queueMicrotask(()=>req.onsuccess?.());return req;},
     add(value){operations.push('items.add');
      if(savedRows.has(value.id))throw Error('ConstraintError: key already exists');
      savedRows.set(value.id,structuredClone(value));},
@@ -3279,11 +3640,10 @@ test('P88 ordinary reviewed draft ID collision preserves existing closet row and
      const req={result:structuredClone(savedDraft)};
      queueMicrotask(()=>req.onsuccess?.());
      return req;},
-    put(value){operations.push('state.put');savedDraft=structuredClone(value);}
+    put(value){operations.push('state.put');savedDraft=structuredClone(value);queueMicrotask(()=>{if(!aborted)tx.oncomplete?.();});}
    };
    throw Error('Unexpected store');
   }};
-  queueMicrotask(()=>queueMicrotask(()=>{if(!aborted)tx.oncomplete?.();}));
   return tx;
  }};
  const c={window:{closetAuth:{user:owner}},db,items:[saved],batch:[source],
@@ -3308,13 +3668,13 @@ test('P88 reviewed original cannot erase another tab new private draft during sa
   assert.deepEqual(Array.from(stores),['items','state']);
   let aborted=false;
   const tx={objectStore(name){
-   if(name==='items')return {add(v){writes.push(v);savedRows.set(v.id,v);}};
+   if(name==='items')return {getAll(){const req={result:[...savedRows.values()].map(x=>structuredClone(x))};queueMicrotask(()=>req.onsuccess?.());return req;},add(v){writes.push(v);savedRows.set(v.id,v);}};
    if(name==='state')return {
     get(key){assert.equal(key,'draft');
      const req={result:structuredClone(remote)};
-     queueMicrotask(()=>{req.onsuccess?.();if(!aborted)queueMicrotask(()=>tx.oncomplete?.());});
+     queueMicrotask(()=>req.onsuccess?.());
      return req;},
-    put(v){remote=structuredClone(v);}
+    put(v){remote=structuredClone(v);queueMicrotask(()=>{if(!aborted)tx.oncomplete?.();});}
    };
   },abort(){aborted=true;queueMicrotask(()=>tx.onabort?.());}};
   return tx;
@@ -3341,13 +3701,13 @@ test('P88 ordinary fresh-ID reviewed save inserts rather than overwrites a close
  let savedDraft={id:'draft',batch:[structuredClone(source)]};
  const db={name:'closet-current-user-owner-A',transaction(){
   const tx={oncomplete:null,onabort:null,onerror:null,objectStore(name){
-   return {add(value){operations.push(name+'.add:'+value.id);},
+   return {getAll(){assert.equal(name,'items');const req={result:[]};queueMicrotask(()=>req.onsuccess?.());return req;},add(value){operations.push(name+'.add:'+value.id);},
     get(id){assert.equal(id,'draft');const req={result:structuredClone(savedDraft)};
      queueMicrotask(()=>req.onsuccess?.());return req;},
     put(value){operations.push(name+'.put:'+value.id);
-     if(name==='state')savedDraft=structuredClone(value);}};
+     if(name==='state'){savedDraft=structuredClone(value);queueMicrotask(()=>tx.oncomplete?.());}}};
   }};
-  queueMicrotask(()=>queueMicrotask(()=>tx.oncomplete?.()));return tx;
+  return tx;
  }};
  const c={window:{closetAuth:{user:owner}},db,items:[],batch:[source],
   structuredClone,draftStoreRevision88:JSON.stringify(savedDraft.batch),queued:async fn=>fn()};
@@ -3355,4 +3715,31 @@ test('P88 ordinary fresh-ID reviewed save inserts rather than overwrites a close
  await c.savePiece({...source},[],c.reviewedSaveLease88(source));
  assert.deepEqual(operations,['items.add:new-id','state.put:draft'],
   'new item ID must be insert-only; the captured draft is cleared atomically');
+});
+
+
+test('P88 saved crop must not overwrite second-tab correction of the durable wardrobe row',async()=>{
+ const c=cropHarness88({saved:true}),item=sampleSource88();
+ c.cropClothingPhoto(item);
+ c.durableItems.set(item.id,{...structuredClone(item),color:'Green',itemType:'Blouse'});
+ await assert.rejects(
+  c.editor.save({image:'data:image/jpeg;base64,TkVXLVNBVkVELUNST1A='},null),
+  /P88_SAVED_CROP_STORAGE_CHANGED/);
+ assert.equal(c.written.length,0);
+ assert.equal(c.durableItems.get(item.id).color,'Green');
+ assert.equal(item.image,sampleSource88().image);
+ assert.equal(c.renderCount,0);
+});
+test('P88 draft crop must not erase another tab new original in the same durable draft store',async()=>{
+ const c=cropHarness88(),item=sampleSource88();
+ c.cropClothingPhoto(item);
+ const additional={id:'unseen-other-tab-photo',image:'data:image/jpeg;base64,T1RIRVItT1JJR0lOQUw='};
+ c.durableDraft={id:'draft',batch:[structuredClone(item),additional]};
+ await assert.rejects(
+  c.editor.save({image:'data:image/jpeg;base64,TkVXLURJQUxPRw=='},null),
+  /P88_CROP_DRAFT_STORAGE_CHANGED/);
+ assert.equal(c.written.length,0);
+ assert.deepEqual(c.durableDraft.batch.map(x=>x.id),[item.id,additional.id]);
+ assert.equal(item.image,sampleSource88().image);
+ assert.equal(c.renderCount,0);
 });

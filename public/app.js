@@ -94,6 +94,11 @@ function readDraft(){
   r.onerror=()=>reject(r.error);
  });
 }
+// A reviewed draft was compared against this tab's closet at editor-open time.
+// Another tab can commit the same original or physical source/mask before Save.
+// Recheck the durable owner's items INSIDE the atomic items+draft transaction.
+// Owner attestation for identical photos authorizes only the exact peer IDs
+// seen at review time; it never gives a new unseen peer automatic permission.
 // P88: ordinary one-photo review must not save into a replacement account
 // while cloud.beforeWrite waits. Freeze source bytes, draft identity and IDB.
 function savePiece(value,nextBatch,lease){
@@ -136,10 +141,22 @@ function savePiece(value,nextBatch,lease){
        JSON.stringify(batch)!==liveBatchRevision||
        !reviewedDistinctPhotoReceiptValid88(value,lease))
        throw Error('P88_DRAFT_STORAGE_CHANGED');
-      // This remains CREATE-only; an existing item ID collision aborts both
-      // stores, including removal of the unsaved original.
-      itemStore.add(value);
-      stateStore.put({id:'draft',batch:structuredClone(liveRemaining)});
+      // Another tab may have inserted an identical JPEG while the owner
+      // reviewed this draft. getAll and add run under the SAME IDB write lock.
+      const savedRead=itemStore.getAll();
+      savedRead.onsuccess=()=>{
+       try{
+        if(!reviewedSaveLeaseLive88(lease)||
+         draftStoreRevision88!==expected||
+         JSON.stringify(batch)!==liveBatchRevision||
+         !reviewedDistinctPhotoReceiptValid88(value,lease)||
+         !durableReviewedNewItemPeers88(value,lease,savedRead.result))
+         throw Error('P88_DURABLE_REVIEWED_DUPLICATE_CHANGED');
+        itemStore.add(value); // CREATE only; no colliding saved ID overwrite
+        stateStore.put({id:'draft',batch:structuredClone(liveRemaining)});
+       }catch(e){reason=e;try{tx.abort();}catch{reject(reason);}}
+      };
+      savedRead.onerror=()=>{reason=savedRead.error||Error('P88_DURABLE_PEER_READ_FAIL');try{tx.abort();}catch{reject(reason);}};
      }catch(e){reason=e;try{tx.abort();}catch{reject(reason);}}
     };
     read.onerror=()=>{reason=read.error||Error('P88_DRAFT_STORAGE_READ_FAIL');};
@@ -152,6 +169,34 @@ function savePiece(value,nextBatch,lease){
    }catch(e){reject(e);}
   });
  });
+}
+function durableReviewedNewItemPeers88(value,lease,rows){
+ if(!Array.isArray(rows))return false; // P70 mask checks run separately in source-bound saves
+ if(!Array.isArray(lease?.exactPhotoPeers88))return true; // P70 mask identity above
+ const expected=lease.exactPhotoPeers88;
+ // Same full-size original may yield several *different* crops. An owner
+ // must review that relationship even if display JPEGs are unequal.
+ const original=value.originalPhoto?.image||value.image;
+ const actual=rows.filter(x=>x&&x.id!==value.id&&(
+  (typeof value.image==='string'&&!!value.image&&x.image===value.image)||
+  (typeof original==='string'&&!!original&&
+   (x.originalPhoto?.image||x.image)===original)));
+ return actual.length===expected.length&&actual.every(peer=>
+  expected.some(old=>old.id===peer.id&&old.image===peer.image&&
+   old.original===peer.originalPhoto?.image));
+}
+// A cross-tab conflict is not a generic retryable save error. The original
+// remains pending and the old review decision must be reopened with a fresh
+// private wardrobe snapshot, never silently copied onto another item.
+function ownerReviewedSaveConflict88(error){
+ const code=String(error?.message||'');
+ if(code==='P88_DURABLE_REVIEWED_DUPLICATE_CHANGED')
+  return 'Another saved garment now uses this same photo or the same complete original. Your new photo is still unsaved. Close Adjust, refresh your closet, and compare the actual garments before saving.';
+ if(code==='P88_DURABLE_PHYSICAL_UNIT_ALREADY_SAVED')
+  return 'Another saved garment already uses this source and physical garment mask. Your new photo is still unsaved. Close Adjust, refresh your closet, and review the garment or shoe-pair grouping before saving.';
+ if(code==='P88_DRAFT_STORAGE_CHANGED'||code==='P88_SOURCE_DRAFT_STORAGE_CHANGED')
+  return 'Another tab changed your unsaved photos. This save was refused to protect the originals. Close Adjust, refresh your closet, and review the pending photos before saving.';
+ return null;
 }
 // Saved-item edits must be scoped to the exact signed owner and private IDB,
 // including AFTER the asynchronous cloud.beforeWrite queue. A model or
@@ -226,7 +271,14 @@ function node(tag,text,className){const n=document.createElement(tag);if(text)n.
 // An exact JPEG match is neither proof of one physical item nor proof of two.
 // Freeze all saved same-image peers for explicit owner confirmation.
 function reviewedExactPhotoPeers88(item){
- return items.filter(x=>x&&x!==item&&x.id!==item?.id&&x.image===item?.image);
+ // The raw photo is the stable identity when the reviewed preview was
+ // independently cropped. Neither shared bytes nor a model mask proves one
+ // physical item; the owner must compare their actual garments.
+ const original=item?.originalPhoto?.image||item?.image;
+ return items.filter(x=>x&&x!==item&&x.id!==item?.id&&(
+  (typeof item?.image==='string'&&!!item.image&&x.image===item.image)||
+  (typeof original==='string'&&!!original&&
+   (x.originalPhoto?.image||x.image)===original)));
 }
 function reviewedDistinctPhotoReceipt88(lease){
  return {schema:'p88-distinct-physical-owner-attestation/v1',
@@ -259,7 +311,8 @@ function reviewedSaveLease88(item){
   duplicateReviewRevision88:JSON.stringify(item?.ownerDuplicateReview88??null),
   // Full private saved-row revision: no second-tab correction may be lost.
   savedRowRevision88:batch.includes(item)?null:JSON.stringify(item),
-  exactPhotoPeers88:reviewedExactPhotoPeers88(item).map(x=>({item:x,id:x.id,image:x.image})),
+  exactPhotoPeers88:reviewedExactPhotoPeers88(item).map(x=>({
+   item:x,id:x.id,image:x.image,original:x.originalPhoto?.image})),
   evidenceRevision:ordinarySourceEvidence88(item)};
 }
 // A manual photo review permits category/type/color edits; it is not
@@ -299,7 +352,8 @@ function reviewedSaveLeaseLive88(lease){
    JSON.stringify(item.ownerDuplicateReview88??null)===lease.duplicateReviewRevision88&&
    reviewedExactPhotoPeers88(item).length===lease.exactPhotoPeers88.length&&
    reviewedExactPhotoPeers88(item).every((x,i)=>x===lease.exactPhotoPeers88[i].item&&
-    x.id===lease.exactPhotoPeers88[i].id&&x.image===lease.exactPhotoPeers88[i].image));
+    x.id===lease.exactPhotoPeers88[i].id&&x.image===lease.exactPhotoPeers88[i].image&&
+    x.originalPhoto?.image===lease.exactPhotoPeers88[i].original));
  }catch{return false;}
 }
 
@@ -503,23 +557,114 @@ function cropClothingPhoto(item){
    // the crop dialog remains open. Never recycle that mask with new pixels.
    if(hasSourceBoundMask88(item))throw Error('P88_SOURCE_MASK_CROP_FORBIDDEN');
    if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
-   const value={...structuredClone(item),...photo,userAdjusted:true,localAnalyzed:true,scanFailed:false,saveFailed:false,possibleDuplicate:false};
-   if(value.id!==item.id||hasSourceBoundMask88(value)||value.ownerSourceReview88||
-    Object.hasOwn(photo,'ownerDuplicateReview88')||
-    Object.hasOwn(photo,'exactSavedPhotoMatch88'))
+   // An existing wardrobe entry already has owner-approved details. A Crop
+   // checkbox asking to "Use suggested details" is not a new owner category,
+   // fine subtype, or color review; never let the model silently rewrite it.
+   if(!lease.wasDraft&&choice)
+    throw Error('P88_SAVED_CROP_MODEL_SUGGESTION_REQUIRES_ADJUST');
+   // The photo editor emits ONLY derivative JPEG/PNG pixels, a rectangle
+   // and optional mask-derived color advice. Never spread an untrusted callback
+   // object over a private wardrobe row: source SHA, owner review, garment
+   // identity and 3D permissions are not crop metadata.
+   const cropKeys88=['image','originalPhoto','cropBounds','maskApplied','maskedColorEstimate'];
+   if(!photo||typeof photo!=='object'||Array.isArray(photo)||
+    Object.keys(photo).some(key=>!cropKeys88.includes(key))||
+    typeof photo.image!=='string'||!/^data:image\/(?:jpeg|png);base64,[A-Za-z0-9+/]+={0,2}$/.test(photo.image)||
+    photo.image.length>12000000)
+    throw Error('P88_CROP_UNEXPECTED_FIELD');
+   // On the FIRST crop the native editor sends the captured full-frame JPEG
+   // as originalPhoto. The old lease.original is undefined in that case:
+   // comparing only to it rejected genuine first crops. Bind to the exact
+   // captured source instead, without inheriting any caller-supplied hashes.
+   const cropSource88=lease.original||lease.image;
+   if(photo.originalPhoto!==undefined&&(
+    !photo.originalPhoto||typeof photo.originalPhoto!=='object'||
+    Array.isArray(photo.originalPhoto)||
+    Object.keys(photo.originalPhoto).some(key=>key!=='image')||
+    photo.originalPhoto.image!==cropSource88))
+    throw Error('P88_CROP_ORIGINAL_SOURCE_CHANGED');
+   if(photo.maskApplied!==undefined&&photo.maskApplied!==true)
+    throw Error('P88_CROP_UNEXPECTED_FIELD');
+   // A masked palette is only a tentative pixel estimate, not an owner
+   // confirmation, source hash, or independently verified mask receipt.
+   // Never attach "garment-mask" provenance to an UNMASKED crop. Only the
+   // native editor's narrow color estimate schema may reach the draft.
+   if(photo.maskedColorEstimate!==undefined){
+    if(photo.maskApplied!==true)throw Error('P88_CROP_MASK_ESTIMATE_WITHOUT_MASK');
+    const est=photo.maskedColorEstimate,keys=['color','source','secondaryColor'];
+    if(!est||typeof est!=='object'||Array.isArray(est)||
+     Object.keys(est).some(k=>!keys.includes(k))||
+     typeof est.color!=='string'||!est.color.trim()||
+     est.color.length>40||est.source!=='photo-estimate'||
+     (est.secondaryColor!==undefined&&est.secondaryColor!==null&&
+      (typeof est.secondaryColor!=='string'||est.secondaryColor.length>40)))
+     throw Error('P88_CROP_INVALID_MASK_COLOR');
+   }
+   // The crop rectangle is untrusted callback metadata. An invalid or
+   // overflowing normalized rectangle must never poison an owner-private
+   // wardrobe row even when the derived JPEG and original JPEG are valid.
+   // The native editor emits exactly x/y/width/height through bounds()/drag().
+   if(photo.cropBounds!==undefined){
+    const rect=photo.cropBounds,fields=['x','y','width','height'];
+    if(!rect||typeof rect!=='object'||Array.isArray(rect)||
+     Object.keys(rect).length!==4||
+     Object.keys(rect).some(k=>!fields.includes(k))||
+     !fields.every(k=>typeof rect[k]==='number'&&Number.isFinite(rect[k]))||
+     rect.x<0||rect.y<0||rect.width<0.04-1e-9||
+     rect.height<0.04-1e-9||rect.width>1+1e-9||rect.height>1+1e-9||
+     rect.x+rect.width>1+1e-9||rect.y+rect.height>1+1e-9)
+     throw Error('P88_CROP_INVALID_BOUNDS');
+   }
+   const value={...structuredClone(item),image:photo.image,
+    originalPhoto:structuredClone(item.originalPhoto||{image:cropSource88}),
+    cropBounds:photo.cropBounds!==undefined?structuredClone(photo.cropBounds):item.cropBounds,
+    userAdjusted:true,localAnalyzed:true,scanFailed:false,saveFailed:false,
+    possibleDuplicate:false};
+   if(value.id!==item.id||hasSourceBoundMask88(value)||value.ownerSourceReview88)
     throw Error('P88_CROP_CANNOT_REBIND_ID_OR_MASK');
    delete value.recognitionMemory;delete value.confirmedDetails;delete value.correctionReceipt72;delete value.learningReviewedWeek;delete value.weeklySuggestion;delete value.recognitionPhoto;delete value.colorMethod;
-   if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}
+   // A classifier's category/subtype/color and its confidence diagnostics
+   // belong to the PREVIOUS pixels, not to the owner's newly selected crop.
+   // An unsaved draft is NOT an owner-approved wardrobe row even when a prior
+   // crop had set userAdjusted=true as an edit marker. Reset all previous
+   // inferred core fields BEFORE optional fresh crop analysis. The owner must
+   // explicitly approve the new photo in Adjust before private admission.
+   // The already-saved closet row is different: retain its owner-reviewed
+   // category/type/color, but drop stale photo-specific model diagnostics.
+   delete value.recognitionDiagnostics;delete value.indexingLevel;
+   if(lease.wasDraft){
+    value.category='Uncategorized';value.itemType='Unknown';value.name='';
+    value.sleeveLength='Unknown';value.pattern='Unknown';value.fit='Unknown';
+    value.color='';delete value.colorSource;
+    value.requiresOwnershipConfirmation=true;
+   }
    const quality=await checkPhoto(photo.image);
    if(hasSourceBoundMask88(item))throw Error('P88_STALE_MASK_AFTER_PHOTO_CHECK');
    if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
-   Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));
-   if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')value.colorMethod='garment-mask';
+   // Missing values on a SAVED item are also owner data, not permission
+   // for a post-crop pixel estimate to create a new confirmed garment color.
+   if(lease.wasDraft){
+    Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));
+    if(photo.maskApplied===true&&photo.maskedColorEstimate&&
+     value.colorSource==='photo-estimate')value.colorMethod='garment-mask';
+   }
    delete value.maskedColorEstimate;delete value.maskApplied;
    value.visualSignature=quality.signature;value.visualAspect=quality.aspect;
    delete value.localChoices;delete value.indexedAt;
-   if(choice){applyLocalChoice(value,choice,true);Object.assign(value,ClothingDetails.fill(value,choice,choice.details,true));value.indexedAt=new Date().toISOString();}
-   value.localStatus=choice?'Crop checked. Suggested details applied.':'Crop saved. Check recognition or adjust the clothing details.';
+   if(lease.wasDraft&&choice){
+    applyLocalChoice(value,choice,true);
+    Object.assign(value,ClothingDetails.fill(value,choice,choice.details,true));
+    value.indexedAt=new Date().toISOString();
+   }
+   value.localStatus=!lease.wasDraft?
+    'Crop saved. Existing category, type and color kept. Use Adjust details for any changes.':
+    choice?'Crop checked. Suggested details applied. Confirm them in Adjust before adding.':
+    'Crop saved. Check recognition or adjust the clothing details.';
+   // Recognition-derived suggestions and color estimates must never mint
+   // verified original/source/owner/physical/3D permission during a crop.
+   if(ordinarySourceEvidence88(value)!==lease.evidenceRevision||
+    value.originalPhoto?.image!==cropSource88)
+    throw Error('P88_CROP_SOURCE_EVIDENCE_CHANGED');
    if(hasSourceBoundMask88(item))throw Error('P88_MASK_REVISION_CHANGED_BEFORE_WRITE');
    if(!cropLive88())throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
    // Recheck INSIDE the shared cloud-beforeWrite queue. Commit only into
@@ -527,41 +672,98 @@ function cropClothingPhoto(item){
    // wait must be kept, not wiped by an early batch snapshot.
    await queued(()=>{
     if(hasSourceBoundMask88(item)||hasSourceBoundMask88(value)||
-     !cropLive88()||value.id!==item.id||value.ownerSourceReview88)
+     !cropLive88()||value.id!==item.id||value.ownerSourceReview88||
+     value.originalPhoto?.image!==cropSource88||
+     ordinarySourceEvidence88(value)!==lease.evidenceRevision)
      throw Error('P88_STALE_CROP_OWNER_OR_SOURCE');
-    // Changing photo bytes invalidates old exact-JPEG duplicate consent.
-    // Another photo may have been saved during cloud.beforeWrite, so inspect
-    // saved peers INSIDE the exact-owner queued transaction boundary.
+    // A new crop invalidates previously reviewed duplicate-photo permission.
     if(value.image!==lease.image){
      delete value.ownerDuplicateReview88;
      delete value.exactSavedPhotoMatch88;
-     if(lease.wasDraft){
-      const peer=items.find(x=>x!==item&&x.id!==item.id&&x.image===value.image);
-      if(peer){
-       value.exactSavedPhotoMatch88={savedItemId:peer.id};
-       value.possibleDuplicate=true;
-       value.requiresOwnershipConfirmation=true;
-       value.localStatus='This crop exactly matches another saved closet photo. Keep it unsaved and compare the physical garments in Adjust before adding.';
-      }
-     }
     }
+    const liveBatchRevision=JSON.stringify(batch);
+    const expectedDraftRevision=draftStoreRevision88;
+    if(lease.wasDraft&&typeof expectedDraftRevision!=='string')
+     throw Error('P88_CROP_DRAFT_STORAGE_NOT_LOADED');
     return new Promise((resolve,reject)=>{
-     const tx=lease.ownerDb.transaction(lease.wasDraft?'state':'items','readwrite');
-     const updatedDraft88=lease.wasDraft?structuredClone(batch.map(x=>x===item?value:x)):null;
-     if(lease.wasDraft)tx.objectStore('state').put({id:'draft',batch:updatedDraft88});
-     else tx.objectStore('items').put(value);
-     tx.oncomplete=()=>{
-      // Crop writes state directly (outside persistDraft); advance the local
-      // durable revision so an immediately subsequent reviewed Save can compare
-      // the actual new crop bytes instead of a stale earlier source.
-      if(lease.wasDraft&&cropLive88())draftStoreRevision88=JSON.stringify(updatedDraft88);
-      resolve();
-     };tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+     let tx,reason=null,updatedDraft88=null;
+     const abort=e=>{
+      reason=e||Error('P88_CROP_STORAGE_CHANGED');
+      try{tx.abort();}catch{reject(reason);}
+     };
+     try{
+      // Compare and write under one native IDB write lock. The previous
+      // put-only crop path could overwrite another tab's corrected saved item
+      // or erase another tab's pending raw JPEG from the draft list.
+      tx=lease.ownerDb.transaction(lease.wasDraft?['state','items']:['items'],'readwrite');
+      const target=tx.objectStore(lease.wasDraft?'state':'items');
+      const current=target.get(lease.wasDraft?'draft':item.id);
+      const commit=()=>{
+       if(!cropLive88()||JSON.stringify(batch)!==liveBatchRevision||
+        value.originalPhoto?.image!==cropSource88||
+        ordinarySourceEvidence88(value)!==lease.evidenceRevision||
+        hasSourceBoundMask88(item)||hasSourceBoundMask88(value))
+        throw Error('P88_CROP_OWNER_OR_SOURCE_CHANGED');
+       if(lease.wasDraft){
+        updatedDraft88=structuredClone(batch.map(x=>x===item?value:x));
+        target.put({id:'draft',batch:updatedDraft88});
+       }else target.put(value);
+      };
+      current.onsuccess=()=>{
+       try{
+        if(!cropLive88())throw Error('P88_CROP_OWNER_OR_SOURCE_CHANGED');
+        if(lease.wasDraft){
+         if(draftStoreRevision88!==expectedDraftRevision||
+          JSON.stringify(current.result?.batch??null)!==expectedDraftRevision)
+          throw Error('P88_CROP_DRAFT_STORAGE_CHANGED');
+         // The same readwrite transaction also checks actual saved peers;
+         // another tab can save the same PHOTO while crop quality runs.
+         const savedRead=tx.objectStore('items').getAll();
+         savedRead.onsuccess=()=>{
+          try{
+           if(!Array.isArray(savedRead.result))
+            throw Error('P88_CROP_SAVED_PEERS_UNAVAILABLE');
+           const original=value.originalPhoto?.image||value.image;
+           const peer=savedRead.result.find(x=>x&&x.id!==value.id&&(
+            (typeof value.image==='string'&&!!value.image&&x.image===value.image)||
+            (typeof original==='string'&&!!original&&
+             (x.originalPhoto?.image||x.image)===original)));
+           if(peer){
+            value.exactSavedPhotoMatch88={savedItemId:peer.id};
+            value.possibleDuplicate=true;
+            value.requiresOwnershipConfirmation=true;
+            value.localStatus=peer.image===value.image?
+             'This crop exactly matches another saved closet photo. Keep it unsaved and compare the physical garments in Adjust before adding.':
+             'This crop shares a complete original with a saved closet item. Keep it unsaved and compare the physical garments in Adjust before adding.';
+           }
+           commit();
+          }catch(e){abort(e);}
+         };
+         savedRead.onerror=()=>abort(savedRead.error||Error('P88_CROP_PEER_READ_FAILED'));
+        }else{
+         // Saved-item edits may NEVER clobber a different tab's entire
+         // source/metadata revision even when this tab retains the ID.
+         if(!current.result||
+          JSON.stringify(current.result)!==lease.savedRowRevision88)
+          throw Error('P88_SAVED_CROP_STORAGE_CHANGED');
+         commit();
+        }
+       }catch(e){abort(e);}
+      };
+      current.onerror=()=>abort(current.error||Error('P88_CROP_STORAGE_READ_FAILED'));
+      tx.oncomplete=()=>{
+       if(!cropLive88())return reject(Error('P88_CROP_OWNER_OR_SOURCE_CHANGED'));
+       if(lease.wasDraft)draftStoreRevision88=JSON.stringify(updatedDraft88);
+       resolve();
+      };
+      tx.onabort=()=>reject(reason||tx.error||Error('P88_CROP_STORAGE_CHANGED'));
+      tx.onerror=()=>{}; // native request errors cause transaction abort
+     }catch(e){reject(e);}
     });
    });
    if(!cropLive88())return; // Old owner's completed write cannot paint B's UI.
    Object.assign(item,value);
-   for(const key of ['visualSignature','visualAspect','localChoices','indexedAt','recognitionPhoto','colorMethod','recognitionMemory','confirmedDetails','correctionReceipt72','learningReviewedWeek','weeklySuggestion','ownerDuplicateReview88','exactSavedPhotoMatch88'])if(!(key in value))delete item[key];
+   for(const key of ['visualSignature','visualAspect','localChoices','indexedAt','recognitionPhoto','colorMethod','recognitionDiagnostics','indexingLevel','recognitionMemory','confirmedDetails','correctionReceipt72','learningReviewedWeek','weeklySuggestion','ownerDuplicateReview88','exactSavedPhotoMatch88'])if(!(key in value))delete item[key];
    render();
   }
  }).catch(()=>message('Could not open this photo for cropping. Your saved photo is kept.'));
@@ -779,8 +981,22 @@ function saveSourceBoundPiece88(value,nextBatch,lease){
        JSON.stringify(batch)!==liveBatchRevision||
        duplicateUnit70InCloset(value,items))
        throw Error('P88_SOURCE_DRAFT_STORAGE_CHANGED');
-      itemStore.add(value); // insert-only; transaction aborts on item-ID collision
-      stateStore.put({id:'draft',batch:structuredClone(liveRemaining)});
+      // P70 reconciliation also checks the persisted physical masks, not
+      // just this tab's possibly stale in-memory saved items.
+      const savedRead=itemStore.getAll();
+      savedRead.onsuccess=()=>{
+       try{
+        if(!sourceSaveLeaseLive88(lease)||
+         draftStoreRevision88!==expected||
+         JSON.stringify(batch)!==liveBatchRevision||
+         duplicateUnit70InCloset(value,items)||
+         duplicateUnit70InCloset(value,savedRead.result))
+         throw Error('P88_DURABLE_PHYSICAL_UNIT_ALREADY_SAVED');
+        itemStore.add(value); // insert-only, same write transaction
+        stateStore.put({id:'draft',batch:structuredClone(liveRemaining)});
+       }catch(e){reason=e;try{tx.abort();}catch{reject(reason);}}
+      };
+      savedRead.onerror=()=>{reason=savedRead.error||Error('P88_DURABLE_UNIT_READ_FAIL');try{tx.abort();}catch{reject(reason);}};
      }catch(e){reason=e;try{tx.abort();}catch{reject(reason);}}
     };
     read.onerror=()=>{reason=read.error||Error('P88_SOURCE_DRAFT_READ_FAIL');};
@@ -824,6 +1040,9 @@ function adjustPhoto(item){
  // owner-review path and also fence Cancel/Remove/Escape and field edits while
  // the private write is pending. This research branch is NOT deployed.
  let saveInFlight=false;
+ // A durable second-tab conflict invalidates this entire open review.
+ // No checkbox or scripted repeat submit may reuse its stale peer snapshot.
+ let reviewConflict88=false;
  let subtype80Panel=null,dual82Panel=null;
  const dual82Owner=window.closetAuth?.user,dual82OwnerId=dual82Owner?.id;
  const dual82Enabled=Boolean(pendingDraft&&new URLSearchParams(location.search).get('dual82')==='1'&&dual82OwnerId);
@@ -849,12 +1068,14 @@ function adjustPhoto(item){
    (!item.reconciliation70||!duplicateUnit70InCloset(item,items));
  };
  const canSaveReview=()=>{
-  if(!explicitReview)return true;
-  const valid=Boolean(confirmReview?.checked&&reviewedCore()&&
+  if(!explicitReview)return !reviewConflict88;
+  const valid=Boolean(!reviewConflict88&&confirmReview?.checked&&reviewedCore()&&
    (!distinctPhotoRequired88||(distinctPhotoCheck88?.checked&&
     reviewedSaveLeaseLive88(reviewLease88)&&reviewLease88.exactPhotoPeers88.length>0))&&!cross77Pending&&(!cross77Scope||CrossCaptureDuplicate77.valid(cross77Scope))&&(!cross77Proposal||cross77Decision?.action==='different'));
   if(save)save.disabled=saveInFlight||!valid;
-  if(reviewStatus)reviewStatus.textContent=reviewedCore()?
+  if(reviewStatus)reviewStatus.textContent=reviewConflict88?
+   'This review is outdated. Refresh the closet and compare the saved garments before reopening this original.':
+   reviewedCore()?
    'Confirm that the category, specific type (or Unknown), and color match the garment photo.':
    'Choose a garment category and color, and resolve any garment pairing or duplicate warning, before confirming.';
   return valid;
@@ -921,19 +1142,19 @@ function adjustPhoto(item){
  }
  if(distinctPhotoRequired88){
   const panel=node('section',null,'duplicate-review-88');
-  panel.setAttribute('aria-label','Exact saved photograph physical garment decision');
+  panel.setAttribute('aria-label','Saved photo or shared-original physical garment decision');
   panel.append(node('p',
    reviewLease88.exactPhotoPeers88.length+
-   ' saved closet item(s) use this exact photo. A matching picture cannot prove another physical garment. Compare the real items and leave this photo unsaved if uncertain.','fine'));
+   ' saved closet item(s) share this cropped photo or its complete original photograph. Multiple crops do not prove separate physical garments. Compare the real items and leave this photo unsaved if uncertain.','fine'));
   if(reviewLease88.exactPhotoPeers88[0]){
    const matching=node('img');matching.src=reviewLease88.exactPhotoPeers88[0].image;
-   matching.alt='Already saved photograph exactly matching this new photo';panel.append(matching);
+   matching.alt='Previously saved garment photo with matching crop or shared original';panel.append(matching);
   }
   const label=node('label',null,'review-acknowledgement');
   distinctPhotoCheck88=node('input');distinctPhotoCheck88.type='checkbox';
   distinctPhotoCheck88.setAttribute('aria-label','I physically checked this is a different owned garment from every matching saved item');
   label.append(distinctPhotoCheck88,document.createTextNode(
-   'I checked my actual clothing and confirm this is a physically different garment from every saved item using this exact photo. This is my decision, not independent model verification.'));
+   ' I checked my actual clothing and confirm this is a physically different garment from every saved item sharing this crop or complete original photo. This is my decision, not independent model verification.'));
   distinctPhotoCheck88.onchange=canSaveReview;
   panel.append(label);form.prepend(panel);canSaveReview();
  }
@@ -996,6 +1217,10 @@ function adjustPhoto(item){
  };
  form.onsubmit=async event=>{
   event.preventDefault();
+  if(reviewConflict88){
+   message('This review is outdated. Close Adjust and refresh your closet before saving this photo.');
+   return;
+  }
   // A disabled submit button is not a transaction lock: a scripted event or a
   // second mobile submit can enter again while IndexedDB/cloud work is pending.
   if(saveInFlight){message('This photo is already being saved.');return;}
@@ -1101,14 +1326,22 @@ function adjustPhoto(item){
   // Both reviewed saves already committed items + the live draft atomically.
   // A second queued persistDraft could write into a newly switched account.
   dialog.close();render();scheduleMemoryReview();
- }catch{
+ }catch(error){
+  // Late durable duplicate/mask/draft conflicts must never leave a previously
+  // checked Save button ready for a blind retry against stale peers.
+  const conflictMessage88=ownerReviewedSaveConflict88(error);
+  if(conflictMessage88){
+   reviewConflict88=true;
+   if(confirmReview)confirmReview.checked=false;
+   if(distinctPhotoCheck88)distinctPhotoCheck88.checked=false;
+  }
   saveInFlight=false;
   for(const field of lockedFields)field.input.disabled=field.disabled;
   cancel.disabled=false;remove.disabled=false;
   save.textContent='Save changes';
   if(learningCheck72)learningCheck72.checked=false; // consent must be deliberate again after a failed write
-  if(explicitReview)canSaveReview();else save.disabled=false;
-  message('Could not save changes. Try again.');
+  if(explicitReview)canSaveReview();else save.disabled=Boolean(reviewConflict88);
+  message(conflictMessage88||'Could not save changes. Try again.');
  }};
  dialog.oncancel=event=>{if(saveInFlight)event.preventDefault();};
  dialog.onclose=()=>{dual82Panel?.close();subtype80Panel?.close();if(cross77Scope)CrossCaptureDuplicate77.close(cross77Scope);if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
