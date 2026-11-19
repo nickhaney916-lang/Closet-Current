@@ -64,7 +64,7 @@ test('two distinct separately SHA-attested source image receipts can seed only i
 });
 test('previously observed alternative compression with IDENTICAL decoded RGB is research-only; forged pixel hashes fail',()=>{
  const p=photos();
- p[0].sha256='f2e83d99e39ef472e834189ef6541760973bc2ef2d6cc9123b58140c06';
+ p[0].sha256='f2e83d99e39ef472e834189ef6541760973bc2ef2d6cc4786cc9123b58140c06';
  const a=audit({images:p});
  assert.equal(a.status,'MET_SAME_OBJECT_MEASUREMENTS_AND_TWO_PUBLISHED_JPEGS_ATTESTED_RESEARCH_ONLY');
  assert.equal(a.anyJPEGReencodedButPixelIdenticalToLockedPhoto,true);
