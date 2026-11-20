@@ -83,7 +83,9 @@ async function probe(){
  const browser=await webkit.launch({headless:true});
  try{
   const page=await browser.newPage();
-  await page.goto('about:blank');
+  await page.goto('data:text/html,<html><body><main>m282-local-only</main></body></html>');
+  const ready=await page.evaluate(()=>document.querySelector('main')?.textContent);
+  assert(ready==='m282-local-only','native WebKit renderer did not execute local document');
   const webkitVersion=browser.version();
   const candidates=processPids();
   const gdbCheck=spawnSync('gdb',['--version'],{encoding:'utf8',timeout:3500});
