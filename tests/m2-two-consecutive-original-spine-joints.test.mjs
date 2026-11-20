@@ -25,7 +25,7 @@ const cfg=(bodyStageB=()=>0)=>({
  ],
  frontIndices:Uint32Array.from([0,1,2]),
  bodyIndices:Uint32Array.from([0,1,2]),
- expectedFrontFaces:1,expectedBodyFaces:1,sourceWitness:witness
+ expectedFrontFaces:1,expectedBodyFaces:1,sourceWitness:{...witness}
 });
 
 test('complete genuine-math consecutive two LBS segments remain RESEARCH ONLY, never wearable',()=>{
