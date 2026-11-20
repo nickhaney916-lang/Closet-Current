@@ -111,6 +111,23 @@ export function deriveM283(originalRunner,originalWorker){
  s=replaceOnce(s,original,successor);
  return s;
 }
+/** Pure fail-closed identity validator: a downloaded SHA or unsupported result is NEVER enough. */
+export function adjudicateWitnesses(rows){
+ demand(Array.isArray(rows)&&rows.length<=3,'oversize or missing native witness array');
+ for(const x of rows){
+  demand(x&&['instantiate','instantiateStreaming'].includes(x.operation),'not native instance');
+  demand(['instantiated','unverified'].includes(x.phase),'native instantiation not resolved');
+  demand(Number.isSafeInteger(x.bytes)&&x.bytes>=0&&x.bytes<=100000000,'invalid exact byte size');
+  demand(x.sha256===null||typeof x.sha256==='string'&&/^[a-f0-9]{64}$/.test(x.sha256),
+   'invalid runtime digest');
+ }
+ const matching=rows.filter(x=>x.phase==='instantiated'&&x.bytes===expectedBytes&&
+  x.sha256===expectedSha);
+ demand(!rows.some(x=>x.phase==='instantiated'&&x.bytes===expectedBytes&&
+   x.sha256!==expectedSha),'original JSEP runtime byte identity mismatch');
+ return {exactInstanceProven:rows.length===1&&matching.length===1,
+  acceptedWitnessCount:matching.length,originalModelCausalFixProven:false};
+}
 export function assessProcess(log,exit,metadata){
  const original=adjudicateProcess(log,exit,metadata);
  demand(typeof log==='string'&&log.length>0&&log.length<3_000_000,'invalid original process log');
@@ -123,12 +140,7 @@ export function assessProcess(log,exit,metadata){
   return x;
  });
  demand(rows.length<=3,'duplicate or excessive original byte witnesses');
- const witness=rows.filter(r=>r.phase==='instantiated'&&r.bytes===expectedBytes&&r.sha256===expectedSha);
- const unknown=rows.filter(r=>r.phase==='unverified');
- const bad=rows.filter(r=>r.phase==='instantiated'&&r.bytes===expectedBytes&&r.sha256!==expectedSha);
- // A mismatched original binary is a hard failure, never a model success.
- demand(bad.length===0,'original JSEP runtime byte identity mismatch');
- const exactInstanceProven=witness.length===1&&unknown.length===0;
+ const {exactInstanceProven}=adjudicateWitnesses(rows);
  const verdict=original.originalJourneyPositive?
   (exactInstanceProven?'ORIGINAL_POSITIVE_WITH_INSTANTIATED_SHA':'PROVENANCE_BLOCKED'):
   (original.originalOrtCreateSessionThrew?
