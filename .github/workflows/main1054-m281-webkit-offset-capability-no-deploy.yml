@@ -32,16 +32,22 @@ jobs:
           node --test tests/main1054-m279-original-model-pointer-bounds.test.mjs
       - name: Install pinned original installed native Playwright browser API
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Authenticate original 21.6 MB JSEP binary hash and inspect actual debug sections
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          timeout -k 5s 180s node research/main1054/m281-webkit-offset-capability.mjs sections
       - name: Run genuinely installed WebKit engine deterministic negative trap (NOT original model)
         shell: bash
         run: |
           set -euo pipefail
-          node research/main1054/m281-webkit-offset-capability.mjs webkit
+          timeout -k 5s 120s node research/main1054/m281-webkit-offset-capability.mjs webkit
       - name: Run genuinely installed Chromium offset control for exact synthetic opcode file offset
         shell: bash
         run: |
           set -euo pipefail
-          node research/main1054/m281-webkit-offset-capability.mjs chromium
+          timeout -k 5s 120s node research/main1054/m281-webkit-offset-capability.mjs chromium
       - name: Preserve only native offset capability and proof limitations
         if: always()
         uses: actions/upload-artifact@v4
