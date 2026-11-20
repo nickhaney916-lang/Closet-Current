@@ -1,0 +1,72 @@
+name: MAIN1054 M280 authentic original WebKit native RED exact JSEP WASM function map HOLD
+on:
+  push:
+    branches: [research/main1054-m280-original-jsep-function-map-HOLD]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  m280-source-negative-and-inherited:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify source, immutable M279 authentic natural RED and original model Worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:research/main1054/m280-original-jsep-function-map.mjs)" = 05e24dd7278d3c9e1fd3ab5e5b396ea26b29d5f4
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/main1054/m279-original-model-pointer-bounds.mjs)" = f2fd27553cc6854997480ee586cb8e191e9aca11
+          node --check research/main1054/m280-original-jsep-function-map.mjs
+      - name: Run M280 adversarial original WASM parser, RED attribution and no-false-fix tests
+        run: node --test tests/main1054-m280-original-jsep-function-map.test.mjs
+      - name: Run inherited authentic M279/M278 original model/source-negative cases
+        run: node --test tests/main1054-m279-original-model-pointer-bounds.test.mjs tests/main1054-m278-native-session-memory-class.test.mjs tests/main1054-m269-webkit-original-graph-optimization-ab.test.mjs
+      - name: Install pinned offline no-deploy app regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build source and run complete inherited owner/privacy/photo/2D/backup regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  m280-read-only-exact-function-map:
+    needs: m280-source-negative-and-inherited
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact source and re-fetch actual failed first-attempt GitHub metadata and logs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:research/main1054/m280-original-jsep-function-map.mjs)" = 05e24dd7278d3c9e1fd3ab5e5b396ea26b29d5f4
+          node research/main1054/m280-original-jsep-function-map.mjs map
+      - name: Archive only exact original JSEP function-index file spans, opaque body hashes and honest unknowns
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m280-original-jsep-authentic-red-sanitized-function-map-HOLD
+          path: m280-sanitized/exact-function-map.json
+          retention-days: 7
+          if-no-files-found: ignore
