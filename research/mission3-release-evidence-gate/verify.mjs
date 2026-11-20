@@ -149,6 +149,9 @@ export function verifyEvidence(manifest,files=new Map()){
  if(!GIT_SHA.test(manifest.sourceHead||''))errors.push('mission3.sourceHead: exact Git SHA required');
  if(!SHORT_SHA.test(manifest.appAssetRelease||''))errors.push('mission3.appAssetRelease: exact published asset version required');
  const observed=new Set();
+ // A copied JPEG may be tested on another phone as a restore scenario, but
+ // must not be counted twice as an independently captured photo sample.
+ const originalCaptureFamily=new Map();
  if(!Array.isArray(manifest.devices)||manifest.devices.length!==2){
   errors.push('mission3.devices: exactly one physical Android and one physical iPhone required');
  }else{
@@ -170,6 +173,14 @@ export function verifyEvidence(manifest,files=new Map()){
      photoReceipt(v,j,p+'.photoReceipts',errors);
      if(seen.has(v?.capture))errors.push(p+'.photoReceipts['+j+']: duplicate original SHA');
      seen.add(v?.capture);
+     // Only hash identity is compared; do not expose source JPEG bytes or
+     // either digest in output. Account/device claims remain self-reported.
+     if(typeof v?.capture==='string'&&SHA256.test(v.capture)){
+      const prior=originalCaptureFamily.get(v.capture);
+      if(prior!==undefined&&prior!==d.family)
+       errors.push(p+'.photoReceipts['+j+']: cross-device original JPEG SHA reused');
+      else if(prior===undefined)originalCaptureFamily.set(v.capture,d.family);
+     }
     }
    }
    const app=artifact(files,d.reportFile,d.reportSha256,errors,p+'.report');
