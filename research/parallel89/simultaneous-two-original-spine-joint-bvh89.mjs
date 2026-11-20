@@ -152,7 +152,7 @@ export function evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase({
   minBodyArea=Infinity;
  const vertices=(grid,poses,holdoutKey)=>{
   const n=poses[0].length/3,
-   boxes=new Float64Array(n*6),
+   boxes=Array.from({length:4},()=>new Float64Array(n*6)),
    offDiagonal=independentOffDiagonalHoldouts;
   for(let coord=0;coord<poses[0].length;coord++){
    const raw=new Array(9);
@@ -221,16 +221,21 @@ export function evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase({
    const inflation=deriv/8+1e-4;
    if(!finite(inflation))return null;
    maxInflation=Math.max(maxInflation,inflation);
-   let lo=Infinity,hi=-Infinity;
-   for(let t=0;t<5;t++){
-    const v=poses[t][coord];
-    lo=Math.min(lo,v);hi=Math.max(hi,v);
+   for(let t=0;t<5;t++)
     maxOriginalVertexCoordinate=Math.max(maxOriginalVertexCoordinate,
-     Math.abs(v));
-   }
+     Math.abs(poses[t][coord]));
    const j=Math.floor(coord/3),k=coord%3;
-   boxes[j*6+k]=lo-inflation;
-   boxes[j*6+k+3]=hi+inflation;
+   // In each of FOUR SAME-TIME slabs, nearest ORIGINAL endpoint pose is
+   // within 1/8 of the entire path t. The per-coordinate derivative
+   // bound is therefore VALID for every continuous intermediate time
+   // within each slab; preserve time correlation instead of globally
+   // unioning positions at unrelated original pose times.
+   for(let slab=0;slab<4;slab++){
+    const lo=Math.min(poses[slab][coord],poses[slab+1][coord]),
+     hi=Math.max(poses[slab][coord],poses[slab+1][coord]);
+    boxes[slab][j*6+k]=lo-inflation;
+    boxes[slab][j*6+k+3]=hi+inflation;
+   }
   }
   return boxes;
  };
@@ -260,16 +265,18 @@ export function evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase({
  if(maxResidual>1e-5)
   return forbid('BLOCKED_NONBILINEAR_TRUE_ORIGINAL_TWO_JOINT_MOTION',common);
  const sweptFaces=(indices,vertBoxes,poses,kind)=>{
-  const count=indices.length/3,boxes=new Float64Array(count*6);
+  const count=indices.length/3,
+   boxes=Array.from({length:4},()=>new Float64Array(count*6));
   let minimumOriginalDoubleArea=Infinity;
   for(let f=0;f<count;f++){
    const p=f*6;
-   for(let k=0;k<3;k++){
-    boxes[p+k]=Infinity;boxes[p+k+3]=-Infinity;
-   }
-   for(let j=0;j<3;j++){
-    const i=indices[3*f+j],k=i*6;
-    addBound(boxes,p,vertBoxes,k);
+   for(let slab=0;slab<4;slab++){
+    const slabFaces=boxes[slab],vertexBoxes=vertBoxes[slab];
+    for(let k=0;k<3;k++){
+     slabFaces[p+k]=Infinity;slabFaces[p+k+3]=-Infinity;
+    }
+    for(let j=0;j<3;j++)
+     addBound(slabFaces,p,vertexBoxes,indices[3*f+j]*6);
    }
    for(let stage=0;stage<5;stage++){
     const a=area2(faceTriangle(poses,indices,f,stage));
