@@ -1,0 +1,58 @@
+name: MAIN1054 M281 real WebKit WASM trap-offset engine capability HOLD
+on:
+  push:
+    branches: [research/main1054-m281-webkit-trap-offset-capability-HOLD]
+permissions:
+  contents: read
+jobs:
+  m281-original-source-and-native-engine-negative-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run M281 fail-closed adversarial original source and native offset attribution tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          node --test tests/main1054-m281-webkit-offset-capability.test.mjs
+          node --test tests/main1054-m280-original-jsep-function-map.test.mjs
+          node --test tests/main1054-m279-original-model-pointer-bounds.test.mjs
+      - name: Install pinned original installed native Playwright browser API
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Authenticate original 21.6 MB JSEP binary hash and inspect actual debug sections
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          timeout -k 5s 180s node research/main1054/m281-webkit-offset-capability.mjs sections
+      - name: Run genuinely installed WebKit engine deterministic negative trap (NOT original model)
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout -k 5s 120s node research/main1054/m281-webkit-offset-capability.mjs webkit
+      - name: Run real Node V8 native WASM trap offset control (NOT Chromium, NOT original model)
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout -k 5s 15s node research/main1054/m281-webkit-offset-capability.mjs node-v8
+      - name: Preserve only native offset capability and proof limitations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m281-native-webkit-offset-capability-not-original-trap-HOLD
+          path: m281-sanitized/*.json
+          retention-days: 7
+          if-no-files-found: ignore
