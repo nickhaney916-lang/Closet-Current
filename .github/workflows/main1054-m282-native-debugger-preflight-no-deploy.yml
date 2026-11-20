@@ -1,0 +1,93 @@
+name: MAIN1054 M282 native WebKit debugger attachment feasibility NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m282-native-webkit-debugger-attach-HOLD]
+permissions:
+  contents: read
+jobs:
+  m282-original-evidence-and-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin original source and protect genuine failed WebKit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:research/main1054/m282-native-debugger-preflight.mjs)" = cd91e67e7f595b2b264d93a0d80d8fa82bebc600
+          test "$(git rev-parse HEAD:tests/main1054-m282-native-debugger-preflight.test.mjs)" = 151fec4b01faa79a2d8243395b23568d6c237527
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/main1054/m279-original-model-pointer-bounds.mjs)" = f2fd27553cc6854997480ee586cb8e191e9aca11
+          test "$(git rev-parse HEAD:research/main1054/m280-original-jsep-function-map.mjs)" = c52b967bc80ce8ba4c2c69bc2ea09c70e50bb332
+          node --check research/main1054/m282-native-debugger-preflight.mjs
+      - name: Negative native debugger and source-integrity tests
+        run: |
+          node --test tests/main1054-m282-native-debugger-preflight.test.mjs
+          node --test tests/main1054-m281-webkit-trap-pc-capability.test.mjs
+          node --test tests/main1054-m280-original-jsep-function-map.test.mjs
+          node --test tests/main1054-m279-original-model-pointer-bounds.test.mjs
+      - name: Install exact known test-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build untouched app and run original owner private backup regressions
+        run: |
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  m282-pinned-original-webkit-native-attach-probe:
+    needs: m282-original-evidence-and-regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify native source original unchanged and first-attempt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD:research/main1054/m282-native-debugger-preflight.mjs)" = cd91e67e7f595b2b264d93a0d80d8fa82bebc600
+      - name: Install ordinary user-space debugger ONLY inside disposable CI container
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v gdb >/dev/null; then
+            apt-get update -qq
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends gdb
+          fi
+          gdb --version | head -1
+      - name: Install pinned real WebKit browser bindings
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Probe consent-free idle debugger attach and separate synthetic WASM negative
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout -k 5s 120s node research/main1054/m282-native-debugger-preflight.mjs probe
+          test -s m282-sanitized/debugger-attach.json
+      - name: Archive sanitized permission/PC capability only — not original fault or private data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m282-webkit-native-debugger-attach-capability-NOT-ORIGINAL-RED-HOLD
+          path: m282-sanitized/*.json
+          retention-days: 7
+          if-no-files-found: ignore
