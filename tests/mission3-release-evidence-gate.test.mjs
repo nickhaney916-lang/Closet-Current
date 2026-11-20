@@ -463,3 +463,14 @@ test('independent per-phone original hashes continue to be review-only, never a 
  assert.equal(result.releaseAuthorized,false);
  assert.equal(result.familyAlpha,'HOLD');
 });
+
+test('cross-device source identity check is independent of phone report ordering',()=>{
+ const f=fixture(),[android,ios]=f.manifest.devices;
+ ios.photoReceipts[2]={...android.photoReceipts[10]};
+ f.manifest.devices.reverse();
+ const result=check(f);
+ assert.equal(result.status,'BLOCKED');
+ assert.ok(result.issues.some(x=>x.includes('cross-device original JPEG SHA reused')));
+ assert.equal(result.releaseAuthorized,false);
+ assert.equal(result.familyAlpha,'HOLD');
+});
