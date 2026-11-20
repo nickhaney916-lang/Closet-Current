@@ -20,7 +20,15 @@ const head='b'.repeat(40),release='abc123abc123',source='c'.repeat(40);
 // Deterministic, generated two-pixel JPEG test data; no family photos.
 // Inserting a genuine JPEG comment segment before JFIF makes 30 distinct
 // valid photo byte sequences without using any private images.
-const jpegBase=Buffer.from('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAACAAIDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAABv/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AKgBOOv/2Q==','base64');
+const jpegBase=Buffer.from('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYH'+
+ 'BwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwg'+
+ 'IyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYa'+
+ 'KCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgo'+
+ 'KCgoKCgoKCgoKCgoKCj/wAARCAACAAIDASIAAhEBAxEB/8QA'+
+ 'FQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAA'+
+ 'AAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAABv/EABQRAQAA'+
+ 'AAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AKgBOOv/2Q==','base64');
+assert.equal(jpegBase.byteLength,286,'independently decoded 2×2 generated JPEG fixture byte length');
 function jpg(i,n){
  const comment=Buffer.from([0xff,0xfe,0,4,i+1,n+1]);
  return Buffer.concat([jpegBase.subarray(0,2),comment,jpegBase.subarray(2)]);
