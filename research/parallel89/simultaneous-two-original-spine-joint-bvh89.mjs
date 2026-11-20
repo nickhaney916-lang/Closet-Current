@@ -13,7 +13,7 @@
  * combination of {1,cos(a),sin(a)} x {1,cos(b),sin(b)}. Derive nine real
  * coefficients per coordinate from a 3x3 original pose angular grid and
  * verify model at two independent original off-grid poses + quarter path
- * samples. For simultaneous a(t),b(t), a certified derivative L1 bound
+ * samples. For simultaneous a(t),b(t), a certified path-specific third-harmonic derivative bound
  * multiplied by 1/8 bounds all times nearest to five actual time samples.
  * A vertex is inflated ONCE. All original face boxes/BVH tested conservatively.
  * Unsupported arbitrary rotations, missing independent holdouts, malformed
@@ -138,7 +138,7 @@ export function evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase({
  if(!structuralWitness)
   return forbid('BLOCKED_UNVERIFIED_ORIGINAL_SKELETON_WITNESS');
  const A=6*Math.PI/180,B=12*Math.PI/180,
-  da=2*A,db=2*B;
+  da=2*A;
  const fit=(lo,mid,hi,angle)=>{
   const sin=Math.sin(angle),cos=Math.cos(angle)-1;
   const ss=(hi-lo)/(2*sin),cc=((hi+lo)/2-mid)/cos;
@@ -199,18 +199,25 @@ export function evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase({
     maxResidual=Math.max(maxResidual,
      Math.abs(observed-predicted));
    }
-   // Across 0<=t<=1 with a=-6°+12°t, b=-12°+24°t,
-   // |dp/dt| <= |a'| SUM_{i>0,j}|Cij|+
-   //           |b'| SUM_{i,j>0}|Cij|.
-   // Every time is at most 1/8 from one of five true original poses.
-   // This derivative bounds the full continuous SIMULTANEOUS diagonal,
-   // not unobserved arbitrary 2D joint motion and not fabric deformation.
-   let deriv=0;
-   for(let i=0;i<3;i++)for(let j=0;j<3;j++){
-    const c=Math.abs(C[i*3+j]);
-    if(i>0)deriv+=da*c;
-    if(j>0)deriv+=db*c;
-   }
+   // EXACT synchronized original joint path: b(t) = 2*a(t).
+   // Use sin/cos product-to-sum identities. The original TWO-ANGLE
+   // tensor harmonic is restricted to a true third-harmonic 1D curve:
+   // p(a,2a) = h0 + Σ_{n=1}^3 [Hcn cos(n*a)+Hsn sin(n*a)].
+   // The derivatives of each harmonic pair combine in Euclidean norm
+   // BEFORE adding distinct frequencies. Thus the mathematically VALID,
+   // much tighter global bound
+   // |dp/dt| <= |a'| Σ_{n=1}^3 n*hypot(Hcn,Hsn).
+   // This is valid only for the EXACT pinned b=2a diagonal, not a
+   // rectangular 2D joint region or independent joint timelines.
+   const cos1=C[3]+(C[4]+C[8])/2,
+    sin1=C[6]+(C[5]-C[7])/2,
+    cos2=C[1],sin2=C[2],
+    cos3=(C[4]-C[8])/2,sin3=(C[5]+C[7])/2;
+   const deriv=da*(Math.hypot(cos1,sin1)+
+    2*Math.hypot(cos2,sin2)+
+    3*Math.hypot(cos3,sin3));
+   // One of FIVE actual original time samples lies at most 1/8 from
+   // any continuous t. Add a positive independent numeric tolerance.
    const inflation=deriv/8+1e-4;
    if(!finite(inflation))return null;
    maxInflation=Math.max(maxInflation,inflation);
