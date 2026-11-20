@@ -1,7 +1,7 @@
 name: Mission 3 private import locked UI and v4 bridge — NO DEPLOY
 on:
   push:
-    branches: [research/mission3-private-import-gate-and-v4-bridge-20261113-HOLD, research/mission3-linear-original-jpeg-20261118-HOLD, research/mission3-release-evidence-convergence-20261119-HOLD, research/mission3-device-failure-evidence-quarantine-20261119-HOLD, research/mission3-device-event-cap-failclosed-20261119-HOLD, research/mission3-cloud-evidence-source-time-bind-20261119-HOLD, research/mission3-cross-device-original-custody-20261119-HOLD]
+    branches: [research/mission3-private-import-gate-and-v4-bridge-20261113-HOLD, research/mission3-linear-original-jpeg-20261118-HOLD, research/mission3-release-evidence-convergence-20261119-HOLD, research/mission3-device-failure-evidence-quarantine-20261119-HOLD, research/mission3-device-event-cap-failclosed-20261119-HOLD, research/mission3-cloud-evidence-source-time-bind-20261119-HOLD, research/mission3-cross-device-original-custody-20261119-HOLD, research/mission3-owner-original-jpeg-byte-custody-20261119-HOLD]
   workflow_dispatch:
 permissions:
   contents: read
@@ -24,7 +24,7 @@ jobs:
           test "$(git rev-parse "2a40f1db1a29b00e152700c538aa04dc2ddfbfc8:research/mission3-release-evidence-gate/verify.mjs")" = 340b47d8f6c2bd12276cc69a3145f60a91e6d922
           test "$(git hash-object research/mission3-release-evidence-gate/verify.mjs)" = 5ad7efd09d5b0ebc167dea8975e7c4814491345e
           test "$(git rev-parse "2a40f1db1a29b00e152700c538aa04dc2ddfbfc8:tests/mission3-release-evidence-gate.test.mjs")" = a9559cecf6429fb3f1ee392be5dd8fae99dbe632
-          test "$(git hash-object tests/mission3-release-evidence-gate.test.mjs)" = 0e779056f8faae7780e30b000569ca697479ad07
+          test "$(git hash-object tests/mission3-release-evidence-gate.test.mjs)" = 6ab11e141a3f098ffde4a95a67bf92e875387541
           # Research-only successor: preserve all protections and the real RED
           # quarantine at the frozen, first-attempt-green #1471 head.
           PRIOR=702b4f1e9eb6a040f7285c6ef18bf937cb10f640
@@ -33,6 +33,8 @@ jobs:
           test "$(git merge-base "$SOURCE_PARENT" HEAD)" = "$SOURCE_PARENT"
           M3_PARENT=37640be2e6b4f380087edddaa5197497bf2b2ef0
           test "$(git merge-base "$M3_PARENT" HEAD)" = "$M3_PARENT"
+          PHOTO_PARENT=e120813b567cfa79f0e3895c6d80e41417536a82
+          test "$(git merge-base "$PHOTO_PARENT" HEAD)" = "$PHOTO_PARENT"
           CHILD=2a40f1db1a29b00e152700c538aa04dc2ddfbfc8
           test "$(git merge-base "$CHILD" HEAD)" = "$CHILD"
           git diff --name-only "$CHILD" HEAD | while read -r p; do
@@ -222,7 +224,7 @@ jobs:
           test "$(git rev-parse "2a40f1db1a29b00e152700c538aa04dc2ddfbfc8:research/mission3-release-evidence-gate/verify.mjs")" = 340b47d8f6c2bd12276cc69a3145f60a91e6d922
           test "$(git hash-object research/mission3-release-evidence-gate/verify.mjs)" = 5ad7efd09d5b0ebc167dea8975e7c4814491345e
           test "$(git rev-parse "2a40f1db1a29b00e152700c538aa04dc2ddfbfc8:tests/mission3-release-evidence-gate.test.mjs")" = a9559cecf6429fb3f1ee392be5dd8fae99dbe632
-          test "$(git hash-object tests/mission3-release-evidence-gate.test.mjs)" = 0e779056f8faae7780e30b000569ca697479ad07
+          test "$(git hash-object tests/mission3-release-evidence-gate.test.mjs)" = 6ab11e141a3f098ffde4a95a67bf92e875387541
           # Research-only successor: preserve all protections and the real RED
           # quarantine at the frozen, first-attempt-green #1471 head.
           PRIOR=702b4f1e9eb6a040f7285c6ef18bf937cb10f640
@@ -231,6 +233,8 @@ jobs:
           test "$(git merge-base "$SOURCE_PARENT" HEAD)" = "$SOURCE_PARENT"
           M3_PARENT=37640be2e6b4f380087edddaa5197497bf2b2ef0
           test "$(git merge-base "$M3_PARENT" HEAD)" = "$M3_PARENT"
+          PHOTO_PARENT=e120813b567cfa79f0e3895c6d80e41417536a82
+          test "$(git merge-base "$PHOTO_PARENT" HEAD)" = "$PHOTO_PARENT"
           CHILD=2a40f1db1a29b00e152700c538aa04dc2ddfbfc8
           test "$(git merge-base "$CHILD" HEAD)" = "$CHILD"
           git diff --name-only "$CHILD" HEAD | while read -r p; do
