@@ -1,0 +1,86 @@
+name: MAIN1054 M281 pinned original WebKit trap-PC/debugger capability NO-DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m281-webkit-trap-pc-capability-HOLD]
+permissions:
+  contents: read
+jobs:
+  m281-original-source-negative-and-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin exact original M280 authentic WebKit RED source and no application changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:research/main1054/m281-webkit-trap-pc-capability.mjs)" = 52412852f1c4f42a57826b1dcb18f1e793d92f19
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/main1054/m280-original-jsep-function-map.mjs)" = c52b967bc80ce8ba4c2c69bc2ea09c70e50bb332
+          node --check research/main1054/m281-webkit-trap-pc-capability.mjs
+      - name: M281 synthetic WASM trap capability source adversarial guardrails
+        run: node --test tests/main1054-m281-webkit-trap-pc-capability.test.mjs
+      - name: Inherited true WebKit M279/M280 evidence and negative source integrity tests
+        run: node --test tests/main1054-m280-original-jsep-function-map.test.mjs tests/main1054-m279-original-model-pointer-bounds.test.mjs tests/main1054-m278-native-session-memory-class.test.mjs
+      - name: Install offline inherited app and security regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build unchanged original app and test original owner/photo/private/backup gates
+        run: |
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  m281-genuine-pinned-webkit-engine-capability:
+    needs: m281-original-source-negative-and-regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin original source and original native-bounds failure without modifying WASM
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:research/main1054/m281-webkit-trap-pc-capability.mjs)" = 52412852f1c4f42a57826b1dcb18f1e793d92f19
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Install pinned Playwright 1.56.1 library matching original WebKit image
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Check whether pinned WebKit JSC reveals synthetic trap PC and debugger options
+        shell: bash
+        run: |
+          set -euo pipefail
+          logfile="$(mktemp)"
+          trap 'rm -f "$logfile"' EXIT
+          DEBUG=pw:browser timeout -k 5s 110s node research/main1054/m281-webkit-trap-pc-capability.mjs probe > "$logfile" 2>&1 || {
+            echo 'M281_SYNTHETIC_JSC_DIAGNOSTIC_FAILED'
+            grep 'M281_CAPABILITY_BLOCKED' "$logfile" | tail -2 || true
+            exit 1
+          }
+          node research/main1054/m281-webkit-trap-pc-capability.mjs receipt "$logfile" | tee m281-sanitized.txt
+      - name: Archive ONLY sanitized JSC synthetic capability, NOT raw logs or false native repair
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m281-pinned-webkit-synthetic-debugger-capability-NOT-REAL-RED-HOLD
+          path: m281-sanitized.txt
+          retention-days: 7
+          if-no-files-found: ignore
