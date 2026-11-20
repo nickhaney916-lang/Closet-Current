@@ -5,7 +5,7 @@
  * No shipped Worker, ONNX weights, JSEP WASM, app or original photo is changed.
  */
 import {execFileSync,spawnSync} from 'node:child_process';
-import {readFileSync,readdirSync,writeFileSync,mkdirSync} from 'node:fs';
+import {readFileSync,readdirSync,writeFileSync,mkdirSync,readlinkSync} from 'node:fs';
 import {pathToFileURL} from 'node:url';
 import {syntheticWasmBytes,parseFrame} from './m281-webkit-trap-pc-capability.mjs';
 
@@ -57,13 +57,23 @@ export function adjudicate(x){
  assert(x.syntheticWasmTrapObserved===true&&x.syntheticWasmFrameIndex===0,'missing original engine capability control');
  return x;
 }
+// Linux /proc/<pid>/comm is limited to 15 bytes, truncating
+// "WebKitWebProcess" to "WebKitWebProces". Never search for arbitrary JS workers.
+export function isWebKitContentProcess(comm,cmdline,exe){
+ const candidates=[comm,String(cmdline||'').split(/\s+/)[0],exe]
+  .filter(x=>typeof x==='string'&&x.length>0)
+  .map(x=>x.trim().split('/').at(-1));
+ return candidates.some(x=>/^WebKitWebProces(?:s)?(?:$|[-.])/.test(x));
+}
 function processPids(){
  const result=[];
  for(const dir of readdirSync('/proc')){
   if(!/^\d+$/.test(dir))continue;
   try{
+   const name=readFileSync('/proc/'+dir+'/comm','utf8').trim();
    const cmdline=readFileSync('/proc/'+dir+'/cmdline').toString('utf8').replace(/\0/g,' ');
-   if(/(?:^|\/)WebKitWebProcess(?:\s|$)/.test(cmdline))result.push(Number(dir));
+   let exe='';try{exe=readlinkSync('/proc/'+dir+'/exe');}catch{}
+   if(isWebKitContentProcess(name,cmdline,exe))result.push(Number(dir));
   }catch{}
  }
  return result.sort((a,b)=>b-a);
