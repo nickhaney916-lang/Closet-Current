@@ -434,3 +434,32 @@ test('missing or relabeled integration report time never becomes same-head appro
  assert.equal(result.status,'BLOCKED');
  assert.ok(result.issues.some(x=>x.includes('integration.report: test time mismatch')));
 });
+
+test('iPhone may not reuse all 15 Android original JPEG receipts as separate capture proof',()=>{
+ const f=fixture();
+ const [android,ios]=f.manifest.devices;
+ ios.photoReceipts=android.photoReceipts.map(r=>({...r}));
+ const result=check(f);
+ assert.equal(result.status,'BLOCKED',
+  'two phones must not count one copied set of original bytes as independent captures');
+ assert.ok(result.issues.some(x=>x.includes('cross-device original JPEG SHA reused')));
+ assert.equal(result.releaseAuthorized,false);
+ assert.equal(result.familyAlpha,'HOLD');
+});
+test('one transferred Android original cannot be double-counted within iPhone capture evidence',()=>{
+ const f=fixture();
+ const [android,ios]=f.manifest.devices;
+ ios.photoReceipts[7]={...android.photoReceipts[3]};
+ const result=check(f);
+ assert.equal(result.status,'BLOCKED');
+ assert.ok(result.issues.some(x=>x.includes('cross-device original JPEG SHA reused')));
+ assert.equal(result.releaseAuthorized,false);
+ assert.equal(result.familyAlpha,'HOLD');
+});
+test('independent per-phone original hashes continue to be review-only, never a release',()=>{
+ const f=fixture(),result=check(f);
+ assert.equal(result.status,'EVIDENCE_READY_FOR_INDEPENDENT_REVIEW');
+ assert.equal(result.issues.length,0);
+ assert.equal(result.releaseAuthorized,false);
+ assert.equal(result.familyAlpha,'HOLD');
+});
