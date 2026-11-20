@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {binary,knownProbeLoadFileOffset,parseWasmFrames,classifyProbe,sourceGate,
-  parent,branch,added} from '../research/main1054/m281-webkit-offset-capability.mjs';
+  parent,branch,added,customSectionSummary} from '../research/main1054/m281-webkit-offset-capability.mjs';
 
 test('native binary has real 64KiB out-of-bounds load at absolute file byte 44',()=>{
   assert.equal(binary.length,48);
@@ -74,4 +74,17 @@ test('exact SOURCE gate rejects wrong branch, new unreviewed code, rerun',()=>{
   assert.throws(()=>sourceGate(git,{...e,attempt:'2'}),/attempt/);
   assert.throws(()=>sourceGate((cmd,...args)=>cmd==='diff-tree'?'A\0public\/outfit-worker-p94.mjs\0':git(cmd,...args),e),
     /protected source modified/);
+});
+
+test('canonical WASM metadata scanner is bounded; missing debug info NEVER yields C++ attribution',()=>{
+  const out=customSectionSummary(binary);
+  assert.deepEqual(out.customSections,[]);
+  assert.equal(out.hasFunctionNameSection,false);
+  assert.equal(out.hasDWARFDebugSection,false);
+  assert.equal(out.sourceLineFromWasmVerified,false);
+  assert.equal(out.originalCausalRepairProven,false);
+  assert.throws(()=>customSectionSummary(Uint8Array.from([0,97,115,109,1,0,0])),
+    /not a WASM/);
+  assert.throws(()=>customSectionSummary(Uint8Array.from([...binary,0,128])),
+    /truncated LEB/);
 });
