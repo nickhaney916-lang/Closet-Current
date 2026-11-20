@@ -1,13 +1,15 @@
 /**
  * Mission 3 release evidence preflight, NOT a deployment or release authorizer.
  *
- * Reads only locally supplied, redacted artifacts. No network, Supabase access,
- * production changes, family photos, raw JWTs, personal identifiers or auto-GO.
+ * Reads local redacted receipts and explicitly supplied ORIGINAL JPEG bytes,
+ * never uploads/logs originals. No network, Supabase access, production changes,
+ * raw JWTs, personal identifiers or auto-GO.
  * A passing manifest is READY_FOR_INDEPENDENT_REVIEW, never a verified phone,
  * hosted-cloud acceptance or permission to remove Family Alpha HOLD #255.
  */
 import {createHash} from 'node:crypto';
-import {readFile,lstat} from 'node:fs/promises';
+import {readFile,lstat,open} from 'node:fs/promises';
+import {constants} from 'node:fs';
 import {dirname,join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -59,6 +61,12 @@ const FAMILIES=Object.freeze({
  'android-chrome':'Android','ios-safari':'iPhone/iPad'
 });
 const FILE=/^[A-Za-z0-9][A-Za-z0-9_.-]{0,100}\.json$/;
+const ORIGINAL_JPEG_MAX_BYTES=50*1024*1024;
+const PHYSICAL_PHOTO_PROOF=Symbol('only-local-file-read-photo-proof');
+const PHOTO_PHASES=Object.freeze(['capture','saved','restored']);
+function originalFileName(family,index,phase){
+ return family+'-'+String(index+1).padStart(2,'0')+'-'+phase+'.jpg';
+}
 
 function object(x){return !!x&&typeof x==='object'&&!Array.isArray(x);}
 function keys(x,allowed,path,errors){
@@ -88,6 +96,28 @@ function photoReceipt(x,index,path,errors){
  if(x.capture&&x.saved&&x.restored&&
     !(x.capture===x.saved&&x.saved===x.restored))
   errors.push(p+': original JPEG SHA changed during save/restore');
+}
+function photoByteProof(receipt,family,index,photoFiles,errors,path){
+ for(const phase of PHOTO_PHASES){
+  const p=path+'['+index+'].'+phase;
+  const value=photoFiles instanceof Map?
+   photoFiles.get(originalFileName(family,index,phase)):undefined;
+  const raw=value instanceof Uint8Array?value:null;
+  const local=raw?null:(value?.[PHYSICAL_PHOTO_PROOF]===true?value:null);
+  if((!raw&&!local)||(raw&&(raw.byteLength<4||raw.byteLength>ORIGINAL_JPEG_MAX_BYTES))){
+   errors.push(p+': original JPEG bytes missing or outside safe size limit');
+   continue;
+  }
+  const jpeg=raw?
+   raw[0]===0xff&&raw[1]===0xd8&&
+   raw[raw.byteLength-2]===0xff&&raw[raw.byteLength-1]===0xd9:
+   local.isJpegEnvelope===true;
+  if(!jpeg)errors.push(p+': invalid JPEG envelope');
+  const digest=raw?createHash('sha256').update(raw).digest('hex'):local.digest;
+  if(typeof receipt?.[phase]==='string'&&SHA256.test(receipt[phase])&&
+     digest!==receipt[phase])
+   errors.push(p+': original JPEG byte digest mismatch');
+ }
 }
 function reportShape(value,family,appAssetRelease,errors,path){
  if(!keys(value,['format','version','appRelease','platform','steps','events'],path,errors))return;
@@ -141,7 +171,7 @@ function artifact(files,name,expected,errors,path){
 }
 
 /** Pure, offline, fail-closed evidence preflight. Strings from artifacts never appear in output. */
-export function verifyEvidence(manifest,files=new Map()){
+export function verifyEvidence(manifest,files=new Map(),photoFiles=new Map()){
  const errors=[],path='mission3';
  if(!keys(manifest,['schema','sourceHead','appAssetRelease','devices','cloud','integration','ownerApproval'],path,errors))
   return {status:'BLOCKED',releaseAuthorized:false,issues:errors};
@@ -171,6 +201,8 @@ export function verifyEvidence(manifest,files=new Map()){
     const seen=new Set();
     for(const [j,v] of d.photoReceipts.entries()){
      photoReceipt(v,j,p+'.photoReceipts',errors);
+     if(Object.hasOwn(FAMILIES,d.family))
+      photoByteProof(v,d.family,j,photoFiles,errors,p+'.photoReceipts');
      if(seen.has(v?.capture))errors.push(p+'.photoReceipts['+j+']: duplicate original SHA');
      seen.add(v?.capture);
      // Only hash identity is compared; do not expose source JPEG bytes or
@@ -285,12 +317,60 @@ async function readLocalArtifacts(manifest,manifestPath){
  }
  return files;
 }
+// Private-only operator receipt path: fixed filenames derived from the two
+// allowed families, indices and phases. No JSON-supplied filesystem paths.
+// Hash with bounded fixed-size reads, not 90 potentially 24MP JPEGs in RAM.
+// Never reveal file paths, original names, bytes or computed SHA values.
+async function readLocalOriginalPhotoBytes(manifest,folder){
+ const photoFiles=new Map();
+ if(typeof folder!=='string'||!folder.trim())return photoFiles;
+ try{
+  const root=await lstat(folder);
+  if(!root.isDirectory()||root.isSymbolicLink())return photoFiles;
+ }catch{return photoFiles;}
+ for(const d of Array.isArray(manifest?.devices)?manifest.devices:[]){
+  if(!object(d)||!Object.hasOwn(FAMILIES,d.family)||
+     !Array.isArray(d.photoReceipts)||d.photoReceipts.length>40)continue;
+  for(let i=0;i<d.photoReceipts.length;i++)for(const phase of PHOTO_PHASES){
+   const name=originalFileName(d.family,i,phase),file=join(folder,name);
+   let fh;
+   try{
+    const pre=await lstat(file);
+    if(!pre.isFile()||pre.isSymbolicLink()||pre.size<4||
+       pre.size>ORIGINAL_JPEG_MAX_BYTES)continue;
+    fh=await open(file,constants.O_RDONLY|(constants.O_NOFOLLOW??0));
+    const stat=await fh.stat();
+    if(!stat.isFile()||stat.size<4||stat.size>ORIGINAL_JPEG_MAX_BYTES)continue;
+    const hash=createHash('sha256'),buffer=Buffer.allocUnsafe(128*1024);
+    let read=0,first=Buffer.alloc(0),tail=Buffer.alloc(0);
+    while(read<=ORIGINAL_JPEG_MAX_BYTES){
+     const chunk=await fh.read(buffer,0,buffer.length,read);
+     if(!chunk.bytesRead)break;
+     if(read+chunk.bytesRead>ORIGINAL_JPEG_MAX_BYTES)break;
+     const bytes=buffer.subarray(0,chunk.bytesRead);
+     hash.update(bytes);
+     if(first.length<2)
+      first=Buffer.concat([first,bytes.subarray(0,2-first.length)]);
+     tail=Buffer.concat([tail,bytes]).subarray(-2);
+     read+=chunk.bytesRead;
+    }
+    if(read!==stat.size)continue;
+    photoFiles.set(name,{
+     [PHYSICAL_PHOTO_PROOF]:true,digest:hash.digest('hex'),
+     isJpegEnvelope:first[0]===0xff&&first[1]===0xd8&&
+      tail[0]===0xff&&tail[1]===0xd9
+    });
+   }catch{}finally{try{await fh?.close();}catch{}}
+  }
+ }
+ return photoFiles;
+}
 const invoked=process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1]);
 if(invoked){
  const mode=process.argv[2];
  if(mode==='--template'&&process.argv.length===3){
   process.stdout.write(JSON.stringify(blankManifest(),null,2)+'\n');
- }else if(mode==='--verify'&&process.argv.length===4){
+ }else if(mode==='--verify'&&(process.argv.length===4||process.argv.length===5)){
   let result;
   try{
    const filename=process.argv[3],info=await lstat(filename);
@@ -298,12 +378,14 @@ if(invoked){
     throw Error('unsupported or oversized manifest');
    const data=await readFile(filename);
    const manifest=JSON.parse(data.toString('utf8'));
-   result=verifyEvidence(manifest,await readLocalArtifacts(manifest,filename));
+   const photos=process.argv.length===5?
+    await readLocalOriginalPhotoBytes(manifest,process.argv[4]):new Map();
+   result=verifyEvidence(manifest,await readLocalArtifacts(manifest,filename),photos);
   }catch{result={status:'BLOCKED',releaseAuthorized:false,familyAlpha:'HOLD',issues:['manifest: missing, invalid or too large']};}
   process.stdout.write(JSON.stringify(result,null,2)+'\n');
   if(result.status==='BLOCKED')process.exitCode=2;
  }else{
-  process.stderr.write('Usage: node verify.mjs --template OR node verify.mjs --verify /private/path/mission3.json\n');
+  process.stderr.write('Usage: node verify.mjs --template OR node verify.mjs --verify /private/mission3.json /private/original-jpeg-folder\n');
   process.exitCode=64;
  }
 }

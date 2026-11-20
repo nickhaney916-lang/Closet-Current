@@ -17,8 +17,27 @@ const cases=keys=>Object.fromEntries(keys.map(k=>[k,'PASS']));
 const appSteps=['login','capture','cameraModes','recognition','adjust',
  'outfitCapture','closet','outfit','return','backup'];
 const head='b'.repeat(40),release='abc123abc123',source='c'.repeat(40);
+// Deterministic, generated two-pixel JPEG test data; no family photos.
+// Inserting a genuine JPEG comment segment before JFIF makes 30 distinct
+// valid photo byte sequences without using any private images.
+const jpegBase=Buffer.from('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYH'+
+ 'BwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwg'+
+ 'IyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYa'+
+ 'KCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgo'+
+ 'KCgoKCgoKCgoKCgoKCj/wAARCAACAAIDASIAAhEBAxEB/8QA'+
+ 'FQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAA'+
+ 'AAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAABv/EABQRAQAA'+
+ 'AAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AKgBOOv/2Q==','base64');
+assert.equal(jpegBase.byteLength,286,'independently decoded 2×2 generated JPEG fixture byte length');
+function jpg(i,n){
+ const comment=Buffer.from([0xff,0xfe,0,4,i+1,n+1]);
+ return Buffer.concat([jpegBase.subarray(0,2),comment,jpegBase.subarray(2)]);
+}
+function photoKey(family,n,phase){
+ return family+'-'+String(n+1).padStart(2,'0')+'-'+phase+'.jpg';
+}
 function fixture(){
- const files=new Map();
+ const files=new Map(),photoFiles=new Map();
  function attach(name,obj){
   const bytes=Buffer.from(JSON.stringify(obj));
   files.set(name,bytes);return sha(bytes);
@@ -33,7 +52,9 @@ function fixture(){
   };
   for(const k of appSteps)report.steps[k]='pass';
   const photoReceipts=Array.from({length:15},(_,n)=>{
-   const h=(i*100+n+1).toString(16).padStart(64,'0');
+   const bytes=jpg(i,n),h=sha(bytes);
+   for(const phase of ['capture','saved','restored'])
+    photoFiles.set(photoKey(family,n,phase),Buffer.from(bytes));
    return {capture:h,saved:h,restored:h};
   });
   return {
@@ -69,9 +90,9 @@ function fixture(){
   },
   ownerApproval:'HOLD'
  };
- return {manifest,files};
+ return {manifest,files,photoFiles};
 }
-const check=(f)=>verifyEvidence(f.manifest,f.files);
+const check=(f)=>verifyEvidence(f.manifest,f.files,f.photoFiles);
 test('blank template is HOLD and contains no fabricated physical, hosted or integrated PASS',()=>{
  const manifest=blankManifest();
  const value=verifyEvidence(manifest,new Map());
@@ -473,4 +494,84 @@ test('cross-device source identity check is independent of phone report ordering
  assert.ok(result.issues.some(x=>x.includes('cross-device original JPEG SHA reused')));
  assert.equal(result.releaseAuthorized,false);
  assert.equal(result.familyAlpha,'HOLD');
+});
+
+test('manual SHA strings without actual 90 private JPEG byte records cannot qualify for review',()=>{
+ const f=fixture();
+ const result=verifyEvidence(f.manifest,f.files,new Map());
+ assert.equal(result.status,'BLOCKED',
+  'all-PASS manually entered manifests cannot substitute for actual original bytes');
+ assert.ok(result.issues.some(x=>x.includes('original JPEG bytes missing')));
+ assert.equal(result.releaseAuthorized,false);
+ assert.equal(result.familyAlpha,'HOLD');
+});
+test('a forged matching capture/save/restore SHA does not substitute for original photo bytes',()=>{
+ const f=fixture(),r=f.manifest.devices[0].photoReceipts[0];
+ r.capture=r.saved=r.restored='f'.repeat(64);
+ const result=check(f);
+ assert.equal(result.status,'BLOCKED');
+ assert.ok(result.issues.some(x=>x.includes('original JPEG byte digest mismatch')));
+ assert.equal(result.releaseAuthorized,false);
+});
+test('a modified actual restored JPEG is rejected even with intact manifest receipts',()=>{
+ const f=fixture(),key=photoKey('ios-safari',3,'restored');
+ const altered=Buffer.from(f.photoFiles.get(key));
+ altered[altered.length-3]^=1;
+ f.photoFiles.set(key,altered);
+ const result=check(f);
+ assert.equal(result.status,'BLOCKED');
+ assert.ok(result.issues.some(x=>x.includes('original JPEG byte digest mismatch')));
+ assert.equal(result.releaseAuthorized,false);
+});
+test('an internally SHA-consistent arbitrary file is not evidence of source JPEG bytes',()=>{
+ const f=fixture(),bad=Buffer.from('arbitrary bytes are not an original JPEG');
+ const r=f.manifest.devices[1].photoReceipts[4];
+ r.capture=r.saved=r.restored=sha(bad);
+ for(const phase of ['capture','saved','restored'])
+  f.photoFiles.set(photoKey('ios-safari',4,phase),Buffer.from(bad));
+ const result=check(f);
+ assert.equal(result.status,'BLOCKED');
+ assert.ok(result.issues.some(x=>x.includes('invalid JPEG envelope')));
+ assert.equal(result.releaseAuthorized,false);
+});
+test('genuine in-memory byte-for-byte local source, saved and restored fixtures remain review-only',()=>{
+ const f=fixture(),result=check(f);
+ assert.deepEqual(result.issues,[]);
+ assert.equal(result.status,'EVIDENCE_READY_FOR_INDEPENDENT_REVIEW');
+ assert.equal(result.releaseAuthorized,false);
+ assert.equal(result.familyAlpha,'HOLD');
+});
+test('CLI needs private JPEG folder to accept source custody receipts as review evidence',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'mission3-original-jpeg-bytes-'));
+ try{
+  const f=fixture(),manifestPath=join(dir,'mission3-private.json'),photos=join(dir,'photo-bytes');
+  const cli=resolve('research','mission3-release-evidence-gate','verify.mjs');
+  const {mkdir,symlink,unlink}=await import('node:fs/promises');
+  await mkdir(photos);
+  await writeFile(manifestPath,JSON.stringify(f.manifest));
+  for(const [name,bytes] of f.files)await writeFile(join(dir,name),bytes);
+  const noPhotos=spawnSync(process.execPath,[cli,'--verify',manifestPath],{encoding:'utf8'});
+  assert.equal(noPhotos.status,2);
+  assert.equal(JSON.parse(noPhotos.stdout).status,'BLOCKED');
+  for(const [name,bytes] of f.photoFiles)await writeFile(join(photos,name),bytes);
+  const withPhotos=spawnSync(process.execPath,
+   [cli,'--verify',manifestPath,photos],{encoding:'utf8'});
+  assert.equal(withPhotos.status,0,withPhotos.stderr);
+  const decision=JSON.parse(withPhotos.stdout);
+  assert.equal(decision.status,'EVIDENCE_READY_FOR_INDEPENDENT_REVIEW');
+  assert.equal(decision.releaseAuthorized,false);
+  assert.equal(decision.familyAlpha,'HOLD');
+  // Reject a path substituted with a symlink even if the target JPEG bytes
+  // and manually entered manifest hashes themselves still match.
+  const source=join(photos,photoKey('android-chrome',0,'capture'));
+  const target=join(dir,'outside-private-original.jpg');
+  await writeFile(target,f.photoFiles.get(photoKey('android-chrome',0,'capture')));
+  await unlink(source);
+  await symlink(target,source);
+  const symlinked=spawnSync(process.execPath,
+   [cli,'--verify',manifestPath,photos],{encoding:'utf8'});
+  assert.equal(symlinked.status,2);
+  assert.equal(JSON.parse(symlinked.stdout).status,'BLOCKED');
+  assert.ok(!symlinked.stdout.includes(target));
+ }finally{await rm(dir,{recursive:true,force:true});}
 });
