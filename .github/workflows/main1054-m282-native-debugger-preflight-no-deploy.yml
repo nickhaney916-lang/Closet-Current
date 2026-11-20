@@ -22,7 +22,7 @@ jobs:
         run: |
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          test "$(git rev-parse HEAD:research/main1054/m282-native-debugger-preflight.mjs)" = 68588600c94f798b062a8843bc7a1b9575c061a6
+          test "$(git rev-parse HEAD:research/main1054/m282-native-debugger-preflight.mjs)" = cd91e67e7f595b2b264d93a0d80d8fa82bebc600
           test "$(git rev-parse HEAD:tests/main1054-m282-native-debugger-preflight.test.mjs)" = 151fec4b01faa79a2d8243395b23568d6c237527
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
           test "$(git rev-parse HEAD:research/main1054/m279-original-model-pointer-bounds.mjs)" = f2fd27553cc6854997480ee586cb8e191e9aca11
@@ -65,7 +65,7 @@ jobs:
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "${{ github.run_attempt }}" = 1
-          test "$(git rev-parse HEAD:research/main1054/m282-native-debugger-preflight.mjs)" = 68588600c94f798b062a8843bc7a1b9575c061a6
+          test "$(git rev-parse HEAD:research/main1054/m282-native-debugger-preflight.mjs)" = cd91e67e7f595b2b264d93a0d80d8fa82bebc600
       - name: Install ordinary user-space debugger ONLY inside disposable CI container
         shell: bash
         run: |
