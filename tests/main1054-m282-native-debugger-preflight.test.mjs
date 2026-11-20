@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {sourceGate,branch,additions,pins,classifyAttach,adjudicate}
+import {sourceGate,branch,additions,pins,classifyAttach,adjudicate,isWebKitContentProcess}
  from '../research/main1054/m282-native-debugger-preflight.mjs';
 const sha='a'.repeat(40),event={name:'push',ref:branch,attempt:'1',sha};
 function git(cmd,...args){
@@ -20,6 +20,14 @@ test('deny unapproved branch, rerun, unexpected source changes or worker drift',
  assert.throws(()=>sourceGate((...a)=>a[0]==='diff-tree'?'M\0public/outfit-worker-p94.mjs\0':git(...a),event),/unexpected protected/);
  assert.throws(()=>sourceGate((...a)=>a[0]==='ls-tree'?'120000 blob symlink':git(...a),event),/unsafe research path/);
  assert.throws(()=>sourceGate((...a)=>a[0]==='rev-parse'&&a[1]===sha+':public/outfit-worker-p94.mjs'?'0'.repeat(40):git(...a),event),/source drift/);
+});
+test('Linux WebKitWebProcess executable truncated in /proc/comm is discoverable',()=>{
+ assert.equal(isWebKitContentProcess('WebKitWebProces','',''),true);
+ assert.equal(isWebKitContentProcess('','/ms-playwright/webkit/ WebKitWebProcess',''),false);
+ assert.equal(isWebKitContentProcess('','/ms-playwright/webkit/WebKitWebProcess --token=none',''),true);
+ assert.equal(isWebKitContentProcess('','', '/ms-playwright/webkit/WebKitWebProcess'),true);
+ assert.equal(isWebKitContentProcess('node','node research/main1054/m282-native-debugger-preflight.mjs','/usr/bin/node'),false);
+ assert.equal(isWebKitContentProcess('WebKitNetworkPro','',''),false);
 });
 test('gdb denied ptrace stays an explicit blocker, never calls this a fix',()=>{
  const x=classifyAttach('ptrace: Operation not permitted.\n',1,null);
