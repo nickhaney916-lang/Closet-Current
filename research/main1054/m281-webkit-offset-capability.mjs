@@ -8,6 +8,7 @@ import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {pathToFileURL} from 'node:url';
+import {originalBinary} from './m280-original-jsep-function-map.mjs';
 
 export const parent='8ba2039f5ef45f07f6f248912c4f703c997f5beb';
 export const branch='refs/heads/research/main1054-m281-webkit-trap-offset-capability-HOLD';
@@ -89,18 +90,75 @@ export async function runBrowser(engine){
     return classifyProbe(engine,native);
   }finally{await browser.close();}
 }
+
+/** Enumerate opaque custom-section HEADERS only in source-SHA-verified ORIGINAL JSEP. */
+export function customSectionSummary(data){
+ const b=Buffer.from(data);
+ requireTrue(b.length>=8&&b.subarray(0,8).equals(Buffer.from([0,97,115,109,1,0,0,0])),
+  'not a WASM v1 binary');
+ let p=8;const out=[];
+ const u32=()=>{
+  let v=0;
+  for(let n=0;n<5;n++){
+   requireTrue(p<b.length,'truncated LEB');
+   const x=b[p++];v+=(x&127)*2**(n*7);
+   if(!(x&128)){requireTrue(v<=4294967295,'bad uint32');return v;}
+  }
+  throw Error('M281 BLOCKED: overlong LEB');
+ };
+ while(p<b.length){
+  const id=b[p++],size=u32(),end=p+size;
+  requireTrue(id<=13&&end<=b.length,'invalid section boundary');
+  if(id===0){
+   const n=u32();requireTrue(n<=512&&p+n<=end,'invalid custom section name');
+   const name=b.subarray(p,p+n).toString('utf8');
+   out.push({name,sectionBytes:size});
+  }
+  p=end;
+ }
+ const names=out.map(x=>x.name);
+ return {
+  schema:'M281_ORIGINAL_JSEP_DEBUG_METADATA_PRESENCE_V1',
+  customSections:out,
+  hasFunctionNameSection:names.includes('name'),
+  hasDWARFDebugSection:names.some(n=>n.startsWith('.debug_')),
+  sourceLineFromWasmVerified:false,
+  trapOffsetFromNativeEngineVerified:false,
+  originalCausalRepairProven:false,
+  familyAlpha:'HOLD'
+ };
+}
+async function fetchCanonicalBinary(){
+ const r=await fetch(originalBinary.url,{signal:AbortSignal.timeout(140000)});
+ requireTrue(r.ok,'public canonical original JSEP unavailable');
+ const b=Buffer.from(await r.arrayBuffer());
+ requireTrue(b.length===originalBinary.bytes&&
+  createHash('sha256').update(b).digest('hex')===originalBinary.sha256,
+  'original JSEP source hash/decoded length mismatch');
+ return b;
+}
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   try{
     const git=(...args)=>execFileSync('git',['-c','safe.directory='+process.cwd(),...args],
        {encoding:'utf8'}).replace(/\n$/,'');
     sourceGate(git,{name:process.env.GITHUB_EVENT_NAME,ref:process.env.GITHUB_REF,
       sha:process.env.GITHUB_SHA,attempt:process.env.GITHUB_RUN_ATTEMPT});
-    requireTrue(['webkit','chromium'].includes(process.argv[2]),'expected engine');
-    const result=await runBrowser(process.argv[2]);
-    mkdirSync('m281-sanitized',{recursive:true});
-    writeFileSync('m281-sanitized/'+process.argv[2]+'-offset-capability.json',
-      JSON.stringify(result,null,2)+'\n');
-    console.log('M281_REAL_NATIVE_ENGINE_OFFSET_CAPABILITY '+JSON.stringify(result));
+    if(process.argv[2]==='sections'){
+      const original=await fetchCanonicalBinary();
+      const result=customSectionSummary(original);
+      mkdirSync('m281-sanitized',{recursive:true});
+      writeFileSync('m281-sanitized/original-jsep-debug-sections.json',
+        JSON.stringify({canonicalBinarySHA256:originalBinary.sha256,canonicalOriginalBytes:original.length,
+          ...result},null,2)+'\n');
+      console.log('M281_EXACT_ORIGINAL_JSEP_DEBUG_SECTION_HEADINGS '+JSON.stringify(result));
+    }else{
+      requireTrue(['webkit','chromium'].includes(process.argv[2]),'expected engine');
+      const result=await runBrowser(process.argv[2]);
+      mkdirSync('m281-sanitized',{recursive:true});
+      writeFileSync('m281-sanitized/'+process.argv[2]+'-offset-capability.json',
+        JSON.stringify(result,null,2)+'\n');
+      console.log('M281_REAL_NATIVE_ENGINE_OFFSET_CAPABILITY '+JSON.stringify(result));
+    }
     // A successful capability check is not a successful original model run.
   }catch(e){console.error('M281_FAIL_CLOSED '+String(e.message||e).slice(0,240));process.exitCode=1;}
 }
