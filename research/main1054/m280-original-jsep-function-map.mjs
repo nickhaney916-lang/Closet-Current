@@ -212,8 +212,8 @@ async function verifyGitHubRed(token){
 async function downloadOriginal(){
  const res=await fetch(originalBinary.url,{signal:AbortSignal.timeout(140000)});
  insist(res.ok,'pinned public JSEP fetch failed');
- const length=Number(res.headers.get('content-length')||0);
- insist(!length||length===originalBinary.bytes,'unexpected JSEP content-length');
+ // HTTP Content-Length may describe compressed transfer bytes. Only decoded
+ // exact raw WASM length and canonical SHA256 can attest source identity.
  const bytes=Buffer.from(await res.arrayBuffer());
  insist(bytes.length===originalBinary.bytes&&
   createHash('sha256').update(bytes).digest('hex')===originalBinary.sha256,
