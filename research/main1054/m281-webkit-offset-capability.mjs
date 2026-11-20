@@ -51,7 +51,7 @@ export function parseWasmFrames(stack){
   }));
 }
 export function classifyProbe(engine,result){
-  requireTrue(['webkit','chromium'].includes(engine),'unsupported engine');
+  requireTrue(['webkit','chromium','node-v8'].includes(engine),'unsupported engine');
   requireTrue(result&&result.name==='RuntimeError','real WASM RuntimeError absent');
   requireTrue(/out of bounds|memory access/i.test(result.message||''),'wrong trap');
   const frames=parseWasmFrames(result.stack);
@@ -72,6 +72,21 @@ export function classifyProbe(engine,result){
     originalFamilyDataAccessed:false,familyAlpha:'HOLD'
   };
 }
+/** Native Node/V8 independent control; not Chromium, WebKit, or original ONNX. */
+export function runNodeV8(){
+  requireTrue(WebAssembly.validate(binary),'invalid negative-only WASM');
+  try{
+    new WebAssembly.Instance(new WebAssembly.Module(binary)).exports.probe();
+  }catch(error){
+    if(error instanceof WebAssembly.RuntimeError){
+      return classifyProbe('node-v8',{name:error.name,
+        message:String(error.message||''),stack:String(error.stack||'')});
+    }
+    throw error;
+  }
+  throw Error('M281 BLOCKED: native Node/V8 control failed to trap');
+}
+
 export async function runBrowser(engine){
   requireTrue(WebAssembly.validate(binary),'invalid pinned negative-only WASM');
   const pw=await import('playwright'),browserType=pw[engine];
@@ -152,8 +167,8 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
           ...result},null,2)+'\n');
       console.log('M281_EXACT_ORIGINAL_JSEP_DEBUG_SECTION_HEADINGS '+JSON.stringify(result));
     }else{
-      requireTrue(['webkit','chromium'].includes(process.argv[2]),'expected engine');
-      const result=await runBrowser(process.argv[2]);
+      requireTrue(['webkit','chromium','node-v8'].includes(process.argv[2]),'expected engine');
+      const result=process.argv[2]==='node-v8'?runNodeV8():await runBrowser(process.argv[2]);
       mkdirSync('m281-sanitized',{recursive:true});
       writeFileSync('m281-sanitized/'+process.argv[2]+'-offset-capability.json',
         JSON.stringify(result,null,2)+'\n');
