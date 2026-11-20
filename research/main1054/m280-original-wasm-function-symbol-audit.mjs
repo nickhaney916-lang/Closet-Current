@@ -211,7 +211,7 @@ export function auditWasm(bytes,options={requireOriginal:true}){
    .map(s=>({name:s.label,bytes:s.byteLength})),
   mappedFunctions:functions,
   originalModelInputRangeWasInBounds:true,
-  invalidInternalWasmAccessFunctionIdentified:
+  namedWasmStackFunctionsAvailable:
     functions.some(f=>f.confidentlyResolvedNativeSymbol),
   preciseTrapInstructionIdentified:false,
   targetedCausalNativeCorrectionDemonstrated:false,
