@@ -537,7 +537,8 @@ test('CLI needs private JPEG folder to accept source custody receipts as review 
  const dir=await mkdtemp(join(tmpdir(),'mission3-original-jpeg-bytes-'));
  try{
   const f=fixture(),manifestPath=join(dir,'mission3-private.json'),photos=join(dir,'photo-bytes');
-  const {mkdir}=await import('node:fs/promises');
+  const cli=resolve('research','mission3-release-evidence-gate','verify.mjs');
+  const {mkdir,symlink,unlink}=await import('node:fs/promises');
   await mkdir(photos);
   await writeFile(manifestPath,JSON.stringify(f.manifest));
   for(const [name,bytes] of f.files)await writeFile(join(dir,name),bytes);
@@ -552,5 +553,17 @@ test('CLI needs private JPEG folder to accept source custody receipts as review 
   assert.equal(decision.status,'EVIDENCE_READY_FOR_INDEPENDENT_REVIEW');
   assert.equal(decision.releaseAuthorized,false);
   assert.equal(decision.familyAlpha,'HOLD');
+  // Reject a path substituted with a symlink even if the target JPEG bytes
+  // and manually entered manifest hashes themselves still match.
+  const source=join(photos,photoKey('android-chrome',0,'capture'));
+  const target=join(dir,'outside-private-original.jpg');
+  await writeFile(target,f.photoFiles.get(photoKey('android-chrome',0,'capture')));
+  await unlink(source);
+  await symlink(target,source);
+  const symlinked=spawnSync(process.execPath,
+   [cli,'--verify',manifestPath,photos],{encoding:'utf8'});
+  assert.equal(symlinked.status,2);
+  assert.equal(JSON.parse(symlinked.stdout).status,'BLOCKED');
+  assert.ok(!symlinked.stdout.includes(target));
  }finally{await rm(dir,{recursive:true,force:true});}
 });
