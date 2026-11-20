@@ -136,6 +136,7 @@ export function mapModule(original,indices,{sha256=null,expectedSize=null}={}){
    }
   }
   // Other standard/custom sections are skipped according to their declared byte length.
+  if(id===0&&s.p<end)s.p=end; // unnamed custom payloads are opaque, not malformed.
   if([0,2,3,7,10].includes(id))s.endAt(end);
   r.p=end;
  }
