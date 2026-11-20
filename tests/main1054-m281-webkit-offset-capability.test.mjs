@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {binary,knownProbeLoadFileOffset,parseWasmFrames,classifyProbe,sourceGate,
-  parent,branch,added,customSectionSummary} from '../research/main1054/m281-webkit-offset-capability.mjs';
+  parent,branch,added,customSectionSummary,runNodeV8} from '../research/main1054/m281-webkit-offset-capability.mjs';
 
 test('native binary has real 64KiB out-of-bounds load at absolute file byte 44',()=>{
   assert.equal(binary.length,48);
@@ -87,4 +87,15 @@ test('canonical WASM metadata scanner is bounded; missing debug info NEVER yield
     /not a WASM/);
   assert.throws(()=>customSectionSummary(Uint8Array.from([...binary,0,128])),
     /truncated LEB/);
+});
+
+test('real Node/V8 native negative control returns actual WASM instruction 0x2c, never original model fix',()=>{
+  const r=runNodeV8();
+  assert.equal(r.engine,'node-v8');
+  assert.equal(r.reportedOffset,44);
+  assert.equal(r.stackHasOffset,true);
+  assert.equal(r.exactFileOffsetConfirmed,true);
+  assert.equal(r.originalSegFormerProcess,false);
+  assert.equal(r.originalWebKitTrapOffset,null);
+  assert.equal(r.permanentRepairProven,false);
 });
