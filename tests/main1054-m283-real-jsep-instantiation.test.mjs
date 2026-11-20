@@ -47,9 +47,13 @@ test('pass-through original browser instrumentation is valid JavaScript, no sour
  assert.equal(worker.includes('M283_NATIVE_WASM_SHA'),false);
  assert.throws(()=>instrument('ort-wasm-simd-threaded.jsep.mjs',Buffer.from('mismatch'),'/x'),/SHA mismatch/);
 });
-test('unbound or fabricated positive log cannot be accepted as original model',()=>{
- assert.throws(()=>assessProcess('M283_NATIVE_WASM_SHA '+JSON.stringify(good()),0,
-  {engine:'webkit',width:430,ordinal:1}),/BLOCKED|invalid|original|trace/i);
+test('unbound or fabricated positive log is explicitly BLOCKED, not a native model positive',()=>{
+ const r=assessProcess('M283_NATIVE_WASM_SHA '+JSON.stringify(good()),0,
+  {engine:'webkit',width:430,ordinal:1});
+ assert.equal(r.originalPositive,false);
+ assert.equal(r.verdict,'ORIGINAL_RED_OR_BLOCKED');
+ assert.equal(r.nativeCausalFixProven,false);
+ assert.equal(r.releaseAllowed,false);
 });
 test('strict source ancestry + only three additive files + no retries/source drift',()=>{
  const sha='a'.repeat(40),old={
