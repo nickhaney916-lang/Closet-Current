@@ -297,38 +297,44 @@ export function evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase({
  minBodyArea=bs.minimumOriginalDoubleArea;
  const ninfo={...common,minimumOriginalFrontDoubleAreaRigUnitsSquared:minFrontArea,
   minimumOriginalBodyDoubleAreaRigUnitsSquared:minBodyArea};
- // Balanced median BVH over ALL actual body indexed triangles. Bounding
- // boxes enclose the full time continuum, not merely five screenshots.
- const ids=Array.from({length:nb},(_,i)=>i);
+ // FOUR complete original-body BVHs for FOUR synchronized time slabs.
+ // The original vertex/face envelopes are certified by true two-angle
+ // third-harmonic time derivatives and original endpoints; no time skipped.
  let nodes=0,leaves=0,maxDepth=0;
- const build=(low,high,depth)=>{
+ const build=(low,high,depth,ids,bodyBoxes)=>{
   nodes++;maxDepth=Math.max(maxDepth,depth);
   const bound=new Float64Array([Infinity,Infinity,Infinity,
    -Infinity,-Infinity,-Infinity]);
-  for(let j=low;j<high;j++){
-   const p=ids[j]*6;
-   addBound(bound,0,bs.boxes,p);
-  }
+  for(let j=low;j<high;j++)
+   addBound(bound,0,bodyBoxes,ids[j]*6);
   if(high-low<=12){leaves++;return {bound,low,high};}
   let axis=0;
   if(bound[4]-bound[1]>bound[3]-bound[0])axis=1;
   if(bound[5]-bound[2]>bound[axis+3]-bound[axis])axis=2;
-  const segment=ids.slice(low,high);
-  segment.sort((a,b)=>(
-   bs.boxes[6*a+axis]+bs.boxes[6*a+axis+3])-
-   (bs.boxes[6*b+axis]+bs.boxes[6*b+axis+3]));
-  for(let j=0;j<segment.length;j++)ids[low+j]=segment[j];
-  const mid=Math.floor((low+high)/2);
-  return {bound,left:build(low,mid,depth+1),
-   right:build(mid,high,depth+1)};
+  const sorted=ids.slice(low,high);
+  sorted.sort((a,b)=>(
+   bodyBoxes[a*6+axis]+bodyBoxes[a*6+axis+3])-
+   (bodyBoxes[b*6+axis]+bodyBoxes[b*6+axis+3]));
+  for(let j=0;j<sorted.length;j++)ids[low+j]=sorted[j];
+  const mid=(low+high)>>1;
+  return {bound,left:build(low,mid,depth+1,ids,bodyBoxes),
+   right:build(mid,high,depth+1,ids,bodyBoxes)};
  };
- const root=build(0,nb,0);
+ const slabs=bs.boxes.map((bodyBoxes,i)=>{
+  const ids=Array.from({length:nb},(_,k)=>k);
+  const root=build(0,nb,0,ids,bodyBoxes);
+  return {root,ids,bodyBoxes,frontBoxes:fs.boxes[i]};
+ });
  let visits=0,leafPairTests=0,envelopeOverlaps=0,
   exactSamplesTested=0,unknownExactSamples=0;
  const summary=(decision,extra={})=>forbid(decision,{
-  ...ninfo,allOriginalBodyFacesPresentInSweptBVH:ids.length===nb,
+  ...ninfo,
+  allOriginalBodyFacesPresentInSweptBVH:
+   slabs.length===4&&slabs.every(v=>v.ids.length===nb),
   fullOriginalTwoJointSimultaneousPathSweptBroadphaseCompleted:
    extra.complete===true,
+  originalConservativeSweptTimeSlabs:4,
+  exactOriginalTimeSlabEndpoints:[0,.25,.5,.75,1],
   originalBodyBVHNodes:nodes,originalBodyBVHLeaves:leaves,
   maximumBodyBVHDepth:maxDepth,
   bodyBVHNodesVisited:visits,bodyLeafPairsChecked:leafPairTests,
@@ -338,35 +344,43 @@ export function evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase({
   ...extra
  });
  const stack=[];
- for(let fi=0;fi<nf;fi++){
-  stack.length=0;stack.push(root);
-  while(stack.length){
-   const node=stack.pop();visits++;
-   if(visits>maxBodyBVHVisits)
-    return summary('BLOCKED_TWO_JOINT_BVH_VISIT_BUDGET',{
-     lastFrontFaceIndex:fi,complete:false});
-   if(!hit(fs.boxes,6*fi,node.bound,0))continue;
-   if(node.left){stack.push(node.left,node.right);continue;}
-   for(let j=node.low;j<node.high;j++){
-    const bi=ids[j];leafPairTests++;
-    if(leafPairTests>maxLeafPairTests)
-     return summary('BLOCKED_TWO_JOINT_FACE_PAIR_BUDGET',{
-      lastFrontFaceIndex:fi,complete:false});
-    if(!hit(fs.boxes,6*fi,bs.boxes,6*bi))continue;
-    envelopeOverlaps++;
-    if(envelopeOverlaps>maxNarrowphasePairs)
-     return summary('BLOCKED_TWO_JOINT_EXACT_SAMPLE_BUDGET',{
-      lastFrontFaceIndex:fi,complete:false});
-    for(let t=0;t<5;t++){
-     const cls=classifyExactTriangleContact(
-      faceTriangle(frontPoses,frontIndices,fi,t),
-      faceTriangle(bodyPoses,bodyIndices,bi,t));
-     exactSamplesTested++;
-     if(['CROSSING','TOUCHING','COPLANAR_OVERLAP'].includes(cls))
-      return summary('BLOCKED_ACTUAL_TRUE_ORIGINAL_DISCRETE_CONTACT',{
-       witness:{frontFace:fi,bodyFace:bi,normalizedTime:times[t],
-        contactClass:cls},complete:false});
-     if(cls==='INDETERMINATE')unknownExactSamples++;
+ for(let slab=0;slab<4;slab++){
+  const {root,ids,bodyBoxes,frontBoxes}=slabs[slab];
+  for(let fi=0;fi<nf;fi++){
+   stack.length=0;stack.push(root);
+   while(stack.length){
+    const node=stack.pop();visits++;
+    if(visits>maxBodyBVHVisits)
+     return summary('BLOCKED_TWO_JOINT_BVH_VISIT_BUDGET',{
+      lastTimeSlab:slab,lastFrontFaceIndex:fi,complete:false});
+    if(!hit(frontBoxes,6*fi,node.bound,0))continue;
+    if(node.left){stack.push(node.left,node.right);continue;}
+    for(let j=node.low;j<node.high;j++){
+     const bi=ids[j];leafPairTests++;
+     if(leafPairTests>maxLeafPairTests)
+      return summary('BLOCKED_TWO_JOINT_FACE_PAIR_BUDGET',{
+       lastTimeSlab:slab,lastFrontFaceIndex:fi,complete:false});
+     if(!hit(frontBoxes,6*fi,bodyBoxes,6*bi))continue;
+     envelopeOverlaps++;
+     if(envelopeOverlaps>maxNarrowphasePairs)
+      return summary('BLOCKED_TWO_JOINT_EXACT_SAMPLE_BUDGET',{
+       lastTimeSlab:slab,lastFrontFaceIndex:fi,complete:false});
+     // Only exact ORIGINAL matching-time face pairs at BOTH endpoints of
+     // the active temporal slab. A between-frame possibility stays BLOCKED
+     // by the conservative swept-envelope overlap even without observed
+     // touching/crossing at these discrete pose times.
+     for(const t of [slab,slab+1]){
+      const cls=classifyExactTriangleContact(
+       faceTriangle(frontPoses,frontIndices,fi,t),
+       faceTriangle(bodyPoses,bodyIndices,bi,t));
+      exactSamplesTested++;
+      if(['CROSSING','TOUCHING','COPLANAR_OVERLAP'].includes(cls))
+       return summary('BLOCKED_ACTUAL_TRUE_ORIGINAL_DISCRETE_CONTACT',{
+        witness:{frontFace:fi,bodyFace:bi,
+         normalizedTime:times[t],contactClass:cls,
+         originalTimeSlab:slab},complete:false});
+      if(cls==='INDETERMINATE')unknownExactSamples++;
+     }
     }
    }
   }
@@ -374,9 +388,9 @@ export function evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase({
  if(envelopeOverlaps)
   return summary('BLOCKED_UNRESOLVED_FULL_INDEXED_SIMULTANEOUS_TWO_JOINT_CONTACT',{
    complete:true,
-   reason:'all original indexed angular envelopes checked but possible in-between contact unresolved'});
+   reason:'all original indexed faces audited across FOUR same-time slabs, but possible continuous between-frame contact remains unresolved'});
  return summary('RESEARCH_ONLY_FULL_INDEXED_SIMULTANEOUS_TWO_JOINT_PATH_ENVELOPES_DISJOINT',{
   complete:true,
-  reason:'all original supplied front+body bounds disjoint only for two-angle simultaneous linear fixed-axis LBS and FLOATING uncalibrated photo front is NOT worn clothing'
+  reason:'full four-time-slab conservative two-angle synchronized original front/body envelope separation in floating viewer only; garment NOT fitted'
  });
 }
