@@ -43,7 +43,8 @@ function setup({frontBaseline=3,bodyBaseline=0,
   })),
   frontIndices:faces,bodyIndices:faces,
   expectedFrontFaces:1,expectedBodyFaces:1,
-  sourceWitness:{...witness}
+  sourceWitness:{...witness,
+   simultaneousMovingNamedBones:[...witness.simultaneousMovingNamedBones]}
  };
 }
 test('two original simultaneous original-joint Fourier cross terms are enclosed through full path',()=>{
