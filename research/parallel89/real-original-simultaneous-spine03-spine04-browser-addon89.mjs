@@ -1,0 +1,172 @@
+/**
+ * M2 original authentic public museum garment front + CC0 licensed male/female
+ * 163bone skeleton, TWO spine joints moving at the SAME TIME. This is a
+ * browser-only additive module appended IN MEMORY to the original SHA-pinned
+ * unmodified original photographic THREE source registration.
+ */
+import {evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase}
+ from './simultaneous-two-original-spine-joint-bvh89.mjs';
+
+window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=()=>{
+ const x=sourceSkinResearch;
+ invariant(x?.mesh?.isSkinnedMesh&&x?.model?.snapshots?.length>0&&
+  x.body?.skeleton?.bones?.length===163&&
+  x.mesh.skeleton===x.body.skeleton&&
+  x.lowerName==='spine03'&&x.upperName==='spine04',
+  'true-original-licensed-two-moving-named-bones-not-found');
+ const model=x.model,frontIndices=faces.slice(
+  range.sourcePhotoFront.start,
+  range.sourcePhotoFront.start+range.sourcePhotoFront.count);
+ invariant(frontIndices.length/3===35262&&x.sourceFrontN===17985,
+  'entire-original-museum-photo-front-original-faces-required');
+ const parts=model.snapshots.map(entry=>{
+  const mesh=entry.mesh,geometry=mesh.geometry,
+   vertices=geometry.getAttribute('position'),
+   index=geometry.getIndex();
+  invariant(mesh.isSkinnedMesh&&mesh.skeleton.bones.length===163&&
+   vertices.count>2,'true-original-licensed-body-component-missing');
+  const n=index?index.count:vertices.count;
+  invariant(n>0&&n%3===0,'actual-original-body-component-face-invalid');
+  return {mesh,index,vertexCount:vertices.count,indexCount:n};
+ });
+ const bodyVertexCount=parts.reduce((v,p)=>v+p.vertexCount,0),
+  bodyIndices=new Uint32Array(parts.reduce((v,p)=>v+p.indexCount,0));
+ let pos=0,offset=0;
+ for(const p of parts){
+  for(let i=0;i<p.indexCount;i++){
+   const local=p.index?p.index.getX(i):i;
+   invariant(Number.isSafeInteger(local)&&local>=0&&
+    local<p.vertexCount,'actual-original-body-vertex-index-out-of-range');
+   bodyIndices[offset+i]=pos+local;
+  }
+  pos+=p.vertexCount;offset+=p.indexCount;
+ }
+ invariant(bodyVertexCount===72771&&bodyIndices.length/3===109064,
+  'all-original-licensed-body-anatomy-indexed-faces-required');
+ const allBones=x.body.skeleton.bones,
+  q3=x.lowerBone.quaternion.clone(),q4=x.posedBone.quaternion.clone();
+ const originalLocalPose=allBones.map(b=>({
+  b,p:b.position.toArray(),q:b.quaternion.toArray(),
+  s:b.scale.toArray()
+ }));
+ const frozenOther161=()=>originalLocalPose.every(item=>{
+  const bone=item.b;
+  if(bone===x.lowerBone||bone===x.posedBone)return true;
+  return item.p.every((v,k)=>bone.position.toArray()[k]===v)&&
+   item.q.every((v,k)=>bone.quaternion.toArray()[k]===v)&&
+   item.s.every((v,k)=>bone.scale.toArray()[k]===v);
+ });
+ const index=frontIndices[0],
+  trueOriginalVertex=originalSkinnedVertexWorld(x.mesh,index),
+  zeroSeed=x.mesh.applyBoneTransform(index,new THREE.Vector3())
+   .applyMatrix4(x.mesh.matrixWorld);
+ const realOriginalVsIncorrectZeroSeedDistance=
+  trueOriginalVertex.distanceTo(zeroSeed);
+ invariant(Number.isFinite(realOriginalVsIncorrectZeroSeedDistance)&&
+  realOriginalVsIncorrectZeroSeedDistance>.0001,
+  'not-true-original-position-attribute-skinning');
+ const actualVertices=(mesh,count)=>{
+  const positions=new Float64Array(count*3);
+  mesh.updateWorldMatrix(true,false);mesh.skeleton.update();
+  for(let i=0;i<count;i++){
+   const original=originalSkinnedVertexWorld(mesh,i);
+   invariant([original.x,original.y,original.z].every(Number.isFinite),
+    'actual-original-simultaneous-joint-pose-nonfinite');
+   positions[i*3]=original.x;
+   positions[i*3+1]=original.y;
+   positions[i*3+2]=original.z;
+  }
+  return positions;
+ };
+ const generate=(a,b)=>{
+  x.lowerBone.quaternion.copy(q3);
+  x.lowerBone.rotateZ(a*Math.PI/180);
+  x.posedBone.quaternion.copy(q4);
+  x.posedBone.rotateZ(b*Math.PI/180);
+  model.root.updateMatrixWorld(true);
+  x.body.skeleton.update();
+  invariant(frozenOther161(),
+   'simultaneous-original-two-joint-pose-mutated-third-bone');
+  const front=actualVertices(x.mesh,x.sourceFrontN),
+   body=new Float64Array(bodyVertexCount*3);
+  let j=0;
+  for(const p of parts){
+   const v=actualVertices(p.mesh,p.vertexCount);
+   body.set(v,j);j+=v.length;
+  }
+  invariant(j===body.length,'actual-original-licensed-anatomy-truncated');
+  return {front,body};
+ };
+ try{
+  const grid=[],path=[],offDiagonal=[];
+  for(const a of [-6,0,6])for(const b of [-12,0,12])
+   grid.push(generate(a,b));
+  for(let i=0;i<5;i++){
+   const a=[-6,-3,0,3,6][i],b=[-12,-6,0,6,12][i];
+   path.push(generate(a,b));
+  }
+  for(const [a,b] of [[-3,6],[3,-6]])
+   offDiagonal.push({anglesDeg:[a,b],...generate(a,b)});
+  const evaluator=evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase({
+   frontGridPoses:grid.map(x=>x.front),
+   bodyGridPoses:grid.map(x=>x.body),
+   frontPoses:path.map(x=>x.front),
+   bodyPoses:path.map(x=>x.body),
+   independentOffDiagonalHoldouts:offDiagonal.map(x=>({
+    anglesDeg:x.anglesDeg,frontVertices:x.front,bodyVertices:x.body
+   })),
+   frontIndices,bodyIndices,expectedFrontFaces:35262,
+   expectedBodyFaces:109064,
+   sourceWitness:{
+    actualRigBoneCount:163,
+    simultaneousMovingNamedBones:['spine03','spine04'],
+    other161BoneLocalTransformsFrozen:frozenOther161(),
+    independentOriginalSourceJointPoses:true,
+    sourceCoordinatesReadFromOriginalPositionAttribute:true,
+    originalSourceSkinnedMesh:x.mesh.isSkinnedMesh,
+    originalJPEG_SHA256:payload.originalJPEGByteSHA256,
+    actualLicensedRigSHA256:model.sha256
+   }
+  });
+  invariant(evaluator.consumer3DAdmitted===false&&
+   evaluator.familyAlpha==='HOLD'&&
+   evaluator.allSubmittedOriginalFacesIndexed===true&&
+   evaluator.originalFrontFaceCount===35262&&
+   evaluator.originalBodyFaceCount===109064,
+   'two-original-bone-true-face-scope-or-no-release-broken');
+  sourceSkinProvenanceUnchanged();
+  assertModelUnchanged(model);
+  return {
+   schema:'M2-original-licensed-163bone-true-two-simultaneous-spine-joints-full-front-body-BVH/RESEARCH/v1',
+   originalJPEG_SHA256:payload.originalJPEGByteSHA256,
+   originalDecodedRGB_SHA256:required.sourceRGB,
+   originalMachineUnreviewedMaskSHA256:required.conservativeMaskPNG,
+   realOriginalLicensedRigKind:x.kind,
+   originalLicensed163boneGLBSHA256:model.sha256,
+   realOriginalFrontFaces:35262,realOriginalBodyFaces:109064,
+   realOriginalFrontVertices:x.sourceFrontN,
+   realOriginalBodyVertices:bodyVertexCount,
+   originalGridRealJointAnglePairsDegrees:
+    [-6,0,6].flatMap(a=>[-12,0,12].map(b=>[a,b])),
+   originalSimultaneousPathJointAnglePairsDegrees:
+    [[-6,-12],[-3,-6],[0,0],[3,6],[6,12]],
+   independentOriginalOffDiagonalPosePairsDegrees:[[-3,6],[3,-6]],
+   actualOriginalCorrectedXYZRatherThanZeroSeed:true,
+   originalCorrectedVsHistoricalZeroSeedDistanceRigUnits:
+    realOriginalVsIncorrectZeroSeedDistance,
+   other161BoneLocalPoseTransformsImmutable:true,
+   trueSimultaneousTwoJointFullIndexedAudit:evaluator,
+   sourcePhotoFrontFloatingWithoutPhysicalCalibratedFit:true,
+   simultaneousMotionConstrainedToSingleDiagonalJointAnglePath:true,
+   noSewingSeamTextilePhysicsOrUnknownReverseClaim:true,
+   ownerRulerOrAnatomicalDimensionsNotMeasured:true,
+   originalPhoto2DFallbackRequired:true,consumer3DAdmitted:false,
+   familyAlpha:'HOLD'
+  };
+ }finally{
+  x.lowerBone.quaternion.copy(q3);
+  x.posedBone.quaternion.copy(q4);
+  model.root.updateMatrixWorld(true);
+  x.body.skeleton.update();
+ }
+};
