@@ -1,0 +1,93 @@
+name: MAIN1054 M291 browser-owned WPE mapped-native ELF fingerprints HOLD
+on:
+  push:
+    branches: [research/main1054-m291-loaded-wpe-native-elf-closure-HOLD]
+permissions:
+  contents: read
+jobs:
+  m291-original-source-and-full-owner-private-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Freeze original M279 RED and untouched M290/source/owner controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/main1054/m290-live-native-elf-identity.mjs)" = 5d395b06ad76750d1d0a709daab9cfd49e88cc6e
+          node --check research/main1054/m291-loaded-wpe-elf-closure.mjs
+          node --check tests/main1054-m291-loaded-wpe-elf-closure.test.mjs
+      - name: Test exact source provenance and negative controls, never invent trap PC
+        run: node --test tests/main1054-m291-loaded-wpe-elf-closure.test.mjs
+      - name: Inherited real original M290 and M286 to M279 source and native controls
+        run: |
+          node --test tests/main1054-m290-live-native-elf-identity.test.mjs
+          node --test tests/main1054-m286-pinned-webkit-source-binary-provenance.test.mjs tests/main1054-m284-wpe-native-process-discovery.test.mjs tests/main1054-m282-native-debugger-preflight.test.mjs tests/main1054-m281-webkit-trap-pc-capability.test.mjs tests/main1054-m280-original-jsep-function-map.test.mjs tests/main1054-m279-original-model-pointer-bounds.test.mjs
+      - name: Install only original no-deploy app test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build untouched original application and all existing owner/photo/private/2D-v4/backup tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  m291-real-original-pinned-wpe-owned-process-elf-sha:
+    needs: m291-original-source-and-full-owner-private-regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fail closed if original pinned sources drift or workflow rerun
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD:research/main1054/m290-live-native-elf-identity.mjs)" = 5d395b06ad76750d1d0a709daab9cfd49e88cc6e
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Install pinned Playwright API and ordinary readelf, no native debugging or permission changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v readelf >/dev/null; then
+            apt-get update -qq
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends binutils
+          fi
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Fingerprint actual mapped original-root native files in our local-only WPE child
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout -k 5s 240s node research/main1054/m291-loaded-wpe-elf-closure.mjs probe
+          test -s m291-sanitized/pinned-wpe-mapped-native-file-shas.json
+      - name: Retain only bounded public pinned-native SHA and Build ID metadata
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m291-source-pinned-wpe-loaded-native-SHA-buildid-NO-TRAP-PC-HOLD
+          path: m291-sanitized/pinned-wpe-mapped-native-file-shas.json
+          retention-days: 7
+          if-no-files-found: ignore
