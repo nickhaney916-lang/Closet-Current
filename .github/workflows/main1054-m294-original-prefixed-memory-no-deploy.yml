@@ -1,0 +1,88 @@
+name: MAIN1054 M294 exact original JSEP prefixed memory opcode reconciliation HOLD
+on:
+  push:
+    branches: [research/main1054-m294-original-prefixed-memory-boundaries-HOLD]
+permissions:
+  contents: read
+jobs:
+  m294-original-source-and-complete-owner-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: First-attempt exact original Worker JSEP M293 source freeze
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/main1054/m280-original-jsep-function-map.mjs)" = c52b967bc80ce8ba4c2c69bc2ea09c70e50bb332
+          test "$(git rev-parse HEAD:research/main1054/m293-original-wasm-instruction-boundary.mjs)" = 03bc9a5bb01657378a386bcb51125c16bcc8e731
+          node --check research/main1054/m294-prefixed-original-memory-opcode-boundaries.mjs
+          node --check tests/main1054-m294-prefixed-original-memory-opcode-boundaries.test.mjs
+      - name: New M294 SIMD atomic bulk static boundary and forged native PC negative tests
+        run: node --test tests/main1054-m294-prefixed-original-memory-opcode-boundaries.test.mjs
+      - name: Inherited M293 M292 M291 M290 M286 M279 safety and original failure controls
+        run: |
+          node --test tests/main1054-m293-original-wasm-instruction-boundary.test.mjs tests/main1054-m292-original-native-pc-evidence-handoff.test.mjs tests/main1054-m291-loaded-wpe-elf-closure.test.mjs tests/main1054-m290-live-native-elf-identity.test.mjs
+          node --test tests/main1054-m286-pinned-webkit-source-binary-provenance.test.mjs tests/main1054-m284-wpe-native-process-discovery.test.mjs tests/main1054-m282-native-debugger-preflight.test.mjs tests/main1054-m281-webkit-trap-pc-capability.test.mjs tests/main1054-m280-original-jsep-function-map.test.mjs tests/main1054-m279-original-model-pointer-bounds.test.mjs
+      - name: Install pinned original no-deploy owner private backup offline dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build original app and all unchanged owner photo 2D-v4 private backup Node suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  m294-canonical-original-binary-real-WABT-family-reconciliation:
+    needs: m294-original-source-and-complete-owner-regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce exact original source first attempt no runtime modifications
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Install standard WABT static disassembler without engine/debugger modifications
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends wabt
+          wasm-objdump --version
+      - name: SHA-attested original 21.6MB JSEP real WABT M288 plus M293 reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout -k 10s 1400s node research/main1054/m294-prefixed-original-memory-opcode-boundaries.mjs static-reconcile
+          test -s m294-tmp/original-prefixed-memory-reconciliation.json
+          test ! -e m294-tmp/canonical-JSEP-TEMP.wasm
+          M294_SANITIZED_RECEIPT=m294-tmp/original-prefixed-memory-reconciliation.json node --test tests/main1054-m294-prefixed-original-memory-opcode-boundaries.test.mjs
+      - name: Archive ONLY bounded original static prefixed op counts never native trap PC
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m294-real-original-JSEP-SIMD-atomic-bulk-static-counts-NOT-TRAP-HOLD
+          path: m294-tmp/original-prefixed-memory-reconciliation.json
+          retention-days: 7
+          if-no-files-found: ignore
