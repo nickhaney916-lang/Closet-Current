@@ -50,7 +50,7 @@ export function sourceGate(git,e){
 // NOT only standard href links. Never accept absolute/remote/socket paths.
 export function parseLocalInspectorPaths(markup){
  need(typeof markup==='string'&&markup.length<=65536,'oversized or invalid inspector listing');
- const matches=[...markup.matchAll(/['"](\\/socket\\/([0-9]{1,18})\\/([0-9]{1,18})\\/([a-zA-Z][a-zA-Z0-9_-]{0,47}))['"]/g)];
+ const matches=[...markup.matchAll(/['"](\/socket\/([0-9]{1,18})\/([0-9]{1,18})\/([a-zA-Z][a-zA-Z0-9_-]{0,47}))['"]/g)];
  const out=[];
  for(const m of matches){
   const left=Number(m[2]),right=Number(m[3]);
