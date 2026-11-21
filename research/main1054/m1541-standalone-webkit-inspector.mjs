@@ -19,7 +19,8 @@ const report={
  dualSyntheticOpcodeOffsets:null,dualSyntheticTrapCaught:false,dualPauseReceipts:[],
  dualResumeAckCount:0,sameJavascriptPauseLocation:null,wasmBytecodeAttributionVerified:false,
  workerCreated:false,workerReady:false,workerTargetCreated:false,
- workerTargetScope:null,workerTargetDestroyed:false,workerScriptEvaluation:false
+ workerTargetScope:null,workerTargetDestroyed:false,workerScriptEvaluation:false,
+ workerHttpKinds:[],workerHttpNonPagePath:false,workerHttpListingAvailable:false
 };
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let child,socket,spawnError=null;
@@ -185,7 +186,24 @@ try {
     sendNested(109,'Runtime.evaluate',{expression:"window.__m1541WorkerState",returnByValue:true});
     for(let i=0;i<24&&!innerReplies.has(109)&&!report.processExited;i++)await wait(250);
     if(!report.workerReady)throw Error('synthetic Worker did not post ready message');
-    if(!report.workerTargetCreated)throw Error('dedicated Worker Inspector target not discovered');
+    // Standalone WPE HTTP discovery may expose dedicated Worker separately
+    // even if page Target.targetCreated is absent. Examine only bounded local
+    // endpoint TYPE tokens, never raw socket IDs or page/user data.
+    for(let i=0;i<12&&!report.workerHttpNonPagePath;i++){
+     try{
+      const r=await fetch('http://'+host+'/',{signal:AbortSignal.timeout(650),redirect:'error'});
+      if(r.ok){
+       report.workerHttpListingAvailable=true;
+       const p=parseLocalInspectorPaths(await r.text());
+       const kinds=[...new Set(p.map(v=>v.split('/').at(-1)))].filter(v=>/^[A-Za-z][A-Za-z0-9_-]{0,47}$/.test(v));
+       report.workerHttpKinds=kinds.slice(0,10);
+       report.workerHttpNonPagePath=kinds.some(v=>v!=='WebPage');
+      }
+     }catch{}
+     if(!report.workerHttpNonPagePath)await wait(250);
+    }
+    if(!report.workerTargetCreated&&!report.workerHttpNonPagePath)
+     throw Error('dedicated Worker neither Target event nor independent local endpoint');
     sendNested(110,'Runtime.evaluate',{expression:"(()=>{window.__m1541Worker.terminate();URL.revokeObjectURL(window.__m1541WorkerUrl);return 'TERMINATED'})()",returnByValue:true});
     for(let i=0;i<24&&!innerReplies.has(110)&&!report.processExited;i++)await wait(250);
     if(!report.workerScriptEvaluation)throw Error('synthetic Worker termination failed');
