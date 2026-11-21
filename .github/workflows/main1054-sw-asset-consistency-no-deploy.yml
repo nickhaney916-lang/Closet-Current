@@ -28,7 +28,7 @@ jobs:
           git diff --check "$BASE" HEAD
           while IFS= read -r changed; do
             case "$changed" in
-              public/sw.js|tests/main1054-sw-asset-consistency.test.cjs|.github/workflows/main1054-sw-asset-consistency-no-deploy.yml) ;;
+              public/sw.js|tests/main1054-sw-asset-consistency.test.cjs|tests/main1054-sw-asset-browser.cjs|.github/workflows/main1054-sw-asset-consistency-no-deploy.yml) ;;
               *) echo "OUT OF SCOPE: $changed"; exit 1 ;;
             esac
           done < <(git diff --name-only "$BASE" HEAD)
@@ -40,6 +40,14 @@ jobs:
         run: |
           set -euo pipefail
           node --test tests/main1054-sw-asset-consistency.test.cjs | tee "$RUNNER_TEMP/sw-test.tap"
+      - name: Exercise actual Chromium and WebKit service worker updates with synthetic assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+          node tests/main1054-sw-asset-browser.cjs | tee "$RUNNER_TEMP/sw-browser.json"
+          grep -q '"status": "PASS"' "$RUNNER_TEMP/sw-browser.json"
       - name: Run untouched ordinary application Node regression suite
         shell: bash
         run: |
@@ -54,5 +62,6 @@ jobs:
           name: main1054-sw-asset-consistency-no-deploy
           path: |
             ${{ runner.temp }}/sw-test.tap
+            ${{ runner.temp }}/sw-browser.json
             ${{ runner.temp }}/sw-full-node.tap
           if-no-files-found: ignore
