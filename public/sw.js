@@ -1,8 +1,17 @@
 'use strict';
-const CACHE='closet-current-__VERSION__';
+const VERSION='__VERSION__';
+const CACHE='closet-current-'+VERSION;
 const FILES=__ASSETS__;
 const urls=FILES.map(path=>new URL(path,self.registration.scope).href);
-self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(urls)));});
+function releaseURL(href){
+ const url=new URL(href);
+ if(!url.search)url.searchParams.set('v',VERSION);
+ return url.href;
+}
+self.addEventListener('install',event=>{
+ const requests=[...new Set(urls.map(releaseURL))].map(url=>new Request(url,{cache:'reload'}));
+ event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(requests)));
+});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('closet-current-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',event=>{
  if(event.request.method!=='GET')return;
@@ -13,7 +22,8 @@ self.addEventListener('fetch',event=>{
  if(!isHome&&!urls.includes(url.href))return;
  event.respondWith((async()=>{
   const cache=await caches.open(CACHE);
-  try{const response=await fetch(event.request);if(response.ok&&!response.redirected&&response.type==='basic')await cache.put(isHome?index:event.request,response.clone());return response;}
-  catch{const saved=await cache.match(isHome?index:event.request);return saved||new Response('Reconnect to load Closet Current.',{status:503});}
+  // Only a newly installed worker can replace this release's asset snapshot.
+  const saved=await cache.match(releaseURL(isHome?index:url.href));
+  return saved||new Response('Reload to load Closet Current.',{status:503});
  })());
 });

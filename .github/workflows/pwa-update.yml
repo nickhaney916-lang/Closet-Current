@@ -1,0 +1,32 @@
+name: PWA release cache acceptance
+on:
+  pull_request:
+    paths:
+      - public/sw.js
+      - public/pwa.js
+      - scripts/build.mjs
+      - scripts/run-pwa-update.mjs
+      - tests/pwa.test.mjs
+      - .github/workflows/pwa-update.yml
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.mjs
+      - run: node --test tests/*.test.cjs tests/*.test.mjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps ${{ matrix.engine }}
+      - run: node scripts/run-pwa-update.mjs ${{ matrix.engine }}
