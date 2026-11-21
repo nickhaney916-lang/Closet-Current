@@ -28,7 +28,7 @@ jobs:
           git diff --check "$BASE" HEAD
           while IFS= read -r file; do
             case "$file" in
-              public/outfit-board.js|public/closet-browser.js|tests/main1054-outfit-clear-rollback.test.cjs|.github/workflows/main1054-outfit-clear-rollback-no-deploy.yml) ;;
+              public/outfit-board.js|public/closet-browser.js|tests/main1054-outfit-clear-rollback.test.cjs|scripts/main1054-outfit-clear-browser.cjs|.github/workflows/main1054-outfit-clear-rollback-no-deploy.yml) ;;
               *) echo "OUT OF SCOPE: $file"; exit 1 ;;
             esac
           done < <(git diff --name-only "$BASE" HEAD)
@@ -49,6 +49,16 @@ jobs:
           node --test --test-concurrency=1 tests/*.cjs tests/*.mjs | tee "$RUNNER_TEMP/clear-full.tap"
           grep -Eq '^# fail 0$' "$RUNNER_TEMP/clear-full.tap"
           grep -Eq '^# skipped 0$' "$RUNNER_TEMP/clear-full.tap"
+      - name: Compare actual Chromium and WebKit outfit clearing against pre-fix source and native IndexedDB
+        shell: bash
+        run: |
+          set -euo pipefail
+          git worktree add --detach "$RUNNER_TEMP/m4-clear-old" 23d111ad6cde011f78b036f91cd85cf19bb897ea
+          (cd "$RUNNER_TEMP/m4-clear-old" && node scripts/build.mjs)
+          npx playwright install --with-deps chromium webkit
+          node scripts/main1054-outfit-clear-browser.cjs "$RUNNER_TEMP/m4-clear-old/dist" dist | tee "$RUNNER_TEMP/clear-browser.json"
+          grep -q '"status": "PASS"' "$RUNNER_TEMP/clear-browser.json"
+          grep -q '"checks": 28' "$RUNNER_TEMP/clear-browser.json"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -56,4 +66,5 @@ jobs:
           path: |
             ${{ runner.temp }}/clear-focused.tap
             ${{ runner.temp }}/clear-full.tap
+            ${{ runner.temp }}/clear-browser.json
           if-no-files-found: ignore
