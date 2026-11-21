@@ -36,12 +36,17 @@ self.addEventListener('fetch',event=>{
   }
   try{
    const response=await fetch(event.request);
-   if(response.ok&&!response.redirected&&response.type==='basic'){
-    // An old active SW can see a new shell before the new SW activates.
-    // Serve it online, but preserve the old shell for coherent offline reloads.
-    if(!isHome||sameVersionShell(await response.clone().text())){
-     await cache.put(isHome?index:event.request,response.clone());
+   if(isHome){
+    // Until the matching new SW activates, a newly deployed HTML shell would
+    // launch new versioned JS while this old SW still pins unversioned Worker
+    // imports. Serve the coherent old shell instead of mixing revisions.
+    if(!response.ok||response.redirected||response.type!=='basic'||
+       !sameVersionShell(await response.clone().text())){
+     return await cache.match(index)||new Response('Matching application update unavailable. Reconnect and reload.',{status:503});
     }
+    await cache.put(index,response.clone());
+   }else if(response.ok&&!response.redirected&&response.type==='basic'){
+    await cache.put(event.request,response.clone());
    }
    return response;
   }

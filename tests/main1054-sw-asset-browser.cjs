@@ -77,8 +77,8 @@ async function exercise(name,engine,base){
      name+' reused stale app query must not load new bytes');
    assert.match(after['scanner-errors.mjs'],/="old"/,
      name+' old Worker static imports must not load new bytes');
-   assert.equal(after['index.html'],shell(newVersion),
-     name+' fresh online shell remains reachable');
+   assert.equal(after['index.html'],shell(oldVersion),
+     name+' old controller must not expose new HTML while serving old Worker imports');
    const inspect=async()=>initial.page.evaluate(async({oldVersion,newVersion})=>{
     const keys=await caches.keys();
     return Promise.all(keys.map(async key=>{
