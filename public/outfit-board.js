@@ -10,7 +10,7 @@ async function persistBoardState(){
 async function storeBoard(){try{await persistBoardState();return true;}catch{$('boardSaveStatus').textContent='This outfit could not be saved. Please try again.';return false;}}
 function syncBoardInputs(){for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'}))$(id).value=currentBoard[key]||'';}
 async function selectBoardPiece(slotId,itemId){
- const before=structuredClone(currentBoard);
+ const before=cleanOutfitBoard(currentBoard,items);
  delete currentBoard.ideas[slotId];
  for(const key of Object.keys(currentBoard.slots))if(currentBoard.slots[key]===itemId)delete currentBoard.slots[key];
  if(itemId)currentBoard.slots[slotId]=itemId;else delete currentBoard.slots[slotId];
