@@ -4,6 +4,8 @@ const board=fs.readFileSync('public/outfit-board.js','utf8');
 const engine=fs.readFileSync('public/outfit-board-engine.js','utf8');
 const sync=board.split('\n').find(line=>line.startsWith('function syncBoardInputs(){'));
 assert.ok(sync,'load exact real board metadata input synchronizer');
+const storeSource=board.split('\n').find(line=>line.startsWith('async function storeBoard(){'));
+assert.ok(storeSource,'load actual production save/error handler');
 const begin=board.indexOf("\nfor(const [id,key]");
 const end=board.indexOf("\n$('closeBoardPicker')",begin);
 assert.ok(begin>=0&&end>begin,'load exact real onchange handler definitions');
@@ -27,13 +29,14 @@ function setup(){
   vm.runInContext('currentBoard=cleanOutfitBoard(currentBoard,items)',ctx);
   renders.push(JSON.parse(vm.runInContext('JSON.stringify(currentBoard)',ctx)));
  };
- ctx.storeBoard=async()=>true;
+ ctx.persistBoardState=async()=>{};
+ vm.runInContext(storeSource,ctx);
  vm.runInContext(handlers,ctx);
  vm.runInContext('syncBoardInputs()',ctx);
  return {
   ctx,$,garments,renders,
   state:()=>JSON.parse(vm.runInContext('JSON.stringify(currentBoard)',ctx)),
-  persist:fn=>{ctx.storeBoard=fn;},
+  persist:fn=>{ctx.persistBoardState=async()=>{if(!await fn())throw Error('synthetic rejected IndexedDB transaction');};},
   edit:(id,value)=>{$(id).value=value;return $(id).onchange();}
  };
 }
