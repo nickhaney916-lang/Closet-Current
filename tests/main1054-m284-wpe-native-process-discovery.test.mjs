@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
  parent,branch,additions,pinned,sourceGate,originalRed,expectedWpePath,
- processKind,classifyContentProcess,candidateDecision,adjudicate
+ processKind,classifyContentProcess,candidateDecision,classifyGdbTranscript,adjudicate
 } from '../research/main1054/m284-wpe-native-process-discovery.mjs';
 const sha='a'.repeat(40),e={name:'push',ref:branch,sha,attempt:'1'};
 function git(cmd,...args){
@@ -101,4 +101,31 @@ test('even a successful real idle attach never proves actual original WASM trap 
  assert.equal(r.genuineOriginalWasmTrapPcCaptured,false);
  assert.equal(r.nativeCausalFixProven,false);
  assert.equal(r.originalM279WasmTrapInstructionOffset,null);
+});
+
+
+test('GDB outputs become bounded scalar causal blockers, not exposed native stacks',()=>{
+ const denied=classifyGdbTranscript('Attaching to process 311\nwarning: ptrace_scope=1\n',1,null);
+ assert.equal(denied.ptraceRestrictionMentioned,true);
+ assert.equal(denied.targetExitedMentioned,false);
+ assert.equal(denied.exitStatus,1);
+ assert.equal(denied.unresolvedNativePC,true);
+ assert.ok(!JSON.stringify(denied).includes('311'));
+ const gone=classifyGdbTranscript('No such process.\n',1,null);
+ assert.equal(gone.targetExitedMentioned,true);
+ assert.equal(gone.ptraceRestrictionMentioned,false);
+ const good=classifyGdbTranscript('rip 0x7fff12345678\nDetaching from program\n',0,null);
+ assert.equal(good.registerRipObserved,true);
+ assert.equal(good.detachObserved,true);
+ assert.equal(good.unresolvedNativePC,true);
+ const unverified=classifyGdbTranscript('Unexpected gdb output',1,null);
+ assert.equal(unverified.registerRipObserved,false);
+ assert.equal(unverified.ptraceRestrictionMentioned,false);
+ assert.throws(()=>classifyGdbTranscript('secret'.repeat(40000),1,null),/unbounded/);
+});
+test('GDB scalar receipt rejects arbitrary fake registers, leaked addresses or implied fix',()=>{
+ const safe=classifyGdbTranscript('cannot attach to process due to ptrace_scope',1,null);
+ assert.equal(adjudicate({...receipt,safeGdbEvidence:safe}).nativeCausalFixProven,false);
+ assert.throws(()=>adjudicate({...receipt,safeGdbEvidence:{...safe,rawStack:'secret'}}),/unbounded or forged/);
+ assert.throws(()=>adjudicate({...receipt,safeGdbEvidence:{...safe,unresolvedNativePC:false}}),/unbounded or forged/);
 });
