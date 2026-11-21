@@ -1,0 +1,74 @@
+name: Assignment 1554 accessible photo review
+on:
+  pull_request:
+    branches: [main]
+    paths: ['.github/workflows/assignment1554-review-no-deploy.yml', 'tests/photo-adjust-accessibility.test.cjs']
+permissions:
+  contents: read
+jobs:
+  owner-review:
+    if: github.head_ref == 'research/assignment1554-review-name-HOLD' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact head and focused Node test
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_RUN_ATTEMPT" = 1
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          node --check public/app.js
+          node --test tests/photo-adjust-accessibility.test.cjs
+      - name: Build and full Node regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Chromium and WebKit keyboard smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium webkit
+          node <<'JS'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const { chromium, webkit } = require('playwright');
+          const app = fs.readFileSync('public/app.js', 'utf8');
+          const adjust = app.slice(app.indexOf('function adjustPhoto('), app.indexOf('function renderRecognitionNotice('));
+          (async()=>{
+            for (const engine of [chromium, webkit]) {
+              const browser = await engine.launch();
+              try {
+                const page = await browser.newPage();
+                await page.setContent('<button id="adjust">Adjust photo</button>');
+                await page.addScriptTag({content: `
+                  const stream=null, cameraOpening=false, localPending=new Set();
+                  const batch=[{id:'fixture',name:'Synthetic shirt'}];
+                  let saves=0;
+                  const savePiece=()=>{saves++;};
+                  const clothingFields=(_,draft)=>()=>draft;
+                  const node=(tag,text)=>Object.assign(document.createElement(tag),{textContent:text||''});
+                  ${adjust}
+                  document.querySelector('#adjust').onclick=()=>adjustPhoto(batch[0]);
+                `});
+                await page.getByRole('button', {name:'Adjust photo'}).focus();
+                await page.keyboard.press('Enter');
+                const dialog = page.getByRole('dialog', {name:'Adjust clothing photo'});
+                await dialog.waitFor({state:'visible',timeout:5000});
+                await page.keyboard.press('Escape');
+                await dialog.waitFor({state:'detached',timeout:5000});
+                assert.equal(await page.evaluate(()=>saves),0);
+                console.log(engine.name()+' keyboard dialog and no-save checks passed');
+              } finally { await browser.close(); }
+            }
+          })().catch(error=>{console.error(error);process.exitCode=1;});
+          JS
