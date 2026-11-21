@@ -45,11 +45,21 @@ export function sourceGate(git,e){
  return {originalWebkitAndModelUnmodified:true,originalM279RedPreserved:true,
   noSandboxOrPtraceOverride:true,familyAlpha:'HOLD'};
 }
+// This exact WebKit upstream WPE build advertises HTTP targets inside
+// "window.open('Main.html?ws=' + window.location.host + '/socket/ID/ID/TYPE')",
+// NOT only standard href links. Never accept absolute/remote/socket paths.
 export function parseLocalInspectorPaths(markup){
  need(typeof markup==='string'&&markup.length<=65536,'oversized or invalid inspector listing');
- const matches=[...markup.matchAll(/href=["'](\/socket\/[a-zA-Z0-9_./-]+)["']/g)];
- const unique=[...new Set(matches.map(m=>m[1]))];
- return unique.filter(s=>!s.includes('..')&&s.length<=256).slice(0,10);
+ const matches=[...markup.matchAll(/['"](\\/socket\\/([0-9]{1,18})\\/([0-9]{1,18})\\/([a-zA-Z][a-zA-Z0-9_-]{0,47}))['"]/g)];
+ const out=[];
+ for(const m of matches){
+  const left=Number(m[2]),right=Number(m[3]);
+  if(!Number.isSafeInteger(left)||left<1||!Number.isSafeInteger(right)||right<1)
+   continue;
+  if(!out.includes(m[1]))out.push(m[1]);
+  if(out.length===10)break;
+ }
+ return out;
 }
 export function classifyInspectorPause(event){
  if(!event||event.method!=='Debugger.paused')return null;
