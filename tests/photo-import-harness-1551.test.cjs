@@ -41,9 +41,12 @@ test('photo import registers independently named asynchronous Node test cases', 
 test('photo import test cases can run independently by name without prior fixture state', () => {
   for (const name of expected) {
     const result = run(['--test-name-pattern=' + name]);
-    assert.match(result, /# tests 2(?:\r?\n|$)/);
+    // Node 22 filters out nonmatching test definitions before TAP counting.
+    // Exactly one named test should be discovered and executed from a fresh VM.
+    assert.ok(result.includes('# Subtest: ' + name));
+    assert.match(result, /# tests 1(?:\r?\n|$)/);
     assert.match(result, /# pass 1(?:\r?\n|$)/);
-    assert.match(result, /# skipped 1(?:\r?\n|$)/);
+    assert.match(result, /# skipped 0(?:\r?\n|$)/);
     assert.match(result, /# fail 0(?:\r?\n|$)/);
   }
 });
