@@ -1,0 +1,36 @@
+name: Assignment 1551 Node fixture isolation
+on:
+  pull_request:
+    branches: [main]
+    paths: ['.github/workflows/assignment1551-node-no-deploy.yml', 'tests/taxonomy*.cjs']
+permissions:
+  contents: read
+jobs:
+  node-tests:
+    if: github.head_ref == 'research/assignment1551-taxonomy-fixture-HOLD' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify source and repeat fixture test
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_RUN_ATTEMPT" = 1
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          node --version
+          for attempt in 1 2 3; do node --test tests/taxonomy*.cjs; done
+          (cd tests && node --test taxonomy.test.cjs)
+      - name: Run full ordinary JavaScript suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
