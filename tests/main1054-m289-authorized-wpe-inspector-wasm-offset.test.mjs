@@ -56,6 +56,17 @@ test('an arbitrary JS line 44 does not prove native WASM instruction offset',()=
  assert.equal(p.actualSyntheticOpcodeOffsetVerified,null);
  assert.equal(p.wasmFramePresented,false);
 });
+test('a lower wasm frame cannot transfer opcode byte 44 from unrelated JS top frame',()=>{
+ const p=classifyInspectorPause({method:'Debugger.paused',params:{
+  reason:'exception',callFrames:[
+   {functionName:'myJsCaller',url:'https://example.test/app.js',location:{
+     lineNumber:44,columnNumber:44}},
+   {functionName:'wasm-function[0]',url:'wasm://wasm/module',location:{
+     lineNumber:0,columnNumber:10}}
+  ]}});
+ assert.equal(p.wasmFramePresented,false);
+ assert.equal(p.actualSyntheticOpcodeOffsetVerified,null);
+});
 test('wrong synthetic instruction, missing real debugger pause or arbitrary offset fail closed',()=>{
  for(const patch of [{syntheticInspectorFileOffset:43},
   {syntheticInspectorFileOffset:44},{syntheticTrapObserved:false},
