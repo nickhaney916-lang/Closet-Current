@@ -1,0 +1,87 @@
+name: MAIN1054 M293 true original JSEP static opcode boundaries NO NATIVE REPAIR HOLD
+on:
+  push:
+    branches: [research/main1054-m293-original-wasm-exact-opcode-boundary-HOLD]
+permissions:
+  contents: read
+jobs:
+  m293-unchanged-original-app-native-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact first-attempt source identity and protected original Worker freeze
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/main1054/m280-original-jsep-function-map.mjs)" = c52b967bc80ce8ba4c2c69bc2ea09c70e50bb332
+          test "$(git rev-parse HEAD:research/main1054/m292-original-native-pc-evidence-handoff.mjs)" = f6756739021e8074954c9cdf890b79ab176e7b6b
+          node --check research/main1054/m293-original-wasm-instruction-boundary.mjs
+          node --check tests/main1054-m293-original-wasm-instruction-boundary.test.mjs
+      - name: M293 disassembly and false opcode/native-PC adversarial fixture tests
+        run: node --test tests/main1054-m293-original-wasm-instruction-boundary.test.mjs
+      - name: Inherited M292 M291 M290 M286 and original M279 safety-negative controls
+        run: |
+          node --test tests/main1054-m292-original-native-pc-evidence-handoff.test.mjs tests/main1054-m291-loaded-wpe-elf-closure.test.mjs tests/main1054-m290-live-native-elf-identity.test.mjs
+          node --test tests/main1054-m286-pinned-webkit-source-binary-provenance.test.mjs tests/main1054-m284-wpe-native-process-discovery.test.mjs tests/main1054-m282-native-debugger-preflight.test.mjs tests/main1054-m281-webkit-trap-pc-capability.test.mjs tests/main1054-m280-original-jsep-function-map.test.mjs tests/main1054-m279-original-model-pointer-bounds.test.mjs
+      - name: Install exact original app owner photo privacy backup regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original app build and ALL unchanged owner privacy 2D-v4 photo backup Node tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  m293-original-canonical-wabt-real-byte-boundaries:
+    needs: m293-unchanged-original-app-native-regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Freeze exact original native source first attempt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Install ordinary pinned-runtime-independent WABT command-line disassembler
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends wabt
+          wasm-objdump --version
+      - name: Real SHA-attested ORIGINAL JSEP exact instruction-boundary check only
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout -k 10s 1400s node research/main1054/m293-original-wasm-instruction-boundary.mjs static-boundary
+          test -s m293-tmp/original-wasm-static-boundary-only.json
+          test ! -e m293-tmp/canonical-JSEP-TEMP.wasm
+      - name: Archive only sanitized static candidate boundary counts NEVER original-model trap PC
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m293-canonical-original-JSEP-static-instruction-boundaries-NOT-TRAP-HOLD
+          path: m293-tmp/original-wasm-static-boundary-only.json
+          retention-days: 7
+          if-no-files-found: ignore
