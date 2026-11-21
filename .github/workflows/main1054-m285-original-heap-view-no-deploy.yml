@@ -1,0 +1,111 @@
+name: MAIN1054 M285 original model copy memory-view native evidence NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m285-original-heap-view-witness-HOLD]
+permissions:
+  contents: read
+jobs:
+  m285-original-source-negative-and-full-inherited:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact parent, native source pins and prepare original worker without altering shipped code
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/main1054/m283-real-jsep-instantiation.mjs)" = 6c4ad406643871851c9c21e6b324d67ef9d992a9
+          node research/main1054/m285-original-heap-view-witness.mjs prepare
+          node --check scripts/.cc-m285-original-copy-view.mjs
+      - name: M285 original Uint8Array view and native owner/worker falsification tests
+        run: node --test tests/main1054-m285-original-heap-view-witness.test.mjs
+      - name: Inherited exact native, SHA256, source and WebKit diagnostic negatives
+        run: |
+          node --test tests/main1054-m283-real-jsep-instantiation.test.mjs
+          node --test tests/main1054-m281-webkit-offset-capability.test.mjs tests/main1054-m280-original-jsep-function-map.test.mjs tests/main1054-m279-original-model-pointer-bounds.test.mjs
+      - name: Install pinned original no-deploy offline app dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build original app and run all original owner/privacy/source/2D/v4/backup regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  m285-original-webkit-native-view-cohort:
+    needs: m285-original-source-negative-and-full-inherited
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - {engine: webkit, width: 430, count: 4}
+          - {engine: chromium, width: 390, count: 1}
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: ${{ matrix.width }}
+      M285_COUNT: ${{ matrix.count }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare source-locked pass-through original P94 SegFormer/JSEP observer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          node research/main1054/m285-original-heap-view-witness.mjs prepare
+      - name: Install same pinned actual WebKit/Chromium original model dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Capture authentic original model copy HEAP view at native entry and natural throw, never retry
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p m285-sanitized
+          logfile="$(mktemp)"
+          trap 'rm -f "$logfile"' EXIT
+          failures=0
+          for i in $(seq 1 "$M285_COUNT"); do
+            export M285_ORDINAL="$i"
+            result=0
+            timeout -k 5s 180s node scripts/.cc-m285-original-copy-view.mjs > "$logfile" 2>&1 || result=$?
+            receiptResult=0
+            node research/main1054/m285-original-heap-view-witness.mjs receipt "$logfile" "$result" > "m285-sanitized/$i.txt" || receiptResult=$?
+            cat "m285-sanitized/$i.txt"
+            if [ "$result" != 0 ] || [ "$receiptResult" != 0 ] || ! grep -q '^P91_FULL_JOURNEY_PASS ' "$logfile"; then
+              failures=1
+              echo "M285_GENUINE_ORIGINAL_RED_OR_UNVERIFIED_MODEL_COPY ordinal=$i"
+            fi
+          done
+          exit "$failures"
+      - name: Preserve only sanitized numeric view/heap/SHA receipt, never model or private bytes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m285-authentic-original-model-copy-${{ matrix.engine }}-${{ matrix.width }}-HOLD
+          path: m285-sanitized/*.txt
+          retention-days: 7
+          if-no-files-found: ignore
