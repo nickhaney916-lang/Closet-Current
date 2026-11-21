@@ -14,7 +14,7 @@ function git(cmd,...args){
 }
 const change=(predicate,value)=>(...args)=>predicate(...args)?value:git(...args);
 const paths=expected.map((x,i)=>i===0?source.wpe:source.root+'/minibrowser-wpe/lib/'+x.name);
-const map=(path,i)=>['7f0000','7f1000','r-xp','00000000','08:01',String(1000+i),path].join(' ');
+const map=(path,i)=>['7f0000-7f1000','r-xp','00000000','08:01',String(1000+i),path].join(' ');
 const receipt={
  schema:'M290_ACTUAL_PINNED_WPE_MAPPED_ELF_V1',
  playwright:'1.56.1',webkit:'26.0',browserRevision:'2215',
