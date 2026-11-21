@@ -3,8 +3,8 @@ import {spawn} from 'node:child_process';
 import {webkit} from 'playwright';
 import {parseLocalInspectorPaths} from './m289-authorized-wpe-inspector-wasm-offset.mjs';
 
-const phase=Number(process.argv[2]); // 0=socket, 1=outer reply, 2=Runtime, 3=Debugger, 4=WASM exception, 5=JS debugger statement, 6=two distinct WASM opcodes/one JS callsite
-if(!Number.isInteger(phase)||phase<0||phase>6)throw Error('invalid standalone phase');
+const phase=Number(process.argv[2]); // 0=socket, 1=outer reply, 2=Runtime, 3=Debugger, 4=WASM exception, 5=JS debugger statement, 6=two distinct WASM opcodes/one JS callsite, 7=dedicated Worker Inspector target
+if(!Number.isInteger(phase)||phase<0||phase>7)throw Error('invalid standalone phase');
 const host='127.0.0.1:17652';
 const report={
  phase,mode:'standalone-single-frontend',engine:'pinned-webkit',
@@ -17,7 +17,9 @@ const report={
  exceptionPauseObserved:false,exceptionPauseReason:null,debuggerPauseObserved:false,debuggerPauseReason:null,pauseTopWasm:false,
  pauseLocationLine:null,pauseLocationColumn:null,debuggerResumeReply:false,
  dualSyntheticOpcodeOffsets:null,dualSyntheticTrapCaught:false,dualPauseReceipts:[],
- dualResumeAckCount:0,sameJavascriptPauseLocation:null,wasmBytecodeAttributionVerified:false
+ dualResumeAckCount:0,sameJavascriptPauseLocation:null,wasmBytecodeAttributionVerified:false,
+ workerCreated:false,workerReady:false,workerTargetCreated:false,
+ workerTargetScope:null,workerTargetDestroyed:false,workerScriptEvaluation:false
 };
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let child,socket,spawnError=null;
@@ -51,7 +53,7 @@ try {
  if(!/^\/socket\/[0-9]{1,18}\/[0-9]{1,18}\/WebPage$/.test(path))throw Error('invalid local WebPage endpoint');
  report.http=true;
  socket=new WebSocket('ws://'+host+path);
- let targetId=null,outerId=0,outerDone=false,innerDone=false;
+ let targetId=null,outerId=0,outerDone=false,innerDone=false;let workerTargetId=null;
  const innerReplies=new Map();let resumeSent=false;const pauseScriptIds=[];
  const sendNested=(id,method,params={})=>{
   socket.send(JSON.stringify({id:++outerId,method:'Target.sendMessageToTarget',params:{
@@ -73,6 +75,14 @@ try {
    outerDone=true;report.outerReply=true;
    report.outerErrorCode=Number.isInteger(msg.error?.code)?msg.error.code:null;
   }
+  if(msg.method==='Target.targetCreated'&&msg.params?.targetInfo?.type==='worker'){
+   const id=msg.params.targetInfo.targetId;
+   if(typeof id==='string'&&/^[A-Za-z0-9_:-]{1,128}$/.test(id)){
+    workerTargetId=id;report.workerTargetCreated=true;report.workerTargetScope='outer';
+   }
+  }
+  if(msg.method==='Target.targetDestroyed'&&msg.params?.targetId===workerTargetId)
+   report.workerTargetDestroyed=true;
   if(msg.method==='Target.targetCreated'&&msg.params?.targetInfo?.type==='page'){
    const candidate=msg.params.targetInfo.targetId;
    if(typeof candidate==='string'&&/^[A-Za-z0-9_:-]{1,128}$/.test(candidate)){
@@ -82,6 +92,14 @@ try {
   if(msg.method==='Target.dispatchMessageFromTarget'&&typeof msg.params?.message==='string'){
    try{
     const inner=JSON.parse(msg.params.message);
+    if(inner.method==='Target.targetCreated'&&inner.params?.targetInfo?.type==='worker'){
+     const id=inner.params.targetInfo.targetId;
+     if(typeof id==='string'&&/^[A-Za-z0-9_:-]{1,128}$/.test(id)){
+      workerTargetId=id;report.workerTargetCreated=true;report.workerTargetScope='nested';
+     }
+    }
+    if(inner.method==='Target.targetDestroyed'&&inner.params?.targetId===workerTargetId)
+     report.workerTargetDestroyed=true;
     if(inner.method==='Debugger.paused'){
      const p=inner.params||{},top=Array.isArray(p.callFrames)?p.callFrames[0]:null;
      report.debuggerPauseObserved=true;
@@ -108,10 +126,16 @@ try {
       }
      }else if((phase===4||phase===5)&&!resumeSent){resumeSent=true;sendNested(104,'Debugger.resume');}
     }
-    if([101,102,103,104,105,106,107,114].includes(Number(inner.id))&&String(inner.id)===String(Number(inner.id))){
+    if([101,102,103,104,105,106,107,108,109,110,114].includes(Number(inner.id))&&String(inner.id)===String(Number(inner.id))){
      innerReplies.set(Number(inner.id),inner);
      if(Number(inner.id)===104&&inner.error===undefined)report.debuggerResumeReply=true;
      if(phase===6&&[104,114].includes(Number(inner.id))&&inner.error===undefined)report.dualResumeAckCount++;
+     if(Number(inner.id)===108&&inner.error===undefined&&
+        inner.result?.result?.value==='WORKER_ARMED')report.workerCreated=true;
+     if(Number(inner.id)===109&&inner.error===undefined&&
+        inner.result?.result?.value==='READY')report.workerReady=true;
+     if(Number(inner.id)===110&&inner.error===undefined&&
+        inner.result?.result?.value==='TERMINATED')report.workerScriptEvaluation=true;
      if(Number(inner.id)===105){
       report.syntheticTrapCaught=phase===4&&
        inner.result?.result?.value==='EXPECTED_SYNTHETIC_WASM_TRAP';
@@ -151,6 +175,21 @@ try {
    if(report.outerErrorCode!==null)throw Error('nested outer command rejected '+report.outerErrorCode);
    if(!innerDone)throw Error('nested inner command reply absent');
    if(report.innerErrorCode!==null)throw Error('nested inner command rejected '+report.innerErrorCode);
+   if(phase===7){
+    // Pinned WebKit TargetInfo includes dedicated worker. Synthetic-only
+    // lifecycle to validate access to the same target KIND as original P94.
+    const expression=`(()=>{const u=URL.createObjectURL(new Blob(["self.postMessage('READY');self.onmessage=()=>self.postMessage('ECHO');"],{type:'application/javascript'}));const w=new Worker(u);window.__m1541Worker=w;window.__m1541WorkerUrl=u;window.__m1541WorkerState='PENDING';w.onmessage=(e)=>{if(e.data==='READY')window.__m1541WorkerState='READY'};return 'WORKER_ARMED'})()`;
+    sendNested(108,'Runtime.evaluate',{expression,returnByValue:true});
+    for(let i=0;i<32&&(!innerReplies.has(108)||!report.workerTargetCreated)&&!report.processExited;i++)await wait(250);
+    if(!report.workerCreated)throw Error('synthetic Worker creation was not acknowledged');
+    sendNested(109,'Runtime.evaluate',{expression:"window.__m1541WorkerState",returnByValue:true});
+    for(let i=0;i<24&&!innerReplies.has(109)&&!report.processExited;i++)await wait(250);
+    if(!report.workerReady)throw Error('synthetic Worker did not post ready message');
+    if(!report.workerTargetCreated)throw Error('dedicated Worker Inspector target not discovered');
+    sendNested(110,'Runtime.evaluate',{expression:"(()=>{window.__m1541Worker.terminate();URL.revokeObjectURL(window.__m1541WorkerUrl);return 'TERMINATED'})()",returnByValue:true});
+    for(let i=0;i<24&&!innerReplies.has(110)&&!report.processExited;i++)await wait(250);
+    if(!report.workerScriptEvaluation)throw Error('synthetic Worker termination failed');
+   }
    if(phase===4||phase===5||phase===6){
     // Pinned JSC Debugger protocol supports pause-on-all exceptions. The
     // M281 tiny module is ONLY synthetic proof; it is not the original ORT.
