@@ -1,0 +1,27 @@
+name: M1541 Inspector contract offline checks (HOLD)
+on:
+  push:
+    branches:
+      - research/main1054-m1541-inspector-protocol-contract-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify unchanged original M289 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:research/main1054/m289-authorized-wpe-inspector-wasm-offset.mjs)" = "$(git rev-parse c4a9f36545f321998e1252a4c341a6a9e0c961d0:research/main1054/m289-authorized-wpe-inspector-wasm-offset.mjs)"
+          test "$(git diff --name-only c4a9f36545f321998e1252a4c341a6a9e0c961d0 HEAD -- public)" = ""
+      - name: Run genuine repository offline contract tests
+        run: node --test research/main1054/m1541-inspector-protocol-contract.test.mjs
