@@ -56,7 +56,12 @@ try {
   assert.equal(await picker.isEnabled(), true);
   const jpeg = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = 12;
+    canvas.width = canvas.height = 96;
+    const paint = canvas.getContext('2d');
+    paint.fillStyle = '#061021';
+    paint.fillRect(0, 0, 96, 96);
+    paint.fillStyle = '#e4a440';
+    paint.fillRect(20, 18, 58, 61);
     return canvas.toDataURL('image/jpeg').split(',')[1];
   });
   await picker.setInputFiles({name:'saved.jpg',mimeType:'image/jpeg',buffer:Buffer.from(jpeg,'base64')});
