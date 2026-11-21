@@ -17,7 +17,7 @@ const receipt=()=>({
 });
 test('documented local WebPage socket is discoverable; absolute and remote URLs are not',()=>{
  assert.deepEqual(parseLocalInspectorPaths(`window.open('Main.html?ws=' + window.location.host + '/socket/12/34/WebPage')`),['/socket/12/34/WebPage']);
- assert.deepEqual(parseLocalInspectorPaths('https://example.com/socket/12/34/WebPage'),['/socket/12/34/WebPage']);
+ assert.deepEqual(parseLocalInspectorPaths('https://example.com/socket/12/34/WebPage'),[]);
  // The parser returns a relative path only; callers must construct the loopback URL themselves.
  assert.deepEqual(parseLocalInspectorPaths('/socket/0/34/WebPage /socket/12/0/WebPage'),[]);
 });
