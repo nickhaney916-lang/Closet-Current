@@ -90,10 +90,10 @@ try {
      // Inspector line/column are NOT native PC or original WASM file offsets.
      if(phase===4&&!resumeSent){resumeSent=true;sendNested(104,'Debugger.resume');}
     }
-    if([101,102,103,104].includes(Number(inner.id))&&String(inner.id)===String(Number(inner.id))){
+    if([101,102,103,104,105].includes(Number(inner.id))&&String(inner.id)===String(Number(inner.id))){
      innerReplies.set(Number(inner.id),inner);
      if(Number(inner.id)===104&&inner.error===undefined)report.debuggerResumeReply=true;
-     if(Number(inner.id)===103)report.syntheticTrapCaught=
+     if(Number(inner.id)===105)report.syntheticTrapCaught=
       inner.result?.result?.value==='EXPECTED_SYNTHETIC_WASM_TRAP';
     }
     const forwardedId=msg.params.targetId;
@@ -136,14 +136,23 @@ try {
     const pauseConfig=innerReplies.get(102);
     if(!pauseConfig||pauseConfig.error)throw Error('pause-on-exception setup rejected or absent');
     const bytes=JSON.stringify(Array.from(binary));
-    const expression=`(()=>{const m=new WebAssembly.Module(Uint8Array.from(${bytes}));try{new WebAssembly.Instance(m).exports.probe();return 'NO_TRAP'}catch(e){return e instanceof WebAssembly.RuntimeError&&/out of bounds|memory access/i.test(String(e.message))?'EXPECTED_SYNTHETIC_WASM_TRAP':'UNEXPECTED_EXCEPTION'}})()`;
+    // A direct Runtime.evaluate exception may not yield a debugger pause.
+    // Schedule the same genuine negative-only WASM opcode on the page event
+    // loop, separately from the protocol evaluation call.
+    const expression=`(()=>{window.__m1541Result='ARMED';setTimeout(()=>{try{const m=new WebAssembly.Module(Uint8Array.from(${bytes}));new WebAssembly.Instance(m).exports.probe();window.__m1541Result='NO_TRAP'}catch(e){window.__m1541Result=e instanceof WebAssembly.RuntimeError&&/out of bounds|memory access/i.test(String(e.message))?'EXPECTED_SYNTHETIC_WASM_TRAP':'UNEXPECTED_EXCEPTION'}},400);return 'ARMED'})()`;
     sendNested(103,'Runtime.evaluate',{expression,returnByValue:true});
-    for(let i=0;i<40&&(!innerReplies.has(103)||!innerReplies.has(104))&&!report.processExited;i++)await wait(250);
-    if(!report.exceptionPauseObserved)throw Error('genuine synthetic exception pause absent');
-    if(!report.debuggerResumeReply)throw Error('Debugger.resume reply absent');
+    for(let i=0;i<30&&(!innerReplies.has(103)||!report.exceptionPauseObserved)&&!report.processExited;i++)await wait(250);
     const evalReply=innerReplies.get(103);
-    if(!evalReply||evalReply.error||evalReply.result?.wasThrown)throw Error('Runtime.evaluate failed');
+    if(!evalReply||evalReply.error||evalReply.result?.wasThrown||evalReply.result?.result?.value!=='ARMED')
+     throw Error('scheduled evaluation was not armed');
+    // Even on FAIL, independently check that the test really executed its
+    // synthetic OOB opcode, rather than mistaking an idle debugger for RED.
+    if(!report.exceptionPauseObserved)await wait(750);
+    sendNested(105,'Runtime.evaluate',{expression:"window.__m1541Result||'MISSING'",returnByValue:true});
+    for(let i=0;i<24&&!innerReplies.has(105)&&!report.processExited;i++)await wait(250);
     if(!report.syntheticTrapCaught)throw Error('synthetic WASM RuntimeError not independently returned');
+    if(!report.exceptionPauseObserved)throw Error('scheduled synthetic WebAssembly exception pause absent');
+    if(!report.debuggerResumeReply)throw Error('Debugger.resume reply absent');
    }
   }
  }
