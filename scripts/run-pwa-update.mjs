@@ -65,11 +65,14 @@ try {
   const offScope = await context.newPage();
   await offScope.goto(url + '/probe');
   await offScope.waitForFunction(async expected => {
+    const registration = await navigator.serviceWorker.getRegistration('/app/');
     const keys = await caches.keys();
-    return keys.length === 1 && keys[0] === 'closet-current-' + expected;
+    return registration?.active?.state === 'activated' && !registration.waiting
+      && keys.length === 1 && keys[0] === 'closet-current-' + expected;
   }, nextVersion);
   const next = await offScope.goto(url + '/app/');
-  assert.ok((await next.text()).includes('app.js?v=' + nextVersion));
+  assert.equal(next.status(), 200, 'Navigation after activation returns the shell');
+  assert.equal(await next.text(), originalShell.replaceAll(version, nextVersion));
   await offScope.waitForFunction(() => navigator.serviceWorker.controller !== null);
   assert.equal(await worker(offScope, nextVersion), originalWorker + '\n// Next release\n');
   offline = true;
