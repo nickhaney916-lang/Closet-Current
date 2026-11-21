@@ -80,7 +80,16 @@ for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',b
 $('closeBoardPicker').onclick=()=>$('boardPicker').close();
 $('emptyBoardSlot').onclick=()=>{selectBoardPiece(choosingSlot,'');$('boardPicker').close();};
 $('shopBoardSlot').onclick=()=>{$('boardTarget').value=choosingSlot;$('boardPicker').close();renderBoardSuggestions();$('boardGapStatus').scrollIntoView({behavior:'smooth',block:'start'});};
-$('clearBoard').onclick=()=>{currentBoard=cleanOutfitBoard({},items);syncBoardInputs();renderOutfitBoard();storeBoard();};
+$('clearBoard').onclick=async()=>{
+ const previous=cleanOutfitBoard(currentBoard,items);
+ currentBoard=cleanOutfitBoard({},items);syncBoardInputs();renderOutfitBoard();
+ const attempted=JSON.stringify(currentBoard);
+ const saved=await storeBoard();
+ // Only restore on failed persistence when no newer outfit edit superseded it.
+ if(!saved&&JSON.stringify(currentBoard)===attempted){
+  currentBoard=previous;syncBoardInputs();renderOutfitBoard();
+ }
+};
 $('saveBoard').onclick=async()=>{if(!Object.keys(currentBoard.slots).length)return $('boardSaveStatus').textContent='Choose at least one piece from your own closet first.';if(savedOutfitBoards.length>=50)return $('boardSaveStatus').textContent='You can save up to 50 outfits.';$('saveBoard').disabled=true;try{savedOutfitBoards.push(structuredClone(currentBoard));await persistBoardState();$('boardSaveStatus').textContent='Outfit saved with references to your clothing photos.';renderSavedOutfitBoards();}catch{savedOutfitBoards.pop();$('boardSaveStatus').textContent='Could not save this outfit. Please try again.';}finally{$('saveBoard').disabled=false;}};
 function renderTrendReferences(){const grid=$('boardTrendSources');grid.replaceChildren();for(const source of outfitTrendSources)grid.append(boardLink(source.title,source.url));}
 renderTrendReferences();
