@@ -21,7 +21,8 @@ const report={
  workerCreated:false,workerReady:false,workerTargetCreated:false,
  workerTargetScope:null,workerTargetDestroyed:false,workerScriptEvaluation:false,
  workerHttpKinds:[],workerHttpNonPagePath:false,workerHttpListingAvailable:false,
- workerProtocolEnabled:false,workerInitializedAck:false,workerDomainEventObserved:false
+ workerProtocolEnabled:false,workerInitializedAck:false,workerDomainEventObserved:false,
+ workerIdType:null,workerIdLength:null,workerIdAccepted:false
 };
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let child,socket,spawnError=null;
@@ -98,12 +99,20 @@ try {
     // Page-owned dedicated workers. InspectorWorkerAgent::enable connects
     // the worker proxy and emits Worker.workerCreated. initialized resumes
     // the paused-on-start worker before it can post READY.
-    if(inner.method==='Worker.workerCreated'&&typeof inner.params?.workerId==='string'){
-     const id=inner.params.workerId;
-     if(/^[A-Za-z0-9_:-]{1,128}$/.test(id)){
+    if(inner.method==='Worker.workerCreated'){
+     const id=inner.params?.workerId;
+     report.workerDomainEventObserved=true;
+     report.workerIdType=typeof id;
+     report.workerIdLength=typeof id==='string'?id.length:null;
+     // WorkerInspectorProxy::identifier() is an opaque String. Preserve the
+     // exact server-supplied token in JSON; reject only blank, oversized or
+     // control-character values, without inventing a character grammar.
+     const safe=typeof id==='string'&&id.length>0&&id.length<=256&&
+       !/[\\u0000-\\u001f\\u007f]/.test(id);
+     report.workerIdAccepted=safe;
+     if(safe){
       workerTargetId=id;report.workerTargetCreated=true;
       report.workerTargetScope='Worker.workerCreated';
-      report.workerDomainEventObserved=true;
       sendNested(112,'Worker.initialized',{workerId:id});
      }
     }
