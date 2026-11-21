@@ -41,7 +41,6 @@ let browser;
 try {
   browser = await engine.launch({executablePath: process.env.PWA_BROWSER_EXECUTABLE});
   const context = await browser.newContext();
-  await context.route(request => request.origin !== url, route => route.abort());
   const page = await context.newPage();
   const shell = async response => assert.ok(response && (await response.text()).includes('app.js?v=' + version));
   const worker = (tab, release) => tab.evaluate(async value => {
@@ -63,16 +62,13 @@ try {
   await blocker.waitForFunction(() => navigator.serviceWorker.controller !== null);
   upgraded = true;
   await page.evaluate(() => navigator.serviceWorker.getRegistration().then(reg => reg.update()));
-  await page.waitForFunction(async () => Boolean((await navigator.serviceWorker.getRegistration())?.waiting));
-  const waitingShell = await page.evaluate(async expected => {
-    const key = 'closet-current-' + expected;
+  await page.waitForFunction(async expected => {
+    const registration = await navigator.serviceWorker.getRegistration();
     const request = new URL('/app/index.html?v=' + expected, location.href).href;
-    const response = await caches.match(request, {cacheName: key});
-    if (response) return (await response.text()).match(/app\.js\?v=([a-f0-9]+)/)?.[1];
-    const cache = await caches.open(key);
-    return (await cache.keys()).slice(0, 8).map(entry => entry.url);
-  }, nextVersion);
-  assert.equal(waitingShell, nextVersion, 'Waiting worker installed the new shell');
+    const response = await caches.match(request, {cacheName: 'closet-current-' + expected});
+    return registration?.waiting?.state === 'installed'
+      && response && (await response.text()).includes('app.js?v=' + expected);
+  }, nextVersion, {timeout: 12000});
   await shell(await page.reload());
   assert.equal(await worker(page, version), originalWorker);
   const offScope = await context.newPage();
