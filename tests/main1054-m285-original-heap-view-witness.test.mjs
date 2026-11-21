@@ -33,7 +33,7 @@ test('missing or ambiguous native model copy is unknown, not silently assumed cu
  const empty=classifyCopyViews([]);
  assert.equal(empty.originalModelCopyProven,false);
  assert.equal(empty.copiedHeapViewCurrentAtNativeEntry,null);
- assert.equal(classifyCopyViews([{...row(),copyCount:2},row('return')]).originalModelCopyProven,false);
+ assert.equal(classifyCopyViews([{...row(),copyCount:2},{...row('return'),copyCount:2}]).originalModelCopyProven,false);
  assert.equal(classifyCopyViews([{...row(),copyOffsetMatchesPointer:false},row('return')]).originalModelCopyProven,false);
  assert.equal(classifyCopyViews([{...row(),targetIsLiveWasmBuffer:false},row('return')]).originalModelCopyProven,false);
 });
