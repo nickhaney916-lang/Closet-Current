@@ -164,7 +164,7 @@ async function openLocalInspector(path,observations){
   if(typeof data.method==='string'&&observations.innerEventMethods.length<6&&
      /^[a-zA-Z][a-zA-Z0-9.]{1,60}$/.test(data.method))
    observations.innerEventMethods.push(data.method);
-  const incomingId=typeof data.id==='string'&&/^\\d{1,7}$/.test(data.id)?
+  const incomingId=typeof data.id==='string'&&/^\d{1,7}$/.test(data.id)?
    Number(data.id):data.id;
   if(Number.isInteger(incomingId)&&innerCallbacks.has(incomingId)){
    observations.innerCommandResponses++;
@@ -205,7 +205,7 @@ async function openLocalInspector(path,observations){
    if(typeof data.method==='string'&&observations.eventMethods.length<6&&
       /^[A-Za-z][A-Za-z0-9.]{1,60}$/.test(data.method))
     observations.eventMethods.push(data.method);
-   const outerReplyId=typeof data.id==='string'&&/^\\d{1,7}$/.test(data.id)?
+   const outerReplyId=typeof data.id==='string'&&/^\d{1,7}$/.test(data.id)?
     Number(data.id):data.id;
    if(Number.isInteger(outerReplyId)&&outerCallbacks.has(outerReplyId)){
     observations.commandResponseCount++;
