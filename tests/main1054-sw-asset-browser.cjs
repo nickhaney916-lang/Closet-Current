@@ -76,16 +76,18 @@ async function exercise(name,engine,base){
      name+' old Worker static imports must not load new bytes');
    assert.equal(after['index.html'],shell(newVersion),
      name+' fresh online shell remains reachable');
-   const inspect=async()=>initial.page.evaluate(async()=>{
+   const inspect=async()=>initial.page.evaluate(async({oldVersion,newVersion})=>{
     const keys=await caches.keys();
     return Promise.all(keys.map(async key=>{
      const cache=await caches.open(key);
      const value=await cache.match('index.html');
      const html=value?await value.text():'';
-     return {cache:key,htmlVersion:html.match(/app\\.js\\?v=([a-f0-9]{12})/)?.[1]||'missing'};
+     return {cache:key,hasOld:html.includes('app.js?v='+oldVersion),hasNew:html.includes('app.js?v='+newVersion)};
     }));
-   });
+   },{oldVersion,newVersion});
    const onlineCache=await inspect();
+   assert.ok(onlineCache.some(v=>v.hasOld&&!v.hasNew),
+    name+' old cache shell unexpectedly replaced before offline: '+JSON.stringify(onlineCache));
    await initial.context.setOffline(true);
    const offline=await read(initial.page,oldVersion);
    const offlineCache=await inspect();
