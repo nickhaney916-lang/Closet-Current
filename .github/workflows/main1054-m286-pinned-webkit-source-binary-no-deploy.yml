@@ -1,0 +1,106 @@
+name: MAIN1054 M286 exact pinned WebKit source baseline patched browser ELF identity HOLD
+on:
+  push:
+    branches: [research/main1054-m286-pinned-webkit-source-binary-provenance-HOLD]
+permissions:
+  contents: read
+jobs:
+  m286-source-integrity-tests-and-original-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Freeze authentic source M279 RED and original WPE debugger/Worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:research/main1054/m286-pinned-webkit-source-binary-provenance.mjs)" = 13874630185f165d9725e2ea4b7579ab4050fa53
+          test "$(git rev-parse HEAD:tests/main1054-m286-pinned-webkit-source-binary-provenance.test.mjs)" = 99f330f67dda5c694251d9c3a3c00706320211f4
+          test "$(git rev-parse HEAD:research/main1054/m284-wpe-native-process-discovery.mjs)" = bbdab84c7aa890ecdd7f641342736fe1376a8127
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          node --check research/main1054/m286-pinned-webkit-source-binary-provenance.mjs
+      - name: Negative source tag/patch/binary trust and no false native repair tests
+        run: node --test tests/main1054-m286-pinned-webkit-source-binary-provenance.test.mjs
+      - name: Inherited authentic M284/M282/M281/M280/M279 original model privacy security negatives
+        run: node --test tests/main1054-m284-wpe-native-process-discovery.test.mjs tests/main1054-m282-native-debugger-preflight.test.mjs tests/main1054-m281-webkit-trap-pc-capability.test.mjs tests/main1054-m280-original-jsep-function-map.test.mjs tests/main1054-m279-original-model-pointer-bounds.test.mjs
+      - name: Exact offline original owner, photo, backup and model tests
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Offline original app build and complete inherited Node privacy/security/backup regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Independently attest exact official Playwright tag upstream WebKit source and bootstrap patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          node research/main1054/m286-pinned-webkit-source-binary-provenance.mjs source
+          test -s m286-sanitized/source-provenance.json
+      - name: Archive public source SHA, original source baseline and honest patch mismatch only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m286-exact-official-playwright-webkit-source-baseline-HOLD
+          path: m286-sanitized/source-provenance.json
+          retention-days: 7
+          if-no-files-found: ignore
+  m286-original-pinned-browser-readonly-elf-identity:
+    needs: m286-source-integrity-tests-and-original-regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact first attempt and original pinned source, no native change
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD:research/main1054/m286-pinned-webkit-source-binary-provenance.mjs)" = 13874630185f165d9725e2ea4b7579ab4050fa53
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Install standard non-debug readelf native library inspection
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v readelf >/dev/null; then
+            apt-get update -qq
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends binutils
+          fi
+          readelf --version | head -1
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Pin actual WebKit/WPE native ELF SHA and Build ID without ptrace, addresses or original model
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout -k 5s 110s node research/main1054/m286-pinned-webkit-source-binary-provenance.mjs binary
+          test -s m286-sanitized/binary-provenance.json
+      - name: Archive only native file SHA256, static ELF build IDs and honest unknown trap PC
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m286-original-playwright-wpe-static-elf-build-identity-HOLD
+          path: m286-sanitized/binary-provenance.json
+          retention-days: 7
+          if-no-files-found: ignore
