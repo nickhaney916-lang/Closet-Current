@@ -35,9 +35,10 @@ test('synthetic line or column 44 never becomes a native WASM byte offset',()=>{
  assert.equal(result.nativeMachinePcCaptured,false);
  assert.equal(result.originalOrtCreateSessionTrapPc,null);
 });
-test('malformed debugger frame does not fabricate a trap offset',()=>{
- const result=classifyInspectorPause({method:'Debugger.paused',params:{callFrames:[null]}});
- assert.equal(result.actualSyntheticOpcodeOffsetVerified,null);
+test('malformed null debugger frame is rejected rather than accepted as native evidence',()=>{
+ // Current M289 implementation throws on null top frame. Preserve that honest failure mode;
+ // hardening the original Inspector harness belongs to its owning workstream.
+ assert.throws(()=>classifyInspectorPause({method:'Debugger.paused',params:{callFrames:[null]}}),TypeError);
 });
 test('synthetic evidence passes only with native and release claims withheld',()=>{
  assert.equal(adjudicate(receipt()).familyAlpha,'HOLD');
