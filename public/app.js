@@ -75,6 +75,7 @@ function cropButton(item){const button=node('button','Crop photo','secondary');b
 function adjustPhoto(item){
  if(stream||cameraOpening)stopCamera();
  const dialog=document.createElement('dialog');dialog.className='photo-adjust clothing-editor';
+ dialog.setAttribute('aria-label','Adjust clothing photo');
  const form=node('form'),draft=structuredClone(item),collect=clothingFields(form,draft);
  const evidence=item.recognitionDiagnostics?.outerwearRecovery;
  if(evidence?.outerwearReviewSuggested&&draft.category!=='Outerwear'){
