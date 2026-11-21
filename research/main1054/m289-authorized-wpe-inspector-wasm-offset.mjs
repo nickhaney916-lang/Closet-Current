@@ -70,9 +70,11 @@ export function classifyInspectorPause(event){
  const wasmScript=/wasm/i.test(String(top?.url||top?.functionName||''));
  const line=Number.isSafeInteger(loc.lineNumber)&&loc.lineNumber>=0?loc.lineNumber:null;
  const column=Number.isSafeInteger(loc.columnNumber)&&loc.columnNumber>=0?loc.columnNumber:null;
- const candidateFileOffset=wasmScript&&
-  (line===knownProbeLoadFileOffset||column===knownProbeLoadFileOffset)?
-   knownProbeLoadFileOffset:null;
+ // Inspector Debugger locations are protocol coordinates, NOT proven WASM
+ // binary file offsets. A coincidental line/column 44 must fail closed.
+ // A future positive requires authenticated script/module identity and
+ // independently verified coordinate mapping for multiple trap sites.
+ const candidateFileOffset=null;
  return {reason:typeof p.reason==='string'?p.reason.slice(0,36):null,
   frameCount:frames.length<=50?frames.length:null,wasmFramePresented:wasmScript,
   locationLine:line,locationColumn:column,
@@ -101,9 +103,8 @@ export function adjudicate(receipt){
   receipt.releaseAllowed===false&&receipt.originalOrtTrapByteOffset===null&&
   receipt.originalCxxSourceStatement===null&&receipt.familyAlpha==='HOLD',
   'fabricated real native PC / fix / release');
- need(receipt.syntheticInspectorFileOffset===null||
-  receipt.syntheticInspectorFileOffset===knownProbeLoadFileOffset,
-  'arbitrary inspector script location advertised as WASM opcode');
+ need(receipt.syntheticInspectorFileOffset===null,
+  'unverified inspector protocol coordinates advertised as WASM bytecode offset');
  if(receipt.syntheticInspectorFileOffset!==null)
   need(receipt.inspectorExceptionPauseObserved&&receipt.inspectorDebuggerEnabled,
   'offset claimed without real debugger event');
