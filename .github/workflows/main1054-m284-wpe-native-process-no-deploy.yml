@@ -22,8 +22,8 @@ jobs:
         run: |
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          test "$(git rev-parse HEAD:research/main1054/m284-wpe-native-process-discovery.mjs)" = cf8523408f87c365d0e0d4b1e74312e0fa5f9fe5
-          test "$(git rev-parse HEAD:tests/main1054-m284-wpe-native-process-discovery.test.mjs)" = 539b8793a5014fe9d7ab919b4d173c8bc82a4140
+          test "$(git rev-parse HEAD:research/main1054/m284-wpe-native-process-discovery.mjs)" = bbdab84c7aa890ecdd7f641342736fe1376a8127
+          test "$(git rev-parse HEAD:tests/main1054-m284-wpe-native-process-discovery.test.mjs)" = 27e98896d538cc13f3582d8a93783054b9e90eea
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
           test "$(git rev-parse HEAD:research/main1054/m279-original-model-pointer-bounds.mjs)" = f2fd27553cc6854997480ee586cb8e191e9aca11
           test "$(git rev-parse HEAD:research/main1054/m282-native-debugger-preflight.mjs)" = cd91e67e7f595b2b264d93a0d80d8fa82bebc600
@@ -65,7 +65,7 @@ jobs:
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "${{ github.run_attempt }}" = 1
-          test "$(git rev-parse HEAD:research/main1054/m284-wpe-native-process-discovery.mjs)" = cf8523408f87c365d0e0d4b1e74312e0fa5f9fe5
+          test "$(git rev-parse HEAD:research/main1054/m284-wpe-native-process-discovery.mjs)" = bbdab84c7aa890ecdd7f641342736fe1376a8127
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
       - name: Pinned WebKit 26.0 headless WPE runtime plus ordinary user-space debugger
         shell: bash
