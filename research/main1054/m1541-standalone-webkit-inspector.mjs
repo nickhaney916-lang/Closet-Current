@@ -108,7 +108,7 @@ try {
      // exact server-supplied token in JSON; reject only blank, oversized or
      // control-character values, without inventing a character grammar.
      const safe=typeof id==='string'&&id.length>0&&id.length<=256&&
-       !/[\\u0000-\\u001f\\u007f]/.test(id);
+       ![...id].some(ch=>{const n=ch.charCodeAt(0);return n<32||n===127});
      report.workerIdAccepted=safe;
      if(safe){
       workerTargetId=id;report.workerTargetCreated=true;
