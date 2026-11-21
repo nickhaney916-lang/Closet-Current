@@ -1,0 +1,74 @@
+name: Assignment 1549 application evidence
+on:
+  pull_request:
+    branches: [research/assignment1546-closet-collection-HOLD]
+    paths:
+      - '.github/workflows/main1054-assignment1549-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  application-node:
+    if: github.head_ref == 'research/assignment1549-evidence-HOLD'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      CANDIDATE: ed340449514255c4bda84eb47f64187e5bd546c8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify candidate lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_RUN_ATTEMPT" = 1
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          test "${{ github.event.pull_request.base.sha }}" = "$CANDIDATE"
+          git merge-base --is-ancestor "$CANDIDATE" HEAD
+          test "$(git rev-parse "$CANDIDATE~2")" = 15ed37c35dfe0830e73d007bce64a090b0f53333
+          git diff --check "$CANDIDATE" HEAD
+          diff -u <(printf 'A\t%s\n' .github/workflows/main1054-assignment1549-no-deploy.yml research/main1054/assignment1549-evidence.md research/main1054/assignment1549-evidence.mjs tests/main1054-assignment1549-evidence.test.mjs) <(git diff --name-status "$CANDIDATE" HEAD)
+          node --test tests/main1054-assignment1549-evidence.test.mjs
+          git worktree add --detach "$RUNNER_TEMP/candidate" "$CANDIDATE"
+      - name: Install application test dependencies
+        run: cd "$RUNNER_TEMP/candidate" && npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Focused closet regressions
+        id: focused
+        run: cd "$RUNNER_TEMP/candidate" && node --test tests/closet-filter-1544.test.cjs tests/closet-browser.test.cjs tests/taxonomy.test.cjs
+      - name: Owner photo privacy and backup regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/candidate"
+          missing=0
+          for term in owner photo backup; do
+            mapfile -t matched < <(find tests -maxdepth 1 -type f \( -name "*$term*.test.cjs" -o -name "*$term*.test.mjs" \) | sort)
+            if (( ${#matched[@]} == 0 )); then
+              echo "BLOCKED: no candidate test files match $term"
+              missing=1
+              continue
+            fi
+            node --test --test-concurrency=1 "${matched[@]}"
+          done
+          test "$missing" = 0
+      - name: Full available JavaScript suite
+        if: ${{ !cancelled() && steps.focused.outcome == 'success' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/candidate"
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs | tee "$RUNNER_TEMP/assignment1549-node.tap"
+          grep -Eq '^# skipped 0$' "$RUNNER_TEMP/assignment1549-node.tap"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: assignment1549-ordinary-node-tap
+          path: ${{ runner.temp }}/assignment1549-node.tap
+          if-no-files-found: ignore
