@@ -95,6 +95,27 @@ export function candidateDecision(rows,baseline){
   kinds.wpe>0?'WPE_PRESENT_BUT_UNATTESTED':'NO_WEBKIT_CONTENT_PROCESS';
  return {eligible,classification,kinds};
 }
+/**
+ * A bounded, strictly scalar debugger transcript classification. This records
+ * no PID, address, register value, process command line, stack or native bytes.
+ * It distinguishes a debugger/ptrace denial hint from a process exit race;
+ * neither outcome is the original WASM trap, nor a corrected ONNX model.
+ */
+export function classifyGdbTranscript(raw,status,signal){
+ requireTruth(typeof raw==='string'&&raw.length<200000,'unbounded native debugger output');
+ const text=raw.toLowerCase();
+ return {
+  exitStatus:Number.isInteger(status)&&status>=0&&status<=255?status:null,
+  signalled:Boolean(signal),
+  ptraceRestrictionMentioned:/ptrace_scope|ptrace.*(operation not permitted|permission denied)|operation not permitted|permission denied/.test(text),
+  targetExitedMentioned:/no such process|process.*(exited|terminated|not found)|process .*does not exist/.test(text),
+  targetAttachAttemptMentioned:/attaching to process|attach to process|attaching to pid|could not attach|cannot attach/.test(text),
+  registerRipObserved:/^\s*rip\s+0x[0-9a-f]{4,16}\b/m.test(text),
+  detachObserved:/detaching from program|\bdetached\b/.test(text),
+  unresolvedNativePC:true
+ };
+}
+
 export function adjudicate(receipt){
  requireTruth(receipt?.schema==='M284_PINNED_WEBKIT_WPE_RENDERER_NATIVE_DEBUG_V1','receipt missing');
  requireTruth(receipt.syntheticOnly===true&&receipt.originalModelExecuted===false,
@@ -117,6 +138,16 @@ export function adjudicate(receipt){
  if(receipt.discoveryClass!=='UNIQUE_PINNED_WPE_CONTENT')
   requireTruth(receipt.nativeAttachClass==='NOT_ATTEMPTED'||receipt.nativeAttachClass==='GDB_MISSING',
    'attached to unknown/unrelated content process');
+ if(receipt.safeGdbEvidence!==null&&receipt.safeGdbEvidence!==undefined){
+  const d=receipt.safeGdbEvidence;
+  requireTruth(d&&typeof d==='object'&&!Array.isArray(d)&&
+   Object.keys(d).sort().join(',')==='detachObserved,exitStatus,ptraceRestrictionMentioned,registerRipObserved,signalled,targetAttachAttemptMentioned,targetExitedMentioned,unresolvedNativePC'&&
+   (d.exitStatus===null||Number.isInteger(d.exitStatus)&&d.exitStatus>=0&&d.exitStatus<=255)&&
+   ['signalled','ptraceRestrictionMentioned','targetExitedMentioned',
+    'targetAttachAttemptMentioned','registerRipObserved','detachObserved','unresolvedNativePC']
+     .every(k=>typeof d[k]==='boolean')&&d.unresolvedNativePC===true,
+    'unbounded or forged native debugger provenance');
+ }
  requireTruth(receipt.syntheticWasmTrapObserved===true&&receipt.syntheticWasmFrameIndex===0,
   'missing native engine synthetic capability control');
  return receipt;
@@ -139,6 +170,7 @@ async function probe(){
   }
   const gdb=spawnSync('gdb',['--version'],{encoding:'utf8',timeout:3500,maxBuffer:5000});
   let nativeAttachClass='NOT_ATTEMPTED',permissionDenied=false,attachmentPossible=false;
+  let safeGdbEvidence=null;
   if(decision.classification==='UNIQUE_PINNED_WPE_CONTENT'&&gdb.status!==0)
    nativeAttachClass='GDB_MISSING';
   if(decision.classification==='UNIQUE_PINNED_WPE_CONTENT'&&gdb.status===0){
@@ -154,6 +186,7 @@ async function probe(){
      {encoding:'utf8',timeout:16000,maxBuffer:180000});
     const d=classifyAttach(String(result.stdout||'')+'\n'+String(result.stderr||''),result.status,result.signal);
     nativeAttachClass=d.className;
+    safeGdbEvidence=classifyGdbTranscript(String(result.stdout||'')+'\n'+String(result.stderr||''),result.status,result.signal);
     permissionDenied=d.permissionDenied;attachmentPossible=d.attachmentPossible;
    }else nativeAttachClass='DEBUGGER_OR_TARGET_UNAVAILABLE';
   }
@@ -174,7 +207,7 @@ async function probe(){
    visibleWpeWithoutPinnedExecutable:decision.kinds.missingPinnedBinary,
    exactlyOneNewPinnedWpeRenderer:decision.eligible.length===1,
    discoveryClass:decision.classification,debuggerPresent:gdb.status===0,
-   nativeAttachClass,attachmentPossible,permissionDenied,
+   nativeAttachClass,attachmentPossible,permissionDenied,safeGdbEvidence,
    syntheticOnly:true,originalModelExecuted:false,
    syntheticWasmTrapObserved:error.name==='RuntimeError'&&
     /out of bounds|memory access/i.test(error.message),
