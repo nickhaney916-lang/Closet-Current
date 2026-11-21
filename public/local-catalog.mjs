@@ -11,7 +11,17 @@ export const localCandidates=[
  ['a hand with no garment','Uncategorized','Unknown','Unknown'],['a dog or cat','Uncategorized','Unknown','Unknown'],
  ['a pile of several different clothes','Uncategorized','Unknown','Unknown']
 ].map(([label,category,itemType,sleeveLength])=>({label,category,itemType,sleeveLength}));
-export function clothingChoices(results){return results.filter(x=>Number.isFinite(x.score)).map(x=>{const candidate=localCandidates.find(c=>c.label===x.label);return candidate?{...candidate,score:x.score}:null;}).filter(Boolean).sort((a,b)=>b.score-a.score).slice(0,3);}
+export function clothingChoices(results){
+ const scores=new Map();
+ for(const {label,score} of results){
+  if(!Number.isFinite(score))continue;
+  scores.set(label,Math.max(score,scores.get(label)??-Infinity));
+ }
+ return Array.from(scores,([label,score])=>{
+  const candidate=localCandidates.find(c=>c.label===label);
+  return candidate?{...candidate,score}:null;
+ }).filter(Boolean).sort((a,b)=>b.score-a.score).slice(0,3);
+}
 export function strongMatch(choices){return !!choices[0]&&choices[0].category!=='Uncategorized'&&choices[0].score>=.55&&choices[0].score-(choices[1]?.score||0)>=.15;}
 export function detailMatch(ranked,choices){
  const first=ranked[0];
