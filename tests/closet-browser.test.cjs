@@ -15,3 +15,29 @@ test('zero layers allows one base and replacing it keeps both clothing records',
 test('dress preview hides pants and layers without mutating the in-progress shirt look',()=>{const c=setup();c.boardInitialized=true;c.currentBoard={layerCount:3,slots:{top:'shirt',bottom:'pants',layer:'sweater',layer2:'jacket',layer3:'coat'}};c.items=[{id:'shirt',category:'Tops'}];const before=JSON.stringify(c.currentBoard);c.window.closetDressPreview=true;const visible=c.closetVisibleSections();assert.deepEqual(Array.from(visible,section=>section.category),['Dresses','Shoes']);assert.equal(JSON.stringify(c.currentBoard),before);c.window.closetDressPreview=false;assert.equal(c.closetVisibleSections().filter(section=>section.torso).length,4);assert.equal(JSON.stringify(c.currentBoard),before);});
 
 test('a dress view cannot silently accept a hidden jacket or pants selection',async()=>{const c=setup();c.boardInitialized=true;c.items=[{id:'dress',category:'Dresses'},{id:'coat',category:'Outerwear',itemType:'Coat'},{id:'pants',category:'Bottoms'}];c.currentBoard={layerCount:0,slots:{top:'dress'}};const before=JSON.stringify(c.currentBoard);assert.equal(await c.placeClosetPiece(c.items[1],'layer3'),false);assert.equal(await c.placeClosetPiece(c.items[2],'bottom'),false);assert.equal(JSON.stringify(c.currentBoard),before);});
+
+test('standalone season and sleeve filters reveal the closet collection',()=>{
+ const c=setup();
+ const fields=new Map();
+ c.$=id=>{
+  if(!fields.has(id))fields.set(id,{
+   value:id==='filter'?'All categories':'',hidden:false,dataset:{},
+   classList:{remove(){},toggle(){}},replaceChildren(){},append(){},setAttribute(){},
+   closest(){return {};},
+  });
+  return fields.get(id);
+ };
+ c.node=()=>c.$('dummy');
+ const source=fs.readFileSync('public/closet-browser.js','utf8');
+ vm.runInContext(source.slice(source.indexOf('function renderClosetBrowser('),
+  source.indexOf('function enableClosetDrag(')),c);
+ vm.runInContext('closetVisibleSections=()=>[];',c);
+ for(const id of ['seasonFilter','sleeveFilter']){
+  c.$(id).value=id==='seasonFilter'?'Winter':'Long sleeve';
+  c.renderClosetBrowser();
+  assert.equal(c.$('closetCollection').hidden,false,id+' must reveal matching cards');
+  c.$(id).value='';
+ }
+ c.renderClosetBrowser();
+ assert.equal(c.$('closetCollection').hidden,true);
+});
