@@ -1,0 +1,75 @@
+name: Assignment 1557 recognition recovery
+on:
+  pull_request:
+    branches: [main]
+    paths: ['.github/workflows/assignment1557-recovery-no-deploy.yml', 'tests/recognition-message-recovery.test.cjs']
+permissions:
+  contents: read
+jobs:
+  node-tests:
+    if: github.head_ref == 'research/assignment1557-message-recovery-HOLD' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact source and Node regressions
+        run: |
+          test "$GITHUB_RUN_ATTEMPT" = 1
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          node --test tests/recognition-message-recovery.test.cjs
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Chromium and WebKit recovery smoke
+        shell: bash
+        run: |
+          npx playwright install --with-deps chromium webkit
+          node <<'JS'
+          const fs = require('node:fs');
+          const assert = require('node:assert/strict');
+          const {chromium, webkit} = require('playwright');
+          const app = fs.readFileSync('public/app.js','utf8');
+          const source = app.slice(app.indexOf('function stopRecognitionWorker('),app.indexOf('async function enableLocal('));
+          (async()=>{
+            for(const engine of [chromium, webkit]){
+              const browser=await engine.launch();
+              try {
+                const page=await browser.newPage();
+                page.on('pageerror',error=>console.error(engine.name(),error));
+                await page.setContent('<button>Try again</button><p role="status"></p>');
+                await page.addScriptTag({content: source + `
+                  let localWorker=null, localReady=true, recognitionUnavailable=false;
+                  const recognitionState={phase:'ready'}, recognitionAssetVersion='', localJobs=new Map();
+                  const recoveryStatus=document.querySelector('p');
+                  const renderRecognitionNotice=()=>recoveryStatus.textContent=recognitionState.phase;
+                  let fault=true, requestId=0;
+                  const crypto={randomUUID:()=>String(++requestId)};
+                  const Worker=class {
+                    terminate(){}
+                    postMessage(request){
+                      queueMicrotask(()=>{
+                        if(fault){fault=false;this.onmessageerror(new MessageEvent('messageerror'));}
+                        else this.onmessage(new MessageEvent('message',{data:{id:request.id,type:'loaded'}}));
+                      });
+                    }
+                  };
+                  document.querySelector('button').onclick=async()=>{
+                    try { await localRequest('load'); recoveryStatus.textContent='Ready'; }
+                    catch(error){ recoveryStatus.textContent=error.message; }
+                  };
+                `});
+                await page.getByRole('button').click();
+                await page.getByText(/could not be read/).waitFor({timeout:5000});
+                await page.getByRole('button').click();
+                await page.getByText('Ready',{exact:true}).waitFor({timeout:5000});
+                assert.equal(await page.evaluate(()=>localJobs.size),0);
+                console.log(engine.name()+' synthetic messageerror recovery passed');
+              } finally { await browser.close(); }
+            }
+          })().catch(error=>{console.error(error);process.exitCode=1;});
+          JS

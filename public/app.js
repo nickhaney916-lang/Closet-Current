@@ -276,6 +276,7 @@ function localRequest(type,image,itemId,hint){
      if(data.type==='error'){localReady=false;if(typeof recordDeviceEvent==='function')recordDeviceEvent('scanner_error',{stage:data.stage,code:data.code,durationMs:Date.now()-job.started});job.reject(Error(data.text));}else job.resolve(data);
     };
     localWorker.onerror=()=>{if(worker===localWorker)stopRecognitionWorker('Local recognition is unavailable. Try again or use Adjust.');};
+    localWorker.onmessageerror=()=>{if(worker===localWorker)stopRecognitionWorker('Recognition result could not be read. Your photos are kept. Try again or use Adjust.');};
    }
    const id=crypto.randomUUID(),started=Date.now();
    const job={resolve,reject,type,itemId,started,timer:null,touch(){
