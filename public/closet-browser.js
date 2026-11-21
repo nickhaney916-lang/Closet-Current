@@ -35,9 +35,9 @@ function closetSectionMatches(section,item){return (section.mixed?outfitSlots.so
 function closetDropSlot(section,item){if((section.itemType||section.sleeves)&&!closetSectionMatches(section,item))return null;const slot=section.category==='Accessories'?closetPieceSlot(item):section.slot;if(!slot)return null;if(section.category==='Dresses'&&item.category!=='Dresses'||section.category==='Accessories'&&item.category!=='Accessories')return null;return outfitSlots.find(x=>x.id===slot&&slotAllows(x,item))?slot:null;}
 async function placeClosetPiece(item,slotId){
  await outfitBoardReady;slotId=slotId||closetPieceSlot(item);if(!items.some(x=>x.id===item.id)||!outfitSlots.some(x=>x.id===slotId&&slotAllows(x,item))){$('closetLookStatus').textContent='Confirm this piece’s category and accessory type in Adjust details before placing it.';return false;}
- const level=outfitSlots.find(slot=>slot.id===slotId)?.level;if(closetDressMode()&&(slotId==='bottom'||level)){$('closetLookStatus').textContent='Switch to Shirts & pants to add pants or layers.';return false;}if(level)currentBoard.layerCount=Math.max(currentBoard.layerCount||0,level);
+ const level=outfitSlots.find(slot=>slot.id===slotId)?.level;if(closetDressMode()&&(slotId==='bottom'||level)){$('closetLookStatus').textContent='Switch to Shirts & pants to add pants or layers.';return false;}
  if(slotId==='bottom'&&items.find(x=>x.id===currentBoard.slots.top)?.category==='Dresses'){$('closetLookStatus').textContent='Your dress covers the bottoms space. Choose a top or clear the look to add bottoms.';return false;}
- const saved=await selectBoardPiece(slotId,item.id);if(['Tops','Dresses'].includes(item.category))window.closetDressPreview=false;render();$('closetLookStatus').textContent=saved?(item.name||'Your piece')+' added to your look.':'This look could not save. Your clothing photos are kept.';return saved;
+ const saved=await selectBoardPiece(slotId,item.id);if(saved&&['Tops','Dresses'].includes(item.category))window.closetDressPreview=false;render();$('closetLookStatus').textContent=saved?(item.name||'Your piece')+' added to your look.':'This look could not save. Your clothing photos are kept.';return saved;
 }
 function renderClosetBrowser(){
  const grid=$('closetCategories');if(!grid)return;grid.replaceChildren();grid.classList.remove('split-layers');grid.dataset.layers=closetLayerCount();
