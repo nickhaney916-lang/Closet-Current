@@ -4,7 +4,7 @@ const board=fs.readFileSync('public/outfit-board.js','utf8');
 const engine=fs.readFileSync('public/outfit-board-engine.js','utf8');
 const sync=board.split('\n').find(line=>line.startsWith('function syncBoardInputs(){'));
 assert.ok(sync,'load exact real board metadata input synchronizer');
-const begin=board.indexOf("\nfor(const [id,key]of Object.entries({boardName:'name'");
+const begin=board.indexOf("\nfor(const [id,key]");
 const end=board.indexOf("\n$('closeBoardPicker')",begin);
 assert.ok(begin>=0&&end>begin,'load exact real onchange handler definitions');
 const handlers=board.slice(begin,end);
