@@ -123,6 +123,7 @@ async function openLocalInspector(path,observations){
   'inspector websocket path not locally sourced');
  const socket=new WebSocket('ws://'+pinnedEnvironment.inspectorLoopback+path);
  const callbacks=new Map();let id=0,closed=false;
+ observations.selectedTargetType=path.split('/').at(-1)||null;
  const send=(method,params={})=>{
   if(socket.readyState!==WebSocket.OPEN)return false;
   socket.send(JSON.stringify({id:++id,method,params}));
@@ -134,11 +135,23 @@ async function openLocalInspector(path,observations){
   socket.addEventListener('open',()=>{clearTimeout(timeout);resolve();},{once:true});
   socket.addEventListener('error',()=>{clearTimeout(timeout);reject(Error('local WS refused'));},{once:true});
  });
+ socket.addEventListener('close',()=>{observations.socketClosedByServer=true;});
  socket.addEventListener('message',e=>{
   try{
    const data=JSON.parse(String(e.data||'').slice(0,16384));
+   observations.messageCount++;
+   const keys=Object.keys(data).sort().filter(k=>/^[A-Za-z]{2,25}$/.test(k));
+   if(observations.protocolEnvelopeKeys.length<4)
+    observations.protocolEnvelopeKeys.push(keys.slice(0,8).join(','));
+   if(typeof data.method==='string'&&observations.eventMethods.length<6&&
+      /^[A-Za-z][A-Za-z0-9.]{1,60}$/.test(data.method))
+    observations.eventMethods.push(data.method);
    if(data.id&&callbacks.has(data.id)){
+    observations.commandResponseCount++;
     const method=callbacks.get(data.id);callbacks.delete(data.id);
+    if(data.error&&observations.commandErrors.length<4)
+     observations.commandErrors.push({command:method,
+      code:Number.isSafeInteger(data.error.code)?data.error.code:null});
     if(method==='Debugger.enable'&&!data.error)observations.debuggerEnabled=true;
     if(method==='Debugger.setPauseOnExceptions'&&!data.error)
      observations.pauseOnExceptionEnabled=true;
@@ -155,10 +168,13 @@ async function openLocalInspector(path,observations){
  });
  await initialized;
  observations.websocketConnected=true;
+ // The WPE RemoteInspectorClient's backend Setup is asynchronous even after
+ // HTTP/WebSocket success. Give pinned source time to report its target state.
+ await new Promise(resolve=>setTimeout(resolve,600));
  send('Debugger.enable');
- await new Promise(resolve=>setTimeout(resolve,350));
- send('Debugger.setPauseOnExceptions',{state:'all'});
- await new Promise(resolve=>setTimeout(resolve,350));
+ await new Promise(resolve=>setTimeout(resolve,1600));
+ if(observations.debuggerEnabled)send('Debugger.setPauseOnExceptions',{state:'all'});
+ await new Promise(resolve=>setTimeout(resolve,1100));
  return ()=>{if(!closed){closed=true;socket.close();}};
 }
 export async function probeSyntheticInspector(){
@@ -173,7 +189,10 @@ export async function probeSyntheticInspector(){
   await page.goto('data:text/html,<html><head><title>m289-local-synthetic</title></head><body>safe synthetic WASM</body></html>');
   need(await page.title()==='m289-local-synthetic','local synthetic WebKit page absent');
   const observed={websocketConnected:false,debuggerEnabled:false,
-   pauseOnExceptionEnabled:false,pauses:0,lastPause:null};
+   pauseOnExceptionEnabled:false,pauses:0,lastPause:null,
+   selectedTargetType:null,socketClosedByServer:false,
+   messageCount:0,commandResponseCount:0,commandErrors:[],
+   eventMethods:[],protocolEnvelopeKeys:[]};
   const http=await httpProbe();
   let disconnect=()=>{};
   for(const path of http.paths){
@@ -200,6 +219,13 @@ export async function probeSyntheticInspector(){
    syntheticJsStackFileOffset:frame?.absoluteModuleOffset??null,
    inspectorHttpReachable:http.reachable,inspectorSocketCount:http.paths.length,
    inspectorWebSocketConnected:observed.websocketConnected,
+   inspectorSelectedTargetType:observed.selectedTargetType,
+   inspectorSocketClosed:observed.socketClosedByServer,
+   inspectorMessageCount:observed.messageCount,
+   inspectorCommandResponses:observed.commandResponseCount,
+   inspectorCommandErrors:observed.commandErrors,
+   inspectorEventMethods:observed.eventMethods,
+   inspectorProtocolEnvelopeKeys:observed.protocolEnvelopeKeys,
    inspectorDebuggerEnabled:observed.debuggerEnabled,
    inspectorPauseOnExceptionsEnabled:observed.pauseOnExceptionEnabled,
    inspectorExceptionPauseObserved:observed.pauses>0,
