@@ -23,13 +23,15 @@ try{
   const path=paths.find(p=>p.endsWith('/WebPage'))||paths[0];
   if(!/^\/socket\/[0-9]{1,18}\/[0-9]{1,18}\/[A-Za-z][A-Za-z0-9_-]{0,47}$/.test(path))throw Error('invalid local path');
   socket=new WebSocket('ws://'+host+path);
-  await new Promise((resolve,reject)=>{
+  const handshake=new Promise((resolve,reject)=>{
    const t=setTimeout(()=>reject(Error('WebSocket handshake timeout')),5000);
    socket.addEventListener('open',()=>{clearTimeout(t);resolve()},{once:true});
    socket.addEventListener('error',()=>{clearTimeout(t);reject(Error('WebSocket handshake failed'))},{once:true});
   });
-  report.websocket=true;
-  if(phase>1){
+  if(phase<=1){
+   await handshake;
+   report.websocket=true;
+  } else {
    let id=0,targetId=null,innerDone=false;
    const send=(method,params={})=>socket.send(JSON.stringify({id:++id,method,params}));
    socket.addEventListener('message',e=>{
@@ -44,6 +46,8 @@ try{
      try{const inner=JSON.parse(msg.params.message);if(typeof inner.method==='string'&&report.innerMethods.length<10)report.innerMethods.push(inner.method.slice(0,80));if(inner.id===101){innerDone=true;report.innerResponse=true;report.innerErrorCode=Number.isInteger(inner.error?.code)?inner.error.code:null}}catch{}
     }
    });
+   await handshake;
+   report.websocket=true;
    for(let n=0;n<20&&!targetId;n++)await wait(250);
    if(phase>=2&&!targetId)throw Error('Target discovery absent');
    if(phase>=3){
