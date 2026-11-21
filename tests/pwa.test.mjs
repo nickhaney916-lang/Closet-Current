@@ -11,9 +11,9 @@ const self={registration:{scope:'https://example.com/Closet-Current/'},location:
 const context={self,URL,Request,Response,caches:{open:async()=>cache,keys:async()=>[],delete:async()=>true},fetch:async()=>{throw Error('offline');}};
 vm.createContext(context);vm.runInContext(source,context);
 let job;events.install({waitUntil(promise){job=promise;}});await job;
-assert.ok(saved.has('https://example.com/Closet-Current/index.html'));
 const html=fs.readFileSync('dist/index.html','utf8');
 const buildVersion=html.match(/auth\.js\?v=([a-f0-9]+)/)[1];
+assert.ok(saved.has('https://example.com/Closet-Current/index.html?v='+buildVersion));
 for(const asset of ['local-worker.mjs','local-catalog.mjs'])assert.ok(saved.has(new URL(asset+'?v='+buildVersion,self.registration.scope).href));
 const scriptURLs=[...html.matchAll(/src="([^"]+\.js\?v=[a-f0-9]+)"/g)].map(match=>match[1]);
 assert.ok(scriptURLs.some(url=>url.startsWith('auth.js?v=')));
@@ -34,7 +34,7 @@ console.log('Install manifest, icon dimensions, subpath offline fallback, restri
 
 // A deployed release can change while this worker still controls open tabs.
 const homeURL=self.registration.scope;
-const indexURL=new URL('index.html',homeURL).href;
+const indexURL=new URL('index.html?v='+buildVersion,homeURL).href;
 const workerURL=new URL('local-worker.mjs?v='+buildVersion,homeURL).href;
 const oldWorker=fs.readFileSync('dist/local-worker.mjs','utf8');
 saved.set(indexURL,new Response(html));
