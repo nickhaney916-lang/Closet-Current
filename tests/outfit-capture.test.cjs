@@ -182,3 +182,18 @@ test('pagehide releases an outfit photo decode and fences its late result from a
  assert.equal(h.c.busy,false);
  assert.equal(h.timers.size,0);
 });
+
+test('delayed model downloads cannot overwrite separation status or reset its watchdog',()=>{
+ const h=setup();
+ h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');
+ h.emit({type:'progress',phase:'loading',percent:25});
+ assert.match(h.el('outfitSplitStatus').textContent,/25%/);
+ h.emit({type:'progress',phase:'separating'});
+ const timer=[...h.timers.keys()][0];
+ h.emit({type:'progress',phase:'loading',percent:100});
+ assert.equal(h.el('outfitSplitStatus').textContent,'Separating clothes…');
+ assert.deepEqual([...h.timers.keys()],[timer]);
+ h.emit({type:'done',count:0});
+ assert.equal(h.c.busy,false);
+ assert.equal(h.el('outfitRetry').hidden,false);
+});
