@@ -1,0 +1,86 @@
+name: MAIN1054 M288 original JSEP WASM static memory instruction candidates NO REPAIR HOLD
+on:
+  push:
+    branches: [research/main1054-m288-original-jsep-static-memory-instruction-map-HOLD]
+permissions:
+  contents: read
+jobs:
+  m288-source-original-regression-and-adversarial:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Freeze authentic original M279 RED and unchanged JSEP/owner Worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:research/main1054/m288-original-jsep-static-memory-map.mjs)" = f3ed9f2bc8b877723efb73b5f792b4b693073f58
+          test "$(git rev-parse HEAD:tests/main1054-m288-original-jsep-static-memory-map.test.mjs)" = a897a81a45e47851cb70baa9d19471e0ec0dd7ea
+          test "$(git rev-parse HEAD:research/main1054/m280-original-jsep-function-map.mjs)" = c52b967bc80ce8ba4c2c69bc2ea09c70e50bb332
+          test "$(git rev-parse HEAD:research/main1054/m279-original-model-pointer-bounds.mjs)" = f2fd27553cc6854997480ee586cb8e191e9aca11
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          node --check research/main1054/m288-original-jsep-static-memory-map.mjs
+      - name: Fail-closed original binary static memory instruction and no-false-trap tests
+        run: node --test tests/main1054-m288-original-jsep-static-memory-map.test.mjs
+      - name: Original inherited native failure provenance, debugger and security negative tests
+        run: node --test tests/main1054-m286-pinned-webkit-source-binary-provenance.test.mjs tests/main1054-m284-wpe-native-process-discovery.test.mjs tests/main1054-m282-native-debugger-preflight.test.mjs tests/main1054-m281-webkit-trap-pc-capability.test.mjs tests/main1054-m280-original-jsep-function-map.test.mjs tests/main1054-m279-original-model-pointer-bounds.test.mjs
+      - name: Install original private/owner/backup offline regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build untouched original app and run all inherited owner/privacy/backup/photo/2D-v4 Node regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  m288-authentic-original-jsep-code-body-disassembly:
+    needs: m288-source-original-regression-and-adversarial
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact source checkout, first attempt, no model and no runtime changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD:research/main1054/m288-original-jsep-static-memory-map.mjs)" = f3ed9f2bc8b877723efb73b5f792b4b693073f58
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Install standard static WASM disassembly CLI, not a browser debugger
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends wabt
+          wasm-objdump --version
+      - name: Only SHA-attested original JSEP WASM static code-body memory access candidate map
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout -k 5s 850s node research/main1054/m288-original-jsep-static-memory-map.mjs static-map
+          test -s m288-sanitized/original-JSEP-static-memory-map.json
+          test ! -e m288-sanitized/original-canonical-JSEP-TEMP.wasm
+      - name: Preserve only sanitized original static candidate offsets, never native failing PC
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m288-original-JSEP-static-memory-access-instruction-map-NOT-TRAP-PC-HOLD
+          path: m288-sanitized/original-JSEP-static-memory-map.json
+          retention-days: 7
+          if-no-files-found: ignore
