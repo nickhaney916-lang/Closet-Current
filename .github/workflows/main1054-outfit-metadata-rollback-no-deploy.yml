@@ -1,0 +1,59 @@
+name: M4 P1 Outfit metadata rejected-save rollback no deploy HOLD
+on:
+  push:
+    branches: [research/main1054-p1-outfit-details-save-rollback-HOLD]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify immutable candidate and narrow file ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=b6d14614fbbf560537fdbdf9c8f28f16d7a42903
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --check "$BASE" HEAD
+          while IFS= read -r file; do
+            case "$file" in
+              public/outfit-board.js|tests/main1054-outfit-metadata-rejected-save.test.cjs|scripts/main1054-outfit-metadata-browser.cjs|.github/workflows/main1054-outfit-metadata-rollback-no-deploy.yml) ;;
+              *) echo "OUT-OF-SCOPE: $file"; exit 1 ;;
+            esac
+          done < <(git diff --name-only "$BASE" HEAD)
+          node --check public/outfit-board.js
+      - name: Verify genuine application metadata handlers under injected transaction refusal
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/main1054-outfit-metadata-rejected-save.test.cjs | tee "$RUNNER_TEMP/metadata-focused.tap"
+          grep -Eq '^# fail 0$' "$RUNNER_TEMP/metadata-focused.tap"
+      - name: Build and complete existing Node tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs | tee "$RUNNER_TEMP/metadata-full.tap"
+          grep -Eq '^# fail 0$' "$RUNNER_TEMP/metadata-full.tap"
+          grep -Eq '^# skipped 0$' "$RUNNER_TEMP/metadata-full.tap"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m4-outfit-metadata-rejected-save-HOLD
+          path: |
+            ${{ runner.temp }}/metadata-focused.tap
+            ${{ runner.temp }}/metadata-full.tap
+            ${{ runner.temp }}/metadata-browser.json
+          if-no-files-found: ignore
