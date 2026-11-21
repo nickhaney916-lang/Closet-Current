@@ -1,0 +1,56 @@
+name: ASSIGNMENT1551 photo-import named Node test harness and full owner checks HOLD
+on:
+  push:
+    branches: [research/assignment1551-photo-import-test-isolation-HOLD]
+permissions:
+  contents: read
+jobs:
+  photo-import-test-harness-no-deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Freeze #1546 candidate, forbid application edits, unexpected tests and reruns
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=ed340449514255c4bda84eb47f64187e5bd546c8
+          test "${{ github.run_attempt }}" = "1"
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse HEAD:public/app.js)" = a45b25488b9a8f1e433dd2e60706a7101d4648ba
+          test "$(git rev-parse HEAD:public/photo-import.js)" = 1682c9dfcb37da93901b361753512a3e336dde35
+          test "$(git rev-parse HEAD:public/taxonomy.js)" = 7beedac0e9114fb2f8b371fa2990e2fad1de8654
+          test "$(git rev-parse "$BASE:tests/photo-import.test.cjs")" = 29a2243e61546d790596a571f96ab623cc28b8d2
+          while IFS= read -r changed; do
+            case "$changed" in
+              .github/workflows/assignment1551-photo-import-test-harness-no-deploy.yml|tests/photo-import-harness-1551.test.cjs|tests/photo-import.test.cjs) ;;
+              *) echo "UNEXPECTED_ORIGINAL_APPLICATION_CHANGE $changed"; exit 1 ;;
+            esac
+            test "$(git ls-files -s "$changed" | cut -d' ' -f1)" = 100644
+          done < <(git diff --name-only --no-renames "$BASE" HEAD)
+          node --check tests/photo-import.test.cjs
+          node --check tests/photo-import-harness-1551.test.cjs
+      - name: Fail-first discovery and independent test-case execution regression
+        run: node --test tests/photo-import-harness-1551.test.cjs
+      - name: All real photo-import source assertions in Node test runner
+        run: node --test tests/photo-import.test.cjs
+      - name: Install pinned ordinary JS test dependencies without any deployment
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original reviewed #1546 application build and complete available JS regression suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Confirm no deployment or family-release action was taken
+        run: echo 'M1551_TEST_INFRA_ONLY_PASS original app unchanged; Family Alpha HOLD'
