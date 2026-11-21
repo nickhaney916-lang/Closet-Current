@@ -25,3 +25,50 @@ jobs:
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
           node scripts/build.mjs
           node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Chromium and WebKit recovery smoke
+        shell: bash
+        run: |
+          npx playwright install --with-deps chromium webkit
+          node <<'JS'
+          const fs = require('node:fs');
+          const assert = require('node:assert/strict');
+          const {chromium, webkit} = require('playwright');
+          const app = fs.readFileSync('public/app.js','utf8');
+          const source = app.slice(app.indexOf('function stopRecognitionWorker('),app.indexOf('async function enableLocal('));
+          (async()=>{
+            for(const engine of [chromium, webkit]){
+              const browser=await engine.launch();
+              try {
+                const page=await browser.newPage();
+                await page.setContent('<button>Try again</button><p role="status"></p>');
+                await page.addScriptTag({content: source + `
+                  let localWorker=null, localReady=true, recognitionUnavailable=false;
+                  const recognitionState={phase:'ready'}, recognitionAssetVersion='', localJobs=new Map();
+                  const status=document.querySelector('p');
+                  const renderRecognitionNotice=()=>status.textContent=recognitionState.phase;
+                  let fault=true;
+                  const NativeWorker=Worker;
+                  window.Worker=class extends NativeWorker {
+                    constructor(){
+                      super(URL.createObjectURL(new Blob(['onmessage=e=>postMessage({id:e.data.id,type:"loaded"})'],{type:'text/javascript'})),{type:'module'});
+                    }
+                    postMessage(request){
+                      if(fault){fault=false;queueMicrotask(()=>this.dispatchEvent(new MessageEvent('messageerror')));}
+                      else super.postMessage(request);
+                    }
+                  };
+                  document.querySelector('button').onclick=async()=>{
+                    try { await localRequest('load'); status.textContent='Ready'; }
+                    catch(error){ status.textContent=error.message; }
+                  };
+                `});
+                await page.getByRole('button').click();
+                await page.getByText(/could not be read/).waitFor({timeout:5000});
+                await page.getByRole('button').click();
+                await page.getByText('Ready',{exact:true}).waitFor({timeout:5000});
+                assert.equal(await page.evaluate(()=>localJobs.size),0);
+                console.log(engine.name()+' synthetic messageerror recovery passed');
+              } finally { await browser.close(); }
+            }
+          })().catch(error=>{console.error(error);process.exitCode=1;});
+          JS
