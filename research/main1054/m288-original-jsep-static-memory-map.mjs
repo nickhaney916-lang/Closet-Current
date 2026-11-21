@@ -73,7 +73,7 @@ export function createCollector(frames){
  let active=null,lineCount=0;
  function acceptLine(line){
   insist(typeof line==='string'&&line.length<6000,'oversize disassembly line');
-  lineCount++;insist(lineCount<10000000,'unbounded external disassembly lines');
+  lineCount++;insist(lineCount<originalBinary.bytes*3,'unbounded external disassembly lines');
   const head=/^\s*(?:0x)?([0-9a-f]{1,12})\s+func\[(\d{1,6})\]/i.exec(line);
   if(head){
    const index=Number(head[2]);
