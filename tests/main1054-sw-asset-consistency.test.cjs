@@ -32,6 +32,7 @@ function cacheHarness() {
   const text=url.pathname==='/index.html'||url.pathname==='/'?
     (isNew?newShell:oldShell):
     url.pathname==='/app.js'?(isNew?nextApp:oldApp):
+    url.pathname==='/scanner-errors.mjs'?'static-'+deployed:
     'synthetic static resource for '+url.pathname;
   return response(text);
  };
@@ -98,8 +99,8 @@ test('an old active SW must not overwrite cached old HTML with a newer incompati
  const h=cacheHarness(),sw=h.worker();
  await sw.dispatch('install');
  h.setDeployed('new');
- assert.equal((await sw.dispatch('fetch','index.html')).body,newShell,
-  'an online user can still reach the new shell while its new SW installs');
+ assert.equal((await sw.dispatch('fetch','index.html')).body,oldShell,
+  'old SW must keep a matching old shell until the new SW activates');
  h.setDeployed('offline');
  assert.equal((await sw.dispatch('fetch','index.html')).body,oldShell,
   'old SW offline shell must remain paired with its own cached assets');
@@ -126,4 +127,15 @@ test('a missing cached versioned script does not silently masquerade as a matchi
  h.setDeployed('new');
  const result=await sw.dispatch('fetch','app.js?v='+oldVersion);
  assert.equal(result.status,503,'missing pinned JS must fail closed, not silently load incompatible new bytes');
+});
+
+test('new HTML must not pair with an old unversioned Worker import during rollout',async()=>{
+ const h=cacheHarness(),old=h.worker();
+ await old.dispatch('install');
+ h.setDeployed('new');
+ const shell=(await old.dispatch('fetch','index.html')).body;
+ const imported=(await old.dispatch('fetch','scanner-errors.mjs')).body;
+ assert.equal(imported,'static-old');
+ assert.equal(shell,oldShell,
+  'old cache-controlled scanner-errors.mjs cannot accompany a new HTML/Worker contract');
 });
