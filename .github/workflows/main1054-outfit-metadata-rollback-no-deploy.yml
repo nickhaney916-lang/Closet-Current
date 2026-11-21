@@ -48,6 +48,16 @@ jobs:
           node --test --test-concurrency=1 tests/*.cjs tests/*.mjs | tee "$RUNNER_TEMP/metadata-full.tap"
           grep -Eq '^# fail 0$' "$RUNNER_TEMP/metadata-full.tap"
           grep -Eq '^# skipped 0$' "$RUNNER_TEMP/metadata-full.tap"
+      - name: Real Chromium and WebKit metadata form rejection and actual native IndexedDB controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          git worktree add --detach "$RUNNER_TEMP/m4-metadata-prev" b6d14614fbbf560537fdbdf9c8f28f16d7a42903
+          (cd "$RUNNER_TEMP/m4-metadata-prev" && node scripts/build.mjs)
+          npx playwright install --with-deps chromium webkit
+          node scripts/main1054-outfit-metadata-browser.cjs "$RUNNER_TEMP/m4-metadata-prev/dist" dist | tee "$RUNNER_TEMP/metadata-browser.json"
+          grep -q '"status": "PASS"' "$RUNNER_TEMP/metadata-browser.json"
+          grep -q '"checks": 52' "$RUNNER_TEMP/metadata-browser.json"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
