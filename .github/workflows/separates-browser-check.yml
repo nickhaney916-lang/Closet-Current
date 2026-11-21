@@ -1,0 +1,30 @@
+name: Mission 4 dress-to-separates browser acceptance
+on:
+  pull_request:
+    branches: ['mission4/closet-separates-rollback']
+    paths:
+      - scripts/check-separates-browser.cjs
+      - .github/workflows/separates-browser-check.yml
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node scripts/build.mjs
+          node --test tests/*.test.*
+          git worktree add --detach "$RUNNER_TEMP/separates-baseline" 52d662dcb0fc24063ef11675224c1de62bc7bd38
+          (cd "$RUNNER_TEMP/separates-baseline" && node scripts/build.mjs)
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - run: npx playwright install --with-deps chromium webkit
+      - run: node scripts/check-separates-browser.cjs "$RUNNER_TEMP/separates-baseline/dist" dist
