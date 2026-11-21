@@ -20,7 +20,8 @@ const report={
  dualResumeAckCount:0,sameJavascriptPauseLocation:null,wasmBytecodeAttributionVerified:false,
  workerCreated:false,workerReady:false,workerTargetCreated:false,
  workerTargetScope:null,workerTargetDestroyed:false,workerScriptEvaluation:false,
- workerHttpKinds:[],workerHttpNonPagePath:false,workerHttpListingAvailable:false
+ workerHttpKinds:[],workerHttpNonPagePath:false,workerHttpListingAvailable:false,
+ workerProtocolEnabled:false,workerInitializedAck:false,workerDomainEventObserved:false
 };
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let child,socket,spawnError=null;
@@ -93,6 +94,21 @@ try {
   if(msg.method==='Target.dispatchMessageFromTarget'&&typeof msg.params?.message==='string'){
    try{
     const inner=JSON.parse(msg.params.message);
+    // WebKit 26 has a separate Worker domain, not the Target domain, for
+    // Page-owned dedicated workers. InspectorWorkerAgent::enable connects
+    // the worker proxy and emits Worker.workerCreated. initialized resumes
+    // the paused-on-start worker before it can post READY.
+    if(inner.method==='Worker.workerCreated'&&typeof inner.params?.workerId==='string'){
+     const id=inner.params.workerId;
+     if(/^[A-Za-z0-9_:-]{1,128}$/.test(id)){
+      workerTargetId=id;report.workerTargetCreated=true;
+      report.workerTargetScope='Worker.workerCreated';
+      report.workerDomainEventObserved=true;
+      sendNested(112,'Worker.initialized',{workerId:id});
+     }
+    }
+    if(inner.method==='Worker.workerTerminated'&&inner.params?.workerId===workerTargetId)
+     report.workerTargetDestroyed=true;
     if(inner.method==='Target.targetCreated'&&inner.params?.targetInfo?.type==='worker'){
      const id=inner.params.targetInfo.targetId;
      if(typeof id==='string'&&/^[A-Za-z0-9_:-]{1,128}$/.test(id)){
@@ -127,10 +143,12 @@ try {
       }
      }else if((phase===4||phase===5)&&!resumeSent){resumeSent=true;sendNested(104,'Debugger.resume');}
     }
-    if([101,102,103,104,105,106,107,108,109,110,114].includes(Number(inner.id))&&String(inner.id)===String(Number(inner.id))){
+    if([101,102,103,104,105,106,107,108,109,110,111,112,114].includes(Number(inner.id))&&String(inner.id)===String(Number(inner.id))){
      innerReplies.set(Number(inner.id),inner);
      if(Number(inner.id)===104&&inner.error===undefined)report.debuggerResumeReply=true;
      if(phase===6&&[104,114].includes(Number(inner.id))&&inner.error===undefined)report.dualResumeAckCount++;
+     if(Number(inner.id)===111&&inner.error===undefined)report.workerProtocolEnabled=true;
+     if(Number(inner.id)===112&&inner.error===undefined)report.workerInitializedAck=true;
      if(Number(inner.id)===108&&inner.error===undefined&&
         inner.result?.result?.value==='WORKER_ARMED')report.workerCreated=true;
      if(Number(inner.id)===109&&inner.error===undefined&&
@@ -179,17 +197,23 @@ try {
    if(phase===7){
     // Pinned WebKit TargetInfo includes dedicated worker. Synthetic-only
     // lifecycle to validate access to the same target KIND as original P94.
+    sendNested(111,'Worker.enable');
+    for(let i=0;i<24&&!innerReplies.has(111)&&!report.processExited;i++)await wait(250);
+    if(!report.workerProtocolEnabled)throw Error('Worker.enable rejected or unanswered');
     const expression=`(()=>{const u=URL.createObjectURL(new Blob(["self.postMessage('READY');self.onmessage=()=>self.postMessage('ECHO');"],{type:'application/javascript'}));const w=new Worker(u);window.__m1541Worker=w;window.__m1541WorkerUrl=u;window.__m1541WorkerState='PENDING';w.onmessage=(e)=>{if(e.data==='READY')window.__m1541WorkerState='READY'};return 'WORKER_ARMED'})()`;
     sendNested(108,'Runtime.evaluate',{expression,returnByValue:true});
     for(let i=0;i<32&&(!innerReplies.has(108)||!report.workerTargetCreated)&&!report.processExited;i++)await wait(250);
     if(!report.workerCreated)throw Error('synthetic Worker creation was not acknowledged');
+    if(report.workerTargetCreated&&!report.workerInitializedAck)
+     for(let i=0;i<24&&!report.workerInitializedAck&&!report.processExited;i++)await wait(250);
+    await wait(400);
     sendNested(109,'Runtime.evaluate',{expression:"window.__m1541WorkerState",returnByValue:true});
     for(let i=0;i<24&&!innerReplies.has(109)&&!report.processExited;i++)await wait(250);
     if(!report.workerReady)throw Error('synthetic Worker did not post ready message');
     // Standalone WPE HTTP discovery may expose dedicated Worker separately
     // even if page Target.targetCreated is absent. Examine only bounded local
     // endpoint TYPE tokens, never raw socket IDs or page/user data.
-    for(let i=0;i<12&&!report.workerHttpNonPagePath;i++){
+    for(let i=0;i<12&&!report.workerHttpNonPagePath&&!report.workerTargetCreated;i++){
      try{
       const r=await fetch('http://'+host+'/',{signal:AbortSignal.timeout(650),redirect:'error'});
       if(r.ok){
@@ -202,8 +226,10 @@ try {
      }catch{}
      if(!report.workerHttpNonPagePath)await wait(250);
     }
-    if(!report.workerTargetCreated&&!report.workerHttpNonPagePath)
-     throw Error('dedicated Worker neither Target event nor independent local endpoint');
+    if(!report.workerDomainEventObserved)
+     throw Error('Worker.workerCreated event absent after Worker.enable');
+    if(!report.workerInitializedAck)
+     throw Error('Worker.initialized acknowledgement absent');
     sendNested(110,'Runtime.evaluate',{expression:"(()=>{window.__m1541Worker.terminate();URL.revokeObjectURL(window.__m1541WorkerUrl);return 'TERMINATED'})()",returnByValue:true});
     for(let i=0;i<24&&!innerReplies.has(110)&&!report.processExited;i++)await wait(250);
     if(!report.workerScriptEvaluation)throw Error('synthetic Worker termination failed');
