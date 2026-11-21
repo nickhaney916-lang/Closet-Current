@@ -76,7 +76,22 @@ async function importBoardBackup(value){
  currentBoard=cleanOutfitBoard(value.current,items);savedOutfitBoards=value.saved.map(board=>cleanOutfitBoard(board,items));syncBoardInputs();await persistBoardState();renderOutfitBoard();
 }
 for(const slot of outfitSlots){const option=node('option',slot.label);option.value=slot.id;$('boardTarget').append(option);}$('boardTarget').value='shoes';$('boardTarget').onchange=renderBoardSuggestions;
-for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'}))$(id).onchange=()=>{currentBoard[key]=$(id).value;currentBoard=cleanOutfitBoard(currentBoard,items);renderOutfitBoard();storeBoard();};
+for(const [id,key] of Object.entries({boardName:'name',boardOccasion:'occasion',boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'})){
+ $(id).onchange=async()=>{
+  const previous=cleanOutfitBoard(currentBoard,items),input=$(id),entered=input.value;
+  currentBoard[key]=entered;
+  currentBoard=cleanOutfitBoard(currentBoard,items);
+  renderOutfitBoard();
+  const attempted=JSON.stringify(currentBoard),saved=await storeBoard();
+  // Revert a rejected change only if nothing newer has replaced this board.
+  // Don't overwrite text the owner is still typing while the save is pending.
+  if(!saved&&JSON.stringify(currentBoard)===attempted){
+   currentBoard=previous;
+   if(input.value===entered)input.value=String(previous[key]??'');
+   renderOutfitBoard();
+  }
+ };
+}
 $('closeBoardPicker').onclick=()=>$('boardPicker').close();
 $('emptyBoardSlot').onclick=()=>{selectBoardPiece(choosingSlot,'');$('boardPicker').close();};
 $('shopBoardSlot').onclick=()=>{$('boardTarget').value=choosingSlot;$('boardPicker').close();renderBoardSuggestions();$('boardGapStatus').scrollIntoView({behavior:'smooth',block:'start'});};
