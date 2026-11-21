@@ -76,10 +76,22 @@ async function exercise(name,engine,base){
      name+' old Worker static imports must not load new bytes');
    assert.equal(after['index.html'],shell(newVersion),
      name+' fresh online shell remains reachable');
+   const inspect=async()=>initial.page.evaluate(async()=>{
+    const keys=await caches.keys();
+    return Promise.all(keys.map(async key=>{
+     const cache=await caches.open(key);
+     const value=await cache.match('index.html');
+     const html=value?await value.text():'';
+     return {cache:key,htmlVersion:html.match(/app\\.js\\?v=([a-f0-9]{12})/)?.[1]||'missing'};
+    }));
+   });
+   const onlineCache=await inspect();
    await initial.context.setOffline(true);
    const offline=await read(initial.page,oldVersion);
+   const offlineCache=await inspect();
    assert.equal(offline['index.html'],shell(oldVersion),
-     name+' old offline shell remains paired with old scripts');
+     name+' old offline shell remains paired with old scripts; online '+JSON.stringify(onlineCache)+
+     ' offline '+JSON.stringify(offlineCache));
    assert.match(offline['app.js?v='+oldVersion],/VERSION="old"/);
    assert.match(offline['scanner-errors.mjs'],/="old"/);
    record.push({engine:name,phase:'old controlled client during new deployment',status:'PASS'});
