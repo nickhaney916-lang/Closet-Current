@@ -1,0 +1,58 @@
+name: M4 P1 immutable SW version consistency HOLD
+on:
+  push:
+    branches: [research/main1054-p1-sw-asset-version-coherence-HOLD]
+permissions:
+  contents: read
+jobs:
+  sw-asset-consistency:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Freeze genuine app lineage and restrict source paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=ed340449514255c4bda84eb47f64187e5bd546c8
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --check "$BASE" HEAD
+          while IFS= read -r changed; do
+            case "$changed" in
+              public/sw.js|tests/main1054-sw-asset-consistency.test.cjs|.github/workflows/main1054-sw-asset-consistency-no-deploy.yml) ;;
+              *) echo "OUT OF SCOPE: $changed"; exit 1 ;;
+            esac
+          done < <(git diff --name-only "$BASE" HEAD)
+          node --check public/sw.js
+          node scripts/build.mjs
+          test -s dist/sw.js
+      - name: Reproduce actual generated SW cache-version protocol
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/main1054-sw-asset-consistency.test.cjs | tee "$RUNNER_TEMP/sw-test.tap"
+      - name: Run untouched ordinary application Node regression suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs | tee "$RUNNER_TEMP/sw-full-node.tap"
+          grep -Eq '^# fail 0$' "$RUNNER_TEMP/sw-full-node.tap"
+          grep -Eq '^# skipped 0$' "$RUNNER_TEMP/sw-full-node.tap"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: main1054-sw-asset-consistency-no-deploy
+          path: |
+            ${{ runner.temp }}/sw-test.tap
+            ${{ runner.temp }}/sw-full-node.tap
+          if-no-files-found: ignore
