@@ -26,7 +26,7 @@ try{
   await new Promise((resolve,reject)=>{
    const t=setTimeout(()=>reject(Error('WebSocket handshake timeout')),5000);
    socket.addEventListener('open',()=>{clearTimeout(t);resolve()},{once:true});
-   socket.addEventListener('error',()=>{clearTimeout(t);reject(Error('WebSocket handshake failed')),{once:true});
+   socket.addEventListener('error',()=>{clearTimeout(t);reject(Error('WebSocket handshake failed'))},{once:true});
   });
   report.websocket=true;
   if(phase>1){
