@@ -91,7 +91,7 @@ test('reject duplicate original headers, duplicate instructions and out-of-body 
  assert.throws(()=>t.acceptLine(' 000065: 28 02 00 | i32.load'),/out of order/);
  const u=createCollector(frames);
  u.acceptLine('000064 func[4846]:');
- assert.throws(()=>u.acceptLine(' 0000fe: 28 02 00 | i32.load'),/offset outside/);
+ assert.throws(()=>u.acceptLine(' 000180: 28 02 00 | i32.load'),/offset outside/);
 });
 test('reject fake WebKit real trap PC, forged root cause and released original model',()=>{
  const valid=sample().finish('wabt 1.0.36');
