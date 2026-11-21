@@ -26,6 +26,9 @@ const server = createServer(async (request, response) => {
     }
     const type = /\.html$/.test(file) ? 'text/html'
       : /\.m?js$/.test(file) ? 'text/javascript' : 'application/octet-stream';
+    if (['/index.html', '/sw.js'].includes(file)) {
+      console.log(request.url, upgraded ? 'new release' : 'old release');
+    }
     response.writeHead(200, {'Content-Type': type, 'Cache-Control': 'no-cache'});
     response.end(body);
   } catch {
@@ -70,10 +73,17 @@ try {
     return registration?.active?.state === 'activated' && !registration.waiting
       && keys.length === 1 && keys[0] === 'closet-current-' + expected;
   }, nextVersion);
-  const next = await offScope.goto(url + '/app/');
+  const cachedRelease = await offScope.evaluate(async expected => {
+    const cache = await caches.open('closet-current-' + expected);
+    const response = await cache.match('/app/index.html');
+    const body = await response.text();
+    return body.match(/app\.js\?v=([a-f0-9]+)/)[1];
+  }, nextVersion);
+  assert.equal(cachedRelease, nextVersion, 'Activated cache contains the new shell');
+  const next = await offScope.goto(url + '/app/index.html');
   assert.equal(next.status(), 200, 'Navigation after activation returns the shell');
-  assert.equal(await next.text(), originalShell.replaceAll(version, nextVersion));
   await offScope.waitForFunction(() => navigator.serviceWorker.controller !== null);
+  assert.equal(await offScope.locator('script[src^="app.js?"]').getAttribute('src'), 'app.js?v=' + nextVersion);
   assert.equal(await worker(offScope, nextVersion), originalWorker + '\n// Next release\n');
   offline = true;
   assert.ok((await (await offScope.reload()).text()).includes('app.js?v=' + nextVersion));
