@@ -25,6 +25,9 @@ const worker=version=>{
 };
 async function launchServer(){
  const server=http.createServer((request,response)=>{
+  // Force a real origin network rejection. Browser context.setOffline can leave
+  // service-worker loopback fetches reachable and is not a trustworthy offline test.
+  if(deployment==='offline'){request.socket.destroy();return;}
   const url=new URL(request.url,'http://localhost');
   const version=deployment==='old'?oldVersion:newVersion;
   const resource=({ '/':'text/html; charset=utf-8',
@@ -88,7 +91,7 @@ async function exercise(name,engine,base){
    const onlineCache=await inspect();
    assert.ok(onlineCache.some(v=>v.hasOld&&!v.hasNew),
     name+' old cache shell unexpectedly replaced before offline: '+JSON.stringify(onlineCache));
-   await initial.context.setOffline(true);
+   deployment='offline';
    const offline=await read(initial.page,oldVersion);
    const offlineCache=await inspect();
    assert.equal(offline['index.html'],shell(oldVersion),
@@ -102,7 +105,7 @@ async function exercise(name,engine,base){
   const fresh=await controlled(browser,base);
   try{
    assert.equal(await fresh.page.evaluate(()=>window.TEST_ASSET_VERSION),'new');
-   await fresh.context.setOffline(true);
+   deployment='offline';
    const offline=await read(fresh.page,newVersion);
    assert.equal(offline['index.html'],shell(newVersion));
    assert.match(offline['app.js?v='+newVersion],/VERSION="new"/);
