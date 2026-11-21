@@ -4,7 +4,7 @@ import {parseLocalInspectorPaths} from './m289-authorized-wpe-inspector-wasm-off
 const phase=Number(process.argv[2]);
 if(!Number.isInteger(phase)||phase<0||phase>4)throw Error('invalid phase');
 const host='127.0.0.1:17651';
-const report={phase,http:false,websocket:false,target:false,nestedCommandSent:false,debuggerEnableSent:false,outerMethods:[],innerMethods:[],outerErrors:[],discoveryCommandSent:false,discoveryResponse:false,discoveryErrorCode:null,innerResponse:false,innerErrorCode:null,socketClosed:false};
+const report={phase,http:false,websocket:false,target:false,nestedCommandSent:false,debuggerEnableSent:false,outerMethods:[],innerMethods:[],outerErrors:[],outerMessageCount:0,discoveryCommandSent:false,discoveryResponse:false,discoveryErrorCode:null,innerResponse:false,innerErrorCode:null,socketClosed:false};
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 let browser,socket;
 try{
@@ -34,17 +34,19 @@ try{
   } else {
    let id=0,targetId=null,innerDone=false;
    const send=(method,params={})=>socket.send(JSON.stringify({id:++id,method,params}));
+   socket.addEventListener('close',()=>{report.socketClosed=true});
    socket.addEventListener('message',e=>{
     let msg;try{msg=JSON.parse(String(e.data).slice(0,16384))}catch{return}
+    report.outerMessageCount++;
     if(typeof msg.method==='string'&&report.outerMethods.length<10)report.outerMethods.push(msg.method.slice(0,80));
     if(msg.error&&report.outerErrors.length<5)report.outerErrors.push({code:Number.isInteger(msg.error.code)?msg.error.code:null});
-    if(msg.id===1){report.discoveryResponse=true;report.discoveryErrorCode=Number.isInteger(msg.error?.code)?msg.error.code:null;}
+    if(msg.id===1||msg.id==='1'){report.discoveryResponse=true;report.discoveryErrorCode=Number.isInteger(msg.error?.code)?msg.error.code:null;}
     const candidate=msg.params?.targetInfo?.targetId||msg.params?.targetId;
     if(typeof candidate==='string'&&/^[A-Za-z0-9_:-]{1,128}$/.test(candidate)){
      targetId=candidate;report.target=true;
     }
     if(msg.method==='Target.dispatchMessageFromTarget'&&typeof msg.params?.message==='string'){
-     try{const inner=JSON.parse(msg.params.message);if(typeof inner.method==='string'&&report.innerMethods.length<10)report.innerMethods.push(inner.method.slice(0,80));if(inner.id===101){innerDone=true;report.innerResponse=true;report.innerErrorCode=Number.isInteger(inner.error?.code)?inner.error.code:null}}catch{}
+     try{const inner=JSON.parse(msg.params.message);if(typeof inner.method==='string'&&report.innerMethods.length<10)report.innerMethods.push(inner.method.slice(0,80));if(inner.id===101||inner.id==='101'){innerDone=true;report.innerResponse=true;report.innerErrorCode=Number.isInteger(inner.error?.code)?inner.error.code:null}}catch{}
     }
    });
    await handshake;
@@ -54,7 +56,10 @@ try{
    send('Target.setDiscoverTargets',{discover:true});
    report.discoveryCommandSent=true;
    for(let n=0;n<20&&!targetId;n++)await wait(250);
-   if(phase>=2&&!targetId)throw Error('Target discovery absent after explicit request; reply='+report.discoveryResponse+' code='+report.discoveryErrorCode);
+   if(phase>=2&&!targetId){
+    const reason=report.discoveryErrorCode!==null?'discovery command rejected':report.discoveryResponse?'discovery acknowledged without target':report.socketClosed?'socket closed before target':'no discovery response or target';
+    throw Error(reason);
+   }
    if(phase>=3){
     const method=phase===3?'Runtime.enable':'Debugger.enable';
     send('Target.sendMessageToTarget',{targetId,message:JSON.stringify({id:101,method,params:{}})});
