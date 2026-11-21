@@ -107,6 +107,28 @@ $('closetLayerCount').onchange=async()=>{
  $('closetLookStatus').textContent=saved?(count?'Choose clothing for each layer.':'Choose one base shirt: short or long sleeve.'):'Layer choice could not save. Please try again.';
 };
 $('closetUnsorted').onclick=()=>{window.closetTargetSlot=null;window.closetSlotFilter=null;window.closetSleeves=null;window.closetItemType='';window.closetBrowseAll=false;$('search').value='';$('filter').value='Uncategorized';render();$('closetCollection').scrollIntoView({block:'start',behavior:'smooth'});};
-$('closetSeparates').onclick=async()=>{await outfitBoardReady;window.closetDressPreview=false;const selectedDress=items.find(item=>item.id===currentBoard.slots.top)?.category==='Dresses';if(selectedDress){delete currentBoard.slots.top;delete currentBoard.ideas.top;currentBoard=cleanOutfitBoard(currentBoard,items);syncBoardInputs();}window.closetTargetSlot=null;window.closetSlotFilter=null;window.closetItemType='';window.closetSleeves=null;window.closetBrowseAll=false;for(const id of ['search','seasonFilter','sleeveFilter'])$(id).value='';$('filter').value='All categories';render();if(selectedDress&&!await storeBoard())$('closetLookStatus').textContent='Outfit change could not save. Please try again.';};
+$('closetSeparates').onclick=async()=>{
+ await outfitBoardReady;
+ const selectedDress=items.find(item=>item.id===currentBoard.slots.top)?.category==='Dresses';
+ const previous=selectedDress?cleanOutfitBoard(currentBoard,items):null;
+ const previousDressPreview=window.closetDressPreview;
+ window.closetDressPreview=false;
+ if(selectedDress){
+  delete currentBoard.slots.top;delete currentBoard.ideas.top;
+  currentBoard=cleanOutfitBoard(currentBoard,items);syncBoardInputs();
+ }
+ window.closetTargetSlot=null;window.closetSlotFilter=null;window.closetItemType='';window.closetSleeves=null;window.closetBrowseAll=false;
+ for(const id of ['search','seasonFilter','sleeveFilter'])$(id).value='';
+ $('filter').value='All categories';render();
+ if(!selectedDress)return;
+ const attempted=JSON.stringify(currentBoard);
+ if(await storeBoard())return;
+ if(JSON.stringify(currentBoard)===attempted){
+  currentBoard=previous;
+  if(window.closetDressPreview===false)window.closetDressPreview=previousDressPreview;
+  syncBoardInputs();render();
+ }
+ $('closetLookStatus').textContent='Outfit change could not save. Please try again.';
+};
 $('closetStyleLook').onclick=()=>{switchView('builder');$('boardTarget').value='accessory';renderBoardSuggestions();refreshTrendLibrary(true);$('boardGapStatus').scrollIntoView({block:'start',behavior:'smooth'});};
 Promise.all([closetReady,outfitBoardReady]).then(render);
