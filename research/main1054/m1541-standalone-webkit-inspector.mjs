@@ -3,8 +3,8 @@ import {spawn} from 'node:child_process';
 import {webkit} from 'playwright';
 import {parseLocalInspectorPaths} from './m289-authorized-wpe-inspector-wasm-offset.mjs';
 
-const phase=Number(process.argv[2]); // 0=socket, 1=outer reply, 2=Runtime, 3=Debugger, 4=WASM exception, 5=JS debugger statement
-if(!Number.isInteger(phase)||phase<0||phase>5)throw Error('invalid standalone phase');
+const phase=Number(process.argv[2]); // 0=socket, 1=outer reply, 2=Runtime, 3=Debugger, 4=WASM exception, 5=JS debugger statement, 6=two distinct WASM opcodes/one JS callsite
+if(!Number.isInteger(phase)||phase<0||phase>6)throw Error('invalid standalone phase');
 const host='127.0.0.1:17652';
 const report={
  phase,mode:'standalone-single-frontend',engine:'pinned-webkit',
@@ -15,7 +15,9 @@ const report={
  syntheticOnly:true,originalModelExecuted:false,nativeMachinePcCaptured:false,
  originalOrtTrapByteOffset:null,syntheticTrapCaught:false,syntheticDebuggerStatementCompleted:false,
  exceptionPauseObserved:false,exceptionPauseReason:null,debuggerPauseObserved:false,debuggerPauseReason:null,pauseTopWasm:false,
- pauseLocationLine:null,pauseLocationColumn:null,debuggerResumeReply:false
+ pauseLocationLine:null,pauseLocationColumn:null,debuggerResumeReply:false,
+ dualSyntheticOpcodeOffsets:null,dualSyntheticTrapCaught:false,dualPauseReceipts:[],
+ dualResumeAckCount:0,sameJavascriptPauseLocation:null,wasmBytecodeAttributionVerified:false
 };
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let child,socket,spawnError=null;
@@ -50,7 +52,7 @@ try {
  report.http=true;
  socket=new WebSocket('ws://'+host+path);
  let targetId=null,outerId=0,outerDone=false,innerDone=false;
- const innerReplies=new Map();let resumeSent=false;
+ const innerReplies=new Map();let resumeSent=false;const pauseScriptIds=[];
  const sendNested=(id,method,params={})=>{
   socket.send(JSON.stringify({id:++outerId,method:'Target.sendMessageToTarget',params:{
    targetId,message:JSON.stringify({id,method,params})
@@ -90,14 +92,31 @@ try {
      report.pauseLocationLine=Number.isSafeInteger(top?.location?.lineNumber)?top.location.lineNumber:null;
      report.pauseLocationColumn=Number.isSafeInteger(top?.location?.columnNumber)?top.location.columnNumber:null;
      // Inspector line/column are NOT native PC or original WASM file offsets.
-     if((phase===4||phase===5)&&!resumeSent){resumeSent=true;sendNested(104,'Debugger.resume');}
+     if(phase===6){
+      // Bounded synthesized experiment: two separate verified WASM opcodes,
+      // each called at ONE JS callsite. Never label JS coordinates WASM offsets.
+      if(report.dualPauseReceipts.length<2){
+       const index=report.dualPauseReceipts.length;
+       report.dualPauseReceipts.push({
+        reason:typeof p.reason==='string'?p.reason.slice(0,30):null,
+        topWasm:/wasm/i.test(String(top?.functionName||top?.url||'')),
+        line:Number.isSafeInteger(top?.location?.lineNumber)?top.location.lineNumber:null,
+        column:Number.isSafeInteger(top?.location?.columnNumber)?top.location.columnNumber:null
+       });
+       pauseScriptIds.push(typeof top?.location?.scriptId==='string'?top.location.scriptId:null);
+       sendNested(index===0?104:114,'Debugger.resume');
+      }
+     }else if((phase===4||phase===5)&&!resumeSent){resumeSent=true;sendNested(104,'Debugger.resume');}
     }
-    if([101,102,103,104,105,106,107].includes(Number(inner.id))&&String(inner.id)===String(Number(inner.id))){
+    if([101,102,103,104,105,106,107,114].includes(Number(inner.id))&&String(inner.id)===String(Number(inner.id))){
      innerReplies.set(Number(inner.id),inner);
      if(Number(inner.id)===104&&inner.error===undefined)report.debuggerResumeReply=true;
+     if(phase===6&&[104,114].includes(Number(inner.id))&&inner.error===undefined)report.dualResumeAckCount++;
      if(Number(inner.id)===105){
       report.syntheticTrapCaught=phase===4&&
        inner.result?.result?.value==='EXPECTED_SYNTHETIC_WASM_TRAP';
+      report.dualSyntheticTrapCaught=phase===6&&
+       inner.result?.result?.value==='EXPECTED_DUAL_SYNTHETIC_WASM_TRAPS';
       report.syntheticDebuggerStatementCompleted=phase===5&&
        inner.result?.result?.value==='EXPECTED_SYNTHETIC_DEBUGGER_STATEMENT';
      }
@@ -132,7 +151,7 @@ try {
    if(report.outerErrorCode!==null)throw Error('nested outer command rejected '+report.outerErrorCode);
    if(!innerDone)throw Error('nested inner command reply absent');
    if(report.innerErrorCode!==null)throw Error('nested inner command rejected '+report.innerErrorCode);
-   if(phase===4||phase===5){
+   if(phase===4||phase===5||phase===6){
     // Pinned JSC Debugger protocol supports pause-on-all exceptions. The
     // M281 tiny module is ONLY synthetic proof; it is not the original ORT.
     const {binary}=await import('./m281-webkit-offset-capability.mjs');
@@ -156,14 +175,26 @@ try {
     if(!innerReplies.has(107)||innerReplies.get(107).error)
      throw Error('Debugger.setBreakpointsActive rejected or absent');
     const bytes=JSON.stringify(Array.from(binary));
+    // Insert a single 'nop' before the load: shift known binary opcode 44
+    // to 45; update section and function-body byte lengths. The original
+    // JSEP and any real ONNX model are NOT loaded in this harness.
+    const shifted=Uint8Array.from([...binary.slice(0,44),0x01,...binary.slice(44)]);
+    shifted[36]=12;shifted[38]=10;
+    if(phase===6){
+     if(!WebAssembly.validate(shifted)||shifted.length!==49||shifted[45]!==0x28||
+        binary[44]!==0x28)throw Error('two distinct synthetic WASM opcode controls invalid');
+     report.dualSyntheticOpcodeOffsets=[44,45];
+    }
     // A direct Runtime.evaluate exception may not yield a debugger pause.
     // Schedule the same genuine negative-only WASM opcode on the page event
     // loop, separately from the protocol evaluation call.
     const expression=phase===4?
      `(()=>{window.__m1541Result='ARMED';setTimeout(()=>{try{const m=new WebAssembly.Module(Uint8Array.from(${bytes}));new WebAssembly.Instance(m).exports.probe();window.__m1541Result='NO_TRAP'}catch(e){window.__m1541Result=e instanceof WebAssembly.RuntimeError&&/out of bounds|memory access/i.test(String(e.message))?'EXPECTED_SYNTHETIC_WASM_TRAP':'UNEXPECTED_EXCEPTION'}},400);return 'ARMED'})()`:
-     `(()=>{window.__m1541Result='ARMED';setTimeout(()=>{debugger;window.__m1541Result='EXPECTED_SYNTHETIC_DEBUGGER_STATEMENT'},400);return 'ARMED'})()`;
+     phase===5?
+     `(()=>{window.__m1541Result='ARMED';setTimeout(()=>{debugger;window.__m1541Result='EXPECTED_SYNTHETIC_DEBUGGER_STATEMENT'},400);return 'ARMED'})()`:
+     `(()=>{window.__m1541Result='ARMED';setTimeout(()=>{let count=0;for(const raw of ${JSON.stringify([Array.from(binary),Array.from(shifted)])}){try{const m=new WebAssembly.Module(Uint8Array.from(raw));new WebAssembly.Instance(m).exports.probe()}catch(e){if(e instanceof WebAssembly.RuntimeError&&/out of bounds|memory access/i.test(String(e.message)))count++}}window.__m1541Result=count===2?'EXPECTED_DUAL_SYNTHETIC_WASM_TRAPS':'WRONG_TRAP_COUNT'},400);return 'ARMED'})()`;
     sendNested(103,'Runtime.evaluate',{expression,returnByValue:true});
-    for(let i=0;i<30&&(!innerReplies.has(103)||!report.debuggerPauseObserved)&&!report.processExited;i++)await wait(250);
+    for(let i=0;i<40&&(!innerReplies.has(103)||(phase===6?report.dualPauseReceipts.length<2:!report.debuggerPauseObserved))&&!report.processExited;i++)await wait(250);
     const evalReply=innerReplies.get(103);
     if(!evalReply||evalReply.error||evalReply.result?.wasThrown||evalReply.result?.result?.value!=='ARMED')
      throw Error('scheduled evaluation was not armed');
@@ -172,6 +203,19 @@ try {
     if(!report.debuggerPauseObserved)await wait(750);
     sendNested(105,'Runtime.evaluate',{expression:"window.__m1541Result||'MISSING'",returnByValue:true});
     for(let i=0;i<24&&!innerReplies.has(105)&&!report.processExited;i++)await wait(250);
+    if(phase===6){
+     if(!report.dualSyntheticTrapCaught)throw Error('independent two-opcode WASM traps not verified');
+     if(report.dualPauseReceipts.length!==2||report.dualResumeAckCount!==2)
+      throw Error('two paused+resumed native engine events were not observed');
+     if(report.dualPauseReceipts.some(x=>x.reason!=='exception'||x.line===null||x.column===null))
+      throw Error('synthetic dual pause reason or script location invalid');
+     report.sameJavascriptPauseLocation=report.dualPauseReceipts[0].line===report.dualPauseReceipts[1].line&&
+       report.dualPauseReceipts[0].column===report.dualPauseReceipts[1].column&&
+       pauseScriptIds[0]!==null&&pauseScriptIds[0]===pauseScriptIds[1];
+     // Distinct bytecode offsets but identical JS location is an empirically
+     // demonstrated many-to-one mapping. Keep attribution explicitly FALSE.
+     if(!report.sameJavascriptPauseLocation)throw Error('two probes have differing JS pause locations; offset mapping still unverified');
+    }
     if(phase===4&&!report.syntheticTrapCaught)throw Error('synthetic WASM RuntimeError not independently returned');
     if(phase===5&&!report.syntheticDebuggerStatementCompleted)throw Error('synthetic debugger statement never completed');
     if(phase===4&&!report.exceptionPauseObserved)throw Error('scheduled synthetic WebAssembly exception pause absent');
