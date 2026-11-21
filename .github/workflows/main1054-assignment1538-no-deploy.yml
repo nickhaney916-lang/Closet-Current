@@ -1,0 +1,44 @@
+name: Assignment 1538 offline research and regressions
+on:
+  pull_request:
+    branches: [research/main1054-m291-loaded-wpe-native-elf-closure-HOLD]
+    paths:
+      - 'research/main1054/assignment1538-*'
+      - 'tests/main1054-assignment1538-*'
+      - '.github/workflows/main1054-assignment1538-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    if: github.head_ref == 'research/assignment1538-native-evidence-HOLD'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact source and research-only scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_RUN_ATTEMPT" = 1
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          git diff --check 6adeffeb82557a365d42237fca47b042368d6d4e HEAD
+          git diff --name-status --no-renames 6adeffeb82557a365d42237fca47b042368d6d4e HEAD > "$RUNNER_TEMP/assignment1538-scope"
+          diff -u <(printf 'A\t%s\n' .github/workflows/main1054-assignment1538-no-deploy.yml research/main1054/assignment1538-correlate.mjs research/main1054/assignment1538-operator.md tests/main1054-assignment1538-correlate.test.mjs) "$RUNNER_TEMP/assignment1538-scope"
+          node --check research/main1054/assignment1538-correlate.mjs
+          node --test tests/main1054-assignment1538-correlate.test.mjs
+      - name: Install pinned no-deploy regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Run app build and offline owner, photo, backup and security tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
