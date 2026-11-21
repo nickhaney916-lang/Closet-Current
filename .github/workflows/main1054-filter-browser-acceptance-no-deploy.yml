@@ -1,0 +1,75 @@
+name: M4 P1 actual-document closet filter browser acceptance HOLD
+on:
+  push:
+    branches: [research/main1054-p1-closet-filter-browser-verification-HOLD]
+permissions:
+  contents: read
+jobs:
+  filter-browser-acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Freeze baseline, fixed candidate and restricted QA-only diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE=15ed37c35dfe0830e73d007bce64a090b0f53333
+          FIXED=ed340449514255c4bda84eb47f64187e5bd546c8
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          git merge-base --is-ancestor "$FIXED" HEAD
+          test "$(git rev-parse "$FIXED~2")" = "$BASELINE"
+          git diff --check "$FIXED" HEAD
+          diff -u <(printf 'A\t%s\n' \
+            .github/workflows/main1054-filter-browser-acceptance-no-deploy.yml \
+            tests/main1054-filter-browser-acceptance.cjs) \
+            <(git diff --name-status "$FIXED" HEAD)
+          git worktree add --detach "$RUNNER_TEMP/before" "$BASELINE"
+          git worktree add --detach "$RUNNER_TEMP/after" "$FIXED"
+          test "$(git -C "$RUNNER_TEMP/before" rev-parse HEAD)" = "$BASELINE"
+          test "$(git -C "$RUNNER_TEMP/after" rev-parse HEAD)" = "$FIXED"
+          (cd "$RUNNER_TEMP/before" && node scripts/build.mjs)
+          (cd "$RUNNER_TEMP/after" && node scripts/build.mjs)
+      - name: Install pinned test browser engines without app/host changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: First verify original candidate's independent source regression suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/after"
+          node --test tests/closet-filter-1544.test.cjs tests/closet-browser.test.cjs
+      - name: Genuine locked-shell Chromium and WebKit DOM acceptance, 320 390 430 px
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/main1054-filter-browser-acceptance.cjs "$RUNNER_TEMP/before/dist" "$RUNNER_TEMP/after/dist" | tee "$RUNNER_TEMP/filter-browser-matrix.json"
+          grep -q '"status": "PASS"' "$RUNNER_TEMP/filter-browser-matrix.json"
+      - name: Full unchanged original candidate Node application checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/after"
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs | tee "$RUNNER_TEMP/filter-browser-node.tap"
+          grep -Eq '^# fail 0$' "$RUNNER_TEMP/filter-browser-node.tap"
+          grep -Eq '^# skipped 0$' "$RUNNER_TEMP/filter-browser-node.tap"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: main1054-filter-browser-pinned-acceptance
+          path: |
+            ${{ runner.temp }}/filter-browser-matrix.json
+            ${{ runner.temp }}/filter-browser-node.tap
+          if-no-files-found: ignore
