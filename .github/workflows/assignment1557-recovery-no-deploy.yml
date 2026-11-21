@@ -47,7 +47,8 @@ jobs:
                   const recognitionState={phase:'ready'}, recognitionAssetVersion='', localJobs=new Map();
                   const recoveryStatus=document.querySelector('p');
                   const renderRecognitionNotice=()=>recoveryStatus.textContent=recognitionState.phase;
-                  let fault=true;
+                  let fault=true, requestId=0;
+                  const crypto={randomUUID:()=>String(++requestId)};
                   const Worker=class {
                     terminate(){}
                     postMessage(request){
