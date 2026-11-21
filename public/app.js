@@ -205,18 +205,20 @@ function takePhoto(){
  catch{message('The camera is still getting ready. Wait a moment, then tap Take photo again.');}
 }
 async function startCamera(mode){
- if(busy||stream)return;
- const request=++cameraRequest;cameraOpening=true;busy=true;controls(true);
+ if(busy||stream||cameraOpening)return;
+ const request=++cameraRequest;cameraOpening=true;controls(true);$('clothingPhotos').disabled=false;
  $('captureState').textContent='Opening camera…';
  try{audio=new(window.AudioContext||window.webkitAudioContext)();await audio.resume();}catch{}
  try{
+  if(request!==cameraRequest)return;
   if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access unavailable. Choose saved photos or a closet video instead.');
   const acquired=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
   if(request!==cameraRequest){acquired.getTracks().forEach(track=>track.stop());return;}
   stream=acquired;cameraMode=mode;
   video.removeAttribute('src');video.srcObject=stream;video.classList.add('visible');$('placeholder').hidden=true;
-  await video.play();session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
+  await video.play();
   if(request!==cameraRequest)return;
+  $('clothingPhotos').disabled=true;session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
   cameraOpening=false;$('cameraChoices').hidden=true;$('cameraActions').hidden=false;$('takePhoto').hidden=mode!=='manual';
   if(mode==='auto'){
    cadence=new CaptureCadence(Number($('interval').value)*1000,Date.now());
@@ -229,7 +231,6 @@ async function startCamera(mode){
  }catch(e){
   if(request===cameraRequest){stopCamera();message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));}
  }
- finally{busy=false;if(!stream)controls(false);}
 }
 $('start').onclick=()=>startCamera('manual');
 $('startAuto').onclick=()=>startCamera('auto');

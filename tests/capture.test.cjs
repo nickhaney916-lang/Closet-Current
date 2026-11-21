@@ -61,3 +61,39 @@ test('leaving during permission prompt stops a late camera stream',async()=>{
 test('the eight-second option and all four camera buttons use their intended actions',async()=>{
  const {context:c,clock,element}=setup();element('interval').value='8';await element('startAuto').onclick();clock.now=7999;c.captureTick();assert.equal(c.session,0);clock.now=8000;c.captureTick();assert.equal(c.session,1);element('stop').onclick();assert.equal(c.view,'review');await element('start').onclick();assert.equal(c.cameraMode,'manual');element('takePhoto').onclick();assert.equal(c.session,1);element('stop').onclick();assert.equal(c.stream,null);
 });
+
+test('saved photo picker can replace a pending camera request without a late camera result disturbing it',async()=>{
+ let grant,finishRead;
+ const {context:c,element,media,stopped}=setup({getUserMedia:()=>new Promise(resolve=>{grant=resolve;})});
+ c.photoToJPEG=async()=> 'data:image/jpeg;base64,TEST';
+ c.readPhotoBatch=()=>new Promise(resolve=>{finishRead=resolve;});
+ vm.runInContext(source.slice(source.indexOf('async function importClothingPhotos('),source.indexOf('let memoryReviewTimer=')),c);
+ const opening=element('start').onclick();
+ assert.equal(element('clothingPhotos').disabled,false,'Saved photo picker remains available while permission is pending');
+ const importing=c.importClothingPhotos([{name:'saved.jpg'}]);
+ assert.equal(typeof finishRead,'function','The pending camera request does not block importing');
+ grant(media);await opening;
+ assert.equal(stopped(),1);
+ assert.equal(c.stream,null);
+ assert.equal(c.busy,true,'Late grant does not unlock the ongoing import');
+ finishRead({added:1,errors:[]});await importing;
+ assert.equal(c.view,'review');
+ assert.equal(c.busy,false);
+});
+
+test('missing and busy devices restore the picker and allow explicit retry',async()=>{
+ for(const name of ['NotAllowedError','NotFoundError','NotReadableError']){
+  let attempts=0;
+  const {context:c,element,media}=setup({getUserMedia:async()=>{
+   if(++attempts===1)throw Object.assign(Error('No video input'),{name});
+   return media;
+  }});
+  await element('start').onclick();
+  assert.equal(element('clothingPhotos').disabled,false);
+  assert.equal(attempts,1);
+  await element('start').onclick();
+  assert.equal(c.stream,media);
+  assert.equal(attempts,2);
+  c.stopCamera();
+ }
+});
