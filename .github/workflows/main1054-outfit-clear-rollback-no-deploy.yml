@@ -1,0 +1,70 @@
+name: M4 P1 outfit clear rollback no deploy HOLD
+on:
+  push:
+    branches: [research/main1054-p1-outfit-clear-rollback-HOLD]
+permissions:
+  contents: read
+jobs:
+  clear-rollback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact source frozen and only two clear handlers touched
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=23d111ad6cde011f78b036f91cd85cf19bb897ea
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --check "$BASE" HEAD
+          while IFS= read -r file; do
+            case "$file" in
+              public/outfit-board.js|public/closet-browser.js|tests/main1054-outfit-clear-rollback.test.cjs|scripts/main1054-outfit-clear-browser.cjs|.github/workflows/main1054-outfit-clear-rollback-no-deploy.yml) ;;
+              *) echo "OUT OF SCOPE: $file"; exit 1 ;;
+            esac
+          done < <(git diff --name-only "$BASE" HEAD)
+          node --check public/outfit-board.js
+          node --check public/closet-browser.js
+      - name: Exercise original clear handlers with real failure-path regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/main1054-outfit-clear-rollback.test.cjs | tee "$RUNNER_TEMP/clear-focused.tap"
+          grep -Eq '^# fail 0$' "$RUNNER_TEMP/clear-focused.tap"
+      - name: Rebuild app and run full untouched Node regression suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs | tee "$RUNNER_TEMP/clear-full.tap"
+          grep -Eq '^# fail 0$' "$RUNNER_TEMP/clear-full.tap"
+          grep -Eq '^# skipped 0$' "$RUNNER_TEMP/clear-full.tap"
+      - name: Compare actual Chromium and WebKit outfit clearing against pre-fix source and native IndexedDB
+        shell: bash
+        run: |
+          set -euo pipefail
+          git worktree add --detach "$RUNNER_TEMP/m4-clear-old" 23d111ad6cde011f78b036f91cd85cf19bb897ea
+          (cd "$RUNNER_TEMP/m4-clear-old" && node scripts/build.mjs)
+          npx playwright install --with-deps chromium webkit
+          node scripts/main1054-outfit-clear-browser.cjs "$RUNNER_TEMP/m4-clear-old/dist" dist | tee "$RUNNER_TEMP/clear-browser.json"
+          grep -q '"status": "PASS"' "$RUNNER_TEMP/clear-browser.json"
+          grep -q '"checks": 28' "$RUNNER_TEMP/clear-browser.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m4-outfit-clear-rollback-no-deploy
+          path: |
+            ${{ runner.temp }}/clear-focused.tap
+            ${{ runner.temp }}/clear-full.tap
+            ${{ runner.temp }}/clear-browser.json
+          if-no-files-found: ignore

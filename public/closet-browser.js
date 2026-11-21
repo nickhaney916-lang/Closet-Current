@@ -72,7 +72,20 @@ function closetWearButton(item){
 $('filter').onchange=()=>{window.closetTargetSlot=null;window.closetSlotFilter=null;window.closetItemType='';window.closetSleeves=null;window.closetBrowseAll=$('filter').value==='All categories';render();};
 $('closetAllPieces').onclick=()=>{window.closetTargetSlot=null;window.closetSlotFilter=null;window.closetItemType='';window.closetSleeves=null;window.closetBrowseAll=true;$('filter').value='All categories';render();};
 $('closetBack').onclick=()=>{window.closetTargetSlot=null;window.closetSlotFilter=null;window.closetItemType='';window.closetSleeves=null;window.closetBrowseAll=false;for(const id of ['search','seasonFilter','sleeveFilter'])$(id).value='';$('filter').value='All categories';render();$('closetCategories').scrollIntoView({block:'start',behavior:'smooth'});};
-$('closetClearLook').onclick=async()=>{await outfitBoardReady;window.closetDressPreview=false;currentBoard=cleanOutfitBoard({...currentBoard,slots:{},ideas:{}},items);syncBoardInputs();renderOutfitBoard();const saved=await storeBoard();$('closetLookStatus').textContent=saved?'Look cleared. Your closet pieces are kept.':'Cleared look could not save. Please try again.';};
+$('closetClearLook').onclick=async()=>{
+ await outfitBoardReady;
+ const previous=cleanOutfitBoard(currentBoard,items),previousDressPreview=window.closetDressPreview;
+ window.closetDressPreview=false;
+ currentBoard=cleanOutfitBoard({...currentBoard,slots:{},ideas:{}},items);
+ syncBoardInputs();renderOutfitBoard();
+ const attempted=JSON.stringify(currentBoard),saved=await storeBoard();
+ if(!saved&&JSON.stringify(currentBoard)===attempted){
+  currentBoard=previous;
+  if(window.closetDressPreview===false)window.closetDressPreview=previousDressPreview;
+  syncBoardInputs();renderOutfitBoard();
+ }
+ $('closetLookStatus').textContent=saved?'Look cleared. Your closet pieces are kept.':'Cleared look could not save. Please try again.';
+};
 $('closetSaveLook').onclick=async()=>{await outfitBoardReady;await $('saveBoard').onclick();$('closetLookStatus').textContent=$('boardSaveStatus').textContent;};
 $('search').oninput=()=>{window.closetTargetSlot=null;window.closetSlotFilter=null;window.closetItemType='';window.closetSleeves=null;render();};
 $('closetLayerCount').onchange=async()=>{await outfitBoardReady;const count=Number($('closetLayerCount').value);currentBoard.layerCount=count;for(const [slot,level]of [['layer',1],['layer2',2],['layer3',3]])if(level>count){delete currentBoard.slots[slot];delete currentBoard.ideas[slot];}window.closetTargetSlot=null;window.closetSlotFilter=null;render();const saved=await storeBoard();$('closetLookStatus').textContent=saved?(count?'Choose clothing for each layer.':'Choose one base shirt: short or long sleeve.'):'Layer choice could not save. Please try again.';};
