@@ -1,0 +1,102 @@
+import assert from 'node:assert/strict';
+import { generateKeyPairSync, sign } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import test from 'node:test';
+import {
+  authenticate, correlate, instructionCoordinate, pinned, validateReceipt, validateSourceMapping,
+} from '../research/main1054/assignment1538-correlate.mjs';
+
+// Deliberately synthetic controls. No fixture is a signed production receipt.
+const webkitElf = {
+  sha256: 'daa10258a2161710c7c1d6a3e3f7abe0a100a6f269c00f5843dcd0f7df46ec29',
+  buildId: '8faf9134c0557d2d09f3d680f9c8b780498cf59b',
+};
+const manifest = {
+  schema: 1, engine: pinned, modelSha256: 'a'.repeat(64), testSha: 'b'.repeat(40),
+  captureMethod: 'authorized-engine-trace', bootIdentity: 'c'.repeat(64),
+  runIdentity: 'd'.repeat(64), browserPid: 9, browserStartTicks: '100',
+  startMs: 20, modelLength: 15199746,
+};
+const before = [
+  { pid: 12, parentPid: 9, startTicks: '102' },
+  { pid: 9, parentPid: 1, startTicks: '100' },
+];
+const receipt = {
+  ...manifest, runMode: 'original-model', attempt: 1, outcome: 'RED',
+  operation: '_OrtCreateSession', exception: 'wasm-memory-bounds',
+  before, atTrap: structuredClone(before), trapPid: 12,
+  renderer: {
+    sha256: 'b46f88603e43eca28083389188944f7f47fd26311c8697a14f910e4f8bfa0d66',
+    buildId: '23a6254355e0ab6aa4f3672cc51bd9eb487522a7',
+  },
+  webkitElf, trapMs: 30, heapBytes: 33554432, modelPointer: 8933688,
+  frames: [4846, 1384, 11276, 7427],
+  location: { kind: 'wasm-module-offset', origin: 'trap-event', offset: 7022500, functionIndex: 4846 },
+};
+const wasmMapping = { moduleSha256: pinned.jsepSha256 };
+
+test('fixture reaches coordinate validation, but arbitrary bytes cannot correlate', () => {
+  const location = validateReceipt(receipt, manifest);
+  assert.equal(instructionCoordinate(location, wasmMapping), 7022500);
+  assert.throws(() => correlate(receipt, manifest, wasmMapping, Buffer.from('test'), Buffer.alloc(0)),
+    /binary bytes mismatch/);
+});
+
+for (const [name, changes, reason] of [
+  ['wrong module', { engine: { ...pinned, jsepSha256: '0'.repeat(64) } }, /JSEP mismatch/],
+  ['wrong original model', { modelSha256: 'f'.repeat(64) }, /model or exact test/],
+  ['passing run', { outcome: 'GREEN' }, /original-model RED/],
+  ['retry', { attempt: 2 }, /original-model RED/],
+  ['bad bounds', { modelPointer: Number.MAX_SAFE_INTEGER }, /pointer bounds/],
+  ['wrong renderer', { trapPid: 99 }, /wrong browser renderer/],
+  ['recycled PID', { atTrap: [{ ...before[0], startTicks: '300' }, before[1]] }, /stale/],
+  ['broken parent link', { atTrap: [{ ...before[0], parentPid: 90 }, before[1]] }, /unrelated/],
+  ['wrong Build ID', { webkitElf: { ...webkitElf, buildId: 'deadbeef' } }, /ELF SHA or Build ID/],
+]) {
+  test('rejects ' + name, () => assert.throws(() => validateReceipt({ ...receipt, ...changes }, manifest), reason));
+}
+
+test('rejects static candidates and inspector line/column', () => {
+  assert.throws(() => instructionCoordinate({ ...receipt.location, origin: 'static-candidate' }, wasmMapping),
+    /original module trap offset/);
+  assert.throws(() => instructionCoordinate({ kind: 'protocol-line-column', line: 0, column: 44 }, wasmMapping),
+    /file-backed native PC/);
+  assert.throws(() => instructionCoordinate(receipt.location, { moduleSha256: 'f'.repeat(64) }),
+    /original module trap offset/);
+});
+
+test('derives ELF virtual coordinate and rejects wrong load bias and non-file-backed PC', () => {
+  const location = {
+    ...webkitElf, kind: 'native-elf-pc', origin: 'trap-event', pc: '0x11132',
+    mapStart: '0x11000', mapEnd: '0x12000', mapFileOffset: '0x1000', loadBias: '0xe000',
+  };
+  const mapping = {
+    ...webkitElf, pageSize: 4096, segmentOffset: '0x1020', segmentVaddr: '0x3020',
+    segmentFileSize: '0x500',
+  };
+  assert.equal(instructionCoordinate(location, mapping), 0x3132);
+  assert.throws(() => instructionCoordinate({ ...location, loadBias: '0xf000' }, mapping), /load bias/);
+  assert.throws(() => instructionCoordinate({ ...location, pc: '0x11a00' }, mapping), /file-backed/);
+  assert.throws(() => instructionCoordinate(location, { ...mapping, buildId: 'deadbeef' }), /verified file-backed/);
+});
+
+test('verifies real Ed25519 signatures and rejects tampering', () => {
+  const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+  const input = Buffer.from(JSON.stringify(receipt));
+  const key = publicKey.export({ type: 'spki', format: 'pem' });
+  const signature = sign(null, input, privateKey);
+  assert.doesNotThrow(() => authenticate(input, signature, key));
+  assert.throws(() => authenticate(Buffer.concat([input, Buffer.from(' ')]), signature, key), /signature rejected/);
+});
+
+test('CLI without operator input reports BLOCKED and emits no attestation', () => {
+  const run = spawnSync(process.execPath, ['research/main1054/assignment1538-correlate.mjs'], { encoding: 'utf8' });
+  assert.equal(run.status, 1);
+  assert.equal(run.stdout, '');
+  assert.match(run.stderr, /^BLOCKED:/);
+});
+
+test('rejects a map without build-matched debug files and original source', () => {
+  assert.throws(() => validateSourceMapping({ sourceEvidence: 'symbol-only' }, manifest,
+    Buffer.from('int x;'), 'wasm-module-offset'), /DWARF or original source missing/);
+});
