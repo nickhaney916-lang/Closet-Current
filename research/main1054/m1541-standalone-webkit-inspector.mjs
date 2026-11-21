@@ -92,7 +92,7 @@ try {
      // Inspector line/column are NOT native PC or original WASM file offsets.
      if((phase===4||phase===5)&&!resumeSent){resumeSent=true;sendNested(104,'Debugger.resume');}
     }
-    if([101,102,103,104,105,106].includes(Number(inner.id))&&String(inner.id)===String(Number(inner.id))){
+    if([101,102,103,104,105,106,107].includes(Number(inner.id))&&String(inner.id)===String(Number(inner.id))){
      innerReplies.set(Number(inner.id),inner);
      if(Number(inner.id)===104&&inner.error===undefined)report.debuggerResumeReply=true;
      if(Number(inner.id)===105){
@@ -149,6 +149,12 @@ try {
      if(!innerReplies.has(106)||innerReplies.get(106).error)
       throw Error('Debugger.setPauseOnDebuggerStatements rejected or absent');
     }
+    // Source-backed controlled setting: InspectorDebuggerAgent uses
+    // activateBreakpoints() independently of Debugger.enable.
+    sendNested(107,'Debugger.setBreakpointsActive',{active:true});
+    for(let i=0;i<24&&!innerReplies.has(107)&&!report.processExited;i++)await wait(250);
+    if(!innerReplies.has(107)||innerReplies.get(107).error)
+     throw Error('Debugger.setBreakpointsActive rejected or absent');
     const bytes=JSON.stringify(Array.from(binary));
     // A direct Runtime.evaluate exception may not yield a debugger pause.
     // Schedule the same genuine negative-only WASM opcode on the page event
