@@ -1,0 +1,55 @@
+name: MAIN1054 M291 exact pinned JSEP glue memory view source audit HOLD
+on:
+  push:
+    branches: [research/main1054-m291-pinned-jsep-glue-view-audit-HOLD]
+permissions:
+  contents: read
+jobs:
+  pinned-glue-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download SHA-attested original generated JSEP JS and inspect actual memory-view refresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import {createHash} from 'node:crypto';
+          const expected='08fb86ec433c78bfb032c5d84a68b8e8e5a8d81268fa39e24314179a5767a5b9';
+          const bases=['https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/','https://unpkg.com/@huggingface/transformers@3.8.1/dist/'];
+          async function get(url){
+            const r=await fetch(url,{signal:AbortSignal.timeout(90000)});
+            if(!r.ok)throw Error('HTTP '+r.status);
+            return Buffer.from(await r.arrayBuffer());
+          }
+          let bytes=null,sourceURL=null;
+          for(const base of bases){
+            try {
+              const b=await get(base+'ort-wasm-simd-threaded.jsep.mjs');
+              const hash=createHash('sha256').update(b).digest('hex');
+              if(hash!==expected)throw Error('SHA256 mismatch '+hash);
+              bytes=b;sourceURL=base;break;
+            }catch(e){console.log('M291_DOWNLOAD_CANDIDATE_REJECTED '+base+' '+String(e.message).slice(0,100));}
+          }
+          if(!bytes)throw Error('M291 BLOCKED exact original JS bytes unavailable or SHA mismatch');
+          const s=bytes.toString('utf8');
+          console.log('M291_EXACT_GLUE '+JSON.stringify({sha256:expected,bytes:bytes.length,sourceURL}));
+          for(const term of ['HEAPU8','HEAP8','wasmMemory','memory.grow','\.grow(','.buffer','new Uint8Array','updateMemoryViews','updateGlobalBufferAndViews','emscripten_realloc_buffer','ALLOW_MEMORY_GROWTH']){
+            const re=new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
+            let m,count=0,first=[];
+            while((m=re.exec(s))&&count<20000){
+              count++;if(first.length<6)first.push({offset:m.index,context:s.slice(Math.max(0,m.index-110),Math.min(s.length,m.index+170)).replace(/[\r\n]/g,' ')});
+            }
+            console.log('M291_GLUE_TOKEN '+JSON.stringify({term,count,first}));
+          }
+          const pkg=JSON.parse((await get('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/package.json')).toString('utf8'));
+          console.log('M291_PACKAGE_METADATA '+JSON.stringify({name:pkg.name,version:pkg.version,dependencies:pkg.dependencies,optionalDependencies:pkg.optionalDependencies}).slice(0,2500));
+          console.log('M291_SOURCE_REVISION_VERIFIED false (package metadata is not compiler/source commit provenance)');
+          NODE
