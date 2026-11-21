@@ -23,7 +23,7 @@ jobs:
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD:research/main1054/m290-live-native-elf-identity.mjs)" = 6139c60b8e1e220d8ebe5782fa8c23c4e6cbaf26
-          test "$(git rev-parse HEAD:tests/main1054-m290-live-native-elf-identity.test.mjs)" = e41173d2975bcd34f4f2d4b93c6569fba2746e87
+          test "$(git rev-parse HEAD:tests/main1054-m290-live-native-elf-identity.test.mjs)" = 03cbd35e2ea2403a7f432fe76bfcb9b0d79a484d
           test "$(git rev-parse HEAD:research/main1054/m286-pinned-webkit-source-binary-provenance.mjs)" = 13874630185f165d9725e2ea4b7579ab4050fa53
           test "$(git rev-parse HEAD:research/main1054/m279-original-model-pointer-bounds.mjs)" = f2fd27553cc6854997480ee586cb8e191e9aca11
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
