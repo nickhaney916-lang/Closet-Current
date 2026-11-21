@@ -83,6 +83,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID(),proof=null){
    else if(data.type==='error')finishOutfitSplit(job,job.added?'Some pieces are kept; the rest could not be separated. Try again.':'This outfit could not be separated. Try another clear photo of one person, head to toe.',true);
   };
   job.worker.onerror=()=>finishOutfitSplit(job,'Outfit separation could not start. Your existing photos are kept. Try again.',true);
+  job.worker.addEventListener('messageerror',()=>finishOutfitSplit(job,'Outfit separation could not read a result. Your existing photos are kept. Try again.',true));
   // Legacy photo conversion is already <=3072 px. Keep its long-standing
   // synchronous worker behavior and current camera/retry callbacks intact.
   if(!guarded)job.worker.postMessage({id:job.id,image});

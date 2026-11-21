@@ -3,7 +3,7 @@ const source=fs.readFileSync('public/outfit-capture.js','utf8');
 function setup({workerFails=false,saveFails=false,guarded=false,proofLoader=null}={}){
  const nodes=new Map(),timers=new Map(),listeners=new Map();let now=0,next=0;const el=id=>{if(!nodes.has(id))nodes.set(id,{hidden:false,value:'',disabled:false});return nodes.get(id);};
  const window={addEventListener(type,handler){const group=listeners.get(type)||[];group.push(handler);listeners.set(type,group);}};
- const c={$:el,window,captureProof01Active:guarded,captureOperationEpoch:0,captureProofOwner:()=> 'owner-A',captureProofFromFile:file=>proofLoader?.(file),batch:[],items:[],localPending:new Set(),busy:false,session:0,recognitionAssetVersion:'release',categories:['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],crypto:{randomUUID:()=> 'id-'+(++next)},Date:{now:()=>now},setTimeout(fn,delay){const id=++next;timers.set(id,{fn,delay});return id;},clearTimeout:id=>timers.delete(id),stopCamera(){c.stopped=true;},controls:disabled=>c.controlsDisabled=disabled,segmentationAllows:(item,choice)=>!item.segmentHint?.clipped&&(!item.segmentHint||item.segmentHint.categories.includes(choice.category)),candidate(image,options){if([...c.batch,...c.items].some(x=>x.image===image))return false;c.batch.push({id:'piece-'+(++next),image,...options,requiresOwnershipConfirmation:false});return true;},saveIndexed:async item=>{if(saveFails)throw Error('storage failed');c.items.push({...item});c.batch=c.batch.filter(x=>x.id!==item.id);return true;},switchView:view=>{c.view=view;},structuredClone,closetReady:Promise.resolve(),outfitBoardReady:Promise.resolve(),photoToJPEG:async()=> 'data:image/jpeg;base64,AAAA',Worker:class{constructor(){if(workerFails)throw Error('unsupported');c.worker=this;}postMessage(data){this.request=data;}terminate(){this.stopped=true;}},render(){c.renderOutfitCapture();}};
+ const c={$:el,window,captureProof01Active:guarded,captureOperationEpoch:0,captureProofOwner:()=> 'owner-A',captureProofFromFile:file=>proofLoader?.(file),batch:[],items:[],localPending:new Set(),busy:false,session:0,recognitionAssetVersion:'release',categories:['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],crypto:{randomUUID:()=> 'id-'+(++next)},Date:{now:()=>now},setTimeout(fn,delay){const id=++next;timers.set(id,{fn,delay});return id;},clearTimeout:id=>timers.delete(id),stopCamera(){c.stopped=true;},controls:disabled=>c.controlsDisabled=disabled,segmentationAllows:(item,choice)=>!item.segmentHint?.clipped&&(!item.segmentHint||item.segmentHint.categories.includes(choice.category)),candidate(image,options){if([...c.batch,...c.items].some(x=>x.image===image))return false;c.batch.push({id:'piece-'+(++next),image,...options,requiresOwnershipConfirmation:false});return true;},saveIndexed:async item=>{if(saveFails)throw Error('storage failed');c.items.push({...item});c.batch=c.batch.filter(x=>x.id!==item.id);return true;},switchView:view=>{c.view=view;},structuredClone,closetReady:Promise.resolve(),outfitBoardReady:Promise.resolve(),photoToJPEG:async()=> 'data:image/jpeg;base64,AAAA',Worker:class{constructor(){if(workerFails)throw Error('unsupported');c.worker=this;}addEventListener(type,handler){this.listeners??=new Map();this.listeners.set(type,handler);}dispatch(type){this.listeners?.get(type)?.();}postMessage(data){this.request=data;}terminate(){this.stopped=true;}},render(){c.renderOutfitCapture();}};
  vm.createContext(c);vm.runInContext(source,c);return {c,el,timers,advance:n=>now+=n,pagehide:()=>{for(const fn of listeners.get('pagehide')||[])fn();},emit:data=>c.worker.onmessage({data:{id:c.worker.request.id,...data}}),lock:()=>{c.captureOperationEpoch++;c.busy=false;c.controls(false);for(const fn of listeners.get('closet:session-locked')||[])fn();}};
 }
 test('automatically cropped pieces enter indexing separately with original photos retained',async()=>{
@@ -196,4 +196,25 @@ test('delayed model downloads cannot overwrite separation status or reset its wa
  h.emit({type:'done',count:0});
  assert.equal(h.c.busy,false);
  assert.equal(h.el('outfitRetry').hidden,false);
+});
+
+test('an unreadable outfit Worker reply immediately releases controls and preserves retry',()=>{
+ const h=setup();
+ const original='data:image/jpeg;base64,AAAA';
+ h.c.startOutfitSplit(original);
+ const retired=h.c.worker;
+ retired.dispatch('messageerror');
+ assert.equal(h.c.busy,false,'unreadable reply must release outfit capture');
+ assert.equal(h.c.controlsDisabled,false);
+ assert.equal(h.timers.size,0);
+ assert.equal(retired.stopped,true);
+ assert.equal(h.el('outfitRetry').hidden,false);
+ h.el('outfitRetry').onclick();
+ const retry=h.c.worker;
+ assert.notEqual(retry,retired);
+ assert.equal(retry.request.image,original);
+ retired.dispatch('messageerror');
+ assert.equal(h.c.busy,true);
+ h.emit({type:'done',count:0});
+ assert.equal(h.c.busy,false);
 });
