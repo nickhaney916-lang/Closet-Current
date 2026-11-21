@@ -1,0 +1,103 @@
+name: MAIN1054 M292 original native trap PC evidence gate only NO DEPLOY HOLD
+on:
+  push:
+    branches: [research/main1054-m292-native-trap-evidence-handoff-HOLD]
+permissions:
+  contents: read
+jobs:
+  m292-source-full-owner-native-and-private-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: First-attempt pinned original JSEP and protected Worker source gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = "1"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/main1054/m280-original-jsep-function-map.mjs)" = c52b967bc80ce8ba4c2c69bc2ea09c70e50bb332
+          test "$(git rev-parse HEAD:research/main1054/m291-loaded-wpe-elf-closure.mjs)" = 1ff7f5553b2cadbc43bea6118df40e1125c021c4
+          node --check research/main1054/m292-original-native-pc-evidence-handoff.mjs
+          node --check tests/main1054-m292-original-native-pc-evidence-handoff.test.mjs
+      - name: Adversarial first-attempt source, native-PC and release falsification checks
+        run: node --test tests/main1054-m292-original-native-pc-evidence-handoff.test.mjs
+      - name: Existing M291 M290 M286 native and actual original RED regressions
+        run: |
+          node --test tests/main1054-m291-loaded-wpe-elf-closure.test.mjs tests/main1054-m290-live-native-elf-identity.test.mjs
+          node --test tests/main1054-m286-pinned-webkit-source-binary-provenance.test.mjs tests/main1054-m284-wpe-native-process-discovery.test.mjs tests/main1054-m282-native-debugger-preflight.test.mjs tests/main1054-m281-webkit-trap-pc-capability.test.mjs tests/main1054-m280-original-jsep-function-map.test.mjs tests/main1054-m279-original-model-pointer-bounds.test.mjs
+      - name: Preserve protected original app regressions in no-deploy mode
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original application build and complete owner privacy photo 2D v4 backup suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Issue honest read-only native-PC evidence NOT AVAILABLE receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          node research/main1054/m292-original-native-pc-evidence-handoff.mjs no-witness
+          test -s m292-sanitized/native-trap-pc-evidence-readiness.json
+      - name: Archive only bounded source identity and truthful blocker status
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m292-original-native-pc-unknown-needs-authorized-witness-HOLD
+          path: m292-sanitized/native-trap-pc-evidence-readiness.json
+          retention-days: 7
+          if-no-files-found: ignore
+  m292-genuine-pinned-original-wasm-static-byte-handoff:
+    needs: m292-source-full-owner-native-and-private-regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download ONLY the public original JSEP bytes and attest size and SHA256
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.run_attempt }}" = "1"
+          mkdir -p m292-tmp
+          node --input-type=module <<'NODE'
+          import {writeFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          import {originalBinary} from './research/main1054/m280-original-jsep-function-map.mjs';
+          const r=await fetch(originalBinary.url,{signal:AbortSignal.timeout(150000)});
+          if(!r.ok)throw Error('public original WASM unavailable');
+          const b=Buffer.from(await r.arrayBuffer());
+          if(b.length!==originalBinary.bytes||
+            createHash('sha256').update(b).digest('hex')!==originalBinary.sha256)
+            throw Error('public original WASM hash / byte count mismatch');
+          writeFileSync('m292-tmp/original.wasm',b,{flag:'wx'});
+          console.log('M292_PUBLIC_JSEP_EXACT_BYTE_IDENTITY_ONLY',{
+            count:b.length,validOriginalSHA:true,originalNativeTrapPc:null});
+          NODE
+      - name: Verify exact original WASM real bytes, function span and no false trap attribution
+        shell: bash
+        env:
+          M292_ORIGINAL_WASM_PATH: m292-tmp/original.wasm
+        run: |
+          set -euo pipefail
+          node --test tests/main1054-m292-original-native-pc-evidence-handoff.test.mjs
+      - name: Discard public original binary bytes before any archived artifacts
+        if: always()
+        shell: bash
+        run: rm -f m292-tmp/original.wasm
