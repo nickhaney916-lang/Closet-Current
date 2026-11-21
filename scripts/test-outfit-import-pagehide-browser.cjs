@@ -3,6 +3,7 @@ const { readFileSync } = require('node:fs');
 const { chromium, webkit } = require('playwright');
 
 const source = readFileSync(process.env.OUTFIT_CAPTURE_SOURCE || 'public/outfit-capture.js', 'utf8');
+const replacementOnly = process.env.OUTFIT_REPLACEMENT_ONLY === '1';
 const unreadableOnly = process.env.OUTFIT_UNREADABLE_ONLY === '1';
 const progressOnly = process.env.OUTFIT_PROGRESS_ONLY === '1';
 const html = `
@@ -26,6 +27,12 @@ let busy = false, session = 0;
 function stopCamera() {}
 function controls(locked) { $('outfitUpload').disabled = locked; }
 function captureProofFromFile(file) {
+ if (file.name === 'broken.jpg') {
+  const image = new Image();
+  const url = URL.createObjectURL(file);
+  image.src = url;
+  return image.decode().finally(() => URL.revokeObjectURL(url));
+ }
  return new Promise(resolve => pendingDecodes.set(file.name, resolve));
 }
 function finishDecode(name) {
@@ -62,6 +69,29 @@ async function check(engine, browserType) {
   await page.goto('http://localhost/');
   const picker = page.locator('#outfitUpload');
   const select = name => picker.setInputFiles({name,mimeType:'image/jpeg',buffer:Buffer.from('fixture')});
+  if (replacementOnly) {
+   const retry = page.locator('#outfitRetry');
+   const open = async name => {
+    await select(name);
+    await page.waitForFunction(name => pendingDecodes.has(name), name);
+    await page.evaluate(name => finishDecode(name), name);
+    await page.waitForFunction(() => !busy && !$('outfitRetry').hidden);
+   };
+   await open('first.jpg');
+   assert.equal(workers.length, 1);
+   await select('broken.jpg');
+   await page.waitForFunction(() => !busy && $('outfitSplitStatus').textContent.includes('Could not open'));
+   assert.equal(await retry.isVisible(), false, 'replacement decode failure must retire the earlier photo retry');
+   await page.evaluate(() => $('outfitRetry').click());
+   assert.equal(await page.evaluate(() => outfitSplitJob === null), true);
+   await open('fresh.jpg');
+   await retry.click();
+   await page.waitForFunction(() => !busy && !$('outfitRetry').hidden);
+   assert.equal(workers.length, 3);
+   assert.deepEqual(errors, []);
+   console.log(`${engine}: replacement photo retry regression passed`);
+   return;
+  }
   if (unreadableOnly) {
    await select('unreadable.jpg');
    await page.waitForFunction(() => pendingDecodes.has('unreadable.jpg'));
