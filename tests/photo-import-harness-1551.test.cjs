@@ -12,9 +12,13 @@ const expected = [
 ];
 
 function run(args = []) {
+  // Node's parent test runner sets NODE_TEST_CONTEXT=child-v8; inheriting it
+  // makes the nested runner emit no standalone TAP even on a green exit.
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
   const proc = spawnSync(process.execPath, [
     '--test', '--test-reporter=tap', ...args, target,
-  ], { cwd, encoding: 'utf8', timeout: 30000, maxBuffer: 1024 * 1024 });
+  ], { cwd, env, encoding: 'utf8', timeout: 30000, maxBuffer: 1024 * 1024 });
   assert.equal(proc.error, undefined, String(proc.error));
   assert.equal(proc.status, 0,
     'genuine photo-import assertions must complete successfully:\n' +
