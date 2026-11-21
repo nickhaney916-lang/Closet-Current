@@ -51,10 +51,21 @@ test('synthetic WebInspector exception reason/locations are not an actual origin
  ]}};
  const p=classifyInspectorPause(event);
  assert.equal(p.wasmFramePresented,true);
- assert.equal(p.actualSyntheticOpcodeOffsetVerified,44);
+ assert.equal(p.actualSyntheticOpcodeOffsetVerified,null);
  assert.equal(p.nativeMachinePcCaptured,false);
  assert.equal(p.originalOrtCreateSessionTrapPc,null);
  assert.equal(classifyInspectorPause({method:'Debugger.resumed'}),null);
+});
+test('WASM-labeled Inspector line or column 44 is never proof of a binary opcode',()=>{
+ for(const location of [{lineNumber:44,columnNumber:0},
+  {lineNumber:0,columnNumber:44},{lineNumber:44,columnNumber:44},
+  {lineNumber:0,columnNumber:43},{lineNumber:0,columnNumber:45}]){
+  const p=classifyInspectorPause({method:'Debugger.paused',params:{
+   reason:'exception',callFrames:[{functionName:'wasm-function[0]',
+    url:'wasm://wasm/module',location}]}});
+  assert.equal(p.wasmFramePresented,true);
+  assert.equal(p.actualSyntheticOpcodeOffsetVerified,null);
+ }
 });
 test('an arbitrary JS line 44 does not prove native WASM instruction offset',()=>{
  const p=classifyInspectorPause({method:'Debugger.paused',params:{reason:'exception',
@@ -82,10 +93,12 @@ test('wrong synthetic instruction, missing real debugger pause or arbitrary offs
   {inspectorBoundToLoopback:false},{syntheticOnly:false},
   {originalModelExecuted:true}])
   assert.throws(()=>adjudicate({...receipt,...patch}),/M289 FAIL-CLOSED/);
- const proved={...receipt,inspectorHttpReachable:true,
+ const observed={...receipt,inspectorHttpReachable:true,
   inspectorWebSocketConnected:true,inspectorDebuggerEnabled:true,
-  inspectorExceptionPauseObserved:true,syntheticInspectorFileOffset:44};
- assert.equal(adjudicate(proved),proved);
+  inspectorExceptionPauseObserved:true,syntheticInspectorFileOffset:null};
+ assert.equal(adjudicate(observed),observed);
+ assert.throws(()=>adjudicate({...observed,syntheticInspectorFileOffset:44}),
+  /M289 FAIL-CLOSED/);
 });
 test('native pc, original WASM trap, C++ line, causal fix, release never inferred from synthetic',()=>{
  for(const patch of [{nativeMachinePcCaptured:true},
