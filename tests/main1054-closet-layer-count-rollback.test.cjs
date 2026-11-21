@@ -51,7 +51,7 @@ test('late rejected layer change does not erase a newer user edit',async()=>{
  const f=setup(),pending=[];
  f.persist(()=>new Promise(resolve=>pending.push(resolve)));
  f.$('closetLayerCount').value='0';const previous=f.call();
- await Promise.resolve(); // actual handler awaits outfitBoardReady
+ await new Promise(resolve=>setImmediate(resolve)); // drain the original async handler's ready/persistence microtasks
  assert.equal(pending.length,1,'native handler must start one save');
  f.evaluate('currentBoard=cleanOutfitBoard({name:"Newer owner choice",slots:{top:"base",layer:"sweater"},layerCount:1},items)');
  f.render?.();
