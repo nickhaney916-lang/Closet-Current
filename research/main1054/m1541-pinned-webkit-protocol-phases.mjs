@@ -20,7 +20,8 @@ try{
  if(!report.http)throw Error('HTTP discovery yielded no local WebPage socket');
  if(phase===0)process.exitCode=0;
  else {
-  const path=paths.find(p=>p.endsWith('/WebPage'))||paths[0];
+  const path=paths.find(p=>p.endsWith('/WebPage'));
+  if(!path)throw Error('HTTP listing has no WebPage Inspector socket');
   if(!/^\/socket\/[0-9]{1,18}\/[0-9]{1,18}\/[A-Za-z][A-Za-z0-9_-]{0,47}$/.test(path))throw Error('invalid local path');
   report.selectedSocketKind=path.split('/').at(-1);
   socket=new WebSocket('ws://'+host+path);
