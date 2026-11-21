@@ -22,7 +22,7 @@ jobs:
         run: |
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          test "$(git rev-parse HEAD:research/main1054/m288-original-jsep-static-memory-map.mjs)" = 3daf44c99df5f3f8eb2b3b6ffdf4fbdb78b6d71f
+          test "$(git rev-parse HEAD:research/main1054/m288-original-jsep-static-memory-map.mjs)" = f3ed9f2bc8b877723efb73b5f792b4b693073f58
           test "$(git rev-parse HEAD:tests/main1054-m288-original-jsep-static-memory-map.test.mjs)" = a897a81a45e47851cb70baa9d19471e0ec0dd7ea
           test "$(git rev-parse HEAD:research/main1054/m280-original-jsep-function-map.mjs)" = c52b967bc80ce8ba4c2c69bc2ea09c70e50bb332
           test "$(git rev-parse HEAD:research/main1054/m279-original-model-pointer-bounds.mjs)" = f2fd27553cc6854997480ee586cb8e191e9aca11
@@ -60,7 +60,7 @@ jobs:
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "${{ github.run_attempt }}" = 1
-          test "$(git rev-parse HEAD:research/main1054/m288-original-jsep-static-memory-map.mjs)" = 3daf44c99df5f3f8eb2b3b6ffdf4fbdb78b6d71f
+          test "$(git rev-parse HEAD:research/main1054/m288-original-jsep-static-memory-map.mjs)" = f3ed9f2bc8b877723efb73b5f792b4b693073f58
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
       - name: Install standard static WASM disassembly CLI, not a browser debugger
         shell: bash
