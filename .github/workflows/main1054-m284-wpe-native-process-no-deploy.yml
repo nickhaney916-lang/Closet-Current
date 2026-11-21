@@ -1,0 +1,92 @@
+name: MAIN1054 M284 exact pinned Linux WPEWebProcess discovery and native debugger capability HOLD
+on:
+  push:
+    branches: [research/main1054-m284-wpe-native-process-discovery-HOLD]
+permissions:
+  contents: read
+jobs:
+  m284-source-and-native-negative:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable original M279 native RED, protected Worker, and WPE observer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:research/main1054/m284-wpe-native-process-discovery.mjs)" = bbdab84c7aa890ecdd7f641342736fe1376a8127
+          test "$(git rev-parse HEAD:tests/main1054-m284-wpe-native-process-discovery.test.mjs)" = 27e98896d538cc13f3582d8a93783054b9e90eea
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/main1054/m279-original-model-pointer-bounds.mjs)" = f2fd27553cc6854997480ee586cb8e191e9aca11
+          test "$(git rev-parse HEAD:research/main1054/m282-native-debugger-preflight.mjs)" = cd91e67e7f595b2b264d93a0d80d8fa82bebc600
+          node --check research/main1054/m284-wpe-native-process-discovery.mjs
+      - name: M284 authentic WPE/GTK process identity, strict source and no false trap tests
+        run: node --test tests/main1054-m284-wpe-native-process-discovery.test.mjs
+      - name: Inherited native M282 and M281 original negative tests
+        run: node --test tests/main1054-m282-native-debugger-preflight.test.mjs tests/main1054-m281-webkit-trap-pc-capability.test.mjs tests/main1054-m280-original-jsep-function-map.test.mjs tests/main1054-m279-original-model-pointer-bounds.test.mjs
+      - name: Install original offline security/owner/backup test dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original app build and full inherited Node privacy, photo, original model, 2D/v4 and backup regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  m284-pinned-real-wpe-discovery:
+    needs: m284-source-and-native-negative
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact-source and first-attempt original model exclusion
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD:research/main1054/m284-wpe-native-process-discovery.mjs)" = bbdab84c7aa890ecdd7f641342736fe1376a8127
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Pinned WebKit 26.0 headless WPE runtime plus ordinary user-space debugger
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v gdb >/dev/null; then
+            apt-get update -qq
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends gdb
+          fi
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Discover exact new pinned WPE renderer and attempt permitted idle attach only
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout -k 5s 110s node research/main1054/m284-wpe-native-process-discovery.mjs probe
+          test -s m284-sanitized/wpe-native-debugger.json
+      - name: Archive only sanitized WPE classification, no PID/address/raw stack or private bytes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m284-pinned-wpe-content-process-native-debugger-READ-ONLY-HOLD
+          path: m284-sanitized/*.json
+          retention-days: 7
+          if-no-files-found: ignore
