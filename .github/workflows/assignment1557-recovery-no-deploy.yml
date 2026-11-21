@@ -40,26 +40,26 @@ jobs:
               const browser=await engine.launch();
               try {
                 const page=await browser.newPage();
+                page.on('pageerror',error=>console.error(engine.name(),error));
                 await page.setContent('<button>Try again</button><p role="status"></p>');
                 await page.addScriptTag({content: source + `
                   let localWorker=null, localReady=true, recognitionUnavailable=false;
                   const recognitionState={phase:'ready'}, recognitionAssetVersion='', localJobs=new Map();
-                  const status=document.querySelector('p');
-                  const renderRecognitionNotice=()=>status.textContent=recognitionState.phase;
+                  const recoveryStatus=document.querySelector('p');
+                  const renderRecognitionNotice=()=>recoveryStatus.textContent=recognitionState.phase;
                   let fault=true;
-                  const NativeWorker=Worker;
-                  window.Worker=class extends NativeWorker {
-                    constructor(){
-                      super(URL.createObjectURL(new Blob(['onmessage=e=>postMessage({id:e.data.id,type:"loaded"})'],{type:'text/javascript'})),{type:'module'});
-                    }
+                  const Worker=class {
+                    terminate(){}
                     postMessage(request){
-                      if(fault){fault=false;queueMicrotask(()=>this.dispatchEvent(new MessageEvent('messageerror')));}
-                      else super.postMessage(request);
+                      queueMicrotask(()=>{
+                        if(fault){fault=false;this.onmessageerror(new MessageEvent('messageerror'));}
+                        else this.onmessage(new MessageEvent('message',{data:{id:request.id,type:'loaded'}}));
+                      });
                     }
                   };
                   document.querySelector('button').onclick=async()=>{
-                    try { await localRequest('load'); status.textContent='Ready'; }
-                    catch(error){ status.textContent=error.message; }
+                    try { await localRequest('load'); recoveryStatus.textContent='Ready'; }
+                    catch(error){ recoveryStatus.textContent=error.message; }
                   };
                 `});
                 await page.getByRole('button').click();
