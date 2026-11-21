@@ -1,0 +1,88 @@
+name: MAIN1054 M289 sanctioned loopback WPE WebInspector WebAssembly trap-site capability HOLD
+on:
+  push:
+    branches: [research/main1054-m289-authorized-wpe-inspector-trap-pc-HOLD]
+permissions:
+  contents: read
+jobs:
+  m289-original-source-and-negative:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve original first-attempt M279 RED and protected native sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/main1054/m287-original-webkit-failing-process-witness.mjs)" = 4439bb9d27220fe0a37402e81899d2bf5bcc5346
+          test "$(git rev-parse HEAD:research/main1054/m281-webkit-offset-capability.mjs)" = be652d12ab80038a9ec43e2f1f2719803999d948
+          node --check research/main1054/m289-authorized-wpe-inspector-wasm-offset.mjs
+      - name: Check only sanctioned loopback inspector and no synthetic/original native trap confusion
+        run: node --test tests/main1054-m289-authorized-wpe-inspector-wasm-offset.test.mjs
+      - name: Inherited original M287/M285/M283 source, native trap negative controls
+        run: |
+          node --test tests/main1054-m287-original-webkit-failing-process-witness.test.mjs
+          node --test tests/main1054-m285-original-heap-view-witness.test.mjs
+          node --test tests/main1054-m283-real-jsep-instantiation.test.mjs
+          node --test tests/main1054-m281-webkit-offset-capability.test.mjs tests/main1054-m280-original-jsep-function-map.test.mjs tests/main1054-m279-original-model-pointer-bounds.test.mjs
+      - name: Install offline source/app security test dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original unchanged application build and entire owner/photo/privacy/backup Node suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  m289-real-pinned-webkit-local-inspector:
+    needs: m289-original-source-and-negative
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce exact original source, 1st attempt, no ptrace or capability change
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/main1054/m287-original-webkit-failing-process-witness.mjs)" = 4439bb9d27220fe0a37402e81899d2bf5bcc5346
+      - name: Install original exact pinned Playwright 1.56.1 no-debug engine
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Test officially documented WPE remote inspector loopback only with actual synthetic native WASM bounds trap
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout -k 5s 100s node research/main1054/m289-authorized-wpe-inspector-wasm-offset.mjs probe
+          test -s m289-sanitized/inspector-capability.json
+      - name: Archive ONLY bounded inspector capability and true synthetic opcode classification, never private/model binary bytes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m289-synthetic-only-native-WebKit-WPE-local-inspector-capability-READ-ONLY-HOLD
+          path: m289-sanitized/inspector-capability.json
+          retention-days: 7
+          if-no-files-found: ignore
