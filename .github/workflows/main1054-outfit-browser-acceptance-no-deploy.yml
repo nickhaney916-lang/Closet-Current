@@ -1,0 +1,78 @@
+name: M4 P1 real browser outfit rollback verification HOLD
+on:
+  push:
+    branches: [research/main1054-p1-outfit-rollback-real-browser-acceptance-HOLD]
+permissions:
+  contents: read
+jobs:
+  outfit-rollback-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Freeze exact reviewed source and test-only diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          CANDIDATE=23d111ad6cde011f78b036f91cd85cf19bb897ea
+          BASELINE=ed340449514255c4bda84eb47f64187e5bd546c8
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          git merge-base --is-ancestor "$CANDIDATE" HEAD
+          git merge-base --is-ancestor "$BASELINE" HEAD
+          git diff --check "$CANDIDATE" HEAD
+          while IFS= read -r path; do
+            case "$path" in
+              scripts/main1054-outfit-browser-acceptance.cjs|.github/workflows/main1054-outfit-browser-acceptance-no-deploy.yml) ;;
+              *) echo "OUT-OF-SCOPE PATH $path"; exit 1 ;;
+            esac
+          done < <(git diff --name-only "$CANDIDATE" HEAD)
+          test "$(git diff --name-status "$CANDIDATE" HEAD | grep -c '^A')" = 2
+          git worktree add --detach "$RUNNER_TEMP/m4-prev" "$BASELINE"
+          node --check scripts/main1054-outfit-browser-acceptance.cjs
+      - name: Build both actual immutable source trees
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          (cd "$RUNNER_TEMP/m4-prev" && node scripts/build.mjs)
+          test -s dist/index.html
+          test -s "$RUNNER_TEMP/m4-prev/dist/index.html"
+      - name: Install supported Chromium and WebKit
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+          npx playwright install --with-deps chromium webkit
+      - name: Execute real Outfit Builder DOM and native IndexedDB negative and positive browser controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/main1054-outfit-browser-acceptance.cjs "$RUNNER_TEMP/m4-prev/dist" dist | tee "$RUNNER_TEMP/browser-receipt.json"
+          grep -q '"status": "PASS"' "$RUNNER_TEMP/browser-receipt.json"
+          grep -q '"checks": 14' "$RUNNER_TEMP/browser-receipt.json"
+      - name: Verify unchanged focused and full application Node tests on exact candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/main1054-outfit-failed-save-rollback.test.cjs | tee "$RUNNER_TEMP/focused.tap"
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs | tee "$RUNNER_TEMP/full-node.tap"
+          grep -Eq '^# fail 0$' "$RUNNER_TEMP/focused.tap"
+          grep -Eq '^# fail 0$' "$RUNNER_TEMP/full-node.tap"
+          grep -Eq '^# skipped 0$' "$RUNNER_TEMP/full-node.tap"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m4-outfit-rollback-browser-no-deploy
+          path: |
+            ${{ runner.temp }}/browser-receipt.json
+            ${{ runner.temp }}/focused.tap
+            ${{ runner.temp }}/full-node.tap
+          if-no-files-found: ignore
