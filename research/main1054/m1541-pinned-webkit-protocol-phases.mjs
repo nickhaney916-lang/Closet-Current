@@ -4,7 +4,7 @@ import {parseLocalInspectorPaths} from './m289-authorized-wpe-inspector-wasm-off
 const phase=Number(process.argv[2]);
 if(!Number.isInteger(phase)||phase<0||phase>4)throw Error('invalid phase');
 const host='127.0.0.1:17651';
-const report={phase,http:false,websocket:false,target:false,nestedCommandSent:false,debuggerEnableSent:false,outerMethods:[],innerMethods:[],outerErrors:[],innerResponse:false,innerErrorCode:null,socketClosed:false};
+const report={phase,http:false,websocket:false,target:false,nestedCommandSent:false,debuggerEnableSent:false,outerMethods:[],innerMethods:[],outerErrors:[],discoveryCommandSent:false,discoveryResponse:false,discoveryErrorCode:null,innerResponse:false,innerErrorCode:null,socketClosed:false};
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 let browser,socket;
 try{
@@ -38,6 +38,7 @@ try{
     let msg;try{msg=JSON.parse(String(e.data).slice(0,16384))}catch{return}
     if(typeof msg.method==='string'&&report.outerMethods.length<10)report.outerMethods.push(msg.method.slice(0,80));
     if(msg.error&&report.outerErrors.length<5)report.outerErrors.push({code:Number.isInteger(msg.error.code)?msg.error.code:null});
+    if(msg.id===1){report.discoveryResponse=true;report.discoveryErrorCode=Number.isInteger(msg.error?.code)?msg.error.code:null;}
     const candidate=msg.params?.targetInfo?.targetId||msg.params?.targetId;
     if(typeof candidate==='string'&&/^[A-Za-z0-9_:-]{1,128}$/.test(candidate)){
      targetId=candidate;report.target=true;
@@ -48,8 +49,12 @@ try{
    });
    await handshake;
    report.websocket=true;
+   // Passive discovery yielded zero outer events in the verified baseline.
+   // Request discovery explicitly; record protocol support without fabricating a target.
+   send('Target.setDiscoverTargets',{discover:true});
+   report.discoveryCommandSent=true;
    for(let n=0;n<20&&!targetId;n++)await wait(250);
-   if(phase>=2&&!targetId)throw Error('Target discovery absent');
+   if(phase>=2&&!targetId)throw Error('Target discovery absent after explicit request; reply='+report.discoveryResponse+' code='+report.discoveryErrorCode);
    if(phase>=3){
     const method=phase===3?'Runtime.enable':'Debugger.enable';
     send('Target.sendMessageToTarget',{targetId,message:JSON.stringify({id:101,method,params:{}})});
