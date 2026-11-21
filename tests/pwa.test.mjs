@@ -6,9 +6,9 @@ for(const dimension of [192,512]){
  const buffer=fs.readFileSync('dist/'+icon.src);assert.equal(buffer.readUInt32BE(16),dimension);assert.equal(buffer.readUInt32BE(20),dimension);
 }
 const source=fs.readFileSync('dist/sw.js','utf8');assert.ok(!source.includes('__VERSION__'));assert.ok(!source.includes('__ASSETS__'));
-const events={},saved=new Map();const cache={async addAll(urls){for(const url of urls)saved.set(url,new Response('cached'));},async put(key,value){saved.set(typeof key==='string'?key:key.url,value);},async match(key){return saved.get(typeof key==='string'?key:key.url);}};
+const events={},saved=new Map();const cache={async addAll(urls){for(const request of urls){const url=typeof request==='string'?request:request.url;saved.set(url,new Response('cached'));}},async put(key,value){saved.set(typeof key==='string'?key:key.url,value);},async match(key){return saved.get(typeof key==='string'?key:key.url)?.clone();}};
 const self={registration:{scope:'https://example.com/Closet-Current/'},location:{origin:'https://example.com'},clients:{claim:async()=>{}},addEventListener(name,handler){events[name]=handler;}};
-const context={self,URL,Response,caches:{open:async()=>cache,keys:async()=>[],delete:async()=>true},fetch:async()=>{throw Error('offline');}};
+const context={self,URL,Request,Response,caches:{open:async()=>cache,keys:async()=>[],delete:async()=>true},fetch:async()=>{throw Error('offline');}};
 vm.createContext(context);vm.runInContext(source,context);
 let job;events.install({waitUntil(promise){job=promise;}});await job;
 assert.ok(saved.has('https://example.com/Closet-Current/index.html'));
@@ -31,3 +31,31 @@ events.fetch({request:{method:'GET',url:'https://external.example/photo.jpg'},re
 events.fetch({request:{method:'POST',url:'https://example.com/Closet-Current/index.html'},respondWith(){intercepted=true;}});assert.equal(intercepted,false);
 assert.ok(fs.readFileSync('public/pwa.js','utf8').includes("!location.hostname.endsWith('.chatgpt.site')"));
 console.log('Install manifest, icon dimensions, subpath offline fallback, restricted caching and private-test-host exclusion checks passed.');
+
+// A deployed release can change while this worker still controls open tabs.
+const homeURL=self.registration.scope;
+const indexURL=new URL('index.html',homeURL).href;
+const workerURL=new URL('local-worker.mjs?v='+buildVersion,homeURL).href;
+const oldWorker=fs.readFileSync('dist/local-worker.mjs','utf8');
+saved.set(indexURL,new Response(html));
+saved.set(workerURL,new Response(oldWorker));
+const newerHTML=html.replaceAll(buildVersion,'000000000000');
+context.fetch=async request=>{
+ const response=new Response(request.url===workerURL?'newer worker bytes':newerHTML);
+ Object.defineProperty(response,'type',{value:'basic'});
+ return response;
+};
+async function controlledFetch(url,mode='same-origin'){
+ let response;
+ events.fetch({request:{method:'GET',url,mode},respondWith(promise){response=promise;}});
+ return response;
+}
+assert.equal(await (await controlledFetch(homeURL,'navigate')).text(),html,
+ 'A reload under the old worker must keep its release shell until activation');
+assert.equal(await (await controlledFetch(workerURL)).text(),oldWorker,
+ 'A release-keyed Worker request must keep its installed bytes');
+context.fetch=async()=>{throw Error('offline');};
+assert.equal(await (await controlledFetch(homeURL,'navigate')).text(),html);
+assert.equal(await (await controlledFetch(workerURL)).text(),oldWorker);
+saved.delete(workerURL);
+assert.equal((await controlledFetch(workerURL)).status,503);
