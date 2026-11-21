@@ -31,3 +31,14 @@ const {verifiedGarmentDetails,detailPhotoUsable}=await import('../public/local-c
 assert.deepEqual(verifiedGarmentDetails({color:'Black'}, {color:[{label:groups.color[1].label,score:.95},{label:groups.color[0].label,score:.05}]},groups),{});
 assert.deepEqual(verifiedGarmentDetails({color:'Black'}, {color:[{label:groups.color[0].label,score:.95},{label:groups.color[1].label,score:.05}]},groups),{color:'Black'});
 assert.equal(detailPhotoUsable(112,200),false);assert.equal(detailPhotoUsable(900,224),true);assert.equal(detailPhotoUsable(NaN,900),false);
+
+const duplicateChoices=clothingChoices([
+ {label:top.label,score:.57},
+ {label:second.label,score:.2},
+ {label:top.label,score:.64},
+]);
+assert.deepEqual(duplicateChoices.map(({label,score})=>({label,score})),[
+ {label:top.label,score:.64},
+ {label:second.label,score:.2},
+],'Repeated scores for one label must not occupy multiple recognition choices');
+assert.equal(strongMatch(duplicateChoices),true,'The margin must compare distinct clothing labels');
