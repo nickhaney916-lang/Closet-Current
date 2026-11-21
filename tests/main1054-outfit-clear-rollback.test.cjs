@@ -3,7 +3,15 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const board=fs.readFileSync('public/outfit-board.js','utf8');
 const closet=fs.readFileSync('public/closet-browser.js','utf8');
 const engine=fs.readFileSync('public/outfit-board-engine.js','utf8');
-const part=(text,label)=>{const line=text.split('\n').find(x=>x.startsWith("$('"+label+"').onclick="));assert.ok(line,'Original production '+label+' handler required');return line;};
+const part=(text,label)=>{
+ const begin=text.indexOf("$('"+label+"').onclick=");
+ assert.ok(begin>=0,'Original production '+label+' handler required');
+ // Production handlers are one line before the fix, multiple lines after it.
+ // The following independent DOM handler anchors their exact complete extent.
+ const end=text.indexOf("\n$('",begin+1);
+ assert.ok(end>begin,'Find boundary after complete original '+label+' handler');
+ return text.slice(begin,end).trim();
+};
 const clearBoard=part(board,'clearBoard'),clearLook=part(closet,'closetClearLook');
 const start=board.indexOf('function boardBackup('),end=board.indexOf('function openBoardPicker(');
 assert.ok(start>=0&&end>start,'Original real persistence helpers required');
