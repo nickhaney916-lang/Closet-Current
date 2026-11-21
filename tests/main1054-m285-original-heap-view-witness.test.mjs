@@ -55,19 +55,19 @@ test('never convert synthetic positive, falsified PC or claimed causal fix into 
   {engine:'webkit',width:430,ordinal:1}),/missing or inconsistent|M285 BLOCKED|original/i);
 });
 test('the test-only Uint8Array.set observer preserves actual original result and source bytes',()=>{
+ class ScopedUint8Array extends Uint8Array {}
  const sandbox={
-  Uint8Array,Number,Reflect,JSON,console:{info:()=>{}},
+  Uint8Array:ScopedUint8Array,Number,Reflect,JSON,console:{info:()=>{}},
   __ccNativeMemory:null
  };
  vm.runInNewContext(originalModelCopyObserver,sandbox,{timeout:1000});
- const source=new Uint8Array(15199746);source[0]=77;source[source.length-1]=91;
- const target=new Uint8Array(15199800);
+ const source=new ScopedUint8Array(15199746);source[0]=77;source[source.length-1]=91;
+ const target=new ScopedUint8Array(15199800);
  const result=target.set(source,10);
  assert.equal(result,undefined);
  assert.equal(target[10],77);assert.equal(target[10+source.length-1],91);
  assert.equal(source[0],77);
- // The test globally replaces Uint8Array.prototype.set, so restore by using
- // a sandbox-local subclass in future code rather than retaining a mutation.
+ // Only the disposable subclass's prototype is patched; process-wide native set stays original.
 });
 test('original test-only JS source derives, native 3-argument ABI untouched and both app inputs unchanged',()=>{
  const browser=readFileSync('scripts/test-parallel94-native-p88-browser.mjs','utf8');
