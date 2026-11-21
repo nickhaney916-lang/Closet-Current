@@ -54,25 +54,31 @@ try {
   await shell(await page.reload());
   assert.equal(await worker(page, version), originalWorker);
 
-  upgraded = true;
   offline = true;
   await shell(await page.reload());
   assert.equal(await worker(page, version), originalWorker);
   offline = false;
+  const blocker = await context.newPage();
+  await shell(await blocker.goto(url + '/app/'));
+  await blocker.waitForFunction(() => navigator.serviceWorker.controller !== null);
+  upgraded = true;
   await page.evaluate(() => navigator.serviceWorker.getRegistration().then(reg => reg.update()));
   await page.waitForFunction(async () => Boolean((await navigator.serviceWorker.getRegistration())?.waiting));
+  const waitingShell = await page.evaluate(async expected => {
+    const key = 'closet-current-' + expected;
+    const request = new URL('/app/index.html?v=' + expected, location.href).href;
+    const response = await caches.match(request, {cacheName: key});
+    if (response) return (await response.text()).match(/app\.js\?v=([a-f0-9]+)/)?.[1];
+    const cache = await caches.open(key);
+    return (await cache.keys()).slice(0, 8).map(entry => entry.url);
+  }, nextVersion);
+  assert.equal(waitingShell, nextVersion, 'Waiting worker installed the new shell');
   await shell(await page.reload());
   assert.equal(await worker(page, version), originalWorker);
-
-  const waitingShell = await page.evaluate(async expected => {
-    const cache = await caches.open('closet-current-' + expected);
-    const response = await cache.match(new URL('index.html?v=' + expected, location.href).href);
-    return response ? (await response.text()).includes('app.js?v=' + expected) : false;
-  }, nextVersion);
-  assert.ok(waitingShell, 'Waiting worker installed the new shell');
   const offScope = await context.newPage();
   await offScope.goto(url + '/probe');
   await page.close();
+  await blocker.close();
   await offScope.waitForFunction(async expected => {
     const registration = await navigator.serviceWorker.getRegistration('/app/');
     const keys = await caches.keys();
