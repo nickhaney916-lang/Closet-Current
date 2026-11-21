@@ -1,0 +1,31 @@
+name: Outfit camera decode cleanup
+on:
+  pull_request:
+    paths:
+      - public/photo-import.js
+      - public/outfit-capture.js
+      - tests/outfit-capture.test.cjs
+      - scripts/run-outfit-decode-cleanup.mjs
+      - .github/workflows/outfit-decode-cleanup.yml
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.mjs
+      - run: node --test tests/*.test.cjs tests/*.test.mjs
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps ${{ matrix.engine }}
+      - run: node scripts/run-outfit-decode-cleanup.mjs ${{ matrix.engine }}

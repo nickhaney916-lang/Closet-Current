@@ -41,3 +41,32 @@ test('100 simulated full-outfit camera captures keep cutouts distinct and queue 
  assert.equal(total,250);
  assert.equal(new Set(h.c.batch.map(x=>x.image)).size,250);
 });
+
+test('timed-out outfit camera imports release their URLs before a late decode and allow a fresh capture',async()=>{
+ const {c,el,timers}=setup();
+ const created=[],revoked=[],decodes=[];
+ c.URL={createObjectURL(){const url='blob:outfit-'+created.length;created.push(url);return url;},revokeObjectURL(url){revoked.push(url);}};
+ c.Image=class{constructor(){this.width=10;this.height=10;}decode(){return new Promise(resolve=>decodes.push(resolve));}};
+ c.document={createElement(){return {getContext:()=>({fillRect(){},drawImage(){}}),toDataURL:()=> 'data:image/jpeg;base64,FRESH'};}};
+ vm.runInContext(fs.readFileSync('public/photo-import.js','utf8'),c);
+ const file={type:'image/jpeg',name:'outfit.jpg',size:100};
+ for(let i=0;i<2;i++){
+  const pending=c.readOutfitPhoto(file);
+  const timeout=[...timers.values()].find(timer=>timer.delay===15000);
+  assert.ok(timeout);
+  timeout.fn();await pending;
+  assert.deepEqual(revoked,created,'Every timed-out outfit decode releases its URL immediately');
+  assert.equal(c.busy,false);
+  assert.equal(c.worker,undefined);
+  assert.match(el('outfitSplitStatus').textContent,/Could not open/);
+ }
+ const fresh=c.readOutfitPhoto(file);
+ decodes[2]();await fresh;
+ const worker=c.worker;
+ assert.equal(worker.request.image,'data:image/jpeg;base64,FRESH');
+ assert.deepEqual(revoked,created);
+ decodes[0]();decodes[1]();await new Promise(setImmediate);
+ assert.equal(c.worker,worker,'Old decode completions must leave the new Worker alone');
+ assert.deepEqual(revoked,created,'Old completions do not revoke the URLs twice');
+ assert.deepEqual(c.batch,[]);
+});

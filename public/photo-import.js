@@ -1,14 +1,19 @@
 'use strict';
-async function photoToJPEG(file,{maxDimension=2048,quality=.94}={}){
- const url=URL.createObjectURL(file);
+async function photoToJPEG(file,{maxDimension=2048,quality=.94,decodeTimeout=0}={}){
+ const url=URL.createObjectURL(file);let timer;
  try{
-  const image=new Image();image.src=url;await image.decode();
+  const image=new Image();image.src=url;
+  const decoded=image.decode();
+  if(decodeTimeout>0)await Promise.race([decoded,new Promise((_,reject)=>{
+   timer=setTimeout(()=>reject(Error('decode timeout')),decodeTimeout);
+  })]);
+  else await decoded;
   if(!image.width||!image.height)throw Error('No image content');
   const scale=Math.min(1,maxDimension/Math.max(image.width,image.height)),canvas=document.createElement('canvas');
   canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));
   const context=canvas.getContext('2d');context.fillStyle='#ffffff';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(image,0,0,canvas.width,canvas.height);
   return canvas.toDataURL('image/jpeg',quality);
- }finally{URL.revokeObjectURL(url);}
+ }finally{if(timer!==undefined)clearTimeout(timer);URL.revokeObjectURL(url);}
 }
 async function readPhotoBatch(files,decode,onPhoto){
  const errors=[],results=[];let added=0;
