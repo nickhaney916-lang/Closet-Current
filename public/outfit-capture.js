@@ -60,6 +60,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID(),proof=null){
    if(job!==outfitSplitJob)return;
    if(guarded&&captureProofOwner()!==job.owner){finishOutfitSplit(job,'Signed-in account changed. Outfit scan stopped; previously reviewed clothing remains private.',true);return;}const data=event.data;if(!data||data.id!==job.id)return;
    if(data.type==='progress'){
+    if(data.phase!=='separating'&&(job.phase!=='loading'||data.phase!=='loading'))return;
     if(data.phase==='separating'&&job.phase!=='separating'){job.phase='separating';clearTimeout(job.timer);job.timer=setTimeout(timeout,60000);}
     else if(job.phase==='loading')touch();
     $('outfitSplitStatus').textContent=data.phase==='separating'?'Separating clothes…':Number.isFinite(data.percent)?'Downloading · '+data.percent+'%':'Preparing…';return;
