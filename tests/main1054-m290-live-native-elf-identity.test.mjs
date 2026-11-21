@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
  sourceGate,branch,additions,pinned,source,expected,
- parseMapsLine,classifyMaps,identifyWpeProcess,processStartToken,adjudicate
+ parseMapsLine,classifyMaps,identifyWpeProcess,processStartToken,processParentPid,
+ hasVerifiedBrowserAncestry,adjudicate
 } from '../research/main1054/m290-live-native-elf-identity.mjs';
 const sha='a'.repeat(40),event={name:'push',ref:branch,sha,attempt:'1'};
 function git(cmd,...args){
@@ -19,7 +20,8 @@ const receipt={
  schema:'M290_ACTUAL_PINNED_WPE_MAPPED_ELF_V1',
  playwright:'1.56.1',webkit:'26.0',browserRevision:'2215',
  upstreamBaseSource:source.webkitUpstream,downstreamPatchBlob:source.playwrightPatchGitBlob,
- discovery:'MAPPED_ELF_ATTESTED',
+ discovery:'MAPPED_ELF_ATTESTED',localLoopbackTransportOnly:true,
+ browserServerRootAncestryVerified:true,
  elf:expected.map((x,i)=>({...x,mappedIntoLocalLiveWpe:i===0})),
  originalModelExecuted:false,historicalM279FailedProcessInspected:false,
  originalTrapInstructionOffset:null,cxxNativeFaultLocation:null,
@@ -80,6 +82,68 @@ test('process identity must exactly match new WPE process and start-time nonce',
  assert.equal(processStartToken(stat),'987654321');
  assert.throws(()=>processStartToken('123 (WPEWebProcess) x'),/start time/);
 });
+
+test('supported BrowserServer process roots identify only actual renderer descendants',()=>{
+ const root={pid:400,startToken:'9921'};
+ const browser={pid:400,ppid:3,startToken:'9921'};
+ const renderer={pid:401,ppid:400,startToken:'9925'};
+ const foreignRoot={pid:950,ppid:3,startToken:'9922'};
+ const foreignWpe={pid:951,ppid:950,startToken:'9926'};
+ const collection=new Map([browser,renderer,foreignRoot,foreignWpe].map(row=>[row.pid,row]));
+ const read=pid=>collection.get(pid);
+ assert.equal(hasVerifiedBrowserAncestry(
+  {pid:renderer.pid,startToken:renderer.startToken},root,read),true);
+ assert.equal(hasVerifiedBrowserAncestry(
+  {pid:foreignWpe.pid,startToken:foreignWpe.startToken},root,read),false,
+  'concurrent newly launched unrelated WPE must not be treated as the test browser');
+ assert.equal(hasVerifiedBrowserAncestry(
+  {pid:renderer.pid,startToken:'1'},root,read),false,
+  'reused child PID must never be accepted');
+ assert.equal(hasVerifiedBrowserAncestry(
+  {pid:renderer.pid,startToken:renderer.startToken},{...root,startToken:'1'},read),false,
+  'reused BrowserServer PID must never be accepted');
+ assert.equal(hasVerifiedBrowserAncestry(
+  {pid:renderer.pid,startToken:renderer.startToken},root,
+  pid=>pid===renderer.pid?{...renderer,ppid:950}:read(pid)),false,
+  'renderer reparenting from browser to unrelated process must fail closed');
+ assert.equal(hasVerifiedBrowserAncestry(
+  {pid:renderer.pid,startToken:renderer.startToken},root,
+  pid=>pid===root.pid?null:read(pid)),false,
+  'disappearing browser process must never be treated as a valid root');
+});
+test('ancestry is source-bound through bounded parent chain, rejecting cycles and concurrent roots',()=>{
+ const root={pid:200,startToken:'50'};
+ const chain=new Map([
+  [200,{pid:200,startToken:'50',ppid:1}],
+  [201,{pid:201,startToken:'51',ppid:200}],
+  [202,{pid:202,startToken:'52',ppid:201}],
+  [300,{pid:300,startToken:'80',ppid:1}],
+  [301,{pid:301,startToken:'81',ppid:300}],
+ ]);
+ const lookup=pid=>chain.get(pid);
+ assert.equal(hasVerifiedBrowserAncestry({pid:202,startToken:'52'},root,lookup),true);
+ assert.equal(hasVerifiedBrowserAncestry({pid:301,startToken:'81'},root,lookup),false);
+ assert.equal(hasVerifiedBrowserAncestry({pid:201,startToken:'51'},root,
+  pid=>pid===201?{pid:201,startToken:'51',ppid:202}:lookup(pid)),false);
+ assert.throws(()=>hasVerifiedBrowserAncestry(
+  {pid:202,startToken:'X'},root,lookup),/M290 FAIL-CLOSED/);
+ assert.throws(()=>hasVerifiedBrowserAncestry(
+  {pid:-1,startToken:'52'},root,lookup),/M290 FAIL-CLOSED/);
+});
+test('read-only Linux stat parent metadata is parsed independently of PID starttime',()=>{
+ const suffix=Array.from({length:25},(_,i)=>i===1?'400':i===19?'9925':String(i));
+ const line='401 (WPEWebProcess) '+suffix.join(' ');
+ assert.equal(processParentPid(line),400);
+ assert.equal(processStartToken(line),'9925');
+ assert.throws(()=>processParentPid('401 (WPEWebProcess) S X'),/M290 FAIL-CLOSED/);
+});
+test('provenance adjudicator blocks falsely attributed mapped ELF without browser ancestry',()=>{
+ assert.throws(()=>adjudicate({...receipt,browserServerRootAncestryVerified:false}),
+  /mapped ELF cannot be attributed/);
+ assert.throws(()=>adjudicate({...receipt,localLoopbackTransportOnly:false}),
+  /missing loopback browser parent provenance/);
+});
+
 test('historical native trap, exact invalid C++ access or consumer release can never be promoted by a mapped ELF',()=>{
  assert.deepEqual(adjudicate(receipt),receipt);
  const errors=[
