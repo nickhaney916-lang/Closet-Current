@@ -1,0 +1,40 @@
+name: M1541 synthetic Worker WASM inspector contract HOLD
+on:
+  push:
+    branches: [research/main1054-m1541-inspector-protocol-contract-HOLD]
+permissions:
+  contents: read
+jobs:
+  isolated-worker:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [trap, control]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify immutable original runtime scope and test syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:research/main1054/m289-authorized-wpe-inspector-wasm-offset.mjs)" = "$(git rev-parse c4a9f36545f321998e1252a4c341a6a9e0c961d0:research/main1054/m289-authorized-wpe-inspector-wasm-offset.mjs)"
+          test "$(git diff --name-only c4a9f36545f321998e1252a4c341a6a9e0c961d0 HEAD -- public)" = ""
+          node --check research/main1054/m1541-worker-wasm-inspector.mjs
+      - name: Install pinned Playwright 1.56.1 for WPE binary location only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Genuine pinned WebKit Worker Inspector synthetic test
+        shell: bash
+        run: timeout -k 5s 90s node research/main1054/m1541-worker-wasm-inspector.mjs ${{ matrix.mode }}
