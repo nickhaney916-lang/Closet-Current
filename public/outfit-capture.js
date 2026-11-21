@@ -1,5 +1,5 @@
 'use strict';
-let outfitActiveId=null,lastOutfitPhoto='',outfitSplitJob=null,lastOutfitSourceProof=null;
+let outfitActiveId=null,lastOutfitPhoto='',outfitSplitJob=null,lastOutfitSourceProof=null,outfitPhotoImport=null;
 function renderOutfitCapture(){
  if(!outfitActiveId)outfitActiveId=batch.find(x=>x.outfitSourceId)?.outfitSourceId||null;
  const pending=batch.filter(x=>x.outfitSourceId===outfitActiveId),saved=items.filter(x=>x.outfitSourceId===outfitActiveId);
@@ -103,7 +103,8 @@ async function readOutfitPhoto(file){
  // M183: account ID alone is not a session lease. The same signed owner may
  // log out and back in while a photo decodes; never resume its old import.
  const leaseEpoch=typeof captureOperationEpoch==='number'?captureOperationEpoch:null;
- const revoked=()=>leaseEpoch!==null&&captureOperationEpoch!==leaseEpoch;
+ const operation={};outfitPhotoImport=operation;
+ const revoked=()=>outfitPhotoImport!==operation||(leaseEpoch!==null&&captureOperationEpoch!==leaseEpoch);
  stopCamera();busy=true;controls(true);let timer;
  const guarded=typeof captureProof01Active!=='undefined'&&captureProof01Active,owner=guarded?captureProofOwner():null;
  try{
@@ -116,14 +117,24 @@ async function readOutfitPhoto(file){
   busy=false;controls(false);session=0;startOutfitSplit(image,crypto.randomUUID(),guarded?decoded:null);
  }
  catch{if(!revoked())$('outfitSplitStatus').textContent='Could not open that outfit photo. Try JPEG or PNG.';}
- finally{clearTimeout(timer);if(!revoked()&&!outfitSplitJob){busy=false;controls(false);}}
+ finally{
+  clearTimeout(timer);
+  if(outfitPhotoImport===operation){
+   outfitPhotoImport=null;
+   if((leaseEpoch===null||captureOperationEpoch===leaseEpoch)&&!outfitSplitJob){busy=false;controls(false);}
+  }
+ }
 }
 for(const id of ['outfitCamera','outfitUpload']){$(id).onclick=()=>{if(!busy)stopCamera();};$(id).onchange=event=>{const file=event.target.files?.[0];event.target.value='';readOutfitPhoto(file);};}
 $('outfitRetry').onclick=()=>{if(lastOutfitPhoto)startOutfitSplit(lastOutfitPhoto,outfitActiveId,lastOutfitSourceProof);};
-if(typeof captureProof01Active!=='undefined'&&captureProof01Active)
- window.addEventListener('pagehide',()=>{if(outfitSplitJob)
+window.addEventListener('pagehide',()=>{
+ if(outfitPhotoImport){
+  outfitPhotoImport=null;busy=false;controls(false);
+  $('outfitSplitStatus').textContent='Outfit photo selection paused. Choose the photo again.';
+ }
+ if(outfitSplitJob)
   finishOutfitSplit(outfitSplitJob,'Outfit capture paused. Your saved photos remain available.',true);
- });
+});
 function capturedPieceSlot(item){
  if(['Tops','Dresses'].includes(item.category))return 'top';if(item.category==='Bottoms')return 'bottom';if(item.category==='Outerwear')return 'layer';if(item.category==='Shoes')return 'shoes';
  return item.itemType==='Bag'?'bag':['Jewelry','Sunglasses'].includes(item.itemType)?'accessory':['Belt','Scarf','Hat'].includes(item.itemType)?'finish':null;
@@ -145,7 +156,7 @@ if(typeof window!=='undefined'&&typeof window.addEventListener==='function')
   clearTimeout(outfitSplitJob.timer);
   outfitSplitJob.worker?.terminate();outfitSplitJob=null;
  }
- lastOutfitPhoto='';lastOutfitSourceProof=null;outfitActiveId=null;
+ outfitPhotoImport=null;lastOutfitPhoto='';lastOutfitSourceProof=null;outfitActiveId=null;
  // Do not retain prior-owner scan text or offer a stale retry after re-login.
  $('outfitRetry').hidden=true;$('outfitSplitStatus').textContent='';
  $('outfitSaveStatus').textContent='';$('outfitPieceActions').hidden=true;

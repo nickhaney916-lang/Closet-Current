@@ -1,0 +1,38 @@
+name: Mission 4 outfit import pagehide (NO DEPLOY)
+on:
+  push:
+    branches: [research/main1054-1577-browser-lifecycle-HOLD]
+permissions:
+  contents: read
+jobs:
+  outfit-import-lifecycle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --prefix "$RUNNER_TEMP/browser" --no-audit --no-fund playwright@1.56.1
+      - run: '"$RUNNER_TEMP/browser/node_modules/.bin/playwright" install --with-deps ${{ matrix.browser }}'
+      - run: node --test tests/outfit-capture.test.cjs tests/outfit-worker.test.mjs
+      - name: Require original application regression
+        run: |
+          git show 4e2bd9f4a3585eed387042afd1ef8ed7e310cfa8:public/outfit-capture.js > "$RUNNER_TEMP/outfit-capture-before.js"
+          export NODE_PATH="$RUNNER_TEMP/browser/node_modules"
+          export OUTFIT_CAPTURE_SOURCE="$RUNNER_TEMP/outfit-capture-before.js"
+          if node scripts/test-outfit-import-pagehide-browser.cjs ${{ matrix.browser }} > "$RUNNER_TEMP/outfit-red.log" 2>&1; then
+            echo "Expected the unmodified source to fail"
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/outfit-red.log"
+          grep -F 'AssertionError [ERR_ASSERTION]: pagehide must release the picker' "$RUNNER_TEMP/outfit-red.log"
+      - name: Verify corrected application source
+        run: NODE_PATH="$RUNNER_TEMP/browser/node_modules" node scripts/test-outfit-import-pagehide-browser.cjs ${{ matrix.browser }}
