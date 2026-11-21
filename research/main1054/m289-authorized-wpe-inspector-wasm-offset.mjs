@@ -118,20 +118,63 @@ async function httpProbe(){
   return {reachable:true,paths:parseLocalInspectorPaths(body.slice(0,65536))};
  }catch{return {reachable:false,paths:[]};}
 }
+// Native WPE Web Inspector's WebPage socket is a Target proxy. Sending a
+// Debugger command directly to the *outer* socket returns -32601. Commands
+// must be wrapped in Target.sendMessageToTarget and responses unwrapped from
+// Target.dispatchMessageFromTarget. Official pinned protocol Target.json.
 async function openLocalInspector(path,observations){
- need(/^\/socket\/[a-zA-Z0-9_./-]+$/.test(path)&&!path.includes('..'),
+ need(/^\\/socket\\/[a-zA-Z0-9_./-]+$/.test(path)&&!path.includes('..'),
   'inspector websocket path not locally sourced');
  const socket=new WebSocket('ws://'+pinnedEnvironment.inspectorLoopback+path);
- const callbacks=new Map();let id=0,closed=false;
+ const outerCallbacks=new Map(),innerCallbacks=new Map();
+ let outerId=0,innerId=100,closed=false,targetId=null;
  observations.selectedTargetType=path.split('/').at(-1)||null;
+ const validId=v=>typeof v==='string'&&v.length<=128&&
+  /^[a-zA-Z0-9_:-]+$/.test(v);
  const send=(method,params={})=>{
   if(socket.readyState!==WebSocket.OPEN)return false;
-  socket.send(JSON.stringify({id:++id,method,params}));
-  callbacks.set(id,method);
+  const id=++outerId;
+  outerCallbacks.set(id,method);
+  socket.send(JSON.stringify({id,method,params}));
   return true;
  };
+ const sendInner=(method,params={})=>{
+  if(!validId(targetId))return false;
+  const id=++innerId;
+  innerCallbacks.set(id,method);
+  return send('Target.sendMessageToTarget',{targetId,
+   message:JSON.stringify({id,method,params})});
+ };
+ function receiveInner(raw){
+  let data;
+  try{
+   if(typeof raw!=='string'||raw.length>16384)return;
+   data=JSON.parse(raw);
+  }catch{return;}
+  observations.innerMessageCount++;
+  if(typeof data.method==='string'&&observations.innerEventMethods.length<6&&
+     /^[a-zA-Z][a-zA-Z0-9.]{1,60}$/.test(data.method))
+   observations.innerEventMethods.push(data.method);
+  if(Number.isInteger(data.id)&&innerCallbacks.has(data.id)){
+   observations.innerCommandResponses++;
+   const method=innerCallbacks.get(data.id);innerCallbacks.delete(data.id);
+   if(data.error&&observations.commandErrors.length<5)
+    observations.commandErrors.push({command:method,
+      code:Number.isSafeInteger(data.error.code)?data.error.code:null});
+   if(method==='Debugger.enable'&&!data.error)observations.debuggerEnabled=true;
+   if(method==='Debugger.setPauseOnExceptions'&&!data.error)
+    observations.pauseOnExceptionEnabled=true;
+  }
+  const p=classifyInspectorPause(data);
+  if(p){
+   observations.pauses++;
+   observations.lastPause=p;
+   // Do not log debugger scopes, registers, stack, memory or arbitrary data.
+   sendInner('Debugger.resume');
+  }
+ }
  const initialized=new Promise((resolve,reject)=>{
-  const timeout=setTimeout(()=>reject(Error('inspector local-only WS handshake timed out')),4500);
+  const timeout=setTimeout(()=>reject(Error('inspector local WS handshake timed out')),4500);
   socket.addEventListener('open',()=>{clearTimeout(timeout);resolve();},{once:true});
   socket.addEventListener('error',()=>{clearTimeout(timeout);reject(Error('local WS refused'));},{once:true});
  });
@@ -146,35 +189,37 @@ async function openLocalInspector(path,observations){
    if(typeof data.method==='string'&&observations.eventMethods.length<6&&
       /^[A-Za-z][A-Za-z0-9.]{1,60}$/.test(data.method))
     observations.eventMethods.push(data.method);
-   if(data.id&&callbacks.has(data.id)){
+   if(Number.isInteger(data.id)&&outerCallbacks.has(data.id)){
     observations.commandResponseCount++;
-    const method=callbacks.get(data.id);callbacks.delete(data.id);
-    if(data.error&&observations.commandErrors.length<4)
+    const method=outerCallbacks.get(data.id);outerCallbacks.delete(data.id);
+    if(data.error&&observations.commandErrors.length<5)
      observations.commandErrors.push({command:method,
       code:Number.isSafeInteger(data.error.code)?data.error.code:null});
-    if(method==='Debugger.enable'&&!data.error)observations.debuggerEnabled=true;
-    if(method==='Debugger.setPauseOnExceptions'&&!data.error)
-     observations.pauseOnExceptionEnabled=true;
    }
-   const p=classifyInspectorPause(data);
-   if(p){
-    observations.pauses++;
-    observations.lastPause=p;
-    // Resuming a local synthetic test is not patching original JSEP/ONNX;
-    // never read scopes, stack content, private photos or registers.
-    send('Debugger.resume');
+   if(data.method==='Target.targetCreated'&&
+      validId(data.params?.targetInfo?.targetId)){
+    targetId=data.params.targetInfo.targetId;
+    observations.targetDiscovered=true;
+    const kind=data.params.targetInfo.type;
+    if(['page','worker','service-worker'].includes(kind))
+      observations.nestedTargetKind=kind;
+   }
+   if(data.method==='Target.dispatchMessageFromTarget'&&
+      validId(data.params?.targetId)){
+    targetId=data.params.targetId;
+    observations.targetDiscovered=true;
+    receiveInner(data.params?.message);
    }
   }catch{}
  });
  await initialized;
  observations.websocketConnected=true;
- // The WPE RemoteInspectorClient's backend Setup is asynchronous even after
- // HTTP/WebSocket success. Give pinned source time to report its target state.
- await new Promise(resolve=>setTimeout(resolve,600));
- send('Debugger.enable');
+ for(let i=0;i<10&&!targetId;i++)
+  await new Promise(resolve=>setTimeout(resolve,300));
+ if(targetId)sendInner('Debugger.enable');
  await new Promise(resolve=>setTimeout(resolve,1600));
- if(observations.debuggerEnabled)send('Debugger.setPauseOnExceptions',{state:'all'});
- await new Promise(resolve=>setTimeout(resolve,1100));
+ if(observations.debuggerEnabled)sendInner('Debugger.setPauseOnExceptions',{state:'all'});
+ await new Promise(resolve=>setTimeout(resolve,1200));
  return ()=>{if(!closed){closed=true;socket.close();}};
 }
 export async function probeSyntheticInspector(){
