@@ -113,5 +113,12 @@ try {
   for(let i=0;i<8&&!report.processExited;i++)await wait(250);
   if(!report.processExited){try{child.kill('SIGKILL')}catch{}}
  }
- console.log('M1541_STANDALONE_SANITIZED '+JSON.stringify(report));
+ // A standalone WPE runner can leave a remote Inspector/undici handle alive
+ // after the browser exits. The finite isolated test must end only *after*
+ // the genuine protocol receipt has been flushed; preserve any failure code.
+ child?.stderr?.destroy();
+ child?.unref();
+ process.stdout.write('M1541_STANDALONE_SANITIZED '+JSON.stringify(report)+'\\n',()=>{
+  process.exit(process.exitCode??0);
+ });
 }
