@@ -1,8 +1,9 @@
 const fs=require('node:fs');
 const vm=require('node:vm');
+const {join}=require('node:path');
 const assert=require('node:assert/strict');
 const context={};vm.createContext(context);
-vm.runInContext(fs.readFileSync('public/taxonomy.js','utf8'),context);
+vm.runInContext(fs.readFileSync(join(__dirname,'../public/taxonomy.js'),'utf8'),context);
 const normalize=x=>JSON.parse(JSON.stringify(context.normalizeClothing(x)));
 const legacy=normalize({id:'existing',category:'Tops',name:'Blue blouse',color:'Blue',notes:'Gift, summer',image:'data:image/jpeg;base64,AA=='});
 assert.equal(legacy.name,'Blue blouse');assert.equal(legacy.notes,'Gift, summer');assert.equal(legacy.sleeveLength,'Unknown');assert.deepEqual(legacy.seasons,[]);
