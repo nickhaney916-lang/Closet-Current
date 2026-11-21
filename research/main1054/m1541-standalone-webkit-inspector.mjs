@@ -3,15 +3,19 @@ import {spawn} from 'node:child_process';
 import {webkit} from 'playwright';
 import {parseLocalInspectorPaths} from './m289-authorized-wpe-inspector-wasm-offset.mjs';
 
-const phase=Number(process.argv[2]); // 0=socket, 1=outer reply, 2=Runtime, 3=Debugger
-if(!Number.isInteger(phase)||phase<0||phase>3)throw Error('invalid standalone phase');
+const phase=Number(process.argv[2]); // 0=socket, 1=outer reply, 2=Runtime, 3=Debugger, 4=synthetic WASM exception pause
+if(!Number.isInteger(phase)||phase<0||phase>4)throw Error('invalid standalone phase');
 const host='127.0.0.1:17652';
 const report={
  phase,mode:'standalone-single-frontend',engine:'pinned-webkit',
  launched:false,http:false,websocket:false,target:false,targetEvidence:null,
  outerReply:false,outerErrorCode:null,innerReply:false,innerErrorCode:null,
  outerMessageCount:0,outerMethods:[],innerMethods:[],nestedCommandSent:false,
- processExited:false,exitCode:null,signal:null,stderrBytes:0
+ processExited:false,exitCode:null,signal:null,stderrBytes:0,
+ syntheticOnly:true,originalModelExecuted:false,nativeMachinePcCaptured:false,
+ originalOrtTrapByteOffset:null,syntheticTrapCaught:false,
+ exceptionPauseObserved:false,exceptionPauseReason:null,pauseTopWasm:false,
+ pauseLocationLine:null,pauseLocationColumn:null,debuggerResumeReply:false
 };
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let child,socket,spawnError=null;
@@ -46,6 +50,13 @@ try {
  report.http=true;
  socket=new WebSocket('ws://'+host+path);
  let targetId=null,outerId=0,outerDone=false,innerDone=false;
+ const innerReplies=new Map();let resumeSent=false;
+ const sendNested=(id,method,params={})=>{
+  socket.send(JSON.stringify({id:++outerId,method:'Target.sendMessageToTarget',params:{
+   targetId,message:JSON.stringify({id,method,params})
+  }}));
+ };
+
  const handshake=new Promise((resolve,reject)=>{
   const timeout=setTimeout(()=>reject(Error('standalone WebSocket timeout')),5000);
   socket.addEventListener('open',()=>{clearTimeout(timeout);resolve()},{once:true});
@@ -69,6 +80,22 @@ try {
   if(msg.method==='Target.dispatchMessageFromTarget'&&typeof msg.params?.message==='string'){
    try{
     const inner=JSON.parse(msg.params.message);
+    if(inner.method==='Debugger.paused'){
+     const p=inner.params||{},top=Array.isArray(p.callFrames)?p.callFrames[0]:null;
+     report.exceptionPauseObserved=p.reason==='exception';
+     report.exceptionPauseReason=typeof p.reason==='string'?p.reason.slice(0,35):null;
+     report.pauseTopWasm=/wasm/i.test(String(top?.functionName||top?.url||''));
+     report.pauseLocationLine=Number.isSafeInteger(top?.location?.lineNumber)?top.location.lineNumber:null;
+     report.pauseLocationColumn=Number.isSafeInteger(top?.location?.columnNumber)?top.location.columnNumber:null;
+     // Inspector line/column are NOT native PC or original WASM file offsets.
+     if(phase===4&&!resumeSent){resumeSent=true;sendNested(104,'Debugger.resume');}
+    }
+    if([101,102,103,104].includes(Number(inner.id))&&String(inner.id)===String(Number(inner.id))){
+     innerReplies.set(Number(inner.id),inner);
+     if(Number(inner.id)===104&&inner.error===undefined)report.debuggerResumeReply=true;
+     if(Number(inner.id)===103)report.syntheticTrapCaught=
+      inner.result?.result?.value==='EXPECTED_SYNTHETIC_WASM_TRAP';
+    }
     const forwardedId=msg.params.targetId;
     if(inner.method==='Page.frameNavigated'&&typeof forwardedId==='string'&&/^[A-Za-z0-9_:-]{1,128}$/.test(forwardedId)){
      targetId=forwardedId;report.target=true;report.targetEvidence='Page.frameNavigated';
@@ -92,15 +119,32 @@ try {
    for(let i=0;i<20&&!targetId;i++)await wait(250);
    if(!targetId)throw Error('standalone tracked page target absent');
    const method=phase===2?'Runtime.enable':'Debugger.enable';
-   socket.send(JSON.stringify({id:1,method:'Target.sendMessageToTarget',params:{
-    targetId,message:JSON.stringify({id:101,method,params:{}})
-   }}));
+   sendNested(101,method);
    report.nestedCommandSent=true;
    for(let i=0;i<24&&!innerDone&&!report.processExited;i++)await wait(250);
    if(!outerDone)throw Error('nested outer command reply absent');
    if(report.outerErrorCode!==null)throw Error('nested outer command rejected '+report.outerErrorCode);
    if(!innerDone)throw Error('nested inner command reply absent');
    if(report.innerErrorCode!==null)throw Error('nested inner command rejected '+report.innerErrorCode);
+   if(phase===4){
+    // Pinned JSC Debugger protocol supports pause-on-all exceptions. The
+    // M281 tiny module is ONLY synthetic proof; it is not the original ORT.
+    const {binary}=await import('./m281-webkit-offset-capability.mjs');
+    if(binary.length!==48||binary[44]!==0x28)throw Error('synthetic probe source changed');
+    sendNested(102,'Debugger.setPauseOnExceptions',{state:'all'});
+    for(let i=0;i<24&&!innerReplies.has(102)&&!report.processExited;i++)await wait(250);
+    const pauseConfig=innerReplies.get(102);
+    if(!pauseConfig||pauseConfig.error)throw Error('pause-on-exception setup rejected or absent');
+    const bytes=JSON.stringify(Array.from(binary));
+    const expression=`(()=>{const m=new WebAssembly.Module(Uint8Array.from(${bytes}));try{new WebAssembly.Instance(m).exports.probe();return 'NO_TRAP'}catch(e){return e instanceof WebAssembly.RuntimeError&&/out of bounds|memory access/i.test(String(e.message))?'EXPECTED_SYNTHETIC_WASM_TRAP':'UNEXPECTED_EXCEPTION'}})()`;
+    sendNested(103,'Runtime.evaluate',{expression,returnByValue:true});
+    for(let i=0;i<40&&(!innerReplies.has(103)||!innerReplies.has(104))&&!report.processExited;i++)await wait(250);
+    if(!report.exceptionPauseObserved)throw Error('genuine synthetic exception pause absent');
+    if(!report.debuggerResumeReply)throw Error('Debugger.resume reply absent');
+    const evalReply=innerReplies.get(103);
+    if(!evalReply||evalReply.error||evalReply.result?.wasThrown)throw Error('Runtime.evaluate failed');
+    if(!report.syntheticTrapCaught)throw Error('synthetic WASM RuntimeError not independently returned');
+   }
   }
  }
 } catch(e) {
