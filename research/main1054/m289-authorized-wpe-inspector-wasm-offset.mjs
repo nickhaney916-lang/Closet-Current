@@ -123,7 +123,7 @@ async function httpProbe(){
 // must be wrapped in Target.sendMessageToTarget and responses unwrapped from
 // Target.dispatchMessageFromTarget. Official pinned protocol Target.json.
 async function openLocalInspector(path,observations){
- need(/^\\/socket\\/[a-zA-Z0-9_./-]+$/.test(path)&&!path.includes('..'),
+ need(/^\/socket\/[a-zA-Z0-9_./-]+$/.test(path)&&!path.includes('..'),
   'inspector websocket path not locally sourced');
  const socket=new WebSocket('ws://'+pinnedEnvironment.inspectorLoopback+path);
  const outerCallbacks=new Map(),innerCallbacks=new Map();
@@ -237,7 +237,9 @@ export async function probeSyntheticInspector(){
    pauseOnExceptionEnabled:false,pauses:0,lastPause:null,
    selectedTargetType:null,socketClosedByServer:false,
    messageCount:0,commandResponseCount:0,commandErrors:[],
-   eventMethods:[],protocolEnvelopeKeys:[]};
+   eventMethods:[],protocolEnvelopeKeys:[],targetDiscovered:false,
+   nestedTargetKind:null,innerMessageCount:0,innerCommandResponses:0,
+   innerEventMethods:[]};
   const http=await httpProbe();
   let disconnect=()=>{};
   for(const path of http.paths){
@@ -268,6 +270,11 @@ export async function probeSyntheticInspector(){
    inspectorSocketClosed:observed.socketClosedByServer,
    inspectorMessageCount:observed.messageCount,
    inspectorCommandResponses:observed.commandResponseCount,
+   inspectorTargetDiscovered:observed.targetDiscovered,
+   inspectorNestedTargetKind:observed.nestedTargetKind,
+   inspectorInnerMessageCount:observed.innerMessageCount,
+   inspectorInnerCommandResponses:observed.innerCommandResponses,
+   inspectorInnerEventMethods:observed.innerEventMethods,
    inspectorCommandErrors:observed.commandErrors,
    inspectorEventMethods:observed.eventMethods,
    inspectorProtocolEnvelopeKeys:observed.protocolEnvelopeKeys,
