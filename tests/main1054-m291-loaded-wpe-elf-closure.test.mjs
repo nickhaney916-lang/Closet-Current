@@ -98,7 +98,7 @@ test('file identity cannot be promoted from a non-ELF or malicious data',()=>{
 });
 test('independently verifies known original mapped WPE executable and WPE library',()=>{
  assert.deepEqual(adjudicate(valid),valid);
- assert.throws(()=>adjudicate({...valid,mapped:valid.mapped.slice(0,1)}),/missing known/);
+ assert.throws(()=>adjudicate({...valid,mapped:valid.mapped.slice(0,1)}),/unsafe or unverified|missing known/);
  assert.throws(()=>adjudicate({...valid,mapped:[
   valid.mapped[0],{...valid.mapped[1],sha256:'0'.repeat(64)}]}),/missing known/);
  assert.throws(()=>adjudicate({...valid,mapped:[
