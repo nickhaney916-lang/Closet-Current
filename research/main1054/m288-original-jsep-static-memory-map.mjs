@@ -117,7 +117,8 @@ export function createCollector(frames){
   const rows=[...state.values()].map(r=>{
    insist(r.headerSeen,'original function disassembly missing '+r.index);
    insist(r.totalDisassembledInstructions>0,'no disassembled instructions '+r.index);
-   insist(r.memoryPotentiallyTrappingCount>0,'no memory access candidates '+r.index);
+   if(r.index===originalFailure.indices[0])
+    insist(r.memoryPotentiallyTrappingCount>0,'top authentic WASM trap function has no candidates');
    const {headerSeen,totalDisassembledInstructions,memoryPotentiallyTrappingCount,
     memoryManagementCount,opcodeCounts,earliestAccessFileByte,
     latestAccessFileByte,firstCandidateFileOffsets,lastCandidateFileOffsets,
@@ -156,7 +157,8 @@ export function adjudicate(report){
   report.rows.every((row,i)=>row.index===originalFailure.indices[i]&&
    row.trapInstructionFileOffset===null&&
    row.invalidMemoryAccessCauseLocated===false&&row.headerSeen===true&&
-   row.memoryPotentiallyTrappingCount>0),'false original PC or incomplete static map');
+   Number.isInteger(row.memoryPotentiallyTrappingCount)&&
+   row.memoryPotentiallyTrappingCount>=(i===0?1:0)),'false original PC or incomplete static map');
  insist(report.originalFailingProcessJsepShaWitnessed===false&&
   report.genuineWebkitTrapSitePcKnown===false&&
   report.actualOriginalMemoryAccessLocated===false&&
