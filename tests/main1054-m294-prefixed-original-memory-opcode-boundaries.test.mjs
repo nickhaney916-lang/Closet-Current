@@ -118,7 +118,7 @@ test('wrong source bytes, wrong prefix, out-of-span and duplicate header fail',(
  const {bytes}=fixture();
  const a=createPrefixedScanner(spans,bytes);
  a.accept('000064 func[4846]:');
- assert.throws(()=>a.accept('000064 func[4846]:'),/duplicate function/);
+ assert.throws(()=>a.accept('000064 func[4846]:'),/duplicate (?:original )?function/);
  assert.throws(()=>a.accept(' 000069: fc 0b 02 00 | v128.store'),/prefixed opcode/);
  const b=createPrefixedScanner(spans,bytes);
  b.accept('000064 func[4846]:');
