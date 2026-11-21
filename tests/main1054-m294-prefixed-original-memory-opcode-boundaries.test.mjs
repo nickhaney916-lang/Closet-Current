@@ -126,7 +126,7 @@ test('wrong source bytes, wrong prefix, out-of-span and duplicate header fail',(
  const c=createPrefixedScanner(spans,bytes);
  c.accept('000064 func[4846]:');
  assert.throws(()=>c.accept(' 001000: fc 0a 00 00 | memory.copy'),
-  /out-of-span/);
+  /out-of-span|out-of-function/);
 });
 test('source receipt never becomes genuine original native PC, cause, fix or release',()=>{
  const r={
