@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {sourceGate,branch,parent,additions,legacyNativeRed,noWitnessReceipt,
  adjudicateReceipt,classifyUntrustedOperatorOffset}
  from '../research/main1054/m292-original-native-pc-evidence-handoff.mjs';
-import {originalBinary} from '../research/main1054/m280-original-jsep-function-map.mjs';
+import {originalBinary,mapModule,originalFailure} from '../research/main1054/m280-original-jsep-function-map.mjs';
 
 const fakeSHA='a'.repeat(40);
 const event={name:'push',ref:branch,sha:fakeSHA,attempt:'1'};
@@ -21,7 +22,6 @@ const git=(cmd,...args)=>{
  if(cmd==='ls-tree')return '100644 blob '+'b'.repeat(40);
  throw Error('unrecognized CI stub command');
 };
-const fakeFile=(file)=>({...fakeFile,candidate:file});
 test('genuine original M279 failure is immutable and still not natively attributed',()=>{
  assert.equal(parent,'6adeffeb82557a365d42237fca47b042368d6d4e');
  assert.deepEqual(legacyNativeRed().functionIndices,[4846,1384,11276,7427]);
@@ -107,3 +107,32 @@ test('no raw debugger address, personal model or original photo is consumed by n
  assert.ok(!serialized.includes('modelBuffer'));
  assert.equal(r.releaseAuthorized,false);
 });
+
+if(process.env.M292_ORIGINAL_WASM_PATH){
+ test('positive operator-supplied candidate mapped to REAL original bytes remains UNTRUSTED',()=>{
+  const bytes=readFileSync(process.env.M292_ORIGINAL_WASM_PATH);
+  const mapped=mapModule(bytes,originalFailure.indices,{
+   sha256:originalBinary.sha256,expectedSize:originalBinary.bytes
+  });
+  const top=mapped.frames[0];
+  // Find one in-body scalar memory byte, but without decoded instruction
+  // boundaries or genuine native debugger evidence it remains a CANDIDATE.
+  let offset=-1;
+  for(let i=top.bodyFileStart;i<top.bodyFileEndExclusive;i++){
+   if(bytes[i]===0x28){offset=i;break;}
+  }
+  assert.ok(offset>=top.bodyFileStart);
+  const r=classifyUntrustedOperatorOffset(bytes,{
+   provenance:'UNTRUSTED_OPERATOR_INPUT',wasmFunctionIndex:4846,
+   moduleFileOffset:offset,opcodeByte:0x28
+  });
+  assert.equal(r.kind,'UNTRUSTED_OPERATOR_STATIC_OFFSET_CANDIDATE');
+  assert.equal(r.staticCandidateOpcode,'0x28');
+  assert.equal(r.candidateVerifiedAgainstOriginalWasm,true);
+  assert.equal(r.staticCandidateIsValidatedInstructionBoundary,false);
+  assert.equal(r.actualTrapPC,null);
+  assert.equal(r.independentSameFailingProcessNativeAttribution,false);
+  assert.equal(r.causalRepairProven,false);
+  assert.equal(r.familyAlpha,'HOLD');
+ });
+}
