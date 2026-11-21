@@ -55,7 +55,9 @@ export function classifyInspectorPause(event){
  if(!event||event.method!=='Debugger.paused')return null;
  const p=event.params||{},frames=Array.isArray(p.callFrames)?p.callFrames:[];
  const top=frames[0]||{},loc=top.location||{};
- const wasmScript=frames.some(f=>/wasm/i.test(String(f?.url||f?.functionName||'')));
+ // Only an actual TOP native WASM frame can attribute its position to the
+ // trapping instruction. A lower wasm frame beneath JS line 44 is not proof.
+ const wasmScript=/wasm/i.test(String(top?.url||top?.functionName||''));
  const line=Number.isSafeInteger(loc.lineNumber)&&loc.lineNumber>=0?loc.lineNumber:null;
  const column=Number.isSafeInteger(loc.columnNumber)&&loc.columnNumber>=0?loc.columnNumber:null;
  const candidateFileOffset=wasmScript&&
