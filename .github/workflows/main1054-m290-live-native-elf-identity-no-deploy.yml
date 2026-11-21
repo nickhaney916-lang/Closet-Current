@@ -1,0 +1,92 @@
+name: MAIN1054 M290 actual native WPE process mapped ELF provenance NO PTRACE HOLD
+on:
+  push:
+    branches: [research/main1054-m290-actual-wpe-loaded-native-elf-identity-HOLD]
+permissions:
+  contents: read
+jobs:
+  m290-original-source-tests-and-owner-private-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify genuine M279 failure preserved and all original JSEP/owner source frozen
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD:research/main1054/m290-live-native-elf-identity.mjs)" = 5d395b06ad76750d1d0a709daab9cfd49e88cc6e
+          test "$(git rev-parse HEAD:tests/main1054-m290-live-native-elf-identity.test.mjs)" = b86f32678799b9c878202cf7f46580f9a06d6e8e
+          test "$(git rev-parse HEAD:research/main1054/m286-pinned-webkit-source-binary-provenance.mjs)" = 13874630185f165d9725e2ea4b7579ab4050fa53
+          test "$(git rev-parse HEAD:research/main1054/m279-original-model-pointer-bounds.mjs)" = f2fd27553cc6854997480ee586cb8e191e9aca11
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          node --check research/main1054/m290-live-native-elf-identity.mjs
+      - name: Adversarial read-only new WPE process and mapped source identity tests
+        run: node --test tests/main1054-m290-live-native-elf-identity.test.mjs
+      - name: Inherited M286/M284/M282/M281/M280/M279 native source and anti-false-repair regressions
+        run: node --test tests/main1054-m286-pinned-webkit-source-binary-provenance.test.mjs tests/main1054-m284-wpe-native-process-discovery.test.mjs tests/main1054-m282-native-debugger-preflight.test.mjs tests/main1054-m281-webkit-trap-pc-capability.test.mjs tests/main1054-m280-original-jsep-function-map.test.mjs tests/main1054-m279-original-model-pointer-bounds.test.mjs
+      - name: Install original owner photo/private/backup regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build untouched original application and all inherited owner/privacy/2D-v4/backup tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  m290-actual-pinned-wpe-native-process-mapped-files:
+    needs: m290-original-source-tests-and-owner-private-regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact original source/first attempt only; no permission changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = 1
+          test "$(git rev-parse HEAD:research/main1054/m290-live-native-elf-identity.mjs)" = 5d395b06ad76750d1d0a709daab9cfd49e88cc6e
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Install ordinary readelf and pinned browser bindings, no debugger or ptrace
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v readelf >/dev/null; then
+            apt-get update -qq
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends binutils
+          fi
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Read only own exact new WPE child process mapped pinned ELF paths and static SHA/Build IDs
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout -k 5s 150s node research/main1054/m290-live-native-elf-identity.mjs probe
+          test -s m290-sanitized/live-original-wpe-elf-identity.json
+      - name: Archive ONLY sanitized exact pinned build identity and loaded metadata, no private bytes/address/PID
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m290-actual-pinned-wpe-native-mapped-ELF-SHA-no-trap-PC-HOLD
+          path: m290-sanitized/live-original-wpe-elf-identity.json
+          retention-days: 7
+          if-no-files-found: ignore
