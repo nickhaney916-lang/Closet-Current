@@ -4,7 +4,7 @@ import {parseLocalInspectorPaths} from './m289-authorized-wpe-inspector-wasm-off
 const phase=Number(process.argv[2]);
 if(!Number.isInteger(phase)||phase<0||phase>4)throw Error('invalid phase');
 const host='127.0.0.1:17651';
-const report={phase,http:false,websocket:false,target:false,nestedCommandSent:false,debuggerEnableSent:false,outerMethods:[],innerMethods:[],outerErrors:[],socketClosed:false};
+const report={phase,http:false,websocket:false,target:false,nestedCommandSent:false,debuggerEnableSent:false,outerMethods:[],innerMethods:[],outerErrors:[],innerResponse:false,innerErrorCode:null,socketClosed:false};
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 let browser,socket;
 try{
@@ -30,7 +30,7 @@ try{
   });
   report.websocket=true;
   if(phase>1){
-   let id=0,targetId=null;
+   let id=0,targetId=null,innerDone=false;
    const send=(method,params={})=>socket.send(JSON.stringify({id:++id,method,params}));
    socket.addEventListener('message',e=>{
     let msg;try{msg=JSON.parse(String(e.data).slice(0,16384))}catch{return}
@@ -41,7 +41,7 @@ try{
      targetId=candidate;report.target=true;
     }
     if(msg.method==='Target.dispatchMessageFromTarget'&&typeof msg.params?.message==='string'){
-     try{const inner=JSON.parse(msg.params.message);if(typeof inner.method==='string'&&report.innerMethods.length<10)report.innerMethods.push(inner.method.slice(0,80))}catch{}
+     try{const inner=JSON.parse(msg.params.message);if(typeof inner.method==='string'&&report.innerMethods.length<10)report.innerMethods.push(inner.method.slice(0,80));if(inner.id===101){innerDone=true;report.innerResponse=true;report.innerErrorCode=Number.isInteger(inner.error?.code)?inner.error.code:null}}catch{}
     }
    });
    for(let n=0;n<20&&!targetId;n++)await wait(250);
@@ -50,7 +50,9 @@ try{
     const method=phase===3?'Runtime.enable':'Debugger.enable';
     send('Target.sendMessageToTarget',{targetId,message:JSON.stringify({id:101,method,params:{}})});
     report.nestedCommandSent=true;report.debuggerEnableSent=phase===4;
-    await wait(2000);
+    for(let n=0;n<16&&!innerDone;n++)await wait(250);
+    if(!innerDone)throw Error('nested command response absent');
+    if(report.innerErrorCode!==null)throw Error('nested command rejected '+report.innerErrorCode);
    }
   }
  }
