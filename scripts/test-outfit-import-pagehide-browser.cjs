@@ -5,6 +5,7 @@ const { chromium, webkit } = require('playwright');
 const source = readFileSync(process.env.OUTFIT_CAPTURE_SOURCE || 'public/outfit-capture.js', 'utf8');
 const progressOnly = process.env.OUTFIT_PROGRESS_ONLY === '1';
 const html = `
+<meta charset="utf-8">
 <input id="outfitUpload" type="file"><input id="outfitCamera" type="file">
 <button id="outfitRetry" hidden>Retry</button>
 <button id="useCapturedOutfit"></button>
@@ -44,7 +45,7 @@ async function check(engine, browserType) {
   await page.route('http://localhost/**', route => {
    const path = new URL(route.request().url()).pathname;
    if (path === '/') return route.fulfill({contentType:'text/html',body:html});
-   if (path === '/outfit-capture.js') return route.fulfill({contentType:'text/javascript',body:source});
+   if (path === '/outfit-capture.js') return route.fulfill({contentType:'text/javascript; charset=utf-8',body:source});
    if (path === '/outfit-worker.mjs') return route.fulfill({
     contentType:'text/javascript',
     body:progressOnly ? `
