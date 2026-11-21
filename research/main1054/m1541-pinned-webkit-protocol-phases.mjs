@@ -4,7 +4,7 @@ import {parseLocalInspectorPaths} from './m289-authorized-wpe-inspector-wasm-off
 const phase=Number(process.argv[2]);
 if(!Number.isInteger(phase)||phase<0||phase>4)throw Error('invalid phase');
 const host='127.0.0.1:17651';
-const report={phase,http:false,websocket:false,target:false,nestedCommandSent:false,debuggerEnableSent:false,outerMethods:[],innerMethods:[],outerErrors:[],outerMessageCount:0,innerResponse:false,innerErrorCode:null,socketClosed:false};
+const report={phase,http:false,websocket:false,target:false,nestedCommandSent:false,debuggerEnableSent:false,outerMethods:[],innerMethods:[],outerErrors:[],outerMessageCount:0,postConnectNavigation:false,selectedSocketKind:null,innerResponse:false,innerErrorCode:null,socketClosed:false};
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 let browser,socket;
 try{
@@ -22,6 +22,7 @@ try{
  else {
   const path=paths.find(p=>p.endsWith('/WebPage'))||paths[0];
   if(!/^\/socket\/[0-9]{1,18}\/[0-9]{1,18}\/[A-Za-z][A-Za-z0-9_-]{0,47}$/.test(path))throw Error('invalid local path');
+  report.selectedSocketKind=path.split('/').at(-1);
   socket=new WebSocket('ws://'+host+path);
   const handshake=new Promise((resolve,reject)=>{
    const t=setTimeout(()=>reject(Error('WebSocket handshake timeout')),5000);
@@ -51,8 +52,14 @@ try{
    });
    await handshake;
    report.websocket=true;
-   // The pinned WebKit Target domain announces existing targets when the frontend connects.
-   for(let n=0;n<20&&!targetId&&!report.socketClosed;n++)await wait(250);
+   // Baseline received no Target.targetCreated event. Check whether a fresh
+   // synthetic navigation after Inspector attachment produces the event.
+   for(let n=0;n<10&&!targetId&&!report.socketClosed;n++)await wait(250);
+   if(!targetId&&!report.socketClosed){
+    await page.goto('data:text/html,<title>M1541 post-attach navigation</title>');
+    report.postConnectNavigation=true;
+    for(let n=0;n<10&&!targetId&&!report.socketClosed;n++)await wait(250);
+   }
    if(!targetId)throw Error(report.socketClosed?'socket closed before Target.targetCreated':'Target.targetCreated absent');
    if(phase>=3){
     const method=phase===3?'Runtime.enable':'Debugger.enable';
