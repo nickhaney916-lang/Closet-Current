@@ -3,6 +3,7 @@ const { readFileSync } = require('node:fs');
 const { chromium, webkit } = require('playwright');
 
 const source = readFileSync(process.env.OUTFIT_CAPTURE_SOURCE || 'public/outfit-capture.js', 'utf8');
+const unreadableOnly = process.env.OUTFIT_UNREADABLE_ONLY === '1';
 const progressOnly = process.env.OUTFIT_PROGRESS_ONLY === '1';
 const html = `
 <meta charset="utf-8">
@@ -48,7 +49,7 @@ async function check(engine, browserType) {
    if (path === '/outfit-capture.js') return route.fulfill({contentType:'text/javascript; charset=utf-8',body:source});
    if (path === '/outfit-worker.mjs') return route.fulfill({
     contentType:'text/javascript',
-    body:progressOnly ? `
+    body:(progressOnly || unreadableOnly) ? `
      let id;
      onmessage = ({data}) => {
       if (data.id) { id = data.id; postMessage({type:'progress',id,phase:'loading',percent:25}); }
@@ -61,6 +62,31 @@ async function check(engine, browserType) {
   await page.goto('http://localhost/');
   const picker = page.locator('#outfitUpload');
   const select = name => picker.setInputFiles({name,mimeType:'image/jpeg',buffer:Buffer.from('fixture')});
+  if (unreadableOnly) {
+   await select('unreadable.jpg');
+   await page.waitForFunction(() => pendingDecodes.has('unreadable.jpg'));
+   await page.evaluate(() => finishDecode('unreadable.jpg'));
+   await page.waitForFunction(() => $('outfitSplitStatus').textContent.includes('25%'));
+   // Inject the standard event on the real Worker at the receiving boundary.
+   await page.evaluate(() => {
+    window.retiredWorker = outfitSplitJob.worker;
+    retiredWorker.dispatchEvent(new MessageEvent('messageerror'));
+   });
+   assert.equal(await picker.isEnabled(), true, 'unreadable reply must release outfit capture');
+   const retry = page.locator('#outfitRetry');
+   assert.equal(await retry.isVisible(), true);
+   await retry.click();
+   await page.waitForFunction(() => busy && outfitSplitJob.worker !== retiredWorker &&
+    $('outfitSplitStatus').textContent.includes('25%'));
+   await page.evaluate(() => retiredWorker.dispatchEvent(new MessageEvent('messageerror')));
+   assert.equal(await picker.isEnabled(), false, 'retired Worker must not interrupt retry');
+   await page.evaluate(() => outfitSplitJob.worker.postMessage({type:'done',count:0}));
+   await page.waitForFunction(() => !busy && !$('outfitRetry').hidden);
+   assert.equal(workers.length, 2);
+   assert.deepEqual(errors, []);
+   console.log(`${engine}: unreadable reply regression passed`);
+   return;
+  }
   if (progressOnly) {
    await select('progress.jpg');
    await page.waitForFunction(() => pendingDecodes.has('progress.jpg'));
