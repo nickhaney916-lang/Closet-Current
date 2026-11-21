@@ -142,8 +142,17 @@ async function openLocalInspector(path,observations){
   if(!validId(targetId))return false;
   const id=++innerId;
   innerCallbacks.set(id,method);
-  return send('Target.sendMessageToTarget',{targetId,
+  const ok=send('Target.sendMessageToTarget',{targetId,
    message:JSON.stringify({id,method,params})});
+  if(ok)observations.innerCommandsSent++;
+  else innerCallbacks.delete(id);
+  return ok;
+ };
+ const enableWhenTargetReady=()=>{
+  if(!observations.debuggerEnableSent&&targetId&&
+      socket.readyState===WebSocket.OPEN){
+   observations.debuggerEnableSent=sendInner('Debugger.enable');
+  }
  };
  function receiveInner(raw){
   let data;
@@ -155,13 +164,20 @@ async function openLocalInspector(path,observations){
   if(typeof data.method==='string'&&observations.innerEventMethods.length<6&&
      /^[a-zA-Z][a-zA-Z0-9.]{1,60}$/.test(data.method))
    observations.innerEventMethods.push(data.method);
-  if(Number.isInteger(data.id)&&innerCallbacks.has(data.id)){
+  const incomingId=typeof data.id==='string'&&/^\\d{1,7}$/.test(data.id)?
+   Number(data.id):data.id;
+  if(Number.isInteger(incomingId)&&innerCallbacks.has(incomingId)){
    observations.innerCommandResponses++;
-   const method=innerCallbacks.get(data.id);innerCallbacks.delete(data.id);
+   const method=innerCallbacks.get(incomingId);innerCallbacks.delete(incomingId);
    if(data.error&&observations.commandErrors.length<5)
     observations.commandErrors.push({command:method,
       code:Number.isSafeInteger(data.error.code)?data.error.code:null});
-   if(method==='Debugger.enable'&&!data.error)observations.debuggerEnabled=true;
+   if(method==='Debugger.enable'&&!data.error){
+    observations.debuggerEnabled=true;
+    if(!observations.pauseEnableSent)
+     observations.pauseEnableSent=sendInner('Debugger.setPauseOnExceptions',
+      {state:'all'});
+   }
    if(method==='Debugger.setPauseOnExceptions'&&!data.error)
     observations.pauseOnExceptionEnabled=true;
   }
@@ -189,9 +205,12 @@ async function openLocalInspector(path,observations){
    if(typeof data.method==='string'&&observations.eventMethods.length<6&&
       /^[A-Za-z][A-Za-z0-9.]{1,60}$/.test(data.method))
     observations.eventMethods.push(data.method);
-   if(Number.isInteger(data.id)&&outerCallbacks.has(data.id)){
+   const outerReplyId=typeof data.id==='string'&&/^\\d{1,7}$/.test(data.id)?
+    Number(data.id):data.id;
+   if(Number.isInteger(outerReplyId)&&outerCallbacks.has(outerReplyId)){
     observations.commandResponseCount++;
-    const method=outerCallbacks.get(data.id);outerCallbacks.delete(data.id);
+    const method=outerCallbacks.get(outerReplyId);
+    outerCallbacks.delete(outerReplyId);
     if(data.error&&observations.commandErrors.length<5)
      observations.commandErrors.push({command:method,
       code:Number.isSafeInteger(data.error.code)?data.error.code:null});
@@ -200,6 +219,7 @@ async function openLocalInspector(path,observations){
       validId(data.params?.targetInfo?.targetId)){
     targetId=data.params.targetInfo.targetId;
     observations.targetDiscovered=true;
+    enableWhenTargetReady();
     const kind=data.params.targetInfo.type;
     if(['page','worker','service-worker'].includes(kind))
       observations.nestedTargetKind=kind;
@@ -208,17 +228,19 @@ async function openLocalInspector(path,observations){
       validId(data.params?.targetId)){
     targetId=data.params.targetId;
     observations.targetDiscovered=true;
+    enableWhenTargetReady();
     receiveInner(data.params?.message);
    }
   }catch{}
  });
  await initialized;
  observations.websocketConnected=true;
- for(let i=0;i<10&&!targetId;i++)
+ for(let i=0;i<30&&!observations.debuggerEnableSent;i++)
   await new Promise(resolve=>setTimeout(resolve,300));
- if(targetId)sendInner('Debugger.enable');
- await new Promise(resolve=>setTimeout(resolve,1600));
- if(observations.debuggerEnabled)sendInner('Debugger.setPauseOnExceptions',{state:'all'});
+ enableWhenTargetReady();
+ await new Promise(resolve=>setTimeout(resolve,2300));
+ if(observations.debuggerEnabled&&!observations.pauseEnableSent)
+  observations.pauseEnableSent=sendInner('Debugger.setPauseOnExceptions',{state:'all'});
  await new Promise(resolve=>setTimeout(resolve,1200));
  return ()=>{if(!closed){closed=true;socket.close();}};
 }
@@ -239,6 +261,7 @@ export async function probeSyntheticInspector(){
    messageCount:0,commandResponseCount:0,commandErrors:[],
    eventMethods:[],protocolEnvelopeKeys:[],targetDiscovered:false,
    nestedTargetKind:null,innerMessageCount:0,innerCommandResponses:0,
+   innerCommandsSent:0,debuggerEnableSent:false,pauseEnableSent:false,
    innerEventMethods:[]};
   const http=await httpProbe();
   let disconnect=()=>{};
@@ -274,6 +297,9 @@ export async function probeSyntheticInspector(){
    inspectorNestedTargetKind:observed.nestedTargetKind,
    inspectorInnerMessageCount:observed.innerMessageCount,
    inspectorInnerCommandResponses:observed.innerCommandResponses,
+   inspectorInnerCommandsSent:observed.innerCommandsSent,
+   inspectorDebuggerEnableSent:observed.debuggerEnableSent,
+   inspectorPauseEnableSent:observed.pauseEnableSent,
    inspectorInnerEventMethods:observed.innerEventMethods,
    inspectorCommandErrors:observed.commandErrors,
    inspectorEventMethods:observed.eventMethods,
