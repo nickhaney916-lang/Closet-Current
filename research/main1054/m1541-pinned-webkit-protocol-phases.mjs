@@ -4,7 +4,7 @@ import {parseLocalInspectorPaths} from './m289-authorized-wpe-inspector-wasm-off
 const phase=Number(process.argv[2]);
 if(!Number.isInteger(phase)||phase<0||phase>4)throw Error('invalid phase');
 const host='127.0.0.1:17651';
-const report={phase,http:false,websocket:false,target:false,nestedCommandSent:false,debuggerEnableSent:false,outerMethods:[],innerMethods:[],outerErrors:[],outerMessageCount:0,discoveryCommandSent:false,discoveryResponse:false,discoveryErrorCode:null,innerResponse:false,innerErrorCode:null,socketClosed:false};
+const report={phase,http:false,websocket:false,target:false,nestedCommandSent:false,debuggerEnableSent:false,outerMethods:[],innerMethods:[],outerErrors:[],outerMessageCount:0,innerResponse:false,innerErrorCode:null,socketClosed:false};
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 let browser,socket;
 try{
@@ -40,8 +40,8 @@ try{
     report.outerMessageCount++;
     if(typeof msg.method==='string'&&report.outerMethods.length<10)report.outerMethods.push(msg.method.slice(0,80));
     if(msg.error&&report.outerErrors.length<5)report.outerErrors.push({code:Number.isInteger(msg.error.code)?msg.error.code:null});
-    if(msg.id===1||msg.id==='1'){report.discoveryResponse=true;report.discoveryErrorCode=Number.isInteger(msg.error?.code)?msg.error.code:null;}
-    const candidate=msg.params?.targetInfo?.targetId||msg.params?.targetId;
+    const targetInfo=msg.method==='Target.targetCreated'?msg.params?.targetInfo:null;
+    const candidate=targetInfo?.type==='page'?targetInfo.targetId:null;
     if(typeof candidate==='string'&&/^[A-Za-z0-9_:-]{1,128}$/.test(candidate)){
      targetId=candidate;report.target=true;
     }
@@ -51,15 +51,9 @@ try{
    });
    await handshake;
    report.websocket=true;
-   // Passive discovery yielded zero outer events in the verified baseline.
-   // Request discovery explicitly; record protocol support without fabricating a target.
-   send('Target.setDiscoverTargets',{discover:true});
-   report.discoveryCommandSent=true;
-   for(let n=0;n<20&&!targetId;n++)await wait(250);
-   if(phase>=2&&!targetId){
-    const reason=report.discoveryErrorCode!==null?'discovery command rejected':report.discoveryResponse?'discovery acknowledged without target':report.socketClosed?'socket closed before target':'no discovery response or target';
-    throw Error(reason);
-   }
+   // The pinned WebKit Target domain announces existing targets when the frontend connects.
+   for(let n=0;n<20&&!targetId&&!report.socketClosed;n++)await wait(250);
+   if(!targetId)throw Error(report.socketClosed?'socket closed before Target.targetCreated':'Target.targetCreated absent');
    if(phase>=3){
     const method=phase===3?'Runtime.enable':'Debugger.enable';
     send('Target.sendMessageToTarget',{targetId,message:JSON.stringify({id:101,method,params:{}})});
