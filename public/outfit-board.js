@@ -9,11 +9,20 @@ async function persistBoardState(){
 }
 async function storeBoard(){try{await persistBoardState();return true;}catch{$('boardSaveStatus').textContent='This outfit could not be saved. Please try again.';return false;}}
 function syncBoardInputs(){for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'}))$(id).value=currentBoard[key]||'';}
-function selectBoardPiece(slotId,itemId){
+async function selectBoardPiece(slotId,itemId){
+ const before=cleanOutfitBoard(currentBoard,items);
  delete currentBoard.ideas[slotId];
  for(const key of Object.keys(currentBoard.slots))if(currentBoard.slots[key]===itemId)delete currentBoard.slots[key];
  if(itemId)currentBoard.slots[slotId]=itemId;else delete currentBoard.slots[slotId];
- currentBoard=cleanOutfitBoard(currentBoard,items);renderOutfitBoard();return storeBoard();
+ currentBoard=cleanOutfitBoard(currentBoard,items);renderOutfitBoard();
+ const attempted=JSON.stringify(currentBoard);
+ const saved=await storeBoard();
+ // Only undo the failed selection if another interaction has not changed the
+ // board while its IndexedDB write was pending.
+ if(!saved&&JSON.stringify(currentBoard)===attempted){
+  currentBoard=before;renderOutfitBoard();
+ }
+ return saved;
 }
 function openBoardPicker(slotId){
  choosingSlot=slotId;const slot=outfitSlots.find(s=>s.id===slotId);$('boardPickerTitle').textContent='Choose '+slot.label.toLowerCase();
