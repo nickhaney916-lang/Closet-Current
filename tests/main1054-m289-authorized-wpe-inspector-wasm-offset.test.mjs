@@ -36,6 +36,13 @@ test('read-only HTTP target extraction only permits bounded local /socket names'
  assert.throws(()=>parseLocalInspectorPaths('x'.repeat(65537)),/M289 FAIL-CLOSED/);
  assert.throws(()=>parseLocalInspectorPaths(null),/M289 FAIL-CLOSED/);
 });
+test('real pinned WebKit upstream advertises JS window.open socket rather than anchor href',()=>{
+ const upstream="window.open('Main.html?ws=' + window.location.host + '/socket/12/34/web-page', '_blank')";
+ assert.deepEqual(parseLocalInspectorPaths(upstream),['/socket/12/34/web-page']);
+ assert.deepEqual(parseLocalInspectorPaths("window.open('/socket/0/1/web-page')"),[]);
+ assert.deepEqual(parseLocalInspectorPaths("window.open('/socket/999999999999999999/1/web-page')"),[]);
+ assert.deepEqual(parseLocalInspectorPaths("window.open('https://evil.example/socket/12/34/web-page')"),[]);
+});
 test('synthetic WebInspector exception reason/locations are not an actual original native PC',()=>{
  const event={method:'Debugger.paused',params:{reason:'exception',callFrames:[
   {functionName:'wasm-function[0]',url:'wasm://wasm/module',location:{
