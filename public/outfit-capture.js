@@ -100,6 +100,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID(),proof=null){
 }
 async function readOutfitPhoto(file){
  if(!file||busy||outfitSplitJob)return;
+ lastOutfitPhoto='';lastOutfitSourceProof=null;$('outfitRetry').hidden=true;
  if(file.size>10*1024*1024)return $('outfitSplitStatus').textContent='Choose an outfit photo smaller than 10 MB.';
  if(!file.type?.startsWith('image/')&&!/\.(jpe?g|png|webp|avif|heic|heif)$/i.test(file.name||''))return $('outfitSplitStatus').textContent='Choose a clothing photo.';
  // M183: account ID alone is not a session lease. The same signed owner may

@@ -218,3 +218,18 @@ test('an unreadable outfit Worker reply immediately releases controls and preser
  h.emit({type:'done',count:0});
  assert.equal(h.c.busy,false);
 });
+
+test('a replacement photo decode failure cannot retry a previous outfit photo',async()=>{
+ const h=setup();
+ h.c.startOutfitSplit('data:image/jpeg;base64,FIRST');
+ const first=h.c.worker;
+ h.emit({type:'done',count:0});
+ assert.equal(h.el('outfitRetry').hidden,false);
+ h.c.photoToJPEG=async()=>{throw Error('decode failed');};
+ await h.c.readOutfitPhoto({name:'broken.jpg',type:'image/jpeg',size:1000});
+ assert.match(h.el('outfitSplitStatus').textContent,/Could not open/);
+ assert.equal(h.el('outfitRetry').hidden,true,'replacement decode failure must retire the earlier photo retry');
+ h.el('outfitRetry').onclick();
+ assert.equal(h.c.worker,first);
+ assert.equal(h.c.busy,false);
+});
