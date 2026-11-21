@@ -127,6 +127,53 @@ export function processStartToken(stat){
  assert(suffix.length>=20&&/^\d+$/.test(suffix[19]),'cannot validate original process start time');
  return suffix[19];
 }
+
+/** /proc/stat field 4 (PPID), with field 22 starttime checked independently. */
+export function processParentPid(stat){
+ assert(typeof stat==='string'&&stat.length>20&&stat.length<4000,'invalid process parent stat');
+ const cut=stat.lastIndexOf(') ');
+ assert(cut>=0,'missing process name terminator');
+ const tokens=stat.slice(cut+2).trim().split(/\s+/);
+ const ppid=tokens[1];
+ assert(tokens.length>=20&&/^\d+$/.test(ppid)&&
+  Number.isSafeInteger(Number(ppid)),'invalid parent process id');
+ return Number(ppid);
+}
+function currentProcIdentity(pid){
+ assert(Number.isSafeInteger(pid)&&pid>=2,'invalid native proc PID');
+ const stat=readFileSync('/proc/'+pid+'/stat','utf8');
+ return {pid,ppid:processParentPid(stat),startToken:processStartToken(stat)};
+}
+/**
+ * Authenticates a browser-controlled process, not merely another new binary.
+ * Caller supplies the browserServer.process() root, from the pinned Playwright
+ * launchServer API. Reject cycles, reparenting, PID reuse and unrelated WPE.
+ * Returns a boolean; never logs PIDs or raw /proc/stat process information.
+ */
+export function hasVerifiedBrowserAncestry(target,root,lookup){
+ assert(target&&root&&typeof lookup==='function'&&
+  Number.isSafeInteger(target.pid)&&target.pid>=2&&
+  Number.isSafeInteger(root.pid)&&root.pid>=2&&
+  /^\d{1,30}$/.test(target.startToken||'')&&
+  /^\d{1,30}$/.test(root.startToken||''),'untrusted browser root/child identity');
+ const seen=new Set();
+ let step={pid:target.pid,startToken:target.startToken};
+ for(let depth=0;depth<16;depth++){
+  if(seen.has(step.pid))return false;
+  seen.add(step.pid);
+  const observed=lookup(step.pid);
+  if(!observed||observed.pid!==step.pid||observed.startToken!==step.startToken||
+   !Number.isSafeInteger(observed.ppid)||observed.ppid<1)return false;
+  if(step.pid===root.pid)return observed.startToken===root.startToken;
+  if(observed.ppid===1||observed.ppid===step.pid)return false;
+  const parent=lookup(observed.ppid);
+  if(!parent||parent.pid!==observed.ppid||!/^\d{1,30}$/.test(parent.startToken||''))
+   return false;
+  step={pid:parent.pid,startToken:parent.startToken};
+ }
+ return false;
+}
+
 export function adjudicate(receipt){
  assert(receipt?.schema==='M290_ACTUAL_PINNED_WPE_MAPPED_ELF_V1','missing diagnostic schema');
  assert(receipt.playwright===source.playwright&&receipt.webkit===source.webkit&&
@@ -146,8 +193,13 @@ export function adjudicate(receipt){
   receipt.originalTrapInstructionOffset===null&&receipt.cxxNativeFaultLocation===null&&
   receipt.originalCausalFixProven===false&&receipt.releaseAuthorized===false&&
   receipt.familyAlpha==='HOLD','forged original root cause or release');
+ assert(receipt.localLoopbackTransportOnly===true&&
+  typeof receipt.browserServerRootAncestryVerified==='boolean',
+  'missing loopback browser parent provenance');
  if(receipt.discovery==='MAPPED_ELF_ATTESTED')
-  assert(receipt.elf[0].mappedIntoLocalLiveWpe===true,'original pinned WPE executable not actually mapped');
+  assert(receipt.browserServerRootAncestryVerified===true&&
+   receipt.elf[0].mappedIntoLocalLiveWpe===true,
+   'mapped ELF cannot be attributed to launched browser');
  return receipt;
 }
 async function hashFile(file){
@@ -213,8 +265,19 @@ async function inspect(){
  const {paths,rows}=await verifyInstalled();
  const previous=new Map(enumerateNativeProcesses().map(p=>[p.pid,p.startToken]));
  const {webkit}=await import('playwright');
- const browser=await webkit.launch({headless:true});
+ // Supported BrowserServer.process() exposes the exact launched browser root.
+ // The transport is forced to disposable loopback, never a public inspector.
+ const server=await webkit.launchServer({headless:true,host:'127.0.0.1',port:0});
+ let browser=null;
  try{
+  const endpoint=new URL(server.wsEndpoint());
+  assert(endpoint.protocol==='ws:'&&endpoint.hostname==='127.0.0.1'&&
+   Number(endpoint.port)>0,'Playwright transport not loopback-only');
+  const rootPid=server.process()?.pid;
+  assert(Number.isSafeInteger(rootPid)&&rootPid>=2,
+   'supported BrowserServer process ID unavailable');
+  const root=currentProcIdentity(rootPid);
+  browser=await webkit.connect(server.wsEndpoint());
   assert(browser.version()===source.webkit,'wrong original WebKit engine');
   const page=await browser.newPage();
   await page.goto('data:text/html,<html><body><main>m290-original-pinned-local-only</main></body></html>');
@@ -228,19 +291,33 @@ async function inspect(){
     identifyWpeProcess(p.comm,p.exe,p.startToken,previous.get(p.pid)));
   }
   let discovery='NO_UNIQUE_NEW_WPE',maps=null,failCategory=null;
+  let browserServerRootAncestryVerified=false;
   if(natives.length===1){
    const target=natives[0];
    try{
-    const stat=readFileSync('/proc/'+target.pid+'/stat','utf8');
-    assert(processStartToken(stat)===target.startToken,'native process PID reused');
-    const comm=readFileSync('/proc/'+target.pid+'/comm','utf8').trim();
-    const exe=readlinkSync('/proc/'+target.pid+'/exe');
-    assert(identifyWpeProcess(comm,exe,target.startToken,previous.get(target.pid)),
-     'native process identity changed before reading maps');
-    const text=readFileSync('/proc/'+target.pid+'/maps','utf8');
-    maps=classifyMaps(text,paths);
-    rows.forEach((r,i)=>r.mappedIntoLocalLiveWpe=maps.mappedIndices.includes(i));
-    discovery=rows[0].mappedIntoLocalLiveWpe?'MAPPED_ELF_ATTESTED':'MAPS_INCOMPLETE';
+    const belongsToBrowser=()=>hasVerifiedBrowserAncestry(target,root,currentProcIdentity);
+    // Before reading /proc maps, independently tie this WPE to the exact
+    // BrowserServer process, rather than any other new WPE launched concurrently.
+    browserServerRootAncestryVerified=belongsToBrowser();
+    if(browserServerRootAncestryVerified){
+     const stat=readFileSync('/proc/'+target.pid+'/stat','utf8');
+     assert(processStartToken(stat)===target.startToken,'native process PID reused');
+     const comm=readFileSync('/proc/'+target.pid+'/comm','utf8').trim();
+     const exe=readlinkSync('/proc/'+target.pid+'/exe');
+     assert(identifyWpeProcess(comm,exe,target.startToken,previous.get(target.pid)),
+      'native process identity changed before reading maps');
+     const text=readFileSync('/proc/'+target.pid+'/maps','utf8');
+     // A native renderer can be reparented while /proc/maps is read: recheck
+     // browser root and full parent chain before calling anything attested.
+     browserServerRootAncestryVerified=belongsToBrowser()&&
+      currentProcIdentity(rootPid).startToken===root.startToken&&
+      readlinkSync('/proc/'+target.pid+'/exe')===source.wpe;
+     if(browserServerRootAncestryVerified){
+      maps=classifyMaps(text,paths);
+      rows.forEach((r,i)=>r.mappedIntoLocalLiveWpe=maps.mappedIndices.includes(i));
+      discovery=rows[0].mappedIntoLocalLiveWpe?'MAPPED_ELF_ATTESTED':'MAPS_INCOMPLETE';
+     }
+    }
    }catch(error){
     const code=String(error?.code||'');
     if(code==='EACCES'||code==='EPERM'||code==='ENOENT'||code==='ESRCH'){
@@ -254,6 +331,7 @@ async function inspect(){
    playwright:source.playwright,webkit:source.webkit,browserRevision:source.browserRevision,
    upstreamBaseSource:source.webkitUpstream,downstreamPatchBlob:source.playwrightPatchGitBlob,
    observedFreshWpeCount:natives.length,discovery,failCategory,
+   browserServerRootAncestryVerified,localLoopbackTransportOnly:true,
    mappedPinnedNativeELFCount:maps?.mappedInstalledCount??null,
    otherPinnedNativeMappedPathCount:maps?.pinnedRootOtherMappedPathCount??null,
    originalM286FiveInstalledELFVerified:true,elf:rows,
@@ -263,7 +341,10 @@ async function inspect(){
    originalCausalFixProven:false,releaseAuthorized:false,familyAlpha:'HOLD'
   };
   return adjudicate(receipt);
- }finally{await browser.close();}
+ }finally{
+  if(browser)await browser.close().catch(()=>{});
+  await server.close();
+ }
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  const git=(...args)=>execFileSync('git',['-c','safe.directory='+process.cwd(),...args],
@@ -278,7 +359,8 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
    JSON.stringify(receipt,null,2)+'\n');
   console.log('M290_REAL_PINNED_WPE_MAPPED_ELF_RECEIPT '+JSON.stringify({
    browser:receipt.webkit,newWpeCount:receipt.observedFreshWpeCount,
-   discovery:receipt.discovery,mappedPinnedELFs:receipt.elf.filter(x=>x.mappedIntoLocalLiveWpe).map(x=>x.name),
+   discovery:receipt.discovery,linkedToBrowserServer:receipt.browserServerRootAncestryVerified,
+   mappedPinnedELFs:receipt.elf.filter(x=>x.mappedIntoLocalLiveWpe).map(x=>x.name),
    mapReadBlocker:receipt.failCategory,
    historicalOriginalModelFailReproduced:false,actualNativeTrapPc:null,
    permanentRepairProven:false,familyAlpha:'HOLD'
