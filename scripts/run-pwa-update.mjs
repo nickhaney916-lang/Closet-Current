@@ -64,9 +64,15 @@ try {
   await shell(await page.reload());
   assert.equal(await worker(page, version), originalWorker);
 
-  await page.close();
+  const waitingShell = await page.evaluate(async expected => {
+    const cache = await caches.open('closet-current-' + expected);
+    const response = await cache.match(new URL('index.html', location.href).href);
+    return response ? (await response.text()).includes('app.js?v=' + expected) : false;
+  }, nextVersion);
+  assert.ok(waitingShell, 'Waiting worker installed the new shell');
   const offScope = await context.newPage();
   await offScope.goto(url + '/probe');
+  await page.close();
   await offScope.waitForFunction(async expected => {
     const registration = await navigator.serviceWorker.getRegistration('/app/');
     const keys = await caches.keys();
@@ -75,7 +81,8 @@ try {
   }, nextVersion);
   const cachedRelease = await offScope.evaluate(async expected => {
     const cache = await caches.open('closet-current-' + expected);
-    const response = await cache.match('/app/index.html');
+    const response = await cache.match(new URL('/app/index.html', location.href).href);
+    if (!response) return (await cache.keys()).slice(0, 8).map(request => request.url);
     const body = await response.text();
     return body.match(/app\.js\?v=([a-f0-9]+)/)[1];
   }, nextVersion);
