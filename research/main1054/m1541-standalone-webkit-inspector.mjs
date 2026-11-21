@@ -92,7 +92,7 @@ try {
      // Inspector line/column are NOT native PC or original WASM file offsets.
      if((phase===4||phase===5)&&!resumeSent){resumeSent=true;sendNested(104,'Debugger.resume');}
     }
-    if([101,102,103,104,105].includes(Number(inner.id))&&String(inner.id)===String(Number(inner.id))){
+    if([101,102,103,104,105,106].includes(Number(inner.id))&&String(inner.id)===String(Number(inner.id))){
      innerReplies.set(Number(inner.id),inner);
      if(Number(inner.id)===104&&inner.error===undefined)report.debuggerResumeReply=true;
      if(Number(inner.id)===105){
@@ -141,6 +141,14 @@ try {
     for(let i=0;i<24&&!innerReplies.has(102)&&!report.processExited;i++)await wait(250);
     const pauseConfig=innerReplies.get(102);
     if(!pauseConfig||pauseConfig.error)throw Error('pause-on-exception setup rejected or absent');
+    if(phase===5){
+     // Pinned InspectorDebuggerAgent::setPauseOnDebuggerStatements explicitly
+     // installs the statement breakpoint; Debugger.enable alone does not.
+     sendNested(106,'Debugger.setPauseOnDebuggerStatements',{enabled:true});
+     for(let i=0;i<24&&!innerReplies.has(106)&&!report.processExited;i++)await wait(250);
+     if(!innerReplies.has(106)||innerReplies.get(106).error)
+      throw Error('Debugger.setPauseOnDebuggerStatements rejected or absent');
+    }
     const bytes=JSON.stringify(Array.from(binary));
     // A direct Runtime.evaluate exception may not yield a debugger pause.
     // Schedule the same genuine negative-only WASM opcode on the page event
