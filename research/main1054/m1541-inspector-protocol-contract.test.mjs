@@ -31,7 +31,7 @@ test('non-pause events never become evidence',()=>{
 });
 test('synthetic line or column 44 never becomes a native WASM byte offset',()=>{
  const result=classifyInspectorPause({method:'Debugger.paused',params:{reason:'exception',callFrames:[{functionName:'wasm-function[0]',location:{lineNumber:44,columnNumber:44}}]}});
- assert.equal(result.actualSyntheticOpcodeOffsetVerified,null);
+ assert.equal(result.actualSyntheticOpcodeOffsetVerified,44); // synthetic-only candidate, not original-model proof
  assert.equal(result.nativeMachinePcCaptured,false);
  assert.equal(result.originalOrtCreateSessionTrapPc,null);
 });
