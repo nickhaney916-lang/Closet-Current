@@ -48,7 +48,16 @@ try{
      targetId=candidate;report.target=true;
     }
     if(msg.method==='Target.dispatchMessageFromTarget'&&typeof msg.params?.message==='string'){
-     try{const inner=JSON.parse(msg.params.message);if(typeof inner.method==='string'&&report.innerMethods.length<10)report.innerMethods.push(inner.method.slice(0,80));if(inner.id===101||inner.id==='101'){innerDone=true;report.innerResponse=true;report.innerErrorCode=Number.isInteger(inner.error?.code)?inner.error.code:null}}catch{}
+     try{const inner=JSON.parse(msg.params.message);
+      // Pinned WebKit Target.json requires a targetId on forwarded messages;
+      // InspectorTargetAgent.cpp asserts the ID refers to a tracked target.
+      // An actual page-navigation event may establish a page target even when
+      // the earlier Target.targetCreated notification was not observed.
+      const forwardedId=msg.params?.targetId;
+      if(inner.method==='Page.frameNavigated'&&typeof forwardedId==='string'&&/^[A-Za-z0-9_:-]{1,128}$/.test(forwardedId)){
+       targetId=forwardedId;report.target=true;report.targetEvidence='Page.frameNavigated';
+      }
+      if(typeof inner.method==='string'&&report.innerMethods.length<10)report.innerMethods.push(inner.method.slice(0,80));if(inner.id===101||inner.id==='101'){innerDone=true;report.innerResponse=true;report.innerErrorCode=Number.isInteger(inner.error?.code)?inner.error.code:null}}catch{}
     }
    });
    await handshake;
