@@ -154,6 +154,89 @@ def classified_jsc_exception_log(log, exit_code, timed_out):
     }
 
 
+def jsc_bulk_gdb_commands(mode):
+    """Operator opt-in: observe one native JSC bulk memory helper entry."""
+    helpers = {
+        'bulk-copy': ('JSC::operationWasmMemoryCopy',
+                      'printf "CC1538_BULK_SRC=%u\\n", (unsigned int)srcAddress\n'),
+        'bulk-fill': ('JSC::operationWasmMemoryFill', ''),
+        'bulk-init': ('JSC::operationWasmMemoryInit',
+                      'printf "CC1538_BULK_SEGMENT_SRC=%u\\n", (unsigned int)srcAddress\n'),
+    }
+    require(mode in helpers, 'BULK_MODE_INVALID')
+    function, extra = helpers[mode]
+    count_arg = 'length' if mode == 'bulk-init' else 'count'
+    return ('''set pagination off
+set confirm off
+set print elements 0
+set print pretty off
+set breakpoint pending off
+break ''' + function + '''
+commands
+silent
+printf "CC1538_BULK_OPERATION=''' + mode[5:] + '''\\n"
+printf "CC1538_BULK_DST=%u\\n", (unsigned int)dstAddress
+''' + extra +
+'''printf "CC1538_BULK_COUNT=%u\\n", (unsigned int)''' + count_arg + '''
+printf "CC1538_BULK_MEMORY_BYTES=%llu\\n", (unsigned long long)instance->memory()->memory().size()
+printf "CC1538_BULK_CAPTURE_COMPLETE=1\\n"
+bt 8
+detach
+quit
+end
+continue
+''')
+
+
+def classified_jsc_bulk_log(log, exit_code, timed_out, expected_mode):
+    """Helper-entry operands: never identify an original model failure."""
+    require(expected_mode in ('bulk-copy', 'bulk-fill', 'bulk-init'), 'BULK_MODE_INVALID')
+
+    def numeric(label):
+        hits = re.findall(r'(?m)^CC1538_BULK_' + label + r'=([0-9]{1,20})\s*$', log)
+        if len(hits) != 1:
+            return None
+        n = int(hits[0])
+        return n if 0 <= n <= 2**48 else None
+
+    op_hits = re.findall(r'(?m)^CC1538_BULK_OPERATION=([a-z-]+)\s*$', log)
+    op = op_hits[0] if len(op_hits) == 1 else None
+    dst, count, size = numeric('DST'), numeric('COUNT'), numeric('MEMORY_BYTES')
+    src = numeric('SRC') if expected_mode == 'bulk-copy' else None
+    segment = numeric('SEGMENT_SRC') if expected_mode == 'bulk-init' else None
+    complete = re.findall(r'(?m)^CC1538_BULK_CAPTURE_COMPLETE=1\s*$', log)
+    observed = (exit_code == 0 and not timed_out and op == expected_mode[5:]
+                and dst is not None and count is not None and size is not None
+                and (expected_mode != 'bulk-copy' or src is not None)
+                and (expected_mode != 'bulk-init' or segment is not None)
+                and len(complete) == 1 and
+                not re.search(r'(?i)no symbol|cannot access memory|operation not permitted|ptrace:', log))
+    breached = []
+    if observed:
+        if dst + count > size:
+            breached.append('destination')
+        if expected_mode == 'bulk-copy' and src + count > size:
+            breached.append('source')
+    return {
+        'kind': ('UNATTESTED_BULK_LINEAR_MEMORY_OOB_CANDIDATE_ONLY' if breached
+                 else 'UNATTESTED_BULK_HELPER_ENTRY_IN_BOUNDS_OR_UNRELATED' if observed
+                 else 'NO_VERIFIED_BULK_HELPER_ENTRY'),
+        'bulkHelperOperandsObserved': observed,
+        'observedBulkOperation': op if observed else None,
+        'bulkLinearMemoryBoundExceededSides': breached,
+        'dataSegmentSourceBoundsEvaluated': False,
+        'actualBulkHelperFailed': False,
+        'originalOrtCreateSessionRedObserved': False,
+        'originalWasmTrapInstructionOffset': None,
+        'originalWasmEffectiveAddress': None,
+        'wasmAccessBytes': None,
+        'wasmLiveMemoryBytesAtTrap': None,
+        'sourceCxxLine': None,
+        'causalFixProven': False,
+        'familyAlpha': 'HOLD',
+    }
+
+
 def classified_log(log, exit_code, timed_out):
     pc = re.findall(r'(?m)^CC1538_NATIVE_SIGSEGV_PC=(0x[0-9a-f]+)\s*$', log)
     addr = re.findall(r'(?m)^CC1538_SIGNAL_FAULT_ADDRESS=(0x[0-9a-f]+)\s*$', log)
@@ -213,7 +296,8 @@ def run(args):
     with tempfile.NamedTemporaryFile('w', dir=out, prefix='cc1538-', suffix='.gdb',
                                      delete=False) as g:
         os.chmod(g.name, 0o600)
-        g.write(jsc_exception_gdb_commands() if args.mode == 'exception' else gdb_commands())
+        g.write(jsc_bulk_gdb_commands(args.mode) if args.mode.startswith('bulk-') else
+                jsc_exception_gdb_commands() if args.mode == 'exception' else gdb_commands())
         cmds = g.name
     started = time.time()
     timed_out = False
@@ -237,7 +321,9 @@ def run(args):
     with logpath.open('x') as fd:
         os.fchmod(fd.fileno(), 0o600)
         fd.write(raw)
-    result = (classified_jsc_exception_log(raw, code, timed_out)
+    result = (classified_jsc_bulk_log(raw, code, timed_out, args.mode)
+              if args.mode.startswith('bulk-')
+              else classified_jsc_exception_log(raw, code, timed_out)
               if args.mode == 'exception' else classified_log(raw, code, timed_out))
     result['operatorLocalLogName'] = name
     result['debuggerTimedOut'] = timed_out
@@ -249,7 +335,9 @@ def run(args):
 
 def main():
     p = argparse.ArgumentParser(description='Operator-only WebKit native signal/exception observer; no original WASM trap proof')
-    p.add_argument('--mode', choices=('inspect', 'capture', 'exception'), default='inspect')
+    p.add_argument('--mode', choices=('inspect', 'capture', 'exception',
+                                      'bulk-copy', 'bulk-fill', 'bulk-init'),
+                   default='inspect')
     p.add_argument('--host-paths', required=True)
     p.add_argument('--renderer', type=int, required=True)
     p.add_argument('--browser', type=int, required=True)

@@ -111,6 +111,78 @@ class TestNativeFaultObserver(unittest.TestCase):
             self.assertFalse(r['jscExceptionHelperObserved'])
             self.assertIsNone(r['originalWasmTrapInstructionOffset'])
 
+    def test_source_matched_bulk_operation_breakpoints_are_operator_only(self):
+        for mode, expected in [
+            ('bulk-copy', 'operationWasmMemoryCopy'),
+            ('bulk-fill', 'operationWasmMemoryFill'),
+            ('bulk-init', 'operationWasmMemoryInit')
+        ]:
+            script = fault.jsc_bulk_gdb_commands(mode)
+            self.assertIn('break JSC::' + expected, script)
+            self.assertIn('instance->memory()->memory().size()', script)
+            self.assertIn('CC1538_BULK_CAPTURE_COMPLETE', script)
+            for prohibited in ('ptrace_scope', 'gcore ', 'set breakpoint pending on'):
+                self.assertNotIn(prohibited, script)
+
+    def test_bulk_copy_original_failure_never_claimed(self):
+        sample = ('CC1538_BULK_OPERATION=copy\n'
+                  'CC1538_BULK_DST=65530\n'
+                  'CC1538_BULK_SRC=12\n'
+                  'CC1538_BULK_COUNT=12\n'
+                  'CC1538_BULK_MEMORY_BYTES=65536\n'
+                  'CC1538_BULK_CAPTURE_COMPLETE=1\n')
+        result = fault.classified_jsc_bulk_log(sample, 0, False, 'bulk-copy')
+        self.assertEqual(result['kind'], 'UNATTESTED_BULK_LINEAR_MEMORY_OOB_CANDIDATE_ONLY')
+        self.assertEqual(result['bulkLinearMemoryBoundExceededSides'], ['destination'])
+        self.assertFalse(result['actualBulkHelperFailed'])
+        self.assertFalse(result['originalOrtCreateSessionRedObserved'])
+        self.assertIsNone(result['originalWasmEffectiveAddress'])
+        self.assertIsNone(result['originalWasmTrapInstructionOffset'])
+        good = sample.replace('CC1538_BULK_DST=65530', 'CC1538_BULK_DST=100')
+        self.assertEqual(fault.classified_jsc_bulk_log(good, 0, False, 'bulk-copy')['kind'],
+                         'UNATTESTED_BULK_HELPER_ENTRY_IN_BOUNDS_OR_UNRELATED')
+
+    def test_bulk_copy_invalid_source_and_destination(self):
+        sample = ('CC1538_BULK_OPERATION=copy\n'
+                  'CC1538_BULK_DST=65535\n'
+                  'CC1538_BULK_SRC=65534\n'
+                  'CC1538_BULK_COUNT=5\n'
+                  'CC1538_BULK_MEMORY_BYTES=65536\n'
+                  'CC1538_BULK_CAPTURE_COMPLETE=1\n')
+        got = fault.classified_jsc_bulk_log(sample, 0, False, 'bulk-copy')
+        self.assertEqual(got['bulkLinearMemoryBoundExceededSides'], ['destination','source'])
+
+    def test_bulk_init_source_is_segment_offset_not_linear_memory(self):
+        sample = ('CC1538_BULK_OPERATION=init\n'
+                  'CC1538_BULK_DST=20\n'
+                  'CC1538_BULK_SEGMENT_SRC=999999\n'
+                  'CC1538_BULK_COUNT=15\n'
+                  'CC1538_BULK_MEMORY_BYTES=65536\n'
+                  'CC1538_BULK_CAPTURE_COMPLETE=1\n')
+        got = fault.classified_jsc_bulk_log(sample, 0, False, 'bulk-init')
+        self.assertEqual(got['kind'], 'UNATTESTED_BULK_HELPER_ENTRY_IN_BOUNDS_OR_UNRELATED')
+        self.assertFalse(got['dataSegmentSourceBoundsEvaluated'])
+
+    def test_bulk_fail_closed_for_missing_duplicate_timeout_denied(self):
+        sample = ('CC1538_BULK_OPERATION=fill\n'
+                  'CC1538_BULK_DST=1\n'
+                  'CC1538_BULK_COUNT=3\n'
+                  'CC1538_BULK_MEMORY_BYTES=65536\n'
+                  'CC1538_BULK_CAPTURE_COMPLETE=1\n')
+        cases = [
+            (sample + sample, 0, False),
+            (sample, 1, False),
+            (sample, 0, True),
+            (sample.replace('CC1538_BULK_MEMORY_BYTES=65536\n', ''), 0, False),
+            (sample.replace('CC1538_BULK_OPERATION=fill', 'CC1538_BULK_OPERATION=copy'), 0, False),
+            (sample + 'Operation not permitted\n', 0, False)
+        ]
+        for log, code, timeout in cases:
+            r = fault.classified_jsc_bulk_log(log, code, timeout, 'bulk-fill')
+            self.assertFalse(r['bulkHelperOperandsObserved'])
+            self.assertEqual(r['kind'], 'NO_VERIFIED_BULK_HELPER_ENTRY')
+            self.assertIsNone(r['originalWasmTrapInstructionOffset'])
+
     def test_tool_refuses_missing_inputs_without_debugger(self):
         p = subprocess.run([sys.executable, str(FILE)], capture_output=True, text=True, timeout=5)
         self.assertNotEqual(p.returncode, 0)

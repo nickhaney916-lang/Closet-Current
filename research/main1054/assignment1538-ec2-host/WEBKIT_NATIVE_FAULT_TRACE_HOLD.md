@@ -38,6 +38,36 @@ original JIT call origin and live internal failing access must still be
 observed and signed separately by an approved source/build-matched operator.
 Do not submit helper-only output as an original trap receipt.
 
+## Operator-only concrete bulk-memory operand observation
+
+The frozen upstream WebKit revision `db897909f7c31d9b38793374c66427b6a4cb3dd3`
+contains `WasmOperations.cpp` native helpers for `memory.fill` (~1562),
+`memory.copy` (~1567) and `memory.init` (~1659). Their arguments include
+the actual bulk-operation destination, source or data-segment offset,
+and count. Exact-source `JSWebAssemblyInstance.h` provides the
+`instance->memory()` getter; `WasmMemory.h` exposes `memory().size()`.
+
+The opt-in existing observer also accepts `--mode bulk-copy`,
+`--mode bulk-fill`, or `--mode bulk-init`. Each uses the same independent
+authorization and original-binary/renderer-identity gates as the signal
+and software-exception modes. The GDB command sets one source-symbol
+breakpoint in the approved original renderer and attempts to log a *single*
+observed native helper entry's operand values and linear-memory size.
+The result is private, bounded, and unattested. If debug symbols or the
+C++ inline memory-size accessor cannot be evaluated, the result is BLOCKED.
+
+Checks use non-overflowing Python integers for destination+count; copy
+also checks source+count. A `memory.init` source offset references a
+**data segment**, not the live linear memory; it cannot be checked
+against `memory().size()`. The tool never claims segment bounds.
+
+Even a candidate exceeding the live memory bound is only helper-entry
+evidence, not an observed failed helper or proof of the original
+ONNX `_OrtCreateSession` trap. An earlier healthy call may have been
+captured. Direct JIT loads/stores, SIMD and atomics may not invoke
+these helpers at all. These logs do not identify the JIT/WASM opcode
+coordinate, cannot be promoted into the independently signed actual-fault
+receipt, and do not change historical original RED or Family Alpha HOLD.
 ## Operator steps (authorized VM only)
 
 1. Confirm independent written native-debug authorization and that the verified VM has source, patch, binary, and model/JSEP assets from the original pinned Playwright 1.56.1 WebKit 26.0 r2215 build. Verify local read-only assets through `node research/main1054/assignment1538-native-host.mjs --preflight /private/host-paths.json` (expect `PINNED_HOST_FILES_VERIFIED_ONLY`). No private wardrobe or family data.
