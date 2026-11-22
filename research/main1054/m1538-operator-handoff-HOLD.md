@@ -9,7 +9,7 @@ This package does **not** start, connect to, attach to, or debug a native proces
 Its validator reviews only a *sanitized proposed receipt* and makes no network requests.
 Run offline:
 
-    node research/main1054/m1538-authorized-native-trap-receipt-gate.mjs sanitized-receipt.json
+    node research/main1054/m1538-authorized-native-trap-receipt-gate.mjs sanitized-receipt.json original-pinned-JSEP.wasm
     node --test tests/main1054-m1538-authorized-native-trap-receipt-gate.test.mjs
 
 An engineer with separately granted, legitimate permission on an operator-controlled
@@ -41,6 +41,19 @@ Worker IDs, auth tokens, binary/model payloads, user data or environment values.
 2. native-elf-pc: observed machine PC and verified mapped ELF SHA/build ID,
    mapping start/end, load file offset and file length. Can derive only
    an ELF file offset, NOT a WASM instruction or C++ statement.
+
+The actual original WASM file must first be downloaded from the exact
+Transformers.js 3.8.1 public distribution and verified as 21,596,019 bytes,
+SHA-256 c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39.
+Install ordinary WABT wasm-objdump for static disassembly. For a proposed
+WASM bytecode location the validator now verifies *an exact instruction start*
+and a potentially bounds-trapping original f4846 linear-memory opcode via
+actual original WABT disassembly. Merely providing an integer inside the
+static function span is no longer sufficient. It rejects a non-opcode
+interior byte, incorrect binary SHA, wrong function and forged opcode proof.
+The exact-head CI also runs a binary-backed positive and negative static
+opcode check. This can authenticate only static opcode membership, **never
+that this is the instruction that actually trapped**.
 
 The metadata validator requires the same exact run/job/commit/Worker
 process birth identity and rejects invalid load bias, stale/reused PID,
