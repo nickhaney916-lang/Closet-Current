@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assessOriginalWorkerBridge as check,validWorkerEventSequence,expectedWorkerEvents,originalPins, classifyOriginalWorkerProfile, classifyPinnedWorkerExceptionPause}
+import {assessOriginalWorkerBridge as check,validWorkerEventSequence,expectedWorkerEvents,originalPins, classifyOriginalWorkerProfile, classifyPinnedWorkerExceptionPause, classifyPinnedJscFastMemoryDump}
   from '../research/main1054/m1585-original-worker-evidence-contract.mjs';
 
 const sha='a'.repeat(40),digest='b'.repeat(64);
@@ -242,4 +242,56 @@ test('genuine Worker diagnostics expose only sanitized classifications, never pr
  assert.match(src,/workerNativeBoundsTextPauseCount/);
  assert.match(src,/workerThrownValueIsNativePc:false/);
  assert.match(src,/receipt.workerPauseEventWorkerDigest!==receipt.workerIdDigest/);
+});
+
+
+test('pinned JSC dump exposes source-supported fast-memory config, not true allocation/tier',()=>{
+ for(const [str,expected] of [
+  ['All JSC options:\n   dumpOptions=2\n   useWasmFastMemory=true\n   useBBQJIT=true\n', 'true'],
+  ['All JSC options:\n   useWasmFastMemory=false (default: true)\n', 'false']
+ ]) {
+  const r=classifyPinnedJscFastMemoryDump(str);
+  assert.equal(r.observed,true);
+  assert.equal(r.option,expected);
+  assert.equal(r.allocationModeProven,false);
+  assert.equal(r.nativeTrapPc,null);
+  assert.equal(r.releaseAllowed,false);
+  assert.equal(JSON.stringify(r).includes('useBBQJIT'),false);
+ }
+});
+test('JSC logs missing, mixed or spoofed are NOT credited as mode observations',()=>{
+ for(const str of [
+  '',
+  'useWasmFastMemory=false',
+  'Modified JSC options:\n useWasmFastMemory=false',
+  'All JSC options:\n useWasmFastMemory=true\n useWasmFastMemory=false\n',
+  'All JSC options:\n useWasmFastMemory=surprise\n',
+  'All JSC options:\n useWasmFastMemory=false\n'+'X'.repeat(512001)
+ ]) {
+  const r=classifyPinnedJscFastMemoryDump(str);
+  assert.equal(r.option,null);
+  assert.equal(r.allocationModeProven,false);
+ }
+});
+test('JSC original Worker A/B is only a pinned browser subprocess option, not a sandbox/permission edit',()=>{
+ const script=readFileSync('research/main1054/m1585-original-p94-standalone-webkit.mjs','utf8');
+ const workflow=readFileSync('.github/workflows/main1054-m1585-authentic-original-p94-webkit-HOLD.yml','utf8');
+ assert.match(script,/JSC_useWasmFastMemory='false'/);
+ assert.match(script,/JSC_dumpOptions='2'/);
+ assert.match(script,/classifyPinnedJscFastMemoryDump\(jscOptionDump\)/);
+ assert.match(script,/jscNativeAllocationModeProven:false/);
+ assert.match(script,/jscWasmJitCodeOriginProven:false/);
+ assert.match(script,/receipt.jscFastMemoryOption!==/);
+ assert.match(workflow,/jsc_mode: \[default, explicit-bounds\]/);
+ assert.match(workflow,/profile: \[instrumented, no-js-proxy\]/);
+ assert.match(workflow,/ordinal: \[1, 2, 3, 4\]/);
+ assert.match(workflow,/M1585_JSC_MEMORY_MODE: \$\{\{ matrix.jsc_mode \}\}/);
+ assert.doesNotMatch(workflow,/privileged:|SYS_PTRACE|seccomp=unconfined|--cap-add|--security-opt/);
+});
+test('JSC bounds-check strategy never promotes a healthy model run to original repaired RED',()=>{
+ for(const option of ['true','false']){
+  const r=classifyPinnedJscFastMemoryDump('All JSC options:\n  useWasmFastMemory='+option+'\n');
+  assert.equal(r.nativeTrapPc,null);
+  assert.equal(r.releaseAllowed,false);
+ }
 });
