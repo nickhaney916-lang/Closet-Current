@@ -38,7 +38,15 @@ const staticProof={verified:true,
  originalWasmSha256:pins.wasmSha256,functionIndex:4846,
  wasmFileOffset:7022509,opcode:'i32.load',kind:'linear-memory-access'
 };
-const verdict=(x,proof=staticProof)=>check(x,{staticProof:proof});
+const elfProof={verified:true,
+ source:'pinned-playwright-webkit-2215-elf-file',
+ sha256:pins.originalWebProcessSha256,
+ buildId:pins.originalWebProcessBuildId,
+ genuineFailingProcessMappedElfVerified:false,
+ nativeMachinePcCaptured:false,sourceCxxStatement:null
+};
+const verdict=(x,proof=staticProof,elf=elfProof)=>
+ check(x,{staticProof:proof,elfProof:elf});
 const assertBlocked=(x,reason)=>{
  const r=verdict(x);assert.equal(r.status,'BLOCKED');
  assert.equal(r.candidate,false);assert.ok(r.blockers.includes(reason));
@@ -138,7 +146,8 @@ test('native machine PC translated only within exact ELF mapping / load bias',()
  const x=original();
  x.native.trapKind='native-elf-pc';x.native.nativePc=12345;
  x.native.wasmFileOffset=null;
- x.native.elfMapping={sha256:'c'.repeat(64),buildId:'abcdef0123456789',
+ x.native.elfMapping={sha256:pins.originalWebProcessSha256,
+  buildId:pins.originalWebProcessBuildId,
   start:12000,endExclusive:13000,fileOffset:3000,fileBytes:80000};
  const r=verdict(x);
  assert.equal(r.status,'CANDIDATE_REQUIRES_INDEPENDENT_NATIVE_VERIFICATION');
@@ -150,14 +159,14 @@ test('native machine PC translated only within exact ELF mapping / load bias',()
 test('native ELF mapping refuses bogus build, PC outside range or byte overflow',()=>{
  for(const change of [
   {nativePc:13000},{nativePc:11000},
-  {elfMapping:{sha256:'c'.repeat(64),buildId:'not-valid!',start:12000,endExclusive:13000,
+  {elfMapping:{sha256:pins.originalWebProcessSha256,buildId:'not-valid!',start:12000,endExclusive:13000,
    fileOffset:3000,fileBytes:80000}},
-  {elfMapping:{sha256:'c'.repeat(64),buildId:'abcdef0123456789',start:12000,
+  {elfMapping:{sha256:pins.originalWebProcessSha256,buildId:pins.originalWebProcessBuildId,start:12000,
    endExclusive:13000,fileOffset:79999,fileBytes:80000}}
  ]){
   const x=original();x.native.trapKind='native-elf-pc';
   x.native.nativePc=12345;x.native.wasmFileOffset=null;
-  x.native.elfMapping={sha256:'c'.repeat(64),buildId:'abcdef0123456789',
+  x.native.elfMapping={sha256:pins.originalWebProcessSha256,buildId:pins.originalWebProcessBuildId,
    start:12000,endExclusive:13000,fileOffset:3000,fileBytes:80000};
   Object.assign(x.native,change);
   assertBlocked(x,'VERIFIED_ELF_MAPPING_LOAD_BIAS_ABSENT_OR_INVALID');
@@ -193,5 +202,53 @@ test('incorrect or manufactured opcode proof is fail closed',()=>{
     assert.ok(r.blockers.includes('ORIGINAL_F4846_MEMORY_OPCODE_NOT_INDEPENDENTLY_ATTESTED'));
     assert.equal(r.actualNativeTrapIndependentlyVerified,false);
     assert.equal(r.causalFixProven,false);
+  }
+});
+
+
+test('ELF candidate never self-attests binary hash/build ID',()=>{
+  const x=original();x.native.trapKind='native-elf-pc';
+  x.native.nativePc=12345;x.native.wasmFileOffset=null;
+  x.native.elfMapping={
+    sha256:pins.originalWebProcessSha256,buildId:pins.originalWebProcessBuildId,
+    start:12000,endExclusive:13000,fileOffset:3000,fileBytes:80000
+  };
+  const missing=verdict(x,staticProof,null);
+  assert.equal(missing.status,'BLOCKED');
+  assert.ok(missing.blockers.includes('ELF_SHA_BUILD_ID_NOT_INDEPENDENTLY_VERIFIED'));
+  assert.equal(missing.nativeElfFileOffsetCandidate,null);
+});
+test('well-formed but wrong ELF SHA or build ID rejects regardless of claimed mapping',()=>{
+  for(const change of [{sha256:'a'.repeat(64)},{buildId:'abcdef0123456789'}]){
+    const x=original();x.native.trapKind='native-elf-pc';
+    x.native.nativePc=12345;x.native.wasmFileOffset=null;
+    x.native.elfMapping={
+      sha256:pins.originalWebProcessSha256,buildId:pins.originalWebProcessBuildId,
+      start:12000,endExclusive:13000,fileOffset:3000,fileBytes:80000,
+      ...change
+    };
+    const r=verdict(x);
+    assert.equal(r.status,'BLOCKED');
+    assert.ok(r.blockers.includes('ELF_SHA_BUILD_ID_NOT_INDEPENDENTLY_VERIFIED'));
+    assert.equal(r.actualNativeTrapIndependentlyVerified,false);
+    assert.equal(r.releaseAllowed,false);
+  }
+});
+test('forged proof flags fail closed even if the native metadata is pinned',()=>{
+  const x=original();x.native.trapKind='native-elf-pc';
+  x.native.nativePc=12345;x.native.wasmFileOffset=null;
+  x.native.elfMapping={
+    sha256:pins.originalWebProcessSha256,buildId:pins.originalWebProcessBuildId,
+    start:12000,endExclusive:13000,fileOffset:3000,fileBytes:80000
+  };
+  for(const fake of [
+   {...elfProof,source:'synthetic-elf'},
+   {...elfProof,verified:false},
+   {...elfProof,sha256:'b'.repeat(64)},
+   {...elfProof,buildId:'abcdef0123456789'},
+  ]){
+    const r=verdict(x,staticProof,fake);
+    assert.equal(r.status,'BLOCKED');
+    assert.ok(r.blockers.includes('ELF_SHA_BUILD_ID_NOT_INDEPENDENTLY_VERIFIED'));
   }
 });
