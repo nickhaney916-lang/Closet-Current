@@ -8,6 +8,9 @@
  */
 import {readFileSync} from 'node:fs';
 import {pathToFileURL} from 'node:url';
+import {createHash} from 'node:crypto';
+import {spawn} from 'node:child_process';
+import {createInterface} from 'node:readline';
 export const pins=Object.freeze({
   wasmSha256:'c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39',
   wasmBytes:21596019,
@@ -23,7 +26,6 @@ export const pins=Object.freeze({
 });
 const SHA=/^[a-f0-9]{40}$/, HASH=/^[a-f0-9]{64}$/;
 const safeInt=n=>Number.isSafeInteger(n)&&n>=0;
-const bad=[]; // no retained data; function uses its own blockers
 const result=(blockers,candidate,location)=>({
   schema:'M1538_OPERATOR_NATIVE_FAULT_ADMISSION_V1',
   status:candidate?'CANDIDATE_REQUIRES_INDEPENDENT_NATIVE_VERIFICATION':'BLOCKED',
@@ -31,6 +33,8 @@ const result=(blockers,candidate,location)=>({
   candidate,
   locationKind:location?.kind??null,
   wasmFileOffsetCandidate:location?.wasmOffset??null,
+  staticOriginalWasmOpcodeCandidate:location?.opcode??null,
+  originalWasmMemoryOpcodeStaticallyVerified:location?.staticVerified===true,
   nativeElfFileOffsetCandidate:location?.elfOffset??null,
   actualNativeTrapIndependentlyVerified:false,
   originalCxxStatement:null,
@@ -49,7 +53,7 @@ const sensitiveKeys=new Set([
  * original model + WASM byte hashes, not just a repeating WPE Worker ID hash.
  * A native machine PC is NEVER a WASM file offset.
  */
-export function assessNativeFaultReceipt(input) {
+export function assessNativeFaultReceipt(input,{staticProof=null}={}) {
   const b=[];
   if(!input||typeof input!=='object'||Array.isArray(input))
     return result(['RECEIPT_ABSENT'],false);
@@ -127,7 +131,26 @@ export function assessNativeFaultReceipt(input) {
        native.wasmFileOffset>=pins.staticFunctionEndExclusive||
        native.nativePc!=null)
       b.push('ORIGINAL_F4846_OFFSET_NOT_AUTHENTICATED');
-    else loc={kind:'wasm-bytecode-offset',wasmOffset:native.wasmFileOffset};
+    else {
+      // Static original function-span membership is insufficient: M288
+      // identified 5,769 potential memory accesses among 73,974 f4846
+      // disassembled instructions. Do NOT admit any arbitrary address inside
+      // the original f4846 body as an actual access opcode.
+      const proof=staticProof;
+      const trapping=proof?.kind==='linear-memory-access'||
+        proof?.kind==='linear-memory-bulk-access'||
+        proof?.kind==='linear-memory-atomic-access';
+      if(proof?.verified!==true||
+         proof?.source!=='exact-original-wabt-static-disassembly'||
+         proof?.originalWasmSha256!==pins.wasmSha256||
+         proof?.functionIndex!==pins.originalFunction||
+         proof?.wasmFileOffset!==native.wasmFileOffset||
+         !trapping||
+         typeof proof?.opcode!=='string'||proof.opcode.length>100)
+        b.push('ORIGINAL_F4846_MEMORY_OPCODE_NOT_INDEPENDENTLY_ATTESTED');
+      else loc={kind:'wasm-bytecode-offset',
+        wasmOffset:native.wasmFileOffset,opcode:proof.opcode,staticVerified:true};
+    }
   }else if(native.trapKind==='native-elf-pc'){
     const elf=native.elfMapping;
     if(!elf||typeof elf!=='object'||!HASH.test(elf.sha256||'')||
@@ -146,12 +169,86 @@ export function assessNativeFaultReceipt(input) {
   return result(['INDEPENDENT_RUN_LOG_PROCESS_BINARY_AND_OPERATOR_ATTESTATION_REQUIRED',
     'CXX_SOURCE_MAP_NOT_IN_RECEIPT'],true,loc);
 }
+
+/**
+ * Verify *static* memory-opcode membership against actual canonical original
+ * JSEP bytes with WABT, with no WebKit process or native debugger.
+ *
+ * This is a source/binary alignment check, never a real fault PC witness.
+ * wasm-objdump is an ordinary offline WASM disassembler; run it only after
+ * exact raw-length and SHA256 verification.
+ */
+export async function verifyOriginalStaticMemoryOpcode(wasmPath,offset){
+  if(!safeInt(offset)||offset<pins.staticFunctionStart||
+     offset>=pins.staticFunctionEndExclusive)
+    throw Error('requested original f4846 file offset invalid');
+  const wasm=readFileSync(wasmPath);
+  if(wasm.byteLength!==pins.wasmBytes||
+     createHash('sha256').update(wasm).digest('hex')!==pins.wasmSha256)
+    throw Error('original JSEP WASM bytes do not match canonical SHA/length');
+  const child=spawn('wasm-objdump',['-d',wasmPath],{
+    stdio:['ignore','pipe','pipe']
+  });
+  let count=0,inside=false,headerSeen=false,matched=null;
+  let stderr='';
+  child.stderr.on('data',chunk=>{if(stderr.length<1000)stderr+=String(chunk).slice(0,500)});
+  const lines=createInterface({input:child.stdout,crlfDelay:Infinity});
+  let parserError=null;
+  try{
+    for await(const line of lines){
+      if(++count>=pins.wasmBytes*3)throw Error('unbounded original disassembly');
+      if(line.length>6000)throw Error('invalid original disassembly line size');
+      const h=/^\s*(?:0x)?([0-9a-f]{1,12})\s+func\[(\d{1,6})\]/i.exec(line);
+      if(h){inside=Number(h[2])===pins.originalFunction;
+        if(inside){if(headerSeen)throw Error('duplicate canonical f4846 header');headerSeen=true}
+        continue;
+      }
+      if(!inside)continue;
+      const m=/^\s*(?:0x)?([0-9a-f]{1,12}):\s*((?:[0-9a-f]{2}(?:\s+|$)){1,64})\|\s*([^\s|]{1,90})/i.exec(line);
+      if(!m||Number.parseInt(m[1],16)!==offset)continue;
+      if(matched!==null)throw Error('duplicate canonical opcode at requested offset');
+      const opcode=m[3].toLowerCase();
+      const kind=
+        /^(?:i32|i64|f32|f64|v128)\.(?:load|store)(?:\d|[a-z_.])*$/.test(opcode)||
+        /^(?:i32|i64)\.atomic\.(?:load|store|rmw)[a-z0-9_.]*$/.test(opcode)?
+        'linear-memory-access':
+        /^(?:memory)\.(?:copy|fill|init)$/.test(opcode)?
+        'linear-memory-bulk-access':
+        /^(?:memory|i32|i64)\.atomic\.(?:notify|wait|wait32|wait64)$/.test(opcode)?
+        'linear-memory-atomic-access':null;
+      matched={opcode,kind};
+    }
+  }catch(e){parserError=e;child.kill('SIGTERM')}
+  const close=await new Promise(resolve=>{
+    if(child.exitCode!==null||child.signalCode)
+      resolve({exit:child.exitCode,signal:child.signalCode});
+    else child.once('close',(exit,signal)=>resolve({exit,signal}));
+  });
+  if(parserError)throw parserError;
+  if(close.exit!==0||close.signal)
+    throw Error('canonical WABT disassembler incomplete');
+  if(!headerSeen||!matched||!matched.kind)
+    throw Error('offset is not an exact potentially trapping f4846 memory opcode');
+  return Object.freeze({
+    verified:true,source:'exact-original-wabt-static-disassembly',
+    originalWasmSha256:pins.wasmSha256,
+    functionIndex:pins.originalFunction,wasmFileOffset:offset,
+    opcode:matched.opcode,kind:matched.kind
+  });
+}
+
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   try{
-    if(process.argv.length!==3)throw Error('single sanitized JSON path required');
+    if(process.argv.length<3||process.argv.length>4)
+      throw Error('sanitized JSON path and optional canonical JSEP WASM path required');
     const raw=readFileSync(process.argv[2]);
     if(raw.byteLength>65536)throw Error('oversized untrusted receipt');
-    const verdict=assessNativeFaultReceipt(JSON.parse(raw.toString('utf8')));
+    const input=JSON.parse(raw.toString('utf8'));
+    const proof=input?.native?.trapKind==='wasm-bytecode-offset'&&
+      process.argv.length===4?
+      await verifyOriginalStaticMemoryOpcode(process.argv[3],
+        input.native.wasmFileOffset):null;
+    const verdict=assessNativeFaultReceipt(input,{staticProof:proof});
     console.log('M1538_NATIVE_OPERATOR_RECEIPT_SANITIZED '+JSON.stringify(verdict));
     if(!verdict.candidate)process.exitCode=1;
   }catch(e){console.log('M1538_NATIVE_OPERATOR_RECEIPT_SANITIZED '+
