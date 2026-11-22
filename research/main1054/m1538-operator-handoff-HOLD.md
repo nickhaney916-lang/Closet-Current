@@ -38,9 +38,21 @@ Worker IDs, auth tokens, binary/model payloads, user data or environment values.
 1. wasm-bytecode-offset: independently observed original WASM module file
    offset within static original f4846 [7022489,7165245). This range
    is a bound, NOT itself a genuine trap location.
-2. native-elf-pc: observed machine PC and verified mapped ELF SHA/build ID,
-   mapping start/end, load file offset and file length. Can derive only
-   an ELF file offset, NOT a WASM instruction or C++ statement.
+2. native-elf-pc: observed machine PC and independently verified *mapped*
+   ELF SHA/build ID, mapping start/end, load file offset and file length.
+   The validator currently admits only the exact pinned Playwright 1.56.1
+   WebKit 2215 WPEWebProcess file, SHA-256
+   b46f88603e43eca28083389188944f7f47fd26311c8697a14f910e4f8bfa0d66,
+   ELF Build ID 23a6254355e0ab6aa4f3672cc51bd9eb487522a7, through
+   offline readelf plus SHA verification of the installed executable.
+   CI uses the SHA-pinned Playwright container. The operator's proposed
+   fault mapping must match that binary's hash/build ID, *and* must be
+   independently verified as mapped in the SAME genuinely failing process.
+   A machine PC in an anonymous JIT region is not automatically a location
+   in WPEWebProcess or any other ELF file. An ELF PC yields only an ELF
+   file offset—not a WASM instruction or C++ statement. If the real
+   PC is in a JIT code cache or different library, this scope is
+   BLOCKED pending independently verified engine-native JIT mapping.
 
 The actual original WASM file must first be downloaded from the exact
 Transformers.js 3.8.1 public distribution and verified as 21,596,019 bytes,
