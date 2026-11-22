@@ -12,7 +12,7 @@ const webkitElf = {
   buildId: '8faf9134c0557d2d09f3d680f9c8b780498cf59b',
 };
 const manifest = {
-  schema: 1, engine: pinned, modelSha256: 'a'.repeat(64), testSha: 'b'.repeat(40),
+  schema: 1, engine: pinned, modelSha256: pinned.modelSha256, testSha: 'b'.repeat(40),
   captureMethod: 'authorized-engine-trace', bootIdentity: 'c'.repeat(64),
   runIdentity: 'd'.repeat(64), browserPid: 9, browserStartTicks: '100',
   startMs: 20, modelLength: 15199746,
@@ -99,4 +99,31 @@ test('CLI without operator input reports BLOCKED and emits no attestation', () =
 test('rejects a map without build-matched debug files and original source', () => {
   assert.throws(() => validateSourceMapping({ sourceEvidence: 'symbol-only' }, manifest,
     Buffer.from('int x;'), 'wasm-module-offset'), /DWARF or original source missing/);
+});
+
+
+test('signed original ONNX identity uses canonical 15,199,746-byte model digest, not any 64-hex claim', () => {
+  assert.equal(pinned.modelSha256,
+    '02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3');
+  assert.equal(pinned.modelBytes, 15199746);
+  assert.doesNotThrow(() => validateReceipt(receipt, manifest));
+  const wellFormedWrong = 'a'.repeat(64);
+  for (const changedManifest of [
+    {...manifest, modelSha256: wellFormedWrong},
+    {...manifest, modelLength: 15199745},
+    {...manifest, modelLength: 15199747},
+  ]) assert.throws(
+    () => validateReceipt({...receipt, modelSha256: changedManifest.modelSha256,
+      modelLength: changedManifest.modelLength}, changedManifest),
+    /model or exact test source mismatch/
+  );
+  assert.throws(() => validateReceipt({...receipt, modelSha256: wellFormedWrong}, manifest),
+    /model or exact test source mismatch/);
+  assert.throws(() => validateReceipt({...receipt, modelLength: 15199745}, manifest),
+    /model or exact test source mismatch/);
+  // A matching but wrong operator-signed manifest is insufficient.
+  assert.throws(() => validateReceipt({
+    ...receipt, modelSha256: wellFormedWrong, modelLength: 15199745,
+  }, {...manifest, modelSha256: wellFormedWrong, modelLength: 15199745}),
+  /model or exact test source mismatch/);
 });
