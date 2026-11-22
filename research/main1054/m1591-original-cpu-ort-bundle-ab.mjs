@@ -39,8 +39,21 @@ const worker=[
  "const hash=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');",
  "if(hash!=='"+originalSha+"'||data.length!=="+originalBytes+")throw Error('model-unverified');",
  "stage='SESSION_CREATE';const s=await ort.InferenceSession.create(data,{executionProviders:['wasm']});",
- "const inputs=s.inputNames.slice(0,6);await s.release();",
- "self.postMessage({phase:'done',modelAttested:true,inputs});",
+ "const inputs=s.inputNames.slice(0,6);if(inputs[0]!=='pixel_values')throw Error('unexpected-input');",
+ "stage='DETERMINISTIC_INFERENCE';",
+ "const tensor=new ort.Tensor('float32',new Float32Array(3*512*512),[1,3,512,512]);",
+ "const outputs=await s.run({pixel_values:tensor});",
+ "const logits=outputs.logits||outputs[Object.keys(outputs)[0]];",
+ "const dims=Array.isArray(logits?.dims)?logits.dims.slice(0,6):[];",
+ "const values=logits?.data;",
+ "const finite=!!values&&values.length>0&&Array.from(values).every(v=>Number.isFinite(Number(v)));",
+ "let outputSha=null;",
+ "if(finite&&ArrayBuffer.isView(values)){",
+ "const raw=new Uint8Array(values.buffer,values.byteOffset,values.byteLength);",
+ "const hd=await crypto.subtle.digest('SHA-256',raw);",
+ "outputSha=Array.from(new Uint8Array(hd),x=>x.toString(16).padStart(2,'0')).join('');}",
+ "stage='RELEASE';await s.release();",
+ "self.postMessage({phase:'done',modelAttested:true,inputs,inferenceRan:true,finiteOutput:finite,outputDims:dims,outputSha});",
  "}catch(e){const name=['RuntimeError','Error','TypeError','RangeError'].includes(e?.name)?e.name:'OTHER';",
  "const bounds=typeof e?.message==='string'&&e.message.slice(0,256).includes('memory access out of bounds');",
  "self.postMessage({phase:'error',stage,errorClass:name,boundsMessage:bounds});}};"
@@ -87,11 +100,17 @@ try{
   workerErrorClass:result?.errorClass||null,
   workerWasmBoundsTextObserved:result?.boundsMessage===true,
   sessionInputNames:result?.inputs||[],
+  deterministicInferenceRan:result?.inferenceRan===true,
+  finiteOutput:result?.finiteOutput===true,outputDims:result?.outputDims||null,
+  outputSha:result?.outputSha||null,
   nativeTrapPc:null,wasmFileOffset:null,originalNativeRedObserved:false,
   causalFixProven:false,releaseAllowed:false,familyAlpha:'HOLD'};
  const pass=result?.phase==='done'&&result?.modelAttested===true&&
    receipt.expectedWasmLoaded&&!receipt.oppositeWasmLoaded&&
-   receipt.sessionInputNames.includes('pixel_values');
+   receipt.sessionInputNames.includes('pixel_values')&&
+   receipt.deterministicInferenceRan&&receipt.finiteOutput&&
+   Array.isArray(receipt.outputDims)&&receipt.outputDims.length>=2&&
+   /^[0-9a-f]{64}$/.test(receipt.outputSha||'');
  console.log('M1591_SANITIZED_ORIGINAL_ONNX_SESSION '+JSON.stringify({...receipt,
   outcome:pass?'RESEARCH_ONLY_SAME_ORIGINAL_MODEL_SESSION_PASS':'FAIL_NOT_NATIVE_ATTRIBUTED'}));
  if(!pass)process.exitCode=1;
