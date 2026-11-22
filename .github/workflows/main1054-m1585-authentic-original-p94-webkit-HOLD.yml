@@ -6,10 +6,11 @@ permissions:
   contents: read
 jobs:
   original-p94-first-attempt:
-    name: original-p94-first-attempt-${{ matrix.profile }}-${{ matrix.ordinal }}
+    name: original-p94-first-attempt-${{ matrix.jsc_mode }}-${{ matrix.profile }}-${{ matrix.ordinal }}
     strategy:
       fail-fast: false
       matrix:
+        jsc_mode: [default, explicit-bounds]
         profile: [instrumented, no-js-proxy]
         ordinal: [1, 2, 3, 4]
     runs-on: ubuntu-24.04
@@ -21,6 +22,7 @@ jobs:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       M1585_COHORT_ORDINAL: ${{ matrix.ordinal }}
       M1585_WORKER_PROFILE: ${{ matrix.profile }}
+      M1585_JSC_MEMORY_MODE: ${{ matrix.jsc_mode }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,6 +43,6 @@ jobs:
           node --check research/main1054/m1585-original-p94-standalone-webkit.mjs
       - name: Install the identical pinned browser-facing Playwright release
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
-      - name: First-attempt original P94 ${{ matrix.profile }} ordinal ${{ matrix.ordinal }} (no retries)
+      - name: First-attempt original P94 JSC ${{ matrix.jsc_mode }} ${{ matrix.profile }} ordinal ${{ matrix.ordinal }} (no retries)
         shell: bash
         run: timeout -k 10s 400s node research/main1054/m1585-original-p94-standalone-webkit.mjs
