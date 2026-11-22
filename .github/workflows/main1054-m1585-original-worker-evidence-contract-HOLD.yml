@@ -22,6 +22,8 @@ jobs:
           set -euo pipefail
           test "$(git diff --name-only 7043a298912a865246a8b43a12f6d31a8161738c HEAD | sort)" = "$(printf '%s\n' \
             .github/workflows/main1054-m1585-original-worker-evidence-contract-HOLD.yml \
+            .github/workflows/main1054-m1585-authentic-original-p94-webkit-HOLD.yml \
+            research/main1054/m1585-original-p94-standalone-webkit.mjs \
             research/main1054/m1585-original-worker-evidence-contract.mjs \
             tests/main1054-m1585-original-worker-evidence-contract.test.mjs | sort)"
           test "$(git rev-parse HEAD:research/main1054/m287-original-webkit-failing-process-witness.mjs)" = "4439bb9d27220fe0a37402e81899d2bf5bcc5346"
