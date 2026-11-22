@@ -31,7 +31,16 @@ restricted run log. Leave host, runner and sandbox security settings intact.
 3. Confirm access to the build-matched binary and associated debug line table.
    Verify source and debug artifact provenance from the exact build recipe.
    For native ELF, confirm the mapped backing file and executable load segment
-   from the live process map and original ELF headers. Match the mapping to
+   from the live process map and original ELF headers. The verifier admits
+   exact pinned `libWPEWebKit-2.0.so.1.7.0` (SHA-256
+   `daa10258a2161710c7c1d6a3e3f7abe0a100a6f269c00f5843dcd0f7df46ec29`,
+   Build ID `8faf9134c0557d2d09f3d680f9c8b780498cf59b`) **or**
+   exact pinned `libjavascriptcoregtk-6.0.so.1.7.0` (SHA-256
+   `73f32b17f002381abadb8cec18cdec85fb17ace1077f993f448e3024b3014f8b`,
+   Build ID `e04d2e784f16edeb1612cc24cd180e328c4b3e56`),
+   only for an actual file-backed PC in that precise mapped ELF.
+   A generated WASM/JSC JIT address is **not file-backed in either library**; 
+   independently validated engine native-code origin mapping is mandatory. Match the mapping to
    the expected device/inode before hashing and reading the Build ID. Use
    M290/M291 for reference identities. A healthy run supplies reference
    identity only.
