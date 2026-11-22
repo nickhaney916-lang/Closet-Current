@@ -23,6 +23,15 @@ const webkit = {
   sha256: 'daa10258a2161710c7c1d6a3e3f7abe0a100a6f269c00f5843dcd0f7df46ec29',
   buildId: '8faf9134c0557d2d09f3d680f9c8b780498cf59b',
 };
+// Independently inventoried in M286 from the exact pinned WebKit container.
+// A JSC generated WASM JIT address is not file-backed ELF: these pins
+// admit only an actual file-mapped library instruction coordinate.
+const javaScriptCore = {
+  sha256: '73f32b17f002381abadb8cec18cdec85fb17ace1077f993f448e3024b3014f8b',
+  buildId: 'e04d2e784f16edeb1612cc24cd180e328c4b3e56',
+};
+const pinnedFileBackedNativeModule = (location, mapping) =>
+  [webkit, javaScriptCore].find(m => same(location,m) && same(mapping,m)) ?? null;
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const sha = value => typeof value === 'string' && /^[0-9a-f]{64}$/.test(value);
 const uint = value => Number.isSafeInteger(value) && value >= 0;
@@ -99,7 +108,7 @@ export function instructionCoordinate(location, mapping) {
   requireEvidence(location.kind === 'native-elf-pc' && location.origin === 'trap-event' &&
     hex(location.pc) && hex(location.mapStart) && hex(location.mapEnd) &&
     hex(location.mapFileOffset) && hex(location.loadBias) &&
-    same(location, webkit) && same(mapping, webkit), 'requires a verified file-backed native PC');
+    pinnedFileBackedNativeModule(location, mapping) !== null, 'requires a verified file-backed native PC');
   const [pc, start, end, fileOffset, bias] = [
     location.pc, location.mapStart, location.mapEnd, location.mapFileOffset, location.loadBias,
   ].map(BigInt);
@@ -136,7 +145,8 @@ export function validateSourceMapping(mapping, manifest, source, kind) {
 export function correlate(receipt, manifest, mapping, binary, source) {
   const location = validateReceipt(receipt, manifest);
   const coordinate = instructionCoordinate(location, mapping);
-  const expectedBinary = location.kind === 'wasm-module-offset' ? pinned.jsepSha256 : webkit.sha256;
+  const expectedBinary = location.kind === 'wasm-module-offset' ? pinned.jsepSha256 :
+    pinnedFileBackedNativeModule(location, mapping)?.sha256;
   requireEvidence(digest(binary) === expectedBinary, 'pinned binary bytes mismatch');
   requireEvidence(mapping.kind === location.kind && mapping.coordinate === coordinate &&
     mapping.functionIndex === location.functionIndex &&
