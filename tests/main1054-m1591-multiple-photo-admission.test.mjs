@@ -1,4 +1,4 @@
-import {classifyM1591ErrorReason} from '../research/main1054/m1591-error-reason-classifier.mjs';
+import {classifyM1591ErrorReason,parseM1591WasmStackFrames} from '../research/main1054/m1591-error-reason-classifier.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -60,4 +60,22 @@ test('error classes fail closed and no raw errors are printed',()=>{
  assert.ok(!source.includes('rawError:'));
  assert.ok(source.includes('originalNativeRedObserved:false'));
  assert.ok(source.includes('causalFixProven:false'));
+});
+
+test('original numeric WASM frames preserve uncertainty about native PC',()=>{
+ const observed=parseM1591WasmStackFrames('RuntimeError: memory access out of bounds\n at wasm-function[4846]\n at wasm-function[1384]');
+ assert.deepEqual(observed,[{functionIndex:4846,stackLocationUnverified:null},{functionIndex:1384,stackLocationUnverified:null}]);
+ assert.deepEqual(parseM1591WasmStackFrames('wasm-function[4846]:0x12a'),[{functionIndex:4846,stackLocationUnverified:298}]);
+ assert.deepEqual(parseM1591WasmStackFrames('https://example.invalid/private/writer.js:42:1'),[]);
+ assert.deepEqual(parseM1591WasmStackFrames('wasm-function[9999999]'),[]);
+ assert.equal(parseM1591WasmStackFrames(Array.from({length:9},(_,i)=>'wasm-function['+i+']').join('\n')).length,6);
+ assert.deepEqual(parseM1591WasmStackFrames(null),[]);
+});
+test('stack frame evidence is numeric, bounded, and cannot claim bytecode PC',()=>{
+ const src=readFileSync('research/main1054/m1591-original-cpu-ort-bundle-ab.mjs','utf8');
+ assert.ok(src.includes('parseM1591WasmStackFrames.toString()'));
+ assert.ok(src.includes('reportedWasmStackFramesUnverified:'));
+ assert.ok(src.includes('nativeTrapPc:null,wasmFileOffset:null'));
+ assert.ok(!src.includes('rawStack:'));
+ assert.ok(!src.includes('workerErrorStack:'));
 });

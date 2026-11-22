@@ -8,7 +8,7 @@ import {createHash} from 'node:crypto';
 import {createServer} from 'node:http';
 import {resolve} from 'node:path';
 import {webkit,chromium} from 'playwright';
-import {classifyM1591ErrorReason} from './m1591-error-reason-classifier.mjs';
+import {classifyM1591ErrorReason,parseM1591WasmStackFrames} from './m1591-error-reason-classifier.mjs';
 const originalSha='02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3';
 const originalBytes=15199746;
 const originalJsep='c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39';
@@ -31,6 +31,7 @@ const selectedSha=sha(readFileSync(resolve(dir,stem+'.wasm')));
 const requested=new Set();
 const worker=[
  'const classifyM1591ErrorReason='+classifyM1591ErrorReason.toString()+';',
+ 'const parseM1591WasmStackFrames='+parseM1591WasmStackFrames.toString()+';',
  "self.onmessage=async()=>{let stage='IMPORT';try{",
  "const ort=await import('/dist/"+bundle+"');",
  "ort.env.wasm.numThreads=1;ort.env.wasm.proxy=false;",
@@ -58,7 +59,8 @@ const worker=[
  "self.postMessage({phase:'done',modelAttested:true,inputs,inferenceRan:true,finiteOutput:finite,outputDims:dims,outputSha});",
  "}catch(e){const name=['RuntimeError','Error','TypeError','RangeError'].includes(e?.name)?e.name:'OTHER';",
  "const reason=classifyM1591ErrorReason(name,e?.message);",
- "self.postMessage({phase:'error',stage,errorClass:name,errorReasonClass:reason,boundsMessage:reason==='WASM_MEMORY_BOUNDS'});}};"
+ "const frames=parseM1591WasmStackFrames(e?.stack);",
+ "self.postMessage({phase:'error',stage,errorClass:name,errorReasonClass:reason,boundsMessage:reason==='WASM_MEMORY_BOUNDS',wasmFrames:frames});}};"
 ].join('\n');
 const server=createServer((req,res)=>{
  try{
@@ -102,6 +104,8 @@ try{
   workerErrorClass:result?.errorClass||null,
   workerErrorReasonClass:['WASM_MEMORY_BOUNDS','WASM_TABLE_BOUNDS','WASM_UNREACHABLE','STACK_EXHAUSTED','MEMORY_RESOURCE','RUNTIME_OTHER','NON_RUNTIME_OTHER'].includes(result?.errorReasonClass)?result.errorReasonClass:null,
   workerWasmBoundsTextObserved:result?.boundsMessage===true,
+  // Numeric JS stack frames are not native PCs or authoritative WASM offsets.
+  reportedWasmStackFramesUnverified:Array.isArray(result?.wasmFrames)&&result.wasmFrames.length<=6&&result.wasmFrames.every(f=>Number.isSafeInteger(f?.functionIndex)&&f.functionIndex>=0&&f.functionIndex<=20000&&(f?.stackLocationUnverified===null||Number.isSafeInteger(f?.stackLocationUnverified)&&f.stackLocationUnverified>=0))?result.wasmFrames:[],
   sessionInputNames:result?.inputs||[],
   deterministicInferenceRan:result?.inferenceRan===true,
   finiteOutput:result?.finiteOutput===true,outputDims:result?.outputDims||null,
