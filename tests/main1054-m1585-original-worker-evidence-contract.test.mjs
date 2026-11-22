@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assessOriginalWorkerBridge as check,validWorkerEventSequence,expectedWorkerEvents,originalPins, classifyOriginalWorkerProfile}
+import {assessOriginalWorkerBridge as check,validWorkerEventSequence,expectedWorkerEvents,originalPins, classifyOriginalWorkerProfile, classifyPinnedWorkerExceptionPause}
   from '../research/main1054/m1585-original-worker-evidence-contract.mjs';
 
 const sha='a'.repeat(40),digest='b'.repeat(64);
@@ -170,4 +170,76 @@ test('CI runs four fresh first-attempt controls per profile without native chang
  assert.match(script,/if\(workerProfile==='instrumented'\)\{\s*for\(let i=0;i<36/);
  assert.match(script,/ORIGINAL_WORKER_DONE_NO_JS_PROXY_UNATTESTED/);
  assert.match(script,/if\(receipt.workerTerminal==='error'\)/);
+});
+
+
+test('pinned WebKit RemoteObject identifies wasm-bounds text but never native trap PC',()=>{
+ const event={method:'Debugger.paused',params:{reason:'exception',data:{
+  type:'object',subtype:'error',className:'RuntimeError',
+  description:'RuntimeError: memory access out of bounds'}}};
+ const r=classifyPinnedWorkerExceptionPause(event);
+ assert.equal(r.state,'WASM_BOUNDS_MESSAGE_UNATTRIBUTED');
+ assert.equal(r.observedWebAssemblyRuntimeError,true);
+ assert.equal(r.wasmBoundsMessageObserved,true);
+ assert.equal(r.originalOrtCreateSessionAttribution,false);
+ assert.equal(r.originalNativeRedObserved,false);
+ assert.equal(r.nativeTrapPc,null);
+ assert.equal(r.wasmFileOffset,null);
+ assert.equal(r.causalFixProven,false);
+ assert.equal(r.releaseAllowed,false);
+ assert.equal('description' in r,false);
+ assert.equal('objectId' in r,false);
+});
+test('inspector exception reason without actual remote-object subtype cannot assert wasm-bounds',()=>{
+ for(const input of [
+  null,
+  {},
+  {method:'Debugger.paused',params:{reason:'other'}},
+  {method:'Debugger.paused',params:{reason:'exception'}},
+  {method:'Debugger.paused',params:{reason:'exception',data:{type:'string',value:'RuntimeError: memory access out of bounds'}}},
+  {method:'Debugger.paused',params:{reason:'exception',data:{type:'object',subtype:'array',className:'RuntimeError',description:'memory access out of bounds'}}}
+ ]) {
+  const r=classifyPinnedWorkerExceptionPause(input);
+  assert.equal(r.wasmBoundsMessageObserved,false);
+  assert.equal(r.originalNativeRedObserved,false);
+ }
+});
+test('runtime error class alone or non-native errors cannot be relabeled original OrtCreateSession bounds',()=>{
+ for(const event of [
+  {className:'RuntimeError',description:'RuntimeError: unreachable'},
+  {className:'TypeError',description:'memory access out of bounds'},
+  {className:'Error',description:'RuntimeError: memory access out of bounds'}
+ ]) {
+  const r=classifyPinnedWorkerExceptionPause({method:'Debugger.paused',params:{
+   reason:'exception',data:{type:'object',subtype:'error',...event}}});
+  assert.equal(r.wasmBoundsMessageObserved,false);
+  assert.equal(r.originalOrtCreateSessionAttribution,false);
+ }
+});
+test('inspector pause description never leaves source-attested bounded classification',()=>{
+ const leak='secret-token-should-not-be-in-output';
+ const r=classifyPinnedWorkerExceptionPause({method:'Debugger.paused',params:{
+  reason:'exception',data:{type:'object',subtype:'error',className:'RuntimeError',
+   objectId:'secret-object-id',description:'RuntimeError: memory access out of bounds '+leak,
+   preview:{properties:[{value:'private-source-jpeg'}]}}}});
+ assert.equal(r.wasmBoundsMessageObserved,true);
+ assert.ok(!JSON.stringify(r).includes(leak));
+ assert.ok(!JSON.stringify(r).includes('secret-object-id'));
+ assert.ok(!JSON.stringify(r).includes('private-source-jpeg'));
+ assert.equal(r.familyAlpha,'HOLD');
+});
+test('oversized or absent thrown object descriptions fail closed',()=>{
+ for(const d of [null,undefined,'x'.repeat(4097)]){
+  const r=classifyPinnedWorkerExceptionPause({method:'Debugger.paused',params:{
+   reason:'exception',data:{type:'object',subtype:'error',className:'RuntimeError',description:d}}});
+  assert.equal(r.state,'ERROR_CLASS_OR_DESCRIPTION_UNAVAILABLE');
+  assert.equal(r.wasmBoundsMessageObserved,false);
+ }
+});
+test('genuine Worker diagnostics expose only sanitized classifications, never promote source offsets',()=>{
+ const src=readFileSync('research/main1054/m1585-original-p94-standalone-webkit.mjs','utf8');
+ assert.match(src,/classifyPinnedWorkerExceptionPause\(w\)/);
+ assert.match(src,/workerNativeBoundsTextPauseCount/);
+ assert.match(src,/workerThrownValueIsNativePc:false/);
+ assert.match(src,/receipt.workerPauseEventWorkerDigest!==receipt.workerIdDigest/);
 });
