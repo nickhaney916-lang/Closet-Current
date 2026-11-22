@@ -1,0 +1,35 @@
+name: M1585 original-model Worker evidence contract (HOLD, offline)
+on:
+  push:
+    branches: [research/main1054-m1585-original-worker-evidence-contract-HOLD]
+permissions:
+  contents: read
+jobs:
+  original-worker-bridge-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reject nonisolated research or source modifications
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git diff --name-only 7043a298912a865246a8b43a12f6d31a8161738c HEAD | sort)" = "$(printf '%s\n' \
+            .github/workflows/main1054-m1585-original-worker-evidence-contract-HOLD.yml \
+            .github/workflows/main1054-m1585-authentic-original-p94-webkit-HOLD.yml \
+            research/main1054/m1585-original-p94-standalone-webkit.mjs \
+            research/main1054/m1585-original-worker-evidence-contract.mjs \
+            tests/main1054-m1585-original-worker-evidence-contract.test.mjs | sort)"
+          test "$(git rev-parse HEAD:research/main1054/m287-original-webkit-failing-process-witness.mjs)" = "4439bb9d27220fe0a37402e81899d2bf5bcc5346"
+          test "$(git diff --name-only 7043a298912a865246a8b43a12f6d31a8161738c HEAD -- public)" = ""
+          node --check research/main1054/m1585-original-worker-evidence-contract.mjs
+      - name: Run original-model and Worker correlation negative controls
+        run: |
+          node --test tests/main1054-m1585-original-worker-evidence-contract.test.mjs
+          node --test tests/main1054-m287-original-webkit-failing-process-witness.test.mjs
