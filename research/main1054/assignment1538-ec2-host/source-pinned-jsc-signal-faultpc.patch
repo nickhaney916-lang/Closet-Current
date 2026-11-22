@@ -1,0 +1,105 @@
+diff --git a/Source/JavaScriptCore/wasm/js/JSWebAssemblyInstance.h b/Source/JavaScriptCore/wasm/js/JSWebAssemblyInstance.h
+--- a/Source/JavaScriptCore/wasm/js/JSWebAssemblyInstance.h
++++ b/Source/JavaScriptCore/wasm/js/JSWebAssemblyInstance.h
+@@ -296,7 +296,11 @@
+     void* softStackLimit() const { return m_softStackLimit; }
+ 
+     void setFaultPC(void* pc) { m_faultPC = pc; };
+-    void* faultPC() const { return m_faultPC; }
++    void* faultPC() const { return m_faultPC; }
++    // M1538 research-only engine build: attach SIGSEGV's fault address to
++    // the existing faultPC; emit sanitized evidence in the later slow path.
++    void setFaultAddress(void* address) { m_faultAddress = address; }
++    void* faultAddress() const { return m_faultAddress; }
+ 
+ private:
+     JSWebAssemblyInstance(VM&, Structure*, JSWebAssemblyModule*, WebAssemblyModuleRecord*);
+@@ -328,7 +332,8 @@
+     BitVector m_passiveDataSegments;
+     FixedVector<RefPtr<const Wasm::Tag>> m_tags;
+     Vector<Ref<Wasm::WasmToJSCallee>> importCallees;
+-    void* m_faultPC { nullptr };
++    void* m_faultPC { nullptr };
++    void* m_faultAddress { nullptr };
+ };
+ 
+ } // namespace JSC
+diff --git a/Source/JavaScriptCore/wasm/WasmFaultSignalHandler.cpp b/Source/JavaScriptCore/wasm/WasmFaultSignalHandler.cpp
+--- a/Source/JavaScriptCore/wasm/WasmFaultSignalHandler.cpp
++++ b/Source/JavaScriptCore/wasm/WasmFaultSignalHandler.cpp
+@@ -110,7 +110,8 @@
+             auto [isWasm, callee] = didFaultInWasm(faultingInstruction);
+             if (isWasm) {
+                 auto* instance = jsSecureCast<JSWebAssemblyInstance*>(static_cast<JSCell*>(MachineContext::wasmInstancePointer(context)));
+-                instance->setFaultPC(faultingInstruction);
++                instance->setFaultPC(faultingInstruction);
++                instance->setFaultAddress(sigInfo.faultingAddress);
+ #if CPU(ARM64E) && HAVE(HARDENED_MACH_EXCEPTIONS)
+                 if (g_wtfConfig.signalHandlers.useHardenedHandler) {
+                     MachineContext::setInstructionPointer(context, presignedTrampoline);
+diff --git a/Source/JavaScriptCore/wasm/WasmSlowPaths.cpp b/Source/JavaScriptCore/wasm/WasmSlowPaths.cpp
+--- a/Source/JavaScriptCore/wasm/WasmSlowPaths.cpp
++++ b/Source/JavaScriptCore/wasm/WasmSlowPaths.cpp
+@@ -36,7 +36,9 @@
+ #include "JITExceptions.h"
+ #include "JSWebAssemblyArrayInlines.h"
+ #include "JSWebAssemblyException.h"
+-#include "JSWebAssemblyInstance.h"
++#include "JSWebAssemblyInstance.h"
++#include "JSWebAssemblyMemory.h"
++#include "WasmMemory.h"
+ #include "LLIntCommon.h"
+ #include "LLIntData.h"
+ #include "WasmBBQPlan.h"
+@@ -52,7 +54,9 @@
+ #include "WasmTypeDefinitionInlines.h"
+ #include "WasmWorklist.h"
+ #include "WebAssemblyFunction.h"
+-#include <bit>
++#include <bit>
++#include <cstdint>
++#include <wtf/DataLog.h>
+ 
+ namespace JSC { namespace LLInt {
+ 
+@@ -1369,12 +1373,34 @@
+ {
+     SlowPathFrameTracer tracer(instance->vm(), callFrame);
+ #if ENABLE(WEBASSEMBLY_BBQJIT)
+-    void* pc = instance->faultPC();
+-    instance->setFaultPC(nullptr);
+-    auto* callee = callFrame->callee().asNativeCallee();
+-    ASSERT(callee->category() == NativeCallee::Category::Wasm);
+-    auto& wasmCallee = static_cast<Wasm::Callee&>(*callee);
+-    if (isAnyOMG(wasmCallee.compilationMode())) {
++    void* pc = instance->faultPC();
++    void* accessAddress = instance->faultAddress();
++    instance->setFaultPC(nullptr);
++    instance->setFaultAddress(nullptr);
++    auto* callee = callFrame->callee().asNativeCallee();
++    ASSERT(callee->category() == NativeCallee::Category::Wasm);
++    auto& wasmCallee = static_cast<Wasm::Callee&>(*callee);
++    // M1538 operator-only diagnostic engine; this file must NEVER be shipped.
++    // Log relative scalar evidence only, never arbitrary native process pointers.
++    if (pc && accessAddress && instance->memory() && exceptionType == Wasm::ExceptionType::OutOfBoundsMemoryAccess) {
++        auto [codeStart, codeEnd] = wasmCallee.range();
++        auto& linearMemory = instance->memory()->memory();
++        auto* basePointer = linearMemory.basePointer();
++        uintptr_t machinePC = reinterpret_cast<uintptr_t>(pc);
++        uintptr_t codeBase = reinterpret_cast<uintptr_t>(codeStart);
++        uintptr_t codeLimit = reinterpret_cast<uintptr_t>(codeEnd);
++        uintptr_t access = reinterpret_cast<uintptr_t>(accessAddress);
++        uintptr_t memoryBase = reinterpret_cast<uintptr_t>(basePointer);
++        if (codeBase && memoryBase && codeBase <= machinePC && machinePC < codeLimit && access >= memoryBase) {
++            dataLogLn("CC1538_SOURCE_PINNED_WASM_SIGNAL_V1 functionSpaceIndex=", wasmCallee.index().rawIndex(),
++                " jitMachineCodeOffset=", machinePC - codeBase,
++                " effectiveLinearAddress=", access - memoryBase,
++                " liveMemoryBytes=", linearMemory.size(),
++                " mappedCapacityBytes=", linearMemory.mappedCapacity(),
++                " accessWidthKnown=false wasmBytecodeOffsetKnown=false");
++        }
++    }
++    if (isAnyOMG(wasmCallee.compilationMode())) {
+         if (auto callSiteIndexFromPC = static_cast<Wasm::OptimizingJITCallee&>(wasmCallee).tryGetCallSiteIndex(pc))
+             callFrame->setCallSiteIndex(callSiteIndexFromPC.value());
+     }
