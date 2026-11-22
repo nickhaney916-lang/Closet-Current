@@ -10,7 +10,9 @@ export function assessJitOptionDump(raw){
  const one=(key)=>{
   const pat=new RegExp('(?:^|\\n)\\s*'+key+'=(true|false)(?=\\s|$)','g');
   const a=[...raw.matchAll(pat)].map(x=>x[1]);
-  return a.length===1?a[0]:null;
+  // A WPE process family can print the same full options more than once.
+  // Accept repetitions ONLY when they all agree; mixed values fail closed.
+  return a.length>0&&a.every(x=>x===a[0])?a[0]:null;
  };
  const bbq=one('useBBQJIT'),omg=one('useOMGJIT');
  if(bbq===null||omg===null)return {...blocked,ambiguous:true};

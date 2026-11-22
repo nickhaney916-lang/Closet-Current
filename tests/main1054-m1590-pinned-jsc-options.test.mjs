@@ -10,10 +10,18 @@ test('source-bound JSC baseline and OMG-off options are only configuration recei
   assert.equal(r.causalFixProven,false);assert.equal(r.releaseAllowed,false);
  }
 });
-test('missing, duplicate, wrong-class and forged parser inputs fail closed',()=>{
+test('repeat identical process-family option dumps are accepted, conflicts are not',()=>{
+ const raw='All JSC options:\n useBBQJIT=true\n useOMGJIT=false\n'+
+   'All JSC options:\n useBBQJIT=true\n useOMGJIT=false\n';
+ const r=check(raw);
+ assert.equal(r.observed,true);assert.equal(r.bbq,'true');assert.equal(r.omg,'false');
+ assert.equal(r.actualTierProven,false);assert.equal(r.nativeTrapPc,null);
+});
+test('missing, conflicting, wrong-class and forged parser inputs fail closed',()=>{
  for(const s of ['',null,'useBBQJIT=true\nuseOMGJIT=false',
   'Modified JSC options:\nuseBBQJIT=true\nuseOMGJIT=false',
   'All JSC options:\nuseBBQJIT=true\nuseOMGJIT=false\nuseOMGJIT=true',
+  'All JSC options:\nuseBBQJIT=true\nuseBBQJIT=false\nuseOMGJIT=true',
   'All JSC options:\nuseBBQJIT=true\nuseOMGJIT=secret',
   'All JSC options:\nuseBBQJIT=true\nuseOMGJIT=false\n'+'x'.repeat(512001)]){
   const r=check(s);assert.equal(r.observed,false);assert.equal(r.nativeTrapPc,null);
