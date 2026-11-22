@@ -178,7 +178,13 @@ function boundedRead(path, limit) {
   }
 }
 
-export function authenticate(bytes, signature, keyBytes) {
+export function authenticate(bytes, signature, keyBytes, independentlyApprovedKeySha256) {
+  // The manifest and signature may be created together by an untrusted
+  // signer. The trusted key fingerprint MUST be supplied out-of-band by the
+  // authorized operator, never inferred from the signed receipt/manifest.
+  requireEvidence(sha(independentlyApprovedKeySha256) &&
+    digest(keyBytes) === independentlyApprovedKeySha256,
+    'independently approved operator key fingerprint required');
   const key = createPublicKey(keyBytes);
   requireEvidence(key.asymmetricKeyType === 'ed25519' && signature.length === 64 &&
     verify(null, bytes, key, signature), 'operator receipt signature rejected');
@@ -194,7 +200,10 @@ function main(args) {
   const key = boundedRead(keyPath, 4096);
   requireEvidence(digest(key) === manifest.operatorKeySha256, 'operator key mismatch');
   requireEvidence(digest(mappingBytes) === manifest.mappingSha256, 'independently reviewed mapping digest mismatch');
-  authenticate(receiptBytes, boundedRead(signaturePath, 64), key);
+  // The caller's trusted fingerprint is a separate prerequisite. A manifest
+  // cannot authorize its own newly generated signing key.
+  const trustedKey = process.env.CC1538_APPROVED_OPERATOR_SPKI_SHA256;
+  authenticate(receiptBytes, boundedRead(signaturePath, 64), key, trustedKey);
   return correlate(JSON.parse(receiptBytes), manifest, JSON.parse(mappingBytes),
     boundedRead(binaryPath, 512 * 1024 * 1024), boundedRead(sourcePath, 8 * 1024 * 1024));
 }
