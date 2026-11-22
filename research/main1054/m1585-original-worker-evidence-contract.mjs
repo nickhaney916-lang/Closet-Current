@@ -189,3 +189,39 @@ export function classifyOriginalWorkerProfile(receipt) {
   return {...base,status:'HEALTHY_INSTRUMENTED_PROVENANCE_ATTESTED',
     reason:'CONTROL_ONLY_RESEARCH_PROXIES_CAN_PERTURB_TIMING'};
 }
+
+/**
+ * Sanitized pinned-WebKit Worker Inspector exception candidate classifier.
+ * WebKit source: InspectorDebuggerAgent::buildExceptionPauseReason wraps the
+ * actual caught/thrown value as a Runtime.RemoteObject and transports it in
+ * Debugger.paused.params.data. Only strict primitive flags leave this function.
+ * An Inspector JS thrown object is NOT a native machine PC, WASM file offset,
+ * OrtCreateSession call-site attribution, or causal fix.
+ */
+export function classifyPinnedWorkerExceptionPause(message) {
+  const empty={
+    schema:'M1585_WEBKIT_WORKER_THROWN_OBJECT_CLASS_V1',
+    state:'UNVERIFIED',observedWebAssemblyRuntimeError:false,
+    wasmBoundsMessageObserved:false,
+    originalOrtCreateSessionAttribution:false,originalNativeRedObserved:false,
+    nativeTrapPc:null,wasmFileOffset:null,sourceCxxStatement:null,
+    causalFixProven:false,releaseAllowed:false,familyAlpha:'HOLD'
+  };
+  if (!message || message.method!=='Debugger.paused' ||
+      message.params?.reason!=='exception') return {...empty,state:'NOT_AN_EXCEPTION_PAUSE'};
+  const d=message.params.data;
+  if (!d || typeof d!=='object' || Array.isArray(d) ||
+      d.type!=='object'||d.subtype!=='error')
+    return {...empty,state:'THROWN_OBJECT_NOT_IDENTIFIED'};
+  if (typeof d.className!=='string'||d.className.length>60 ||
+      typeof d.description!=='string'||d.description.length>4096)
+    return {...empty,state:'ERROR_CLASS_OR_DESCRIPTION_UNAVAILABLE'};
+  const runtime=d.className==='RuntimeError'||
+    d.className==='WebAssembly.RuntimeError';
+  const bounds=runtime && /(?:memory access out of bounds|out of bounds memory access|out-of-bounds memory access)/i
+    .test(d.description);
+  // Do NOT return original description / stack / object ID / thrown name.
+  return {...empty,state:bounds?'WASM_BOUNDS_MESSAGE_UNATTRIBUTED':
+    runtime?'WASM_RUNTIME_ERROR_OTHER_UNATTRIBUTED':'OTHER_ERROR_UNATTRIBUTED',
+    observedWebAssemblyRuntimeError:runtime,wasmBoundsMessageObserved:bounds};
+}
