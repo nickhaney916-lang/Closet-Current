@@ -33,6 +33,9 @@ const bounded = (v, max=128) => typeof v==='string'&&v.length>0&&v.length<=max &
   ![...v].some(c=>c.charCodeAt(0)<32||c.charCodeAt(0)===127);
 const sha256 = v => createHash('sha256').update(v).digest('hex');
 const wait = ms=>new Promise(r=>setTimeout(r,ms));
+// Research-only instrumentation executed in the paused dedicated Worker before
+// initialization; preserves native return values but perturbs timing.
+const workerAttestationPrelude="(()=>{\n const g=globalThis;\n if(g.__ccM1585Attestation)return 'ALREADY_ARMED';\n const expectedWasm=21596019, expectedModel=15199746;\n const p={wasm:{count:0,sha256:null,bytes:null,instantiated:false,errors:0},\n   model:{copyCount:0,sha256:null,bytes:null,copyOffset:null,hashErrors:0}};\n const hash=async bytes=>{\n   const digest=await crypto.subtle.digest('SHA-256',bytes);\n   return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');\n };\n const proof=(bytes,kind,operation)=>{\n   if(bytes?.byteLength!==(kind==='wasm'?expectedWasm:expectedModel))return;\n   try{\n     const copy=new Uint8Array(bytes);\n     if(kind==='wasm'){\n       p.wasm.count++;p.wasm.bytes=copy.byteLength;\n       hash(copy).then(s=>{p.wasm.sha256=s;p.wasm.instantiated=true;},\n         ()=>{p.wasm.errors++});\n     }else{\n       p.model.bytes=copy.byteLength;\n       hash(copy).then(s=>{p.model.sha256=s;},()=>{p.model.hashErrors++});\n     }\n   }catch{if(kind==='wasm')p.wasm.errors++;else p.model.hashErrors++}\n };\n const W=WebAssembly, inst=W.instantiate, stream=W.instantiateStreaming;\n W.instantiate=function(input,...rest){\n   const result=Reflect.apply(inst,W,[input,...rest]);\n   if(input instanceof ArrayBuffer||ArrayBuffer.isView(input)){\n     Promise.resolve(result).then(()=>proof(input,'wasm','instantiate'),()=>{});\n   }\n   return result;\n };\n if(typeof stream==='function')W.instantiateStreaming=function(input,...rest){\n   let captured;\n   const forwarded=Promise.resolve(input).then(response=>{\n     try{captured=response.clone().arrayBuffer()}catch{}\n     return response;\n   });\n   const native=Reflect.apply(stream,W,[forwarded,...rest]);\n   forwarded.then(()=>Promise.resolve(native).then(()=>\n     captured?.then(bytes=>proof(bytes,'wasm','instantiateStreaming')).catch(()=>{}),()=>{})).catch(()=>{});\n   return native;\n };\n const set=Uint8Array.prototype.set;\n Uint8Array.prototype.set=function(...args){\n   const source=args[0],offset=args[1]===undefined?0:args[1];\n   const interested=source?.byteLength===expectedModel&&this instanceof Uint8Array;\n   let copy;\n   if(interested&&p.model.copyCount<3)try{copy=new Uint8Array(source)}catch{}\n   const result=Reflect.apply(set,this,args);\n   if(interested){\n     p.model.copyCount++;\n     if(Number.isSafeInteger(offset)&&offset>=0)p.model.copyOffset=offset;\n     if(copy)proof(copy,'model','Uint8Array.set');\n   }\n   return result;\n };\n g.__ccM1585Attestation={snapshot:()=>({\n   wasm:{...p.wasm},model:{...p.model},expectedWasm,expectedModel,\n   instrumentation:'research-JS-proxy-not-native-proof'\n })};\n return 'M1585_ATTESTATION_ARMED';\n})()";
 const branch = 'research/main1054-m1585-original-worker-evidence-contract-HOLD';
 const source = readFileSync('public/outfit-worker-p94.mjs');
 const img = readFileSync('benchmark/fixtures/commons-0003.jpg');
@@ -52,6 +55,11 @@ const receipt={
  nativeDebuggerAttached:false,originalModelWeightsShaVerified:false,
  sameProcessOriginalJsepShaVerified:false,
  originalModelExecutedAndVerified:false,originalModelRedObserved:false,
+ instrumentedWorkerForAttribution:true,workerAttestationProbeArmed:false,
+ sameWorkerModelCopySha256:null,sameWorkerModelCopyBytes:null,
+ sameWorkerModelCopyCount:0,sameWorkerModelCopyOffset:null,
+ sameWorkerJsepInstantiatedSha256:null,sameWorkerJsepInstantiatedBytes:null,
+ sameWorkerJsepShaMatchesPin:false,attestationObservationComplete:false,
  nativeTrapPc:null,wasmFileOffset:null,originalCxxStatement:null,
  causalFixProven:false,releaseAllowed:false,familyAlpha:'HOLD',
  webkitInspectorOpen:false,pageTargetDiscovered:false,
@@ -207,6 +215,11 @@ try {
  await getWorker(203,'Debugger.setPauseOnExceptions',{state:'all'});
  await getWorker(204,'Debugger.setBreakpointsActive',{active:true});
  receipt.workerBreakpointsActive=true;
+ const installed=await getWorker(205,'Runtime.evaluate',{
+  expression:workerAttestationPrelude,returnByValue:true});
+ if(installed?.result?.value!=='M1585_ATTESTATION_ARMED')
+  throw Error('Worker attestation instrumentation not confirmed');
+ receipt.workerAttestationProbeArmed=true;
  await getPage(103,'Worker.initialized',{workerId});
  receipt.workerInitialized=true;
 
@@ -242,10 +255,41 @@ try {
  receipt.workerMessageTypes=(observed?.types||[]).filter(x=>
   ['progress','piece','done','error'].includes(x)).slice(0,32);
  receipt.workerTerminal=['done','error'].includes(observed?.terminal)?observed.terminal:null;
+ // Read sanitised SHA+byte-count receipts from the SAME dedicated Worker Inspector;
+ // no model weights, worker identifier, pixel bytes or stack dump are emitted.
+ let attested=null;
+ for(let i=0;i<36;i++){
+  const r=await getWorker(900+i,'Runtime.evaluate',{
+   expression:"JSON.stringify(globalThis.__ccM1585Attestation?.snapshot()??null)",
+   returnByValue:true});
+  try{attested=JSON.parse(r?.result?.value||'null')}catch{}
+  if(attested?.wasm?.instantiated===true&&
+     /^[0-9a-f]{64}$/.test(attested?.model?.sha256||''))break;
+  await wait(250);
+ }
+ const expectedJsep='c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39';
+ receipt.sameWorkerJsepInstantiatedSha256=attested?.wasm?.sha256||null;
+ receipt.sameWorkerJsepInstantiatedBytes=attested?.wasm?.bytes??null;
+ receipt.sameWorkerJsepShaMatchesPin=Boolean(attested?.wasm?.instantiated&&
+   attested?.wasm?.bytes===21596019&&attested?.wasm?.sha256===expectedJsep);
+ receipt.sameWorkerModelCopySha256=attested?.model?.sha256||null;
+ receipt.sameWorkerModelCopyBytes=attested?.model?.bytes??null;
+ receipt.sameWorkerModelCopyCount=attested?.model?.copyCount??0;
+ receipt.sameWorkerModelCopyOffset=attested?.model?.copyOffset??null;
+ receipt.attestationObservationComplete=Boolean(receipt.sameWorkerJsepShaMatchesPin&&
+   receipt.sameWorkerModelCopyBytes===15199746&&
+   /^[0-9a-f]{64}$/.test(receipt.sameWorkerModelCopySha256||''));
+ receipt.sameProcessOriginalJsepShaVerified=receipt.sameWorkerJsepShaMatchesPin;
+ // Model hash is observed at the native copy boundary, but no independently
+ // pinned expected ONNX SHA has been authenticated in this test.
+ receipt.originalModelWeightsShaVerified=false;
+ receipt.originalModelExecutedAndVerified=false;
  if(!receipt.sourceVerifiedInServer||!receipt.originalWorkerCreated||
     !receipt.workerInitialized)throw Error('original worker source / inspector provenance incomplete');
  if(!receipt.workerTerminal)throw Error('original Worker did not finish within bounded time');
  if(outerErrors.length)throw Error('Inspector outer protocol errors');
+ if(!receipt.attestationObservationComplete)
+  throw Error('same Worker JSEP/model native-copy identity attestation incomplete');
  // A success only means P94 executed; a generic Worker error cannot establish
  // original OrtCreateSession RED. No M279/M283 same-session receipts are here.
  if(receipt.workerTerminal==='error') {
@@ -253,8 +297,8 @@ try {
   receipt.blockedReason='ORIGINAL_P94_GENERIC_ERROR_NATIVE_SITE_NOT_PROVEN';
   process.exitCode=1; // Never paint an original Worker error green.
  } else {
-  receipt.outcome='ORIGINAL_WORKER_DONE_MODEL_ATTESTATION_BLOCKED';
-  receipt.blockedReason='EXACT_MODEL_JSEP_SAME_PROCESS_AND_NATIVE_ERROR_NOT_PROVEN';
+  receipt.outcome='ORIGINAL_WORKER_DONE_SAME_WORKER_JSEP_AND_MODEL_COPY_ATTESTED';
+  receipt.blockedReason='INDEPENDENT_PINNED_MODEL_SHA_AND_NATIVE_TRAP_PC_NOT_PROVEN';
  }
 } catch(err) {
  receipt.outcome='BLOCKED';
