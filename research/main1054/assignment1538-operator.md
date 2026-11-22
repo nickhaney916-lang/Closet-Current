@@ -13,8 +13,12 @@ restricted run log. Leave host, runner and sandbox security settings intact.
 ## Before running
 
 1. Select a local-only authorized test host and the M287 original-model workload
-   at a reviewed exact source commit. Record the test SHA and the independently
-   verified original model digest and byte length. Record the original JSEP SHA
+   at a reviewed exact source commit. Record the test SHA and independently
+   verify the original 15,199,746-byte fp32 ONNX model SHA-256
+   `02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3`
+   (Xenova/segformer_b0_clothes revision `a2489ea8e7ec1ee912190546bad31a4906ccca76`).
+   The independently prepared manifest AND signed actual-trap receipt must
+   match this exact byte count and digest. A plausible different SHA is rejected. Record the original JSEP SHA
    and verify the executable WebKit release, upstream source revision and
    Playwright patch against the pins in the verifier and M286/M290/M291.
 2. Confirm that the approved observation facility can report an actual
@@ -83,3 +87,43 @@ localization result with debug line-table precision. Claim a permanent repair
 only after the same original-model failure is causally reproduced before a
 source-justified change and reliably passes afterward on pinned WebKit and
 Chromium. Preserve first attempts and Family Alpha HOLD #255.
+
+## Exact pinned JSC source and authorized observer boundary
+
+A hosted-runner native observation is not currently authorized: M284 found
+the WPEWebProcess, but a GDB attach produced a ptrace-restriction hint.
+Do not retry the denied operation or change ptrace, seccomp, capabilities,
+sandbox configuration or security policy.
+
+The pinned upstream WebKit revision is
+`db897909f7c31d9b38793374c66427b6a4cb3dd3`, WebKit r2215 / Playwright
+`1.56.1`. The downstream Playwright WebKit `bootstrap.diff` is required
+(Git blob `f713c6fa093a1f45956c84844d50635376923b75`). A
+WebKit upstream-only checkout is not a binary-equivalent original build.
+
+Review two distinct source-backed WASM bounds-check generators in this
+**exact revision** before designing an explicitly authorized trace:
+- `Source/JavaScriptCore/wasm/WasmBBQJIT.h` includes
+  `throwExceptionIf(ExceptionType::OutOfBoundsMemoryAccess, ...)`
+  for bounds-checking and signaling paths.
+- `Source/JavaScriptCore/wasm/WasmOMGIRGenerator.cpp` includes
+  `emitExceptionCheck(..., ExceptionType::OutOfBoundsMemoryAccess)`
+  from the compiled WASM bounds-check path.
+
+These are **possible trap generation paths**, not proof which instruction
+trapped in the historical original f4846 session. A source-and-patch-
+matched, **separately operator-authorized** symbol-enabled WebKit engine
+could instrument an actual original first-attempt failure to record the
+compiled JSC code origin, exact WASM function+bytecode instruction position
+(only when a verified mapping exists), fault kind and live memory bounds.
+A JIT generated machine address is NOT necessarily file-backed ELF and
+must be resolved through validated JSC code-origin metadata; Inspector
+JavaScript line/column is not a WASM or native machine PC.
+
+A rebuilt instrumented WebKit executable is **different** from the pinned
+shipped engine. Record build hash, source+patch identity, and timing
+perturbation against untouched-engine original-model controls. The
+operator must supply an independently witnessed genuine same-renderer
+original model/JSEP RED and exact source/binary proof. No native fault,
+C++ line, or RED-before/GREEN-after fix is implied by this design. No
+additional debugging permission is granted by this document.
