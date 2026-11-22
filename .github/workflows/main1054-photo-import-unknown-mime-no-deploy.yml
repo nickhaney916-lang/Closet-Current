@@ -1,0 +1,41 @@
+name: Mission 4 blank-MIME photo import browser regressions (HOLD/no-deploy)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'public/photo-import.js'
+      - 'tests/photo-import-unknown-mime.test.cjs'
+      - 'scripts/test-photo-import-unknown-mime-browser.mjs'
+      - '.github/workflows/main1054-photo-import-unknown-mime-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  original-photo:
+    if: github.head_ref == 'research/main1054-m4-unknown-mime-photo-import-HOLD'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm immutable PR head and narrow source scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          node --check public/photo-import.js
+          node --check scripts/test-photo-import-unknown-mime-browser.mjs
+          node --test tests/photo-import-unknown-mime.test.cjs
+      - name: Install only pinned browser test driver and standard browsers
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Verify production build, full Node regression and genuine browser APIs
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/test-photo-import-unknown-mime-browser.mjs
