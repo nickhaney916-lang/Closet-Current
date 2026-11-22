@@ -73,7 +73,7 @@ export function assessOriginalWorkerBridge({trial, inspector, trialJob, inspecto
       missing.push('INSPECTOR_ENGINE_OR_FRONTEND_UNPROVEN');
     if (inspector.originalJsepSha256 !== original.originalJsepSha256 ||
         inspector.originalModelByteLength !== original.originalModelBytes ||
-        !HASH.test(inspector.originalModelSha256 || ''))
+        inspector.originalModelSha256 !== originalPins.modelOnnxSha256)
       missing.push('EXACT_ORIGINAL_JSEP_MODEL_RECEIPT_MISSING');
     if (inspector.originalOrtCreateSessionError !== 'wasm-bounds' ||
         inspector.workerPauseReason !== 'exception' ||
