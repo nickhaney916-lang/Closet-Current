@@ -1,6 +1,7 @@
 import {readFileSync} from 'node:fs';
 
 const PREFIX = 'CC1538_SOURCE_PINNED_WASM_SIGNAL_V1 ';
+const BBQ_PREFIX = 'CC1538_BBQ_SAME_CALLEE_WASM_OPCODE_ORIGIN_V1 ';
 const FIELDS = [
   'functionSpaceIndex', 'jitMachineCodeOffset', 'effectiveLinearAddress',
   'liveMemoryBytes', 'mappedCapacityBytes'
@@ -17,6 +18,28 @@ export function parseDiagnosticSignalLog(log) {
     ' accessWidthKnown=false wasmBytecodeOffsetKnown=false$');
   const m = payload.match(regexp);
   if (!m) throw Error('CC1538_SIGNAL_FIELDS_NOT_ATTESTED');
+  const bbqMarkers = log.split(/\r?\n/).filter(line => line.includes(BBQ_PREFIX));
+  if (bbqMarkers.length > 1) throw Error('CC1538_BBQ_MARKER_NOT_UNIQUE');
+  let bbqOffset = null;
+  if (bbqMarkers.length === 1) {
+    const candidate = bbqMarkers[0].slice(bbqMarkers[0].indexOf(BBQ_PREFIX));
+    const candidateRegexp = new RegExp('^' + BBQ_PREFIX +
+      'functionSpaceIndex=(\\d+) jitMachineCodeOffset=(\\d+) functionRelativeWasmOpcodeOffset=(\\d+)$');
+    const mBBQ = candidate.match(candidateRegexp);
+    if (!mBBQ) throw Error('CC1538_BBQ_FIELDS_NOT_ATTESTED');
+    const parseNum = raw => {
+      if (raw.length > 1 && raw[0] === '0') throw Error('CC1538_BBQ_NUMBER_NONCANONICAL');
+      const n = BigInt(raw);
+      if (n > MAX64) throw Error('CC1538_BBQ_NUMBER_RANGE');
+      return n;
+    };
+    const functionIndex = parseNum(mBBQ[1]);
+    const machineOffset = parseNum(mBBQ[2]);
+    bbqOffset = parseNum(mBBQ[3]);
+    if (functionIndex !== BigInt(m[1]) || machineOffset !== BigInt(m[2]) ||
+        functionIndex > 0xffffffffn || bbqOffset > 0xffffffffn)
+      throw Error('CC1538_BBQ_SAME_CALLEE_IDENTITY_MISMATCH');
+  }
   const values = {};
   for (let i = 0; i < FIELDS.length; i++) {
     const raw = m[i + 1];
@@ -40,6 +63,8 @@ export function parseDiagnosticSignalLog(log) {
     faultAddressBeyondLiveMemory: values.effectiveLinearAddress >= values.liveMemoryBytes,
     accessWidthBytes: null,
     originalWasmBytecodeOffset: null,
+    candidateBBQFunctionRelativeWasmOpcodeOffset: bbqOffset === null ? null : bbqOffset.toString(),
+    candidateBBQOffsetIsIndependentlyVerified: false,
     originalWasmFileOffset: null,
     originalCxxLine: null,
     originalWorkerAndModelShaAttested: false,

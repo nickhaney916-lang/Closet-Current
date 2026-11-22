@@ -46,3 +46,25 @@ test('reject raw process address injection and fields that could falsely claim a
  assert.throws(()=>parseDiagnosticSignalLog(sample+' originalWasmBytecodeOffset=123'));
  assert.throws(()=>parseDiagnosticSignalLog(sample+' originalFirstAttemptFailureMatched=true'));
 });
+
+const candidate = 'CC1538_BBQ_SAME_CALLEE_WASM_OPCODE_ORIGIN_V1 functionSpaceIndex=4846 jitMachineCodeOffset=3498 functionRelativeWasmOpcodeOffset=1337';
+
+test('same compiled BBQ callee candidate never becomes original model proof', () => {
+ const r = parseDiagnosticSignalLog(sample + '\n' + candidate);
+ assert.equal(r.candidateBBQFunctionRelativeWasmOpcodeOffset, '1337');
+ assert.equal(r.candidateBBQOffsetIsIndependentlyVerified, false);
+ assert.equal(r.originalWasmBytecodeOffset, null);
+ assert.equal(r.originalFirstAttemptFailureMatched, false);
+ assert.equal(r.permanentFixProven, false);
+});
+
+test('reject inconsistent, repeated or forged BBQ origin evidence', () => {
+ for (const data of [
+  sample + '\n' + candidate + '\n' + candidate,
+  sample + '\n' + candidate.replace('functionSpaceIndex=4846','functionSpaceIndex=4847'),
+  sample + '\n' + candidate.replace('jitMachineCodeOffset=3498','jitMachineCodeOffset=3499'),
+  sample + '\n' + candidate.replace('functionRelativeWasmOpcodeOffset=1337','functionRelativeWasmOpcodeOffset=01337'),
+  sample + '\n' + candidate.replace('functionRelativeWasmOpcodeOffset=1337','functionRelativeWasmOpcodeOffset=4294967296'),
+  sample + '\n' + candidate + ' originalWasmBytecodeOffset=1337',
+ ]) assert.throws(() => parseDiagnosticSignalLog(data));
+});

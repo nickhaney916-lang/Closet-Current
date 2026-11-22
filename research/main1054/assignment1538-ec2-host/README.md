@@ -95,6 +95,10 @@ or proves the original crash repaired.
 
 ## Source-internal WebKit/JSC fault-PC evidence (operator-only research)
 
+The source-only instrumentation now applies **two patches in order**: the original fault-PC/linear-memory-address recorder, then `source-pinned-jsc-bbq-pc-origin.patch` which conditionally queries the **same compiled BBQ function's** PC-to-code-origin map. The second marker is absent if the JSC sampling profiler is disabled or the original failure did not trigger the POSIX WASM signal handler. Research-only log parsing validates the paired function and machine-code offset but **never upgrades it to a genuine original-model WASM opcode** without a separately approved, actually failing, source/binary-matched diagnostic WebKit run, original model/JSEP/Worker receipts and independent opcode-boundary mapping. Neither patch was compiled or executed on a real original failure in this chat. See `JSC_INTERNAL_SIGNAL_FAULTPC_HOLD.md`.
+
+
+
 [Read the exact-source instrumentation runbook](JSC_INTERNAL_SIGNAL_FAULTPC_HOLD.md) and review the [unbuilt source patch](source-pinned-jsc-signal-faultpc.patch). The patch preserves the real JSC signal handler's native faulting machine PC and virtual fault address until its ordinary (non-signal) slow path, then logs only function-relative JIT offset and linear-memory-relative address, never absolute process addresses. **It requires a SEPARATE diagnostic WebKit binary built from the pinned source, and is not running on any original failing process yet.** The strict [offline classifier](jsc-signal-receipt.mjs) cannot promote a candidate to original native trap proof. CI verifies patch applicability and parser tests only; no native build, debugger, cloud provisioning, original-model execution, private photos or release.
 
 ## Original WebKit native-signal observation
