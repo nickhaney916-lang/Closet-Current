@@ -1,3 +1,4 @@
+import {classifyM1591ErrorReason} from '../research/main1054/m1591-error-reason-classifier.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -36,4 +37,27 @@ test('comparison cannot silently treat zero pieces or malformed piece hashes as 
  assert.ok(source.includes("safe.originalDoneCount===safe.pieceCount"));
  assert.ok(source.includes("safe.outputPieceHashes.every"));
  assert.ok(source.includes("if(!good)process.exitCode=1"));
+});
+
+test('M1591 original Worker error category keeps WebAssembly failures distinguishable',()=>{
+ const classify=classifyM1591ErrorReason;
+ assert.equal(classify('RuntimeError','memory access out of bounds'),'WASM_MEMORY_BOUNDS');
+ assert.equal(classify('RuntimeError','Out of bounds memory access'),'WASM_MEMORY_BOUNDS');
+ assert.equal(classify('RuntimeError','table index 7 out of bounds'),'WASM_TABLE_BOUNDS');
+ assert.equal(classify('RuntimeError','unreachable'),'WASM_UNREACHABLE');
+ assert.equal(classify('RangeError','Maximum call stack size exceeded'),'STACK_EXHAUSTED');
+ assert.equal(classify('RuntimeError','failed to allocate memory'),'MEMORY_RESOURCE');
+ assert.equal(classify('RuntimeError','some unrecognized error'),'RUNTIME_OTHER');
+ assert.equal(classify('Error','other sensitive error with internal URL'),'NON_RUNTIME_OTHER');
+ assert.equal(classify(null,null),'NON_RUNTIME_OTHER');
+});
+test('error classes fail closed and no raw errors are printed',()=>{
+ const source=readFileSync('research/main1054/m1591-original-cpu-ort-bundle-ab.mjs','utf8');
+ assert.ok(source.includes('classifyM1591ErrorReason.toString()'));
+ assert.ok(source.includes('workerErrorReasonClass:'));
+ assert.ok(source.includes('workerWasmBoundsTextObserved:result?.boundsMessage===true'));
+ assert.ok(!source.includes('workerErrorMessage:'));
+ assert.ok(!source.includes('rawError:'));
+ assert.ok(source.includes('originalNativeRedObserved:false'));
+ assert.ok(source.includes('causalFixProven:false'));
 });

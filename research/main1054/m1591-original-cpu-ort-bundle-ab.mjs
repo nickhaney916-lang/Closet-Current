@@ -8,6 +8,7 @@ import {createHash} from 'node:crypto';
 import {createServer} from 'node:http';
 import {resolve} from 'node:path';
 import {webkit,chromium} from 'playwright';
+import {classifyM1591ErrorReason} from './m1591-error-reason-classifier.mjs';
 const originalSha='02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3';
 const originalBytes=15199746;
 const originalJsep='c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39';
@@ -29,6 +30,7 @@ const installedJsepSha=sha(readFileSync(resolve(dir,'ort-wasm-simd-threaded.jsep
 const selectedSha=sha(readFileSync(resolve(dir,stem+'.wasm')));
 const requested=new Set();
 const worker=[
+ 'const classifyM1591ErrorReason='+classifyM1591ErrorReason.toString()+';',
  "self.onmessage=async()=>{let stage='IMPORT';try{",
  "const ort=await import('/dist/"+bundle+"');",
  "ort.env.wasm.numThreads=1;ort.env.wasm.proxy=false;",
@@ -55,8 +57,8 @@ const worker=[
  "stage='RELEASE';await s.release();",
  "self.postMessage({phase:'done',modelAttested:true,inputs,inferenceRan:true,finiteOutput:finite,outputDims:dims,outputSha});",
  "}catch(e){const name=['RuntimeError','Error','TypeError','RangeError'].includes(e?.name)?e.name:'OTHER';",
- "const bounds=typeof e?.message==='string'&&e.message.slice(0,256).includes('memory access out of bounds');",
- "self.postMessage({phase:'error',stage,errorClass:name,boundsMessage:bounds});}};"
+ "const reason=classifyM1591ErrorReason(name,e?.message);",
+ "self.postMessage({phase:'error',stage,errorClass:name,errorReasonClass:reason,boundsMessage:reason==='WASM_MEMORY_BOUNDS'});}};"
 ].join('\n');
 const server=createServer((req,res)=>{
  try{
@@ -98,6 +100,7 @@ try{
   oppositeWasmLoaded:requested.has(opposite+'.wasm'),
   workerPhase:result?.phase||null,workerStage:result?.stage||null,
   workerErrorClass:result?.errorClass||null,
+  workerErrorReasonClass:['WASM_MEMORY_BOUNDS','WASM_TABLE_BOUNDS','WASM_UNREACHABLE','STACK_EXHAUSTED','MEMORY_RESOURCE','RUNTIME_OTHER','NON_RUNTIME_OTHER'].includes(result?.errorReasonClass)?result.errorReasonClass:null,
   workerWasmBoundsTextObserved:result?.boundsMessage===true,
   sessionInputNames:result?.inputs||[],
   deterministicInferenceRan:result?.inferenceRan===true,
