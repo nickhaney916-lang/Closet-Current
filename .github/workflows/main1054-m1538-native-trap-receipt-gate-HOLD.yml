@@ -71,3 +71,41 @@ jobs:
           test "$(wc -c < "$wasm")" = "21596019"
           test "$(sha256sum "$wasm" | cut -d ' ' -f1)" = c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39
           timeout -k 5s 780s node research/main1054/m1538-authorized-native-trap-receipt-gate.mjs verify-original-static "$wasm"
+
+
+  sha-attested-pinned-wpe-elf:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate exact source HEAD, immutable original Worker and first attempt
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.run_attempt }}" = "1"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          node --check research/main1054/m1538-authorized-native-trap-receipt-gate.mjs
+      - name: Install standard offline ELF notes reader (no ptrace or debugger)
+        shell: bash
+        run: |
+          set -euo pipefail
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends binutils
+          readelf --version | head -n 1
+      - name: SHA256 and ELF Build ID validation on installed pinned WebKit2215 WPE binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          elf=/ms-playwright/webkit-2215/minibrowser-wpe/bin/WPEWebProcess
+          test -f "$elf"
+          test "$(sha256sum "$elf" | cut -d ' ' -f1)" = b46f88603e43eca28083389188944f7f47fd26311c8697a14f910e4f8bfa0d66
+          timeout -k 5s 70s node research/main1054/m1538-authorized-native-trap-receipt-gate.mjs verify-original-elf "$elf"
