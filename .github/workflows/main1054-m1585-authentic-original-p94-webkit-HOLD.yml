@@ -6,6 +6,11 @@ permissions:
   contents: read
 jobs:
   original-p94-first-attempt:
+    name: original-p94-first-attempt-${{ matrix.ordinal }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ordinal: [1, 2, 3, 4]
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     container:
@@ -13,6 +18,7 @@ jobs:
       options: --shm-size=1gb
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M1585_COHORT_ORDINAL: ${{ matrix.ordinal }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,6 +39,6 @@ jobs:
           node --check research/main1054/m1585-original-p94-standalone-webkit.mjs
       - name: Install the identical pinned browser-facing Playwright release
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
-      - name: Single first attempt, original SHA-pinned P94 module Worker, public JPEG
+      - name: One fresh process with original SHA-pinned P94, no retries (ordinal ${{ matrix.ordinal }})
         shell: bash
         run: timeout -k 10s 400s node research/main1054/m1585-original-p94-standalone-webkit.mjs
