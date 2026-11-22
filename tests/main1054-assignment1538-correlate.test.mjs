@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { generateKeyPairSync, sign } from 'node:crypto';
+import { createHash, generateKeyPairSync, sign } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 import {
@@ -85,8 +85,13 @@ test('verifies real Ed25519 signatures and rejects tampering', () => {
   const input = Buffer.from(JSON.stringify(receipt));
   const key = publicKey.export({ type: 'spki', format: 'pem' });
   const signature = sign(null, input, privateKey);
-  assert.doesNotThrow(() => authenticate(input, signature, key));
-  assert.throws(() => authenticate(Buffer.concat([input, Buffer.from(' ')]), signature, key), /signature rejected/);
+  const independentlyApprovedKeySha256 = createHash('sha256').update(key).digest('hex');
+  assert.doesNotThrow(() => authenticate(input, signature, key, independentlyApprovedKeySha256));
+  assert.throws(() => authenticate(Buffer.concat([input, Buffer.from(' ')]),
+    signature, key, independentlyApprovedKeySha256), /signature rejected/);
+  assert.throws(() => authenticate(input, signature, key), /independently approved operator key/);
+  assert.throws(() => authenticate(input, signature, key, 'f'.repeat(64)),
+    /independently approved operator key/);
 });
 
 test('CLI without operator input reports BLOCKED and emits no attestation', () => {
@@ -126,4 +131,21 @@ test('signed original ONNX identity uses canonical 15,199,746-byte model digest,
     ...receipt, modelSha256: wellFormedWrong, modelLength: 15199745,
   }, {...manifest, modelSha256: wellFormedWrong, modelLength: 15199745}),
   /model or exact test source mismatch/);
+});
+
+
+test('self-issued valid signature cannot prove authorization against a separately trusted operator', () => {
+  const actualOperator = generateKeyPairSync('ed25519');
+  const approvedKey = actualOperator.publicKey.export({type:'spki',format:'pem'});
+  const approvedFingerprint = createHash('sha256').update(approvedKey).digest('hex');
+  const attacker = generateKeyPairSync('ed25519');
+  const attackerKey = attacker.publicKey.export({type:'spki',format:'pem'});
+  const fabricated = Buffer.from(JSON.stringify({...receipt, operatorAuthorized:true}));
+  const fabricatedSignature = sign(null, fabricated, attacker.privateKey);
+  // Both the fabricated receipt and attacker-created signature are valid
+  // cryptographically; the root of trust must remain external to both.
+  assert.throws(() => authenticate(fabricated, fabricatedSignature, attackerKey,
+    approvedFingerprint), /independently approved operator key/);
+  assert.doesNotThrow(() => authenticate(fabricated,
+    sign(null, fabricated, actualOperator.privateKey), approvedKey, approvedFingerprint));
 });
