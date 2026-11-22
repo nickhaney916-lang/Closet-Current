@@ -1,0 +1,184 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Closet Current Mission 4 HOLD - independently approved, isolated EC2 native
+  research host. Infrastructure only; not approval to trace and not a crash fix.
+Metadata:
+  Purpose: 'Separate operator-controlled native WebKit/JSC research; no production access'
+  OriginalRuntime: 'Playwright 1.56.1 / WebKit 26.0 r2215 (assets supplied separately)'
+  FamilyAlpha: 'HOLD-255'
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: 'Approved research VPC, separate from production and family data'
+  PrivateSubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: 'Private subnet with already-approved SSM egress through NAT or VPC endpoints'
+  Ubuntu24Image:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/canonical/ubuntu/server/noble/stable/current/amd64/hvm/ebs-gp3/ami-id
+    Description: 'Canonical Ubuntu 24.04 amd64 image; record resolved immutable AMI ID'
+  InstanceType:
+    Type: String
+    Default: m7i.xlarge
+    AllowedValues:
+      - m7i.xlarge
+      - m7i.2xlarge
+    Description: 'Cost-incurring Linux x86-64 VM. Instance type must be region-available.'
+  ApprovalReference:
+    Type: String
+    MinLength: 14
+    MaxLength: 100
+    AllowedPattern: '^CC-M4-[A-Za-z0-9-]{8,94}$'
+    Description: >-
+      Independent human-reviewed infrastructure approval ID; this field is an
+      audit label and does not itself constitute debugger authorization.
+  OperatorIamPrincipalArn:
+    Type: String
+    MinLength: 25
+    MaxLength: 255
+    AllowedPattern: '^arn:aws:iam::[0-9]{12}:(role|user)/[A-Za-z0-9+=,.@_/-]+$'
+    Description: >-
+      Reviewed human IAM role/user to grant Session Manager access externally.
+      Not automatically granted any IAM permissions by this stack.
+Resources:
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'cc-m4-native-host-${AWS::StackName}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: FamilyAlpha
+          Value: HOLD-255
+        - Key: Purpose
+          Value: native-research-only
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref InstanceRole
+  NativeHostSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'Mission 4 native research host - ZERO ingress; HTTPS and apt egress only'
+      VpcId: !Ref VpcId
+      SecurityGroupIngress: []
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: 'SSM and operator-verified HTTPS sources; subnet routing controls apply'
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: 'Ubuntu apt mirror downloads only; operator may restrict via proxy/NAT'
+      Tags:
+        - Key: FamilyAlpha
+          Value: HOLD-255
+  NativeHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref Ubuntu24Image
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref InstanceProfile
+      SourceDestCheck: true
+      InstanceInitiatedShutdownBehavior: stop
+      MetadataOptions:
+        HttpEndpoint: enabled
+        HttpTokens: required
+        HttpPutResponseHopLimit: 1
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: false
+          DeviceIndex: '0'
+          DeleteOnTermination: true
+          SubnetId: !Ref PrivateSubnetId
+          GroupSet:
+            - !Ref NativeHostSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeType: gp3
+            VolumeSize: 100
+            Encrypted: true
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: !Sub 'closet-current-m4-native-${AWS::StackName}'
+        - Key: FamilyAlpha
+          Value: HOLD-255
+        - Key: Environment
+          Value: research-only
+        - Key: ApprovalReference
+          Value: !Ref ApprovalReference
+        - Key: IntendedOperatorPrincipal
+          Value: !Ref OperatorIamPrincipalArn
+        - Key: OriginalModelRedObserved
+          Value: 'false'
+        - Key: CausalFixProven
+          Value: 'false'
+      UserData:
+        Fn::Base64: |
+          #cloud-config
+          package_update: true
+          packages:
+            - git
+            - gdb
+            - binutils
+            - build-essential
+            - cmake
+            - clang
+            - python3
+            - jq
+          users:
+            - default
+            - name: ccnative
+              gecos: "Closet Current isolated native research account"
+              shell: /bin/bash
+              lock_passwd: true
+              sudo: []
+          write_files:
+            - path: /etc/cc-m4-native-host-status
+              owner: root:root
+              permissions: '0644'
+              content: |
+                status=HOST_PROVISIONED_ONLY
+                original_model_red_observed=false
+                native_trap_pc_observed=false
+                invalid_effective_access_observed=false
+                causal_fix_proven=false
+                family_alpha=HOLD-255
+            - path: /usr/local/bin/cc-m4-host-status
+              owner: root:root
+              permissions: '0755'
+              content: |
+                #!/bin/sh
+                set -eu
+                cat /etc/cc-m4-native-host-status
+          runcmd:
+            - [mkdir, -p, /opt/cc-m4]
+            - [chown, 'ccnative:ccnative', /opt/cc-m4]
+            - [chmod, '0750', /opt/cc-m4]
+Outputs:
+  InstanceId:
+    Value: !Ref NativeHost
+    Description: 'No debug observation or source-level root cause implied'
+  ApprovedOperatorTag:
+    Value: !Ref OperatorIamPrincipalArn
+    Description: 'Audit-only: IAM Session Manager grants must be reviewed separately'
+  ResolvedUbuntuImage:
+    Value: !Ref Ubuntu24Image
+    Description: 'Record this immutable resolved AMI ID with host build receipts'
+  SessionManagerCommand:
+    Value: !Sub 'aws ssm start-session --target ${NativeHost}'
+    Description: 'Requires operator IAM approval; no inbound SSH port'
+  DebugReadiness:
+    Value: 'HOST_PROVISIONED_ONLY - native trace still requires separate approval and proof'
