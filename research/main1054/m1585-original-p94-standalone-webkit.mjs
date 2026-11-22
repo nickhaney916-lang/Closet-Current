@@ -18,7 +18,7 @@ import { webkit } from 'playwright';
 // M287 (which does NOT contain M289). Use its source-verified, small grammar.
 function parseLocalInspectorPaths(markup) {
  if(typeof markup!=='string'||markup.length>65536)throw Error('invalid inspector listing');
- const matches=[...markup.matchAll(/['"](\\/socket\\/([0-9]{1,18})\\/([0-9]{1,18})\\/([a-zA-Z][a-zA-Z0-9_-]{0,47}))['"]/g)];
+ const matches=[...markup.matchAll(/['"](\/socket\/([0-9]{1,18})\/([0-9]{1,18})\/([a-zA-Z][a-zA-Z0-9_-]{0,47}))['"]/g)];
  const out=[];
  for(const m of matches){
   const left=Number(m[2]),right=Number(m[3]);
