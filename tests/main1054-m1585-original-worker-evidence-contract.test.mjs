@@ -22,7 +22,7 @@ const inspector={
  syntheticOnly:false,originalModelExecuted:true,workerSourceIsOriginalP94:true,
  engine:'webkit',browserVersion:'26.0',playwrightVersion:'1.56.1',
  inspectorFrontendCount:1,originalJsepSha256:originalPins.jsepSha256,
- originalModelByteLength:originalPins.modelByteLength,originalModelSha256:'c'.repeat(64),
+ originalModelByteLength:originalPins.modelByteLength,originalModelSha256:originalPins.modelOnnxSha256,
  originalOrtCreateSessionError:'wasm-bounds',workerPauseReason:'exception',
  workerResumeAcknowledged:true,workerRuntimeErrorCaught:true,
  nativeTrapPc:null,wasmFileOffset:null,sourceCxxStatement:null,
@@ -81,7 +81,7 @@ test('JS Inspector source locations cannot be promoted into native PC, WASM offs
  }
 });
 test('wrong JSEP hash, wrong original model bytes, second frontend, unknown Worker do not pass',()=>{
- for(const change of [{originalJsepSha256:'0'.repeat(64)},{originalModelByteLength:48},{inspectorFrontendCount:2},{workerIdDigest:'z'.repeat(64)}]){
+ for(const change of [{originalJsepSha256:'0'.repeat(64)},{originalModelSha256:'c'.repeat(64)},{originalModelByteLength:48},{inspectorFrontendCount:2},{workerIdDigest:'z'.repeat(64)}]){
   const r=check({trial,inspector:{...inspector,...change},trialJob:job,inspectorJob:job});
   assert.equal(r.status,'BLOCKED');
  }
