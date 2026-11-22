@@ -37,6 +37,8 @@ const wait = ms=>new Promise(r=>setTimeout(r,ms));
 // initialization; preserves native return values but perturbs timing.
 const workerAttestationPrelude="(()=>{\n const g=globalThis;\n if(g.__ccM1585Attestation)return 'ALREADY_ARMED';\n const expectedWasm=21596019, expectedModel=15199746;\n const p={wasm:{count:0,sha256:null,bytes:null,instantiated:false,errors:0},\n   model:{copyCount:0,sha256:null,bytes:null,copyOffset:null,hashErrors:0}};\n const hash=async bytes=>{\n   const digest=await crypto.subtle.digest('SHA-256',bytes);\n   return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');\n };\n const proof=(bytes,kind,operation)=>{\n   if(bytes?.byteLength!==(kind==='wasm'?expectedWasm:expectedModel))return;\n   try{\n     const copy=new Uint8Array(bytes);\n     if(kind==='wasm'){\n       p.wasm.count++;p.wasm.bytes=copy.byteLength;\n       hash(copy).then(s=>{p.wasm.sha256=s;p.wasm.instantiated=true;},\n         ()=>{p.wasm.errors++});\n     }else{\n       p.model.bytes=copy.byteLength;\n       hash(copy).then(s=>{p.model.sha256=s;},()=>{p.model.hashErrors++});\n     }\n   }catch{if(kind==='wasm')p.wasm.errors++;else p.model.hashErrors++}\n };\n const W=WebAssembly, inst=W.instantiate, stream=W.instantiateStreaming;\n W.instantiate=function(input,...rest){\n   const result=Reflect.apply(inst,W,[input,...rest]);\n   if(input instanceof ArrayBuffer||ArrayBuffer.isView(input)){\n     Promise.resolve(result).then(()=>proof(input,'wasm','instantiate'),()=>{});\n   }\n   return result;\n };\n if(typeof stream==='function')W.instantiateStreaming=function(input,...rest){\n   let captured;\n   const forwarded=Promise.resolve(input).then(response=>{\n     try{captured=response.clone().arrayBuffer()}catch{}\n     return response;\n   });\n   const native=Reflect.apply(stream,W,[forwarded,...rest]);\n   forwarded.then(()=>Promise.resolve(native).then(()=>\n     captured?.then(bytes=>proof(bytes,'wasm','instantiateStreaming')).catch(()=>{}),()=>{})).catch(()=>{});\n   return native;\n };\n const set=Uint8Array.prototype.set;\n Uint8Array.prototype.set=function(...args){\n   const source=args[0],offset=args[1]===undefined?0:args[1];\n   const interested=source?.byteLength===expectedModel&&this instanceof Uint8Array;\n   let copy;\n   if(interested&&p.model.copyCount<3)try{copy=new Uint8Array(source)}catch{}\n   const result=Reflect.apply(set,this,args);\n   if(interested){\n     p.model.copyCount++;\n     if(Number.isSafeInteger(offset)&&offset>=0)p.model.copyOffset=offset;\n     if(copy)proof(copy,'model','Uint8Array.set');\n   }\n   return result;\n };\n g.__ccM1585Attestation={snapshot:()=>({\n   wasm:{...p.wasm},model:{...p.model},expectedWasm,expectedModel,\n   instrumentation:'research-JS-proxy-not-native-proof'\n })};\n return 'M1585_ATTESTATION_ARMED';\n})()";
 const branch = 'research/main1054-m1585-original-worker-evidence-contract-HOLD';
+// Both profiles use a genuine single-front-end Inspector; only the JS proxy differs.
+const workerProfile=process.env.M1585_WORKER_PROFILE||'instrumented';
 const source = readFileSync('public/outfit-worker-p94.mjs');
 const img = readFileSync('benchmark/fixtures/commons-0003.jpg');
 const locked=JSON.parse(readFileSync('benchmark/locked-photo-sources.json','utf8'))
@@ -47,7 +49,7 @@ if (source.length!==5778 || source.toString('utf8').includes('M1585') ||
 const receipt={
  schema:'M1585_ORIGINAL_P94_SINGLE_FRONTEND_WEBKIT_V1',
  branch,engine:'webkit',browserBuild:'Playwright-1.56.1-WebKit-26.0',
- cohortOrdinal:Number(process.env.M1585_COHORT_ORDINAL||1),
+ cohortOrdinal:Number(process.env.M1585_COHORT_ORDINAL||1),workerProfile,
  originalFirstAttempt:true,
  originalWorkerExpectedBlob:'ab7d3837139c5b7d693383f9d6617e199ec8de4f',
  sourceJpegSha256:locked.sha256,sourceJpegBytes:img.length,
@@ -57,7 +59,7 @@ const receipt={
  nativeDebuggerAttached:false,originalModelWeightsShaVerified:false,
  sameProcessOriginalJsepShaVerified:false,
  originalModelExecutedAndVerified:false,originalModelRedObserved:false,
- instrumentedWorkerForAttribution:true,workerAttestationProbeArmed:false,
+ instrumentedWorkerForAttribution:workerProfile==='instrumented',workerAttestationProbeArmed:false,
  expectedPinnedModelOnnxSha256:'02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3',
  sameWorkerModelCopySha256:null,sameWorkerModelCopyBytes:null,
  sameWorkerModelCopyCount:0,sameWorkerModelCopyOffset:null,
@@ -161,6 +163,8 @@ const getWorker=async(id,method,params={})=>{
  return workerReplies.get(id).result;
 };
 try {
+ if(!['instrumented','no-js-proxy'].includes(workerProfile))
+  throw Error('unknown original Worker observation profile');
  if(!Number.isSafeInteger(receipt.cohortOrdinal)||receipt.cohortOrdinal<1||receipt.cohortOrdinal>4)
   throw Error('invalid bounded original cohort ordinal');
  const root=resolve('.');
@@ -241,11 +245,15 @@ try {
  await getWorker(203,'Debugger.setPauseOnExceptions',{state:'all'});
  await getWorker(204,'Debugger.setBreakpointsActive',{active:true});
  receipt.workerBreakpointsActive=true;
- const installed=await getWorker(205,'Runtime.evaluate',{
-  expression:workerAttestationPrelude,returnByValue:true});
- if(installed?.result?.value!=='M1585_ATTESTATION_ARMED')
-  throw Error('Worker attestation instrumentation not confirmed');
- receipt.workerAttestationProbeArmed=true;
+ // No-JS-proxy controls never evaluate JS in the dedicated original Worker.
+ // Inspector itself may still perturb execution timing: not unobserved native proof.
+ if(workerProfile==='instrumented'){
+  const installed=await getWorker(205,'Runtime.evaluate',{
+   expression:workerAttestationPrelude,returnByValue:true});
+  if(installed?.result?.value!=='M1585_ATTESTATION_ARMED')
+   throw Error('Worker attestation instrumentation not confirmed');
+  receipt.workerAttestationProbeArmed=true;
+ }
  await getPage(103,'Worker.initialized',{workerId});
  receipt.workerInitialized=true;
 
@@ -284,14 +292,16 @@ try {
  // Read sanitised SHA+byte-count receipts from the SAME dedicated Worker Inspector;
  // no model weights, worker identifier, pixel bytes or stack dump are emitted.
  let attested=null;
- for(let i=0;i<36;i++){
-  const r=await getWorker(900+i,'Runtime.evaluate',{
-   expression:"JSON.stringify(globalThis.__ccM1585Attestation?.snapshot()??null)",
-   returnByValue:true});
-  try{attested=JSON.parse(r?.result?.value||'null')}catch{}
-  if(attested?.wasm?.instantiated===true&&
-     /^[0-9a-f]{64}$/.test(attested?.model?.sha256||''))break;
-  await wait(250);
+ if(workerProfile==='instrumented'){
+  for(let i=0;i<36;i++){
+   const r=await getWorker(900+i,'Runtime.evaluate',{
+    expression:"JSON.stringify(globalThis.__ccM1585Attestation?.snapshot()??null)",
+    returnByValue:true});
+   try{attested=JSON.parse(r?.result?.value||'null')}catch{}
+   if(attested?.wasm?.instantiated===true&&
+      /^[0-9a-f]{64}$/.test(attested?.model?.sha256||''))break;
+   await wait(250);
+  }
  }
  const expectedJsep='c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39';
  receipt.sameWorkerJsepInstantiatedSha256=attested?.wasm?.sha256||null;
@@ -321,19 +331,26 @@ try {
  if(receipt.workerPauseEventWorkerDigest!==null&&
     receipt.workerPauseEventWorkerDigest!==receipt.workerIdDigest)
   throw Error('Worker Inspector event does not match original worker digest');
- if(!receipt.attestationObservationComplete)
+ if(workerProfile==='instrumented'&&!receipt.attestationObservationComplete)
   throw Error('same Worker JSEP/model native-copy identity attestation incomplete');
- if(!receipt.originalModelWeightsShaVerified)
+ if(workerProfile==='instrumented'&&!receipt.originalModelWeightsShaVerified)
   throw Error('original model native-copy SHA does not match pinned Hugging Face ONNX blob');
+ if(workerProfile==='no-js-proxy'&&(receipt.workerAttestationProbeArmed||
+    receipt.attestationObservationComplete||receipt.originalModelWeightsShaVerified||
+    receipt.sameProcessOriginalJsepShaVerified||receipt.originalModelExecutedAndVerified))
+  throw Error('no-JS-proxy control falsely claimed in-process model/WASM attestation');
  // A success only means P94 executed; a generic Worker error cannot establish
  // original OrtCreateSession RED. No M279/M283 same-session receipts are here.
  if(receipt.workerTerminal==='error') {
   receipt.outcome='ORIGINAL_WORKER_REPORTED_ERROR_UNATTRIBUTED';
   receipt.blockedReason='ORIGINAL_P94_GENERIC_ERROR_NATIVE_SITE_NOT_PROVEN';
   process.exitCode=1; // Never paint an original Worker error green.
- } else {
+ } else if(workerProfile==='instrumented') {
   receipt.outcome='ORIGINAL_WORKER_DONE_SAME_WORKER_JSEP_AND_MODEL_COPY_ATTESTED';
   receipt.blockedReason='ORIGINAL_WASM_ERROR_NOT_REPRODUCED_NATIVE_TRAP_PC_UNKNOWN';
+ } else {
+  receipt.outcome='ORIGINAL_WORKER_DONE_NO_JS_PROXY_UNATTESTED';
+  receipt.blockedReason='NO_INPROCESS_JSEP_OR_MODEL_SHA_WITHOUT_RESEARCH_PROXIES';
  }
 } catch(err) {
  receipt.outcome='BLOCKED';
