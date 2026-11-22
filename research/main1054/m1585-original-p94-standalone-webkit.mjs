@@ -14,7 +14,7 @@ import { createHash } from 'node:crypto';
 import { resolve,extname } from 'node:path';
 import { spawn } from 'node:child_process';
 import { webkit } from 'playwright';
-import { classifyPinnedWorkerExceptionPause, classifyPinnedJscFastMemoryDump, classifyPinnedWorkerScriptUrl } from './m1585-original-worker-evidence-contract.mjs';
+import { classifyPinnedWorkerExceptionPause, classifyPinnedJscFastMemoryDump, classifyPinnedWorkerScriptUrl, classifyPinnedP94WorkerProgressPhases } from './m1585-original-worker-evidence-contract.mjs';
 // Keep the M289 Inspector helper owner untouched: this branch is stacked on
 // M287 (which does NOT contain M289). Use its source-verified, small grammar.
 function parseLocalInspectorPaths(markup) {
@@ -87,7 +87,7 @@ const receipt={
  workerNativeBoundsTextPauseCount:0,
  workerRuntimeErrorTextPauseCount:0,workerThrownValueIsNativePc:false,
  workerInspectorJsLocationIsNativePc:false,
- workerMessageTypes:[],workerTerminal:null,
+ workerMessageTypes:[],workerTerminal:null,workerProgressPhaseReceipt:null,
  browserExitObserved:false,sourceVerifiedInServer:false,publicJpegSubmitted:false,
  outcome:'BLOCKED',blockedReason:null
 };
@@ -289,9 +289,12 @@ try {
  await getPage(100,'Runtime.enable');
  await getPage(101,'Worker.enable');
  const arm="(()=>{const w=new Worker("+JSON.stringify(base+'/public/outfit-worker-p94.mjs')+
-  ",{type:'module'});window.__p94=w;window.__p94State={ready:true,types:[],terminal:null};"+
+  ",{type:'module'});window.__p94=w;window.__p94State={ready:true,types:[],terminal:null,phaseCounts:{loading:0,separating:0,unknown:0}};"+
   "w.onmessage=e=>{const type=e?.data?.type;const s=window.__p94State;"+
   "if(typeof type==='string'&&s.types.length<32)s.types.push(type);"+
+   "if(type==='progress'){const phase=e?.data?.phase;"+
+   "const key=phase==='loading'?'loading':phase==='separating'?'separating':'unknown';"+
+   "s.phaseCounts[key]=Math.min(4096,s.phaseCounts[key]+1);}"+
   "if(type==='done'||type==='error')s.terminal=type;};return 'ARMED'})()";
  const start=await getPage(102,'Runtime.evaluate',{expression:arm,returnByValue:true});
  if(start?.result?.value!=='ARMED')throw Error('P94 original Worker did not arm');
@@ -347,6 +350,7 @@ try {
  receipt.workerMessageTypes=(observed?.types||[]).filter(x=>
   ['progress','piece','done','error'].includes(x)).slice(0,32);
  receipt.workerTerminal=['done','error'].includes(observed?.terminal)?observed.terminal:null;
+  receipt.workerProgressPhaseReceipt=classifyPinnedP94WorkerProgressPhases(observed);
  // Read sanitised SHA+byte-count receipts from the SAME dedicated Worker Inspector;
  // no model weights, worker identifier, pixel bytes or stack dump are emitted.
  let attested=null;
@@ -394,6 +398,8 @@ try {
  if(!receipt.sourceVerifiedInServer||!receipt.originalWorkerCreated||
     !receipt.workerInitialized)throw Error('original worker source / inspector provenance incomplete');
  if(!receipt.workerTerminal)throw Error('original Worker did not finish within bounded time');
+  if(receipt.workerProgressPhaseReceipt?.state==='PHASE_RECEIPT_INVALID')
+   throw Error('original P94 phase evidence invalid/source drifted');
  if(outerErrors.length)throw Error('Inspector outer protocol errors');
  if(receipt.workerThrownValueIsNativePc!==false||
     receipt.workerNativeBoundsTextPauseCount>receipt.workerExceptionPauses||

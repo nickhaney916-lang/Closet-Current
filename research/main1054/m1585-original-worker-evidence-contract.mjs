@@ -235,6 +235,28 @@ export function classifyPinnedWorkerExceptionPause(message) {
 }
 
 
+
+/** Source-bound P94 Worker progress stage: NOT native fault/OrtCreateSession proof. */
+export function classifyPinnedP94WorkerProgressPhases(observed) {
+ const base={schema:'M1585_P94_PHASE_V1',state:'PHASE_RECEIPT_INVALID',
+  loading:0,separating:0,unknown:0,postLoadMarkerObserved:false,
+  originalOrtCreateSessionAttribution:false,nativeTrapPc:null,wasmFileOffset:null,
+  causalFixProven:false,releaseAllowed:false,familyAlpha:'HOLD'};
+ if(!observed||typeof observed!=='object'||Array.isArray(observed)||
+    !['done','error'].includes(observed.terminal))return base;
+ const x=observed.phaseCounts;
+ if(!x||typeof x!=='object'||Array.isArray(x))return base;
+ for(const key of ['loading','separating','unknown'])
+  if(!Number.isSafeInteger(x[key])||x[key]<0||x[key]>4096)return base;
+ if(x.loading+x.separating+x.unknown>4096||x.separating>1||
+    x.unknown!==0||(observed.terminal==='done'&&x.separating!==1))return base;
+ return {...base,
+  state:observed.terminal==='done'?'DONE_AFTER_SEPARATING_MARKER':
+     x.separating===1?'ERROR_AFTER_SEPARATING_MARKER':'ERROR_WITHOUT_SEPARATING_MARKER',
+  loading:x.loading,separating:x.separating,unknown:x.unknown,
+  postLoadMarkerObserved:x.separating===1};
+}
+
 /**
  * Source-revision-bound WebKit r2215 Inspector Debugger.scriptParsed
  * scriptId -> URL categorization. Never publish a raw URL or scriptId.

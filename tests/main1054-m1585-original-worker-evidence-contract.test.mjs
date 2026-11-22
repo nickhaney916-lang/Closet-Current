@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assessOriginalWorkerBridge as check,validWorkerEventSequence,expectedWorkerEvents,originalPins, classifyOriginalWorkerProfile, classifyPinnedWorkerExceptionPause, classifyPinnedJscFastMemoryDump, classifyPinnedWorkerScriptUrl}
+import {assessOriginalWorkerBridge as check,validWorkerEventSequence,expectedWorkerEvents,originalPins, classifyOriginalWorkerProfile, classifyPinnedWorkerExceptionPause, classifyPinnedJscFastMemoryDump, classifyPinnedWorkerScriptUrl, classifyPinnedP94WorkerProgressPhases}
   from '../research/main1054/m1585-original-worker-evidence-contract.mjs';
 
 const sha='a'.repeat(40),digest='b'.repeat(64);
@@ -357,4 +357,46 @@ test('JSC bounds-check strategy never promotes a healthy model run to original r
   assert.equal(r.nativeTrapPc,null);
   assert.equal(r.releaseAllowed,false);
  }
+});
+
+test('original P94 progress markers reveal post-load phase, never native PC',()=>{
+ const f=classifyPinnedP94WorkerProgressPhases;
+ const before=f({terminal:'error',phaseCounts:{loading:16,separating:0,unknown:0}});
+ assert.equal(before.state,'ERROR_WITHOUT_SEPARATING_MARKER');
+ assert.equal(before.loading,16);
+ assert.equal(before.postLoadMarkerObserved,false);
+ assert.equal(before.nativeTrapPc,null);
+ assert.equal(before.originalOrtCreateSessionAttribution,false);
+ assert.equal(before.causalFixProven,false);
+ assert.equal(before.releaseAllowed,false);
+ const after=f({terminal:'error',phaseCounts:{loading:16,separating:1,unknown:0}});
+ assert.equal(after.state,'ERROR_AFTER_SEPARATING_MARKER');
+ assert.equal(after.postLoadMarkerObserved,true);
+ const done=f({terminal:'done',phaseCounts:{loading:16,separating:1,unknown:0}});
+ assert.equal(done.state,'DONE_AFTER_SEPARATING_MARKER');
+});
+test('invalid original P94 stage data cannot establish loader or native fault',()=>{
+ const f=classifyPinnedP94WorkerProgressPhases;
+ for(const input of [
+  null,{},
+  {terminal:'done',phaseCounts:{loading:1,separating:0,unknown:0}},
+  {terminal:'error',phaseCounts:{loading:1,separating:2,unknown:0}},
+  {terminal:'error',phaseCounts:{loading:-1,separating:0,unknown:0}},
+  {terminal:'error',phaseCounts:{loading:4097,separating:0,unknown:0}},
+  {terminal:'error',phaseCounts:{loading:1,separating:0,unknown:1}},
+  {terminal:'error',phaseCounts:{loading:'16',separating:0,unknown:0}},
+  {terminal:'error',phaseCounts:{loading:4096,separating:1,unknown:0}},
+  {terminal:'wrong',phaseCounts:{loading:1,separating:0,unknown:0}}
+ ]){const x=f(input);assert.equal(x.state,'PHASE_RECEIPT_INVALID');
+    assert.equal(x.nativeTrapPc,null);assert.equal(x.releaseAllowed,false);}
+});
+test('only research page observes original unchanged P94 message phases',()=>{
+ const src=readFileSync('research/main1054/m1585-original-p94-standalone-webkit.mjs','utf8');
+ const worker=readFileSync('public/outfit-worker-p94.mjs','utf8');
+ assert.match(worker,/phase:'loading'/);
+ assert.match(worker,/phase:'separating'/);
+ assert.ok(src.includes('phaseCounts:{loading:0,separating:0,unknown:0}'));
+ assert.ok(src.includes('classifyPinnedP94WorkerProgressPhases(observed)'));
+ assert.ok(src.includes('PHASE_RECEIPT_INVALID'));
+ assert.ok(src.includes("if(receipt.workerTerminal==='error')"));
 });
