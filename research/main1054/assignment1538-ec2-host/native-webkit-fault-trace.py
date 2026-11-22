@@ -106,6 +106,54 @@ quit
 '''
 
 
+
+def jsc_exception_gdb_commands():
+    # The exact pinned JSC software-thrown WASM exception helper. The PC is
+    # inside this shared C++ helper, not the original JIT memory access site.
+    return '''set pagination off
+set confirm off
+set print elements 0
+set print pretty off
+set breakpoint pending off
+break JSC::operationWasmToJSException
+commands
+silent
+printf "CC1538_JSC_EXCEPTION_HELPER_REACHED=1\\n"
+printf "CC1538_JSC_OPERATION_PC=%#lx\\n", (unsigned long)$pc
+printf "CC1538_JSC_THROW_TYPE=%u\\n", (unsigned int)type
+bt 8
+detach
+quit
+end
+continue
+'''
+
+
+def classified_jsc_exception_log(log, exit_code, timed_out):
+    # Validated first helper entry only. Never a genuine original-model receipt.
+    marker = re.findall(r'(?m)^CC1538_JSC_EXCEPTION_HELPER_REACHED=1\s*$', log)
+    pc = re.findall(r'(?m)^CC1538_JSC_OPERATION_PC=(0x[0-9a-f]+)\s*$', log)
+    kind = re.findall(r'(?m)^CC1538_JSC_THROW_TYPE=([0-9]{1,9})\s*$', log)
+    observed = (len(marker) == len(pc) == len(kind) == 1
+                and not timed_out and exit_code == 0)
+    return {
+        'kind': ('UNATTESTED_JSC_SOFTWARE_EXCEPTION_HELPER_ONLY' if observed
+                 else 'NO_VERIFIED_JSC_SOFTWARE_EXCEPTION_HELPER'),
+        'jscExceptionHelperObserved': observed,
+        'jscExceptionTypeNumericalReceiptObserved': observed,
+        'jscOperationFunctionPcObserved': observed,
+        'jscOperationPcIsOriginalWasmSite': False,
+        'originalOrtCreateSessionRedObserved': False,
+        'originalWasmTrapInstructionOffset': None,
+        'originalWasmEffectiveAddress': None,
+        'wasmAccessBytes': None,
+        'wasmLiveMemoryBytesAtTrap': None,
+        'sourceCxxLine': None,
+        'causalFixProven': False,
+        'familyAlpha': 'HOLD',
+    }
+
+
 def classified_log(log, exit_code, timed_out):
     pc = re.findall(r'(?m)^CC1538_NATIVE_SIGSEGV_PC=(0x[0-9a-f]+)\s*$', log)
     addr = re.findall(r'(?m)^CC1538_SIGNAL_FAULT_ADDRESS=(0x[0-9a-f]+)\s*$', log)
@@ -165,7 +213,7 @@ def run(args):
     with tempfile.NamedTemporaryFile('w', dir=out, prefix='cc1538-', suffix='.gdb',
                                      delete=False) as g:
         os.chmod(g.name, 0o600)
-        g.write(gdb_commands())
+        g.write(jsc_exception_gdb_commands() if args.mode == 'exception' else gdb_commands())
         cmds = g.name
     started = time.time()
     timed_out = False
@@ -184,12 +232,13 @@ def run(args):
     finally:
         pathlib.Path(cmds).unlink(missing_ok=True)
     # Full debugger output is privileged operator-local material. Never upload.
-    name = f'cc1538-native-signal-{args.renderer}-{int(started)}.private.log'
+    name = f'cc1538-{args.mode}-{args.renderer}-{int(started)}.private.log'
     logpath = out / name
     with logpath.open('x') as fd:
         os.fchmod(fd.fileno(), 0o600)
         fd.write(raw)
-    result = classified_log(raw, code, timed_out)
+    result = (classified_jsc_exception_log(raw, code, timed_out)
+              if args.mode == 'exception' else classified_log(raw, code, timed_out))
     result['operatorLocalLogName'] = name
     result['debuggerTimedOut'] = timed_out
     result['gdbReturnCode'] = code
@@ -199,8 +248,8 @@ def run(args):
 
 
 def main():
-    p = argparse.ArgumentParser(description='Operator-only WebKit signal observer, NOT a genuine original WASM trap proof')
-    p.add_argument('--mode', choices=('inspect', 'capture'), default='inspect')
+    p = argparse.ArgumentParser(description='Operator-only WebKit native signal/exception observer; no original WASM trap proof')
+    p.add_argument('--mode', choices=('inspect', 'capture', 'exception'), default='inspect')
     p.add_argument('--host-paths', required=True)
     p.add_argument('--renderer', type=int, required=True)
     p.add_argument('--browser', type=int, required=True)

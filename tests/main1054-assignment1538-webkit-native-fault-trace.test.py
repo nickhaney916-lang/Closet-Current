@@ -75,6 +75,42 @@ class TestNativeFaultObserver(unittest.TestCase):
             self.assertNotIn(bad, cmd)
         self.assertIn('$_siginfo._sifields._sigfault.si_addr', cmd)
 
+
+    def test_jsc_helper_breakpoint_is_source_specific_and_non_privileged(self):
+        script = fault.jsc_exception_gdb_commands()
+        self.assertIn('break JSC::operationWasmToJSException', script)
+        self.assertIn('CC1538_JSC_THROW_TYPE', script)
+        for bad in ('handle SIGSEGV', 'gcore ', 'ptrace_scope', 'set breakpoint pending on'):
+            self.assertNotIn(bad, script)
+
+    def test_jsc_exception_receipt_is_not_original_trap(self):
+        synthetic = ('CC1538_JSC_EXCEPTION_HELPER_REACHED=1\n'
+                     'CC1538_JSC_OPERATION_PC=0x1200\n'
+                     'CC1538_JSC_THROW_TYPE=0\n')
+        r = fault.classified_jsc_exception_log(synthetic, 0, False)
+        self.assertEqual(r['kind'], 'UNATTESTED_JSC_SOFTWARE_EXCEPTION_HELPER_ONLY')
+        self.assertTrue(r['jscExceptionHelperObserved'])
+        self.assertFalse(r['jscOperationPcIsOriginalWasmSite'])
+        self.assertFalse(r['originalOrtCreateSessionRedObserved'])
+        self.assertIsNone(r['originalWasmEffectiveAddress'])
+        self.assertIsNone(r['originalWasmTrapInstructionOffset'])
+        self.assertFalse(r['causalFixProven'])
+
+    def test_jsc_exception_rejects_partial_repeated_failed_and_timed_out(self):
+        synthetic = ('CC1538_JSC_EXCEPTION_HELPER_REACHED=1\n'
+                     'CC1538_JSC_OPERATION_PC=0x1200\n'
+                     'CC1538_JSC_THROW_TYPE=0\n')
+        for log, exit_code, timed_out in [
+            ('', 0, False),
+            (synthetic.replace('CC1538_JSC_THROW_TYPE=0\n', ''), 0, False),
+            (synthetic + synthetic, 0, False),
+            (synthetic, 1, False),
+            (synthetic, 0, True),
+        ]:
+            r = fault.classified_jsc_exception_log(log, exit_code, timed_out)
+            self.assertFalse(r['jscExceptionHelperObserved'])
+            self.assertIsNone(r['originalWasmTrapInstructionOffset'])
+
     def test_tool_refuses_missing_inputs_without_debugger(self):
         p = subprocess.run([sys.executable, str(FILE)], capture_output=True, text=True, timeout=5)
         self.assertNotEqual(p.returncode, 0)

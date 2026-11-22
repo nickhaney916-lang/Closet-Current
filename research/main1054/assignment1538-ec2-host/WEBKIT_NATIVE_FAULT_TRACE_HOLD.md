@@ -10,6 +10,34 @@ The second phase requires a separately approved operator, human terminal confirm
 
 **Crucial limit:** The historical original WebKit ONNX `_OrtCreateSession` WASM-bounds `RuntimeError` might be a JavaScriptCore-generated WASM exception with **no POSIX SIGSEGV**. A GDB signal observation alone does **not** establish the original model failed, identify its WASM bytecode instruction, or provide the internal WASM effective address. The kernel signal address must not be mislabeled the WASM linear-memory access. For software traps, a *separately authorized, build-matched JSC exception-site instrumentation* that reports its genuine code origin and effective access is still required. This tool never generates a signed original-model trace receipt or a repair claim.
 
+## Software-generated WASM exception observation (not a SIGSEGV)
+
+An opt-in **`--mode exception`** is also provided because the pinned source
+`db897909f7c31d9b38793374c66427b6a4cb3dd3` routes the JSC
+`OutOfBoundsMemoryAccess` software check through
+`WasmThunks.cpp::throwExceptionFromWasmThunkGenerator` (around line 47)
+to `WasmOperations.cpp::operationWasmToJSException` (around line 1719).
+This helper is a **shared exception dispatch point**, NOT an original WASM
+trapping instruction and not a specific native memory fault.
+
+After separately approved source-and-binary preflight and live renderer
+identity checks, execute the same private operator-only trace procedure but
+set `--mode exception` instead of `--mode capture`. The tool requests a
+single GDB breakpoint at `JSC::operationWasmToJSException`, logs the helper
+machine PC and a numeric exception type *only if actual symbol resolution*
+succeeds, and detaches. It never assumes a `SIGSEGV` must occur. If debug
+symbols are missing, type optimized out, GDB denied, or no helper event is
+observed, the result is `NO_VERIFIED_JSC_SOFTWARE_EXCEPTION_HELPER`.
+
+**Limitations:** This helper can run for unrelated WASM exceptions in the
+same renderer. The helper PC is not the generated WASM code site, the numeric
+exception type is not an observed effective memory address, and this mode
+cannot recover the original opcode/width/live-memory receipt by itself.
+The original first-attempt WebKit `_OrtCreateSession` RED, live module SHA,
+original JIT call origin and live internal failing access must still be
+observed and signed separately by an approved source/build-matched operator.
+Do not submit helper-only output as an original trap receipt.
+
 ## Operator steps (authorized VM only)
 
 1. Confirm independent written native-debug authorization and that the verified VM has source, patch, binary, and model/JSEP assets from the original pinned Playwright 1.56.1 WebKit 26.0 r2215 build. Verify local read-only assets through `node research/main1054/assignment1538-native-host.mjs --preflight /private/host-paths.json` (expect `PINNED_HOST_FILES_VERIFIED_ONLY`). No private wardrobe or family data.
