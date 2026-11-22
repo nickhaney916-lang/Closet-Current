@@ -174,7 +174,6 @@ test('fabricated source, claims of repair, sensitive raw data are fail closed',(
 
 test('static function span alone CANNOT admit an arbitrary file byte offset',()=>{
   const x=original();
-  assertBlocked(x,'ORIGINAL_F4846_MEMORY_OPCODE_NOT_INDEPENDENTLY_ATTESTED');
   const r=verdict(x,null);
   assert.equal(r.candidate,false);
   assert.ok(r.blockers.includes('ORIGINAL_F4846_MEMORY_OPCODE_NOT_INDEPENDENTLY_ATTESTED'));
