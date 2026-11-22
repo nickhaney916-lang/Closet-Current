@@ -29,11 +29,16 @@ const native={
  modelOnnxSha256:pins.modelSha256,modelByteLength:pins.modelBytes,
  modelPointer:8933688,entryMemoryBytes:24182784,
  faultMonotonicMs:240,workerErrorObservedMs:250,
- trapKind:'wasm-bytecode-offset',wasmFileOffset:7022600,
+ trapKind:'wasm-bytecode-offset',wasmFileOffset:7022509,
  nativePc:null,sourceCxxStatement:null,causalFixProven:false,releaseAllowed:false
 };
 const original=()=>({job:{...job},worker:{...worker},native:{...native}});
-const verdict=(x)=>check(x);
+const staticProof={verified:true,
+ source:'exact-original-wabt-static-disassembly',
+ originalWasmSha256:pins.wasmSha256,functionIndex:4846,
+ wasmFileOffset:7022509,opcode:'i32.load',kind:'linear-memory-access'
+};
+const verdict=(x,proof=staticProof)=>check(x,{staticProof:proof});
 const assertBlocked=(x,reason)=>{
  const r=verdict(x);assert.equal(r.status,'BLOCKED');
  assert.equal(r.candidate,false);assert.ok(r.blockers.includes(reason));
@@ -55,7 +60,9 @@ test('syntactically perfect proposed WASM offset remains independently unverifie
  const r=verdict(original());
  assert.equal(r.status,'CANDIDATE_REQUIRES_INDEPENDENT_NATIVE_VERIFICATION');
  assert.equal(r.locationKind,'wasm-bytecode-offset');
- assert.equal(r.wasmFileOffsetCandidate,7022600);
+ assert.equal(r.wasmFileOffsetCandidate,7022509);
+ assert.equal(r.staticOriginalWasmOpcodeCandidate,'i32.load');
+ assert.equal(r.originalWasmMemoryOpcodeStaticallyVerified,true);
  assert.equal(r.nativeElfFileOffsetCandidate,null);
  assert.ok(r.blockers.includes('INDEPENDENT_RUN_LOG_PROCESS_BINARY_AND_OPERATOR_ATTESTATION_REQUIRED'));
  assert.equal(r.actualNativeTrapIndependentlyVerified,false);
@@ -163,4 +170,29 @@ test('fabricated source, claims of repair, sensitive raw data are fail closed',(
   const r=verdict(x);
   assert.equal(r.status,'BLOCKED');assert.equal(r.releaseAllowed,false);
  }
+});
+
+test('static function span alone CANNOT admit an arbitrary file byte offset',()=>{
+  const x=original();
+  assertBlocked(x,'ORIGINAL_F4846_MEMORY_OPCODE_NOT_INDEPENDENTLY_ATTESTED');
+  const r=verdict(x,null);
+  assert.equal(r.candidate,false);
+  assert.ok(r.blockers.includes('ORIGINAL_F4846_MEMORY_OPCODE_NOT_INDEPENDENTLY_ATTESTED'));
+});
+test('incorrect or manufactured opcode proof is fail closed',()=>{
+  const variants=[
+    {...staticProof,wasmFileOffset:7022516},
+    {...staticProof,originalWasmSha256:'a'.repeat(64)},
+    {...staticProof,opcode:'i32.const',kind:'memory-management-nontrapping'},
+    {...staticProof,source:'user-self-report'},
+    {...staticProof,verified:false},
+    {...staticProof,functionIndex:1384},
+  ];
+  for(const proof of variants){
+    const r=verdict(original(),proof);
+    assert.equal(r.candidate,false);
+    assert.ok(r.blockers.includes('ORIGINAL_F4846_MEMORY_OPCODE_NOT_INDEPENDENTLY_ATTESTED'));
+    assert.equal(r.actualNativeTrapIndependentlyVerified,false);
+    assert.equal(r.causalFixProven,false);
+  }
 });
