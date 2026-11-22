@@ -101,6 +101,10 @@ The source-only instrumentation now applies **two patches in order**: the origin
 
 [Read the exact-source instrumentation runbook](JSC_INTERNAL_SIGNAL_FAULTPC_HOLD.md) and review the [unbuilt source patch](source-pinned-jsc-signal-faultpc.patch). The patch preserves the real JSC signal handler's native faulting machine PC and virtual fault address until its ordinary (non-signal) slow path, then logs only function-relative JIT offset and linear-memory-relative address, never absolute process addresses. **It requires a SEPARATE diagnostic WebKit binary built from the pinned source, and is not running on any original failing process yet.** The strict [offline classifier](jsc-signal-receipt.mjs) cannot promote a candidate to original native trap proof. CI verifies patch applicability and parser tests only; no native build, debugger, cloud provisioning, original-model execution, private photos or release.
 
+## Explicit BBQ JIT bounds-site research mode
+
+See [research-only explicit-bounds source patch and operator runbook](JSC_EXPLICIT_BOUNDS_OPCODE_HOLD.md). A **third** sequential source patch may capture the function-relative opcode location of a *taken* BBQ JIT bounds-check branch even if no POSIX SIGSEGV occurs. The log remains an unsigned **diagnostic-build candidate**, not evidence from the original shipped engine; dynamic effective address, access width, original Worker/model identity and native cause remain unobserved. CI applies the patch to the pinned source without compiling WebKit or running an original model.
+
 ## Original WebKit native-signal observation
 
 The separate [WebKit native-fault-trace runbook](WEBKIT_NATIVE_FAULT_TRACE_HOLD.md)
