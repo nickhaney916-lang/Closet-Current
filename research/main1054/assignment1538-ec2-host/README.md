@@ -31,6 +31,41 @@ change IAM/security settings, start a debugger, verify SSM endpoint routing,
 approve billing or establish authorization for native tracing.
 **A green preflight means deployment is possible to evaluate, not approved.**
 
+## Two-stage AWS operator launcher
+
+On an independently approved AWS CloudShell or administrative workstation,
+set the reviewed account configuration locally (not in GitHub/ChatGPT):
+
+```bash
+export CC_M4_AWS_REGION=YOUR_APPROVED_REGION
+export CC_M4_VPC_ID=YOUR_APPROVED_RESEARCH_VPC_ID
+export CC_M4_PRIVATE_SUBNET_ID=YOUR_APPROVED_PRIVATE_SUBNET_ID
+export CC_M4_INSTANCE_TYPE=m7i.xlarge
+export CC_M4_APPROVAL_REFERENCE=CC-M4-YOUR-REVIEWED-TICKET
+export CC_M4_OPERATOR_IAM_PRINCIPAL_ARN=YOUR_APPROVED_AWS_IAM_ROLE_OR_USER_ARN
+bash ./operator-launch-after-approval.sh preflight
+```
+
+Preflight performs AWS **read operations only**, including actual account
+identity matching the operator IAM ARN and instance-type availability in the
+selected subnet's availability zone. It does not create cloud resources.
+
+Only following external change/billing/IAM/SSM-network/native debugging approval,
+the operator can explicitly create one *billable* research host:
+
+```bash
+export CC_M4_OPERATOR_BILLING_APPROVED=APPROVED_BILLABLE_EC2
+export CC_M4_OPERATOR_SSM_NETWORK_REVIEW=REVIEWED_SSM_CONNECTIVITY
+bash ./operator-launch-after-approval.sh create
+```
+
+The launcher requires live interactive typing of the precise stack name.
+The environment variables, ticket string and manual confirmation are
+acknowledgements, **not** independent authorization. Do not run the create
+command before actual organizational approval. Neither launcher nor CI performs
+native debugging, changes kernel security, launches the original ONNX model,
+or proves the original crash repaired.
+
 ## Infrastructure administrator steps (explicit approval / cloud billing)
 
 1. Approve the AWS account, research VPC, *private subnet*, native debugging scope, operator IAM principal and billing budget **before** creating any resources. Choose an x86-64 compatible `m7i.xlarge` or `m7i.2xlarge` in an available region. Require an independent approval ticket and preserve it in your normal change-control system. Subnet must have SSM endpoint/NAT access; do not use production/private-photo resources.
