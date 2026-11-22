@@ -14,7 +14,20 @@ import { createHash } from 'node:crypto';
 import { resolve,extname } from 'node:path';
 import { spawn } from 'node:child_process';
 import { webkit } from 'playwright';
-import { parseLocalInspectorPaths } from './m289-authorized-wpe-inspector-wasm-offset.mjs';
+// Keep the M289 Inspector helper owner untouched: this branch is stacked on
+// M287 (which does NOT contain M289). Use its source-verified, small grammar.
+function parseLocalInspectorPaths(markup) {
+ if(typeof markup!=='string'||markup.length>65536)throw Error('invalid inspector listing');
+ const matches=[...markup.matchAll(/['"](\\/socket\\/([0-9]{1,18})\\/([0-9]{1,18})\\/([a-zA-Z][a-zA-Z0-9_-]{0,47}))['"]/g)];
+ const out=[];
+ for(const m of matches){
+  const left=Number(m[2]),right=Number(m[3]);
+  if(!Number.isSafeInteger(left)||left<1||!Number.isSafeInteger(right)||right<1)continue;
+  if(!out.includes(m[1]))out.push(m[1]);
+  if(out.length===10)break;
+ }
+ return out;
+}
 
 const bounded = (v, max=128) => typeof v==='string'&&v.length>0&&v.length<=max &&
   ![...v].some(c=>c.charCodeAt(0)<32||c.charCodeAt(0)===127);
@@ -44,7 +57,7 @@ const receipt={
  webkitInspectorOpen:false,pageTargetDiscovered:false,
  originalWorkerCreated:false,workerDebuggerReady:false,
  workerRuntimeReady:false,workerBreakpointsActive:false,
- workerInitialized:false,workerIdDigestPresent:false,
+ workerInitialized:false,workerIdDigestPresent:false,workerIdDigest:null,
  workerExceptionPauses:0,workerResumeAcknowledgements:0,
  workerResumedEvents:0,
  workerMessageTypes:[],workerTerminal:null,
@@ -85,7 +98,7 @@ const onMessage=e=>{
    if(bounded(id,256)){
     if(workerId && workerId!==id)throw Error('more than one Worker observed');
     workerId=id;workerDigest=sha256(id);
-    receipt.workerIdDigestPresent=true;receipt.originalWorkerCreated=true;
+    receipt.workerIdDigestPresent=true;receipt.workerIdDigest=workerDigest;receipt.originalWorkerCreated=true;
    }
   }
   if(p.method==='Worker.dispatchMessageFromWorker'&&p.params?.workerId===workerId &&
