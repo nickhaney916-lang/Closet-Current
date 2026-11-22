@@ -210,9 +210,17 @@ export function classifyPinnedWorkerExceptionPause(message) {
   if (!message || message.method!=='Debugger.paused' ||
       message.params?.reason!=='exception') return {...empty,state:'NOT_AN_EXCEPTION_PAUSE'};
   const d=message.params.data;
-  if (!d || typeof d!=='object' || Array.isArray(d) ||
-      d.type!=='object'||d.subtype!=='error')
-    return {...empty,state:'THROWN_OBJECT_NOT_IDENTIFIED'};
+  // Distinguish unsupported Inspector remote-object shapes without exposing
+  // the thrown value, its description, its objectId, or its stack.
+  if (d===undefined || d===null)
+    return {...empty,state:'THROWN_PAUSE_DATA_ABSENT'};
+  if (typeof d!=='object' || Array.isArray(d))
+    return {...empty,state:'THROWN_PAUSE_DATA_MALFORMED'};
+  if (d.type!=='object')
+    return {...empty,state:'THROWN_REMOTE_VALUE_NONOBJECT'};
+  if (d.subtype!=='error')
+    return {...empty,state:d.subtype==null?
+      'THROWN_REMOTE_ERROR_SUBTYPE_ABSENT':'THROWN_REMOTE_NONERROR_SUBTYPE'};
   if (typeof d.className!=='string'||d.className.length>60 ||
       typeof d.description!=='string'||d.description.length>4096)
     return {...empty,state:'ERROR_CLASS_OR_DESCRIPTION_UNAVAILABLE'};

@@ -82,7 +82,8 @@ const receipt={
  workerExceptionPauses:0,workerResumeAcknowledgements:0,
  workerResumedEvents:0,workerPauseReasons:[],workerInspectorJsLocations:[],
  workerPauseEventWorkerDigest:null,
- workerThrownObjectCategories:[],workerNativeBoundsTextPauseCount:0,
+ workerThrownObjectCategories:[],workerThrownObjectCategoryCounts:{},
+ workerNativeBoundsTextPauseCount:0,
  workerRuntimeErrorTextPauseCount:0,workerThrownValueIsNativePc:false,
  workerInspectorJsLocationIsNativePc:false,
  workerMessageTypes:[],workerTerminal:null,
@@ -147,6 +148,10 @@ const onMessage=e=>{
      // Source-backed: WebKit Debugger.paused.params.data wraps its actual
      // thrown JS value as Runtime.RemoteObject. This never reveals a native PC.
      const classified=classifyPinnedWorkerExceptionPause(w);
+     // Every pause is counted using an enum-only bucket. The first five
+     // categories remain available for chronology; nothing raw is logged.
+     receipt.workerThrownObjectCategoryCounts[classified.state]=
+       (receipt.workerThrownObjectCategoryCounts[classified.state]||0)+1;
      if(receipt.workerThrownObjectCategories.length<5)
       receipt.workerThrownObjectCategories.push(classified.state);
      if(classified.observedWebAssemblyRuntimeError)

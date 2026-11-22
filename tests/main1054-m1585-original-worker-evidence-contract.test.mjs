@@ -204,6 +204,36 @@ test('inspector exception reason without actual remote-object subtype cannot ass
   assert.equal(r.originalNativeRedObserved,false);
  }
 });
+
+test('genuine Worker pause envelope stages are distinguishable without leaking thrown data',()=>{
+ const secret='do-not-publish-owner-exception';
+ for(const [data,state] of [
+  [undefined,'THROWN_PAUSE_DATA_ABSENT'],
+  [null,'THROWN_PAUSE_DATA_ABSENT'],
+  [secret,'THROWN_PAUSE_DATA_MALFORMED'],
+  [[secret],'THROWN_PAUSE_DATA_MALFORMED'],
+  [{type:'string',value:secret},'THROWN_REMOTE_VALUE_NONOBJECT'],
+  [{type:'object',className:secret,description:secret},'THROWN_REMOTE_ERROR_SUBTYPE_ABSENT'],
+  [{type:'object',subtype:'array',description:secret},'THROWN_REMOTE_NONERROR_SUBTYPE']
+ ]) {
+  const r=classifyPinnedWorkerExceptionPause({method:'Debugger.paused',params:{
+   reason:'exception',data}});
+  assert.equal(r.state,state);
+  assert.equal(r.originalNativeRedObserved,false);
+  assert.equal(r.nativeTrapPc,null);
+  assert.equal(r.wasmFileOffset,null);
+  assert.equal(r.causalFixProven,false);
+  assert.equal(r.familyAlpha,'HOLD');
+  assert.ok(!JSON.stringify(r).includes(secret));
+ }
+});
+test('original Worker only counts fixed exception categories without logging original throws',()=>{
+ const script=readFileSync('research/main1054/m1585-original-p94-standalone-webkit.mjs','utf8');
+ assert.match(script,/workerThrownObjectCategoryCounts:\{\}/);
+ assert.match(script,/receipt\.workerThrownObjectCategoryCounts\[classified\.state\]/);
+ assert.match(script,/receipt\.workerThrownObjectCategories\.length<5/);
+ assert.match(script,/if\(receipt\.workerTerminal==='error'\)/);
+});
 test('runtime error class alone or non-native errors cannot be relabeled original OrtCreateSession bounds',()=>{
  for(const event of [
   {className:'RuntimeError',description:'RuntimeError: unreachable'},
