@@ -14,7 +14,14 @@ jobs:
       matrix:
         browser: [webkit, chromium]
         mode: [plain, jsep]
-        ordinal: [1, 2, 3, 4]
+        ordinal: [1, 2, 3, 4, 5, 6, 7, 8]
+        # Eight independent first-attempt WebKit trials per runtime,
+        # four independent Chromium controls per runtime. No retries.
+        exclude:
+          - {browser: chromium, ordinal: 5}
+          - {browser: chromium, ordinal: 6}
+          - {browser: chromium, ordinal: 7}
+          - {browser: chromium, ordinal: 8}
     container:
       image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
       options: --shm-size=1gb
