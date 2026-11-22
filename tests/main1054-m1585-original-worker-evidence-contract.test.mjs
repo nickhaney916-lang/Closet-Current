@@ -31,6 +31,7 @@ const candidate=()=>check({trial,inspector,trialJob:job,inspectorJob:job});
 test('canonical original pins and historic RED remain immutable informational inputs',()=>{
  assert.equal(originalPins.jsepSha256,'c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39');
  assert.equal(originalPins.modelByteLength,15199746);
+ assert.equal(originalPins.modelOnnxSha256,'02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3');
  assert.equal(originalPins.historicalRedRun,44640727828);
 });
 test('empty evidence stays BLOCKED, never repaired or original RED',()=>{
