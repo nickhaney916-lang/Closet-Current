@@ -9,7 +9,7 @@
 import {readFileSync} from 'node:fs';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
-import {spawn} from 'node:child_process';
+import {spawn,spawnSync} from 'node:child_process';
 import {createInterface} from 'node:readline';
 export const pins=Object.freeze({
   wasmSha256:'c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39',
@@ -22,7 +22,12 @@ export const pins=Object.freeze({
   originalRedJob:135971719127,
   originalFunction:4846,
   staticFunctionStart:7022489,
-  staticFunctionEndExclusive:7165245
+  staticFunctionEndExclusive:7165245,
+  // Separate M290 original pinned Playwright 1.56.1/WebKit 2215 mapped
+  // WPE process (healthy). NOT an authentic original-model trap identity.
+  originalWebProcessPath:'/ms-playwright/webkit-2215/minibrowser-wpe/bin/WPEWebProcess',
+  originalWebProcessSha256:'b46f88603e43eca28083389188944f7f47fd26311c8697a14f910e4f8bfa0d66',
+  originalWebProcessBuildId:'23a6254355e0ab6aa4f3672cc51bd9eb487522a7'
 });
 const SHA=/^[a-f0-9]{40}$/, HASH=/^[a-f0-9]{64}$/;
 const safeInt=n=>Number.isSafeInteger(n)&&n>=0;
@@ -53,7 +58,7 @@ const sensitiveKeys=new Set([
  * original model + WASM byte hashes, not just a repeating WPE Worker ID hash.
  * A native machine PC is NEVER a WASM file offset.
  */
-export function assessNativeFaultReceipt(input,{staticProof=null}={}) {
+export function assessNativeFaultReceipt(input,{staticProof=null,elfProof=null}={}) {
   const b=[];
   if(!input||typeof input!=='object'||Array.isArray(input))
     return result(['RECEIPT_ABSENT'],false);
@@ -163,7 +168,17 @@ export function assessNativeFaultReceipt(input,{staticProof=null}={}) {
        elf.fileOffset+(native.nativePc-elf.start)>=elf.fileBytes||
        native.wasmFileOffset!=null)
       b.push('VERIFIED_ELF_MAPPING_LOAD_BIAS_ABSENT_OR_INVALID');
-    else loc={kind:'native-elf-pc',elfOffset:elf.fileOffset+(native.nativePc-elf.start)};
+    // A user-supplied SHA/build ID is NOT an independently observed binary
+    // identity. Require comparison with the exact installed pinned WPE ELF.
+    // This still cannot authenticate that the *fault* PC was in that ELF.
+    if(elfProof?.verified!==true||
+       elfProof?.source!=='pinned-playwright-webkit-2215-elf-file'||
+       elfProof?.sha256!==pins.originalWebProcessSha256||
+       elfProof?.buildId!==pins.originalWebProcessBuildId||
+       elf?.sha256!==elfProof?.sha256||elf?.buildId!==elfProof?.buildId)
+      b.push('ELF_SHA_BUILD_ID_NOT_INDEPENDENTLY_VERIFIED');
+    else if(!b.includes('ELF_SHA_BUILD_ID_NOT_INDEPENDENTLY_VERIFIED'))
+      loc={kind:'native-elf-pc',elfOffset:elf.fileOffset+(native.nativePc-elf.start)};
   }
   if(b.length)return result(b,false);
   return result(['INDEPENDENT_RUN_LOG_PROCESS_BINARY_AND_OPERATOR_ATTESTATION_REQUIRED',
@@ -237,9 +252,58 @@ export async function verifyOriginalStaticMemoryOpcode(wasmPath,offset){
   });
 }
 
+
+/**
+ * Static SHA256+readelf build ID check of the installed pinned WPEWebProcess.
+ * Not a native debugger, loaded-library check, or genuine fault witness.
+ * Reject alternative ELF paths to prevent contamination from a benign but
+ * wrong WPE/JSC process or another browser revision.
+ */
+export function verifyPinnedWebProcessElf(path) {
+  if(path!==pins.originalWebProcessPath)
+    throw Error('ELF not exact pinned Playwright WebKit 2215 WPEWebProcess');
+  const bytes=readFileSync(path);
+  if(bytes.length<4096||bytes[0]!==0x7f||bytes[1]!==0x45||
+     bytes[2]!==0x4c||bytes[3]!==0x46)
+    throw Error('not an original ELF file');
+  const sha256=createHash('sha256').update(bytes).digest('hex');
+  if(sha256!==pins.originalWebProcessSha256)
+    throw Error('pinned WPE ELF SHA256 differs');
+  const proc=spawnSync('readelf',['-n',path],{
+    encoding:'utf8',timeout:12000,maxBuffer:512*1024,
+    stdio:['ignore','pipe','pipe']
+  });
+  if(proc.error||proc.status!==0||proc.signal)
+    throw Error('readelf on pinned WPE ELF failed');
+  const all=[...String(proc.stdout).matchAll(/Build ID:\s*([a-f0-9]{8,80})/ig)];
+  if(all.length!==1||all[0][1].toLowerCase()!==pins.originalWebProcessBuildId)
+    throw Error('original pinned WPE ELF build ID differs');
+  return Object.freeze({verified:true,
+    source:'pinned-playwright-webkit-2215-elf-file',
+    sha256,buildId:pins.originalWebProcessBuildId,
+    // This path is the currently installed file, NOT proof of a mapped
+    // module in any genuine failing WPE process.
+    genuineFailingProcessMappedElfVerified:false,
+    nativeMachinePcCaptured:false,sourceCxxStatement:null
+  });
+}
+
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   try{
-    if(process.argv[2]==='verify-original-static'){
+    if(process.argv[2]==='verify-original-elf'){
+      if(process.argv.length!==4)throw Error('exact pinned WPE ELF path needed');
+      const proof=verifyPinnedWebProcessElf(process.argv[3]);
+      let wrongPathRejected=false;
+      try{verifyPinnedWebProcessElf(process.argv[3]+'.wrong')}
+      catch{wrongPathRejected=true}
+      if(!wrongPathRejected)throw Error('unverified alternate ELF path admitted');
+      console.log('M1538_PINNED_WPE_ELF_FILE_GATE '+JSON.stringify({
+        originalWebProcessElfShaVerified:proof.verified,
+        originalWebProcessBuildIdVerified:true,alternateElfPathRejected:true,
+        mappedInOriginalFailingProcess:false,realOriginalNativePc:null,
+        originalCxxStatement:null,causalFixProven:false,familyAlpha:'HOLD'
+      }));
+    }else if(process.argv[2]==='verify-original-static'){
       if(process.argv.length!==4)throw Error('canonical WASM file path needed');
       // M288 exact canonical original f4846 positive static candidate;
       // 7022510 is an interior byte of that instruction, not an opcode start.
@@ -269,7 +333,10 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
         process.argv.length===4?
         await verifyOriginalStaticMemoryOpcode(process.argv[3],
           input.native.wasmFileOffset):null;
-      const verdict=assessNativeFaultReceipt(input,{staticProof:proof});
+      const elfProof=input?.native?.trapKind==='native-elf-pc'&&
+        process.argv.length===4?
+        verifyPinnedWebProcessElf(process.argv[3]):null;
+      const verdict=assessNativeFaultReceipt(input,{staticProof:proof,elfProof});
       console.log('M1538_NATIVE_OPERATOR_RECEIPT_SANITIZED '+JSON.stringify(verdict));
       if(!verdict.candidate)process.exitCode=1;
     }
