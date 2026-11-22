@@ -1,0 +1,115 @@
+name: M1538 authorized native trap receipt acceptance (HOLD, offline only)
+on:
+  push:
+    branches: [research/main1054-m1538-native-trap-receipt-gate-HOLD]
+permissions:
+  contents: read
+jobs:
+  strict-operator-native-receipt:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Refuse retries, protected source changes or additional files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.run_attempt }}" = "1"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/main1054/m287-original-webkit-failing-process-witness.mjs)" = 4439bb9d27220fe0a37402e81899d2bf5bcc5346
+          test "$(git diff --name-only 7043a298912a865246a8b43a12f6d31a8161738c HEAD -- public)" = ""
+          diff -u <(printf '%s\n' \
+            .github/workflows/main1054-m1538-native-trap-receipt-gate-HOLD.yml \
+            research/main1054/m1538-authorized-native-trap-receipt-gate.mjs \
+            research/main1054/m1538-operator-handoff-HOLD.md \
+            tests/main1054-m1538-authorized-native-trap-receipt-gate.test.mjs) \
+            <(git diff --name-only 7043a298912a865246a8b43a12f6d31a8161738c HEAD)
+      - name: Check isolated native operator receipt validator syntax
+        run: node --check research/main1054/m1538-authorized-native-trap-receipt-gate.mjs
+      - name: Run all adversarial receipt tests, no native debugger
+        run: node --test tests/main1054-m1538-authorized-native-trap-receipt-gate.test.mjs
+
+  sha-attested-original-wasm-opcode:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check immutable P94 worker and first-attempt source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.run_attempt }}" = "1"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          node --check research/main1054/m1538-authorized-native-trap-receipt-gate.mjs
+      - name: Install ordinary WASM static disassembly tool only
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends wabt
+          wasm-objdump --version
+      - name: Validate exact original JSEP SHA and true memory opcode / false interior byte
+        shell: bash
+        run: |
+          set -euo pipefail
+          wasm="$(mktemp)"
+          trap 'rm -f "$wasm"' EXIT
+          curl -fL --retry 0 --max-time 180 -o "$wasm" \
+            'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/ort-wasm-simd-threaded.jsep.wasm'
+          test "$(wc -c < "$wasm")" = "21596019"
+          test "$(sha256sum "$wasm" | cut -d ' ' -f1)" = c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39
+          timeout -k 5s 780s node research/main1054/m1538-authorized-native-trap-receipt-gate.mjs verify-original-static "$wasm"
+
+
+  sha-attested-pinned-wpe-elf:
+    needs: strict-operator-native-receipt
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate exact source HEAD, immutable original Worker and first attempt
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.run_attempt }}" = "1"
+          # Container checkout ownership belongs to the host runner; do
+          # not alter Git safe.directory or any permissions. Independently
+          # reconstruct Git's exact original blob SHA from read-only bytes.
+          node --input-type=module -e 'import {readFileSync} from "node:fs"; import {createHash} from "node:crypto"; const b=readFileSync("public/outfit-worker-p94.mjs"); const blob=createHash("sha1").update("blob "+b.length+"\0").update(b).digest("hex"); if(blob!=="ab7d3837139c5b7d693383f9d6617e199ec8de4f")process.exit(1)'
+          node --check research/main1054/m1538-authorized-native-trap-receipt-gate.mjs
+      - name: Install standard offline ELF notes reader (no ptrace or debugger)
+        shell: bash
+        run: |
+          set -euo pipefail
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends binutils
+          readelf --version | head -n 1
+      - name: SHA256 and ELF Build ID validation on installed pinned WebKit2215 WPE binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          elf=/ms-playwright/webkit-2215/minibrowser-wpe/bin/WPEWebProcess
+          test -f "$elf"
+          test "$(sha256sum "$elf" | cut -d ' ' -f1)" = b46f88603e43eca28083389188944f7f47fd26311c8697a14f910e4f8bfa0d66
+          timeout -k 5s 70s node research/main1054/m1538-authorized-native-trap-receipt-gate.mjs verify-original-elf "$elf"

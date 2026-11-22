@@ -1,0 +1,346 @@
+/**
+ * M1538/HOLD. Offline admission for a SANITIZED operator-authorized
+ * original WebKit ONNX native fault witness. NO ptrace, browser launch,
+ * native attach, network requests, debugger rights, or binary patch.
+ *
+ * Untrusted JSON can nominate only an independently verifiable CANDIDATE.
+ * This never independently proves a genuine native trap, C++ line or fix.
+ */
+import {readFileSync} from 'node:fs';
+import {pathToFileURL} from 'node:url';
+import {createHash} from 'node:crypto';
+import {spawn,spawnSync} from 'node:child_process';
+import {createInterface} from 'node:readline';
+export const pins=Object.freeze({
+  wasmSha256:'c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39',
+  wasmBytes:21596019,
+  modelSha256:'02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3',
+  modelBytes:15199746,
+  workerGitBlob:'ab7d3837139c5b7d693383f9d6617e199ec8de4f',
+  glueSha256:'08fb86ec433c78bfb032c5d84a68b8e8e5a8d81268fa39e24314179a5767a5b9',
+  originalRedRun:44640727828,
+  originalRedJob:135971719127,
+  originalFunction:4846,
+  staticFunctionStart:7022489,
+  staticFunctionEndExclusive:7165245,
+  // Separate M290 original pinned Playwright 1.56.1/WebKit 2215 mapped
+  // WPE process (healthy). NOT an authentic original-model trap identity.
+  originalWebProcessPath:'/ms-playwright/webkit-2215/minibrowser-wpe/bin/WPEWebProcess',
+  originalWebProcessSha256:'b46f88603e43eca28083389188944f7f47fd26311c8697a14f910e4f8bfa0d66',
+  originalWebProcessBuildId:'23a6254355e0ab6aa4f3672cc51bd9eb487522a7'
+});
+const SHA=/^[a-f0-9]{40}$/, HASH=/^[a-f0-9]{64}$/;
+const safeInt=n=>Number.isSafeInteger(n)&&n>=0;
+const result=(blockers,candidate,location)=>({
+  schema:'M1538_OPERATOR_NATIVE_FAULT_ADMISSION_V1',
+  status:candidate?'CANDIDATE_REQUIRES_INDEPENDENT_NATIVE_VERIFICATION':'BLOCKED',
+  blockers:[...new Set(blockers)],
+  candidate,
+  locationKind:location?.kind??null,
+  wasmFileOffsetCandidate:location?.wasmOffset??null,
+  staticOriginalWasmOpcodeCandidate:location?.opcode??null,
+  originalWasmMemoryOpcodeStaticallyVerified:location?.staticVerified===true,
+  nativeElfFileOffsetCandidate:location?.elfOffset??null,
+  actualNativeTrapIndependentlyVerified:false,
+  originalCxxStatement:null,
+  originalRootCauseProven:false,
+  causalFixProven:false,
+  releaseAllowed:false,
+  familyAlpha:'HOLD'
+});
+const allowedKinds=new Set(['wasm-bytecode-offset','native-elf-pc']);
+const sensitiveKeys=new Set([
+  'rawWorkerId','rawImage','photo','photoBytes','modelWeights','modelPayload',
+  'cookie','token','password','authHeader','heapDump','stackMemory','privatePath'
+]);
+/**
+ * Admission requires matching run/job/source/process birth identity and the
+ * original model + WASM byte hashes, not just a repeating WPE Worker ID hash.
+ * A native machine PC is NEVER a WASM file offset.
+ */
+export function assessNativeFaultReceipt(input,{staticProof=null,elfProof=null}={}) {
+  const b=[];
+  if(!input||typeof input!=='object'||Array.isArray(input))
+    return result(['RECEIPT_ABSENT'],false);
+  const {job,worker,native}=input;
+  if(!job||!worker||!native||typeof job!=='object'||
+     typeof worker!=='object'||typeof native!=='object')
+    return result(['RECEIPT_SEGMENTS_MISSING'],false);
+  for(const obj of [job,worker,native,input])
+    if(Object.keys(obj).some(key=>sensitiveKeys.has(key)))b.push('UNSAFE_RAW_OR_PRIVATE_FIELD');
+  if(!safeInt(job.runId)||job.runId===0||!safeInt(job.jobId)||job.jobId===0||
+     job.runAttempt!==1||!SHA.test(job.headSha||'')||
+     job.engine!=='webkit'||job.browserVersion!=='26.0'||
+     job.playwrightVersion!=='1.56.1'||job.firstAttempt!==true)
+    b.push('FIRST_ATTEMPT_PINNED_SOURCE_NOT_PROVEN');
+  if(job.runId===pins.originalRedRun||job.jobId===pins.originalRedJob)
+    b.push('HISTORIC_RED_CANNOT_GAIN_RETROACTIVE_NATIVE_PC');
+  if(!HASH.test(job.workerIdDigest||'')||!safeInt(job.rendererPid)||job.rendererPid===0||
+     !safeInt(job.rendererStartTicks)||job.rendererStartTicks===0||
+     !safeInt(job.browserPid)||job.browserPid===0||
+     !safeInt(job.browserStartTicks)||job.browserStartTicks===0||
+     job.rendererPid===job.browserPid||!safeInt(job.workerCreatedMs))
+    b.push('RUN_JOB_RENDERER_PROCESS_IDENTITY_MISSING');
+  if(worker.runId!==job.runId||worker.jobId!==job.jobId||
+     worker.headSha!==job.headSha||
+     worker.workerIdDigest!==job.workerIdDigest||
+     worker.rendererPid!==job.rendererPid||
+     worker.rendererStartTicks!==job.rendererStartTicks||
+     worker.browserPid!==job.browserPid||
+     worker.browserStartTicks!==job.browserStartTicks)
+    b.push('WORKER_AND_BROWSER_PROCESS_IDENTITY_DIFFER');
+  if(worker.sourceGitBlob!==pins.workerGitBlob||
+     worker.inspectorFrontendCount!==1||
+     worker.originalP94===false||worker.originalP94!==true||
+     !safeInt(worker.workerCreatedMs)||
+     worker.workerCreatedMs!==job.workerCreatedMs)
+    b.push('ORIGINAL_WORKER_SOURCE_OR_LIFECYCLE_UNPROVEN');
+  if(native.runId!==job.runId||native.jobId!==job.jobId||
+     native.headSha!==job.headSha||
+     native.workerIdDigest!==job.workerIdDigest||
+     native.rendererPid!==job.rendererPid||
+     native.rendererStartTicks!==job.rendererStartTicks||
+     native.browserPid!==job.browserPid||
+     native.browserStartTicks!==job.browserStartTicks)
+    b.push('FAULT_AND_RUN_PROCESS_IDENTITY_DIFFER');
+  if(native.operatorAuthorized!==true||
+     native.captureMethod!=='operator-authorized-engine-native-fault'||
+     native.origin!=='original-ort-create-session'||native.nativeExceptionClass!=='wasm-bounds'||
+     native.syntheticOnly!==false||native.originalModel===false||
+     native.actualOrtCreateSessionThrown!==true||native.functionIndex!==pins.originalFunction)
+    b.push('ORIGINAL_NATIVE_WASM_BOUNDS_FAULT_NOT_PROVEN');
+  if(native.jsepWasmSha256!==pins.wasmSha256||
+     native.jsepWasmBytes!==pins.wasmBytes||
+     native.generatedGlueSha256!==pins.glueSha256||
+     native.modelOnnxSha256!==pins.modelSha256||
+     native.modelByteLength!==pins.modelBytes)
+    b.push('ORIGINAL_MODEL_AND_RUNTIME_BYTES_UNATTESTED');
+  if(!safeInt(native.modelPointer)||native.modelPointer===0||
+     !safeInt(native.entryMemoryBytes)||
+     native.modelPointer+pins.modelBytes>native.entryMemoryBytes||
+     native.entryMemoryBytes>4294967296)
+    b.push('ORIGINAL_MODEL_ENTRY_POINTER_OUTSIDE_LIVE_MEMORY');
+  if(!safeInt(native.faultMonotonicMs)||
+     native.faultMonotonicMs<=worker.workerCreatedMs||
+     !safeInt(native.workerErrorObservedMs)||
+     native.workerErrorObservedMs<native.faultMonotonicMs)
+    b.push('FAULT_WORKER_EVENT_ORDER_UNPROVEN');
+  if(native.sourceCxxStatement!=null||native.causalFixProven===true||
+     native.releaseAllowed===true||native.jsInspectorLinePromotedToNativePc===true)
+    b.push('UNVERIFIED_SOURCE_OR_REPAIR_PROMOTED');
+  if(!allowedKinds.has(native.trapKind))b.push('NATIVE_LOCATION_KIND_UNSUPPORTED');
+  let loc=null;
+  if(native.trapKind==='wasm-bytecode-offset'){
+    if(!safeInt(native.wasmFileOffset)||
+       native.wasmFileOffset<pins.staticFunctionStart||
+       native.wasmFileOffset>=pins.staticFunctionEndExclusive||
+       native.nativePc!=null)
+      b.push('ORIGINAL_F4846_OFFSET_NOT_AUTHENTICATED');
+    else {
+      // Static original function-span membership is insufficient: M288
+      // identified 5,769 potential memory accesses among 73,974 f4846
+      // disassembled instructions. Do NOT admit any arbitrary address inside
+      // the original f4846 body as an actual access opcode.
+      const proof=staticProof;
+      const trapping=proof?.kind==='linear-memory-access'||
+        proof?.kind==='linear-memory-bulk-access'||
+        proof?.kind==='linear-memory-atomic-access';
+      if(proof?.verified!==true||
+         proof?.source!=='exact-original-wabt-static-disassembly'||
+         proof?.originalWasmSha256!==pins.wasmSha256||
+         proof?.functionIndex!==pins.originalFunction||
+         proof?.wasmFileOffset!==native.wasmFileOffset||
+         !trapping||
+         typeof proof?.opcode!=='string'||proof.opcode.length>100)
+        b.push('ORIGINAL_F4846_MEMORY_OPCODE_NOT_INDEPENDENTLY_ATTESTED');
+      else loc={kind:'wasm-bytecode-offset',
+        wasmOffset:native.wasmFileOffset,opcode:proof.opcode,staticVerified:true};
+    }
+  }else if(native.trapKind==='native-elf-pc'){
+    const elf=native.elfMapping;
+    if(!elf||typeof elf!=='object'||!HASH.test(elf.sha256||'')||
+       !/^[a-f0-9]{8,128}$/.test(elf.buildId||'')||
+       !safeInt(elf.start)||elf.start===0||
+       !safeInt(elf.endExclusive)||elf.endExclusive<=elf.start||
+       !safeInt(elf.fileOffset)||!safeInt(elf.fileBytes)||
+       !safeInt(native.nativePc)||
+       native.nativePc<elf.start||native.nativePc>=elf.endExclusive||
+       elf.fileOffset+(native.nativePc-elf.start)>=elf.fileBytes||
+       native.wasmFileOffset!=null)
+      b.push('VERIFIED_ELF_MAPPING_LOAD_BIAS_ABSENT_OR_INVALID');
+    // A user-supplied SHA/build ID is NOT an independently observed binary
+    // identity. Require comparison with the exact installed pinned WPE ELF.
+    // This still cannot authenticate that the *fault* PC was in that ELF.
+    if(elfProof?.verified!==true||
+       elfProof?.source!=='pinned-playwright-webkit-2215-elf-file'||
+       elfProof?.sha256!==pins.originalWebProcessSha256||
+       elfProof?.buildId!==pins.originalWebProcessBuildId||
+       elf?.sha256!==elfProof?.sha256||elf?.buildId!==elfProof?.buildId)
+      b.push('ELF_SHA_BUILD_ID_NOT_INDEPENDENTLY_VERIFIED');
+    else if(!b.includes('ELF_SHA_BUILD_ID_NOT_INDEPENDENTLY_VERIFIED'))
+      loc={kind:'native-elf-pc',elfOffset:elf.fileOffset+(native.nativePc-elf.start)};
+  }
+  if(b.length)return result(b,false);
+  return result(['INDEPENDENT_RUN_LOG_PROCESS_BINARY_AND_OPERATOR_ATTESTATION_REQUIRED',
+    'CXX_SOURCE_MAP_NOT_IN_RECEIPT'],true,loc);
+}
+
+/**
+ * Verify *static* memory-opcode membership against actual canonical original
+ * JSEP bytes with WABT, with no WebKit process or native debugger.
+ *
+ * This is a source/binary alignment check, never a real fault PC witness.
+ * wasm-objdump is an ordinary offline WASM disassembler; run it only after
+ * exact raw-length and SHA256 verification.
+ */
+export async function verifyOriginalStaticMemoryOpcode(wasmPath,offset){
+  if(!safeInt(offset)||offset<pins.staticFunctionStart||
+     offset>=pins.staticFunctionEndExclusive)
+    throw Error('requested original f4846 file offset invalid');
+  const wasm=readFileSync(wasmPath);
+  if(wasm.byteLength!==pins.wasmBytes||
+     createHash('sha256').update(wasm).digest('hex')!==pins.wasmSha256)
+    throw Error('original JSEP WASM bytes do not match canonical SHA/length');
+  const child=spawn('wasm-objdump',['-d',wasmPath],{
+    stdio:['ignore','pipe','pipe']
+  });
+  let count=0,inside=false,headerSeen=false,matched=null;
+  let stderr='';
+  child.stderr.on('data',chunk=>{if(stderr.length<1000)stderr+=String(chunk).slice(0,500)});
+  const lines=createInterface({input:child.stdout,crlfDelay:Infinity});
+  let parserError=null;
+  try{
+    for await(const line of lines){
+      if(++count>=pins.wasmBytes*3)throw Error('unbounded original disassembly');
+      if(line.length>6000)throw Error('invalid original disassembly line size');
+      const h=/^\s*(?:0x)?([0-9a-f]{1,12})\s+func\[(\d{1,6})\]/i.exec(line);
+      if(h){inside=Number(h[2])===pins.originalFunction;
+        if(inside){if(headerSeen)throw Error('duplicate canonical f4846 header');headerSeen=true}
+        continue;
+      }
+      if(!inside)continue;
+      const m=/^\s*(?:0x)?([0-9a-f]{1,12}):\s*((?:[0-9a-f]{2}(?:\s+|$)){1,64})\|\s*([^\s|]{1,90})/i.exec(line);
+      if(!m||Number.parseInt(m[1],16)!==offset)continue;
+      if(matched!==null)throw Error('duplicate canonical opcode at requested offset');
+      const opcode=m[3].toLowerCase();
+      const kind=
+        /^(?:i32|i64|f32|f64|v128)\.(?:load|store)(?:\d|[a-z_.])*$/.test(opcode)||
+        /^(?:i32|i64)\.atomic\.(?:load|store|rmw)[a-z0-9_.]*$/.test(opcode)?
+        'linear-memory-access':
+        /^(?:memory)\.(?:copy|fill|init)$/.test(opcode)?
+        'linear-memory-bulk-access':
+        /^(?:memory|i32|i64)\.atomic\.(?:notify|wait|wait32|wait64)$/.test(opcode)?
+        'linear-memory-atomic-access':null;
+      matched={opcode,kind};
+    }
+  }catch(e){parserError=e;child.kill('SIGTERM')}
+  const close=await new Promise(resolve=>{
+    if(child.exitCode!==null||child.signalCode)
+      resolve({exit:child.exitCode,signal:child.signalCode});
+    else child.once('close',(exit,signal)=>resolve({exit,signal}));
+  });
+  if(parserError)throw parserError;
+  if(close.exit!==0||close.signal)
+    throw Error('canonical WABT disassembler incomplete');
+  if(!headerSeen||!matched||!matched.kind)
+    throw Error('offset is not an exact potentially trapping f4846 memory opcode');
+  return Object.freeze({
+    verified:true,source:'exact-original-wabt-static-disassembly',
+    originalWasmSha256:pins.wasmSha256,
+    functionIndex:pins.originalFunction,wasmFileOffset:offset,
+    opcode:matched.opcode,kind:matched.kind
+  });
+}
+
+
+/**
+ * Static SHA256+readelf build ID check of the installed pinned WPEWebProcess.
+ * Not a native debugger, loaded-library check, or genuine fault witness.
+ * Reject alternative ELF paths to prevent contamination from a benign but
+ * wrong WPE/JSC process or another browser revision.
+ */
+export function verifyPinnedWebProcessElf(path) {
+  if(path!==pins.originalWebProcessPath)
+    throw Error('ELF not exact pinned Playwright WebKit 2215 WPEWebProcess');
+  const bytes=readFileSync(path);
+  if(bytes.length<4096||bytes[0]!==0x7f||bytes[1]!==0x45||
+     bytes[2]!==0x4c||bytes[3]!==0x46)
+    throw Error('not an original ELF file');
+  const sha256=createHash('sha256').update(bytes).digest('hex');
+  if(sha256!==pins.originalWebProcessSha256)
+    throw Error('pinned WPE ELF SHA256 differs');
+  const proc=spawnSync('readelf',['-n',path],{
+    encoding:'utf8',timeout:12000,maxBuffer:512*1024,
+    stdio:['ignore','pipe','pipe']
+  });
+  if(proc.error||proc.status!==0||proc.signal)
+    throw Error('readelf on pinned WPE ELF failed');
+  const all=[...String(proc.stdout).matchAll(/Build ID:\s*([a-f0-9]{8,80})/ig)];
+  if(all.length!==1||all[0][1].toLowerCase()!==pins.originalWebProcessBuildId)
+    throw Error('original pinned WPE ELF build ID differs');
+  return Object.freeze({verified:true,
+    source:'pinned-playwright-webkit-2215-elf-file',
+    sha256,buildId:pins.originalWebProcessBuildId,
+    // This path is the currently installed file, NOT proof of a mapped
+    // module in any genuine failing WPE process.
+    genuineFailingProcessMappedElfVerified:false,
+    nativeMachinePcCaptured:false,sourceCxxStatement:null
+  });
+}
+
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
+  try{
+    if(process.argv[2]==='verify-original-elf'){
+      if(process.argv.length!==4)throw Error('exact pinned WPE ELF path needed');
+      const proof=verifyPinnedWebProcessElf(process.argv[3]);
+      let wrongPathRejected=false;
+      try{verifyPinnedWebProcessElf(process.argv[3]+'.wrong')}
+      catch{wrongPathRejected=true}
+      if(!wrongPathRejected)throw Error('unverified alternate ELF path admitted');
+      console.log('M1538_PINNED_WPE_ELF_FILE_GATE '+JSON.stringify({
+        originalWebProcessElfShaVerified:proof.verified,
+        originalWebProcessBuildIdVerified:true,alternateElfPathRejected:true,
+        mappedInOriginalFailingProcess:false,realOriginalNativePc:null,
+        originalCxxStatement:null,causalFixProven:false,familyAlpha:'HOLD'
+      }));
+    }else if(process.argv[2]==='verify-original-static'){
+      if(process.argv.length!==4)throw Error('canonical WASM file path needed');
+      // M288 exact canonical original f4846 positive static candidate;
+      // 7022510 is an interior byte of that instruction, not an opcode start.
+      const proof=await verifyOriginalStaticMemoryOpcode(process.argv[3],7022509);
+      let rejectsInteriorByte=false;
+      try{
+        await verifyOriginalStaticMemoryOpcode(process.argv[3],7022510);
+      }catch{rejectsInteriorByte=true}
+      if(!rejectsInteriorByte)throw Error('intra-instruction byte falsely accepted');
+      console.log('M1538_PINNED_ORIGINAL_F4846_STATIC_OPCODE_GATE '+
+        JSON.stringify({exactOriginalWasmShaVerified:true,
+          genuineMemoryOpcodeStaticProof:true,
+          knownNonOpcodeByteRejected:true,
+          source:'canonical-WABT',
+          originalWasmFileOffset:proof.wasmFileOffset,
+          originalWasmOpcode:proof.opcode,
+          historicalNativeTrapPc:null,
+          originalCxxStatement:null,
+          causalFixProven:false,familyAlpha:'HOLD'}));
+    }else{
+      if(process.argv.length<3||process.argv.length>4)
+        throw Error('sanitized JSON path and optional canonical JSEP WASM path required');
+      const raw=readFileSync(process.argv[2]);
+      if(raw.byteLength>65536)throw Error('oversized untrusted receipt');
+      const input=JSON.parse(raw.toString('utf8'));
+      const proof=input?.native?.trapKind==='wasm-bytecode-offset'&&
+        process.argv.length===4?
+        await verifyOriginalStaticMemoryOpcode(process.argv[3],
+          input.native.wasmFileOffset):null;
+      const elfProof=input?.native?.trapKind==='native-elf-pc'&&
+        process.argv.length===4?
+        verifyPinnedWebProcessElf(process.argv[3]):null;
+      const verdict=assessNativeFaultReceipt(input,{staticProof:proof,elfProof});
+      console.log('M1538_NATIVE_OPERATOR_RECEIPT_SANITIZED '+JSON.stringify(verdict));
+      if(!verdict.candidate)process.exitCode=1;
+    }
+  }catch(e){console.log('M1538_NATIVE_OPERATOR_RECEIPT_SANITIZED '+
+    JSON.stringify(result(['OPERATOR_RECEIPT_OR_CANONICAL_STATIC_VERIFICATION_BLOCKED'],false)));
+    process.exitCode=1;}
+}
