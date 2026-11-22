@@ -61,7 +61,7 @@ const receipt={
  workerExceptionPauses:0,workerResumeAcknowledgements:0,
  workerResumedEvents:0,
  workerMessageTypes:[],workerTerminal:null,
- browserExitObserved:false,sourceVerifiedInServer:false,
+ browserExitObserved:false,sourceVerifiedInServer:false,publicJpegSubmitted:false,
  outcome:'BLOCKED',blockedReason:null
 };
 let server,child,socket,target,workerId,workerDigest,wsseq=0;
@@ -210,15 +210,26 @@ try {
  await getPage(103,'Worker.initialized',{workerId});
  receipt.workerInitialized=true;
 
- const startWork="(async()=>{const r=await fetch("+JSON.stringify(base+'/benchmark/fixtures/commons-0003.jpg')+
+ const startWork="(()=>{window.__p94Submission='PENDING';(async()=>{"+
+  "const r=await fetch("+JSON.stringify(base+'/benchmark/fixtures/commons-0003.jpg')+
   ",{cache:'no-store'});if(!r.ok)throw Error('public JPEG missing');"+
   "const bytes=new Uint8Array(await r.arrayBuffer());let text='';"+
   "for(let i=0;i<bytes.length;i+=32768)text+=String.fromCharCode(...bytes.subarray(i,i+32768));"+
   "window.__p94.postMessage({id:'m1585-original-probe',image:'data:image/jpeg;base64,'+btoa(text)});"+
-  "return {submitted:true,jpegByteLength:bytes.length}})()";
- const started=await getPage(104,'Runtime.evaluate',{expression:startWork,awaitPromise:true,returnByValue:true});
- if(!started?.result?.value?.submitted||started.result.value.jpegByteLength!==img.length)
-  throw Error('unchanged public JPEG was not submitted to original P94');
+  "window.__p94Submission=bytes.length===803511?'SUBMITTED':'WRONG_BYTES';"+
+  "})().catch(()=>window.__p94Submission='FETCH_FAILED');return 'SCHEDULED'})()";
+ const scheduled=await getPage(104,'Runtime.evaluate',{expression:startWork,returnByValue:true});
+ if(scheduled?.result?.value!=='SCHEDULED')
+  throw Error('original public JPEG submission not scheduled');
+ for(let i=0;i<28;i++){
+  const state=await getPage(130+i,'Runtime.evaluate',{
+    expression:'window.__p94Submission',returnByValue:true});
+  if(state?.result?.value==='SUBMITTED'){receipt.publicJpegSubmitted=true;break}
+  if(state?.result?.value==='WRONG_BYTES'||state?.result?.value==='FETCH_FAILED')
+   throw Error('original public JPEG rejected by fixture submission');
+  await wait(250);
+ }
+ if(!receipt.publicJpegSubmitted)throw Error('original public JPEG submission not confirmed');
  let observed;
  for(let i=0;i<150;i++){
   const r=await getPage(500+i,'Runtime.evaluate',{
