@@ -239,18 +239,41 @@ export async function verifyOriginalStaticMemoryOpcode(wasmPath,offset){
 
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   try{
-    if(process.argv.length<3||process.argv.length>4)
-      throw Error('sanitized JSON path and optional canonical JSEP WASM path required');
-    const raw=readFileSync(process.argv[2]);
-    if(raw.byteLength>65536)throw Error('oversized untrusted receipt');
-    const input=JSON.parse(raw.toString('utf8'));
-    const proof=input?.native?.trapKind==='wasm-bytecode-offset'&&
-      process.argv.length===4?
-      await verifyOriginalStaticMemoryOpcode(process.argv[3],
-        input.native.wasmFileOffset):null;
-    const verdict=assessNativeFaultReceipt(input,{staticProof:proof});
-    console.log('M1538_NATIVE_OPERATOR_RECEIPT_SANITIZED '+JSON.stringify(verdict));
-    if(!verdict.candidate)process.exitCode=1;
+    if(process.argv[2]==='verify-original-static'){
+      if(process.argv.length!==4)throw Error('canonical WASM file path needed');
+      // M288 exact canonical original f4846 positive static candidate;
+      // 7022510 is an interior byte of that instruction, not an opcode start.
+      const proof=await verifyOriginalStaticMemoryOpcode(process.argv[3],7022509);
+      let rejectsInteriorByte=false;
+      try{
+        await verifyOriginalStaticMemoryOpcode(process.argv[3],7022510);
+      }catch{rejectsInteriorByte=true}
+      if(!rejectsInteriorByte)throw Error('intra-instruction byte falsely accepted');
+      console.log('M1538_PINNED_ORIGINAL_F4846_STATIC_OPCODE_GATE '+
+        JSON.stringify({exactOriginalWasmShaVerified:true,
+          genuineMemoryOpcodeStaticProof:true,
+          knownNonOpcodeByteRejected:true,
+          source:'canonical-WABT',
+          originalWasmFileOffset:proof.wasmFileOffset,
+          originalWasmOpcode:proof.opcode,
+          historicalNativeTrapPc:null,
+          originalCxxStatement:null,
+          causalFixProven:false,familyAlpha:'HOLD'}));
+    }else{
+      if(process.argv.length<3||process.argv.length>4)
+        throw Error('sanitized JSON path and optional canonical JSEP WASM path required');
+      const raw=readFileSync(process.argv[2]);
+      if(raw.byteLength>65536)throw Error('oversized untrusted receipt');
+      const input=JSON.parse(raw.toString('utf8'));
+      const proof=input?.native?.trapKind==='wasm-bytecode-offset'&&
+        process.argv.length===4?
+        await verifyOriginalStaticMemoryOpcode(process.argv[3],
+          input.native.wasmFileOffset):null;
+      const verdict=assessNativeFaultReceipt(input,{staticProof:proof});
+      console.log('M1538_NATIVE_OPERATOR_RECEIPT_SANITIZED '+JSON.stringify(verdict));
+      if(!verdict.candidate)process.exitCode=1;
+    }
   }catch(e){console.log('M1538_NATIVE_OPERATOR_RECEIPT_SANITIZED '+
-    JSON.stringify(result(['INVALID_RECEIPT_JSON_OR_FILE'],false)));process.exitCode=1;}
+    JSON.stringify(result(['OPERATOR_RECEIPT_OR_CANONICAL_STATIC_VERIFICATION_BLOCKED'],false)));
+    process.exitCode=1;}
 }
