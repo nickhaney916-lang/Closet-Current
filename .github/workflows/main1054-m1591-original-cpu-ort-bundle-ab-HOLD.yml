@@ -39,9 +39,10 @@ jobs:
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
           test "$(git rev-parse HEAD:research/main1054/m287-original-webkit-failing-process-witness.mjs)" = 4439bb9d27220fe0a37402e81899d2bf5bcc5346
           test "$(git diff --name-only 7043a298912a865246a8b43a12f6d31a8161738c HEAD -- public)" = ""
-          test "$(git diff --name-only 7043a298912a865246a8b43a12f6d31a8161738c HEAD | wc -l | tr -d ' ')" = "3"
+          test "$(git diff --name-only 7043a298912a865246a8b43a12f6d31a8161738c HEAD | wc -l | tr -d ' ')" = "5"
           node --check research/main1054/m1591-original-cpu-ort-bundle-ab.mjs
           node --check research/main1054/m1591-original-p94-photo-plain-wasm-ab.mjs
+          node --test tests/main1054-m1591-multiple-photo-admission.test.mjs
       - name: Install exact original-era ONNX Runtime Web and pinned Playwright
         shell: bash
         run: |

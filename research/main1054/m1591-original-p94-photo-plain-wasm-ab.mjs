@@ -14,12 +14,22 @@ const hash=x=>createHash('sha256').update(x).digest('hex');
 const mode=process.env.M1591_MODE,engine=process.env.M1591_BROWSER;
 if(!['jsep','plain'].includes(mode)||!['webkit','chromium'].includes(engine)||
    process.env.GITHUB_RUN_ATTEMPT!=='1')throw Error('wrong first-attempt mode');
-const photo=readFileSync('benchmark/fixtures/commons-0003.jpg');
+const fixtureId=process.env.M1591_FIXTURE_ID||'commons-0003';
+const fixtureAllowlist=new Set(['commons-0003','commons-0001','commons-0014','commons-0021','commons-0049']);
+if(!fixtureAllowlist.has(fixtureId))throw Error('M1591 unapproved public fixture');
+const lockedSources=JSON.parse(readFileSync('benchmark/locked-photo-sources.json','utf8'));
+const matches=lockedSources.filter(x=>x.id===fixtureId);
+if(matches.length!==1||matches[0].verified!==true||
+   matches[0].image!==fixtureId+'.jpg'||
+   !/^[a-f0-9]{64}$/.test(matches[0].sha256)||!matches[0].attribution?.license)
+ throw Error('M1591 invalid public fixture metadata');
+const photoPath='/benchmark/fixtures/'+fixtureId+'.jpg';
+const photo=readFileSync('.'+photoPath);
 const model=readFileSync('/tmp/m1591-original-fp32.onnx');
 const original=readFileSync('public/outfit-worker-p94.mjs','utf8');
 const modelSha='02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3';
-const photoSha='cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64';
-if(hash(photo)!==photoSha||photo.length!==803511||
+const photoSha=matches[0].sha256;
+if(hash(photo)!==photoSha||photo.length<1024||photo.length>3000000||
    hash(model)!==modelSha||model.length!==15199746||
    Buffer.byteLength(original)!==5778)throw Error('original public fixture identity invalid');
 const needle=original.split('\n').filter(x=>
@@ -52,7 +62,7 @@ if(adapted===original||adapted.split('const model=async input=>').length!==2)
 const wasmHits=new Set();
 const fileAllow=new Set([
  '/public/outfit-worker-p94.mjs','/public/outfit-segmentation.mjs',
- '/public/photo-color.js','/benchmark/fixtures/commons-0003.jpg',
+ '/public/photo-color.js',photoPath,
  '/model.onnx','/dist/ort.wasm.min.mjs',
  '/dist/ort-wasm-simd-threaded.wasm','/dist/ort-wasm-simd-threaded.mjs'
 ]);
@@ -75,7 +85,7 @@ const server=createServer((req,res)=>{
    res.setHeader('Content-Type','application/javascript');
    return res.end(mode==='plain'?adapted:original);
   }
-  if(u.pathname==='/benchmark/fixtures/commons-0003.jpg'){
+  if(u.pathname===photoPath){
    res.setHeader('Content-Type','image/jpeg');return res.end(photo);
   }
   if(u.pathname.startsWith('/dist/')){
@@ -96,8 +106,8 @@ try{
  const page=await browser.newPage();
  // Same-origin research-only page; Worker retains the original P94 path.
  await page.goto('http://127.0.0.1:'+server.address().port+'/');
- const data=await page.evaluate(async()=>{
-  const jpeg=await (await fetch('/benchmark/fixtures/commons-0003.jpg',{cache:'no-store'})).arrayBuffer();
+ const data=await page.evaluate(async id=>{
+  const jpeg=await (await fetch('/benchmark/fixtures/'+id+'.jpg',{cache:'no-store'})).arrayBuffer();
   const bytes=new Uint8Array(jpeg);
   let text='';
   for(let i=0;i<bytes.length;i+=32768)
@@ -130,8 +140,9 @@ try{
    };
    w.postMessage({id:'m1591-public-photo',image:uri});
   });
- });
+ },fixtureId);
  const safe={schema:'M1591_P94_PUBLIC_PHOTO_ALTERNATE_CPU_WASM_V1',
+  fixtureId,fixtureSha256:photoSha,fixtureBytes:photo.length,
   engine,mode,originalWorkerBlob:'ab7d3837139c5b7d693383f9d6617e199ec8de4f',
   sourcePublicPhotoShaVerified:true,originalOnnxShaVerified:true,
   alternativeIsDerivedNotShipped:mode==='plain',originalWorkerUnchanged:true,
