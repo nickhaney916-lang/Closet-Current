@@ -1,0 +1,73 @@
+name: M1590 WebKit original-model OMG JIT tier A-B (HOLD)
+on:
+  push:
+    branches: [research/main1054-m1590-original-webkit-omg-tier-ab-HOLD]
+permissions:
+  contents: read
+jobs:
+  m1590-offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact parent and no-deploy protected source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.run_attempt }}" = "1"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git diff --name-only 53044793299d5189302856975b655a4d9529cab8 HEAD -- public)" = ""
+          test "$(git diff --name-only 53044793299d5189302856975b655a4d9529cab8 HEAD | sort)" = "$(printf '%s\n' .github/workflows/main1054-m1590-original-webkit-omg-tier-HOLD.yml research/main1054/m1585-original-p94-standalone-webkit.mjs research/main1054/m1590-pinned-jsc-options.mjs tests/main1054-m1590-pinned-jsc-options.test.mjs | sort)"
+          node --check research/main1054/m1585-original-p94-standalone-webkit.mjs
+          node --check research/main1054/m1590-pinned-jsc-options.mjs
+      - name: Run source-provenance and adversarial regression tests
+        run: |
+          node --test tests/main1054-m1590-pinned-jsc-options.test.mjs
+          node --test tests/main1054-m1585-original-worker-evidence-contract.test.mjs
+          node --test tests/main1054-m287-original-webkit-failing-process-witness.test.mjs
+  m1590-webkit:
+    name: original-P94-${{ matrix.compiler }}-${{ matrix.profile }}-${{ matrix.ordinal }}
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [baseline, no-omg]
+        profile: [instrumented, no-js-proxy]
+        ordinal: [1, 2, 3, 4]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M1590_JSC_OMGJIT_ARM: ${{ matrix.compiler }}
+      M1585_COHORT_ORDINAL: ${{ matrix.ordinal }}
+      M1585_WORKER_PROFILE: ${{ matrix.profile }}
+      M1585_JSC_MEMORY_MODE: default
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify immutable source, first attempt, and no protected change
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = "1"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git diff --name-only 53044793299d5189302856975b655a4d9529cab8 HEAD -- public)" = ""
+          node --check research/main1054/m1585-original-p94-standalone-webkit.mjs
+      - name: Install identical pinned Playwright
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: One real first-attempt original SegFormer P94 Worker, no retries
+        run: timeout -k 10s 400s node research/main1054/m1585-original-p94-standalone-webkit.mjs
