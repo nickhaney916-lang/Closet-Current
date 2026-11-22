@@ -9,6 +9,10 @@ export const pinned = Object.freeze({
   webkitSource: 'db897909f7c31d9b38793374c66427b6a4cb3dd3',
   playwrightPatch: 'f713c6fa093a1f45956c84844d50635376923b75',
   jsepSha256: 'c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39',
+  // Immutable original fp32 Xenova/segformer_b0_clothes ONNX graph, revision
+  // a2489ea8e7ec1ee912190546bad31a4906ccca76 / onnx/model.onnx.
+  modelSha256: '02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3',
+  modelBytes: 15199746,
 });
 
 const renderer = {
@@ -50,7 +54,9 @@ function processIdentity(chain) {
 export function validateReceipt(receipt, manifest) {
   requireEvidence(manifest.schema === 1 && same(manifest.engine, pinned) &&
     same(receipt.engine, pinned), 'pinned engine or original JSEP mismatch');
-  requireEvidence(sha(manifest.modelSha256) && receipt.modelSha256 === manifest.modelSha256 &&
+  requireEvidence(manifest.modelSha256 === pinned.modelSha256 &&
+    receipt.modelSha256 === pinned.modelSha256 &&
+    manifest.modelLength === pinned.modelBytes && receipt.modelLength === pinned.modelBytes &&
     typeof manifest.testSha === 'string' && /^[0-9a-f]{40}$/.test(manifest.testSha) &&
     receipt.testSha === manifest.testSha, 'model or exact test source mismatch');
   requireEvidence(receipt.schema === 1 && receipt.runMode === 'original-model' &&
