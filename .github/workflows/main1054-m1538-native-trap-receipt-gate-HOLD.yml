@@ -74,6 +74,7 @@ jobs:
 
 
   sha-attested-pinned-wpe-elf:
+    needs: strict-operator-native-receipt
     runs-on: ubuntu-24.04
     timeout-minutes: 9
     container:
@@ -92,7 +93,10 @@ jobs:
         run: |
           set -euo pipefail
           test "${{ github.run_attempt }}" = "1"
-          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          # Container checkout ownership belongs to the host runner; do
+          # not alter Git safe.directory or any permissions. Independently
+          # reconstruct Git's exact original blob SHA from read-only bytes.
+          node --input-type=module -e 'import {readFileSync} from "node:fs"; import {createHash} from "node:crypto"; const b=readFileSync("public/outfit-worker-p94.mjs"); const blob=createHash("sha1").update("blob "+b.length+"\0").update(b).digest("hex"); if(blob!=="ab7d3837139c5b7d693383f9d6617e199ec8de4f")process.exit(1)'
           node --check research/main1054/m1538-authorized-native-trap-receipt-gate.mjs
       - name: Install standard offline ELF notes reader (no ptrace or debugger)
         shell: bash
