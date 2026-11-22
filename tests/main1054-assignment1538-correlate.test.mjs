@@ -31,9 +31,37 @@ const receipt = {
   },
   webkitElf, trapMs: 30, heapBytes: 33554432, modelPointer: 8933688,
   frames: [4846, 1384, 11276, 7427],
+  // Synthetic ONLY: not a real/native witnessed access or source attribution.
+  trapMemoryAccess: {
+    origin: 'authorized-trap-event', kind: 'original-wasm-linear-memory',
+    memoryIndex: 0, operation: 'load', effectiveAddress: '33554431',
+    accessBytes: '4', liveMemoryBytes: '33554432',
+  },
   location: { kind: 'wasm-module-offset', origin: 'trap-event', offset: 7022500, functionIndex: 4846 },
 };
 const wasmMapping = { moduleSha256: pinned.jsepSha256 };
+
+test('rejects missing, in-bounds, malformed and non-live native memory-access claims', () => {
+  assert.doesNotThrow(() => validateReceipt(receipt, manifest));
+  const valid = receipt.trapMemoryAccess;
+  const cases = [
+    [null, /trapping memory access required/],
+    [{...valid, origin:'static-candidate'}, /trapping memory access required/],
+    [{...valid, memoryIndex:1}, /trapping memory access required/],
+    [{...valid, effectiveAddress:'033554431'}, /trapping memory access required/],
+    [{...valid, effectiveAddress:'-1'}, /trapping memory access required/],
+    [{...valid, accessBytes:'0'}, /not a verified out-of-bounds access/],
+    [{...valid, effectiveAddress:'33554428'}, /not a verified out-of-bounds access/],
+    [{...valid, liveMemoryBytes:'33554436'}, /differs from at-trap heap/],
+    [{...valid, operation:'unknown'}, /trapping memory access required/],
+    [{...valid, effectiveAddress:'18446744073709551615',accessBytes:'2'},
+      /not a verified out-of-bounds access/],
+  ];
+  for (const [trapMemoryAccess, reason] of cases)
+    assert.throws(() => validateReceipt({...receipt, trapMemoryAccess}, manifest), reason);
+  // A model input in bounds says nothing about this separately trapped access.
+  assert.equal(receipt.modelPointer + receipt.modelLength < receipt.heapBytes, true);
+});
 
 test('fixture reaches coordinate validation, but arbitrary bytes cannot correlate', () => {
   const location = validateReceipt(receipt, manifest);

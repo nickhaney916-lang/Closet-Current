@@ -71,6 +71,39 @@ function processIdentity(chain) {
 
 // Verifies the operator's observations against a separately approved manifest.
 // The signature authenticates the observer. It does not replace live observation.
+/**
+ * An authenticated native error name and in-range model input pointer do not
+ * establish which internal WASM load/store/copy exceeded live linear memory.
+ * This gate admits only an operator-witnessed, first-attempt *failing access*
+ * with the actual effective address, byte extent and at-trap memory size.
+ * A signed JSON claim still requires separate authorized observer evidence.
+ */
+export function validateTrappingMemoryAccess(receipt) {
+  const access = receipt?.trapMemoryAccess;
+  const decimal = value => typeof value === 'string' &&
+    /^(?:0|[1-9][0-9]{0,19})$/.test(value);
+  requireEvidence(access?.origin === 'authorized-trap-event' &&
+    access.kind === 'original-wasm-linear-memory' &&
+    access.memoryIndex === 0 &&
+    ['load','store','atomic','simd','bulk-source','bulk-destination'].includes(access.operation) &&
+    decimal(access.effectiveAddress) &&
+    decimal(access.accessBytes) &&
+    decimal(access.liveMemoryBytes),
+  'independently observed trapping memory access required');
+  const address = BigInt(access.effectiveAddress);
+  const width = BigInt(access.accessBytes);
+  const live = BigInt(access.liveMemoryBytes);
+  const max = (1n << 64n) - 1n;
+  requireEvidence(uint(receipt.heapBytes) && live === BigInt(receipt.heapBytes),
+    'trapping memory size differs from at-trap heap');
+  requireEvidence(width > 0n && address <= max && width <= max &&
+    address + width <= max && address + width > live,
+  'trapping effective address is not a verified out-of-bounds access');
+  return {memoryIndex: 0, operation: access.operation,
+    effectiveAddress: access.effectiveAddress, accessBytes: access.accessBytes,
+    liveMemoryBytes: access.liveMemoryBytes};
+}
+
 export function validateReceipt(receipt, manifest) {
   requireEvidence(manifest.schema === 1 && same(manifest.engine, pinned) &&
     same(receipt.engine, pinned), 'pinned engine or original JSEP mismatch');
@@ -105,6 +138,7 @@ export function validateReceipt(receipt, manifest) {
   requireEvidence(Array.isArray(receipt.frames) && receipt.frames.length >= 1 &&
     receipt.frames.length <= 32 && receipt.frames.every(uint) &&
     receipt.frames[0] === receipt.location?.functionIndex, 'invalid trap stack');
+  validateTrappingMemoryAccess(receipt);
   return receipt.location;
 }
 

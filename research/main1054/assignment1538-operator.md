@@ -45,6 +45,35 @@ restricted run log. Leave host, runner and sandbox security settings intact.
    M290/M291 for reference identities. A healthy run supplies reference
    identity only.
 
+## Mandatory at-trap effective-access witness
+
+The original M279 model pointer and full input buffer were **in bounds**.
+This does not prove the internal WASM memory access was in bounds. For the
+native receipt to pass `validateReceipt`, the independently authorized
+observer must now supply `trapMemoryAccess` measured at the **same natural
+first-attempt fault event**:
+
+- `origin: "authorized-trap-event"`, `kind: "original-wasm-linear-memory"`,
+  `memoryIndex: 0`; `operation` is one of `load`, `store`, `atomic`,
+  `simd`, `bulk-source`, or `bulk-destination`.
+- `effectiveAddress`, `accessBytes`, and `liveMemoryBytes` are canonical
+  unsigned base-10 integer **strings**. The effective address must be the
+  actual native/JIT-observed post-offset address, not the original ONNX input
+  pointer or a speculative instruction address. `liveMemoryBytes` must
+  equal `receipt.heapBytes` measured at the trap.
+- The observer must demonstrate `accessBytes > 0`, no 64-bit addition overflow,
+  and `effectiveAddress + accessBytes > liveMemoryBytes`. For multi-range
+  bulk operations, report the **specific failing source or destination**
+  range. Unknown access type, absent effective address, a JS Inspector
+  line/column, memory measured only after the exception, or a healthy run is
+  **BLOCKED**, not synthetic evidence.
+
+The signed receipt proves only that an approved operator signed these fields.
+Actual instruction/address observation and same-renderer JSEP attestation
+must be independently corroborated. Keep addresses and raw native transcripts
+in operator-controlled storage, publishing only approved sanitized metadata.
+This requirement is an evidence-integrity gate, not a debugger or a fix.
+
 ## On the original failure
 
 Preserve the first-attempt log and run/job identifier. On a genuine original
