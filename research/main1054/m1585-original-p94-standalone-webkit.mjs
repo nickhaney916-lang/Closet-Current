@@ -56,6 +56,7 @@ const receipt={
  sameProcessOriginalJsepShaVerified:false,
  originalModelExecutedAndVerified:false,originalModelRedObserved:false,
  instrumentedWorkerForAttribution:true,workerAttestationProbeArmed:false,
+ expectedPinnedModelOnnxSha256:'02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3',
  sameWorkerModelCopySha256:null,sameWorkerModelCopyBytes:null,
  sameWorkerModelCopyCount:0,sameWorkerModelCopyOffset:null,
  sameWorkerJsepInstantiatedSha256:null,sameWorkerJsepInstantiatedBytes:null,
@@ -280,16 +281,22 @@ try {
    receipt.sameWorkerModelCopyBytes===15199746&&
    /^[0-9a-f]{64}$/.test(receipt.sameWorkerModelCopySha256||''));
  receipt.sameProcessOriginalJsepShaVerified=receipt.sameWorkerJsepShaMatchesPin;
- // Model hash is observed at the native copy boundary, but no independently
- // pinned expected ONNX SHA has been authenticated in this test.
- receipt.originalModelWeightsShaVerified=false;
- receipt.originalModelExecutedAndVerified=false;
+ // Pinned fp32 model ONNX digest independently sourced from the immutable
+ // Hugging Face Xenova/segformer_b0_clothes revision a2489ea8... blob
+ // onnx/model.onnx. Comparing a model-copy hash does not prove native PC.
+ receipt.originalModelWeightsShaVerified=Boolean(
+   receipt.sameWorkerModelCopySha256==='02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3');
+ receipt.originalModelExecutedAndVerified=Boolean(
+   receipt.attestationObservationComplete&&receipt.originalModelWeightsShaVerified&&
+   receipt.workerTerminal==='done');
  if(!receipt.sourceVerifiedInServer||!receipt.originalWorkerCreated||
     !receipt.workerInitialized)throw Error('original worker source / inspector provenance incomplete');
  if(!receipt.workerTerminal)throw Error('original Worker did not finish within bounded time');
  if(outerErrors.length)throw Error('Inspector outer protocol errors');
  if(!receipt.attestationObservationComplete)
   throw Error('same Worker JSEP/model native-copy identity attestation incomplete');
+ if(!receipt.originalModelWeightsShaVerified)
+  throw Error('original model native-copy SHA does not match pinned Hugging Face ONNX blob');
  // A success only means P94 executed; a generic Worker error cannot establish
  // original OrtCreateSession RED. No M279/M283 same-session receipts are here.
  if(receipt.workerTerminal==='error') {
@@ -298,7 +305,7 @@ try {
   process.exitCode=1; // Never paint an original Worker error green.
  } else {
   receipt.outcome='ORIGINAL_WORKER_DONE_SAME_WORKER_JSEP_AND_MODEL_COPY_ATTESTED';
-  receipt.blockedReason='INDEPENDENT_PINNED_MODEL_SHA_AND_NATIVE_TRAP_PC_NOT_PROVEN';
+  receipt.blockedReason='ORIGINAL_WASM_ERROR_NOT_REPRODUCED_NATIVE_TRAP_PC_UNKNOWN';
  }
 } catch(err) {
  receipt.outcome='BLOCKED';
