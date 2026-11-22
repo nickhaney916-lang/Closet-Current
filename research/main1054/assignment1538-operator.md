@@ -39,7 +39,7 @@ restricted run log. Leave host, runner and sandbox security settings intact.
    `73f32b17f002381abadb8cec18cdec85fb17ace1077f993f448e3024b3014f8b`,
    Build ID `e04d2e784f16edeb1612cc24cd180e328c4b3e56`),
    only for an actual file-backed PC in that precise mapped ELF.
-   A generated WASM/JSC JIT address is **not file-backed in either library**; 
+   A generated WASM/JSC JIT address is **not file-backed in either library**;
    independently validated engine native-code origin mapping is mandatory. Match the mapping to
    the expected device/inode before hashing and reading the Build ID. Use
    M290/M291 for reference identities. A healthy run supplies reference
