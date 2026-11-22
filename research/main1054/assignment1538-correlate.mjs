@@ -30,6 +30,17 @@ const javaScriptCore = {
   sha256: '73f32b17f002381abadb8cec18cdec85fb17ace1077f993f448e3024b3014f8b',
   buildId: 'e04d2e784f16edeb1612cc24cd180e328c4b3e56',
 };
+/**
+ * M280 independently parsed these entire function body file spans from the
+ * exact pinned original JSEP 21,596,019-byte module. These are range gates,
+ * NOT identified native trap instructions; the historical M279 PC is null.
+ */
+export const pinnedOriginalWasmBodies = Object.freeze({
+  4846: Object.freeze([7022489, 7165245]),
+  1384: Object.freeze([1466483, 1614237]),
+  11276: Object.freeze([16046141, 16046580]),
+  7427: Object.freeze([11415071, 11415529]),
+});
 const pinnedFileBackedNativeModule = (location, mapping) =>
   [webkit, javaScriptCore].find(m => same(location,m) && same(mapping,m)) ?? null;
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -102,6 +113,12 @@ export function instructionCoordinate(location, mapping) {
     requireEvidence(location.origin === 'trap-event' && uint(location.offset) &&
       location.offset < 21_596_019 && mapping.moduleSha256 === pinned.jsepSha256,
     'requires the original module trap offset');
+    // Bind a claimed actual module offset to the independently parsed body
+    // of the exact reported original stack function, not merely the module.
+    // Static valid opcodes alone never prove where a live trap occurred.
+    const body = pinnedOriginalWasmBodies[location.functionIndex];
+    requireEvidence(Array.isArray(body) && body[0] <= location.offset &&
+      location.offset < body[1], 'original WASM function body/offset mismatch');
     return location.offset;
   }
 

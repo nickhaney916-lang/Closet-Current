@@ -3,7 +3,7 @@ import { createHash, generateKeyPairSync, sign } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 import {
-  authenticate, correlate, instructionCoordinate, pinned, validateReceipt, validateSourceMapping,
+  authenticate, correlate, instructionCoordinate, pinned, pinnedOriginalWasmBodies, validateReceipt, validateSourceMapping,
 } from '../research/main1054/assignment1538-correlate.mjs';
 
 // Deliberately synthetic controls. No fixture is a signed production receipt.
@@ -174,4 +174,38 @@ test('file-backed native JavaScriptCore PC uses exact installed pinned JSC ELF/b
     /verified file-backed native PC/);
   assert.throws(()=>instructionCoordinate({...location,pc:'0x12fff'},mapping),
     /invalid native executable map range/);
+});
+
+test('original M279 stack functions restrict purported native WASM offsets to exact code bodies', () => {
+  const expected = new Map([
+    [4846, [7022489, 7165245]],
+    [1384, [1466483, 1614237]],
+    [11276, [16046141, 16046580]],
+    [7427, [11415071, 11415529]],
+  ]);
+  for (const [functionIndex, span] of expected) {
+    assert.deepEqual(pinnedOriginalWasmBodies[functionIndex], span);
+    const [begin, end] = span;
+    const location = {...receipt.location, functionIndex};
+    assert.equal(instructionCoordinate({...location, offset: begin}, wasmMapping), begin);
+    assert.equal(instructionCoordinate({...location, offset: end - 1}, wasmMapping), end - 1);
+    assert.throws(() => instructionCoordinate({...location, offset: begin - 1}, wasmMapping),
+      /function body\/offset mismatch/);
+    assert.throws(() => instructionCoordinate({...location, offset: end}, wasmMapping),
+      /function body\/offset mismatch/);
+  }
+  assert.throws(() => instructionCoordinate({
+    ...receipt.location, offset: pinnedOriginalWasmBodies[1384][0],
+  }, wasmMapping), /function body\/offset mismatch/);
+  assert.throws(() => instructionCoordinate({
+    ...receipt.location, functionIndex: 999, offset: pinnedOriginalWasmBodies[4846][0],
+  }, wasmMapping), /function body\/offset mismatch/);
+});
+
+test('independent static body starts cannot be promoted into a real original trap', () => {
+  const location = {...receipt.location, origin: 'static-candidate', offset: 7022509};
+  assert.throws(() => instructionCoordinate(location, wasmMapping), /original module trap offset/);
+  assert.equal(instructionCoordinate({...location, origin: 'trap-event'}, wasmMapping), 7022509);
+  // This test only exercises an asserted event classification; the signed,
+  // independently witnessed native fault remains a separate requirement.
 });
