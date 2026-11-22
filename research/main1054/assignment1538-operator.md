@@ -56,6 +56,18 @@ build-matched debug artifact and `sourceRevision` of the owning build source.
 Sign the exact receipt JSON bytes with the approved Ed25519 key using a detached
 64-byte binary signature. Never store the signing key in the repository.
 
+**Independent trust anchor is mandatory:** An Ed25519 signature alone proves only
+possession of *some* private key. A forged receipt, manifest and self-created key
+can otherwise all agree with each other. Before running the offline verifier,
+the authorized operator must independently confirm the approved operator's
+SPKI PEM public-key SHA-256 from a trusted custody or approval channel **outside
+the manifest, receipt and signing key**, then supply it as
+`CC1538_APPROVED_OPERATOR_SPKI_SHA256` (64 lowercase hexadecimal characters).
+Both that external trust anchor and `manifest.operatorKeySha256` must match
+the actual approved PEM bytes. The verifier will block without the independent
+fingerprint; do not derive it from the untrusted receipt/manifest.
+No trusted fingerprint or native debugging authorization is supplied by GitHub CI.
+
 ## Offline mapping
 
 Use an independently reviewed exact instruction decoding and its build-matched
@@ -75,7 +87,8 @@ blocks source attribution.
 Run from the repository root:
 
 ```sh
-node research/main1054/assignment1538-correlate.mjs --operator-approved-offline \
+CC1538_APPROVED_OPERATOR_SPKI_SHA256=YOUR_SEPARATELY_APPROVED_64_HEX_DIGEST \
+  node research/main1054/assignment1538-correlate.mjs --operator-approved-offline \
   run-manifest.json trap-receipt.json trap-receipt.sig approved-operator.pem \
   reviewed-mapping.json original-binary original-source.cpp
 ```
