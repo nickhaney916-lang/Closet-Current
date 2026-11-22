@@ -14,7 +14,7 @@ import { createHash } from 'node:crypto';
 import { resolve,extname } from 'node:path';
 import { spawn } from 'node:child_process';
 import { webkit } from 'playwright';
-import { classifyPinnedWorkerExceptionPause } from './m1585-original-worker-evidence-contract.mjs';
+import { classifyPinnedWorkerExceptionPause, classifyPinnedJscFastMemoryDump } from './m1585-original-worker-evidence-contract.mjs';
 // Keep the M289 Inspector helper owner untouched: this branch is stacked on
 // M287 (which does NOT contain M289). Use its source-verified, small grammar.
 function parseLocalInspectorPaths(markup) {
@@ -362,12 +362,11 @@ try {
    receipt.workerTerminal==='done');
  // Process-family option dump is an independently observed configuration
  // receipt, NOT proof of the actual memory allocation mode of that Worker.
- const observed=[...jscOptionDump.matchAll(/(?:^|\n)\s*useWasmFastMemory=(true|false)(?=\s|$)/g)]
-  .map(m=>m[1]);
- receipt.jscOptionDumpObserved=observed.length>0;
- receipt.jscFastMemoryOption=observed.length>0&&observed.every(v=>v===observed[0])
-  ?observed[0]:null;
+ const optionProof=classifyPinnedJscFastMemoryDump(jscOptionDump);
+ receipt.jscOptionDumpObserved=optionProof.observed;
+ receipt.jscFastMemoryOption=optionProof.option;
  jscOptionDump=''; // never preserve untrusted stderr in reported evidence
+ if(optionProof.ambiguous)throw Error('JSC option logs inconsistent or oversized');
  if(receipt.jscFastMemoryOption!==(jscMemoryMode==='explicit-bounds'?'false':'true'))
   throw Error('effective JSC WASM fast-memory option not attested for target arm');
  if(!receipt.sourceVerifiedInServer||!receipt.originalWorkerCreated||
