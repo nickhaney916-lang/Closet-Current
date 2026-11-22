@@ -225,3 +225,24 @@ export function classifyPinnedWorkerExceptionPause(message) {
     runtime?'WASM_RUNTIME_ERROR_OTHER_UNATTRIBUTED':'OTHER_ERROR_UNATTRIBUTED',
     observedWebAssemblyRuntimeError:runtime,wasmBoundsMessageObserved:bounds};
 }
+
+
+/**
+ * Pinned WebKit r2215 Options.cpp supports JSC_dumpOptions=2 and prints the
+ * evaluated values of JSC_useWasmFastMemory. This is a bounded child process
+ * family configuration observation ONLY, never a same-Worker allocation-mode
+ * or native trap-site witness. Never include the raw stderr in any receipt.
+ */
+export function classifyPinnedJscFastMemoryDump(raw) {
+  const blocked={observed:false,option:null,ambiguous:false,
+    allocationModeProven:false,nativeTrapPc:null,releaseAllowed:false};
+  if(typeof raw!=='string'||raw.length>512000)
+    return {...blocked,ambiguous:true};
+  if(!raw.includes('All JSC options:'))return blocked;
+  const observed=[...raw.matchAll(/(?:^|\n)\s*useWasmFastMemory=(true|false)(?=\s|$)/g)]
+    .map(x=>x[1]);
+  if(!observed.length)return blocked;
+  if(observed.some(x=>x!==observed[0]))
+    return {...blocked,observed:true,ambiguous:true};
+  return {...blocked,observed:true,option:observed[0]};
+}
