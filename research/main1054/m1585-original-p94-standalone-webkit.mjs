@@ -47,6 +47,8 @@ if (source.length!==5778 || source.toString('utf8').includes('M1585') ||
 const receipt={
  schema:'M1585_ORIGINAL_P94_SINGLE_FRONTEND_WEBKIT_V1',
  branch,engine:'webkit',browserBuild:'Playwright-1.56.1-WebKit-26.0',
+ cohortOrdinal:Number(process.env.M1585_COHORT_ORDINAL||1),
+ originalFirstAttempt:true,
  originalWorkerExpectedBlob:'ab7d3837139c5b7d693383f9d6617e199ec8de4f',
  sourceJpegSha256:locked.sha256,sourceJpegBytes:img.length,
  originalModelId:'Xenova/segformer_b0_clothes',
@@ -68,7 +70,9 @@ const receipt={
  workerRuntimeReady:false,workerBreakpointsActive:false,
  workerInitialized:false,workerIdDigestPresent:false,workerIdDigest:null,
  workerExceptionPauses:0,workerResumeAcknowledgements:0,
- workerResumedEvents:0,
+ workerResumedEvents:0,workerPauseReasons:[],workerInspectorJsLocations:[],
+ workerPauseEventWorkerDigest:null,
+ workerInspectorJsLocationIsNativePc:false,
  workerMessageTypes:[],workerTerminal:null,
  browserExitObserved:false,sourceVerifiedInServer:false,publicJpegSubmitted:false,
  outcome:'BLOCKED',blockedReason:null
@@ -113,9 +117,28 @@ const onMessage=e=>{
   if(p.method==='Worker.dispatchMessageFromWorker'&&p.params?.workerId===workerId &&
      typeof p.params.message==='string'){
    const w=JSON.parse(p.params.message.slice(0,32768));
-   if(Number.isSafeInteger(w.id))workerReplies.set(w.id,w);
+   if(Number.isSafeInteger(w.id)) {
+    workerReplies.set(w.id,w);
+    if(w.id>800&&w.id<=848&&!w.error)
+      receipt.workerResumeAcknowledgements++;
+   }
    if(w.method==='Debugger.paused'){
-    receipt.workerExceptionPauses += w.params?.reason==='exception'?1:0;
+    const reason=w.params?.reason;
+    if(['exception','other','debuggerStatement','assert'].includes(reason)&&
+       receipt.workerPauseReasons.length<5)receipt.workerPauseReasons.push(reason);
+    if(reason==='exception'){
+     receipt.workerExceptionPauses++;
+     receipt.workerPauseEventWorkerDigest=workerDigest;
+    }
+    // Inspector's top location is Javascript-script metadata, NOT native
+    // instruction PC or original WASM file offset (M1541 44/45 control).
+    const loc=w.params?.callFrames?.[0]?.location;
+    if(receipt.workerInspectorJsLocations.length<5)
+     receipt.workerInspectorJsLocations.push({
+      line:Number.isSafeInteger(loc?.lineNumber)?loc.lineNumber:null,
+      column:Number.isSafeInteger(loc?.columnNumber)?loc.columnNumber:null,
+      nativePc:false,wasmFileOffset:null
+     });
     if(receipt.workerResumeAcknowledgements<48)
      remoteWorker(++workerResumeId,'Debugger.resume');
    }
@@ -138,6 +161,8 @@ const getWorker=async(id,method,params={})=>{
  return workerReplies.get(id).result;
 };
 try {
+ if(!Number.isSafeInteger(receipt.cohortOrdinal)||receipt.cohortOrdinal<1||receipt.cohortOrdinal>4)
+  throw Error('invalid bounded original cohort ordinal');
  const root=resolve('.');
  const allow=new Set([
   '/public/outfit-worker-p94.mjs',
@@ -293,6 +318,9 @@ try {
     !receipt.workerInitialized)throw Error('original worker source / inspector provenance incomplete');
  if(!receipt.workerTerminal)throw Error('original Worker did not finish within bounded time');
  if(outerErrors.length)throw Error('Inspector outer protocol errors');
+ if(receipt.workerPauseEventWorkerDigest!==null&&
+    receipt.workerPauseEventWorkerDigest!==receipt.workerIdDigest)
+  throw Error('Worker Inspector event does not match original worker digest');
  if(!receipt.attestationObservationComplete)
   throw Error('same Worker JSEP/model native-copy identity attestation incomplete');
  if(!receipt.originalModelWeightsShaVerified)
