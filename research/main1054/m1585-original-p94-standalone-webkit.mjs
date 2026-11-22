@@ -40,6 +40,10 @@ const workerAttestationPrelude="(()=>{\n const g=globalThis;\n if(g.__ccM1585Att
 const branch = 'research/main1054-m1585-original-worker-evidence-contract-HOLD';
 // Both profiles use a genuine single-front-end Inspector; only the JS proxy differs.
 const workerProfile=process.env.M1585_WORKER_PROFILE||'instrumented';
+// Source: WebKit r2215 OptionsList.h / Options.cpp. This changes only the
+// original browser process' documented WASM fast-memory strategy, not a
+// security or sandbox setting, not the shipped Worker/ONNX/JSEP.
+const jscMemoryMode=process.env.M1585_JSC_MEMORY_MODE||'default';
 const source = readFileSync('public/outfit-worker-p94.mjs');
 const img = readFileSync('benchmark/fixtures/commons-0003.jpg');
 const locked=JSON.parse(readFileSync('benchmark/locked-photo-sources.json','utf8'))
@@ -50,7 +54,10 @@ if (source.length!==5778 || source.toString('utf8').includes('M1585') ||
 const receipt={
  schema:'M1585_ORIGINAL_P94_SINGLE_FRONTEND_WEBKIT_V1',
  branch,engine:'webkit',browserBuild:'Playwright-1.56.1-WebKit-26.0',
- cohortOrdinal:Number(process.env.M1585_COHORT_ORDINAL||1),workerProfile,
+ cohortOrdinal:Number(process.env.M1585_COHORT_ORDINAL||1),workerProfile,jscMemoryMode,
+ jscOptionDumpObserved:false,jscFastMemoryOption:null,
+ jscModeSource:'WEBKIT_R2215_OPTION_DUMP',jscNativeAllocationModeProven:false,
+ jscWasmJitCodeOriginProven:false,
  originalFirstAttempt:true,
  originalWorkerExpectedBlob:'ab7d3837139c5b7d693383f9d6617e199ec8de4f',
  sourceJpegSha256:locked.sha256,sourceJpegBytes:img.length,
@@ -83,6 +90,9 @@ const receipt={
  outcome:'BLOCKED',blockedReason:null
 };
 let server,child,socket,target,workerId,workerDigest,wsseq=0;
+// Captured transiently ONLY for a strict allowlisted boolean classification;
+// never log/store raw stderr, which may contain unrelated process diagnostics.
+let jscOptionDump='';
 const pageReplies=new Map(), workerReplies=new Map();
 let pagePendingSeq=0,workerResumeId=800;
 const workerIds=new Map(),outerErrors=[];
@@ -177,6 +187,8 @@ const getWorker=async(id,method,params={})=>{
 try {
  if(!['instrumented','no-js-proxy'].includes(workerProfile))
   throw Error('unknown original Worker observation profile');
+ if(!['default','explicit-bounds'].includes(jscMemoryMode))
+  throw Error('unrecognized JSC bounds mode');
  if(!Number.isSafeInteger(receipt.cohortOrdinal)||receipt.cohortOrdinal<1||receipt.cohortOrdinal>4)
   throw Error('invalid bounded original cohort ordinal');
  const root=resolve('.');
@@ -213,12 +225,24 @@ try {
  const base='http://127.0.0.1:'+server.address().port;
  const exe=webkit.executablePath();
  if(!exe||!exe.startsWith('/'))throw Error('missing pinned WebKit executable');
+ // A/B one source-supported JSC engine setting only. The normal default
+ // uses upstream compiled defaults; explicit-bounds turns off signal-backed
+ // fast WASM memory so JSC must use explicit bounds checks (Options.cpp).
+ // Strip inherited JSC_* overrides from the child for a clean baseline.
+ const jscEnv={...process.env};
+ for(const key of Object.keys(jscEnv))if(key.startsWith('JSC_'))delete jscEnv[key];
+ jscEnv.WEBKIT_INSPECTOR_HTTP_SERVER='127.0.0.1:17659';
+ jscEnv.JSC_dumpOptions='2'; // observe source-exposed effective options
+ if(jscMemoryMode==='explicit-bounds')
+  jscEnv.JSC_useWasmFastMemory='false';
  child=spawn(exe,['--headless',base+'/m1585-page'],{
-  env:{...process.env,WEBKIT_INSPECTOR_HTTP_SERVER:'127.0.0.1:17659'},
-  stdio:['ignore','ignore','pipe']
+  env:jscEnv,stdio:['ignore','ignore','pipe']
  });
  child.on('exit',()=>{receipt.browserExitObserved=true});
- child.stderr?.on('data',()=>{});
+ child.stderr?.on('data',data=>{
+  if(jscOptionDump.length<512000)
+   jscOptionDump+=String(data).slice(0,512000-jscOptionDump.length);
+ });
  let path=null;
  for(let i=0;i<48&&!path&&!receipt.browserExitObserved;i++){
   try{
@@ -336,6 +360,16 @@ try {
  receipt.originalModelExecutedAndVerified=Boolean(
    receipt.attestationObservationComplete&&receipt.originalModelWeightsShaVerified&&
    receipt.workerTerminal==='done');
+ // Process-family option dump is an independently observed configuration
+ // receipt, NOT proof of the actual memory allocation mode of that Worker.
+ const observed=[...jscOptionDump.matchAll(/(?:^|\n)\s*useWasmFastMemory=(true|false)(?=\s|$)/g)]
+  .map(m=>m[1]);
+ receipt.jscOptionDumpObserved=observed.length>0;
+ receipt.jscFastMemoryOption=observed.length>0&&observed.every(v=>v===observed[0])
+  ?observed[0]:null;
+ jscOptionDump=''; // never preserve untrusted stderr in reported evidence
+ if(receipt.jscFastMemoryOption!==(jscMemoryMode==='explicit-bounds'?'false':'true'))
+  throw Error('effective JSC WASM fast-memory option not attested for target arm');
  if(!receipt.sourceVerifiedInServer||!receipt.originalWorkerCreated||
     !receipt.workerInitialized)throw Error('original worker source / inspector provenance incomplete');
  if(!receipt.workerTerminal)throw Error('original Worker did not finish within bounded time');
