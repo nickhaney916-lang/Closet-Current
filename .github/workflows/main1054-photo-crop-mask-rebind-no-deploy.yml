@@ -1,0 +1,55 @@
+name: M4 crop-mask source binding regression (HOLD/no-deploy)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'public/photo-crop-editor.js'
+      - 'scripts/test-photo-crop-mask-rebind-browser.mjs'
+      - '.github/workflows/main1054-photo-crop-mask-rebind-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  browser:
+    if: github.head_ref == 'research/main1054-m4-crop-mask-source-binding-HOLD'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin exact application and research-only source scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          git diff --check 8c3355350303399e9edc2e98beaf9de15d601282 HEAD
+          diff -u <(printf '%s\n' \
+            .github/workflows/main1054-photo-crop-mask-rebind-no-deploy.yml \
+            public/photo-crop-editor.js \
+            scripts/test-photo-crop-mask-rebind-browser.mjs) \
+            <(git diff --name-only 8c3355350303399e9edc2e98beaf9de15d601282 HEAD)
+          node --check public/photo-crop-editor.js
+          node --check scripts/test-photo-crop-mask-rebind-browser.mjs
+      - name: Install pinned no-deploy browser test runtime
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Reproduce original stale-mask bug on unmodified source (RED)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp public/photo-crop-editor.js "$RUNNER_TEMP/photo-crop-editor.fixed.js"
+          git show 8c3355350303399e9edc2e98beaf9de15d601282:public/photo-crop-editor.js > public/photo-crop-editor.js
+          node scripts/test-photo-crop-mask-rebind-browser.mjs --expect-stale
+          cp "$RUNNER_TEMP/photo-crop-editor.fixed.js" public/photo-crop-editor.js
+      - name: Verify corrected existing masks are invalidated only after crop changes (GREEN)
+        run: node scripts/test-photo-crop-mask-rebind-browser.mjs
+      - name: Build and run all normal application Node regressions
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
