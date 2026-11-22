@@ -237,8 +237,14 @@ try {
  if(outerErrors.length)throw Error('Inspector outer protocol errors');
  // A success only means P94 executed; a generic Worker error cannot establish
  // original OrtCreateSession RED. No M279/M283 same-session receipts are here.
- receipt.outcome='ORIGINAL_WORKER_EXECUTED_UNATTRIBUTED';
- receipt.blockedReason='EXACT_MODEL_JSEP_SAME_PROCESS_AND_NATIVE_ERROR_NOT_PROVEN';
+ if(receipt.workerTerminal==='error') {
+  receipt.outcome='ORIGINAL_WORKER_REPORTED_ERROR_UNATTRIBUTED';
+  receipt.blockedReason='ORIGINAL_P94_GENERIC_ERROR_NATIVE_SITE_NOT_PROVEN';
+  process.exitCode=1; // Never paint an original Worker error green.
+ } else {
+  receipt.outcome='ORIGINAL_WORKER_DONE_MODEL_ATTESTATION_BLOCKED';
+  receipt.blockedReason='EXACT_MODEL_JSEP_SAME_PROCESS_AND_NATIVE_ERROR_NOT_PROVEN';
+ }
 } catch(err) {
  receipt.outcome='BLOCKED';
  receipt.blockedReason=String(err?.message||err).slice(0,160);
