@@ -1,0 +1,36 @@
+name: M1538 authorized native trap receipt acceptance (HOLD, offline only)
+on:
+  push:
+    branches: [research/main1054-m1538-native-trap-receipt-gate-HOLD]
+permissions:
+  contents: read
+jobs:
+  strict-operator-native-receipt:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Refuse retries, protected source changes or additional files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.run_attempt }}" = "1"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/main1054/m287-original-webkit-failing-process-witness.mjs)" = 4439bb9d27220fe0a37402e81899d2bf5bcc5346
+          test "$(git diff --name-only 7043a298912a865246a8b43a12f6d31a8161738c HEAD -- public)" = ""
+          diff -u <(printf '%s\n' \
+            .github/workflows/main1054-m1538-native-trap-receipt-gate-HOLD.yml \
+            research/main1054/m1538-authorized-native-trap-receipt-gate.mjs \
+            research/main1054/m1538-operator-handoff-HOLD.md \
+            tests/main1054-m1538-authorized-native-trap-receipt-gate.test.mjs) \
+            <(git diff --name-only 7043a298912a865246a8b43a12f6d31a8161738c HEAD)
+      - name: Check isolated native operator receipt validator syntax
+        run: node --check research/main1054/m1538-authorized-native-trap-receipt-gate.mjs
+      - name: Run all adversarial receipt tests, no native debugger
+        run: node --test tests/main1054-m1538-authorized-native-trap-receipt-gate.test.mjs
