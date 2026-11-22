@@ -1,0 +1,64 @@
+name: M1591 multi-category original photo P94 CPU-WASM versus JSEP research (HOLD)
+on:
+  push:
+    branches: [research/main1054-m1591-plain-wasm-original-model-ab-HOLD]
+permissions:
+  contents: read
+jobs:
+  multi-licensed-photo:
+    name: fixture-${{ matrix.fixture }}-${{ matrix.browser }}-${{ matrix.mode }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [commons-0001, commons-0014, commons-0021, commons-0049]
+        browser: [webkit, chromium]
+        mode: [jsep, plain]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M1591_FIXTURE_ID: ${{ matrix.fixture }}
+      M1591_BROWSER: ${{ matrix.browser }}
+      M1591_MODE: ${{ matrix.mode }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fail closed on source drift, original worker change or repeated attempt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "${{ github.run_attempt }}" = "1"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:research/main1054/m287-original-webkit-failing-process-witness.mjs)" = 4439bb9d27220fe0a37402e81899d2bf5bcc5346
+          test "$(git diff --name-only 7043a298912a865246a8b43a12f6d31a8161738c HEAD -- public)" = ""
+          test "$(git diff --name-only 7043a298912a865246a8b43a12f6d31a8161738c HEAD | wc -l | tr -d ' ')" = "6"
+          node --check research/main1054/m1591-original-p94-photo-plain-wasm-ab.mjs
+          node --test tests/main1054-m1591-multiple-photo-admission.test.mjs
+      - name: Install identical pinned ONNX Runtime and Playwright browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4
+          for f in ort.min.mjs ort.wasm.min.mjs ort-wasm-simd-threaded.wasm ort-wasm-simd-threaded.mjs ort-wasm-simd-threaded.jsep.wasm ort-wasm-simd-threaded.jsep.mjs; do test -f "node_modules/onnxruntime-web/dist/$f"; done
+      - name: Download exact public fp32 model and SHA verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 2 --max-time 180 'https://huggingface.co/Xenova/segformer_b0_clothes/resolve/a2489ea8e7ec1ee912190546bad31a4906ccca76/onnx/model.onnx' -o /tmp/m1591-original-fp32.onnx
+          echo '02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3  /tmp/m1591-original-fp32.onnx' | sha256sum -c -
+          test "$(wc -c < /tmp/m1591-original-fp32.onnx)" = "15199746"
+      - name: Genuine original or derived P94 multi-category photo first attempt
+        shell: bash
+        run: timeout -k 10s 400s node research/main1054/m1591-original-p94-photo-plain-wasm-ab.mjs
+      - name: Remove public model from disposable runner
+        if: always()
+        run: rm -f /tmp/m1591-original-fp32.onnx
