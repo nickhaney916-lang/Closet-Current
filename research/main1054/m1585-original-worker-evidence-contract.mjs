@@ -132,6 +132,7 @@ export const expectedWorkerEvents = Object.freeze([...EVENTS]);
 export const originalPins = Object.freeze({
   jsepSha256: original.originalJsepSha256,
   modelByteLength: original.originalModelBytes,
+  modelOnnxSha256: '02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3',
   historicalRedRun: original.originalHistoricalFailRun,
   historicalRedJob: original.originalHistoricalFailJob
 });
