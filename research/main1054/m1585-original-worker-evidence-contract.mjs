@@ -136,3 +136,56 @@ export const originalPins = Object.freeze({
   historicalRedRun: original.originalHistoricalFailRun,
   historicalRedJob: original.originalHistoricalFailJob
 });
+
+
+/**
+ * Read-only comparison of independently inspected GitHub WebKit receipts.
+ * Classifies healthy Worker controls ONLY, never native RED or causal repair.
+ * A no-JS-proxy original Worker has NO independently verified in-process
+ * model/JSEP digest; original source pins do not substitute for that evidence.
+ */
+export function classifyOriginalWorkerProfile(receipt) {
+  const base={
+    schema:'M1585_WORKER_PROFILE_CONTROL_V1',status:'BLOCKED',
+    originalNativeRedAttributed:false,nativeTrapPc:null,wasmFileOffset:null,
+    causalFixProven:false,releaseAllowed:false,familyAlpha:'HOLD'
+  };
+  if (!receipt||!['instrumented','no-js-proxy'].includes(receipt.workerProfile))
+    return {...base,reason:'PROFILE_MISSING_OR_INVALID'};
+  if (receipt.engine!=='webkit' || receipt.originalFirstAttempt!==true ||
+      receipt.workerSourceIsOriginalP94!==true ||
+      receipt.inspectorFrontendCount!==1 ||
+      receipt.originalWorkerCreated!==true || receipt.workerInitialized!==true ||
+      receipt.publicJpegSubmitted!==true)
+    return {...base,reason:'SOURCE_OR_FIRST_ATTEMPT_UNVERIFIED'};
+  if (receipt.nativeTrapPc!=null || receipt.wasmFileOffset!=null ||
+      receipt.originalModelRedObserved!==false ||
+      receipt.causalFixProven!==false || receipt.releaseAllowed!==false ||
+      receipt.familyAlpha!=='HOLD')
+    return {...base,reason:'UNSUPPORTED_NATIVE_CLAIM'};
+  if (receipt.workerTerminal==='error')
+    return {...base,status:'ERROR_UNATTRIBUTED',
+      reason:'GENERIC_WORKER_ERROR_NOT_PROOF_OF_ORIGINAL_NATIVE_TRAP'};
+  if (receipt.workerTerminal!=='done')
+    return {...base,reason:'NO_TERMINAL_WORKER_RECEIPT'};
+  if (receipt.workerProfile==='no-js-proxy') {
+    if (receipt.instrumentedWorkerForAttribution!==false ||
+        receipt.workerAttestationProbeArmed!==false ||
+        receipt.originalModelWeightsShaVerified!==false ||
+        receipt.sameProcessOriginalJsepShaVerified!==false ||
+        receipt.originalModelExecutedAndVerified!==false)
+      return {...base,reason:'NO_PROXY_FALSE_MODEL_ATTESTATION'};
+    return {...base,status:'HEALTHY_NO_JS_PROXY_UNATTESTED',
+      reason:'INPROCESS_SHA_NOT_OBSERVED_WITHOUT_JS_PROXIES'};
+  }
+  if (receipt.instrumentedWorkerForAttribution!==true ||
+      receipt.workerAttestationProbeArmed!==true ||
+      receipt.originalModelWeightsShaVerified!==true ||
+      receipt.sameProcessOriginalJsepShaVerified!==true ||
+      receipt.originalModelExecutedAndVerified!==true ||
+      receipt.sameWorkerJsepInstantiatedSha256!==originalPins.jsepSha256 ||
+      receipt.sameWorkerModelCopySha256!==originalPins.modelOnnxSha256)
+    return {...base,reason:'INSTRUMENTED_SAME_WORKER_SHA_UNVERIFIED'};
+  return {...base,status:'HEALTHY_INSTRUMENTED_PROVENANCE_ATTESTED',
+    reason:'CONTROL_ONLY_RESEARCH_PROXIES_CAN_PERTURB_TIMING'};
+}
