@@ -236,6 +236,31 @@ export function classifyPinnedWorkerExceptionPause(message) {
 
 
 /**
+ * Source-revision-bound WebKit r2215 Inspector Debugger.scriptParsed
+ * scriptId -> URL categorization. Never publish a raw URL or scriptId.
+ * The top JavaScript call frame is NOT an observed native PC/WASM offset.
+ * Only exact source-identifiable paths get a provenance category.
+ */
+export function classifyPinnedWorkerScriptUrl(url) {
+  if(typeof url!=='string'||url.length>2048)return 'SCRIPT_URL_UNVERIFIED';
+  if(url==='https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js')
+    return 'PINNED_TRANSFORMERS_3_8_1_SCRIPT';
+  try{
+    const u=new URL(url);
+    if(u.protocol==='http:'&&u.hostname==='127.0.0.1'&&
+       Number(u.port)>0&&Number(u.port)<=65535&&u.username===''&&
+       u.password===''&&u.hash===''&&u.search===''){
+      if(u.pathname==='/public/outfit-worker-p94.mjs')
+        return 'ORIGINAL_P94_WORKER_SCRIPT';
+      if(['/public/outfit-segmentation.mjs','/public/photo-color.js']
+          .includes(u.pathname))
+        return 'LOCAL_P94_SUPPORT_SCRIPT';
+    }
+  }catch{}
+  return 'OTHER_OR_UNKNOWN_SCRIPT';
+}
+
+/**
  * Pinned WebKit r2215 Options.cpp supports JSC_dumpOptions=2 and prints the
  * evaluated values of JSC_useWasmFastMemory. This is a bounded child process
  * family configuration observation ONLY, never a same-Worker allocation-mode

@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assessOriginalWorkerBridge as check,validWorkerEventSequence,expectedWorkerEvents,originalPins, classifyOriginalWorkerProfile, classifyPinnedWorkerExceptionPause, classifyPinnedJscFastMemoryDump}
+import {assessOriginalWorkerBridge as check,validWorkerEventSequence,expectedWorkerEvents,originalPins, classifyOriginalWorkerProfile, classifyPinnedWorkerExceptionPause, classifyPinnedJscFastMemoryDump, classifyPinnedWorkerScriptUrl}
   from '../research/main1054/m1585-original-worker-evidence-contract.mjs';
 
 const sha='a'.repeat(40),digest='b'.repeat(64);
@@ -275,6 +275,39 @@ test('genuine Worker diagnostics expose only sanitized classifications, never pr
 });
 
 
+
+test('pinned WebKit scriptParsed exact-source URL classification fails closed on spoofed origins',()=>{
+ const classify=classifyPinnedWorkerScriptUrl;
+ assert.equal(classify('http://127.0.0.1:41234/public/outfit-worker-p94.mjs'),
+  'ORIGINAL_P94_WORKER_SCRIPT');
+ assert.equal(classify('http://127.0.0.1:41234/public/outfit-segmentation.mjs'),
+  'LOCAL_P94_SUPPORT_SCRIPT');
+ assert.equal(classify('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js'),
+  'PINNED_TRANSFORMERS_3_8_1_SCRIPT');
+ const token='private-token-must-not-escape';
+ for(const url of [
+  undefined, null, token, 'http://example.com/public/outfit-worker-p94.mjs',
+  'http://127.0.0.1:41234/public/outfit-worker-p94.mjs?secret='+token,
+  'http://127.0.0.1:41234/public/outfit-worker-p94.mjs#token',
+  'http://127.0.0.1.evil.com:41234/public/outfit-worker-p94.mjs',
+  'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.2/dist/transformers.min.js',
+  'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js?token='+token,
+  'x'.repeat(2049)
+ ]) {
+  const result=classify(url);
+  assert.ok(['SCRIPT_URL_UNVERIFIED','OTHER_OR_UNKNOWN_SCRIPT'].includes(result));
+  assert.ok(!result.includes(token));
+ }
+});
+test('genuine original Worker maps only script IDs held transiently and does not emit URLs',()=>{
+ const source=readFileSync('research/main1054/m1585-original-p94-standalone-webkit.mjs','utf8');
+ assert.match(source,/w\.method==='Debugger\.scriptParsed'/);
+ assert.match(source,/workerScriptOrigins\.set\(id,classifyPinnedWorkerScriptUrl\(w\.params\?\.url\)\)/);
+ assert.match(source,/workerPauseTopFrameOriginCounts:\{\}/);
+ assert.match(source,/origin\]\=\s*\(receipt\.workerPauseTopFrameOriginCounts\[origin\]\|\|0\)\+1/);
+ assert.match(source,/nativePc:false,wasmFileOffset:null/);
+ assert.match(source,/if\(receipt\.workerTerminal==='error'\)/);
+});
 test('pinned JSC dump exposes source-supported fast-memory config, not true allocation/tier',()=>{
  for(const [str,expected] of [
   ['All JSC options:\n   dumpOptions=2\n   useWasmFastMemory=true\n   useBBQJIT=true\n', 'true'],

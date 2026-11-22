@@ -14,7 +14,7 @@ import { createHash } from 'node:crypto';
 import { resolve,extname } from 'node:path';
 import { spawn } from 'node:child_process';
 import { webkit } from 'playwright';
-import { classifyPinnedWorkerExceptionPause, classifyPinnedJscFastMemoryDump } from './m1585-original-worker-evidence-contract.mjs';
+import { classifyPinnedWorkerExceptionPause, classifyPinnedJscFastMemoryDump, classifyPinnedWorkerScriptUrl } from './m1585-original-worker-evidence-contract.mjs';
 // Keep the M289 Inspector helper owner untouched: this branch is stacked on
 // M287 (which does NOT contain M289). Use its source-verified, small grammar.
 function parseLocalInspectorPaths(markup) {
@@ -83,6 +83,7 @@ const receipt={
  workerResumedEvents:0,workerPauseReasons:[],workerInspectorJsLocations:[],
  workerPauseEventWorkerDigest:null,
  workerThrownObjectCategories:[],workerThrownObjectCategoryCounts:{},
+ workerPauseTopFrameOrigins:[],workerPauseTopFrameOriginCounts:{},
  workerNativeBoundsTextPauseCount:0,
  workerRuntimeErrorTextPauseCount:0,workerThrownValueIsNativePc:false,
  workerInspectorJsLocationIsNativePc:false,
@@ -96,7 +97,7 @@ let server,child,socket,target,workerId,workerDigest,wsseq=0;
 let jscOptionDump='';
 const pageReplies=new Map(), workerReplies=new Map();
 let pagePendingSeq=0,workerResumeId=800;
-const workerIds=new Map(),outerErrors=[];
+const workerIds=new Map(),workerScriptOrigins=new Map(),outerErrors=[];
 const until=async(pred,reason,attempts=48,ms=250)=>{
  for(let i=0;i<attempts;i++){if(pred())return;if(receipt.browserExitObserved)break;await wait(ms)}
  throw Error(reason);
@@ -138,6 +139,12 @@ const onMessage=e=>{
     if(w.id>800&&w.id<=848&&!w.error)
       receipt.workerResumeAcknowledgements++;
    }
+   if(w.method==='Debugger.scriptParsed'){
+    const id=w.params?.scriptId;
+    if(typeof id==='string'&&id.length>0&&id.length<=128&&
+       workerScriptOrigins.size<256)
+      workerScriptOrigins.set(id,classifyPinnedWorkerScriptUrl(w.params?.url));
+   }
    if(w.method==='Debugger.paused'){
     const reason=w.params?.reason;
     if(['exception','other','debuggerStatement','assert'].includes(reason)&&
@@ -162,6 +169,16 @@ const onMessage=e=>{
     // Inspector's top location is Javascript-script metadata, NOT native
     // instruction PC or original WASM file offset (M1541 44/45 control).
     const loc=w.params?.callFrames?.[0]?.location;
+    if(reason==='exception'){
+     const origin=typeof loc?.scriptId==='string'
+       ?(workerScriptOrigins.get(loc.scriptId)||'SCRIPT_ID_UNMAPPED')
+       :'SCRIPT_ID_ABSENT';
+     // Provenance of top *JavaScript* frame only; never native trap proof.
+     if(receipt.workerPauseTopFrameOrigins.length<5)
+       receipt.workerPauseTopFrameOrigins.push(origin);
+     receipt.workerPauseTopFrameOriginCounts[origin]=
+       (receipt.workerPauseTopFrameOriginCounts[origin]||0)+1;
+    }
     if(receipt.workerInspectorJsLocations.length<5)
      receipt.workerInspectorJsLocations.push({
       line:Number.isSafeInteger(loc?.lineNumber)?loc.lineNumber:null,
