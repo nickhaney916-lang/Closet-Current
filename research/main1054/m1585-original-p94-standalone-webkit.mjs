@@ -14,6 +14,7 @@ import { createHash } from 'node:crypto';
 import { resolve,extname } from 'node:path';
 import { spawn } from 'node:child_process';
 import { webkit } from 'playwright';
+import { assessJitOptionDump } from './m1590-pinned-jsc-options.mjs';
 import { classifyPinnedWorkerExceptionPause, classifyPinnedJscFastMemoryDump, classifyPinnedWorkerScriptUrl } from './m1585-original-worker-evidence-contract.mjs';
 // Keep the M289 Inspector helper owner untouched: this branch is stacked on
 // M287 (which does NOT contain M289). Use its source-verified, small grammar.
@@ -44,6 +45,7 @@ const workerProfile=process.env.M1585_WORKER_PROFILE||'instrumented';
 // original browser process' documented WASM fast-memory strategy, not a
 // security or sandbox setting, not the shipped Worker/ONNX/JSEP.
 const jscMemoryMode=process.env.M1585_JSC_MEMORY_MODE||'default';
+const jscJitArm=process.env.M1590_JSC_OMGJIT_ARM||'baseline';
 const source = readFileSync('public/outfit-worker-p94.mjs');
 const img = readFileSync('benchmark/fixtures/commons-0003.jpg');
 const locked=JSON.parse(readFileSync('benchmark/locked-photo-sources.json','utf8'))
@@ -58,6 +60,7 @@ const receipt={
  jscOptionDumpObserved:false,jscFastMemoryOption:null,
  jscModeSource:'WEBKIT_R2215_OPTION_DUMP',jscNativeAllocationModeProven:false,
  jscWasmJitCodeOriginProven:false,
+ jscJitArm,jscJitOptionsObserved:false,jscBBQOption:null,jscOMGOption:null,jscActualTierProven:false,
  originalFirstAttempt:true,
  originalWorkerExpectedBlob:'ab7d3837139c5b7d693383f9d6617e199ec8de4f',
  sourceJpegSha256:locked.sha256,sourceJpegBytes:img.length,
@@ -211,6 +214,8 @@ try {
   throw Error('unknown original Worker observation profile');
  if(!['default','explicit-bounds'].includes(jscMemoryMode))
   throw Error('unrecognized JSC bounds mode');
+ if(!['baseline','no-omg'].includes(jscJitArm)||jscMemoryMode!=='default')
+  throw Error('unrecognized M1590 research-only engine option pairing');
  if(!Number.isSafeInteger(receipt.cohortOrdinal)||receipt.cohortOrdinal<1||receipt.cohortOrdinal>4)
   throw Error('invalid bounded original cohort ordinal');
  const root=resolve('.');
@@ -255,6 +260,7 @@ try {
  for(const key of Object.keys(jscEnv))if(key.startsWith('JSC_'))delete jscEnv[key];
  jscEnv.WEBKIT_INSPECTOR_HTTP_SERVER='127.0.0.1:17659';
  jscEnv.JSC_dumpOptions='2'; // observe source-exposed effective options
+ if(jscJitArm==='no-omg')jscEnv.JSC_useOMGJIT='false';
  if(jscMemoryMode==='explicit-bounds')
   jscEnv.JSC_useWasmFastMemory='false';
  child=spawn(exe,['--headless',base+'/m1585-page'],{
@@ -385,12 +391,18 @@ try {
  // Process-family option dump is an independently observed configuration
  // receipt, NOT proof of the actual memory allocation mode of that Worker.
  const optionProof=classifyPinnedJscFastMemoryDump(jscOptionDump);
+ const jitProof=assessJitOptionDump(jscOptionDump);
+ receipt.jscJitOptionsObserved=jitProof.observed;
+ receipt.jscBBQOption=jitProof.bbq;receipt.jscOMGOption=jitProof.omg;
  receipt.jscOptionDumpObserved=optionProof.observed;
  receipt.jscFastMemoryOption=optionProof.option;
  jscOptionDump=''; // never preserve untrusted stderr in reported evidence
  if(optionProof.ambiguous)throw Error('JSC option logs inconsistent or oversized');
- if(receipt.jscFastMemoryOption!==(jscMemoryMode==='explicit-bounds'?'false':'true'))
-  throw Error('effective JSC WASM fast-memory option not attested for target arm');
+ if(receipt.jscFastMemoryOption!=='true')
+  throw Error('M1590 original default WASM fast-memory option not attested');
+ if(!jitProof.observed||jitProof.ambiguous||jitProof.bbq!=='true'||
+    jitProof.omg!==(jscJitArm==='no-omg'?'false':'true'))
+  throw Error('JSC pinned optimizing tier option unobserved or mismatched');
  if(!receipt.sourceVerifiedInServer||!receipt.originalWorkerCreated||
     !receipt.workerInitialized)throw Error('original worker source / inspector provenance incomplete');
  if(!receipt.workerTerminal)throw Error('original Worker did not finish within bounded time');
