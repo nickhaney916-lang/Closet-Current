@@ -23,6 +23,7 @@ class LaunchGates(unittest.TestCase):
 printf '%s\n' "$*" >> "$CC_M4_MOCK_CALLS"
 case "$*" in
  *create-stack*|*run-instances*) exit 91 ;;
+ *'get-caller-identity --query Arn'*) echo "$CC_M4_MOCK_CALLER_ARN" ;;
  *get-caller-identity*) echo 111122223333 ;;
  *validate-template*) echo '{}' ;;
  *VpcId*) echo vpc-01234567 ;;
@@ -39,6 +40,7 @@ esac
             e.update({
                 'PATH': d + os.pathsep + e.get('PATH', '/usr/bin:/bin'),
                 'CC_M4_MOCK_CALLS': str(log),
+                'CC_M4_MOCK_CALLER_ARN':'arn:aws:sts::111122223333:assumed-role/approved-operator/cloudshell-user',
                 'CC_M4_AWS_REGION': 'us-west-2',
                 'CC_M4_VPC_ID': 'vpc-01234567',
                 'CC_M4_PRIVATE_SUBNET_ID': 'subnet-01234567',
@@ -56,6 +58,17 @@ esac
             self.assertEqual(p.returncode,2)
             self.assertIn('different AWS account',p.stderr)
             e['CC_M4_OPERATOR_IAM_PRINCIPAL_ARN']='arn:aws:iam::111122223333:role/approved-operator'
+            e['CC_M4_MOCK_CALLER_ARN']='arn:aws:sts::111122223333:assumed-role/other-admin/console'
+            p=subprocess.run(['bash',str(LAUNCH),'preflight'],env=e,
+                             capture_output=True,text=True,timeout=12)
+            self.assertEqual(p.returncode,2)
+            self.assertIn('STS assumed-role identity differs',p.stderr)
+            e['CC_M4_MOCK_CALLER_ARN']='arn:aws:iam::111122223333:user/other-admin'
+            p=subprocess.run(['bash',str(LAUNCH),'preflight'],env=e,
+                             capture_output=True,text=True,timeout=12)
+            self.assertEqual(p.returncode,2)
+            self.assertIn('STS assumed-role identity differs',p.stderr)
+            e['CC_M4_MOCK_CALLER_ARN']='arn:aws:sts::111122223333:assumed-role/approved-operator/cloudshell-user'
             p=subprocess.run(['bash',str(LAUNCH),'create'],env=e,
                              input='',capture_output=True,text=True,timeout=12)
             self.assertEqual(p.returncode,2)

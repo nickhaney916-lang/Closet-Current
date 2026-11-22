@@ -14,6 +14,21 @@ account="$(aws --region "$CC_M4_AWS_REGION" sts get-caller-identity --query Acco
 [[ "$account" =~ ^[0-9]{12}$ ]] || blocked 'unexpected STS account identity'
 [[ "$CC_M4_OPERATOR_IAM_PRINCIPAL_ARN" =~ ^arn:aws:iam::([0-9]{12}):(role|user)/[a-zA-Z0-9+=,.@_/-]+$ ]] || blocked 'invalid IAM operator principal ARN'
 [ "${BASH_REMATCH[1]}" = "$account" ] || blocked 'IAM operator principal belongs to a different AWS account'
+# Verify actual STS principal, not just 12-digit account. Role sessions have
+# arn:aws:sts::ACCOUNT:assumed-role/ROLE/SESSION, not an IAM role ARN.
+caller_arn="$(aws --region "$CC_M4_AWS_REGION" sts get-caller-identity --query Arn --output text)" || blocked 'STS principal ARN lookup failed'
+[[ "$CC_M4_OPERATOR_IAM_PRINCIPAL_ARN" =~ ^arn:aws:iam::[0-9]{12}:(role|user)/(.+)$ ]] || blocked 'reviewed IAM principal ARN invalid'
+principal_type="${BASH_REMATCH[1]}"
+principal_path="${BASH_REMATCH[2]}"
+if [ "$principal_type" = user ]; then
+  [ "$caller_arn" = "$CC_M4_OPERATOR_IAM_PRINCIPAL_ARN" ] || blocked 'STS caller IAM user differs from approved operator'
+else
+  role_name="${principal_path##*/}"
+  case "$caller_arn" in
+    "arn:aws:sts::$account:assumed-role/$role_name/"?*) ;;
+    *) blocked 'STS assumed-role identity differs from approved operator' ;;
+  esac
+fi
 zone="$(aws --region "$CC_M4_AWS_REGION" ec2 describe-subnets --subnet-ids "$CC_M4_PRIVATE_SUBNET_ID" --query 'Subnets[0].AvailabilityZone' --output text)" || blocked 'subnet AZ lookup failed'
 [[ "$zone" =~ ^[a-z]{2}(-gov)?-[a-z]+-[0-9]+[a-z]$ ]] || blocked 'invalid subnet AZ'
 offering="$(aws --region "$CC_M4_AWS_REGION" ec2 describe-instance-type-offerings --location-type availability-zone --filters "Name=location,Values=$zone" "Name=instance-type,Values=$CC_M4_INSTANCE_TYPE" --query 'InstanceTypeOfferings[0].InstanceType' --output text)" || blocked 'instance availability lookup failed'

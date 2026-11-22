@@ -46,9 +46,11 @@ export CC_M4_OPERATOR_IAM_PRINCIPAL_ARN=YOUR_APPROVED_AWS_IAM_ROLE_OR_USER_ARN
 bash ./operator-launch-after-approval.sh preflight
 ```
 
-Preflight performs AWS **read operations only**, including actual account
-identity matching the operator IAM ARN and instance-type availability in the
-selected subnet's availability zone. It does not create cloud resources.
+Preflight performs AWS **read operations only**, including actual IAM user or
+STS assumed-role session identity validation against the reviewed operator IAM
+ARN (not merely comparing account IDs), and instance-type availability in the
+selected subnet's availability zone. Unexpected caller identities fail closed.
+This is an integrity check, not independent approval. It does not create cloud resources.
 
 Only following external change/billing/IAM/SSM-network/native debugging approval,
 the operator can explicitly create one *billable* research host:
