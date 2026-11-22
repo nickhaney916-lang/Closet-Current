@@ -93,6 +93,17 @@ or proves the original crash repaired.
 7. A real original-model trace requires an operator-controlled debugger or a source-matched instrumented JSC engine, independently attested browser/renderer PIDs, birth ticks, module/model hashes, and a **new natural first-attempt** original `OrtCreateSession` failure. Capture the actual JIT-origin→WASM instruction coordinate (or independently mapped native machine PC), **internal effective access address, width and live linear memory bytes** at the same trap. For an out-of-bounds operation, validate `effectiveAddress + accessBytes > liveMemoryBytes`; the original input pointer is *not* that internal address. If the recorded access is in bounds, keep it in bounds and investigate another mechanism—never edit the receipt to force a bounds conclusion.
 8. Hand the independently approved signed trap receipt and original debug mapping to the existing `assignment1538-correlate.mjs`, then report exact C++ source only if attested. Test a source-justified isolated correction against a genuine original RED-before/GREEN-after comparison on WebKit and Chromium. **Do not call an instrumented custom binary identical to the original shipped WebKit.** Preserve every original failure and HOLD #255.
 
+## Original WebKit native-signal observation
+
+The separate [WebKit native-fault-trace runbook](WEBKIT_NATIVE_FAULT_TRACE_HOLD.md)
+documents the read-only live WPE renderer identity check and, only when an
+independently authorized operator is present, a **single** bounded GDB
+SIGSEGV capture attempt. Run it only on the approved native host; CI runs
+**offline tests only**. A native signal PC and kernel fault address are not a
+WASM opcode offset or a verified internal linear-memory effective access.
+The original `_OrtCreateSession` WASM bounds RuntimeError may not raise SIGSEGV;
+this limitation is explicitly marked BLOCKED instead of inventing a trace.
+
 ## Clean shutdown
 
 EC2 and the EBS volume incur charges while allocated. After an approved experiment, terminate the instance through reviewed change control and delete the CloudFormation stack. Do not abandon a running machine. Preserve only sanitized approved evidence; follow the operator's retention policy. No production deployments, Family Alpha actions or private wardrobe/photo data are allowed.

@@ -31,7 +31,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           git diff --check 6adeffeb82557a365d42237fca47b042368d6d4e HEAD
           git diff --name-status --no-renames 6adeffeb82557a365d42237fca47b042368d6d4e HEAD > "$RUNNER_TEMP/assignment1538-scope"
-          diff -u <(printf 'A\t%s\n' .github/workflows/main1054-assignment1538-no-deploy.yml research/main1054/assignment1538-correlate.mjs research/main1054/assignment1538-ec2-host/README.md research/main1054/assignment1538-ec2-host/host.cfn.yaml research/main1054/assignment1538-ec2-host/operator-launch-after-approval.sh research/main1054/assignment1538-ec2-host/operator-readiness.sh research/main1054/assignment1538-ec2-host/synthetic-native-probe.c research/main1054/assignment1538-native-host.md research/main1054/assignment1538-native-host.mjs research/main1054/assignment1538-operator-container.Dockerfile research/main1054/assignment1538-operator.md tests/main1054-assignment1538-correlate.test.mjs tests/main1054-assignment1538-ec2-host.test.py tests/main1054-assignment1538-ec2-launch.test.py tests/main1054-assignment1538-native-host.test.mjs) "$RUNNER_TEMP/assignment1538-scope"
+          diff -u <(printf 'A\t%s\n' .github/workflows/main1054-assignment1538-no-deploy.yml research/main1054/assignment1538-correlate.mjs research/main1054/assignment1538-ec2-host/README.md research/main1054/assignment1538-ec2-host/WEBKIT_NATIVE_FAULT_TRACE_HOLD.md research/main1054/assignment1538-ec2-host/host.cfn.yaml research/main1054/assignment1538-ec2-host/native-webkit-fault-trace.py research/main1054/assignment1538-ec2-host/operator-launch-after-approval.sh research/main1054/assignment1538-ec2-host/operator-readiness.sh research/main1054/assignment1538-ec2-host/synthetic-native-probe.c research/main1054/assignment1538-native-host.md research/main1054/assignment1538-native-host.mjs research/main1054/assignment1538-operator-container.Dockerfile research/main1054/assignment1538-operator.md tests/main1054-assignment1538-correlate.test.mjs tests/main1054-assignment1538-ec2-host.test.py tests/main1054-assignment1538-ec2-launch.test.py tests/main1054-assignment1538-native-host.test.mjs tests/main1054-assignment1538-webkit-native-fault-trace.test.py) "$RUNNER_TEMP/assignment1538-scope"
           test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
           node --check research/main1054/assignment1538-correlate.mjs
           node --check research/main1054/assignment1538-native-host.mjs
@@ -48,6 +48,8 @@ jobs:
           bash -n research/main1054/assignment1538-ec2-host/operator-readiness.sh
           python tests/main1054-assignment1538-ec2-host.test.py -v
           python tests/main1054-assignment1538-ec2-launch.test.py -v
+          python -m py_compile research/main1054/assignment1538-ec2-host/native-webkit-fault-trace.py
+          python tests/main1054-assignment1538-webkit-native-fault-trace.test.py -v
       - name: Install pinned no-deploy regression dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Run app build and offline owner, photo, backup and security tests
