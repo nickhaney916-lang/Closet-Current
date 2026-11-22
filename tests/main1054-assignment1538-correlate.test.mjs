@@ -149,3 +149,29 @@ test('self-issued valid signature cannot prove authorization against a separatel
   assert.doesNotThrow(() => authenticate(fabricated,
     sign(null, fabricated, actualOperator.privateKey), approvedKey, approvedFingerprint));
 });
+
+
+test('file-backed native JavaScriptCore PC uses exact installed pinned JSC ELF/build ID', () => {
+  const jsc = {
+    sha256:'73f32b17f002381abadb8cec18cdec85fb17ace1077f993f448e3024b3014f8b',
+    buildId:'e04d2e784f16edeb1612cc24cd180e328c4b3e56',
+  };
+  const location={
+    ...jsc,kind:'native-elf-pc',origin:'trap-event',pc:'0x11132',
+    mapStart:'0x11000',mapEnd:'0x12000',mapFileOffset:'0x1000',loadBias:'0xe000',
+  };
+  const mapping={
+    ...jsc,pageSize:4096,segmentOffset:'0x1020',segmentVaddr:'0x3020',
+    segmentFileSize:'0x500',
+  };
+  assert.equal(instructionCoordinate(location,mapping),0x3132);
+  assert.throws(()=>instructionCoordinate({...location,buildId:'deadbeef'},mapping),
+    /verified file-backed native PC/);
+  assert.throws(()=>instructionCoordinate(location,{...mapping,sha256:webkitElf.sha256}),
+    /verified file-backed native PC/);
+  assert.throws(()=>instructionCoordinate({
+    ...location,kind:'wasm-jit-native-pc'},mapping),
+    /verified file-backed native PC/);
+  assert.throws(()=>instructionCoordinate({...location,pc:'0x12fff'},mapping),
+    /invalid native executable map range/);
+});
