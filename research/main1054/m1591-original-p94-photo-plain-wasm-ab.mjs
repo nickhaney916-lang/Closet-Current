@@ -60,7 +60,12 @@ const dist=resolve('node_modules/onnxruntime-web/dist');
 const server=createServer((req,res)=>{
  try{
   const u=new URL(req.url,'http://127.0.0.1');
-  if(req.method!=='GET'||!fileAllow.has(u.pathname))throw Error('not-allowed');
+  if(req.method!=='GET')throw Error('not-allowed');
+  if(u.pathname==='/'){
+   res.setHeader('Content-Type','text/html');
+   return res.end('<!doctype html><title>M1591 public photo research only</title>');
+  }
+  if(!fileAllow.has(u.pathname))throw Error('not-allowed');
   res.setHeader('Cache-Control','no-store');
   res.setHeader('Access-Control-Allow-Origin','*');
   if(u.pathname==='/model.onnx'){
@@ -89,10 +94,8 @@ try{
  await new Promise((ok,bad)=>{server.once('error',bad);server.listen(0,'127.0.0.1',ok);});
  browser=await (engine==='webkit'?webkit:chromium).launch({headless:true});
  const page=await browser.newPage();
- await page.goto('http://127.0.0.1:'+server.address().port+'/public/outfit-worker-p94.mjs?landing=1').catch(()=>{});
- await page.goto('http://127.0.0.1:'+server.address().port+'/benchmark/fixtures/commons-0003.jpg').catch(()=>{});
- // Same origin document for the authentic original module Worker.
- await page.goto('http://127.0.0.1:'+server.address().port+'/public/photo-color.js?landing=1').catch(()=>{});
+ // Same-origin research-only page; Worker retains the original P94 path.
+ await page.goto('http://127.0.0.1:'+server.address().port+'/');
  const data=await page.evaluate(async()=>{
   const jpeg=await (await fetch('/benchmark/fixtures/commons-0003.jpg',{cache:'no-store'})).arrayBuffer();
   const bytes=new Uint8Array(jpeg);
