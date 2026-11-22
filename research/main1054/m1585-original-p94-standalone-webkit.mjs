@@ -14,6 +14,7 @@ import { createHash } from 'node:crypto';
 import { resolve,extname } from 'node:path';
 import { spawn } from 'node:child_process';
 import { webkit } from 'playwright';
+import { classifyPinnedWorkerExceptionPause } from './m1585-original-worker-evidence-contract.mjs';
 // Keep the M289 Inspector helper owner untouched: this branch is stacked on
 // M287 (which does NOT contain M289). Use its source-verified, small grammar.
 function parseLocalInspectorPaths(markup) {
@@ -74,6 +75,8 @@ const receipt={
  workerExceptionPauses:0,workerResumeAcknowledgements:0,
  workerResumedEvents:0,workerPauseReasons:[],workerInspectorJsLocations:[],
  workerPauseEventWorkerDigest:null,
+ workerThrownObjectCategories:[],workerNativeBoundsTextPauseCount:0,
+ workerRuntimeErrorTextPauseCount:0,workerThrownValueIsNativePc:false,
  workerInspectorJsLocationIsNativePc:false,
  workerMessageTypes:[],workerTerminal:null,
  browserExitObserved:false,sourceVerifiedInServer:false,publicJpegSubmitted:false,
@@ -131,6 +134,15 @@ const onMessage=e=>{
     if(reason==='exception'){
      receipt.workerExceptionPauses++;
      receipt.workerPauseEventWorkerDigest=workerDigest;
+     // Source-backed: WebKit Debugger.paused.params.data wraps its actual
+     // thrown JS value as Runtime.RemoteObject. This never reveals a native PC.
+     const classified=classifyPinnedWorkerExceptionPause(w);
+     if(receipt.workerThrownObjectCategories.length<5)
+      receipt.workerThrownObjectCategories.push(classified.state);
+     if(classified.observedWebAssemblyRuntimeError)
+      receipt.workerRuntimeErrorTextPauseCount++;
+     if(classified.wasmBoundsMessageObserved)
+      receipt.workerNativeBoundsTextPauseCount++;
     }
     // Inspector's top location is Javascript-script metadata, NOT native
     // instruction PC or original WASM file offset (M1541 44/45 control).
@@ -328,6 +340,10 @@ try {
     !receipt.workerInitialized)throw Error('original worker source / inspector provenance incomplete');
  if(!receipt.workerTerminal)throw Error('original Worker did not finish within bounded time');
  if(outerErrors.length)throw Error('Inspector outer protocol errors');
+ if(receipt.workerThrownValueIsNativePc!==false||
+    receipt.workerNativeBoundsTextPauseCount>receipt.workerExceptionPauses||
+    receipt.workerRuntimeErrorTextPauseCount>receipt.workerExceptionPauses)
+  throw Error('thrown remote-object candidate cannot be a native PC or exceed actual exception pauses');
  if(receipt.workerPauseEventWorkerDigest!==null&&
     receipt.workerPauseEventWorkerDigest!==receipt.workerIdDigest)
   throw Error('Worker Inspector event does not match original worker digest');
