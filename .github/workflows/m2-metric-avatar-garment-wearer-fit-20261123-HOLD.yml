@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - research/m2-metric-avatar-garment-wearer-fit-20261123-HOLD
+      - research/m2-distinct-calibration-spans-20261123-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
