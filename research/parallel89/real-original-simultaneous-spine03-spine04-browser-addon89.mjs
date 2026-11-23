@@ -6,6 +6,8 @@
  */
 import {evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase}
  from './simultaneous-two-original-spine-joint-bvh89.mjs';
+import {evaluateTwoJointOriginalRectangle}
+ from './two-joint-rectangle-safety89.mjs';
 
 window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=()=>{
  const x=sourceSkinResearch;
@@ -128,6 +130,31 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
     actualLicensedRigSHA256:model.sha256
    }
   });
+  // Independent research: bounding a WHOLE 2D angle domain, not merely the
+  // previous single synchronized path. This reuses the TRUE licensed-source
+  // grid already measured above; no second skinned-rig/photo mutation.
+  const rectangle=evaluateTwoJointOriginalRectangle({
+   frontGridPoses:grid.map(q=>q.front),bodyGridPoses:grid.map(q=>q.body),
+   independentOffDiagonalHoldouts:offDiagonal.map(h=>({
+    anglesDeg:h.anglesDeg,frontVertices:h.front,bodyVertices:h.body
+   })),
+   frontIndices,bodyIndices,expectedFrontFaces:35262,expectedBodyFaces:109064,
+   sourceWitness:{
+    actualRigBoneCount:163,
+    simultaneousMovingNamedBones:['spine03','spine04'],
+    other161BoneLocalTransformsFrozen:frozenOther161(),
+    independentOriginalSourceJointPoses:true,
+    sourceCoordinatesReadFromOriginalPositionAttribute:true,
+    originalSourceSkinnedMesh:x.mesh.isSkinnedMesh,
+    originalJPEG_SHA256:payload.originalJPEGByteSHA256,
+    actualLicensedRigSHA256:model.sha256
+   }
+  });
+  invariant(rectangle.consumer3DAdmitted===false&&
+   rectangle.familyAlpha==='HOLD'&&
+   (rectangle.decision.startsWith('BLOCKED_')||
+    rectangle.decision.startsWith('RESEARCH_ONLY_')),
+   'independent-original-angle-rectangle-must-remain-no-release');
   invariant(evaluator.consumer3DAdmitted===false&&
    evaluator.familyAlpha==='HOLD'&&
    evaluator.allSubmittedOriginalFacesIndexed===true&&
@@ -155,6 +182,7 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    originalCorrectedVsHistoricalZeroSeedDistanceRigUnits:
     realOriginalVsIncorrectZeroSeedDistance,
    other161BoneLocalPoseTransformsImmutable:true,
+   independentTwoAngleRectangleOriginalFullFaceAudit:rectangle,
    trueSimultaneousTwoJointFullIndexedAudit:evaluator,
    sourcePhotoFrontFloatingWithoutPhysicalCalibratedFit:true,
    simultaneousMotionConstrainedToSingleDiagonalJointAnglePath:true,
