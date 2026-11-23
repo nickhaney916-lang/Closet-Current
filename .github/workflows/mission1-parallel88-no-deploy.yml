@@ -451,3 +451,96 @@ jobs:
           path: benchmark/output-footwear-p0/footwear-score-comparison.json
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Encode distinct high-top sneaker and boot-shaft descriptions with pinned text encoder
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install -r scripts/recognition-requirements.txt
+          mkdir -p benchmark/output-footwear-p0/shape-candidate
+          cat > benchmark/output-footwear-p0/shape-candidate/prompts.json <<'JSON'
+          {
+            "sneakers": ["sneakers", "low top athletic shoes with a flexible flat rubber outsole", "high top canvas basketball sneakers with laces and a flat rubber cupsole", "high top athletic trainers with a padded ankle collar and a sports shoe sole"],
+            "ankle boots": ["ankle boots", "short structured boots with an upright ankle shaft and a distinct boot heel", "ankle height leather boots with a firm boot sole and a shaft enclosing the ankle", "short Chelsea or lace up boots with a structured shaft above the instep"]
+          }
+          JSON
+          python scripts/rebuild-recognition-vectors.py --prompt-overrides benchmark/output-footwear-p0/shape-candidate/prompts.json --blend 0.5 --output-dir benchmark/output-footwear-p0/shape-candidate
+          git diff --exit-code -- public/recognition-vectors.json public/recognition-vectors.bin
+      - name: Compare high-top construction versus boot-shaft candidate on identical genuine image features
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile,writeFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import {localCandidates} from './public/local-catalog.mjs';
+          import {makeVectorScorer} from './public/vector-scorer.mjs';
+          const root='benchmark/output-footwear-p0';
+          const read=async p=>JSON.parse(await readFile(p,'utf8'));
+          const hash=b=>createHash('sha256').update(b).digest('hex');
+          const base=await read('public/recognition-vectors.json');
+          const candidate=await read(root+'/shape-candidate/recognition-vectors.json');
+          const original=await readFile('public/recognition-vectors.bin');
+          const trial=await readFile(root+'/shape-candidate/recognition-vectors.bin');
+          assert.equal(base.revision,'0f99955d944c39bfd9d035a02ac273c7a44a406b');
+          assert.equal(base.sha256,'e1e0415f2272e81c0f3ce2f08fd5fd5c2a9eb6481437d696936c723e8e1abb2f');
+          assert.equal(hash(original),base.sha256);
+          assert.equal(hash(trial),candidate.sha256);
+          assert.equal(candidate.revision,base.revision);
+          assert.equal(candidate.model,base.model);
+          assert.equal(candidate.scale,base.scale);
+          assert.equal(candidate.promptBlend,0.5);
+          assert.deepEqual(candidate.labels,base.labels);
+          assert.equal(trial.length,original.length);
+          const changed=base.labels.filter((label,i)=>!original.subarray(i*2048,(i+1)*2048).equals(trial.subarray(i*2048,(i+1)*2048)));
+          assert.deepEqual(changed.sort(),['ankle boots','sneakers']);
+          const asFloats=b=>new Float32Array(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength));
+          const baselineScore=makeVectorScorer(async x=>x.features,base,asFloats(original));
+          const trialScore=makeVectorScorer(async x=>x.features,candidate,asFloats(trial));
+          const shoes=localCandidates.filter(x=>x.category==='Shoes');
+          const labels=shoes.map(x=>x.label),types=new Map(shoes.map(x=>[x.label,x.itemType]));
+          assert.equal(labels.length,7);
+          const family=t=>['Boots','Ankle boots','Tall boots'].includes(t)?'Boots':t;
+          const prior=await read(root+'/footwear-score-comparison.json');
+          const actual=await read(root+'/results.json');
+          assert.equal(actual.length,48);
+          assert.equal(prior.cases.length,48);
+          assert.equal(new Set(prior.cases.map(x=>x.sourceSha256)).size,48);
+          const cases=[];
+          for(const p of prior.cases){
+            const r=actual.find(x=>x.id===p.id);
+            assert.ok(r&&!r.error);
+            const eligible=r.prediction?.category==='Shoes';
+            assert.equal(eligible,p.candidateApplied);
+            if(!eligible){cases.push({id:p.id,sourceSha256:p.sourceSha256,eligible:false,expectedCategory:p.expectedCategory,expectedFamily:p.expectedFamily??null});continue;}
+            assert.equal(r.recognitionMemory?.modelKey,'fashion-clip/whole-v1/'+base.revision);
+            assert.equal(r.recognitionMemory.features.length,512);
+            const input={features:r.recognitionMemory.features};
+            const rank=async scorer=>(await scorer(input,labels)).map(x=>({type:types.get(x.label),score:x.score}));
+            const before=await rank(baselineScore),after=await rank(trialScore);
+            assert.equal(before[0].type,p.neutral[0].type);
+            assert.ok(Math.abs(before[0].score-p.neutral[0].score)<1e-9);
+            cases.push({id:p.id,sourceSha256:p.sourceSha256,eligible:true,expectedCategory:p.expectedCategory,expectedFamily:p.expectedFamily??null,before,after});
+          }
+          const footwear=cases.filter(x=>x.expectedCategory==='Shoes');
+          const correct=(x,arm)=>x.eligible&&family(x[arm][0].type)===x.expectedFamily;
+          const improved=footwear.filter(x=>!correct(x,'before')&&correct(x,'after')).map(x=>x.id);
+          const regressed=footwear.filter(x=>correct(x,'before')&&!correct(x,'after')).map(x=>x.id);
+          const known=footwear.find(x=>x.id==='commons-0078');
+          assert.equal(known.sourceSha256,'ba080a9a5d4aa68c193738e728e83c45b6a833a9bf80c45de4d2b35ece38154e');
+          assert.equal(known.expectedFamily,'Sneakers');
+          const summary={photos:cases.length,footwear:footwear.length,controls:cases.length-footwear.length,baselineCorrect:footwear.filter(x=>correct(x,'before')).length,candidateCorrect:footwear.filter(x=>correct(x,'after')).length,improved,regressed,knownHighTop:{before:known.before,after:known.after,correct:correct(known,'after')},nonFootwearEligible:cases.filter(x=>x.expectedCategory!=='Shoes'&&x.eligible).length,coveredFamilies:[...new Set(footwear.map(x=>x.expectedFamily))],independentBlind:false,productionPromotion:false};
+          assert.equal(summary.baselineCorrect,prior.summary.neutralFamilyCorrect);
+          await writeFile(root+'/high-top-shape-comparison.json',JSON.stringify({schema:'p88-high-top-shape-replay-v1',baseVectorSha256:base.sha256,candidateVectorSha256:candidate.sha256,modelRevision:base.revision,changedRows:changed,summary,cases},null,2));
+          console.log('P88_HIGH_TOP_SHAPE_COMPARISON '+JSON.stringify(summary));
+          assert.equal(summary.nonFootwearEligible,0);
+          JS
+      - name: Upload high-top shape numeric evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p88-high-top-shape-comparison
+          path: benchmark/output-footwear-p0/high-top-shape-comparison.json
+          if-no-files-found: warn
+          retention-days: 14
