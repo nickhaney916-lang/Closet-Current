@@ -12,7 +12,7 @@ import {spawnSync} from 'node:child_process';
 const pins={
  runner:'5f999c1dc440539cec143f7c7de48b8fe88dd91e',
  registration:'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb',
- addon:'19247e88ecda69f611e2904b8b2789932ca01163'
+ addon:'6aa01d19674430da0346dce90b195901058bc246'
 };
 const sha=b=>createHash('sha1').update('blob '+Buffer.byteLength(b)+'\0')
  .update(b).digest('hex');
@@ -43,7 +43,7 @@ const routeLines=[
  "    const addonSource=await readFile('research/parallel89/real-original-simultaneous-spine03-spine04-browser-addon89.mjs','utf8');",
  "    const blobSha=t=>createHash('sha1').update('blob '+Buffer.byteLength(t)+'\\0').update(t).digest('hex');",
  "    assert.equal(blobSha(originalSource),'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb');",
- "    assert.equal(blobSha(addonSource),'19247e88ecda69f611e2904b8b2789932ca01163');",
+ "    assert.equal(blobSha(addonSource),'6aa01d19674430da0346dce90b195901058bc246');",
  "    await route.fulfill({status:200,contentType:'text/javascript',body:originalSource+'\\n'+addonSource});",
  "   });",
  routeAnchor
@@ -90,6 +90,17 @@ const verifyLines=[
  "   assert.equal(trial.sourcePhotoFrontFloatingWithoutPhysicalCalibratedFit,true);",
  "   assert.equal(trial.simultaneousMotionConstrainedToSingleDiagonalJointAnglePath,true);",
  "   assert.equal(trial.originalPhoto2DFallbackRequired,true);",
+ "   const rectangle=trial.independentTwoAngleRectangleOriginalFullFaceAudit;",
+ "   assert.ok(rectangle);",
+ "   assert.equal(rectangle.originalFullFrontFaces,35262);",
+ "   assert.equal(rectangle.originalFullBodyFaces,109064);",
+ "   assert.equal(rectangle.entireTwoAngleRectangleIncluded,true);",
+ "   assert.equal(rectangle.cells,4);",
+ "   assert.ok(rectangle.verifiedOffDiagonalMaxResidualRigUnits<1e-5);",
+ "   assert.ok(rectangle.decision.startsWith('BLOCKED_')||",
+ "    rectangle.decision.startsWith('RESEARCH_ONLY_'));",
+ "   assert.equal(rectangle.consumer3DAdmitted,false);",
+ "   assert.equal(rectangle.familyAlpha,'HOLD');",
  "   assert.equal(trial.consumer3DAdmitted,false);",
  "   assert.equal(trial.familyAlpha,'HOLD');",
  "   await writeFile(resultDir+browserName+'-'+kind+",
@@ -108,6 +119,8 @@ const verifyLines=[
  "    actualFullOriginalSweepComplete:audit.fullOriginalTwoJointSimultaneousPathSweptBroadphaseCompleted,",
  "    overlappingConservativeSweptFaceEnvelopes:audit.overlappingOriginalSimultaneousAngularEnvelopes,",
  "    decision:audit.decision,",
+ "    entireTwoAngleRectangleAudited:rectangle.entireTwoAngleRectangleIncluded,",
+ "    independentRectangleDecision:rectangle.decision,",
  "    originalPhysicalFitCertified:false,consumer3DAdmitted:false,familyAlpha:'HOLD'",
  "   }));",
  poseAnchor
