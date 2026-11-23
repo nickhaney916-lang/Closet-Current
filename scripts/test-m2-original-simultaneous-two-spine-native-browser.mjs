@@ -12,7 +12,7 @@ import {spawnSync} from 'node:child_process';
 const pins={
  runner:'5f999c1dc440539cec143f7c7de48b8fe88dd91e',
  registration:'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb',
- addon:'544630fa63472c811bc0fe9188ff50a62228b34b'
+ addon:'27b6dc01bbc9a47175fd6b9dd67b40bed913d89c'
 };
 const sha=b=>createHash('sha1').update('blob '+Buffer.byteLength(b)+'\0')
  .update(b).digest('hex');
@@ -43,7 +43,7 @@ const routeLines=[
  "    const addonSource=await readFile('research/parallel89/real-original-simultaneous-spine03-spine04-browser-addon89.mjs','utf8');",
  "    const blobSha=t=>createHash('sha1').update('blob '+Buffer.byteLength(t)+'\\0').update(t).digest('hex');",
  "    assert.equal(blobSha(originalSource),'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb');",
- "    assert.equal(blobSha(addonSource),'544630fa63472c811bc0fe9188ff50a62228b34b');",
+ "    assert.equal(blobSha(addonSource),'27b6dc01bbc9a47175fd6b9dd67b40bed913d89c');",
  "    await route.fulfill({status:200,contentType:'text/javascript',body:originalSource+'\\n'+addonSource});",
  "   });",
  routeAnchor
@@ -139,6 +139,15 @@ const verifyLines=[
  "   assert.equal(plane.independentMeasuredRealWorldSourceGeometryCertified,false);",
  "   assert.equal(plane.consumer3DAdmitted,false);",
  "   assert.equal(plane.familyAlpha,'HOLD');",
+ "   const measuredFit=trial.originalGarmentToBodyMeasuredWearerFitGate;",
+ "   assert.equal(measuredFit.decision,'BLOCKED_NO_REAL_GARMENT_OR_WEARER_MEASUREMENTS');",
+ "   assert.equal(measuredFit.actualLicensed163BoneRigKind,kind);",
+ "   assert.equal(measuredFit.sourceImageId,2551406);",
+ "   assert.equal(measuredFit.actualOwnerMeasuredPhysicalFitCertified,false);",
+ "   assert.equal(measuredFit.garmentToLicensedRigMeshFitted,false);",
+ "   assert.equal(measuredFit.consumer3DAdmitted,false);",
+ "   assert.equal(measuredFit.familyAlpha,'HOLD');",
+
 
 
  "   assert.equal(trial.consumer3DAdmitted,false);",
@@ -168,6 +177,8 @@ const verifyLines=[
  "    photoToAvatarRigUnitsPerMm:dimensions.photoToOriginalRigUnitsPerMillimeter,",
  "    genuineOriginalPhotoPlaneFiducialDecision:plane.reason,",
  "    originalPhotoPlaneMetricMap:plane.originalGarmentPhysicalPixelScaleMmPerPixel,",
+ "    originalWearerMetricBodyFitDecision:measuredFit.decision,",
+ "    realOwnerMeasurementsPresent:!measuredFit.licensedOriginalRigNotPhysicalWearerMeasurement,",
  "    originalWitnessFiveTruePoseClasses:witness.firstWitnessSampledOriginalPoseContacts.map(p=>p.contactClass),",
  "    originalPhysicalFitCertified:false,consumer3DAdmitted:false,familyAlpha:'HOLD'",
  "   }));",
