@@ -11,6 +11,9 @@
  * supplied and independently authenticated by the existing P89 native runner.
  * No estimates of hidden surfaces, garment closure, circumference or wearer.
  */
+// Exact inch values are multiples of quarter inches; decimal millimetres
+// have at most two digits. Round the binary float representation only,
+// never the museum source value or any physical measurement uncertainty.
 const mmPerIn=25.4;
 const fixedPartAInches=Object.freeze({
  length:39,bottomWidth:52.5,
@@ -68,7 +71,7 @@ export function institutionalPartAAnchor({source,trusted}={}){
   trusted.independentOriginalSourceVerifiedByCaller!==true)
   return blocked('BLOCKED_NATIVE_ORIGINAL_SOURCE_ATTESTATION_MISSING');
  const mm=Object.fromEntries(Object.entries(fixedPartAInches)
-  .map(([key,value])=>[key,value*mmPerIn]));
+  .map(([key,value])=>[key,Math.round(value*mmPerIn*100)/100]));
  return blocked('REAL_CATALOGUED_GARMENT_PART_A_DIMENSIONS_ONLY',{
   museumCatalogueReference:official.dimensionsURL,
   sourceMuseumCollectionObjectId:70759,
