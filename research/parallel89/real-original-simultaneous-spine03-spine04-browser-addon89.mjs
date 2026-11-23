@@ -8,6 +8,8 @@ import {evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase}
  from './simultaneous-two-original-spine-joint-bvh89.mjs';
 import {evaluateTwoJointOriginalRectangle}
  from './two-joint-rectangle-safety89.mjs';
+import {triageOriginalTwoAngleRectangleFirstWitness}
+ from './original-rectangle-first-witness-triage89.mjs';
 
 window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=()=>{
  const x=sourceSkinResearch;
@@ -150,6 +152,28 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
     actualLicensedRigSHA256:model.sha256
    }
   });
+  // One authentic indexed pair at the TRUE four original grid corners
+  // and independent center of the blocked rectangle cell. Explicitly
+  // DIFFERENT from whole-surface continuous contact certification.
+  const originalRectangleWitnessTriage=
+   triageOriginalTwoAngleRectangleFirstWitness({
+    rectangleAudit:rectangle,
+    frontGridPoses:grid.map(p=>p.front),bodyGridPoses:grid.map(p=>p.body),
+    frontPathPoses:path.map(p=>p.front),bodyPathPoses:path.map(p=>p.body),
+    independentOffDiagonalHoldouts:offDiagonal.map(h=>({
+     anglesDeg:h.anglesDeg,frontVertices:h.front,bodyVertices:h.body
+    })),
+    frontIndices,bodyIndices,expectedFrontFaces:35262,
+    expectedBodyFaces:109064
+   });
+  invariant(rectangle.decision===
+   'BLOCKED_UNRESOLVED_ORIGINAL_TWO_ANGLE_RECTANGLE_ENVELOPE_OVERLAP'&&
+   originalRectangleWitnessTriage.sourcePoseSamples===5&&
+   originalRectangleWitnessTriage.genuineOriginalIndexedFacePairsExamined===1&&
+   originalRectangleWitnessTriage.consumer3DAdmitted===false&&
+   originalRectangleWitnessTriage.familyAlpha==='HOLD'&&
+   originalRectangleWitnessTriage.decision.startsWith('BLOCKED_'),
+   'original-rectangle-first-witness-must-require-genuine-pose-and-block');
   invariant(rectangle.consumer3DAdmitted===false&&
    rectangle.familyAlpha==='HOLD'&&
    (rectangle.decision.startsWith('BLOCKED_')||
@@ -182,6 +206,7 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    originalCorrectedVsHistoricalZeroSeedDistanceRigUnits:
     realOriginalVsIncorrectZeroSeedDistance,
    other161BoneLocalPoseTransformsImmutable:true,
+   originalRectangleFirstWitnessExactPoseContactTriage:originalRectangleWitnessTriage,
    independentTwoAngleRectangleOriginalFullFaceAudit:rectangle,
    trueSimultaneousTwoJointFullIndexedAudit:evaluator,
    sourcePhotoFrontFloatingWithoutPhysicalCalibratedFit:true,
