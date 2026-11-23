@@ -190,3 +190,18 @@ test('inputs are never modified, and no actual body measurements appear in defau
  assess(x);
  assert.equal(JSON.stringify(x),serialized);
 });
+
+test('renaming or reversing the same rig segment cannot pass as a distinct anchor or holdout',()=>{
+ for(const slot of ['anchor','holdout'])for(const reverse of [false,true]){
+  const x=fixture();
+  const {rigMetricAnchors: [height, shoulder],rigMetricIndependentHoldout: torso}=x.measurements;
+  const repeated=slot==='anchor'?shoulder:torso;
+  repeated.rigA=[...(reverse?height.rigB:height.rigA)];
+  repeated.rigB=[...(reverse?height.rigA:height.rigB)];
+  repeated.measuredMm=height.measuredMm;
+  const result=assess(x);
+  safe(result);
+  assert.equal(result.decision,'BLOCKED_REUSED_RIG_LANDMARK_SEGMENT');
+  assert.equal(result.metricRigScaleIntervalMmPerRigUnit,undefined);
+ }
+});

@@ -125,6 +125,12 @@ export function assessMetricGarmentToWearerFit({
   return fail("BLOCKED_MISSING_DISTINCT_REAL_BODY_RIG_LANDMARKS");
  if(anchors.some(x=>JSON.stringify(x.rigA)===JSON.stringify(x.rigB)))
   return fail("BLOCKED_DEGENERATE_REAL_BODY_LANDMARK");
+ // Landmark names alone cannot make a repeated mesh span independent.
+ // Canonicalize endpoint order so reversing the same span cannot bypass this.
+ const segments=[...anchors,holdout].map(({rigA,rigB})=>
+  JSON.stringify([JSON.stringify(rigA),JSON.stringify(rigB)].sort()));
+ if(new Set(segments).size!==segments.length)
+  return fail("BLOCKED_REUSED_RIG_LANDMARK_SEGMENT");
  const [a,b]=anchors.map(interval);
  const lower=Math.max(a[0],b[0]),upper=Math.min(a[1],b[1]);
  if(!finite(lower)||!finite(upper)||lower<=0||lower>upper||
