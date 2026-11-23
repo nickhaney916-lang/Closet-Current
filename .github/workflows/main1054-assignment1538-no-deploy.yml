@@ -1,0 +1,101 @@
+name: Assignment 1538 offline research and regressions
+on:
+  pull_request:
+    branches: [research/main1054-m291-loaded-wpe-native-elf-closure-HOLD]
+    paths:
+      - 'research/main1054/assignment1538-*'
+      - 'research/main1054/assignment1538-ec2-host/**'
+      - 'tests/main1054-assignment1538-*'
+      - '.github/workflows/main1054-assignment1538-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    if: github.head_ref == 'research/assignment1538-native-evidence-HOLD'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact source and research-only scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_RUN_ATTEMPT" = 1
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          # Embedded unified diff context lines include a leading space by design.
+          # Keep the patch in the strict path scope and validate it with git apply
+          # below, but do not treat its required context markers as trailing whitespace.
+          git diff --check 6adeffeb82557a365d42237fca47b042368d6d4e HEAD -- . ':(exclude)research/main1054/assignment1538-ec2-host/source-pinned-jsc-signal-faultpc.patch' ':(exclude)research/main1054/assignment1538-ec2-host/source-pinned-jsc-bbq-pc-origin.patch' ':(exclude)research/main1054/assignment1538-ec2-host/source-pinned-jsc-bbq-explicit-bounds-site.patch'
+          git diff --name-status --no-renames 6adeffeb82557a365d42237fca47b042368d6d4e HEAD > "$RUNNER_TEMP/assignment1538-scope"
+          diff -u <(printf 'A\t%s\n' .github/workflows/main1054-assignment1538-no-deploy.yml research/main1054/assignment1538-correlate.mjs research/main1054/assignment1538-ec2-host/APPROVED_NATIVE_WPE_BUILD_HOLD.md research/main1054/assignment1538-ec2-host/JSC_EXPLICIT_BOUNDS_OPCODE_HOLD.md research/main1054/assignment1538-ec2-host/JSC_INTERNAL_SIGNAL_FAULTPC_HOLD.md research/main1054/assignment1538-ec2-host/README.md research/main1054/assignment1538-ec2-host/WEBKIT_NATIVE_FAULT_TRACE_HOLD.md research/main1054/assignment1538-ec2-host/host.cfn.yaml research/main1054/assignment1538-ec2-host/jsc-explicit-receipt.mjs research/main1054/assignment1538-ec2-host/jsc-signal-receipt.mjs research/main1054/assignment1538-ec2-host/native-webkit-fault-trace.py research/main1054/assignment1538-ec2-host/operator-build-research-webkit.py research/main1054/assignment1538-ec2-host/operator-launch-after-approval.sh research/main1054/assignment1538-ec2-host/operator-readiness.sh research/main1054/assignment1538-ec2-host/source-pinned-jsc-bbq-explicit-bounds-site.patch research/main1054/assignment1538-ec2-host/source-pinned-jsc-bbq-pc-origin.patch research/main1054/assignment1538-ec2-host/source-pinned-jsc-signal-faultpc.patch research/main1054/assignment1538-ec2-host/synthetic-native-probe.c research/main1054/assignment1538-native-host.md research/main1054/assignment1538-native-host.mjs research/main1054/assignment1538-operator-container.Dockerfile research/main1054/assignment1538-operator.md tests/main1054-assignment1538-correlate.test.mjs tests/main1054-assignment1538-ec2-host.test.py tests/main1054-assignment1538-ec2-launch.test.py tests/main1054-assignment1538-jsc-explicit-receipt.test.mjs tests/main1054-assignment1538-jsc-signal-receipt.test.mjs tests/main1054-assignment1538-native-build-approval.test.py tests/main1054-assignment1538-native-host.test.mjs tests/main1054-assignment1538-webkit-native-fault-trace.test.py) "$RUNNER_TEMP/assignment1538-scope"
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          node --check research/main1054/assignment1538-ec2-host/jsc-explicit-receipt.mjs
+          node --test tests/main1054-assignment1538-jsc-explicit-receipt.test.mjs
+          node --check research/main1054/assignment1538-ec2-host/jsc-signal-receipt.mjs
+          node --test tests/main1054-assignment1538-jsc-signal-receipt.test.mjs
+          node --check research/main1054/assignment1538-correlate.mjs
+          node --check research/main1054/assignment1538-native-host.mjs
+          node --test tests/main1054-assignment1538-correlate.test.mjs tests/main1054-assignment1538-native-host.test.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate EC2 template and read-only preflight (no AWS access)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check PyYAML==6.0.2
+          bash -n research/main1054/assignment1538-ec2-host/operator-launch-after-approval.sh
+          bash -n research/main1054/assignment1538-ec2-host/operator-readiness.sh
+          python tests/main1054-assignment1538-ec2-host.test.py -v
+          python tests/main1054-assignment1538-ec2-launch.test.py -v
+          python -m py_compile research/main1054/assignment1538-ec2-host/native-webkit-fault-trace.py
+          python tests/main1054-assignment1538-webkit-native-fault-trace.test.py -v
+          python -m py_compile research/main1054/assignment1538-ec2-host/operator-build-research-webkit.py
+          python tests/main1054-assignment1538-native-build-approval.test.py -v
+      - name: Verify pinned JSC fault-PC patch applies (NO native build or debugging)
+        shell: bash
+        run: |
+          set -euo pipefail
+          src="$RUNNER_TEMP/cc1538-webkit-source-only"
+          mkdir -p "$src/Source/JavaScriptCore/wasm/js"
+          for path in \
+            Source/JavaScriptCore/wasm/js/JSWebAssemblyInstance.h \
+            Source/JavaScriptCore/wasm/WasmFaultSignalHandler.cpp \
+            Source/JavaScriptCore/wasm/WasmBBQJIT.h \
+            Source/JavaScriptCore/wasm/WasmBBQJIT.cpp \
+            Source/JavaScriptCore/wasm/WasmOperations.cpp \
+            Source/JavaScriptCore/wasm/WasmSlowPaths.cpp; do
+            mkdir -p "$src/$(dirname "$path")"
+            curl -fsSL --retry 2 --max-time 45 \
+              "https://raw.githubusercontent.com/WebKit/WebKit/db897909f7c31d9b38793374c66427b6a4cb3dd3/$path" \
+              -o "$src/$path"
+          done
+          cd "$src"
+          git init --quiet
+          git apply --check "$GITHUB_WORKSPACE/research/main1054/assignment1538-ec2-host/source-pinned-jsc-signal-faultpc.patch"
+          git apply "$GITHUB_WORKSPACE/research/main1054/assignment1538-ec2-host/source-pinned-jsc-signal-faultpc.patch"
+          git apply --check "$GITHUB_WORKSPACE/research/main1054/assignment1538-ec2-host/source-pinned-jsc-bbq-pc-origin.patch"
+          git apply "$GITHUB_WORKSPACE/research/main1054/assignment1538-ec2-host/source-pinned-jsc-bbq-pc-origin.patch"
+          git apply --check "$GITHUB_WORKSPACE/research/main1054/assignment1538-ec2-host/source-pinned-jsc-bbq-explicit-bounds-site.patch"
+          git apply "$GITHUB_WORKSPACE/research/main1054/assignment1538-ec2-host/source-pinned-jsc-bbq-explicit-bounds-site.patch"
+          grep -q 'CC1538_BBQ_EXPLICIT_BOUNDS_SITE_V1' Source/JavaScriptCore/wasm/WasmOperations.cpp
+          grep -q 'CC1538_BBQ_SAME_CALLEE_WASM_OPCODE_ORIGIN_V1' Source/JavaScriptCore/wasm/WasmSlowPaths.cpp
+          grep -q 'CC1538_SOURCE_PINNED_WASM_SIGNAL_V1' Source/JavaScriptCore/wasm/WasmSlowPaths.cpp
+          grep -q 'setFaultAddress(sigInfo.faultingAddress)' Source/JavaScriptCore/wasm/WasmFaultSignalHandler.cpp
+          echo 'CC1538_PINNED_JSC_SOURCE_PATCH_APPLIES_ONLY noNativeBuild=true noOriginalFaultObserved=true'
+      - name: Install pinned no-deploy regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Run app build and offline owner, photo, backup and security tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          test -s dist/index.html
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs

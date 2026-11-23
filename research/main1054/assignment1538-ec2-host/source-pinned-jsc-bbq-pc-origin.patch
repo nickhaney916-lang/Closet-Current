@@ -1,0 +1,46 @@
+diff --git a/Source/JavaScriptCore/wasm/WasmSlowPaths.cpp b/Source/JavaScriptCore/wasm/WasmSlowPaths.cpp
+--- a/Source/JavaScriptCore/wasm/WasmSlowPaths.cpp
++++ b/Source/JavaScriptCore/wasm/WasmSlowPaths.cpp
+@@ -37,7 +37,8 @@
+ #include "JSWebAssemblyArrayInlines.h"
+ #include "JSWebAssemblyException.h"
+ #include "JSWebAssemblyInstance.h"
+-#include "JSWebAssemblyMemory.h"
++#include "JSWebAssemblyMemory.h"
++#include "NativeCalleeRegistry.h"
+ #include "WasmMemory.h"
+ #include "LLIntCommon.h"
+ #include "LLIntData.h"
+@@ -56,7 +57,8 @@
+ #include "WebAssemblyFunction.h"
+ #include <bit>
+ #include <cstdint>
+-#include <wtf/DataLog.h>
++#include <wtf/CodePtr.h>
++#include <wtf/DataLog.h>
+ 
+ namespace JSC { namespace LLInt {
+ 
+@@ -1397,7 +1399,21 @@
+                 " effectiveLinearAddress=", access - memoryBase,
+                 " liveMemoryBytes=", linearMemory.size(),
+                 " mappedCapacityBytes=", linearMemory.mappedCapacity(),
+-                " accessWidthKnown=false wasmBytecodeOffsetKnown=false");
++                " accessWidthKnown=false wasmBytecodeOffsetKnown=false");
++            // Candidate ONLY: the BBQ profiler's code-origin map is tied to
++            // this same live compiled callee. Without a map, never invent an
++            // original Wasm bytecode offset from the native JIT PC.
++            if (wasmCallee.compilationMode() == Wasm::CompilationMode::BBQMode) {
++                auto& registry = NativeCalleeRegistry::singleton();
++                Locker locker { registry.getLock() };
++                if (auto originMap = registry.codeOriginMap(&wasmCallee)) {
++                    if (auto origin = originMap->findPC(removeCodePtrTag<void*>(pc))) {
++                        dataLogLn("CC1538_BBQ_SAME_CALLEE_WASM_OPCODE_ORIGIN_V1 functionSpaceIndex=", wasmCallee.index().rawIndex(),
++                            " jitMachineCodeOffset=", machinePC - codeBase,
++                            " functionRelativeWasmOpcodeOffset=", origin->bytecodeIndex().offset());
++                    }
++                }
++            }
+         }
+     }
+     if (isAnyOMG(wasmCallee.compilationMode())) {

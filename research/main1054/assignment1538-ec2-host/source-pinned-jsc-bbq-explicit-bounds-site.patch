@@ -1,0 +1,127 @@
+diff --git a/Source/JavaScriptCore/wasm/js/JSWebAssemblyInstance.h b/Source/JavaScriptCore/wasm/js/JSWebAssemblyInstance.h
+--- a/Source/JavaScriptCore/wasm/js/JSWebAssemblyInstance.h
++++ b/Source/JavaScriptCore/wasm/js/JSWebAssemblyInstance.h
+@@ -300,8 +300,13 @@
+     void* faultPC() const { return m_faultPC; }
+     // M1538 research-only engine build: attach SIGSEGV's fault address to
+     // the existing faultPC; emit sanitized evidence in the later slow path.
+     void setFaultAddress(void* address) { m_faultAddress = address; }
+-    void* faultAddress() const { return m_faultAddress; }
++    void* faultAddress() const { return m_faultAddress; }
++    // M1538 operator-only diagnostic marker for a taken BBQ bounds branch.
++    static constexpr uint32_t noDiagnosticOOBOpcode() { return 0xffffffffu; }
++    static size_t offsetOfDiagnosticOOBOpcode() { return OBJECT_OFFSETOF(JSWebAssemblyInstance, m_diagnosticOOBOpcode); }
++    uint32_t diagnosticOOBOpcode() const { return m_diagnosticOOBOpcode; }
++    void clearDiagnosticOOBOpcode() { m_diagnosticOOBOpcode = noDiagnosticOOBOpcode(); }
+ 
+ private:
+     JSWebAssemblyInstance(VM&, Structure*, JSWebAssemblyModule*, WebAssemblyModuleRecord*);
+@@ -332,7 +337,8 @@
+     FixedVector<RefPtr<const Wasm::Tag>> m_tags;
+     Vector<Ref<Wasm::WasmToJSCallee>> importCallees;
+     void* m_faultPC { nullptr };
+-    void* m_faultAddress { nullptr };
++    void* m_faultAddress { nullptr };
++    uint32_t m_diagnosticOOBOpcode { 0xffffffffu };
+ };
+ 
+ } // namespace JSC
+diff --git a/Source/JavaScriptCore/wasm/WasmBBQJIT.h b/Source/JavaScriptCore/wasm/WasmBBQJIT.h
+--- a/Source/JavaScriptCore/wasm/WasmBBQJIT.h
++++ b/Source/JavaScriptCore/wasm/WasmBBQJIT.h
+@@ -2309,7 +2309,11 @@
+ 
+     InternalFunction* m_compilation;
+ 
+-    std::array<JumpList, numberOfExceptionTypes> m_exceptions { };
++    std::array<JumpList, numberOfExceptionTypes> m_exceptions { };
++    // Operator-only research build: do not collapse taken bounds branches
++    // to a shared cold path before preserving their original opcode offsets.
++    struct DiagnosticBoundsSite { Jump branch; uint32_t functionRelativeOpcode; };
++    Vector<DiagnosticBoundsSite, 16> m_diagnosticBoundsSites;
+     Vector<UnlinkedHandlerInfo> m_exceptionHandlers;
+     Vector<CCallHelpers::Label> m_catchEntrypoints;
+ 
+diff --git a/Source/JavaScriptCore/wasm/WasmBBQJIT.cpp b/Source/JavaScriptCore/wasm/WasmBBQJIT.cpp
+--- a/Source/JavaScriptCore/wasm/WasmBBQJIT.cpp
++++ b/Source/JavaScriptCore/wasm/WasmBBQJIT.cpp
+@@ -1870,10 +1870,16 @@
+     m_jit.jumpThunk(CodeLocationLabel<JITThunkPtrTag>(Thunks::singleton().stub(throwExceptionFromWasmThunkGenerator).code()));
+ }
+ 
+-void BBQJIT::throwExceptionIf(ExceptionType type, Jump jump)
+-{
+-    m_exceptions[static_cast<unsigned>(type)].append(jump);
+-}
++void BBQJIT::throwExceptionIf(ExceptionType type, Jump jump)
++{
++    if (type == ExceptionType::OutOfBoundsMemoryAccess && m_parser) {
++        // This JIT branch's source origin is known now, but would otherwise
++        // be lost when all out-of-bounds jumps share the final cold handler.
++        m_diagnosticBoundsSites.append({ jump, static_cast<uint32_t>(m_parser->currentOpcodeStartingOffset()) });
++        return;
++    }
++    m_exceptions[static_cast<unsigned>(type)].append(jump);
++}
+ 
+ template<typename IntType>
+ Value BBQJIT::checkConstantDivision(const Value& lhs, const Value& rhs)
+@@ -3936,7 +3942,17 @@
+         }
+     }
+ 
+-    m_compilation->osrEntryScratchBufferSize = m_osrEntryScratchBufferSize;
++    // M1538 research-only explicit WebAssembly bounds exception sites.
++    // This writes the site marker only AFTER the real bounds branch is taken,
++    // before normal JSC exception dispatch. No JS/ONNX/model changes.
++    for (auto& site : m_diagnosticBoundsSites) {
++        site.branch.link(&jit);
++        jit.store32(CCallHelpers::TrustedImm32(static_cast<int32_t>(site.functionRelativeOpcode)),
++            CCallHelpers::Address(GPRInfo::wasmContextInstancePointer, JSWebAssemblyInstance::offsetOfDiagnosticOOBOpcode()));
++        emitThrowException(ExceptionType::OutOfBoundsMemoryAccess);
++    }
++
++    m_compilation->osrEntryScratchBufferSize = m_osrEntryScratchBufferSize;
+     return { };
+ }
+ 
+diff --git a/Source/JavaScriptCore/wasm/WasmOperations.cpp b/Source/JavaScriptCore/wasm/WasmOperations.cpp
+--- a/Source/JavaScriptCore/wasm/WasmOperations.cpp
++++ b/Source/JavaScriptCore/wasm/WasmOperations.cpp
+@@ -40,7 +40,8 @@
+ #include "JSWebAssemblyArray.h"
+ #include "JSWebAssemblyException.h"
+ #include "JSWebAssemblyHelpers.h"
+-#include "JSWebAssemblyInstance.h"
++#include "JSWebAssemblyInstance.h"
++#include "JSWebAssemblyMemory.h"
+ #include "JSWebAssemblyRuntimeError.h"
+ #include "JSWebAssemblyStruct.h"
+ #include "ProbeContext.h"
+@@ -1721,9 +1722,23 @@
+     CallFrame* callFrame = DECLARE_WASM_CALL_FRAME(instance);
+     assertCalleeIsReferenced(callFrame, instance);
+     VM& vm = instance->vm();
+-    NativeCallFrameTracer tracer(vm, callFrame);
+-    return throwWasmToJSException(callFrame, type, instance);
+-}
++    NativeCallFrameTracer tracer(vm, callFrame);
++    if (type == Wasm::ExceptionType::OutOfBoundsMemoryAccess) {
++        const uint32_t opcode = instance->diagnosticOOBOpcode();
++        instance->clearDiagnosticOOBOpcode();
++        if (opcode != JSWebAssemblyInstance::noDiagnosticOOBOpcode() && instance->memory()) {
++            auto& callee = static_cast<Wasm::Callee&>(*callFrame->callee().asNativeCallee());
++            // This helper is reached by a real taken JIT branch, but does
++            // not establish which original model/worker invoked it.
++            dataLogLn("CC1538_BBQ_EXPLICIT_BOUNDS_SITE_V1 functionSpaceIndex=", callee.index().rawIndex(),
++                " functionRelativeWasmOpcodeOffset=", opcode,
++                " liveMemoryBytes=", instance->memory()->memory().size(),
++                " cachedBoundsCheckingBytes=", instance->cachedBoundsCheckingSize(),
++                " dynamicEffectiveAddressKnown=false accessWidthKnown=false");
++        }
++    }
++    return throwWasmToJSException(callFrame, type, instance);
++}
+ 
+ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationCrashDueToBBQStackOverflow, void, ())
+ {
