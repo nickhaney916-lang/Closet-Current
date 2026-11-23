@@ -14,6 +14,8 @@ import {institutionalPartAAnchor}
  from './met70759-physical-garment-dimension-anchor89.mjs';
 import {evaluateFivePointPlanarReference}
  from './physical-five-point-photo-plane89.mjs';
+import {assessMetricGarmentToWearerFit}
+ from './measured-wearer-to-licensed-rig-garment-fit89.mjs';
 
 window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=()=>{
  const x=sourceSkinResearch;
@@ -222,6 +224,31 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    museumFivePointPhotoPlane.consumer3DAdmitted===false&&
    museumFivePointPhotoPlane.familyAlpha==='HOLD',
    'unmeasured-museum-source-photo-must-never-acquire-fictitious-projective-calibration');
+  // Real source-matched original photo and licensed 163-bone anatomy have
+  // never been registered to an ACTUALLY measured wearer's anthropometry.
+  // Do not derive wearer dimensions from 2/height rig normalization, from
+  // generic body sizes, or from museum part-A catalog garment measurements.
+  const originalMeasuredWearerFit=assessMetricGarmentToWearerFit({
+   source:{imageId:payload.imageId,
+    originalPhotoSHA256:payload.originalJPEGByteSHA256},
+   independentSourceWitness:{imageId:2551406,
+    originalPhotoSHA256:payload.originalJPEGByteSHA256,
+    originalBytesRehashedByNativeCaller:true},
+   licensedRig:{kind:x.kind,sha256:model.sha256,
+    actualOriginalBoneCount:x.body.skeleton.bones.length},
+   independentRigWitness:{kind:x.kind,sha256:model.sha256,
+    actualOriginalBoneCount:x.body.skeleton.bones.length,
+    originalSourceRigBytesVerifiedByNativeCaller:true,
+    actualOriginalRigSourcePositionsVerified:true}
+  });
+  invariant(originalMeasuredWearerFit.decision===
+    'BLOCKED_NO_REAL_GARMENT_OR_WEARER_MEASUREMENTS'&&
+   originalMeasuredWearerFit.licensedOriginalRigNotPhysicalWearerMeasurement===true&&
+   originalMeasuredWearerFit.actualOwnerMeasuredPhysicalFitCertified===false&&
+   originalMeasuredWearerFit.garmentToLicensedRigMeshFitted===false&&
+   originalMeasuredWearerFit.consumer3DAdmitted===false&&
+   originalMeasuredWearerFit.familyAlpha==='HOLD',
+   'authentic-163bone-original-source-missing-real-wearer-metric-data-not-blocked');
   invariant(rectangle.consumer3DAdmitted===false&&
    rectangle.familyAlpha==='HOLD'&&
    (rectangle.decision.startsWith('BLOCKED_')||
@@ -254,6 +281,7 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    originalCorrectedVsHistoricalZeroSeedDistanceRigUnits:
     realOriginalVsIncorrectZeroSeedDistance,
    other161BoneLocalPoseTransformsImmutable:true,
+   originalGarmentToBodyMeasuredWearerFitGate:originalMeasuredWearerFit,
    unmeasuredOriginalMuseumFivePointPhotoPlane:museumFivePointPhotoPlane,
    museumOriginalPartARealPhysicalDimensionEvidence:museumRealPhysicalPartA,
    originalRectangleFirstWitnessExactPoseContactTriage:originalRectangleWitnessTriage,
