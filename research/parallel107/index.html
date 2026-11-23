@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Garment photo calibration</title>
+<link rel="stylesheet" href="capture.css">
+<script type="module" src="capture.mjs"></script>
+</head>
+<body>
+<main>
+<h1>Garment photo calibration</h1>
+<p>Lay one garment flat with every edge visible. Photograph from directly overhead. For optional reference checks, place two measured ruler spans near opposite edges, flat on the garment’s plane. Use a synthetic or licensed public JPEG for this demo. The page processes the file locally.</p>
+<label>Front JPEG <input type="file" id="photo" accept="image/jpeg,.jpg,.jpeg"></label>
+<button type="button" id="clear">Clear photo and measurements</button>
+<img id="preview" alt="Selected original front photograph" hidden>
+<a id="download" download="original.jpg" hidden>Download original JPEG</a>
+<p id="photo-status" role="status">Choose a front JPEG.</p>
+<form id="capture">
+<label for="garment-type">Garment type</label>
+<select id="garment-type" name="garmentType"><option value="">Choose type</option><option value="top">Top</option><option value="dress">Dress</option><option value="trousers">Trousers</option><option value="skirt">Skirt</option><option value="other">Other</option></select>
+<fieldset><legend>Review the front photo</legend>
+<label class="check"><input type="checkbox" name="singleGarment"> One garment only</label>
+<label class="check"><input type="checkbox" name="completeEdges"> All edges visible</label>
+<label class="check"><input type="checkbox" name="overhead"> Camera directly overhead</label>
+<label class="check"><input type="checkbox" name="coplanar"> Garment and references lie flat in the same plane</label>
+</fieldset>
+<fieldset><legend>Manual garment measurement</legend>
+<p>Measure the garment directly and enter a positive uncertainty in the same unit. Enter chest circumference only if you measured around the full garment.</p>
+<label for="dimension-kind">Dimension</label>
+<select id="dimension-kind" name="kind"><option value="flatWidth">Flat width</option><option value="length">Length</option><option value="inseam">Inseam</option><option value="sleeve">Sleeve</option><option value="chestCircumference">Chest circumference</option></select>
+<label>Measured value <input name="value" type="number" inputmode="decimal" step="any"></label>
+<label>Uncertainty <input name="uncertainty" type="number" inputmode="decimal" step="any"></label>
+<label for="measurement-unit">Unit</label>
+<select id="measurement-unit" name="unit"><option>mm</option><option>cm</option><option>in</option></select>
+</fieldset>
+<fieldset id="references"><legend>Optional ruler reference spans</legend>
+<p>Enter original pixel coordinates from the top left or tap the photo to fill the next empty coordinate pair. Use ruler marks with a known measured distance. Rotated and mirrored JPEGs retain their preview and download and disable reference placement.</p>
+</fieldset>
+<p>Side and back views are unknown in this record.</p>
+<button>Check measurement evidence</button>
+</form>
+<p id="outcome" role="status"></p>
+<details id="record" hidden><summary>Source-bound JSON record and handoff</summary><pre id="json"></pre></details>
+</main>
+</body>
+</html>
