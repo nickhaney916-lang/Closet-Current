@@ -93,7 +93,7 @@ export function evaluateFivePointPlanarReference({
   !sha(photo.sha256)||!sha(trustedOriginal.sha256)||
   photo.sha256!==trustedOriginal.sha256||
   !Number.isSafeInteger(photo.width)||!Number.isSafeInteger(photo.height)||
-  photo.width<160||photo.width>12000||photo.height<160||photo.height>12000||
+  photo.width<100||photo.width>12000||photo.height<100||photo.height>12000||
   photo.width*photo.height>48e6||
   fields.some(k=>photo[k]!==trustedOriginal[k])||
   trustedOriginal.originalBytesRehashedByIndependentCaller!==true)
