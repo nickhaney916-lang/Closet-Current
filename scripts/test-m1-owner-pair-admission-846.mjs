@@ -42,12 +42,12 @@ if(checkedSource===source)throw Error('P846 native save error handler changed');
 // its refusal intact rather than weakening the app to satisfy a mock fixture.
 const instrumentedSource=checkedSource.replace(
  "throw Error('P88_SOURCE_DRAFT_STORAGE_CHANGED');",
- `window.p846DraftCAS={live:sourceSaveLeaseLive88(lease),
+ `{window.p846DraftCAS={live:sourceSaveLeaseLive88(lease),
   known:draftStoreRevision88,expected,
   persisted:JSON.stringify(read.result?.batch??null),
   liveBatch:JSON.stringify(batch),captured:liveBatchRevision,
   duplicate:duplicateUnit70InCloset(value,items)};
-  throw Error('P88_SOURCE_DRAFT_STORAGE_CHANGED');`
+  throw Error('P88_SOURCE_DRAFT_STORAGE_CHANGED');}`
 );
 const harness=[
  "const categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];",
