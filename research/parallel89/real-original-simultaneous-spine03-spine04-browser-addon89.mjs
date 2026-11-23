@@ -12,6 +12,8 @@ import {triageOriginalTwoAngleRectangleFirstWitness}
  from './original-rectangle-first-witness-triage89.mjs';
 import {institutionalPartAAnchor}
  from './met70759-physical-garment-dimension-anchor89.mjs';
+import {evaluateFivePointPlanarReference}
+ from './physical-five-point-photo-plane89.mjs';
 
 window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=()=>{
  const x=sourceSkinResearch;
@@ -201,6 +203,25 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    museumRealPhysicalPartA.consumer3DAdmitted===false&&
    museumRealPhysicalPartA.familyAlpha==='HOLD',
    'original-Met-published-dimensions-must-remain-unregistered-photo-to-rig');
+  // P89 authenticates original photo bytes/RGB and reports source decoded
+  // dimensions. The museum photo has NO owner-measured, on-image projective
+  // rectangle+independently located fifth point nor an approved same-plane
+  // garment photo review. The absence MUST survive genuine native browsers.
+  const museumFivePointPhotoPlane=evaluateFivePointPlanarReference({
+   photo:{sha256:payload.originalJPEGByteSHA256,
+    width:textureDims[0],height:textureDims[1],orientation:1},
+   trustedOriginal:{sha256:payload.originalJPEGByteSHA256,
+    width:textureDims[0],height:textureDims[1],orientation:1,
+    originalBytesRehashedByIndependentCaller:true}
+  });
+  invariant(museumFivePointPhotoPlane.reason===
+    'BLOCKED_MISSING_PHOTO_AND_PLANE_REVIEW'&&
+   museumFivePointPhotoPlane.status==='NOT_PHYSICALLY_CALIBRATED'&&
+   museumFivePointPhotoPlane.originalGarmentPhysicalPixelScaleMmPerPixel===null&&
+   museumFivePointPhotoPlane.photographedGarmentToAvatarRigUnitsPerMillimeter===null&&
+   museumFivePointPhotoPlane.consumer3DAdmitted===false&&
+   museumFivePointPhotoPlane.familyAlpha==='HOLD',
+   'unmeasured-museum-source-photo-must-never-acquire-fictitious-projective-calibration');
   invariant(rectangle.consumer3DAdmitted===false&&
    rectangle.familyAlpha==='HOLD'&&
    (rectangle.decision.startsWith('BLOCKED_')||
@@ -233,6 +254,7 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    originalCorrectedVsHistoricalZeroSeedDistanceRigUnits:
     realOriginalVsIncorrectZeroSeedDistance,
    other161BoneLocalPoseTransformsImmutable:true,
+   unmeasuredOriginalMuseumFivePointPhotoPlane:museumFivePointPhotoPlane,
    museumOriginalPartARealPhysicalDimensionEvidence:museumRealPhysicalPartA,
    originalRectangleFirstWitnessExactPoseContactTriage:originalRectangleWitnessTriage,
    independentTwoAngleRectangleOriginalFullFaceAudit:rectangle,
