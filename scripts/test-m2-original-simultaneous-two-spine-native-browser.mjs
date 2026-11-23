@@ -12,7 +12,7 @@ import {spawnSync} from 'node:child_process';
 const pins={
  runner:'5f999c1dc440539cec143f7c7de48b8fe88dd91e',
  registration:'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb',
- addon:'429a20d25649a6f9fbbef8394e02275d4abb4216'
+ addon:'e4bebd48139ed3637e6bcbb9dba89cd4a92fc4f7'
 };
 const sha=b=>createHash('sha1').update('blob '+Buffer.byteLength(b)+'\0')
  .update(b).digest('hex');
@@ -43,7 +43,7 @@ const routeLines=[
  "    const addonSource=await readFile('research/parallel89/real-original-simultaneous-spine03-spine04-browser-addon89.mjs','utf8');",
  "    const blobSha=t=>createHash('sha1').update('blob '+Buffer.byteLength(t)+'\\0').update(t).digest('hex');",
  "    assert.equal(blobSha(originalSource),'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb');",
- "    assert.equal(blobSha(addonSource),'429a20d25649a6f9fbbef8394e02275d4abb4216');",
+ "    assert.equal(blobSha(addonSource),'e4bebd48139ed3637e6bcbb9dba89cd4a92fc4f7');",
  "    await route.fulfill({status:200,contentType:'text/javascript',body:originalSource+'\\n'+addonSource});",
  "   });",
  routeAnchor
@@ -117,6 +117,21 @@ const verifyLines=[
  "   assert.equal(witness.fullOriginalRectangularSweepContactResolved,false);",
  "   assert.equal(witness.consumer3DAdmitted,false);",
  "   assert.equal(witness.familyAlpha,'HOLD');",
+ "   const dimensions=trial.museumOriginalPartARealPhysicalDimensionEvidence;",
+ "   assert.equal(dimensions.reason,'REAL_CATALOGUED_GARMENT_PART_A_DIMENSIONS_ONLY');",
+ "   assert.equal(dimensions.sourceMuseumCollectionObjectId,70759);",
+ "   assert.equal(dimensions.sourceOriginalMuseumImageId,2551406);",
+ "   assert.equal(dimensions.sourceOriginalImageSHA256,hash(image));",
+ "   assert.equal(dimensions.sourceDecodedOriginalRGB_SHA256,shell.originalDecodedRGBSHA256);",
+ "   assert.equal(dimensions.measuredPhysicalPart,'a');",
+ "   assert.deepEqual(dimensions.physicalGarmentPartADimensionsMillimeters,{",
+ "    length:990.6,bottomWidth:1333.5,waistBandWidthExcludingLoopButton:723.9});",
+ "   assert.equal(dimensions.projectedImageContourNotMatchedToMeasuredSeamLandmarks,true);",
+ "   assert.equal(dimensions.localPhotoMillimetersPerPixel,null);",
+ "   assert.equal(dimensions.photoToOriginalRigUnitsPerMillimeter,null);",
+ "   assert.equal(dimensions.consumer3DAdmitted,false);",
+ "   assert.equal(dimensions.familyAlpha,'HOLD');",
+
 
  "   assert.equal(trial.consumer3DAdmitted,false);",
  "   assert.equal(trial.familyAlpha,'HOLD');",
@@ -140,6 +155,9 @@ const verifyLines=[
  "    independentRectangleDecision:rectangle.decision,",
  "    originalWitnessPoseContactTriage:witness.decision,",
  "    originalWitnessDiscreteVerifiedContacts:witness.observedExactTriangleContactsAtSampledPoses,",
+ "    realMetPublishedGarmentPartADimensionsMm:dimensions.physicalGarmentPartADimensionsMillimeters,",
+ "    photoMillimetersPerPixel:dimensions.localPhotoMillimetersPerPixel,",
+ "    photoToAvatarRigUnitsPerMm:dimensions.photoToOriginalRigUnitsPerMillimeter,",
  "    originalWitnessFiveTruePoseClasses:witness.firstWitnessSampledOriginalPoseContacts.map(p=>p.contactClass),",
  "    originalPhysicalFitCertified:false,consumer3DAdmitted:false,familyAlpha:'HOLD'",
  "   }));",

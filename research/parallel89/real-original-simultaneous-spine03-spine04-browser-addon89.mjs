@@ -10,6 +10,8 @@ import {evaluateTwoJointOriginalRectangle}
  from './two-joint-rectangle-safety89.mjs';
 import {triageOriginalTwoAngleRectangleFirstWitness}
  from './original-rectangle-first-witness-triage89.mjs';
+import {institutionalPartAAnchor}
+ from './met70759-physical-garment-dimension-anchor89.mjs';
 
 window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=()=>{
  const x=sourceSkinResearch;
@@ -174,6 +176,31 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    originalRectangleWitnessTriage.familyAlpha==='HOLD'&&
    originalRectangleWitnessTriage.decision.startsWith('BLOCKED_'),
    'original-rectangle-first-witness-must-require-genuine-pose-and-block');
+  // Independently published REAL physical garment catalog dimensions.
+  // P89 authenticates the original photographed part; this module only
+  // binds that identity to the Met object's part A institutional record.
+  // The museum did not publish camera extrinsics, owner fit or a mm/pixel map.
+  const museumRealPhysicalPartA=institutionalPartAAnchor({
+   source:{objectId:70759,imageId:payload.imageId,
+    caption:payload.museumCaption,part:'a',accession:'1983.21a,b',
+    originalJPEG_SHA256:payload.originalJPEGByteSHA256,
+    decodedOriginalRGB_SHA256:payload.decodedOriginalRGBSHA256},
+   trusted:{objectId:70759,imageId:2551406,
+    sourcePhotoCaption:'a) front',
+    originalJPEG_SHA256:payload.originalJPEGByteSHA256,
+    decodedOriginalRGB_SHA256:required.sourceRGB,
+    independentOriginalSourceVerifiedByCaller:true}
+  });
+  invariant(
+   museumRealPhysicalPartA.reason==='REAL_CATALOGUED_GARMENT_PART_A_DIMENSIONS_ONLY'&&
+   museumRealPhysicalPartA.physicalGarmentPartADimensionsMillimeters.length===990.6&&
+   museumRealPhysicalPartA.physicalGarmentPartADimensionsMillimeters.bottomWidth===1333.5&&
+   museumRealPhysicalPartA.physicalGarmentPartADimensionsMillimeters.waistBandWidthExcludingLoopButton===723.9&&
+   museumRealPhysicalPartA.photoToOriginalRigUnitsPerMillimeter===null&&
+   museumRealPhysicalPartA.localPhotoMillimetersPerPixel===null&&
+   museumRealPhysicalPartA.consumer3DAdmitted===false&&
+   museumRealPhysicalPartA.familyAlpha==='HOLD',
+   'original-Met-published-dimensions-must-remain-unregistered-photo-to-rig');
   invariant(rectangle.consumer3DAdmitted===false&&
    rectangle.familyAlpha==='HOLD'&&
    (rectangle.decision.startsWith('BLOCKED_')||
@@ -206,6 +233,7 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    originalCorrectedVsHistoricalZeroSeedDistanceRigUnits:
     realOriginalVsIncorrectZeroSeedDistance,
    other161BoneLocalPoseTransformsImmutable:true,
+   museumOriginalPartARealPhysicalDimensionEvidence:museumRealPhysicalPartA,
    originalRectangleFirstWitnessExactPoseContactTriage:originalRectangleWitnessTriage,
    independentTwoAngleRectangleOriginalFullFaceAudit:rectangle,
    trueSimultaneousTwoJointFullIndexedAudit:evaluator,
