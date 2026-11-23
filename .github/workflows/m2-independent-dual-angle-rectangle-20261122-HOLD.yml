@@ -1,0 +1,42 @@
+name: "M2 independent dual joint angle rectangle research HOLD"
+on:
+  push:
+    branches:
+      - research/m2-independent-dual-angle-rectangle-20261122-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  fail-closed-rectangle-and-full-inherited-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable verified parent and exactly three additive research-only files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 282a40d91284803b462634ef031714b91437ff3d HEAD
+          git diff --exit-code 282a40d91284803b462634ef031714b91437ff3d HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          while IFS= read -r p; do
+            case "$p" in
+              research/parallel89/two-joint-rectangle-safety89.mjs|tests/m2-two-joint-rectangle-envelope.test.mjs|.github/workflows/m2-independent-dual-angle-rectangle-20261122-HOLD.yml) ;;
+              *) echo "Unexpected protected or concurrent change: $p"; exit 1 ;;
+            esac
+          done < <(git diff --name-only 282a40d91284803b462634ef031714b91437ff3d HEAD)
+          node --check research/parallel89/two-joint-rectangle-safety89.mjs
+          node --check tests/m2-two-joint-rectangle-envelope.test.mjs
+      - name: Nine 2-angle rectangle mathematical and adversarial fail-closed cases
+        run: node --test tests/m2-two-joint-rectangle-envelope.test.mjs
+      - name: Install frozen original offline-test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Unchanged offline consumer app build
+        run: node scripts/build.mjs
+      - name: Inherited source owner original-photo backup security and geometry Node regressions
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
