@@ -95,7 +95,7 @@ export function assessMetricGarmentToWearerFit({
   independentRigWitness.actualOriginalBoneCount!==163 ||
   independentRigWitness.originalSourceRigBytesVerifiedByNativeCaller!==true ||
   independentRigWitness.actualOriginalRigSourcePositionsVerified!==true)
-  return fail("BLOCKED_GENUINE_LICENCED_RIG_PROVENANCE_MISSING");
+  return fail("BLOCKED_GENUINE_LICENSED_RIG_PROVENANCE_MISSING");
  if(!measurements)
   return fail("BLOCKED_NO_REAL_GARMENT_OR_WEARER_MEASUREMENTS",{
    actualLicensed163BoneRigKind:licensedRig.kind,
@@ -140,7 +140,7 @@ export function assessMetricGarmentToWearerFit({
    anchorIntersectionMmPerRigUnit:[lower,upper],
    holdoutScaleIntervalMmPerRigUnit:holdoutInterval
   });
- const sections=measurements.physicalCirumferenceSections;
+ const sections=measurements.physicalCircumferenceSections;
  if(!Array.isArray(sections)||sections.length!==sectionSets[kind].length||
   !sections.every(sectionValid)||
   sections.some((s,i)=>s.landmark!==sectionSets[kind][i]))
