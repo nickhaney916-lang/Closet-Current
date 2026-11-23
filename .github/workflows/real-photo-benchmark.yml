@@ -1,3 +1,4 @@
+# November 23 recognition audit: unchanged production model and locked photo labels.
 name: Real-photo recognition benchmark
 on:
   push:
