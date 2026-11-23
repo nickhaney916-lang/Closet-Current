@@ -116,6 +116,10 @@ WASM opcode offset or a verified internal linear-memory effective access.
 The original `_OrtCreateSession` WASM bounds RuntimeError may not raise SIGSEGV;
 this limitation is explicitly marked BLOCKED instead of inventing a trace.
 
+## Separately approved native WebKit diagnostic build (PREPARED, NOT RUN)
+
+A fully gated, isolated native WPE WebKit debug **build package** is now documented in [APPROVED_NATIVE_WPE_BUILD_HOLD.md](APPROVED_NATIVE_WPE_BUILD_HOLD.md). The operator-side `operator-build-research-webkit.py` verifies the exact pinned original WebKit checkout and original Playwright downstream Git patch, the three research-only patch blob hashes, and a separately signed externally trusted approval with a reviewed existing-host/billing scope. It performs a read-only `preflight`; only an approved, interactive non-root operator may create a detached diagnostic worktree and run WebKit's official WPE debug build. It can record actual ELF binary hashes/Build IDs if built. The presence of this script, a synthetic test signature, or offline CI never authorizes or executes a cloud deployment, native debugger or original-model experiment. Existing research EC2 sizing is not certified sufficient for a full Debug WebKit build. Original native trap/repair and Family Alpha release remain BLOCKED/HOLD.
+
 ## Clean shutdown
 
 EC2 and the EBS volume incur charges while allocated. After an approved experiment, terminate the instance through reviewed change control and delete the CloudFormation stack. Do not abandon a running machine. Preserve only sanitized approved evidence; follow the operator's retention policy. No production deployments, Family Alpha actions or private wardrobe/photo data are allowed.
