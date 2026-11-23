@@ -361,7 +361,9 @@ jobs:
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
           npx playwright install --with-deps chromium
           node scripts/build.mjs
-          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-reviewed-32.json benchmark/output-footwear-p0
+          mkdir -p benchmark/output-footwear-p0
+          node --input-type=module -e "import fs from 'node:fs';const rows=['benchmark/manifest-reviewed-32.json','benchmark/manifest-holdout-16.json'].flatMap(p=>JSON.parse(fs.readFileSync(p)));if(rows.length!==48||new Set(rows.map(x=>x.id)).size!==48||!rows.some(x=>x.id==='commons-0078'&&x.expectedType==='Sneakers'))throw Error('P0 required exposed sources missing');fs.writeFileSync('benchmark/output-footwear-p0/manifest.json',JSON.stringify(rows));"
+          node scripts/run-browser-photo-benchmark.mjs benchmark/output-footwear-p0/manifest.json benchmark/output-footwear-p0
       - name: Compare neutral versus balanced pinned color-prompt logits on the SAME real image embeddings
         shell: bash
         run: |
@@ -380,11 +382,11 @@ jobs:
           assert.equal(meta.sha256,'e1e0415f2272e81c0f3ce2f08fd5fd5c2a9eb6481437d696936c723e8e1abb2f');
           assert.equal(hash(bytes),meta.sha256);
           const vectors=new Float32Array(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));
-          const manifest=await readJson('benchmark/manifest-reviewed-32.json');
+          const manifest=await readJson('benchmark/output-footwear-p0/manifest.json');
           const locked=await readJson('benchmark/locked-photo-sources.json');
           const rows=await readJson('benchmark/output-footwear-p0/results.json');
-          assert.equal(rows.length,32);assert.equal(manifest.length,32);
-          assert.equal(new Set(rows.map(r=>r.id)).size,32);
+          assert.equal(rows.length,48);assert.equal(manifest.length,48);
+          assert.equal(new Set(rows.map(r=>r.id)).size,48);
           const shoes=localCandidates.filter(c=>c.category==='Shoes');
           const colors=['black','white','gray','beige','brown','blue','green','red','pink','purple','yellow','orange','multicolor'];
           const prompts=shoes.map(c=>({type:c.itemType,neutral:c.label,labels:[c.label,...colors.map(color=>'a '+color+' '+c.itemType.toLowerCase())]}));
@@ -402,15 +404,15 @@ jobs:
             const row=rows.find(x=>x.id===truth.id), source=locked.find(x=>x.id===truth.id);
             assert.ok(row&&!row.error&&source?.verified&&source.attribution?.license);
             assert.equal(hash(await readFile('benchmark/photos/'+source.image)),source.sha256);
-            assert.equal(row.recognitionMemory?.modelKey,'fashion-clip/whole-v1/'+meta.revision);
-            assert.equal(row.recognitionMemory.features.length,512);
-            assert.ok(row.recognitionMemory.features.every(Number.isFinite));
             // Eligibility comes only from the actual current classifier, not the answer key.
             const eligible=row.prediction?.category==='Shoes';
             if(truth.expectedCategory!=='Shoes'&&!eligible){
               cases.push({id:truth.id,expectedCategory:truth.expectedCategory,sourceSha256:source.sha256,existingPrediction:row.prediction,candidateApplied:false});
               continue;
             }
+            assert.equal(row.recognitionMemory?.modelKey,'fashion-clip/whole-v1/'+meta.revision);
+            assert.equal(row.recognitionMemory.features.length,512);
+            assert.ok(row.recognitionMemory.features.every(Number.isFinite));
             const image={features:row.recognitionMemory.features};
             const raw=await scorer(image,all);
             const scores=new Map(raw.map(x=>[x.label,x.score]));
@@ -421,10 +423,14 @@ jobs:
             cases.push({id:truth.id,sourceSha256:source.sha256,expectedCategory:truth.expectedCategory,expectedFamily:expected,expectedType:truth.expectedType,existingPrediction:row.prediction,existingStrong:row.strong,existingReason:row.reason,neutral,candidate,candidateApplied:eligible,neutralFamilyCorrect:expected!==null&&eligible&&family(neutral[0].type)===expected,candidateFamilyCorrect:expected!==null&&eligible&&family(candidate[0].type)===expected,rawPromptScores:raw});
           }
           const footwear=cases.filter(x=>x.expectedCategory==='Shoes');
-          assert.equal(footwear.length,13);
+          assert.equal(footwear.length,16);
+          const knownFailure=footwear.find(x=>x.id==='commons-0078');
+          assert.equal(knownFailure?.sourceSha256,'ba080a9a5d4aa68c193738e728e83c45b6a833a9bf80c45de4d2b35ece38154e');
+          assert.equal(knownFailure.expectedFamily,'Sneakers');
           const count=(xs,key)=>xs.filter(x=>x[key]).length;
           const summary={photos:cases.length,footwear:footwear.length,controls:cases.length-footwear.length,
             neutralFamilyCorrect:count(footwear,'neutralFamilyCorrect'),candidateFamilyCorrect:count(footwear,'candidateFamilyCorrect'),
+            knownFailure:{id:knownFailure.id,existing:knownFailure.existingPrediction,neutral:knownFailure.neutral.slice(0,3),candidate:knownFailure.candidate.slice(0,3),candidateFamilyCorrect:knownFailure.candidateFamilyCorrect},
             changed:footwear.filter(x=>x.neutral[0].type!==x.candidate[0].type).map(x=>x.id),
             improved:footwear.filter(x=>!x.neutralFamilyCorrect&&x.candidateFamilyCorrect).map(x=>x.id),
             regressed:footwear.filter(x=>x.neutralFamilyCorrect&&!x.candidateFamilyCorrect).map(x=>x.id),
