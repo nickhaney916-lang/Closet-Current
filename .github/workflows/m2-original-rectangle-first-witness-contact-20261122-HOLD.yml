@@ -1,0 +1,142 @@
+name: "M2 genuine original garment-body rectangle first-witness contact HOLD"
+on:
+  push:
+    branches:
+      - research/m2-original-rectangle-witness-contact-20261122-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  original-sha-source-and-mechanical-controls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Immutable #1593 verified parent and five confined original contact research paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 6d7c0ee1db179a9f37a61d64622814869618edaa HEAD
+          git diff --exit-code 6d7c0ee1db179a9f37a61d64622814869618edaa HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          while IFS= read -r p; do
+            case "$p" in
+              research/parallel89/original-rectangle-first-witness-triage89.mjs|tests/m2-original-rectangle-first-witness-triage.test.mjs|research/parallel89/real-original-simultaneous-spine03-spine04-browser-addon89.mjs|scripts/test-m2-original-simultaneous-two-spine-native-browser.mjs|.github/workflows/m2-original-rectangle-first-witness-contact-20261122-HOLD.yml) ;;
+              *) echo "UNEXPECTED other-mission, original rig or protected file: $p"; exit 1 ;;
+            esac
+          done < <(git diff --name-only 6d7c0ee1db179a9f37a61d64622814869618edaa HEAD)
+          node --check research/parallel89/original-rectangle-first-witness-triage89.mjs
+          node --check tests/m2-original-rectangle-first-witness-triage.test.mjs
+          node --check research/parallel89/two-joint-rectangle-safety89.mjs
+          node --check tests/m2-two-joint-rectangle-envelope.test.mjs
+          node --check research/parallel89/simultaneous-two-original-spine-joint-bvh89.mjs
+          node --check research/parallel89/real-original-simultaneous-spine03-spine04-browser-addon89.mjs
+          node --check research/parallel89/original-licensed-two-spine-sequential-browser-addon89.mjs
+          node --check scripts/test-m2-original-simultaneous-two-spine-native-browser.mjs
+          node --check tests/m2-two-simultaneous-spine-joint-harmonic-bvh.test.mjs
+      - name: True original simultaneous spine03 plus spine04 mixed-angle harmonic source and 12 adversarial tests
+        run: node --test tests/m2-two-simultaneous-spine-joint-harmonic-bvh.test.mjs
+      - name: Independent 2D original joint-angle rectangle nine adversarial node cases
+        run: node --test tests/m2-two-joint-rectangle-envelope.test.mjs
+      - name: Eleven adversarial original indexed triangle witness tests
+        run: node --test tests/m2-original-rectangle-first-witness-triage.test.mjs
+      - name: Install frozen offline source and original rig test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Original museum RGB front+pixel identity, exact published original source
+        run: node scripts/test-parallel89-met-four-original-photo-silhouettes.mjs
+      - name: Original machine UNREVIEWED foreground mask, explicitly NOT wearable
+        run: |
+          python -m venv .m2-met-mask-env
+          .m2-met-mask-env/bin/python -m pip install --no-cache-dir --disable-pip-version-check numpy==1.26.4 opencv-python-headless==4.11.0.86 scipy==1.14.1
+          .m2-met-mask-env/bin/python scripts/test-parallel89-met-four-real-full-masks.py
+      - name: Original immutable licensed 163 bone male female donor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .m2-immutable-licensed-body df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.m2-immutable-licensed-body"
+          test "$(git -C .m2-immutable-licensed-body rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          ln -s ../node_modules .m2-immutable-licensed-body/node_modules
+          cd .m2-immutable-licensed-body
+          node research/three-d-20/restore-approved-models.mjs
+      - name: SHA-pinned original true photo and 163bone two simultaneous spine joints browser research
+        run: node scripts/test-m2-original-simultaneous-two-spine-native-browser.mjs .m2-immutable-licensed-body
+      - name: Unchanged original consumer offline app build
+        run: node scripts/build.mjs
+      - name: Inherited full original private owner photo backup and ALL M2 Node tests
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M2-first-witness-original-spine03-spine04-SHA-HOLD
+          path: |
+            benchmark/parallel89-met70759-four-photo-research/
+            benchmark/parallel89-met70759-full-alpha-proposals/
+            benchmark/parallel89-met-real-anatomy-uncalibrated-HOLD/
+          retention-days: 7
+          if-no-files-found: warn
+
+  dual-real-native-163bone-original-spine-sweep:
+    needs: original-sha-source-and-mechanical-controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P89_BROWSER: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact source donor and unchanged privacy/app
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 6d7c0ee1db179a9f37a61d64622814869618edaa HEAD
+          git diff --exit-code 6d7c0ee1db179a9f37a61d64622814869618edaa HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+      - uses: actions/download-artifact@v4
+        with:
+          name: M2-first-witness-original-spine03-spine04-SHA-HOLD
+          path: benchmark/
+      - name: Exact pinned native browser and true licensed GLB tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 three@0.180.0
+      - name: Recreate immutable actual 163-bone male and female original donor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .m2-immutable-licensed-body df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.m2-immutable-licensed-body"
+          ln -s ../node_modules .m2-immutable-licensed-body/node_modules
+          cd .m2-immutable-licensed-body
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Native ${{ matrix.engine }} true-original 35262/109064 face joint03 PLUS joint04 simultaneously
+        run: node scripts/test-m2-original-simultaneous-two-spine-native-browser.mjs .m2-immutable-licensed-body
+      - name: Protected source remains unchanged and consumer untouched
+        run: git diff --exit-code 6d7c0ee1db179a9f37a61d64622814869618edaa HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M2-first-witness-real-spine-joint-${{ matrix.engine }}-HOLD
+          path: benchmark/parallel89-met-real-anatomy-uncalibrated-HOLD/
+          retention-days: 7
+          if-no-files-found: warn

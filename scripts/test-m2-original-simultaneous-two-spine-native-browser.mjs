@@ -12,7 +12,7 @@ import {spawnSync} from 'node:child_process';
 const pins={
  runner:'5f999c1dc440539cec143f7c7de48b8fe88dd91e',
  registration:'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb',
- addon:'6aa01d19674430da0346dce90b195901058bc246'
+ addon:'429a20d25649a6f9fbbef8394e02275d4abb4216'
 };
 const sha=b=>createHash('sha1').update('blob '+Buffer.byteLength(b)+'\0')
  .update(b).digest('hex');
@@ -43,7 +43,7 @@ const routeLines=[
  "    const addonSource=await readFile('research/parallel89/real-original-simultaneous-spine03-spine04-browser-addon89.mjs','utf8');",
  "    const blobSha=t=>createHash('sha1').update('blob '+Buffer.byteLength(t)+'\\0').update(t).digest('hex');",
  "    assert.equal(blobSha(originalSource),'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb');",
- "    assert.equal(blobSha(addonSource),'6aa01d19674430da0346dce90b195901058bc246');",
+ "    assert.equal(blobSha(addonSource),'429a20d25649a6f9fbbef8394e02275d4abb4216');",
  "    await route.fulfill({status:200,contentType:'text/javascript',body:originalSource+'\\n'+addonSource});",
  "   });",
  routeAnchor
@@ -101,6 +101,23 @@ const verifyLines=[
  "    rectangle.decision.startsWith('RESEARCH_ONLY_'));",
  "   assert.equal(rectangle.consumer3DAdmitted,false);",
  "   assert.equal(rectangle.familyAlpha,'HOLD');",
+ "   const witness=trial.originalRectangleFirstWitnessExactPoseContactTriage;",
+ "   assert.equal(witness.sourcePoseSamples,5);",
+ "   assert.equal(witness.actualOriginalGridCornersExamined,4);",
+ "   assert.equal(witness.actualOriginalIndependentCellCentersExamined,1);",
+ "   assert.equal(witness.genuineOriginalIndexedFacePairsExamined,1);",
+ "   assert.equal(witness.originalFrontIndexedFace,rectangle.originalWitness.frontFace);",
+ "   assert.equal(witness.originalBodyIndexedFace,rectangle.originalWitness.bodyFace);",
+ "   assert.equal(witness.rectangleCell,rectangle.originalWitness.cell);",
+ "   assert.equal(witness.firstWitnessSampledOriginalPoseContacts.length,5);",
+ "   assert.ok(witness.firstWitnessSampledOriginalPoseContacts.every(p=>",
+ "    ['NONE','INDETERMINATE','TOUCHING','COPLANAR_OVERLAP','CROSSING']",
+ "    .includes(p.contactClass)));",
+ "   assert.ok(witness.decision.startsWith('BLOCKED_'));",
+ "   assert.equal(witness.fullOriginalRectangularSweepContactResolved,false);",
+ "   assert.equal(witness.consumer3DAdmitted,false);",
+ "   assert.equal(witness.familyAlpha,'HOLD');",
+
  "   assert.equal(trial.consumer3DAdmitted,false);",
  "   assert.equal(trial.familyAlpha,'HOLD');",
  "   await writeFile(resultDir+browserName+'-'+kind+",
@@ -121,6 +138,9 @@ const verifyLines=[
  "    decision:audit.decision,",
  "    entireTwoAngleRectangleAudited:rectangle.entireTwoAngleRectangleIncluded,",
  "    independentRectangleDecision:rectangle.decision,",
+ "    originalWitnessPoseContactTriage:witness.decision,",
+ "    originalWitnessDiscreteVerifiedContacts:witness.observedExactTriangleContactsAtSampledPoses,",
+ "    originalWitnessFiveTruePoseClasses:witness.firstWitnessSampledOriginalPoseContacts.map(p=>p.contactClass),",
  "    originalPhysicalFitCertified:false,consumer3DAdmitted:false,familyAlpha:'HOLD'",
  "   }));",
  poseAnchor
