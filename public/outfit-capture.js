@@ -341,6 +341,14 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     const p=data.piece;
     if(!p||typeof p.image!=='string'||p.image.length>8000000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.image)||!Array.isArray(p.hint?.categories)||p.hint.categories.some(x=>!categories.includes(x))||!Array.isArray(p.hint.types)||p.hint.types.length>8)return;
     if(p.recognitionPhoto&&(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.recognitionPhoto.image)||p.recognitionPhoto.image.length>8000000))return;
+    // A missing/unknown instance method must never downgrade an opt-in
+    // physical-unit review to an ordinary saveable garment suggestion.
+    if(outfitInstances840&&(p.requiresReview!==true||
+      !['native_semantic_group','native_semantic_group_unresolved_fragments',
+        'connected_semantic_component_unverified','connected_footwear_component'].includes(p.instanceMethod))){
+     finishOutfitSplit(job,'Garment review evidence is incomplete. Your original and earlier accepted drafts are kept; retry or photograph items individually.',true);
+     return;
+    }
     if(outfitUnits70&&(!p.reconciliation70||!job.ownerId||
      !/^[a-f0-9]{64}$/.test(p.reconciliation70.sourceSha256||'')||
      !/^[a-f0-9]{64}$/.test(p.reconciliation70.maskSha256||''))){
