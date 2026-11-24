@@ -339,8 +339,14 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
    }
    if(data.type==='piece'){
     const p=data.piece;
-    if(!p||typeof p.image!=='string'||p.image.length>8000000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.image)||!Array.isArray(p.hint?.categories)||p.hint.categories.some(x=>!categories.includes(x))||!Array.isArray(p.hint.types)||p.hint.types.length>8)return;
-    if(p.recognitionPhoto&&(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.recognitionPhoto.image)||p.recognitionPhoto.image.length>8000000))return;
+    if(!p||typeof p.image!=='string'||p.image.length>8000000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.image)||!Array.isArray(p.hint?.categories)||p.hint.categories.some(x=>!categories.includes(x))||!Array.isArray(p.hint.types)||p.hint.types.length>8){
+     finishOutfitSplit(job,'A clothing region could not be verified. Your original and earlier accepted drafts are kept; retry or photograph items individually.',true);
+     return;
+    }
+    if(p.recognitionPhoto&&(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.recognitionPhoto.image)||p.recognitionPhoto.image.length>8000000)){
+     finishOutfitSplit(job,'A clothing region could not be verified. Your original and earlier accepted drafts are kept; retry or photograph items individually.',true);
+     return;
+    }
     // A missing/unknown instance method must never downgrade an opt-in
     // physical-unit review to an ordinary saveable garment suggestion.
     if(outfitInstances840&&(p.requiresReview!==true||
