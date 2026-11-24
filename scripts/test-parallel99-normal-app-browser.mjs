@@ -64,8 +64,14 @@ const server=createServer(async(req,res)=>{
    bytes=Buffer.from(source.replace(authOrigin,origin));
   }
   if(audit&&pathname==='/cloud-backup.js')bytes=Buffer.from(cloudStub);
+  const localWorkerOnly=audit&&/^\/(local|outfit)-worker\.mjs$/.test(pathname);
   res.writeHead(200,{'content-type':mime[extname(file)]||'application/octet-stream',
-   'cache-control':'no-store'});res.end(bytes);
+   'cache-control':'no-store',
+   // Playwright routing does not consistently cover WebKit worker loads
+   // when the actual service worker controls the page. Keep this audit's
+   // worker assets loopback-only and exercise the normal unavailable path.
+   ...(localWorkerOnly?{'content-security-policy':"script-src 'self'; connect-src 'self' data: blob:"}:{})
+  });res.end(bytes);
  }catch{res.writeHead(404);res.end('Not found');}
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
