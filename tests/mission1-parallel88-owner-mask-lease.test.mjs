@@ -3720,6 +3720,7 @@ test('P88 malformed classifier identity envelopes remain original-photo drafts',
   if(invalid.includes(result)){
    assert.equal(saves,0);assert.equal(item.category,'Uncategorized');
    assert.equal(item.itemType,'Unknown');assert.equal(item.requiresOwnershipConfirmation,true);
+   assert.equal(item.localAnalyzed,false);assert.equal(item.scanFailed,true);
    assert.match(item.localStatus,/invalid garment information/);
   }else{
    assert.equal(saves,result.strong?1:0);
