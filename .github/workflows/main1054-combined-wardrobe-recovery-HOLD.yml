@@ -1,0 +1,109 @@
+name: MAIN1054 combined damaged wardrobe recovery HOLD
+on:
+  push:
+    branches: [research/main1054-combined-wardrobe-recovery-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+env:
+  BASELINE: c2b1ae41603d476358af39eba99008914fac8046
+  P1603: a3b143fb41721b6927f55720cff10266002b268a
+  P1607: 84c37f92a5ba783b7779da6103fa966b4bb1e287
+jobs:
+  combined:
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [regression, storage, chromium, webkit]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify isolated recovery hunks and preserved combined donor protections
+        shell: bash
+        run: |
+          set -euo pipefail
+          PARENT=816e6754cc739654c3e7ef638e8b04cf4361ab6a
+          OLD=ae7b7fbf1135bf2c4b9556fc526ace153626ce8b
+          DONOR=dfe479e700bb67ac8752c3fcb7594d65d52fbd90
+          git merge-base --is-ancestor "$PARENT" HEAD
+          git fetch --no-tags origin "$OLD" "$DONOR"
+          paths=(public/app.js public/cloud-backup-bridge.js public/cloud-backup.js public/native-default-atomic-import-m3.mjs public/native-default-verified-backup-export-m3.mjs public/outfit-board.js scripts/test-p1600-wardrobe-recovery-browser.mjs tests/mission3-cloud-restore-owner-lease.test.cjs tests/mission3-edit-backup-owner-lease.test.cjs tests/mission3-native-board-session-lock.test.cjs tests/mission3-private-backup-export-owner-lease.test.cjs)
+          git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
+            case "$path" in
+              public/app.js|public/cloud-backup-bridge.js|public/cloud-backup.js|public/native-default-atomic-import-m3.mjs|public/native-default-verified-backup-export-m3.mjs|public/outfit-board.js|scripts/test-p1600-wardrobe-recovery-browser.mjs|tests/mission3-cloud-restore-owner-lease.test.cjs|tests/mission3-edit-backup-owner-lease.test.cjs|tests/mission3-native-board-session-lock.test.cjs|tests/mission3-private-backup-export-owner-lease.test.cjs|.github/workflows/main1054-combined-wardrobe-recovery-HOLD.yml) ;;
+              *) echo "Unexpected scope $path"; exit 1 ;;
+            esac
+          done
+          git worktree add --detach "$RUNNER_TEMP/recovery-parent" "$PARENT"
+          git diff --binary "$OLD" "$DONOR" -- "${paths[@]}" > "$RUNNER_TEMP/recovery.patch"
+          git -C "$RUNNER_TEMP/recovery-parent" apply --check "$RUNNER_TEMP/recovery.patch"
+          git -C "$RUNNER_TEMP/recovery-parent" apply "$RUNNER_TEMP/recovery.patch"
+          for path in "${paths[@]}"; do
+            test "$(git hash-object "$RUNNER_TEMP/recovery-parent/$path")" = "$(git rev-parse "HEAD:$path")"
+          done
+          test "$(git rev-parse HEAD:public/auth.js)" = "$(git rev-parse "$P1607:public/auth.js")"
+          test "$(git rev-parse HEAD:scripts/test-outfit-draft-conflicts-browser.mjs)" = "$(git rev-parse "$P1603:scripts/test-outfit-draft-conflicts-browser.mjs")"
+          git worktree add --detach "$RUNNER_TEMP/integration-base" "$BASELINE"
+          (cd "$RUNNER_TEMP/integration-base" && bash scripts/check-1452-integration-source.sh "$BASELINE")
+          git log -1 --format='commit %H tree %T'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: node scripts/build.mjs
+      - if: matrix.check == 'regression'
+        run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
+      - if: matrix.check == 'storage'
+        run: npx playwright install --with-deps chromium webkit
+      - if: matrix.check == 'storage'
+        name: Baseline stale draft and corrected concurrent wardrobe on combined source
+        run: |
+          APP_SOURCE_ROOT="${RUNNER_TEMP}/integration-base" P1603_EXPECT_RED=1 CONFLICT_OUT="${RUNNER_TEMP}/p1603-red" node scripts/test-outfit-draft-conflicts-browser.mjs
+          CONFLICT_OUT="${RUNNER_TEMP}/p1603-green" node scripts/test-outfit-draft-conflicts-browser.mjs
+          NATIVE_DRAFT_BROWSER=1 node --test tests/main1054-malformed-draft-insert-veto.test.mjs
+          node scripts/test-mission3-lossless-v4-owner-acceptance-browser.mjs "${RUNNER_TEMP}/combined-backup"
+          node scripts/test-cloud-roundtrip-browser-141.mjs
+          mkdir "$RUNNER_TEMP/p1600-baseline"
+          git archive 816e6754cc739654c3e7ef638e8b04cf4361ab6a public | tar -x -C "$RUNNER_TEMP/p1600-baseline"
+          if P1600_PUBLIC_ROOT="$RUNNER_TEMP/p1600-baseline/public" node scripts/test-p1600-wardrobe-recovery-browser.mjs > "$RUNNER_TEMP/p1600-red.log" 2>&1; then
+            cat "$RUNNER_TEMP/p1600-red.log"
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/p1600-red.log"
+          for engine in chromium webkit; do
+            grep -F "$engine late corruption {\"exported\":true,\"askedToImport\":true,\"overwritten\":true}" "$RUNNER_TEMP/p1600-red.log"
+            grep -F "$engine recovery projection {\"visible\":false}" "$RUNNER_TEMP/p1600-red.log"
+          done
+          node scripts/test-p1600-wardrobe-recovery-browser.mjs
+          node scripts/test-mission3-default-export-owner-snapshot-browser.mjs "$RUNNER_TEMP/p1600-export"
+          node scripts/test-mission3-default-atomic-import-browser.mjs "$RUNNER_TEMP/p1600-import"
+          node scripts/test-mission3-cloud-restore-owner-browser.mjs "$RUNNER_TEMP/p1600-cloud"
+      - if: matrix.check == 'chromium' || matrix.check == 'webkit'
+        run: npx playwright install --with-deps "${{ matrix.check }}"
+      - if: matrix.check == 'chromium' || matrix.check == 'webkit'
+        name: Genuine normal journey and photo containment on combined source
+        env:
+          P99_ENGINE: ${{ matrix.check }}
+          M58_ENGINE: ${{ matrix.check }}
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            P1607_AUDIT=1 P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+            if [ "$P99_ENGINE" = webkit ]; then
+              P1607_AUDIT=1 P1607_CACHE_ONLY=1 P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+            fi
+          done
+          node scripts/test-parallel94-native-p88-browser.mjs
+          node scripts/check-1452-journey-receipts.mjs "$P99_ENGINE"
+  acceptance:
+    if: always()
+    needs: [combined]
+    runs-on: ubuntu-24.04
+    env:
+      RESULT: ${{ needs.combined.result }}
+    steps:
+      - run: test "$RESULT" = success

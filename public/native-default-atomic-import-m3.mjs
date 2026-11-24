@@ -83,7 +83,7 @@ function verifySlotsUnchanged(raw,cleaned){
  }
 }
 export async function prepareDefaultAtomicM3({
- data,ownerDB,ownerId,assertLease,normalizeClothing,validLook,cleanOutfitBoard
+ data,ownerDB,ownerId,assertLease,normalizeClothing,validLook,cleanOutfitBoard,assertCompleteWardrobe
 }={}){
  if(!ownerDB||ownerDB.name!=='closet-current-user-'+ownerId||
   typeof assertLease!=='function')throw Error('LEGACY_ATOMIC_SIGNED_OWNER_REQUIRED');
@@ -129,6 +129,7 @@ export async function prepareDefaultAtomicM3({
  assertLease();
  const rows=await transactSnapshot(ownerDB,assertLease);
  assertLease();
+ assertCompleteWardrobe?.(rows.items,rows.state,ownerId);
  for(const row of rows.items)if(row.ownerId!==undefined&&row.ownerId!==ownerId)
   throw Error('LEGACY_ATOMIC_EXISTING_FOREIGN_OWNER');
  const allItems=new Map(rows.items.map(row=>[row.id,row]));

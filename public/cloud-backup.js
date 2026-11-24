@@ -45,7 +45,7 @@
    row&&(row.batch?.length||row.looks?.length||row.saved?.length||
     Object.keys(row.current?.slots||{}).length));
  }
- async function snapshot(){let items,state;await transact(['items','state'],'readonly',tx=>{const a=tx.objectStore('items').getAll(),b=tx.objectStore('state').getAll();a.onsuccess=()=>items=a.result;b.onsuccess=()=>state=b.result;});return {local:{schemaVersion:1,items,state:Object.fromEntries(state.filter(x=>E.stateIds.includes(x.id)).map(x=>[x.id,x]))},m:state.find(x=>x.id==='cloud-sync')||markerDefault()};}
+ async function snapshot(){let items,state;await transact(['items','state'],'readonly',tx=>{const a=tx.objectStore('items').getAll(),b=tx.objectStore('state').getAll();a.onsuccess=()=>items=a.result;b.onsuccess=()=>state=b.result;});callbacks.assertCompleteWardrobe?.(items,state,user);return {local:{schemaVersion:1,items,state:Object.fromEntries(state.filter(x=>E.stateIds.includes(x.id)).map(x=>[x.id,x]))},m:state.find(x=>x.id==='cloud-sync')||markerDefault()};}
  async function api(path,{body,method='GET',contentType='application/json'}={},again=false,assertActive=()=>{}){
   assertActive();
   if(stopForReview145())throw Error('P145 owner-reviewed mode blocks legacy cloud transport');
@@ -332,6 +332,7 @@
   assertActive();
   if(callbacks.canRestore&&!callbacks.canRestore())return false;
   const local=await decode(document,assertActive);assertActive();
+  callbacks.assertCompleteWardrobe?.(local.items,Object.values(local.state),user);
   const restoreResearch=new URLSearchParams(location.search).get('restoreAtomic01')==='research';
   const guard=restoreResearch?window.restoreAtomic01Bridge:null;
   if(restoreResearch&&(!guard||
@@ -340,7 +341,12 @@
   let applied=false,restoreError=null;
   try{
    await callbacks.capture(()=>transact(['items','state'],'readwrite',tx=>{
-    const state=tx.objectStore('state'),r=state.get('cloud-sync');
+    const state=tx.objectStore('state');
+    // Requests in this transaction execute in order. Validate the raw
+    // destination after both reads and before clearing a single record.
+    const inspect=callbacks.assertCompleteWardrobe;
+    const itemRows=inspect?tx.objectStore('items').getAll():null,stateRows=inspect?state.getAll():null;
+    const r=state.get('cloud-sync');
     r.onsuccess=()=>{
      try{
       assertActive();
@@ -353,6 +359,7 @@
       if(m.localRevision!==expectedRevision||m.dirty)return;
       // All item and outfit changes share a single transaction. Explicit
       // abort on synchronous quota errors prevents partial local restore.
+      inspect?.(itemRows.result,stateRows.result,user);
       const store=tx.objectStore('items');
       store.clear();for(const item of local.items)store.put(item);
       for(const id of E.stateIds)state.delete(id);
@@ -608,6 +615,7 @@
    // A three-way merge/Keep both can reintroduce untrusted remote references.
    // Validate the FINAL document before any JPEG upload or owner cloud RPC.
    assertSourceReceipts(document);
+   callbacks.assertCompleteWardrobe?.(document.items,Object.values(document.state),user);
    await assertCloudPhotoReferences(document,assertActive);
    if(!await isCurrentDirtySnapshot(m,assertActive)){staleSnapshotPending();return;}
    await upload(encoded.photos,assertActive);assertActive();
@@ -632,7 +640,9 @@
     // Cloud quota/file limit failures do not recover from connectivity.
     // Keep local originals untouched, stop background retries, and require
     // an explicit owner-initiated Sync after the capacity issue is fixed.
-    if(remoteRevisionAtStart&&isRemotePhotoError(e.code)){
+    if(e.code==='CLOSET_INCOMPLETE_WARDROBE'){
+     pausedIntegrity=true;clearTimeout(timer);timer=null;status(e.message);
+    }else if(remoteRevisionAtStart&&isRemotePhotoError(e.code)){
      pausedRemotePhoto={reason:e.code,revision:remoteRevisionAtStart};clearTimeout(timer);timer=null;
      let outcome='error';
      try{outcome=await callbacks.capture(()=>writeRemotePhotoPause(e.code,remoteRevisionAtStart,photoRevisionAtStart,assertActive));}
