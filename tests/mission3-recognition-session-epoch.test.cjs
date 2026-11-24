@@ -11,7 +11,7 @@ const baseline=process.env.EXPECT_BASELINE==='1';
 function section(a,b){const i=app.indexOf(a),j=app.indexOf(b,i);assert.ok(i>=0&&j>i,'application section '+a);return app.slice(i,j);}
 const recognizeSource=section('async function recognizeItem(item){','async function recognizeBatch(){');
 const saveSource=section('async function saveIndexed(item,index04ApprovedOwner=null,expectedDraftForIndex=null){','async function recognizeItem(item){');
-const setupSource=section('async function enableLocal(){','function segmentationAllows(');
+const setupSource=section('async function enableLocal(','function segmentationAllows(');
 const queueSource=section('async function drainAutomatic(){','function stopCamera(){');
 const lockSource=section("window.addEventListener('closet:session-locked',()=>{",'function message(t){');
 function deferred(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});promise.catch(()=>{});return {promise,resolve,reject};}
