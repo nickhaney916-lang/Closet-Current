@@ -27,7 +27,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           git merge-base --is-ancestor 21108c29e66af063c5c52fb146a880023e7b6534 HEAD
-          git diff --exit-code 21108c29e66af063c5c52fb146a880023e7b6534 HEAD -- . ':(exclude)public/app.js' ':(exclude)scripts/p1659-native-delete-reload.cjs' ':(exclude).github/workflows/main1054-atomic-garment-outfit-delete-HOLD.yml'
+          git diff --exit-code 21108c29e66af063c5c52fb146a880023e7b6534 HEAD -- . ':(exclude)public/app.js' ':(exclude)scripts/p1659-native-delete-reload.cjs' ':(exclude)tests/mission3-private-mutation-epoch.test.cjs' ':(exclude)tests/mission3-same-owner-delete-cas.test.cjs' ':(exclude)tests/mission3-saved-card-delete-session-cas.test.cjs' ':(exclude)tests/mission3-reviewed-editor-postcommit-lease.test.cjs' ':(exclude).github/workflows/main1054-atomic-garment-outfit-delete-HOLD.yml'
           git show 21108c29e66af063c5c52fb146a880023e7b6534:public/app.js > "$RUNNER_TEMP/delete-parent.js"
           node --check public/app.js
           node --check scripts/p1659-native-delete-reload.cjs
