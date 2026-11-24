@@ -2668,10 +2668,24 @@ async function recognizeItem(item){
  // asynchronous image quality/model checks.
  const expectedDraftForRecognition=structuredClone(item);
  const sameRecognitionLease=()=>epoch===captureOperationEpoch&&batch.includes(item);
+ // The worker owns neither a newer owner decision nor a replacement crop.
+ // Compare after asynchronous boundaries; refresh only after our own color fill.
+ const reviewRevision=()=>JSON.stringify(['id','ownerId','image','originalPhoto','recognitionPhoto',
+  'sourceSHA256','outfitSourceId','cropBounds','segmentHint','category','itemType','color',
+  'colorSource','colorMethod','name','sleeveLength','pattern','fit','notes','seasons',
+  'ownerConfirmed','ownerReviewed','confirmedDetails','ownerSourceReview88',
+  'requiresOwnershipConfirmation'].map(key=>item[key]));
+ let revision=reviewRevision(),superseded=false;
+ const reviewInterrupted=()=>{
+  if(!item.userAdjusted&&reviewRevision()===revision)return false;
+  superseded=true;
+  return true;
+ };
  const scanStarted=Date.now();let savingIndexed=false,index04ApprovedOwner=null;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
  try{
+  if(reviewInterrupted())return false;
   const quality=await checkPhoto(item.recognitionPhoto?.image||item.image);
-  if(!sameRecognitionLease())return;
+  if(!sameRecognitionLease()||reviewInterrupted())return false;
   if(quality.blank){
    // A visual-quality heuristic is not permission to delete an original.
    // Keep the exact owner-private draft JPEG until the owner explicitly
@@ -2682,6 +2696,7 @@ async function recognizeItem(item){
    return true;
   }
   if(!item.userAdjusted)Object.assign(item,ClothingDetails.fillColor(item,quality.colorEstimate));item.visualSignature=quality.signature;item.visualAspect=quality.aspect;
+  revision=reviewRevision();
   const matches=[...items,...batch].filter(x=>x.id!==item.id);
   if(matches.some(x=>x.image===item.image)){
    // An exact source match can be called a possible duplicate, but it is
@@ -2696,9 +2711,9 @@ async function recognizeItem(item){
   if(recognitionUnavailable)throw Error('Recognition is unavailable. Try again or use Adjust.');
   item.localStatus='Identifying this garment…';render();
   let result;
-  try{if(!localReady)await enableLocal();if(!sameRecognitionLease())return;result=await localRequest('classify',item.recognitionPhoto?.image||item.image,item.id,item.segmentHint);}
-  catch(error){if(sameRecognitionLease())recognitionUnavailable=true;throw error;}
-  if(!sameRecognitionLease())return;
+  try{if(!localReady)await enableLocal();if(!sameRecognitionLease()||reviewInterrupted())return false;result=await localRequest('classify',item.recognitionPhoto?.image||item.image,item.id,item.segmentHint);}
+  catch(error){if(!sameRecognitionLease()||reviewInterrupted())return false;recognitionUnavailable=true;throw error;}
+  if(!sameRecognitionLease()||reviewInterrupted())return false;
   if(typeof ClothingMemory!=='undefined'&&ClothingMemory.valid(result.recognitionMemory))item.recognitionMemory=result.recognitionMemory;
   item.localAnalyzed=true;item.localChoices=[];
   // Diagnostic evidence contains category/type scores only, never wardrobe images.
@@ -2718,7 +2733,7 @@ async function recognizeItem(item){
      ownerId:owner,currentOwner:()=>window.closetAuth?.user?.id||null,
      record:item,recognition:result,savedItems:saved
     });
-    if(!sameRecognitionLease())return;
+    if(!sameRecognitionLease()||reviewInterrupted())return false;
     if(!decision.autoSaveSafe){
      item.recognitionReviewReasons=[...decision.reviewReasons];
      const suggested=decision.suggestion.category!=='Uncategorized'
@@ -2728,6 +2743,7 @@ async function recognizeItem(item){
     }
     index04ApprovedOwner=owner;
    }catch{
+    if(!sameRecognitionLease()||reviewInterrupted())return false;
     item.localStatus='Automatic indexing needs source or account verification. Confirm this garment in Adjust; your photo is kept.';
     return true;
    }
@@ -2772,7 +2788,7 @@ async function recognizeItem(item){
   if(recognitionState.phase==='save-failed')recognitionState.phase='ready';
   return true;
  }catch(error){
-  if(epoch!==captureOperationEpoch)return false;
+  if(!sameRecognitionLease()||(!savingIndexed&&reviewInterrupted()))return false;
   item.localAnalyzed=false;item.scanFailed=true;item.saveFailed=savingIndexed;if(!item.visualSignature&&typeof recordDeviceEvent==='function')recordDeviceEvent('photo_check_failed',{stage:'photo_check',durationMs:Date.now()-scanStarted});if(recognitionUnavailable)recognitionState.phase='failed';
   if(savingIndexed){
    recognitionState.phase='save-failed';
@@ -2794,7 +2810,7 @@ async function recognizeItem(item){
    // started. Await its exact owner-private IndexedDB transaction, so the
    // scanner never finishes with a misleading “ready” label after quota,
    // account revocation or another tab's user-confirmed correction.
-   if(!savingIndexed&&batch.includes(item)){
+   if(!savingIndexed&&!superseded&&batch.includes(item)){
     const outcome=structuredClone(item);
     try{
      const committed=await persistDraft({
@@ -2814,6 +2830,8 @@ async function recognizeItem(item){
      }
     }
    }
+   if(superseded&&batch.includes(item)&&['Checking photo quality…','Identifying this garment…'].includes(item.localStatus))
+    item.localStatus='Review changed during recognition. Confirm your current details in Adjust.';
    if(epoch===captureOperationEpoch)render();
    // A failed status CAS is not a successful recognition review, even if
    // classification ran. A caller may only ACK the scan after disk commit.
