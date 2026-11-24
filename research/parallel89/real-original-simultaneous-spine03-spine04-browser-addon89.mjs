@@ -14,6 +14,8 @@ import {institutionalPartAAnchor}
  from './met70759-physical-garment-dimension-anchor89.mjs';
 import {evaluateFivePointPlanarReference}
  from './physical-five-point-photo-plane89.mjs';
+import {assessMetricGarmentToWearerFit,auditSampledOriginalFrontProportions,trialBoundedOriginalFrontCorrection,trialCoordinatedOriginalFrontCorrection,trialProgressiveOriginalFrontStabilization,trialObstacleGuardedOriginalFrontStabilization}
+ from './measured-wearer-to-licensed-rig-garment-fit89.mjs';
 
 window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=()=>{
  const x=sourceSkinResearch;
@@ -115,6 +117,73 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
   }
   for(const [a,b] of [[-3,6],[3,-6]])
    offDiagonal.push({anglesDeg:[a,b],...generate(a,b)});
+  // Exact original rest grid center and all sampled actual skinned fronts.
+  const sampledProportions=auditSampledOriginalFrontProportions({
+   rest:grid[4].front,poses:[...grid,...path,...offDiagonal].map(p=>p.front),
+   indices:frontIndices,expectedFaces:35262,expectedVertices:x.sourceFrontN
+  });
+  invariant(sampledProportions.decision==='RESEARCH_ONLY_SAMPLED_ORIGINAL_FRONT_PROPORTION_AUDIT'&&
+   sampledProportions.sampledPoseCount===16&&sampledProportions.consumer3DAdmitted===false,
+   'source-front-proportion-audit-incomplete');
+  const poseBuffers=[...grid,...path,...offDiagonal].map(p=>p.front);
+  const worstPoseIndex=sampledProportions.sampledPoseDistortion.reduce((best,p,i,all)=>
+   Math.abs(p.worstOriginalEdge.ratio-1)>Math.abs(all[best].worstOriginalEdge.ratio-1)?i:best,0);
+  const correction=trialBoundedOriginalFrontCorrection({
+   rest:grid[4].front,pose:poseBuffers[worstPoseIndex],indices:frontIndices,
+   expectedFaces:35262,expectedVertices:x.sourceFrontN
+  });
+  // Do not transport candidate geometry or apply it to the live mesh.
+  const {correctedPose:discardedCopy,...correctionReceipt}=correction;
+  invariant(correctionReceipt.correctionAppliedToLiveMesh===false&&
+   correctionReceipt.consumer3DAdmitted===false&&
+   correctionReceipt.materialOrCollisionCertified===false,
+   'research-edge-correction-must-never-be-applied-or-certified');
+  const coordinated=trialCoordinatedOriginalFrontCorrection({
+   rest:grid[4].front,pose:poseBuffers[worstPoseIndex],indices:frontIndices,
+   expectedFaces:35262,expectedVertices:x.sourceFrontN
+  });
+  const {correctedPose:discardedCoordinatedCopy,...coordinatedReceipt}=coordinated;
+  invariant(coordinatedReceipt.correctionAppliedToLiveMesh===false&&
+   coordinatedReceipt.consumer3DAdmitted===false&&
+   coordinatedReceipt.materialOrCollisionCertified===false,
+   'coordinated-correction-must-never-be-applied-or-certified');
+  const progressive=trialProgressiveOriginalFrontStabilization({
+   rest:grid[4].front,pose:poseBuffers[worstPoseIndex],indices:frontIndices,
+   expectedFaces:35262,expectedVertices:x.sourceFrontN
+  });
+  const {correctedPose:discardedProgressiveCopy,...progressiveReceipt}=progressive;
+  invariant(progressiveReceipt.correctionAppliedToLiveMesh===false&&
+   progressiveReceipt.consumer3DAdmitted===false&&
+   progressiveReceipt.materialOrCollisionCertified===false,
+   'progressive-stabilization-must-never-be-applied-or-certified');
+  const fixedBodyPose=[...grid,...path,...offDiagonal][worstPoseIndex].body;
+  const guarded=trialObstacleGuardedOriginalFrontStabilization({
+   rest:grid[4].front,pose:poseBuffers[worstPoseIndex],indices:frontIndices,
+   expectedFaces:35262,expectedVertices:x.sourceFrontN,
+   obstacles:[{kind:'body',vertices:fixedBodyPose,indices:bodyIndices}]
+  });
+  const {correctedPose:discardedGuardedCopy,...guardedReceipt}=guarded;
+  invariant(guardedReceipt.fixedObstacleFacesIndexed===109064&&
+   guardedReceipt.suppliedLayerCount===0&&
+   guardedReceipt.correctionAppliedToLiveMesh===false&&
+   guardedReceipt.consumer3DAdmitted===false&&
+   guardedReceipt.fullLayeredOutfitCollisionCertified===false,
+   'fixed-body-correction-guard-must-not-certify-unsupplied-layers');
+  // A distinct research segment: linearly sweep the body from this actual
+  // original sampled pose to the neighboring measured grid pose. This is
+  // not the nonlinear joint trajectory; retain the separate angular audit.
+  const nextGridIndex=worstPoseIndex===0?1:0;
+  const movingBodyGuard=trialObstacleGuardedOriginalFrontStabilization({
+   rest:grid[4].front,pose:poseBuffers[worstPoseIndex],indices:frontIndices,
+   expectedFaces:35262,expectedVertices:x.sourceFrontN,
+   obstacles:[{kind:'body',vertices:fixedBodyPose,endVertices:grid[nextGridIndex].body,indices:bodyIndices}]
+  });
+  const {correctedPose:discardedMovingBodyCopy,...movingBodyReceipt}=movingBodyGuard;
+  invariant(movingBodyReceipt.totalObstacleFacesIndexed===109064&&
+   movingBodyReceipt.nonlinearAnimatedJointPathCertified===false&&
+   movingBodyReceipt.correctionAppliedToLiveMesh===false&&
+   movingBodyReceipt.consumer3DAdmitted===false,
+   'linear-moving-body-trial-must-not-certify-joint-motion');
   const evaluator=evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase({
    frontGridPoses:grid.map(x=>x.front),
    bodyGridPoses:grid.map(x=>x.body),
@@ -222,6 +291,31 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    museumFivePointPhotoPlane.consumer3DAdmitted===false&&
    museumFivePointPhotoPlane.familyAlpha==='HOLD',
    'unmeasured-museum-source-photo-must-never-acquire-fictitious-projective-calibration');
+  // Real source-matched original photo and licensed 163-bone anatomy have
+  // never been registered to an ACTUALLY measured wearer's anthropometry.
+  // Do not derive wearer dimensions from 2/height rig normalization, from
+  // generic body sizes, or from museum part-A catalog garment measurements.
+  const originalMeasuredWearerFit=assessMetricGarmentToWearerFit({
+   source:{imageId:payload.imageId,
+    originalPhotoSHA256:payload.originalJPEGByteSHA256},
+   independentSourceWitness:{imageId:2551406,
+    originalPhotoSHA256:payload.originalJPEGByteSHA256,
+    originalBytesRehashedByNativeCaller:true},
+   licensedRig:{kind:x.kind,sha256:model.sha256,
+    actualOriginalBoneCount:x.body.skeleton.bones.length},
+   independentRigWitness:{kind:x.kind,sha256:model.sha256,
+    actualOriginalBoneCount:x.body.skeleton.bones.length,
+    originalSourceRigBytesVerifiedByNativeCaller:true,
+    actualOriginalRigSourcePositionsVerified:true}
+  });
+  invariant(originalMeasuredWearerFit.decision===
+    'BLOCKED_NO_REAL_GARMENT_OR_WEARER_MEASUREMENTS'&&
+   originalMeasuredWearerFit.licensedOriginalRigNotPhysicalWearerMeasurement===true&&
+   originalMeasuredWearerFit.actualOwnerMeasuredPhysicalFitCertified===false&&
+   originalMeasuredWearerFit.garmentToLicensedRigMeshFitted===false&&
+   originalMeasuredWearerFit.consumer3DAdmitted===false&&
+   originalMeasuredWearerFit.familyAlpha==='HOLD',
+   'authentic-163bone-original-source-missing-real-wearer-metric-data-not-blocked');
   invariant(rectangle.consumer3DAdmitted===false&&
    rectangle.familyAlpha==='HOLD'&&
    (rectangle.decision.startsWith('BLOCKED_')||
@@ -254,6 +348,13 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    originalCorrectedVsHistoricalZeroSeedDistanceRigUnits:
     realOriginalVsIncorrectZeroSeedDistance,
    other161BoneLocalPoseTransformsImmutable:true,
+   sampledOriginalFrontProportionAudit:sampledProportions,
+   sampledWorstPoseBoundedCorrection:{worstPoseIndex,...correctionReceipt},
+   sampledWorstPoseCoordinatedCorrection:{worstPoseIndex,...coordinatedReceipt},
+   sampledWorstPoseProgressiveStabilization:{worstPoseIndex,...progressiveReceipt},
+   sampledWorstPoseFixedBodyCorrectionGuard:{worstPoseIndex,...guardedReceipt},
+   sampledWorstPoseLinearBodySweepGuard:{worstPoseIndex,nextGridIndex,...movingBodyReceipt},
+   originalGarmentToBodyMeasuredWearerFitGate:originalMeasuredWearerFit,
    unmeasuredOriginalMuseumFivePointPhotoPlane:museumFivePointPhotoPlane,
    museumOriginalPartARealPhysicalDimensionEvidence:museumRealPhysicalPartA,
    originalRectangleFirstWitnessExactPoseContactTriage:originalRectangleWitnessTriage,
