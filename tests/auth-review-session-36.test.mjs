@@ -32,10 +32,9 @@ test('AUTH36 app checks owner epoch around asynchronous preflight and closes own
  assert.match(app,/connection\.close\(\);return;/);
  // Both owner-private stores must finish on the exact initiating DB before
  // either roster is published; a revoked account cannot render old clothing.
- assert.match(app,/const loadedItems=await readAllFrom\(connection\)/);
- assert.match(app,/const loadedDraft=await readDraftFrom\(connection\)/);
- assert.match(app,/if\(!current\(\)\)\{connection\.close\(\);return;\}/);
- assert.match(app,/db=connection;items=nextItems;batch=nextBatch/);
+ assert.match(app,/ownerDB\.transaction\(\['items','state'\],'readonly'\)/);
+ assert.match(app,/const \{loadedItems,loadedDraft,draftContainerDamaged\}=await readStartupWardrobeSnapshot\(connection\);\s*if\(!current\(\)\)\{connection\.close\(\);return;\}/);
+ assert.match(app,/if\(roster\.invalid\|\|draftContainerDamaged\)\{[\s\S]*?connection\.close\(\);connection=null;[\s\S]*?render\(\);return;\s*\}\s*db=connection;items=roster\.items;batch=roster\.batch/);
 });
 
 test('AUTH36 removes cached original photos and blocks both old workers and crop review',()=>{
