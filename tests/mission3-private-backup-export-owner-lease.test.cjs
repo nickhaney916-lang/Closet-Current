@@ -25,6 +25,7 @@ function fixture({native=false,restore=false,ready=false,bridgeReady=false,lossl
  const bridge={async exportJSON(){events.push('bridge-read');await backupReady;
   return {data:{format:'closet-current-owner-backup',version:4,items,marker:'PRIVATE-A-V4'}}}};
  const ctx={
+  assertCompleteWardrobe(){},
   window:{closetAuth:auth,restoreAtomic01Bridge:bridge},
   db:{name:'closet-current-user-owner-a'},captureOperationEpoch:3,
   nativeLossless04Active:native,nativeLossless04:{status(){return {active:true}},

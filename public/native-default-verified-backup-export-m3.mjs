@@ -79,7 +79,7 @@ async function durableRead(ownerDB,assertLease){
  });
 }
 export async function exportDurableOwnerBackupM3({
- ownerDB,ownerId,assertLease,assertIdle=()=>{}
+ ownerDB,ownerId,assertLease,assertIdle=()=>{},assertCompleteWardrobe
 }={}){
  if(!ownerDB||typeof ownerId!=='string'||!ownerId||
     ownerDB.name!=='closet-current-user-'+ownerId||
@@ -89,6 +89,7 @@ export async function exportDurableOwnerBackupM3({
  check();
  const snap=await durableRead(ownerDB,check);
  check();
+ assertCompleteWardrobe?.(snap.items,snap.state,ownerId);
  if(!Array.isArray(snap.items)||!Array.isArray(snap.state))fail('INVALID_STATE');
  const state=new Map();
  for(const row of snap.state){

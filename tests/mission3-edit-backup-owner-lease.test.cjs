@@ -29,6 +29,7 @@ function backupHarness({mode='',approve=true,holdFile=false,withLooks=false}={})
  let confirmed=0,bridgeCalls=0;
  const result={importInput,messages,writes,looks,boards,readGate};
  const ctx={
+  assertCompleteWardrobe(){},
   window:{closetAuth:auth,restoreAtomic01Bridge:{importBackup:async(data,{confirm})=>{
    bridgeCalls++;const accepted=confirm({incoming:{itemCount:1,savedCount:0},existing:0,savedExisting:0});
    return accepted?{cancelled:false}:{cancelled:true};
@@ -160,6 +161,7 @@ function savedHarness({holdGet=false,holdCommit=false}={}){
  const a=ownerDB('A',writesA),b=ownerDB('B',writesB);
  const auth={user:{id:'A'},assertCurrent(){}};
  const ctx={
+  assertCompleteWardrobe(){},
   window:{closetAuth:auth},db:a,captureOperationEpoch:0,
   queued:fn=>Promise.resolve().then(fn),normalizeClothing:x=>x,
   nativeIndex07Refresh:async()=>{refresh++;},JSON
