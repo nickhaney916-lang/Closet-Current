@@ -14,7 +14,7 @@ import {institutionalPartAAnchor}
  from './met70759-physical-garment-dimension-anchor89.mjs';
 import {evaluateFivePointPlanarReference}
  from './physical-five-point-photo-plane89.mjs';
-import {assessMetricGarmentToWearerFit,auditSampledOriginalFrontProportions,trialBoundedOriginalFrontCorrection,trialCoordinatedOriginalFrontCorrection,trialProgressiveOriginalFrontStabilization}
+import {assessMetricGarmentToWearerFit,auditSampledOriginalFrontProportions,trialBoundedOriginalFrontCorrection,trialCoordinatedOriginalFrontCorrection,trialProgressiveOriginalFrontStabilization,trialObstacleGuardedOriginalFrontStabilization}
  from './measured-wearer-to-licensed-rig-garment-fit89.mjs';
 
 window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=()=>{
@@ -156,6 +156,19 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    progressiveReceipt.consumer3DAdmitted===false&&
    progressiveReceipt.materialOrCollisionCertified===false,
    'progressive-stabilization-must-never-be-applied-or-certified');
+  const fixedBodyPose=[...grid,...path,...offDiagonal][worstPoseIndex].body;
+  const guarded=trialObstacleGuardedOriginalFrontStabilization({
+   rest:grid[4].front,pose:poseBuffers[worstPoseIndex],indices:frontIndices,
+   expectedFaces:35262,expectedVertices:x.sourceFrontN,
+   obstacles:[{kind:'body',vertices:fixedBodyPose,indices:bodyIndices}]
+  });
+  const {correctedPose:discardedGuardedCopy,...guardedReceipt}=guarded;
+  invariant(guardedReceipt.fixedObstacleFacesIndexed===109064&&
+   guardedReceipt.suppliedLayerCount===0&&
+   guardedReceipt.correctionAppliedToLiveMesh===false&&
+   guardedReceipt.consumer3DAdmitted===false&&
+   guardedReceipt.fullLayeredOutfitCollisionCertified===false,
+   'fixed-body-correction-guard-must-not-certify-unsupplied-layers');
   const evaluator=evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase({
    frontGridPoses:grid.map(x=>x.front),
    bodyGridPoses:grid.map(x=>x.body),
@@ -324,6 +337,7 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    sampledWorstPoseBoundedCorrection:{worstPoseIndex,...correctionReceipt},
    sampledWorstPoseCoordinatedCorrection:{worstPoseIndex,...coordinatedReceipt},
    sampledWorstPoseProgressiveStabilization:{worstPoseIndex,...progressiveReceipt},
+   sampledWorstPoseFixedBodyCorrectionGuard:{worstPoseIndex,...guardedReceipt},
    originalGarmentToBodyMeasuredWearerFitGate:originalMeasuredWearerFit,
    unmeasuredOriginalMuseumFivePointPhotoPlane:museumFivePointPhotoPlane,
    museumOriginalPartARealPhysicalDimensionEvidence:museumRealPhysicalPartA,
