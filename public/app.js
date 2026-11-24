@@ -2332,16 +2332,23 @@ const closetReady=(async()=>{
   // publish either owner's photos until the entire local roster loads.
   const loadedItems=await readAllFrom(connection);
   if(!current()){connection.close();return;}
-  const loadedDraft=await readDraftFrom(connection);
+  let loadedDraft,draftContainerDamaged=false;
+  try{loadedDraft=await readDraftFrom(connection);}
+  catch(error){
+   // The draft container may be corrupt even when every saved garment is
+   // intact. Show only the valid saved projection; never reopen writes.
+   if(error?.message!=='CLOSET_CAPTURE_INVALID_PERSISTED_DRAFT')throw error;
+   loadedDraft=[];draftContainerDamaged=true;
+  }
   if(!current()){connection.close();return;}
   auth.assertCurrent?.();
   if(db&&db!==connection){connection.close();return;}
   const roster=partitionStartupWardrobe(loadedItems,loadedDraft,owner);
-  if(roster.invalid){
+  if(roster.invalid||draftContainerDamaged){
    // Never authorize writes, background recognition or backup from a
    // filtered roster. Keep original durable records exactly as read.
    connection.close();connection=null;
-   startupWardrobeRecoveryCount=roster.invalid;
+   startupWardrobeRecoveryCount=roster.invalid+(draftContainerDamaged?1:0);
    items=roster.items;batch=roster.batch;
    render();return;
   }
