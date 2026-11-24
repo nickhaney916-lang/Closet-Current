@@ -4,6 +4,7 @@ on:
     branches: [research/p1644-regression-closure-HOLD]
     paths:
       - public/app.js
+      - tests/mission3-recognition-session-epoch.test.cjs
       - tests/p1650-background-recognition-ui.test.cjs
       - scripts/p1650-mobile-performance.cjs
       - .github/workflows/p1650-mobile-performance-HOLD.yml
@@ -32,7 +33,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           git merge-base --is-ancestor 949adddc4c05538586cca5107abf03fd5246283c HEAD
-          git diff --exit-code 949adddc4c05538586cca5107abf03fd5246283c HEAD -- . ':(exclude)public/app.js' ':(exclude)tests/p1650-background-recognition-ui.test.cjs' ':(exclude)scripts/p1650-mobile-performance.cjs' ':(exclude).github/workflows/p1650-mobile-performance-HOLD.yml'
+          git diff --exit-code 949adddc4c05538586cca5107abf03fd5246283c HEAD -- . ':(exclude)public/app.js' ':(exclude)tests/p1650-background-recognition-ui.test.cjs' ':(exclude)tests/mission3-recognition-session-epoch.test.cjs' ':(exclude)scripts/p1650-mobile-performance.cjs' ':(exclude).github/workflows/p1650-mobile-performance-HOLD.yml'
           test "$(git rev-parse HEAD:public/app.js)" = "9db93d28a290934047c6d4422bb0a477580e5622"
           git show ea8ff9d4121168e9aea0d6def588a1340d7283dc:public/app.js > "$RUNNER_TEMP/p1650-parent-app.js"
           node --check scripts/p1650-mobile-performance.cjs
@@ -43,7 +44,7 @@ jobs:
       - if: matrix.check == 'regression'
         run: |
           set -euo pipefail
-          node --test tests/p1650-background-recognition-ui.test.cjs
+          node --test tests/p1650-background-recognition-ui.test.cjs tests/mission3-recognition-session-epoch.test.cjs
           node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
       - if: matrix.check == 'storage'
         run: npx playwright install --with-deps chromium webkit
