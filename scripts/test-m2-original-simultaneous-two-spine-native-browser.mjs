@@ -12,7 +12,7 @@ import {spawnSync} from 'node:child_process';
 const pins={
  runner:'5f999c1dc440539cec143f7c7de48b8fe88dd91e',
  registration:'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb',
- addon:'04e78d43d1a1f636431bc690060f4e7b5211977b'
+ addon:'49d5fcdec63be3544af8b76ac090d12a9e6a71af'
 };
 const sha=b=>createHash('sha1').update('blob '+Buffer.byteLength(b)+'\0')
  .update(b).digest('hex');
@@ -43,7 +43,7 @@ const routeLines=[
  "    const addonSource=await readFile('research/parallel89/real-original-simultaneous-spine03-spine04-browser-addon89.mjs','utf8');",
  "    const blobSha=t=>createHash('sha1').update('blob '+Buffer.byteLength(t)+'\\0').update(t).digest('hex');",
  "    assert.equal(blobSha(originalSource),'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb');",
- "    assert.equal(blobSha(addonSource),'04e78d43d1a1f636431bc690060f4e7b5211977b');",
+ "    assert.equal(blobSha(addonSource),'49d5fcdec63be3544af8b76ac090d12a9e6a71af');",
  "    await route.fulfill({status:200,contentType:'text/javascript',body:originalSource+'\\n'+addonSource});",
  "   });",
  routeAnchor
@@ -105,6 +105,17 @@ const verifyLines=[
  "    assert.equal(accepted.newBadEdges,0);assert.equal(accepted.newBadFaces,0);",
  "    assert.equal(accepted.flippedOrOrthogonalFaces,0);",
  "   }else assert.ok(['RESEARCH_ONLY_NO_COORDINATED_CORRECTION_ATTEMPT','RESEARCH_ONLY_COORDINATED_CORRECTION_REJECTED'].includes(coordinated.decision));",
+ "   const progressive=trial.sampledWorstPoseProgressiveStabilization;",
+ "   assert.equal(progressive.worstPoseIndex,correction.worstPoseIndex);",
+ "   assert.equal(progressive.correctionAppliedToLiveMesh,false);",
+ "   assert.equal(progressive.materialOrCollisionCertified,false);",
+ "   assert.equal(progressive.consumer3DAdmitted,false);",
+ "   assert.equal(progressive.correctedPose,undefined);",
+ "   assert.ok(progressive.maximumCumulativeTravelFraction<=.05);",
+ "   assert.ok(progressive.passes.length<=6);",
+ "   assert.ok(progressive.passes.every(p=>p.maximumCumulativeTravelFraction<=.05));",
+ "   assert.ok(['RESEARCH_ONLY_PROGRESSIVE_STABILIZATION_CANDIDATE','RESEARCH_ONLY_PROGRESSIVE_STABILIZATION_REFUSED'].includes(progressive.decision));",
+ "   assert.equal(progressive.familyAlpha,'HOLD');",
  "   const audit=trial.trueSimultaneousTwoJointFullIndexedAudit;",
  "   assert.equal(audit.originalFrontFaceCount,35262);",
  "   assert.equal(audit.originalBodyFaceCount,109064);",
