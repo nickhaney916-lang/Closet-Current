@@ -120,6 +120,9 @@ async function run(engine, browserType, width) {
   const ready = async id => {
    await page.waitForFunction(owner => db?.name === 'closet-current-user-' + owner && !document.querySelector('#appShell').hidden, id);
    await page.evaluate(() => Promise.all([closetReady, outfitBoardReady]));
+   // Startup can resume pending recognition. Let the offline attempt settle
+   // before the next version change or sign-out cancels worker module loads.
+   await page.waitForFunction(() => !automaticRunning && !localPending.size);
   };
   const navigate = async (next, owner) => {
    release = next;
