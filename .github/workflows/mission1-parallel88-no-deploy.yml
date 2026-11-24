@@ -1110,3 +1110,45 @@ jobs:
           path: benchmark/output-footwear-negative-contrast/contrast-diagnostic.json
           if-no-files-found: warn
           retention-days: 14
+
+  footwear-evidence-admission-NO-DEPLOY:
+    needs: footwear-source-audit-NO-DEPLOY
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: p88-footwear-source-audit
+          path: benchmark/output-footwear-source-audit
+      - name: Verify same-run admission artifact and mandatory wiring in each footwear diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=benchmark/output-footwear-source-audit
+          printf '%s\n' '[{"id":"one","mode":"single"},{"id":"two","mode":"single"}]' > /tmp/p88-manifest.json
+          printf '%s\n' '[{"id":"one","prediction":{"category":"Shoes"}},{"id":"two","prediction":{"category":null}}]' > /tmp/p88-valid.json
+          printf '%s\n' '[{"id":"one","prediction":{"category":"Shoes"}},{"id":"two","prediction":{"category":"Shoes"},"error":"runtime_error"}]' > /tmp/p88-invalid.json
+          node "$ROOT/require-complete-results.mjs" /tmp/p88-manifest.json /tmp/p88-valid.json
+          if node "$ROOT/require-complete-results.mjs" /tmp/p88-manifest.json /tmp/p88-invalid.json; then exit 1; fi
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const workflow=readFileSync('.github/workflows/mission1-parallel88-no-deploy.yml','utf8');
+          const jobs=workflow.split(/\n  (?=[a-zA-Z0-9][a-zA-Z0-9-]+:\n)/);
+          for(const [job,root] of [['footwear-prompt-ensemble-NO-DEPLOY','p0'],['footwear-framing-NO-DEPLOY','framing'],['footwear-hard-negative-NO-DEPLOY','hard-negative'],['footwear-negative-contrast-NO-DEPLOY','negative-contrast']]){
+           const section=jobs.find(x=>x.startsWith(job+':\n'));
+           assert.ok(section?.includes('needs: footwear-source-audit-NO-DEPLOY'));
+           const runner=section.indexOf('node scripts/run-browser-photo-benchmark.mjs benchmark/output-footwear-'+root+'/manifest.json');
+           const download=section.indexOf('uses: actions/download-artifact@v4');
+           const gate=section.indexOf('run: node benchmark/output-footwear-source-audit/require-complete-results.mjs benchmark/output-footwear-'+root+'/manifest.json benchmark/output-footwear-'+root+'/results.json');
+           assert.ok(runner>=0&&download>runner&&gate>download);
+           assert.ok(!section.slice(download,gate).includes('continue-on-error'));
+          }
+          console.log('P88_FOUR_RESEARCH_WORKFLOWS_EVIDENCE_ADMISSION 4/4 PASS');
+          JS
