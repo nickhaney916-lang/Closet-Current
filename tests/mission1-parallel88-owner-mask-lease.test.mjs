@@ -3620,3 +3620,30 @@ test('P88 coalesced outfit crops must match the pending original and region',()=
   }
  }
 });
+
+test('P88 delayed automatic scan must not adopt a replaced owner or database lease',async()=>{
+ const start=appSource.indexOf('function queueAutomatic(');
+ const end=appSource.indexOf('// The exact signed account and per-owner storage',start);
+ assert.ok(start>=0&&end>start);
+ for(const kind of ['different-owner','renewed-owner','db','replacement','new-work','valid','removed']){
+  const calls=[],item={id:'old',image:'data:image/jpeg;base64,ORIGINAL'};
+  const c={automaticRunning:true,automaticQueue:[],pendingScanLease859:new Map(),localPending:new Set(),
+   batch:[item],window:{closetAuth:{user:{id:'owner-A'}}},db:{name:'closet-current-user-owner-A'},
+   render(){},scheduleMemoryReview(){},async recognizeItem(value){calls.push(value);value.localAnalyzed=true;}};
+  vm.createContext(c);vm.runInContext(appSource.slice(start,end),c);
+  c.queueAutomatic(item);
+  if(['different-owner','replacement','new-work'].includes(kind))c.window.closetAuth.user={id:'owner-B'};
+  if(kind==='renewed-owner')c.window.closetAuth.user={id:'owner-A'};
+  if(kind==='db')c.db={name:'closet-current-user-owner-A'};
+  if(kind==='replacement')c.batch[0]={id:'old',image:'data:image/jpeg;base64,NEW'};
+  if(kind==='removed')c.batch.splice(0);
+  const fresh={id:'new',image:'data:image/jpeg;base64,FRESH'};
+  if(kind==='new-work'){c.batch.push(fresh);c.queueAutomatic(fresh);}
+  c.automaticRunning=false;await c.drainAutomatic();
+  assert.deepEqual(calls,kind==='valid'?[item]:kind==='new-work'?[fresh]:[],kind);
+  assert.equal(c.pendingScanLease859.size,0);
+  assert.equal(c.localPending.size,0);
+  assert.equal(c.automaticRunning,false);
+  assert.equal(item.image,'data:image/jpeg;base64,ORIGINAL');
+ }
+});
