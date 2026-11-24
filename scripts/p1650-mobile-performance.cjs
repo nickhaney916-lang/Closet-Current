@@ -86,20 +86,58 @@ const workload=String.raw`
    await page.locator('#closetAllPieces').click();
    while(await page.getByRole('button',{name:'Show more clothing'}).count()){
     const old=await page.locator(cardSelector).count();
-    await page.evaluate(()=>{window.__p1650PriorCards=[...document.querySelectorAll('#closetGrid .card')];});
-    await measure('expand-page',size,repeat,()=>page.getByRole('button',{name:'Show more clothing'}).click());
-    const retained=await page.evaluate(()=>{
-     const previous=window.__p1650PriorCards,now=[...document.querySelectorAll('#closetGrid .card')];
-     const count=previous.filter((card,i)=>card===now[i]&&card.isConnected).length;
-     delete window.__p1650PriorCards;return count;
+    await page.evaluate(()=>{
+     // Observe real click dispatch and any independent app render. Do not
+     // suppress the scheduled recognition-memory review or other UI refresh.
+     const original=render,trace={renders:[],click:null,bubble:null};
+     render=function(...args){
+      trace.renders.push({time:performance.now(),stack:new Error().stack});
+      return original.apply(this,args);
+     };
+     const cards=()=>[...document.querySelectorAll('#closetGrid .card')];
+     let prior;
+     const capture=e=>{
+      if(!e.target.closest('.closet-page-more136'))return;
+      prior=cards();trace.click={time:performance.now(),count:prior.length,renders:trace.renders.length};
+     };
+     const bubble=e=>{
+      if(!prior||trace.bubble)return;
+      const now=cards();trace.bubble={time:performance.now(),count:now.length,
+       retained:prior.filter((card,i)=>card===now[i]&&card.isConnected).length,renders:trace.renders.length};
+     };
+     document.addEventListener('click',capture,true);
+     document.addEventListener('click',bubble);
+     window.__p1650FinishTrace=()=>{
+      const now=cards();trace.settled={count:now.length,
+       retained:prior?.filter((card,i)=>card===now[i]&&card.isConnected).length??null};
+      document.removeEventListener('click',capture,true);document.removeEventListener('click',bubble);
+      render=original;delete window.__p1650FinishTrace;return trace;
+     };
     });
+    await measure('expand-page',size,repeat,()=>page.getByRole('button',{name:'Show more clothing'}).click());
+    const trace=await page.evaluate(()=>window.__p1650FinishTrace());
+    console.log('P1650_PAGING_TRACE '+JSON.stringify({size,repeat,trace}));
+    assert.ok(trace.click&&trace.bubble,'native click trace missing');
     const total=await page.locator(cardSelector).count();
     assert.ok(total>old,'pagination made no progress');
-    assert.equal(total,Math.min(size,old+48),'page expansion size changed');
-    measurements.at(-1).retainedPriorCards=retained;
+    assert.equal(trace.click.count,old,'preclick count changed');
+    assert.equal(trace.bubble.count,Math.min(size,old+48),'click page expansion size changed');
+    assert.equal(total,Math.min(size,old+48),'settled page expansion size changed');
+    measurements.at(-1).pagingTrace=trace;
+    measurements.at(-1).retainedPriorCards=trace.bubble.retained;
     measurements.at(-1).priorCards=old;
-    if(process.env.P1650_VARIANT==='parent')assert.equal(retained,0,'parent must reproduce replacement');
-    if(process.env.P1650_VARIANT==='candidate')assert.equal(retained,old,'existing card identity must survive expansion');
+    if(process.env.P1650_VARIANT==='parent'){
+     assert.equal(trace.bubble.retained,0,'parent must reproduce synchronous card replacement');
+     assert.ok(trace.bubble.renders>trace.click.renders,'parent click must invoke render');
+    }
+    if(process.env.P1650_VARIANT==='candidate'){
+     assert.equal(trace.bubble.retained,old,'paging click itself must retain existing card nodes');
+     assert.equal(trace.bubble.renders,trace.click.renders,'paging click must not call full render');
+     if(trace.settled.retained!==old){
+      assert.ok(trace.renders.length>trace.bubble.renders,'unexplained post-click card replacement');
+      console.log('P1650_BACKGROUND_REBUILD '+JSON.stringify(trace.renders.slice(trace.bubble.renders)));
+     }
+    }
    }
    assert.equal(await page.locator(cardSelector).count(),size);
    const ids=await page.locator(cardSelector).evaluateAll(cards=>cards.map(x=>x.dataset.itemId));
