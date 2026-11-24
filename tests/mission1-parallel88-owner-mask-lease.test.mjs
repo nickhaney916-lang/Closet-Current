@@ -3427,3 +3427,31 @@ test('P88 worker terminal count must match verified region deliveries, not draft
   zero.emit({type:'done',count:0});assert.equal(zero.node('outfitRetry').hidden,true);
  }
 });
+
+test('P88 unreadable active worker message cannot become successful separation',()=>{
+ const piece={image:'data:image/jpeg;base64,PIECE',hint:{categories:['Shoes'],types:[]},
+  instanceMethod:'connected_footwear_component',requiresReview:true};
+ for(const href of ['https://example.test/closet','https://example.test/closet?outfitInstances840=1']){
+  for(const kind of ['unknown','missing','messageerror']){
+   const h=captureHarness({ownerId:'owner-A',href});
+   h.emit({type:'piece',piece});
+   if(kind==='messageerror')h.c.worker.onmessageerror({});
+   else h.emit(kind==='unknown'?{type:'unrecognized'}:{});
+   h.emit({type:'done',count:1});
+   assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);
+   assert.equal(h.c.worker.closed,true);assert.equal(h.c.busy,false);
+   assert.equal(h.node('outfitRetry').hidden,false);
+   assert.match(h.node('outfitSplitStatus').textContent,/returned an unreadable message/);
+   assert.equal(vm.runInContext('lastOutfitPhoto',h.c),'data:image/jpeg;base64,ORIGINAL');
+   assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,ORIGINAL');
+  }
+  for(const stale of [false,true]){
+   const h=captureHarness({ownerId:'owner-A',href});
+   h.emit({type:'piece',piece});
+   if(stale)h.emit({id:'wrong-request',type:'unrecognized'});
+   h.emit({type:'done',count:1});
+   assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);
+   assert.equal(h.node('outfitRetry').hidden,true);
+  }
+ }
+});
