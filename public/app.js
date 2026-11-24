@@ -165,6 +165,16 @@ function switchView(view){
  document.querySelectorAll('.tab').forEach(x=>{const active=x.dataset.view===view;x.classList.toggle('active',active);if(active)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current');});
  const more=$('moreMenu');if(more){more.open=false;more.classList.toggle('has-active',['builder','trends','review','devicecheck'].includes(view));}
  render();
+ // Normal saved-item mutations need not activate the research-only index
+ // bridge. Rebuild the pinned selector from the current signed wardrobe
+ // when entering Stylist, including after save, edit, delete or restore.
+ if(view==='stylist'&&!startupWardrobeRecoveryCount&&
+    $('authGate')?.hidden===true&&$('appShell')?.hidden===false&&
+    typeof refreshStylistFocusItems==='function'){
+  let currentOwner=false;
+  try{ownerWardrobeMutationLease().assertLease();currentOwner=true;}catch{}
+  if(currentOwner)refreshStylistFocusItems();
+ }
  const section=document.getElementById(view);section.scrollIntoView?.({block:'start',behavior:'instant'});
  const heading=section.querySelector?.('h1,h2');if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true});}
 }
