@@ -675,26 +675,34 @@ function savePiece(value,nextBatch,{expectedSavedRow=null,expectedDraftRow=null}
   auth?.assertCurrent?.();
   if(!current())throw Error('Saved clothing account session changed; reopen the editor');
  };
+ // Bind the submitted review, including nested receipt and photo metadata,
+ // before yielding to the write queue. Hash an independent snapshot so an
+ // asynchronous check cannot attest a different caller-mutated payload.
+ const reviewedValue=structuredClone(value),reviewedRevision=JSON.stringify(reviewedValue);
+ const requireReviewedPayload=()=>{
+  if(JSON.stringify(value)!==reviewedRevision)
+   throw Error('CLOSET_REVIEWED_PAYLOAD_CHANGED');
+ };
  return queued(async()=>{
-  requireLease();
+  requireLease();requireReviewedPayload();
   // Source SHA verification can be asynchronous. Never let its old result
   // write to a different owner's current mutable global IndexedDB.
-  await captureProofVerifyBeforeSave(value);
-  requireLease();
+  await captureProofVerifyBeforeSave(reviewedValue);
+  requireLease();requireReviewedPayload();
   // CORRECTION10 retains its separate row-level CAS and human review guard.
   if(expected&&new URLSearchParams(location.search).get('nativeCorrection10')==='research'){
    const result=await commitOwnerCorrection10(value,expected,nextBatch);
    requireLease();return result;
   }
   return new Promise((resolve,reject)=>{
-   try{requireLease();}catch(error){reject(error);return;}
+   try{requireLease();requireReviewedPayload();}catch(error){reject(error);return;}
    const tx=ownerDB.transaction(['items','state'],'readwrite');
    const store=tx.objectStore('items');
    let failure;
    const request=store.get(value.id);
    request.onsuccess=()=>{
     try{
-     requireLease();
+     requireLease();requireReviewedPayload();
      // Existing rows require an exact, owner-reviewed compare-and-swap.
      // A new photo must not overwrite an existing garment with the same ID.
      if(expected){
@@ -711,7 +719,7 @@ function savePiece(value,nextBatch,{expectedSavedRow=null,expectedDraftRow=null}
       const draftRequest=draftStore.get('draft');
       draftRequest.onsuccess=()=>{
        try{
-        requireLease();
+        requireLease();requireReviewedPayload();
         const rows=draftRequest.result?.batch;
         const matching=Array.isArray(rows)?rows.filter(row=>row.id===value.id):[];
         if(matching.length!==1||
@@ -735,7 +743,7 @@ function savePiece(value,nextBatch,{expectedSavedRow=null,expectedDraftRow=null}
         const savedRequest=store.getAll();
         savedRequest.onsuccess=()=>{
          try{
-          requireLease();
+          requireLease();requireReviewedPayload();
           // Cropped or resized previews are not new physical garments.
           // Until P88 distinct-item reconciliation is integrated with a
           // source-bound owner approval, matching original bytes OR a valid
@@ -1102,6 +1110,8 @@ function adjustPhoto(item){
    ' Your original photo remains available for review.':
    correction10?'Saved garment not overwritten. '+String(error.message||error)+
    '. Reopen Adjust to review the latest clothing details.':
+   String(error?.message||error).includes('CLOSET_REVIEWED_PAYLOAD_CHANGED')?
+    'Clothing details changed during saving. Nothing was overwritten. Reopen Adjust and review the latest details.':
    String(error?.message||error).includes('CLOSET_STALE_DRAFT_REOPEN_EDITOR')?
     'This unfinished photo changed in another tab. Nothing was overwritten. Reload Photo results, then reopen Adjust.':
    String(error?.message||error).includes('CLOSET_STALE_SAVED_GARMENT_REOPEN_EDITOR')?
