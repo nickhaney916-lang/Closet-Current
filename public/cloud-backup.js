@@ -55,7 +55,7 @@
   if(stopForReview145())throw Error('P145 owner-reviewed mode blocks legacy cloud transport');
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),20000);
   try{
-   const response=await fetch(BASE+path,{method,signal:controller.signal,headers:{apikey:KEY,Authorization:'Bearer '+token,...(body===undefined?{}:{'Content-Type':contentType})},body:body===undefined?undefined:contentType==='application/json'?JSON.stringify(body):body,cache:'no-store'});
+   const response=await fetch(BASE+path,{method,signal:controller.signal,redirect:'error',headers:{apikey:KEY,Authorization:'Bearer '+token,...(body===undefined?{}:{'Content-Type':contentType})},body:body===undefined?undefined:contentType==='application/json'?JSON.stringify(body):body,cache:'no-store'});
    assertActive();
    if(response.status===401&&!again)return await api(path,{body,method,contentType},true,assertActive);
    if(!response.ok){const error=Error('Cloud request failed');error.status=response.status;throw error;}return response;
