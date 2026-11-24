@@ -482,7 +482,9 @@ function persistDraft({required=false,mode=null,record=null,expected=null,retry=
     try{
      checkOwner();
      if(savedRequest.result)throw Error('CLOSET_CAPTURE_SAVED_ID_COLLISION');
-     const rows=draftRequest.result?.batch||[];
+     // Only a genuinely absent IndexedDB record is an empty draft.
+     // A present malformed record must survive untouched for recovery.
+     const rows=draftRequest.result===undefined?[]:draftRequest.result?.batch;
      if(!Array.isArray(rows))throw Error('CLOSET_CAPTURE_INVALID_PERSISTED_DRAFT');
      const matching=rows.filter(row=>row?.id===frozen.id);
      if(matching.length){
