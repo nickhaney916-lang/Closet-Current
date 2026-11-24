@@ -1424,13 +1424,16 @@ async function drainAutomatic(){
  try{while(automaticQueue.length){
   const item=automaticQueue.shift(),lease=pendingScanLease859.get(item.id);
   if(!lease||lease.item!==item)continue;
-  if(batch.some(x=>x===item))await recognizeItem(item);
+  // A queued request is bound at enqueue time, not when a previous
+  // asynchronous scan happens to finish. Do not adopt a revoked request.
+  const ownerLive=()=>lease.owner===window.closetAuth?.user&&lease.db===db;
+  if(ownerLive()&&batch.some(x=>x===item))await recognizeItem(item);
   // A queued stale object and an early owner/DB mismatch still release their
   // OWN pending lease, never any newer same-ID draft's scan.
   if(pendingScanLease859.get(item.id)===lease){
    pendingScanLease859.delete(item.id);localPending.delete(item.id);
    const current=batch.find(x=>x.id===item.id);
-   if(current&&current!==item&&!current.localAnalyzed&&!current.userAdjusted)queueAutomatic(current);
+   if(ownerLive()&&current&&current!==item&&!current.localAnalyzed&&!current.userAdjusted)queueAutomatic(current);
   }
  }}finally{automaticRunning=false;render();scheduleMemoryReview();}
 }
