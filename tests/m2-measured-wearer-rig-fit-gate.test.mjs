@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assessMetricGarmentToWearerFit as assess,auditSampledOriginalFrontProportions as audit,trialBoundedOriginalFrontCorrection as correct,trialCoordinatedOriginalFrontCorrection as coordinate,trialProgressiveOriginalFrontStabilization as progressive}
+import {assessMetricGarmentToWearerFit as assess,auditSampledOriginalFrontProportions as audit,trialBoundedOriginalFrontCorrection as correct,trialCoordinatedOriginalFrontCorrection as coordinate,trialProgressiveOriginalFrontStabilization as progressive,trialObstacleGuardedOriginalFrontStabilization as guarded}
  from '../research/parallel89/measured-wearer-to-licensed-rig-garment-fit89.mjs';
 
 const sourceSHA='a'.repeat(64),rigSHA='b'.repeat(64);
@@ -341,5 +341,38 @@ test('progressive stabilization never alters rigid or invalid geometry',()=>{
  for(const pose of [rest,[0,0,0,1,0,0,2,0,0],[NaN,0,0,1,0,0,0,1,0]]){
   const r=progressive({rest,pose,indices,expectedFaces:1,expectedVertices:3});safe(r);
   assert.equal(r.correctedPose,null);
+ }
+});
+
+test('fixed body and layer swept bound guard preserves safe detached corrections',()=>{
+ const x={rest:[0,0,0,1,0,0,0,1,0,1,1,0],pose:[0,0,0,2,0,0,0,2,0,2,2,0],indices:[0,1,2,1,3,2],expectedFaces:2,expectedVertices:4};
+ const body={kind:'body',vertices:[0,0,3,2,0,3,0,2,3],indices:[0,1,2]};
+ const layer={...body,kind:'layer',vertices:[0,0,-3,2,0,-3,0,2,-3]};
+ const input={...x,obstacles:[body,layer]},original=JSON.stringify(input);
+ const r=guarded(input);safe(r);assert.equal(r.passes.length,2);
+ assert.equal(r.fixedObstacleFacesIndexed,2);assert.equal(r.suppliedLayerCount,1);
+ assert.ok(r.correctionSegmentObstacleReceipts.every(p=>p.clear&&p.movingFacesExamined===2));
+ assert.deepEqual(Array.from(r.correctedPose),Array.from(progressive(x).correctedPose));
+ assert.equal(r.fullLayeredOutfitCollisionCertified,false);assert.equal(JSON.stringify(input),original);
+});
+test('unresolved swept body or layer overlap refuses correction with exact indexed witness',()=>{
+ const x={rest:[0,0,0,1,0,0,0,1,0,1,1,0],pose:[0,0,0,2,0,0,0,2,0,2,2,0],indices:[0,1,2,1,3,2],expectedFaces:2,expectedVertices:4};
+ const body={kind:'body',vertices:[0,0,3,2,0,3,0,2,3],indices:[0,1,2]};
+ const near={vertices:[.5,.5,0,1,.5,0,.5,1,0],indices:[0,1,2]};
+ for(const kind of ['body','layer']){
+  const obstacles=kind==='body'?[{...near,kind}]:[body,{...near,kind}];
+  const r=guarded({...x,obstacles});safe(r);assert.equal(r.correctedPose,null);
+  assert.equal(r.stopReason,'SWEPT_OBSTACLE_OVERLAP_UNRESOLVED');
+  assert.equal(r.correctionSegmentObstacleReceipts[0].obstacleKind,kind);
+  assert.equal(r.correctionSegmentObstacleReceipts[0].frontFaceOrdinal,0);
+  assert.equal(r.correctionSegmentObstacleReceipts[0].obstacleFaceOrdinal,0);
+ }
+});
+test('obstacle guard refuses absent body, malformed bounds and out-of-range indices',()=>{
+ const x={rest:[0,0,0,1,0,0,0,1,0],pose:[0,0,0,2,0,0,0,1,0],indices:[0,1,2],expectedFaces:1,expectedVertices:3};
+ const body={kind:'body',vertices:[0,0,3,2,0,3,0,2,3],indices:[0,1,2]};
+ for(const obstacles of [[],[{...body,kind:'layer'}],[body,body],[{...body,indices:[0,1,3]}],[{...body,vertices:[NaN,...body.vertices.slice(1)]}]]){
+  const r=guarded({...x,obstacles});safe(r);assert.equal(r.correctedPose,null);
+  assert.ok(r.decision.startsWith('BLOCKED_'));
  }
 });
