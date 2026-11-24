@@ -1,0 +1,89 @@
+name: MAIN1054 combined stale-draft and private-photo acceptance HOLD
+on:
+  push:
+    branches: [research/main1054-p1603-p1607-combined-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+env:
+  BASELINE: c2b1ae41603d476358af39eba99008914fac8046
+  P1603: a3b143fb41721b6927f55720cff10266002b268a
+  P1607: 84c37f92a5ba783b7779da6103fa966b4bb1e287
+jobs:
+  combined:
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [regression, storage, chromium, webkit]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact parent and independently verified source donors
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$P1603" HEAD
+          git fetch --no-tags origin "$P1607"
+          git diff --exit-code "$P1603" HEAD -- . \
+            ':(exclude)public/auth.js' \
+            ':(exclude)public/cloud-backup.js' \
+            ':(exclude)scripts/p1607-photo-containment.mjs' \
+            ':(exclude)scripts/test-parallel99-normal-app-browser.mjs' \
+            ':(exclude)tests/p1607-private-transport.test.cjs' \
+            ':(exclude).github/workflows/main1054-p1603-p1607-combined-HOLD.yml'
+          for path in public/auth.js public/cloud-backup.js scripts/p1607-photo-containment.mjs scripts/test-parallel99-normal-app-browser.mjs tests/p1607-private-transport.test.cjs; do
+            test "$(git rev-parse "HEAD:$path")" = "$(git rev-parse "$P1607:$path")"
+          done
+          for path in public/outfit-board.js scripts/test-outfit-draft-conflicts-browser.mjs; do
+            test "$(git rev-parse "HEAD:$path")" = "$(git rev-parse "$P1603:$path")"
+          done
+          test "$(git rev-parse HEAD:public/app.js)" = "$(git rev-parse "$BASELINE:public/app.js")"
+          git worktree add --detach "${RUNNER_TEMP}/integration-base" "$BASELINE"
+          (cd "${RUNNER_TEMP}/integration-base" && bash scripts/check-1452-integration-source.sh "$BASELINE")
+          git log -1 --format='commit %H tree %T'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: node scripts/build.mjs
+      - if: matrix.check == 'regression'
+        run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
+      - if: matrix.check == 'storage'
+        run: npx playwright install --with-deps chromium webkit
+      - if: matrix.check == 'storage'
+        name: Baseline stale draft and corrected concurrent wardrobe on combined source
+        run: |
+          APP_SOURCE_ROOT="${RUNNER_TEMP}/integration-base" P1603_EXPECT_RED=1 CONFLICT_OUT="${RUNNER_TEMP}/p1603-red" node scripts/test-outfit-draft-conflicts-browser.mjs
+          CONFLICT_OUT="${RUNNER_TEMP}/p1603-green" node scripts/test-outfit-draft-conflicts-browser.mjs
+          NATIVE_DRAFT_BROWSER=1 node --test tests/main1054-malformed-draft-insert-veto.test.mjs
+          node scripts/test-mission3-lossless-v4-owner-acceptance-browser.mjs "${RUNNER_TEMP}/combined-backup"
+          node scripts/test-cloud-roundtrip-browser-141.mjs
+      - if: matrix.check == 'chromium' || matrix.check == 'webkit'
+        run: npx playwright install --with-deps "${{ matrix.check }}"
+      - if: matrix.check == 'chromium' || matrix.check == 'webkit'
+        name: Genuine normal journey and photo containment on combined source
+        env:
+          P99_ENGINE: ${{ matrix.check }}
+          M58_ENGINE: ${{ matrix.check }}
+        run: |
+          set -euo pipefail
+          for width in 320 390 430; do
+            P1607_AUDIT=1 P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+            if [ "$P99_ENGINE" = webkit ]; then
+              P1607_AUDIT=1 P1607_CACHE_ONLY=1 P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+            fi
+          done
+          node scripts/test-parallel94-native-p88-browser.mjs
+          node scripts/check-1452-journey-receipts.mjs "$P99_ENGINE"
+  acceptance:
+    if: always()
+    needs: [combined]
+    runs-on: ubuntu-24.04
+    env:
+      RESULT: ${{ needs.combined.result }}
+    steps:
+      - run: test "$RESULT" = success
