@@ -434,8 +434,13 @@ try{
   await login(page,'native05-B');
   await seed(page,'native05-B');
   await page.reload({waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>window.nativeLossless04Bridge?.status()?.active&&
-   !!window.native3D05Bridge,{timeout:30000});
+  // The replacement owner's research controllers mount independently after reload.
+  // Require B's active recovery controller before attempting A's forbidden import.
+  await page.waitForFunction(()=>window.closetAuth?.user?.id==='native05-B'&&
+   db?.name==='closet-current-user-native05-B'&&
+   window.nativeLossless04Bridge?.status()?.active&&
+   window.restoreAtomic01Bridge?.status()?.active&&
+   !!window.native3D05Bridge,null,{timeout:30000});
   await page.evaluate(()=>switchView('builder'));
   const bStored=await readBoard(page),bItems=await readItems(page);
   await assert.rejects(page.evaluate(doc=>
