@@ -332,6 +332,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     lastOutfitPhoto='';lastOutfitOwner88=null;
     finishOutfitSplit(job,'Owner session changed. Further garment drafts were not accepted.',true);return;
    }
+   try{
    if(data.type==='progress'){
     if(data.phase==='separating'&&job.phase!=='separating'){job.phase='separating';clearTimeout(job.timer);job.timer=setTimeout(timeout,60000);}
     else if(job.phase==='loading')touch();
@@ -435,6 +436,9 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
    }
    else if(data.type==='error')finishOutfitSplit(job,job.added?'Some pieces are kept; the rest could not be separated. Try again.':'This outfit could not be separated. Try another clear photo of one person, head to toe.',true);
    else finishOutfitSplit(job,'Outfit separation returned an unreadable message. Your original and earlier accepted drafts are kept; retry or photograph items individually.',true);
+   }catch{
+    finishOutfitSplit(job,'Outfit processing was interrupted. Your original and earlier accepted drafts are kept; retry or photograph items individually.',true);
+   }
   };
   job.worker.onmessage=event=>{
    // Legacy behavior remains synchronous when unit70 is disabled.
