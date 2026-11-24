@@ -24,10 +24,10 @@ replace("  if(audit&&pathname==='/cloud-backup.js')bytes=Buffer.from(cloudStub);
    bytes=Buffer.from(code.replace(authOrigin,origin));
   }
 `);
-const start=source.indexOf("  advance('offline-warm-session-original-preview');");
+const start=source.indexOf(" if(!cacheOnly){\n  advance('normal-v3-private-export');");
 const end=source.lastIndexOf('}catch(error){');
 if(start<0||end<=start)throw Error('Connectivity journey boundary changed');
-source=source.slice(0,start)+" }\n"+`
+source=source.slice(0,start)+`
  advance('signed-owner-offline-trend-and-local-wardrobe');
  const nav=view=>page.locator('nav.main-nav button.tab[data-view="'+view+'"]').click();
  const builder=async()=>{

@@ -45,3 +45,4 @@ jobs:
             (cd "$RUNNER_TEMP/p1669-baseline" && P1669_EXPECT_RED=1 node scripts/p1669-native-connectivity.cjs)
             node scripts/p1669-native-connectivity.cjs
           done
+          P99_WIDTH=390 P1607_AUDIT=1 node scripts/test-parallel99-normal-app-browser.mjs
