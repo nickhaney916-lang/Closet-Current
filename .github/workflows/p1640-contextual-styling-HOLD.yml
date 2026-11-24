@@ -1,0 +1,79 @@
+name: P1640 contextual recommendation acceptance HOLD
+on:
+  push:
+    branches: [research/p1640-contextual-styling-benchmark-HOLD]
+  pull_request:
+    branches: [research/main1054-combined-wardrobe-recovery-HOLD]
+    paths: [.github/workflows/p1640-contextual-styling-HOLD.yml]
+permissions:
+  contents: read
+jobs:
+  contextual:
+    if: github.event_name == 'push' || (github.head_ref == 'research/p1640-contextual-styling-benchmark-HOLD' && github.event.pull_request.head.repo.full_name == github.repository)
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [regression, chromium, webkit]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin source and protect active assignment ownership
+        run: |
+          set -euo pipefail
+          PARENT=1b949a8ecbcad670259ef46897131e3abda6cf72
+          git merge-base --is-ancestor "$PARENT" HEAD
+          git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
+            case "$path" in
+              scripts/p1640-contextual-handoff.cjs|scripts/p1640-native-context.cjs|tests/p1640-contextual-styling.test.cjs|.github/workflows/p1640-contextual-styling-HOLD.yml) ;;
+              *) echo "Unexpected change $path"; exit 1 ;;
+            esac
+          done
+          test "$(git rev-parse HEAD:public/closet-stylist-engine.js)" = a04ef52a5d1cf194d035fa763b4cb541a2683456
+          git log -1 --format='commit %H tree %T'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Exact source handoff RED and GREEN on accepted source and diversity donor
+        run: |
+          set -euo pipefail
+          cp public/closet-stylist-engine.js "$RUNNER_TEMP/p1640-parent.js"
+          git show 896480960b7d821479fea06c10d3545a8818783c:public/closet-stylist-engine.js > "$RUNNER_TEMP/p1640-donor.js"
+          for candidate in parent donor; do
+            engine="$RUNNER_TEMP/p1640-$candidate.js"
+            if P1640_ENGINE_SOURCE="$engine" P1640_BASELINE=1 node --test tests/p1640-contextual-styling.test.cjs > "$RUNNER_TEMP/p1640-$candidate-red.log" 2>&1; then
+              cat "$RUNNER_TEMP/p1640-$candidate-red.log"
+              exit 1
+            fi
+            cat "$RUNNER_TEMP/p1640-$candidate-red.log"
+            grep -F '# fail 7' "$RUNNER_TEMP/p1640-$candidate-red.log"
+            grep -F '# pass 29' "$RUNNER_TEMP/p1640-$candidate-red.log"
+            P1640_ENGINE_SOURCE="$engine" node --test tests/p1640-contextual-styling.test.cjs
+          done
+          node scripts/p1640-contextual-handoff.cjs "$RUNNER_TEMP/p1640-parent.js" public/closet-stylist-engine.js
+          git diff -- public/closet-stylist-engine.js
+      - run: node scripts/build.mjs
+      - if: matrix.check == 'regression'
+        name: Full inherited application regression with disposable contextual patch
+        run: P1640_ENGINE_SOURCE="$RUNNER_TEMP/p1640-parent.js" node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
+      - if: matrix.check != 'regression'
+        run: npx playwright install --with-deps "${{ matrix.check }}"
+      - if: matrix.check != 'regression'
+        name: Actual signed-owner occasion/season controls in native browser
+        env:
+          P99_ENGINE: ${{ matrix.check }}
+        run: |
+          set -euo pipefail
+          cp dist/closet-stylist-engine.js "$RUNNER_TEMP/p1640-built-candidate.js"
+          trap 'cp "$RUNNER_TEMP/p1640-built-candidate.js" dist/closet-stylist-engine.js' EXIT
+          cp "$RUNNER_TEMP/p1640-parent.js" dist/closet-stylist-engine.js
+          P1640_EXPECT_RED=1 P99_WIDTH=390 node scripts/p1640-native-context.cjs
+          cp "$RUNNER_TEMP/p1640-built-candidate.js" dist/closet-stylist-engine.js
+          for width in 320 390 430; do
+            P99_WIDTH="$width" node scripts/p1640-native-context.cjs
+          done
