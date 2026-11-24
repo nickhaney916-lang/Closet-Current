@@ -23,13 +23,19 @@ if(!baseline){
 `+source.slice(end);
 }
 if(baseline){
+ replace(" await page.locator('details.saved-imports summary').click();",`
+ const imports=page.locator('details.saved-imports');
+ if(!await imports.evaluate(element=>element.open))await imports.locator('summary').click();
+`);
  const start=source.indexOf(" await page.locator('#clothingPhotos').setInputFiles({");
  const end=source.indexOf(" await page.locator('#reviewGrid .photo-result",start);
  if(start<0||end<=start)throw Error('Baseline chooser anchor changed');
  source=source.slice(0,start)+`
- const waitingChooser=page.waitForEvent('filechooser');
- await page.locator('label.file-label').filter({hasText:'Choose clothing photos'}).click();
- await (await waitingChooser).setFiles({name:source.name+'.jpg',mimeType:'image/jpeg',buffer:source.bytes});
+ const [chooser]=await Promise.all([
+  page.waitForEvent('filechooser'),
+  page.locator('label.file-label').filter({hasText:'Choose clothing photos'}).click()
+ ]);
+ await chooser.setFiles({name:source.name+'.jpg',mimeType:'image/jpeg',buffer:source.bytes});
 `+source.slice(end);
 }
 
