@@ -344,7 +344,9 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
      finishOutfitSplit(job,'A clothing region could not be verified. Your original and earlier accepted drafts are kept; retry or photograph items individually.',true);
      return;
     }
-    if(p.recognitionPhoto&&(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.recognitionPhoto.image)||p.recognitionPhoto.image.length>8000000)){
+    if(p.recognitionPhoto!=null&&(typeof p.recognitionPhoto!=='object'||Array.isArray(p.recognitionPhoto)||
+     typeof p.recognitionPhoto.image!=='string'||p.recognitionPhoto.image.length>8000000||
+     !/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.recognitionPhoto.image))){
      finishOutfitSplit(job,'A clothing region could not be verified. Your original and earlier accepted drafts are kept; retry or photograph items individually.',true);
      return;
     }
