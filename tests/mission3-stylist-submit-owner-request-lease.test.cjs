@@ -37,7 +37,7 @@ function fixture(){
    events.push('style:'+request.focusItemId);
    return [{focusItemId:request.focusItemId,board:{slots:{top:rows[0].id}},request}];
   },
-  renderStyledCollection(){events.push('render');}
+  renderStyledCollection(){events.push(ctx.styledCollectionResults.length?'render:results':'render:empty');}
  };
  vm.createContext(ctx);vm.runInContext(code,ctx);
  const submit=()=>dom.styleCollectionForm.onsubmit({preventDefault(){events.push('prevent')}});
@@ -68,7 +68,7 @@ function fixture(){
 }
 test('same owner publishes 1 focus-specific result and reenables button',async()=>{
  const f=fixture();await f.submit();
- assert.deepEqual(f.events,['prevent','refresh','trend','style:same-id','render']);
+ assert.deepEqual(f.events,['prevent','render:empty','refresh','trend','style:same-id','render:results']);
  assert.equal(f.dom.createCollectionOutfits.disabled,false);
  assert.match(f.dom.stylistStatus.textContent,/Here are 1 outfit option/);
  assert.equal(f.ctx.styledCollectionResults[0].focusItemId,'same-id');
@@ -79,7 +79,7 @@ test('other account during slow trends sees no old outfits, status or button cha
  f.switchOwner();f.dom.stylistStatus.textContent='owner-b screen';
  f.dom.createCollectionOutfits.disabled=true;
  p.resolve();await op;
- assert.deepEqual(f.events,['prevent','refresh','trend']);
+ assert.deepEqual(f.events,['prevent','render:empty','refresh','trend']);
  assert.equal(f.dom.stylistStatus.textContent,'owner-b screen');
  assert.equal(f.dom.createCollectionOutfits.disabled,true);
  assert.equal(f.ctx.styledCollectionResults.length,0);
@@ -88,14 +88,14 @@ test('same-ID re-login during trends is a new session, never gets old results',a
  const f=fixture(),p=f.deferTrend(),op=f.submit();await p.begun;
  f.relogin();f.dom.stylistStatus.textContent='fresh login';
  p.resolve();await op;
- assert.deepEqual(f.events,['prevent','refresh','trend']);
+ assert.deepEqual(f.events,['prevent','render:empty','refresh','trend']);
  assert.equal(f.dom.stylistStatus.textContent,'fresh login');
- assert.deepEqual(f.ctx.styledCollectionResults,[]);
+ assert.equal(f.ctx.styledCollectionResults.length,0);
 });
 test('auth assertion revocation after trends cancels old request',async()=>{
  const f=fixture(),p=f.deferTrend(),op=f.submit();await p.begun;
- f.revoke();p.resolve();await op;assert.deepEqual(f.events,['prevent','refresh','trend']);
- assert.deepEqual(f.ctx.styledCollectionResults,[]);
+ f.revoke();p.resolve();await op;assert.deepEqual(f.events,['prevent','render:empty','refresh','trend']);
+ assert.equal(f.ctx.styledCollectionResults.length,0);
 });
 test('silent capture epoch rotation invalidates same-ID owner request',async()=>{
  const f=fixture(),p=f.deferTrend(),op=f.submit();await p.begun;
@@ -110,25 +110,26 @@ test('adding a garment while trend fetch pending rejects stale closet snapshot',
  const f=fixture(),p=f.deferTrend(),op=f.submit();await p.begun;
  f.ctx.items.push({id:'fresh-boot',ownerId:'owner-a'});
  p.resolve();await op;
- assert.deepEqual(f.ctx.styledCollectionResults,[]);
+ assert.equal(f.ctx.styledCollectionResults.length,0);
 });
 test('requested focus change during trend fetch cancels old selection',async()=>{
  const f=fixture(),p=f.deferTrend(),op=f.submit();await p.begun;
  f.dom.stylistFocusItem.value='other-garment';
  p.resolve();await op;
- assert.deepEqual(f.ctx.styledCollectionResults,[]);
- assert.equal(f.events.filter(e=>e==='render').length,0);
+ assert.equal(f.ctx.styledCollectionResults.length,0);
+ assert.equal(f.events.filter(e=>e==='render:results').length,0);
+ assert.equal(f.events.filter(e=>e==='render:empty').length,1);
 });
 test('other form value edited while fetch pending cannot publish wrong preferences',async()=>{
  const f=fixture(),p=f.deferTrend(),op=f.submit();await p.begun;
  f.dom.stylistSeason.value='Spring';p.resolve();await op;
- assert.deepEqual(f.ctx.styledCollectionResults,[]);
+ assert.equal(f.ctx.styledCollectionResults.length,0);
 });
 test('return to prior preference after explicit replacement invalidates first request',async()=>{
  const f=fixture(),p=f.deferTrend(),op=f.submit();await p.begun;
  f.changePrefs('stylistSeason','Spring');f.changePrefs('stylistSeason','Fall');
  p.resolve();await op;
- assert.deepEqual(f.ctx.styledCollectionResults,[]);
+ assert.equal(f.ctx.styledCollectionResults.length,0);
 });
 test('old failed trend request cannot show raw private error to next login',async()=>{
  const f=fixture(),p=f.deferTrend(),op=f.submit();await p.begun;
@@ -158,7 +159,8 @@ test('newer request wins; first request completion cannot clear its loading stat
  p2.resolve();await second;
  assert.equal(f.dom.createCollectionOutfits.disabled,false);
  assert.equal(f.ctx.styledCollectionResults.length,1);
- assert.equal(f.events.filter(e=>e==='render').length,1);
+ assert.equal(f.events.filter(e=>e==='render:results').length,1);
+ assert.equal(f.events.filter(e=>e==='render:empty').length,2);
 });
 test('newer request failure is not overwritten by older request completion',async()=>{
  const f=fixture(),p1=deferred(),p2=deferred(),started1=deferred(),started2=deferred();let count=0;
@@ -174,7 +176,7 @@ test('newer request failure is not overwritten by older request completion',asyn
 test('owner change while awaiting closetReady does not invoke trend refresh',async()=>{
  const f=fixture(),gate=f.deferClosetReady(),op=f.submit();
  f.switchOwner();gate.resolve();await op;
- assert.deepEqual(f.events,['prevent']);
+ assert.deepEqual(f.events,['prevent','render:empty']);
  assert.equal(f.ctx.styledCollectionResults.length,0);
 });
 test('locked or wrong private database rejects submit at start',async()=>{
@@ -195,6 +197,25 @@ test('source captures exact original wardrobe object references and four prefere
 });
 test('session lock and changed preference revoke older submissions in production',()=>{
  assert.match(source,/window\.addEventListener\('closet:session-locked',\(\)=>\{[\s\S]*?styledCollectionRequestSerial\+\+/);
- assert.match(source,/for\(const id of \['stylistOccasion','stylistAudience','stylistSeason'\]\)[\s\S]*?styledCollectionRequestSerial\+\+/);
+ assert.match(source,/for\(const id of \['stylistOccasion','stylistAudience','stylistSeason','stylistFocusItem'\]\)[\s\S]*?styledCollectionRequestSerial\+\+/);
  assert.doesNotMatch(code,/catch\(error\)\{\$\('stylistStatus'\)\.textContent=error\.message/);
+});
+
+// New requests must revoke existing actions synchronously, then publish only
+// the current session's results. An invalid session must not render at all.
+test('submission removes existing outfit cards before closet readiness',async()=>{
+ const f=fixture(),gate=f.deferClosetReady();
+ f.ctx.styledCollectionResults=[{focusItemId:'old-garment'}];
+ const op=f.submit();
+ assert.equal(f.ctx.styledCollectionResults.length,0);
+ assert.deepEqual(f.events,['prevent','render:empty']);
+ gate.resolve();await op;
+ assert.deepEqual(f.events,['prevent','render:empty','refresh','trend','style:same-id','render:results']);
+});
+test('revoked owner cannot publish or clear newer owner results after request starts',async()=>{
+ const f=fixture(),p=f.deferTrend(),op=f.submit();await p.begun;
+ f.switchOwner();const newer=[{focusItemId:'owner-b-item'}];f.ctx.styledCollectionResults=newer;
+ p.resolve();await op;
+ assert.equal(f.ctx.styledCollectionResults,newer);
+ assert.deepEqual(f.events,['prevent','render:empty','refresh','trend']);
 });
