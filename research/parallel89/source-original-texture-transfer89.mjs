@@ -27,7 +27,7 @@ const safeSize=(w,h)=>Number.isSafeInteger(w)&&Number.isSafeInteger(h)&&
  * Nearest-neighbor samples are copied verbatim from the full decoded image.
  */
 export async function buildOriginalJPEGTexturedFront89({
- sourceId,originalBytes,lockedRecord,alpha,width,height,sourceMaskSHA256
+ sourceId,originalBytes,lockedRecord,alpha,width,height,sourceMaskSHA256,textureScale=1
 }={}){
  const source=attestOriginalSource89({sourceId,originalBytes,lockedRecord});
  if(source.status!=='ORIGINAL_JPEG_VERIFIED')
@@ -36,6 +36,12 @@ export async function buildOriginalJPEGTexturedFront89({
    alpha.length!==width*height||!Array.from(alpha).every(a=>a===0||a===255)||
    typeof sourceMaskSHA256!=='string'||sha256(alpha)!==sourceMaskSHA256)
   return refused('source-space-binary-proposal-mask-or-sha-invalid');
+ // Integer subdivision keeps texture alpha exactly aligned to mesh cells.
+ // The default is backward compatible; bound allocation independently of mesh.
+ if(!Number.isSafeInteger(textureScale)||textureScale<1||textureScale>8||
+    width*textureScale>1024||height*textureScale>1024)
+  return refused('texture-scale-or-allocation-limit-invalid');
+ const tw=width*textureScale,th=height*textureScale;
  const panel=buildSourceObservedFront89({
   sourceReceipt:source,alpha,width,height,sourceMaskSHA256
  });
@@ -59,18 +65,18 @@ export async function buildOriginalJPEGTexturedFront89({
   for(let i=0;i<positions.length/3;i++){
    positions[3*i]=(panel.uv[2*i]-.5)*sourceAspect;
   }
-  const rgba=new Uint8Array(width*height*4);
+  const rgba=new Uint8Array(tw*th*4);
   let copied=0;
-  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
-   if(alpha[y*width+x]!==255)continue;
-   const sx=Math.min(info.width-1,Math.floor((x+.5)*info.width/width));
-   const sy=Math.min(info.height-1,Math.floor((y+.5)*info.height/height));
-   const src=(sy*info.width+sx)*3,dst=(y*width+x)*4;
+  for(let y=0;y<th;y++)for(let x=0;x<tw;x++){
+   if(alpha[Math.floor(y/textureScale)*width+Math.floor(x/textureScale)]!==255)continue;
+   const sx=Math.min(info.width-1,Math.floor((x+.5)*info.width/tw));
+   const sy=Math.min(info.height-1,Math.floor((y+.5)*info.height/th));
+   const src=(sy*info.width+sx)*3,dst=(y*tw+x)*4;
    rgba[dst]=data[src];rgba[dst+1]=data[src+1];
    rgba[dst+2]=data[src+2];rgba[dst+3]=255;
    copied++;
   }
-  if(copied!==panel.foregroundPixels)
+  if(copied!==panel.foregroundPixels*textureScale*textureScale)
    return refused('segmented-geometry-pixel-count-mismatch');
   return {
    schema:'M2-P89-real-JPEG-front-RGB-UV-research/v1',
@@ -82,11 +88,11 @@ export async function buildOriginalJPEGTexturedFront89({
    decodedOriginalDimensions:[info.width,info.height],
    originalSourcePixelSampling:'nearest original decoded RGB, no generated colors',
    researchMaskSHA256:sourceMaskSHA256,
-   textureSHA256:sha256(rgba),textureDimensions:[width,height],
+   textureSHA256:sha256(rgba),textureDimensions:[tw,th],textureScale,textureForegroundPixels:copied,
    textureRGBA:rgba,positions,uv:panel.uv,indices:panel.indices,
    geometryAspectBasis:'native decoded original RGB width/height; nonmetric',
    decodedOriginalAspect:sourceAspect,
-   originalRGBForegroundPixels:copied,sourceFullImageWasReencoded:false,
+   originalRGBForegroundPixels:panel.foregroundPixels,sourceFullImageWasReencoded:false,
    maskGroundTruthApproved:false,originalSourceAngleIndependentlyAdjudicated:false,
    observedFrontOnly:true,unseenSideOrBackInvented:false,
    garmentPhysicalDepthOrSizeMeasured:false,actual163BoneFitProved:false,
