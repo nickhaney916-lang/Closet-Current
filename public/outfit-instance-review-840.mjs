@@ -36,7 +36,24 @@ function acceptedComponents(map,group){
 // but six extra false positives from all-class splitting (46 vs 40 proposals).
 // Keep the real worker's one-flag review conservative. The all-class candidate
 // remains explicitly callable for RESEARCH comparison only; no auto admission.
+// Native and research label-map producers both emit the same bounded typed
+// arrays. A malformed map is not evidence of an unresolved physical item.
+function assertReviewMask840(map){
+ const {width,height,labels,confidence}=map||{};
+ if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||
+    width>512||height>512||!(labels instanceof Uint8Array)||
+    !(confidence instanceof Float32Array)||labels.length!==width*height||
+    confidence.length!==labels.length)
+  throw Error('P840_INVALID_REVIEW_MASK');
+ for(let i=0;i<labels.length;i++){
+  const id=labels[i],score=confidence[i];
+  if(![0,1,3,4,5,6,7,8,9,16,17].includes(id)||
+     !Number.isFinite(score)||score<0||score>1)
+   throw Error('P840_INVALID_REVIEW_MASK');
+ }
+}
 export function clothingReviewInstances840(map,{splitNonFootwear=false}={}){
+ assertReviewMask840(map);
  const original=clothingMaskGroups(map),output=[],{width,height}=map;
  for(const group of original){
   const parts=acceptedComponents(map,group);
