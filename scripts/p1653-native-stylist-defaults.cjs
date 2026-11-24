@@ -120,7 +120,9 @@ const journey = `
 
 const signedIn = " assert.equal(await page.locator('#home').isVisible(),true);";
 const imported = "  advance('offline-warm-session-original-preview');";
-if (!source.includes(signedIn) || !source.includes(imported)) throw Error('Native restore journey boundary changed');
+const switchOwner = " advance('logout-and-other-owner-no-original-pixels');";
+const ownerB = " await signIn('p99-B');";
+if (![signedIn,imported,switchOwner,ownerB].every(anchor=>source.includes(anchor))) throw Error('Native restore journey boundary changed');
 
 const restoreJourney = source.replace(signedIn, signedIn + `
  await page.locator('button.tab[data-view="stylist"]').first().click();
@@ -136,7 +138,30 @@ const restoreJourney = source.replace(signedIn, signedIn + `
  assert.equal(await page.getByLabel('Style preference').inputValue(),'Men');
  await page.locator('#moreMenu summary').click();
  await page.locator('#moreMenu button.tab[data-view="builder"]').click();
-` + imported);
+` + imported).replace(switchOwner, switchOwner + `
+ await page.locator('nav.main-nav button.tab[data-view="closet"]').click();
+ // Hold the second file read until the actual sign-out event revokes its lease.
+ await page.evaluate(() => {
+  const read = File.prototype.text;
+  File.prototype.text = function(){
+   const bytes = read.call(this);
+   return new Promise(resolve => {
+    window.addEventListener('closet:session-locked',()=>resolve(bytes),{once:true});
+    window.p1653RestoreWaiting = true;
+   });
+  };
+ });
+ await page.locator('#import').setInputFiles({
+  name:'p1653-interrupted-restore.json',mimeType:'application/json',buffer:backup
+ });
+ await page.waitForFunction(() => window.p1653RestoreWaiting===true);
+`).replace(ownerB, ownerB + `
+ await page.locator('button.tab[data-view="stylist"]').first().click();
+ await page.waitForFunction(() => document.querySelector('#rememberStylistDefaults').disabled===false);
+ assert.equal(await page.getByLabel('What’s the plan?').inputValue(),'Casual');
+ assert.equal(await page.getByLabel('Style preference').inputValue(),'All');
+ console.log('P1653_RESTORE_GREEN',engine,width,'local defaults excluded from backup, survived restore and stayed private across interrupted restore');
+`);
 
 try {
   const runner = process.env.P1653_RESTORE==='1' ? restoreJourney : source.slice(0, start) + journey + source.slice(end);
