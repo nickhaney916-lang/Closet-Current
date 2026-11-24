@@ -241,7 +241,8 @@ $('styleCollectionForm').onsubmit=async event=>{
  if(!lease)return;
  const button=$('createCollectionOutfits');
  button.disabled=true;
- $('stylistStatus').textContent='Matching your clothes with the latest verified trends…';
+ $('stylistStatus').textContent=window.navigator?.onLine===false?
+  'Matching your saved clothes…':'Matching your clothes with the latest verified trends…';
  try{
   await closetReady;
   if(!lease.current())return;

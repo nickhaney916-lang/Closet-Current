@@ -967,28 +967,47 @@ const outfitBoardReady=(async()=>{
 
 const TREND_DATA_URL='https://raw.githubusercontent.com/nickhaney916-lang/Closet-Current/main/public/trend-data.json';
 const TREND_CACHE='closet-current-trend-library-v1';let trendLoading=false,trendLastCheck=0;
+let trendController=null,trendCheckFailed=false,trendRetryOnReconnect=false;
 function trendLibraryDate(value){const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'date unavailable';}
-function trendFreshnessText(failed=false){
- if(!activeTrendLibrary)return 'Current trend research is unavailable. Showing general styling ideas.';
+function trendFreshnessText(failed=trendCheckFailed){
+ const offline=navigator.onLine===false;
+ if(!activeTrendLibrary)return offline?'Offline · showing general styling ideas.':'Current trend research is unavailable. Showing general styling ideas.';
  const age=Date.now()-Date.parse(activeTrendLibrary.updatedAt),late=age>8*86400000;
- return (late?'Weekly research refresh is overdue. ':'')+'Last verified '+trendLibraryDate(activeTrendLibrary.updatedAt)+' · '+new Set(activeTrendLibrary.sources.map(s=>new URL(s.url).hostname)).size+' publication sites · '+new Set(activeTrendLibrary.products.map(p=>new URL(p.url).hostname)).size+' retailer sites. '+(failed?'Could not check for newer data; keeping the last verified library.':'Weekly background research; no app install or update needed.');
+ return (offline?'Offline · using the last verified trend library. ':late?'Weekly research refresh is overdue. ':'')+'Last verified '+trendLibraryDate(activeTrendLibrary.updatedAt)+' · '+new Set(activeTrendLibrary.sources.map(s=>new URL(s.url).hostname)).size+' publication sites · '+new Set(activeTrendLibrary.products.map(p=>new URL(p.url).hostname)).size+' retailer sites. '+(offline?'':failed?'Could not check for newer data; keeping the last verified library.':'Weekly background research; no app install or update needed.');
+}
+function updateTrendFreshness(){
+ for(const id of ['trendFreshness','stylistFreshness'])$(id).textContent=trendFreshnessText();
 }
 async function refreshTrendLibrary(force=false){
+ if(navigator.onLine===false){updateTrendFreshness();return;}
  if(trendLoading||(!force&&Date.now()-trendLastCheck<1800000))return;
  trendLoading=true;trendLastCheck=Date.now();const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
+ trendController=controller;
  try{
   const response=await fetch(TREND_DATA_URL+'?checked='+Math.floor(Date.now()/300000),{cache:'no-store',signal:controller.signal});if(!response.ok)throw Error('Recommendation data unavailable');
   const data=await response.json(),library=normalizeTrendLibrary(data);
   if(!activeTrendLibrary||Date.parse(library.updatedAt)>=Date.parse(activeTrendLibrary.updatedAt)){applyLoadedTrendLibrary(data);try{localStorage.setItem(TREND_CACHE,JSON.stringify(data));}catch{}}
-  $('trendFreshness').textContent=trendFreshnessText();renderTrendReferences();if(boardInitialized)renderBoardSuggestions();if(typeof renderStyledCollection==='function')renderStyledCollection();
- }catch{$('trendFreshness').textContent=trendFreshnessText(true);}
- finally{clearTimeout(timeout);trendLoading=false;}
+  trendCheckFailed=false;updateTrendFreshness();renderTrendReferences();if(boardInitialized)renderBoardSuggestions();if(typeof renderStyledCollection==='function')renderStyledCollection();
+ }catch{trendCheckFailed=true;updateTrendFreshness();}
+ finally{
+  clearTimeout(timeout);trendLoading=false;trendController=null;
+  const retry=trendRetryOnReconnect;trendRetryOnReconnect=false;
+  if(retry&&navigator.onLine!==false)void refreshTrendLibrary(true);
+ }
 }
 (async()=>{
  try{const cached=JSON.parse(localStorage.getItem(TREND_CACHE)||'null');if(cached)applyLoadedTrendLibrary(cached);}catch{}
  if(!activeTrendLibrary){try{const response=await fetch('./trend-data.json');if(response.ok)applyLoadedTrendLibrary(await response.json());}catch{}}
  renderTrendReferences();$('trendFreshness').textContent=trendFreshnessText();if(boardInitialized)renderBoardSuggestions();refreshTrendLibrary(true);
 })();
+window.addEventListener('offline',()=>{
+ trendController?.abort();
+ updateTrendFreshness();
+});
+window.addEventListener('online',()=>{
+ if(trendLoading)trendRetryOnReconnect=true;
+ else void refreshTrendLibrary(true);
+});
 window.addEventListener('focus',()=>refreshTrendLibrary());document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshTrendLibrary();});setInterval(()=>refreshTrendLibrary(),3600000);
 
 
