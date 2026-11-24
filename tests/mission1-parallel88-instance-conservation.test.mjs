@@ -578,3 +578,23 @@ test('P88 real Fashionpedia 46-class outputs cannot be claimed as fine subtype c
   assert.equal(denied.productPromotionAllowed,false);
  }
 });
+
+test('P88 malformed segmentation maps cannot create owner-review garment proposals',()=>{
+ const make=()=>{const f=fixture(24,24);f.paint(9,5,5,6,6);return f.map();};
+ const variants=[
+  m=>{m.confidence[125]=NaN;return m;},
+  m=>{m.confidence[0]=Infinity;return m;},
+  m=>{m.confidence[125]=1.4;return m;},
+  m=>{m.labels[0]=255;return m;},
+  m=>{m.confidence[0]=-.1;return m;},
+  m=>({...m,width:12.5,height:46.08}),
+  m=>({...m,labels:Array.from(m.labels)}),
+  m=>({...m,confidence:Array.from(m.confidence)}),
+  m=>({...m,confidence:m.confidence.slice(1)}),
+  m=>({...m,width:576,height:1})
+ ];
+ for(const mutate of variants)assert.throws(()=>clothingReviewInstances840(mutate(make())),/P840_INVALID_REVIEW_MASK/);
+ const valid=make(),original=clothingMaskGroups(valid)[0],review=clothingReviewInstances840(valid);
+ assert.equal(review.length,1);assert.equal(review[0].requiresReview,true);
+ proveConservation(original,review);
+});
