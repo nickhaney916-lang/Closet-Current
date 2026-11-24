@@ -21,6 +21,10 @@ window.addEventListener('closet:session-locked',()=>{
  $('createCollectionOutfits').disabled=false;
  $('stylistFocusItem').replaceChildren(new Option('Use my whole closet',''));
  styledCollectionResults=[];renderStyledCollection();
+ applyStylistDefaults();
+ $('stylistStatus').textContent='Pick your plan, then tap Create my outfits.';
+ $('stylistDefaultsStatus').textContent='';
+ setStylistDefaultsBusy(true);
 });
 // P167 research integration: signed original photo preview is part of the
 // normal Style My New Clothes card rendering in this isolated app branch.
@@ -201,15 +205,9 @@ function renderStyledCollection(){
 // publish an old owner's combination after those awaits, or let a superseded
 // request overwrite a newer result. Pin the exact private session, live
 // wardrobe objects, and four requested form inputs at submission.
-function beginOwnerStyledCollectionRequest(){
+function ownerStylistSession(){
  const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,
-  epoch=captureOperationEpoch,wardrobe=[...items];
- const values={
-  stylistOccasion:$('stylistOccasion')?.value,
-  stylistAudience:$('stylistAudience')?.value,
-  stylistSeason:$('stylistSeason')?.value,
-  stylistFocusItem:$('stylistFocusItem')?.value
- };
+  epoch=captureOperationEpoch;
  const ownsSession=()=>{
   if(typeof owner!=='string'||!owner||window.closetAuth!==auth||
      auth.user?.id!==owner||db!==ownerDB||
@@ -218,7 +216,18 @@ function beginOwnerStyledCollectionRequest(){
      $('authGate')?.hidden!==true||$('appShell')?.hidden!==false)return false;
   try{auth.assertCurrent?.();return true;}catch{return false;}
  };
- if(!ownsSession())return null;
+ return ownsSession()?{owner,ownerDB,ownsSession}:null;
+}
+function beginOwnerStyledCollectionRequest(){
+ const session=ownerStylistSession();
+ if(!session)return null;
+ const {ownsSession}=session,wardrobe=[...items];
+ const values={
+  stylistOccasion:$('stylistOccasion')?.value,
+  stylistAudience:$('stylistAudience')?.value,
+  stylistSeason:$('stylistSeason')?.value,
+  stylistFocusItem:$('stylistFocusItem')?.value
+ };
  const serial=++styledCollectionRequestSerial;
  const current=()=>serial===styledCollectionRequestSerial&&ownsSession()&&
   items.length===wardrobe.length&&wardrobe.every((item,i)=>items[i]===item)&&
@@ -273,5 +282,74 @@ for(const id of ['stylistOccasion','stylistAudience','stylistSeason'])$(id).onch
  renderStyledCollection();
  $('stylistStatus').textContent='Create outfits for your new preferences.';
 };
-$('stylistSeason').value=['Winter','Winter','Spring','Spring','Spring','Summer','Summer','Summer','Fall','Fall','Fall','Winter'][new Date().getMonth()];
+// This owner-private local row is outside the wardrobe backup state allowlist.
+const stylistDefaultsKey='stylist-defaults-v1';
+const defaultStylistSeason=()=>['Winter','Winter','Spring','Spring','Spring','Summer','Summer','Summer','Fall','Fall','Fall','Winter'][new Date().getMonth()];
+function applyStylistDefaults(record){
+ const occasion=$('stylistOccasion'),audience=$('stylistAudience');
+ occasion.value=Array.from(occasion.options).some(option=>option.value===record?.occasion)?record.occasion:'Casual';
+ audience.value=Array.from(audience.options).some(option=>option.value===record?.audience)?record.audience:'All';
+ $('stylistSeason').value=defaultStylistSeason();
+ window.syncOccasionChips?.();
+}
+function setStylistDefaultsBusy(busy){
+ $('rememberStylistDefaults').disabled=busy;
+ $('resetStylistDefaults').disabled=busy;
+}
+function accessStylistDefaults({owner,ownerDB},action){
+ return new Promise((resolve,reject)=>{
+  const tx=ownerDB.transaction('state',action==='read'?'readonly':'readwrite');
+  const store=tx.objectStore('state');
+  let request;
+  if(action==='read')request=store.get(stylistDefaultsKey);
+  if(action==='reset')request=store.delete(stylistDefaultsKey);
+  if(action==='save')request=store.put({id:stylistDefaultsKey,owner,
+   occasion:$('stylistOccasion').value,audience:$('stylistAudience').value});
+  tx.oncomplete=()=>resolve(request.result);
+  tx.onabort=()=>reject(tx.error);
+ });
+}
+applyStylistDefaults();
+const initialStylistSerial=styledCollectionRequestSerial;
+closetReady.then(async()=>{
+ const session=ownerStylistSession();
+ if(!session){
+  if($('appShell').hidden===false)
+   $('stylistDefaultsStatus').textContent='Remembered defaults are unavailable on this device.';
+  return;
+ }
+ try{
+  const record=await accessStylistDefaults(session,'read');
+  if(session.ownsSession()&&styledCollectionRequestSerial===initialStylistSerial&&record?.owner===session.owner)
+   applyStylistDefaults(record);
+ }catch{
+  if(session.ownsSession())$('stylistDefaultsStatus').textContent='Could not load remembered defaults on this device.';
+ }finally{
+  if(session.ownsSession())setStylistDefaultsBusy(false);
+ }
+});
+async function changeStylistDefaults(action){
+ const session=ownerStylistSession();
+ if(!session)return;
+ const status=$('stylistDefaultsStatus');
+ const serial=styledCollectionRequestSerial;
+ setStylistDefaultsBusy(true);
+ status.textContent='';
+ try{
+  await accessStylistDefaults(session,action);
+  if(!session.ownsSession())return;
+  if(action==='reset'&&serial===styledCollectionRequestSerial){
+   applyStylistDefaults();
+   $('stylistOccasion').onchange();
+  }
+  status.textContent=action==='save'?'Stylist defaults remembered on this device.':'Remembered stylist defaults cleared.';
+ }catch{
+  if(session.ownsSession())status.textContent='Could not update remembered defaults. Try again.';
+ }finally{
+  if(session.ownsSession())setStylistDefaultsBusy(false);
+ }
+}
+$('rememberStylistDefaults').onclick=()=>changeStylistDefaults('save');
+$('resetStylistDefaults').onclick=()=>changeStylistDefaults('reset');
+
 $('stylistAddClothes').onclick=()=>switchView('scan');

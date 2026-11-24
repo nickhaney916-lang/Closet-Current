@@ -6,7 +6,7 @@ const assert=require('node:assert/strict');
 const {readFileSync}=require('node:fs');
 const vm=require('node:vm');
 const source=readFileSync('public/closet-stylist.js','utf8');
-const start=source.indexOf('function beginOwnerStyledCollectionRequest(){');
+const start=source.indexOf('function ownerStylistSession(){');
 const end=source.indexOf("for(const id of ['stylistOccasion'",start);
 assert.ok(start>0&&end>start,'Actual production request lease and submit required');
 const code=source.slice(start,end);
