@@ -1809,6 +1809,7 @@ function stopCamera(){
  if(stream)stream.getTracks().forEach(t=>t.stop());
  stream=null;cameraMode=null;video.srcObject=null;video.classList.remove('visible');
  $('placeholder').hidden=false;$('cameraChoices').hidden=false;$('cameraActions').hidden=true;
+ $('takePhoto').disabled=false;$('stop').disabled=false;
  controls(false);$('captureState').textContent='Camera stopped · your photos are ready to review';
 }
 function controls(disabled){for(const id of ['start','startAuto','upload','interval','clothingPhotos','singleCameraCapture','outfitCamera','outfitUpload','outfitRetry','captureSingle','captureOutfit'])$(id).disabled=disabled;}
@@ -1862,9 +1863,25 @@ function reportCaptureCommitFailure(error,epoch=captureOperationEpoch){
 function takePhoto(){
  if(!stream||cameraMode!=='manual')return;
  if(typeof captureProof01Active!=='undefined'&&captureProof01Active){
-  const epoch=captureOperationEpoch;
-  captureProofPhoto().then(accepted=>{if(epoch===captureOperationEpoch&&accepted){beep();$('captureState').textContent=session+' photos taken · ready for the next piece';if(session>=60)finishScan();}})
-  .catch(error=>reportCaptureCommitFailure(error,epoch));return;
+  if(captureProofTaking)return;
+  const epoch=captureOperationEpoch,request=cameraRequest;
+  $('takePhoto').disabled=true;$('stop').disabled=true;
+  $('captureState').textContent='Saving photo for review…';
+  captureProofPhoto().then(accepted=>{
+   if(epoch!==captureOperationEpoch||request!==cameraRequest)return;
+   if(accepted){
+    beep();$('captureState').textContent=session+' photos taken · ready for the next piece';
+    if(session>=60)finishScan();
+   }else $('captureState').textContent='Ready to take another photo';
+  }).catch(error=>{
+   if(request!==cameraRequest)return;
+   $('captureState').textContent='Ready to try another photo';
+   reportCaptureCommitFailure(error,epoch);
+  }).finally(()=>{
+   if(epoch===captureOperationEpoch&&request===cameraRequest){
+    $('takePhoto').disabled=false;$('stop').disabled=false;
+   }
+  });return;
  }
  try{candidate(snap());beep();$('captureState').textContent=`${session} photos taken · ready for the next piece`;if(session>=60){finishScan();message('60 photos collected. Review this batch before continuing.');}}
  catch{message('The camera is still getting ready. Wait a moment, then tap Take photo again.');}
