@@ -40,7 +40,7 @@ for(const [name,change] of [
 for(const [name,change] of [
  ['session revoked',f=>f.revoke()],['dialog closed',f=>f.dialog.open=false],
  ['save in progress',f=>f.disable()],['row removed',f=>f.batch.pop()],
- ['new scan',f=>f.localPending.add(f.item.id)],['proposal replaced',f=>f.item.localChoices[0].itemType='T-shirt']
+ ['new scan',f=>f.localPending.add(f.item.id)],['original bytes replaced',f=>{f.item.image='replacement';f.item.originalPhoto.image='replacement';}],['proposal replaced',f=>f.item.localChoices[0].itemType='T-shirt']
 ])test('late click refuses '+name,()=>{const f=fixture(),use=f.mount();change(f);use.onclick();assert.equal(f.draft.category,'Uncategorized');});
 test('recognition retains a verified proposal but never applies or indexes it',async()=>{
  const item=row();item.requiresOwnershipConfirmation=false;item.localChoices=[];
@@ -50,8 +50,7 @@ test('recognition retains a verified proposal but never applies or indexes it',a
  recognitionState:{activeId:null,phase:'ready'},localPending:new Set([item.id]),recognitionUnavailable:false,localReady:true,render(){},message(){},$:()=>({}),
  checkPhoto:async()=>({blank:false,colorEstimate:'Blue',signature:'sig',aspect:1}),ClothingDetails:{fillColor:()=>({}),fill:()=>({})},similarPhotos:()=>false,
  localRequest:async()=>({strong:true,choices:[{category:'Tops',itemType:'Sweatshirt',score:.99}]}),segmentationAllows:()=>true,applyLocalChoice:()=>applies++,saveIndexed:async()=>{saves++;return true},persistDraft:async()=>{persists++;return true}};
- const h=source.indexOf('function pendingIdentitySuggestion(item){'),i=source.indexOf('function adjustPhoto(item){');assert.ok(h>=0&&i>h);
- await new Function(...Object.keys(c),source.slice(h,i)+'\n'+source.slice(a,b)+'\nreturn recognizeItem(item);')(...Object.values(c));
+ await new Function(...Object.keys(c),source.slice(a,b)+'\nreturn recognizeItem(item);')(...Object.values(c));
  assert.equal(saves,0);assert.equal(applies,0);assert.equal(persists,1);assert.equal(item.category,'Uncategorized');assert.equal(item.itemType,'Unknown');
  assert.equal(item.originalPhoto.image,'original');assert.equal(item.localChoices[0]?.itemType,'Sweatshirt');
 });
