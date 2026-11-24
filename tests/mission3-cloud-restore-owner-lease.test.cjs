@@ -25,6 +25,7 @@ function fixture({hold='',ready=true,failStart=false}={}){
  let callbacks=null,started=0,rendered=0,queued=0,indexRefresh=0,looksCalled=0,boardCalled=0,workRan=0;
  const label={hidden:true,textContent:''};
  const ctx={
+  assertCompleteWardrobe(){},
   window:{closetAuth:auth,closetIndex02:{refresh:async()=>{indexRefresh++;}},
    closetCloud:{start:async (_db,options)=>{if(failStart)throw Error('cloud unavailable');callbacks=options;started++;}}},
   db:first,captureOperationEpoch:0,Promise,
