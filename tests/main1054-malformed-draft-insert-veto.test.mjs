@@ -130,6 +130,8 @@ const photo='data:image/jpeg;base64,AA==';
 const good=(id,extra={})=>({id,name:id,ownerId:'synthetic-owner',image:photo,category:'Tops',itemType:'T-shirt',...extra});
 const validSaved=good('saved-valid'),validDraft=good('draft-valid');
 const startupCases=[
+ ...[null,false,0,'',{}].map(drafts=>({name:'malformed draft container '+JSON.stringify(drafts),saved:[validSaved],drafts,expectedDraft:[],invalid:1})),
+ {name:'missing batch in existing draft container',saved:[validSaved],expectedDraft:[],invalid:1},
  {name:'healthy roster',saved:[validSaved],drafts:[validDraft],expectedSaved:['saved-valid'],expectedDraft:['draft-valid'],invalid:0},
  {name:'legacy name and owner absent',saved:[{id:'legacy',image:photo}],drafts:[],expectedSaved:['legacy'],expectedDraft:[],invalid:0},
  {name:'null draft',saved:[validSaved],drafts:[null,validDraft],invalid:1},
@@ -159,7 +161,12 @@ async function runStartup(c,connection,readAllFrom,readDraftFrom){
 }
 for(const c of startupCases)test('startup roster: '+c.name,async()=>{
  let closes=0;const connection={close(){closes++;}};
- const result=await runStartup(c,connection,async()=>structuredClone(c.saved),async()=>structuredClone(c.drafts));
+ const readDraft=new Function(readSource+'\nreturn readDraftFrom;')();
+ const result=await runStartup(c,connection,async()=>structuredClone(c.saved),()=>{
+  const req={result:structuredClone({id:'draft',batch:c.drafts})};
+  const db={transaction:()=>({objectStore:()=>({get:()=>{queueMicrotask(()=>req.onsuccess());return req;}})})};
+  return readDraft(db);
+ });
  verifyStartup(c,result);assert.equal(closes,c.invalid?1:0);
 });
 if(process.env.NATIVE_DRAFT_BROWSER==='1'){
@@ -171,7 +178,7 @@ if(process.env.NATIVE_DRAFT_BROWSER==='1'){
    await page.route('https://startup-recovery.invalid/**',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><title>Startup recovery fixture</title>'}));
    await page.goto('https://startup-recovery.invalid/');
    for(const c of startupCases){
-    const result=await page.evaluate(async ({c,taxonomy,bootSource})=>{
+    const result=await page.evaluate(async ({c,taxonomy,bootSource,readSource})=>{
      const req=indexedDB.open('closet-current-user-synthetic-owner',1);
      req.onupgradeneeded=()=>{req.result.createObjectStore('items',{keyPath:'id'});req.result.createObjectStore('state',{keyPath:'id'});};
      const connection=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
@@ -181,17 +188,18 @@ if(process.env.NATIVE_DRAFT_BROWSER==='1'){
      for(const row of c.saved)setup.objectStore('items').put(row);
      setup.objectStore('state').put({id:'draft',batch:c.drafts});await done;
      const read=(db,store,key)=>new Promise((resolve,reject)=>{const s=db.transaction(store).objectStore(store),r=key?s.get(key):s.getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
-     const all=db=>read(db,'items'),draft=async db=>(await read(db,'state','draft')).batch;
-     const before={items:await all(connection),batch:await draft(connection)};
+     const all=db=>read(db,'items'),rawDraft=db=>read(db,'state','draft');
+     const draft=new Function(readSource+'\nreturn readDraftFrom;')();
+     const before={items:await all(connection),draft:await rawDraft(connection)};
      const auth={user:{id:'synthetic-owner'},ready:Promise.resolve(),assertCurrent(){}};
      const code='let db,items=[],batch=[],startupWardrobeRecoveryCount=0,renders=0,queued=[];const render=()=>renders++;const queueAutomatic=item=>queued.push(item.id);'+taxonomy+'\n'+bootSource+'\nreturn closetReady.then(()=>({items,batch,recovery:startupWardrobeRecoveryCount,open:db===connection,renders,queued}));';
      const result=await new Function('window','captureOperationEpoch','connection','openDB','readAllFrom','readDraftFrom','message',code)({closetAuth:auth},0,connection,async()=>connection,all,draft,()=>{});
      connection.close();
      const again=indexedDB.open('closet-current-user-synthetic-owner',1);
      const inspect=await new Promise((resolve,reject)=>{again.onsuccess=()=>resolve(again.result);again.onerror=()=>reject(again.error);});
-     const after={items:await all(inspect),batch:await draft(inspect)};inspect.close();
+     const after={items:await all(inspect),draft:await rawDraft(inspect)};inspect.close();
      return {result,before,after};
-    },{c,taxonomy,bootSource});
+    },{c,taxonomy,bootSource,readSource});
     verifyStartup(c,result.result);assert.deepEqual(result.after,result.before);
    }
    console.log('NATIVE_STARTUP_WARDROBE_RECOVERY '+name+' '+startupCases.length+'/'+startupCases.length+' PASS');
