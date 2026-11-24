@@ -14,7 +14,7 @@ import {institutionalPartAAnchor}
  from './met70759-physical-garment-dimension-anchor89.mjs';
 import {evaluateFivePointPlanarReference}
  from './physical-five-point-photo-plane89.mjs';
-import {assessMetricGarmentToWearerFit,auditSampledOriginalFrontProportions,trialBoundedOriginalFrontCorrection,trialCoordinatedOriginalFrontCorrection}
+import {assessMetricGarmentToWearerFit,auditSampledOriginalFrontProportions,trialBoundedOriginalFrontCorrection,trialCoordinatedOriginalFrontCorrection,trialProgressiveOriginalFrontStabilization}
  from './measured-wearer-to-licensed-rig-garment-fit89.mjs';
 
 window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=()=>{
@@ -147,6 +147,15 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    coordinatedReceipt.consumer3DAdmitted===false&&
    coordinatedReceipt.materialOrCollisionCertified===false,
    'coordinated-correction-must-never-be-applied-or-certified');
+  const progressive=trialProgressiveOriginalFrontStabilization({
+   rest:grid[4].front,pose:poseBuffers[worstPoseIndex],indices:frontIndices,
+   expectedFaces:35262,expectedVertices:x.sourceFrontN
+  });
+  const {correctedPose:discardedProgressiveCopy,...progressiveReceipt}=progressive;
+  invariant(progressiveReceipt.correctionAppliedToLiveMesh===false&&
+   progressiveReceipt.consumer3DAdmitted===false&&
+   progressiveReceipt.materialOrCollisionCertified===false,
+   'progressive-stabilization-must-never-be-applied-or-certified');
   const evaluator=evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase({
    frontGridPoses:grid.map(x=>x.front),
    bodyGridPoses:grid.map(x=>x.body),
@@ -314,6 +323,7 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    sampledOriginalFrontProportionAudit:sampledProportions,
    sampledWorstPoseBoundedCorrection:{worstPoseIndex,...correctionReceipt},
    sampledWorstPoseCoordinatedCorrection:{worstPoseIndex,...coordinatedReceipt},
+   sampledWorstPoseProgressiveStabilization:{worstPoseIndex,...progressiveReceipt},
    originalGarmentToBodyMeasuredWearerFitGate:originalMeasuredWearerFit,
    unmeasuredOriginalMuseumFivePointPhotoPlane:museumFivePointPhotoPlane,
    museumOriginalPartARealPhysicalDimensionEvidence:museumRealPhysicalPartA,
