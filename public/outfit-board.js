@@ -680,6 +680,7 @@ function renderBoardSuggestions(){
 }
 function renderSavedOutfitBoards(){
  const grid=$('savedBoards');grid.replaceChildren();
+ if(typeof renderOutfitWearHistory==='function')renderOutfitWearHistory();
  // Bind saved outfit cards to the owner who produced their labels and IDs.
  // A stale click must not select a former owner's outfit in a new session.
  const savedListLease=nativeLossless04Active?null:beginOwnerBoardUiLease();
@@ -693,7 +694,10 @@ function renderSavedOutfitBoards(){
    if(!savedListLease?.current()||b.isConnected===false||
       savedOutfitBoards[index]!==value)return;
    currentBoard=cleanOutfitBoard(value,items);syncBoardInputs();renderOutfitBoard();storeBoard();
-  };grid.append(b);
+  };
+  const wear=savedListLease&&typeof outfitWearRecordButton==='function'?outfitWearRecordButton(value,savedListLease):null;
+  if(wear){b.dataset.wearSavedIndex=String(index);const row=node('div',null,'board-saved-wear');row.append(b,wear);grid.append(row);}
+  else grid.append(b);
  }
 }
 async function importBoardBackup(value){
