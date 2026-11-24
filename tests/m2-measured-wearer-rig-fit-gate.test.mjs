@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assessMetricGarmentToWearerFit as assess}
+import {assessMetricGarmentToWearerFit as assess,auditSampledOriginalFrontProportions as audit}
  from '../research/parallel89/measured-wearer-to-licensed-rig-garment-fit89.mjs';
 
 const sourceSHA='a'.repeat(64),rigSHA='b'.repeat(64);
@@ -218,5 +218,34 @@ test('sparse measurement arrays fail closed without emitting a partial metric re
   assert.equal(r.decision,expected);
   assert.equal(r.metricRigScaleIntervalMmPerRigUnit,undefined);
   assert.equal(r.conditionalMeasuredGarmentBodyEase,undefined);
+ }
+});
+
+test('sampled source geometry distinguishes rigid motion, stretch, compression and collapse',()=>{
+ const rest=[0,0,0,1,0,0,0,1,0],indices=[0,1,2];
+ const poses=[[2,3,4,2,4,4,1,3,4],[0,0,0,2,0,0,0,2,0],
+  [0,0,0,.5,0,0,0,.5,0],[0,0,0,1,0,0,2,0,0]];
+ const input={rest,poses,indices,expectedFaces:1,expectedVertices:3},before=JSON.stringify(input);
+ const r=audit(input);safe(r);assert.equal(JSON.stringify(input),before);
+ const [rigid,stretch,compression,collapse]=r.sampledPoseDistortion;
+ assert.equal(rigid.minimumEdgeLengthRatio,1);assert.equal(rigid.edgesOutsideResearchBand,0);
+ assert.equal(stretch.maximumEdgeLengthRatio,2);assert.equal(stretch.maximumTriangleAreaRatio,4);
+ assert.equal(compression.minimumEdgeLengthRatio,.5);assert.equal(compression.minimumTriangleAreaRatio,.25);
+ assert.equal(collapse.collapsedFaces,1);assert.equal(collapse.minimumTriangleAreaRatio,0);
+ assert.equal(r.continuousMotionOrMaterialStrainCertified,false);
+ assert.equal(r.arbitraryResearchBandNotPhysicalFabricLimit,true);
+});
+test('sampled geometry audit counts shared indexed edges once and refuses missing or invalid source buffers',()=>{
+ const rest=[0,0,0,1,0,0,0,1,0,1,1,0],indices=[0,1,2,1,3,2];
+ const fixture=()=>({rest:[...rest],poses:[[...rest]],indices:[...indices],expectedFaces:2,expectedVertices:4});
+ const good=audit(fixture());safe(good);assert.equal(good.uniqueOriginalFrontEdges,5);
+ for(const change of [
+  x=>{delete x.poses[0];},x=>{delete x.rest[0];},x=>{x.poses[0][0]=NaN;},
+  x=>{x.indices[0]=4;},x=>{x.indices[0]=1;},x=>{x.rest[3]=0;},
+  x=>{x.expectedFaces=1;},x=>{x.poses=[];}
+ ]){
+  const x=fixture();change(x);const r=audit(x);safe(r);
+  assert.equal(r.decision,'BLOCKED_INVALID_SAMPLED_ORIGINAL_FRONT_GEOMETRY');
+  assert.equal(r.sampledPoseDistortion,undefined);
  }
 });
