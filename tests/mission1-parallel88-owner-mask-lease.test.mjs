@@ -3455,3 +3455,30 @@ test('P88 unreadable active worker message cannot become successful separation',
   }
  }
 });
+
+test('P88 processing exceptions fail closed before a later terminal count can claim success',()=>{
+ const piece={image:'data:image/jpeg;base64,PIECE',hint:{categories:['Shoes'],types:[]},
+  instanceMethod:'connected_footwear_component',requiresReview:true};
+ for(const href of ['https://example.test/closet','https://example.test/closet?outfitInstances840=1']){
+  for(const kind of ['invalid-coercion','candidate-throws']){
+   const h=captureHarness({ownerId:'owner-A',href});
+   h.emit({type:'piece',piece});
+   if(kind==='candidate-throws'){
+    h.c.candidate=()=>{throw Error('simulated candidate processing interruption');};
+    h.emit({type:'piece',piece});
+   }else h.emit({type:'piece',piece:{...piece,recognitionPhoto:{image:{toString:null}}}});
+   assert.equal(h.c.busy,false,'failure releases controls immediately');
+   assert.equal(h.c.worker.closed,true);
+   assert.equal(h.node('outfitRetry').hidden,false);
+   h.emit({type:'done',count:kind==='candidate-throws'?2:1});
+   assert.equal(h.node('outfitRetry').hidden,false,'late done cannot overwrite failure');
+   assert.match(h.node('outfitSplitStatus').textContent,/Outfit processing was interrupted/);
+   assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);
+   assert.equal(vm.runInContext('lastOutfitPhoto',h.c),'data:image/jpeg;base64,ORIGINAL');
+   assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,ORIGINAL');
+  }
+  const valid=captureHarness({ownerId:'owner-A',href});
+  valid.emit({type:'piece',piece});valid.emit({type:'done',count:1});
+  assert.equal(valid.c.batch.length,1);assert.equal(valid.node('outfitRetry').hidden,true);
+ }
+});
