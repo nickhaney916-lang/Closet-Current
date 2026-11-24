@@ -3405,3 +3405,25 @@ test('P88 malformed outfit region is a retryable partial failure, not successful
  assert.equal(h.node('outfitRetry').hidden,true);
  assert.match(h.node('outfitSplitStatus').textContent,/1 tentative clothing regions cropped/);
 });
+
+test('P88 worker terminal count must match verified region deliveries, not draft insertions',()=>{
+ const piece={image:'data:image/jpeg;base64,PIECE',hint:{categories:['Shoes'],types:[]},
+  instanceMethod:'connected_footwear_component',requiresReview:true};
+ for(const href of ['https://example.test/closet','https://example.test/closet?outfitInstances840=1']){
+  for(const count of [undefined,2,0,-1,1.5,'1']){
+   const h=captureHarness({ownerId:'owner-A',href});
+   h.emit({type:'piece',piece});h.emit({type:'done',count});
+   assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);
+   assert.equal(h.c.worker.closed,true);assert.equal(h.node('outfitRetry').hidden,false);
+   assert.match(h.node('outfitSplitStatus').textContent,/returned an incomplete result/);
+   assert.equal(vm.runInContext('lastOutfitPhoto',h.c),'data:image/jpeg;base64,ORIGINAL');
+  }
+  const h=captureHarness({ownerId:'owner-A',href});
+  const originalCandidate=h.c.candidate;h.c.candidate=(image,options)=>h.c.batch.some(x=>x.image===image)?false:originalCandidate(image,options);
+  h.emit({type:'piece',piece});h.emit({type:'piece',piece});h.emit({type:'done',count:2});
+  assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);
+  assert.equal(h.node('outfitRetry').hidden,true,'coalesced duplicate does not fabricate a missing worker delivery');
+  const zero=captureHarness({ownerId:'owner-A',href});
+  zero.emit({type:'done',count:0});assert.equal(zero.node('outfitRetry').hidden,true);
+ }
+});
