@@ -60,6 +60,7 @@ function privateDB(owner,record){
 }
 function fixture({reviewed=true}={}){
  const committed=deferred(),deleted=deferred(),events=[];
+ let commitEntered=false;
  const firstDB=privateDB('A',old),secondDB=privateDB('B',newer);
  const firstAuth={user:{id:'A'},assertCurrent(){}},
   secondAuth={user:{id:'B'},assertCurrent(){}};
@@ -75,7 +76,7 @@ function fixture({reviewed=true}={}){
   localPending:new Set(),sessionCapturedIds:new Set(),failedDraftCaptures:new Set(),
   document:{createElement:tag=>element(tag),createTextNode:text=>({text}),
    body:{append(el){el.isConnected=true;domRoot.append(el);}}},
-  node:(tag,text)=>element(tag,text),clothingFields:(form,model)=>()=>({...model}),
+  node:(tag,text)=>element(tag,text),clothingFields:(form,model)=>()=>({sleeveLength:'Unknown',pattern:'Unknown',fit:'Unknown',seasons:[],brand:'',size:'',material:'',occasion:'',notes:'',...model}),
   structuredClone,Date,Error,JSON,
   $:id=>nodes[id]||({hidden:false}),
   captureProofOwner:()=>ctx.window.closetAuth.user?.id,
@@ -83,6 +84,7 @@ function fixture({reviewed=true}={}){
   queued:work=>work(),
   loadReviewedSourceModule:async()=>({commitHumanReviewedPhoto119:async args=>{
    assert.equal(args.db,firstDB,'must pin original signed owner DB');
+   commitEntered=true;
    const result=await committed.promise;
    if(result.saved)firstDB.saved={...old,category:'Tops',itemType:'Shirt',color:'Blue'};
    return result;
@@ -104,6 +106,7 @@ function fixture({reviewed=true}={}){
  assert.ok(form?.onsubmit&&remove?.onclick&&save,'Actual editor callbacks needed');
  return {ctx,firstDB,secondDB,committed,deleted,events,dialog,item,save,remove,
   submit:()=>form.onsubmit({preventDefault(){}}),
+  async assertCommitEntered(){for(let i=0;i<20&&!commitEntered;i++)await Promise.resolve();assert.equal(commitEntered,true,'review must reach the original owner atomic commit before revocation');},
   switchToOther(){
    ctx.captureOperationEpoch++;ctx.window.closetAuth=secondAuth;
    ctx.db=secondDB;ctx.batch=[structuredClone(newer)];
@@ -119,6 +122,7 @@ function fixture({reviewed=true}={}){
 test('same-owner reviewed original reads committed record from exact private DB before acknowledging',async()=>{
  const f=fixture();
  const pending=f.submit();
+ await f.assertCommitEntered();
  f.committed.resolve({saved:true});
  await pending;
  assert.equal(f.firstDB.reads,1);
@@ -129,6 +133,7 @@ test('same-owner reviewed original reads committed record from exact private DB 
 });
 test('revoked owner after reviewed atomic commit cannot read or render new owner wardrobe',async()=>{
  const f=fixture(),pending=f.submit();
+ await f.assertCommitEntered();
  f.switchToOther();f.committed.resolve({saved:true});
  await pending;
  assert.equal(f.firstDB.reads,0);
@@ -140,6 +145,7 @@ test('revoked owner after reviewed atomic commit cannot read or render new owner
 });
 test('same account ID re-login is NOT permission for an old review save to publish its success',async()=>{
  const f=fixture(),pending=f.submit();
+ await f.assertCommitEntered();
  f.reloginSameOwner();f.committed.resolve({saved:true});
  await pending;
  assert.equal(f.firstDB.reads,0);
@@ -148,12 +154,14 @@ test('same account ID re-login is NOT permission for an old review save to publi
 });
 test('revoked old owner cannot publish a late reviewed-save failure warning',async()=>{
  const f=fixture(),pending=f.submit();
+ await f.assertCommitEntered();
  f.switchToOther();f.committed.reject(Error('Synthetic quota failure'));
  await pending;
  assert.equal(f.events.filter(x=>x.startsWith('message:')).length,0);
 });
 test('current owner still receives actionable failed-reviewed-save warning',async()=>{
  const f=fixture(),pending=f.submit();
+ await f.assertCommitEntered();
  f.committed.reject(Error('Synthetic quota failure'));
  await pending;
  assert.equal(f.save.disabled,false);
