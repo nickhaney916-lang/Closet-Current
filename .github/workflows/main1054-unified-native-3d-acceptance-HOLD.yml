@@ -40,6 +40,8 @@ jobs:
           test "$(git rev-parse HEAD:.github/workflows/native-mobile-09-no-deploy.yml)" = 858b13a311ed1e4fd8e72241a434cf32b57a3b34
           test "$(git rev-parse HEAD:.github/workflows/native-photo-readiness-08-no-deploy.yml)" = 85a0cc669de00c152c9e17fd2324e59ab6ae383a
           test "$(git rev-parse HEAD:.github/workflows/native-restore-3d-06-no-deploy.yml)" = 6798b62d4de129ce661cc9a7fcca4194746a024e
+          test "$(git rev-parse HEAD:scripts/install-parallel90-viewer.mjs)" = 6768a6cb58224f403254aeda6aa80d2e720d6375
+          test "$(git rev-parse HEAD:scripts/check-parallel90-interactions.mjs)" = b54c34e4c5743ba6fc2e9161ce3acf7c60886bee
           git log -1 --format='commit %H tree %T'
       - name: Install pinned dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
@@ -219,6 +221,9 @@ jobs:
         name: Actual WebKit original source-qualified viewer at all three widths
         run: |
           set -eu
+          # Match the existing P90 workflow: install the pinned camera controls only into
+          # the disposable PR541 checkout, not the accepted application or donor branch.
+          node scripts/install-parallel90-viewer.mjs
           P90_ENGINE=webkit P90=1 node scripts/test-native-3d-05-browser.mjs
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
@@ -241,6 +246,7 @@ jobs:
             benchmark/native-3d-05/
             benchmark/native-3d-05-audit/
             benchmark/native-3d-05-webkit/
+            benchmark/parallel90/webkit/
             benchmark/native-restore-3d-06/
             benchmark/native-restore-3d-06-audit/
             benchmark/native-index-live-07/
