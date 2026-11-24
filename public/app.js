@@ -1411,6 +1411,17 @@ function renderPhotoResults(grid,results){
   card.append(image,body);grid.append(card);
  }
 }
+// Weekly memory review updates recognition evidence, not the visible saved
+// garment metadata or outfit slots. Refresh only its affected UI surfaces;
+// normal user mutations and navigation still use the complete render.
+function refreshRecognitionMemorySurfaces(){
+ if(startupWardrobeRecoveryCount){renderStartupWardrobeRecovery();return;}
+ $('reviewCount').textContent=batch.length;$('closetCount').textContent=items.length;$('sessionCount').textContent=session;
+ renderRecognitionNotice();
+ const results=[...batch,...items.filter(item=>sessionCapturedIds.has(item.id))];
+ renderPhotoResults($('reviewGrid'),results);
+ renderPhotoResults($('scanResults'),results);
+}
 function render(){
  if(startupWardrobeRecoveryCount){renderStartupWardrobeRecovery();return;}
  const previousFocus=document.activeElement,focusedCard=previousFocus?.closest?.('#closetGrid .card'),
@@ -1429,6 +1440,7 @@ function render(){
  const visible=(query||filter!=='All categories'||window.closetBrowseAll||window.closetSlotFilter)?items.filter(x=>(!window.closetSlotFilter||outfitSlots.some(slot=>slot.id===window.closetSlotFilter&&slotAllows(slot,x)))&&(!window.closetItemType||x.itemType===window.closetItemType)&&(!window.closetSleeves||window.closetSleeves.includes(x.sleeveLength))&&clothingMatches(x,query,filter,$('seasonFilter').value,$('sleeveFilter').value)&&(!window.closetIndex02||window.closetIndex02.includes(x.id))):[];
  if(!visible.length)empty(cg,items.length?'No matching pieces.':'Your closet is ready to grow.',items.length?'Try a different search or category.':'Save your first piece from the review tab.');
  const page=visible.length<=100?visible:visible.slice(0,closetRendered136);
+ function appendClosetCards136(page){
  for(const item of page){const card=node('article',null,'card'),im=node('img');card.dataset.itemId=item.id;im.loading='lazy';if(visible.length>100)im.decoding='async';im.src=item.image;im.alt=item.name;const body=node('div',null,'card-body');body.append(node('h3',item.name),node('p',[item.color,item.pattern].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')),node('p',item.seasons.length?item.seasons.join(' · '):'Season unknown'),node('p',[item.brand,item.size,item.material,item.occasion].filter(Boolean).join(' · ')),node('p',item.notes));if(item.itemType==='Unknown'&&item.color)body.append(node('p','Category and color saved · refine the type when convenient.','fine'));const actions=node('div',null,'actions'),edit=node('button','Adjust details','secondary'),del=node('button','Delete','secondary'),styleFocus=node('button','Get three outfit ideas','secondary');edit.dataset.action='edit-clothing';styleFocus.type='button';styleFocus.onclick=()=>focusSavedClosetCardOwnerSafe(item,styleFocus);edit.onclick=()=>{const editorLease=ownerWardrobeMutationLease();
  const assertEditor=()=>{editorLease.assertLease();if(!items.includes(item))throw Error('This saved garment is no longer in the signed-owner wardrobe');};
  const dialog=document.createElement('dialog');dialog.className='clothing-editor';dialog.style.cssText='border:1px solid #d9ddd2;border-radius:8px;max-width:440px;width:90%;padding:24px';
@@ -1605,12 +1617,33 @@ function render(){
   assertOwner();
  });
  actions.append(styleNew);
-}actions.append(styleFocus,edit,cropButton(item),del);body.append(actions);card.append(im,body);if(typeof enableClosetDrag==='function')enableClosetDrag(im,item);cg.append(card);}
+}actions.append(styleFocus,edit,cropButton(item),del);body.append(actions);card.append(im,body);if(typeof enableClosetDrag==='function')enableClosetDrag(im,item);cg.append(card);}}
+ appendClosetCards136(page);
  if(visible.length>page.length){
   const more=node('button','Show more clothing','secondary closet-page-more136');more.type='button';
   more.setAttribute('aria-label','Show more clothing');
-  more.onclick=()=>{closetRendered136=Math.min(visible.length,closetRendered136+closetPageSize136);render();};
   const status=node('p',`Showing ${page.length} of ${visible.length} pieces.`,'fine closet-page-status136');status.setAttribute('role','status');
+  // Paging changes presentation only. Keep existing cards/images and their
+  // handlers, but revoke the captured roster on account or normal render changes.
+  let count=page.length;
+  const pageAuth=window.closetAuth,pageOwner=pageAuth?.user?.id,pageDB=db,pageEpoch=captureOperationEpoch;
+  more.onclick=()=>{
+   if(!more.isConnected||more.previousElementSibling!==status||status.previousElementSibling!==cg||
+      window.closetAuth!==pageAuth||pageAuth?.user?.id!==pageOwner||db!==pageDB||
+      captureOperationEpoch!==pageEpoch||$('appShell').hidden||$('closet').hidden)return;
+   try{pageAuth?.assertCurrent?.();}catch{return;}
+   const next=Math.min(visible.length,count+closetPageSize136);
+   const newPage=visible.slice(count,next);
+   if(newPage.some(item=>!items.includes(item))){render();return;}
+   const firstNewIndex=count,hadFocus=document.activeElement===more;
+   appendClosetCards136(newPage);
+   count=closetRendered136=next;
+   status.textContent=`Showing ${count} of ${visible.length} pieces.`;
+   if(count===visible.length){
+    more.remove();
+    if(hadFocus)cg.children[firstNewIndex]?.querySelector('[data-action=edit-clothing]')?.focus({preventScroll:true});
+   }
+  };
   cg.after(status,more);
  }
  if(typeof renderClosetBrowser==='function')renderClosetBrowser();
@@ -2576,16 +2609,17 @@ function localRequest(type,image,itemId,hint){
   }catch{stopRecognitionWorker('Recognition could not start. Try again or use Adjust.');reject(Error('Recognition could not start.'));}
  });
 }
-async function enableLocal(){
+async function enableLocal({backgroundMemory=false}={}){
  if(localReady)return true;
+ const refreshScannerUi=()=>backgroundMemory?refreshRecognitionMemorySurfaces():render();
  if(!localLoadPromise){
   const epoch=captureOperationEpoch;
   const loading=(async()=>{
-   recognitionState.phase='loading';recognitionState.percent=null;if(typeof recordDeviceEvent==='function')recordDeviceEvent('setup_start');const setupStarted=Date.now();render();
+   recognitionState.phase='loading';recognitionState.percent=null;if(typeof recordDeviceEvent==='function')recordDeviceEvent('setup_start');const setupStarted=Date.now();refreshScannerUi();
    try{
     await localRequest('load');
     if(epoch!==captureOperationEpoch)throw Error('Recognition account session ended');
-    localReady=true;recognitionUnavailable=false;scheduleMemoryReview();if(typeof recordDeviceEvent==='function')recordDeviceEvent('setup_ready',{durationMs:Date.now()-setupStarted});recognitionState.phase='ready';recognitionState.percent=null;render();return true;
+    localReady=true;recognitionUnavailable=false;scheduleMemoryReview();if(typeof recordDeviceEvent==='function')recordDeviceEvent('setup_ready',{durationMs:Date.now()-setupStarted});recognitionState.phase='ready';recognitionState.percent=null;refreshScannerUi();return true;
    }catch(error){if(epoch===captureOperationEpoch){recognitionState.phase='failed';renderRecognitionNotice();}throw error;}
    finally{if(localLoadPromise===loading)localLoadPromise=null;}
   })();
@@ -3012,7 +3046,7 @@ async function reviewRecognitionMemory(){
  if(!targets.length)return;
  memoryReviewRunning=true;let completed=0;
  try{
-  if(!localReady)await enableLocal();
+  if(!localReady)await enableLocal({backgroundMemory:true});
   if(!lease.current())return;
   for(const target of targets){
    if(!lease.current()||busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))break;
@@ -3030,7 +3064,7 @@ async function reviewRecognitionMemory(){
   }
  }finally{
   if(lease.current()){
-   memoryReviewRunning=false;render();
+   memoryReviewRunning=false;refreshRecognitionMemorySurfaces();
    if(completed===8&&!memoryReviewTimer){
     const timer=setTimeout(()=>{
      if(memoryReviewTimer!==timer||!lease.current())return;
