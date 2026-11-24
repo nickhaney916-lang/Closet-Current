@@ -1806,7 +1806,12 @@ async function recognizeItem(item){
  try{
   if(ownerReviewInterrupted854())return true;
   const source73=original854||source854,owner73=owner854?.id??null;
-  const quality=await checkPhoto(source73);
+  let quality;
+  try{quality=await checkPhoto(source73);}catch(error){
+   if(!live854())return false;
+   if(ownerReviewInterrupted854())return true;
+   throw error;
+  }
   if(!live854())return false;
   if(ownerReviewInterrupted854())return true;
   if(quality.captureGuidance&&source73===(item.recognitionPhoto?.image||item.image)&&
@@ -1924,7 +1929,6 @@ async function recognizeItem(item){
  }catch(error){
   // An asynchronous old photo/owner error cannot become a new user's error.
   if(!live854())return false;
-  if(!savingIndexed&&ownerReviewInterrupted854())return true;
   item.localAnalyzed=false;item.scanFailed=true;item.saveFailed=savingIndexed;if(!item.visualSignature&&typeof recordDeviceEvent==='function')recordDeviceEvent('photo_check_failed',{stage:'photo_check',durationMs:Date.now()-scanStarted});if(recognitionUnavailable)recognitionState.phase='failed';
   if(savingIndexed){recognitionState.phase='save-failed';item.localStatus='Could not save this piece. Keep this page open, check device storage, then try again or use Adjust.';}
   else if(!item.visualSignature)item.localStatus='Could not read this photo. Retake it or adjust details.';
