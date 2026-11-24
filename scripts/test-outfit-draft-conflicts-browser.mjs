@@ -1,8 +1,4 @@
-/**
- * STYLE-NEW-ITEM-01 — actual app UI + owner-private IndexedDB in Chromium and
- * WebKit. Auth is a synthetic fixture; no cloud writes, AI inference or device
- * camera is claimed. A JPEG data URL enters the actual camera candidate path.
- */
+/** Normal outfit UI and concurrent owner-private IndexedDB with synthetic auth. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
@@ -30,8 +26,6 @@ const host='http://127.0.0.1:'+server.address().port+'/public/index.html'; // P1
 const jpg=await sharp({create:{width:24,height:32,channels:3,background:'#426f54'}}).jpeg().toBuffer();
 const dataURL='data:image/jpeg;base64,'+jpg.toString('base64');
 const sha=()=>createHash('sha256').update(jpg).digest('hex');
-const capturePhoto=await sharp(Buffer.from('<svg width="240" height="320" xmlns="http://www.w3.org/2000/svg"><rect width="240" height="320" fill="#f1eee7"/><path d="M74 38 42 58 18 126l37 14 15-34v174h100V106l15 34 37-14-24-68-32-20-26 18H100z" fill="#287346"/><path d="M115 55h10v224h-10z" fill="#e7eadf"/></svg>')).jpeg({quality:90}).toBuffer();
-const cameraFrame='data:image/jpeg;base64,'+capturePhoto.toString('base64');
 const owner='synthetic-style-owner-a';
 const fixtures=[
  ['tee','Tops','T-shirt','Blue'],['polo','Tops','Polo','White'],
@@ -41,12 +35,17 @@ const fixtures=[
  category,itemType,color,colorSource:'user',pattern:'Solid',sleeveLength:'Unknown',seasons:[],image:dataURL,
  sourceSHA256:sha(),sourceHashVerified:true,sourcePhotoOriginal:true,userAdjusted:true,
  confirmedDetails:{category,itemType},localAnalyzed:true,indexingLevel:'specific-type',savedAt:new Date().toISOString()}));
+const concurrentPhotos=await Promise.all(['#c64242','#4242c6','#c68442'].map(async(background,index)=>{
+ const bytes=await sharp({create:{width:24,height:32,channels:3,background}}).jpeg().toBuffer();
+ const hash=createHash('sha256').update(bytes).digest('hex');
+ const image='data:image/jpeg;base64,'+bytes.toString('base64');
+ return {...fixtures[0],id:'concurrent-'+index,image,sourceSHA256:hash,originalPhoto:{image,sha256:hash}};
+}));
 const results=[],errors=[];
 const axe=(await import('axe-core')).default;
 async function audit(page,label){await page.addScriptTag({content:axe.source});const report=await page.evaluate(()=>axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa']}}));await writeFile(out+'/'+label+'-axe.json',JSON.stringify(report,null,2));assert.deepEqual(report.violations.map(v=>v.id),[],label+' accessibility');}
 async function layout(page){const size=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,dialog:[...document.querySelectorAll('dialog[open]')].map(d=>({width:d.getBoundingClientRect().width,left:d.getBoundingClientRect().left}))}));assert.ok(size.scroll<=size.width,JSON.stringify(size));assert.ok(size.dialog.every(d=>d.left>=0&&d.width<=size.width),JSON.stringify(size));}
 
-const provenance167=[];
 try{
  const engines=process.env.STYLE_FOCUSED_ENGINE==='chromium'?[['chromium',chromium]]:[['chromium',chromium],['webkit',webkit]];
  for(const [engine,type] of engines){
@@ -60,13 +59,27 @@ try{
      // external requests and must not be blocked by test-only HTTPS isolation.
      if(url.protocol==='blob:'||url.protocol==='data:')return route.continue();
      if(url.hostname==='127.0.0.1'||url.hostname==='localhost')return route.continue();
-     if(url.hostname==='hlkgymugtfbirlpunsra.supabase.co'&&url.pathname==='/auth/v1/token')
-      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({access_token:'synthetic-access',refresh_token:'synthetic-refresh',expires_in:3600,user:{id:owner,email:'fixture@example.invalid',user_metadata:{username:'Fixture'}}})});
+     if(url.hostname==='hlkgymugtfbirlpunsra.supabase.co'&&url.pathname==='/auth/v1/token'){
+      const fixture=route.request().postDataJSON();
+      const second=fixture?.email==='other@example.invalid'||fixture?.refresh_token==='synthetic-other-refresh';
+      return route.fulfill({json:{
+       access_token:second?'synthetic-other-access':'synthetic-access',
+       refresh_token:second?'synthetic-other-refresh':'synthetic-refresh',
+       expires_in:3600,user:{id:second?'synthetic-style-owner-b':owner,email:second?'other@example.invalid':'fixture@example.invalid'}
+      }});
+     }
      return route.abort();
     });
-    await context.addInitScript(()=>localStorage.setItem('closet-current-auth-v1',JSON.stringify({
-     epoch:'synthetic-epoch',access_token:'synthetic-access',refresh_token:'synthetic-refresh',expires_at:Math.floor(Date.now()/1000)+3600
-    })));
+    await context.addInitScript(()=>{
+     // A stable shared expiration keeps fixture refreshes from rotating the
+     // serialized credential and locking the other tab between assertions.
+     Date.now=()=>1700000000000;
+     if(localStorage.getItem('p1603-fixture-initialized'))return;
+     localStorage.setItem('p1603-fixture-initialized','true');
+     localStorage.setItem('closet-current-auth-v1',JSON.stringify({
+      epoch:'synthetic-epoch',access_token:'synthetic-access',refresh_token:'synthetic-refresh',expires_at:Math.floor(Date.now()/1000)+3600
+     }));
+    });
     await context.addInitScript(()=>{
      class ReviewOnlyWorker{
       constructor(){this.onmessage=null;this.terminated=false;}
@@ -140,7 +153,110 @@ try{
        assert.equal(await other.evaluate(()=>savedOutfitBoards.length),1);
        await other.evaluate(()=>window.closetCloud=window.savedCloud);
 
-       results.push({engine,width,baseline:false,staleDraftRefused:true,localInputRetained:true,appendPreservesRemoteDraft:true,loadLatest:true,automaticRefreshPreserved:true,queuedLoadLatest:true,unseenVersionOverrideRefused:true,explicitOverrideReload:true,savedOutfitsRetained:true});
+       // Hold the stale tab's real autosave before its IndexedDB transaction.
+       // Delete the selected garment in the other tab before releasing it.
+       await other.locator('#clearBoard').click();
+       await other.evaluate(()=>writes);
+       const beforeDeletion=await other.locator('#boardName').inputValue();
+       const deletedId=await other.evaluate(()=>{
+        const used=new Set(savedOutfitBoards.flatMap(board=>Object.values(board.slots)));
+        return items.find(row=>row.category==='Tops'&&!used.has(row.id))?.id;
+       });
+       assert.ok(deletedId);
+       await other.evaluate(()=>{
+        window.savedCloud=window.closetCloud;
+        window.closetCloud={beforeWrite:()=>new Promise(resolve=>window.releaseDeletedDraft=resolve)};
+       });
+       await other.evaluate(()=>{
+        currentBoard.name='Unsaved draft after garment removal';
+        syncBoardInputs();
+       });
+       await other.locator('#boardSlots .board-slot-top').click();
+       await other.locator('#boardPickerItems .board-pick').filter({hasText:fixtures.find(row=>row.id===deletedId).name}).click();
+       await other.waitForFunction(()=>Boolean(window.releaseDeletedDraft));
+       await page.evaluate(async id=>removeItem(id,normalizeClothing((await readAll()).find(row=>row.id===id))),deletedId);
+       await other.evaluate(()=>{
+        window.closetCloud=window.savedCloud;
+        window.releaseDeletedDraft();
+        return writes;
+       });
+       const durable=await other.evaluate(()=>new Promise((resolve,reject)=>{
+        const request=db.transaction('state').objectStore('state').get('outfit-board');
+        request.onsuccess=()=>resolve(request.result);
+        request.onerror=()=>reject(request.error);
+       }));
+       if(process.env.P1603_EXPECT_RED==='1'){
+        assert.equal(durable.current.name,'Unsaved draft after garment removal');
+        assert.equal(durable.current.slots.top,deletedId);
+       }else{
+        assert.equal(durable.current.name,beforeDeletion);
+        assert.equal(durable.current.slots.top,undefined);
+        assert.equal(await other.locator('#boardName').inputValue(),'Unsaved draft after garment removal');
+        await other.getByRole('button',{name:'Refresh my closet',exact:true}).waitFor();
+       }
+
+       if(process.env.P1603_EXPECT_RED!=='1'){
+        // Refresh after the refused autosave, preserve text, and retry without
+        // the deleted reference. Verify the durable result after reload.
+        await other.getByRole('button',{name:'Refresh my closet',exact:true}).click();
+        await other.waitForFunction(()=>document.querySelector('#refreshOutfitWardrobe').hidden);
+        assert.equal(await other.locator('#boardName').inputValue(),'Unsaved draft after garment removal');
+        await other.evaluate(async()=>{if(!await storeBoard())throw Error('Reviewed retry declined');});
+        await other.reload();
+        await other.evaluate(async()=>{await closetReady;await outfitBoardReady;switchView('builder');});
+        assert.equal(await other.locator('#boardName').inputValue(),'Unsaved draft after garment removal');
+        assert.equal(await other.evaluate(()=>currentBoard.slots.top),undefined);
+       }
+
+       // Two independent draft inserts and reviewed promotions start from the
+       // same cached wardrobe. Both tabs use the app's real write functions.
+       const add=(tab,row)=>tab.evaluate(async record=>{
+        await persistDraft({required:true,mode:'insert',record});
+        await savePiece({...record,ownerReviewed:true},[],{expectedDraftRow:record});
+       },row);
+       await Promise.all([add(page,concurrentPhotos[0]),add(other,concurrentPhotos[1])]);
+       const [first,second,revoked]=concurrentPhotos;
+       const edit=(tab,row,name)=>tab.evaluate(async({row,name})=>{
+        try{await saveEditedGarment({...row,name},row);return 'committed';}
+        catch(error){return error.message;}
+       },{row,name});
+       assert.equal(await edit(page,{...first,ownerReviewed:true},'Acknowledged first edit'),'committed');
+       assert.match(await edit(other,{...first,ownerReviewed:true},'Stale competing edit'),/STALE_SAVED_GARMENT/);
+       await page.evaluate(row=>removeItem(row.id,{...row,ownerReviewed:true}),second);
+       assert.match(await edit(other,{...second,ownerReviewed:true},'Stale edit after delete'),/STALE_SAVED_GARMENT/);
+       const kept=await page.evaluate(async id=>(await readAll()).find(row=>row.id===id),first.id);
+       assert.equal(kept.name,'Acknowledged first edit');
+       assert.equal(createHash('sha256').update(Buffer.from(kept.originalPhoto.image.split(',')[1],'base64')).digest('hex'),first.sourceSHA256);
+       assert.equal(await page.evaluate(async id=>(await readAll()).some(row=>row.id===id),second.id),false);
+       await assert.rejects(add(other,{...first,id:'duplicate-source'}),/IDENTICAL_SAVED_PHOTO/);
+
+       await other.evaluate(record=>{
+        window.closetCloud={beforeWrite:()=>new Promise(resolve=>window.releaseRevokedWrite=resolve)};
+        window.revokedWrite=persistDraft({required:true,mode:'insert',record})
+         .then(()=>false,error=>error.code==='CAPTURE_STORAGE_FAILED');
+       },revoked);
+       await other.waitForFunction(()=>Boolean(window.releaseRevokedWrite));
+       const signOut=async tab=>{
+        await tab.locator('.account-menu summary').click();
+        await tab.locator('#logout').click();
+        await tab.locator('#authSubmit').waitFor();
+       };
+       const signIn=async(tab,email)=>{
+        await tab.locator('#authEmail').fill(email);
+        await tab.locator('#authPassword').fill('test-only-password');
+        await tab.locator('#authSubmit').click();
+        await tab.evaluate(async()=>{await closetReady;await outfitBoardReady;});
+       };
+       await signOut(page);
+       await signIn(page,'other@example.invalid');
+       assert.deepEqual(await page.evaluate(()=>readAll()),[]);
+       assert.equal(await other.evaluate(()=>{window.releaseRevokedWrite();return window.revokedWrite;}),true);
+       await signOut(page);
+       await signIn(page,'fixture@example.invalid');
+       assert.equal(await page.evaluate(async id=>(await readDraftFrom(db)).some(row=>row.id===id),revoked.id),false);
+       assert.equal(await page.evaluate(async id=>(await readAll()).find(row=>row.id===id)?.name,first.id),'Acknowledged first edit');
+
+       results.push({engine,width,baseline:process.env.P1603_EXPECT_RED==='1',staleDraftRefused:true,localInputRetained:true,appendPreservesRemoteDraft:true,loadLatest:true,automaticRefreshPreserved:true,queuedLoadLatest:true,unseenVersionOverrideRefused:true,explicitOverrideReload:true,savedOutfitsRetained:true,deletedDraftReferenceRejected:process.env.P1603_EXPECT_RED!=='1',independentAdds:true,competingEditRejected:true,deletedGarmentNotResurrected:true,originalShaPreserved:true,duplicateRejected:true,oldSessionWriteRejected:true,otherOwnerIsolated:true});
       }
      }finally{await other.close();}
     }catch(error){await page.screenshot({path:out+'/'+engine+'-'+width+'-FAIL.png',fullPage:true});throw error;}

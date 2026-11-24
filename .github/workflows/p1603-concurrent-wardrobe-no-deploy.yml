@@ -1,0 +1,54 @@
+name: P1603 concurrent wardrobe (NO DEPLOY)
+on:
+  push:
+    branches: [research/p1603-concurrent-wardrobe-HOLD]
+  pull_request:
+    branches: [research/1452-wardrobe-integration-HOLD]
+    paths: [.github/workflows/p1603-concurrent-wardrobe-no-deploy.yml]
+permissions:
+  contents: read
+env:
+  BASELINE: c2b1ae41603d476358af39eba99008914fac8046
+jobs:
+  verification:
+    if: github.event_name == 'push' || (github.head_ref == 'research/p1603-concurrent-wardrobe-HOLD' && github.event.pull_request.head.repo.full_name == github.repository)
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [regression, browser]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify isolated source and no-deploy scope
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$BASELINE" HEAD
+          git diff --exit-code "$BASELINE" HEAD -- . \
+            ':(exclude)public/outfit-board.js' \
+            ':(exclude)scripts/test-outfit-draft-conflicts-browser.mjs' \
+            ':(exclude).github/workflows/p1603-concurrent-wardrobe-no-deploy.yml'
+          git worktree add --detach "${RUNNER_TEMP}/p1603-base" "$BASELINE"
+          (cd "${RUNNER_TEMP}/p1603-base" && bash scripts/check-1452-integration-source.sh "$BASELINE")
+          git log -1 --format='commit %H tree %T'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: node scripts/build.mjs
+      - if: matrix.check == 'regression'
+        run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
+      - if: matrix.check == 'browser'
+        run: npx playwright install --with-deps chromium webkit
+      - if: matrix.check == 'browser'
+        name: Reproduce stale draft on the pinned baseline
+        run: APP_SOURCE_ROOT="${RUNNER_TEMP}/p1603-base" P1603_EXPECT_RED=1 CONFLICT_OUT="${RUNNER_TEMP}/p1603-red" node scripts/test-outfit-draft-conflicts-browser.mjs
+      - if: matrix.check == 'browser'
+        name: Verify corrected two-tab wardrobe and backup flows
+        run: |
+          CONFLICT_OUT="${RUNNER_TEMP}/p1603-green" node scripts/test-outfit-draft-conflicts-browser.mjs
+          node scripts/test-mission3-lossless-v4-owner-acceptance-browser.mjs "${RUNNER_TEMP}/p1603-backup"
