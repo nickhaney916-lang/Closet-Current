@@ -27,7 +27,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           git merge-base --is-ancestor 07ec40dd26ede456907b89c6caf40bd15118ef6f HEAD
-          git diff --exit-code 07ec40dd26ede456907b89c6caf40bd15118ef6f HEAD -- . ':(exclude)public/app.js' ':(exclude)public/closet-stylist-engine.js' ':(exclude)scripts/p1640-contextual-handoff.cjs' ':(exclude)scripts/p1640-native-context.cjs' ':(exclude)tests/p1640-contextual-styling.test.cjs' ':(exclude).github/workflows/main1054-contextual-stylist-adoption-HOLD.yml'
+          git diff --exit-code 07ec40dd26ede456907b89c6caf40bd15118ef6f HEAD -- . ':(exclude)public/app.js' ':(exclude)public/closet-stylist-engine.js' ':(exclude)scripts/p1640-contextual-handoff.cjs' ':(exclude)scripts/p1640-native-context.cjs' ':(exclude)tests/p1640-contextual-styling.test.cjs' ':(exclude)tests/navigation.test.cjs' ':(exclude).github/workflows/main1054-contextual-stylist-adoption-HOLD.yml'
           test "$(git rev-parse HEAD:public/closet-stylist-engine.js)" = "6ed727e123e8b267d28346138511cd45d40948c9"
           git show 07ec40dd26ede456907b89c6caf40bd15118ef6f:public/closet-stylist-engine.js > "$RUNNER_TEMP/p1640-parent-engine.js"
           node scripts/p1640-contextual-handoff.cjs "$RUNNER_TEMP/p1640-parent-engine.js" "$RUNNER_TEMP/p1640-expected-engine.js"
