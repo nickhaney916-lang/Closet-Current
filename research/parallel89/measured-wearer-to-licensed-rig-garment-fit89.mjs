@@ -182,3 +182,69 @@ export function assessMetricGarmentToWearerFit({
   fitted3DGeometry:null
  });
 }
+
+/** Sampled geometric distortion only, not material strain or a physical fit.
+ * Use the exact original indexed front and actual rest/posed XYZ buffers.
+ * The 10% band is an explicitly arbitrary research diagnostic, NOT a fabric
+ * limit; sampled poses cannot certify the unsampled continuous motion. */
+export function auditSampledOriginalFrontProportions({rest,poses,indices,
+ expectedFaces,expectedVertices}={}){
+ const invalid=()=>fail("BLOCKED_INVALID_SAMPLED_ORIGINAL_FRONT_GEOMETRY");
+ const buffer=v=>Array.isArray(v)||v instanceof Float32Array||v instanceof Float64Array;
+ if(!Number.isSafeInteger(expectedVertices)||expectedVertices<3||expectedVertices>1000000||
+  !Number.isSafeInteger(expectedFaces)||expectedFaces<1||expectedFaces>2000000||
+  !buffer(rest)||rest.length!==expectedVertices*3||
+  !Array.isArray(poses)||poses.length<1||poses.length>64||
+  !(Array.isArray(indices)||indices instanceof Uint32Array||indices instanceof Uint16Array)||
+  indices.length!==expectedFaces*3)return invalid();
+ const good=v=>buffer(v)&&v.length===rest.length&&
+  Array.from(v).every(n=>finite(n)&&Math.abs(n)<=10000);
+ if(!good(rest)||!Array.from(poses).every(good))return invalid();
+ const edges=new Map(),triangles=[];
+ const length=(v,a,b)=>Math.hypot(v[a*3]-v[b*3],v[a*3+1]-v[b*3+1],v[a*3+2]-v[b*3+2]);
+ const area=(v,a,b,c)=>{
+  const x=v[b*3]-v[a*3],y=v[b*3+1]-v[a*3+1],z=v[b*3+2]-v[a*3+2],
+   u=v[c*3]-v[a*3],w=v[c*3+1]-v[a*3+1],q=v[c*3+2]-v[a*3+2];
+  return Math.hypot(y*q-z*w,z*u-x*q,x*w-y*u);
+ };
+ for(let k=0;k<indices.length;k+=3){
+  const a=indices[k],b=indices[k+1],c=indices[k+2];
+  if(![a,b,c].every(i=>Number.isSafeInteger(i)&&i>=0&&i<expectedVertices)||
+   a===b||b===c||a===c)return invalid();
+  const base=area(rest,a,b,c);
+  if(!positive(base))return invalid();
+  triangles.push([a,b,c,base]);
+  for(const [i,j] of [[a,b],[b,c],[c,a]]){
+   const lo=Math.min(i,j),hi=Math.max(i,j),key=lo*expectedVertices+hi;
+   if(!edges.has(key)){
+    const base=length(rest,lo,hi);if(!positive(base))return invalid();
+    edges.set(key,[lo,hi,base]);
+   }
+  }
+ }
+ const samples=[];
+ for(const v of poses){
+  let minEdge=Infinity,maxEdge=0,minArea=Infinity,maxArea=0,edgeOutside=0,areaOutside=0,collapsedFaces=0;
+  for(const [a,b,base] of edges.values()){
+   const r=length(v,a,b)/base;if(!finite(r))return invalid();
+   minEdge=Math.min(minEdge,r);maxEdge=Math.max(maxEdge,r);
+   if(r<.9||r>1.1)edgeOutside++;
+  }
+  for(const [a,b,c,base] of triangles){
+   const r=area(v,a,b,c)/base;if(!finite(r))return invalid();
+   minArea=Math.min(minArea,r);maxArea=Math.max(maxArea,r);
+   if(r<.9||r>1.1)areaOutside++;
+   if(r===0)collapsedFaces++;
+  }
+  samples.push({minimumEdgeLengthRatio:minEdge,maximumEdgeLengthRatio:maxEdge,
+   minimumTriangleAreaRatio:minArea,maximumTriangleAreaRatio:maxArea,
+   edgesOutsideResearchBand:edgeOutside,facesOutsideResearchBand:areaOutside,collapsedFaces});
+ }
+ return fail("RESEARCH_ONLY_SAMPLED_ORIGINAL_FRONT_PROPORTION_AUDIT",{
+  sampledPoseCount:samples.length,originalFrontFaces:triangles.length,
+  uniqueOriginalFrontEdges:edges.size,diagnosticRatioBand:[.9,1.1],
+  arbitraryResearchBandNotPhysicalFabricLimit:true,
+  continuousMotionOrMaterialStrainCertified:false,
+  sampledPoseDistortion:samples
+ });
+}
