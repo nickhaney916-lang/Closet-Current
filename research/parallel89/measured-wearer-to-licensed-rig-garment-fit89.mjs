@@ -18,7 +18,7 @@ const positive = v => finite(v) && v>0;
 const isSHA = v => typeof v === 'string' && /^[0-9a-f]{64}$/.test(v);
 const isSafeText = v => typeof v === 'string' && v.length>0 && v.length<=100;
 const vec3 = v => Array.isArray(v) && v.length===3 &&
-  v.every(x=>finite(x)&&Math.abs(x)<=10);
+  Array.from(v).every(x=>finite(x)&&Math.abs(x)<=10);
 const triad = ["height","shoulder","torso"];
 const sectionSets=Object.freeze({
  top:["chest","waist"],jacket:["chest","waist"],
@@ -120,11 +120,16 @@ export function assessMetricGarmentToWearerFit({
  const anchors=measurements.rigMetricAnchors;
  const holdout=measurements.rigMetricIndependentHoldout;
  if(!Array.isArray(anchors)||anchors.length!==2 ||
-  !anchors.every(segmentShape)||!segmentShape(holdout) ||
+  !Array.from(anchors).every(segmentShape)||!segmentShape(holdout) ||
   new Set([...anchors.map(x=>x.landmark),holdout.landmark]).size!==3)
   return fail("BLOCKED_MISSING_DISTINCT_REAL_BODY_RIG_LANDMARKS");
  if(anchors.some(x=>JSON.stringify(x.rigA)===JSON.stringify(x.rigB)))
   return fail("BLOCKED_DEGENERATE_REAL_BODY_LANDMARK");
+ // Different labels cannot make the same unordered geometric endpoints
+ // independent observations. A shared single endpoint is allowed.
+ const spanKey=s=>[JSON.stringify(s.rigA),JSON.stringify(s.rigB)].sort().join('|');
+ if(new Set([...anchors,holdout].map(spanKey)).size!==3)
+  return fail("BLOCKED_REUSED_RIG_LANDMARK_SPAN");
  const [a,b]=anchors.map(interval);
  const lower=Math.max(a[0],b[0]),upper=Math.min(a[1],b[1]);
  if(!finite(lower)||!finite(upper)||lower<=0||lower>upper||
@@ -142,7 +147,7 @@ export function assessMetricGarmentToWearerFit({
   });
  const sections=measurements.physicalCircumferenceSections;
  if(!Array.isArray(sections)||sections.length!==sectionSets[kind].length||
-  !sections.every(sectionValid)||
+  !Array.from(sections).every(sectionValid)||
   sections.some((s,i)=>s.landmark!==sectionSets[kind][i]))
   return fail("BLOCKED_MISSING_DIRECT_MEASURED_MATCHED_BODY_GARMENT_SECTIONS",{
    expectedAnatomicalSections:sectionSets[kind]
