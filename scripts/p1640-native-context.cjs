@@ -44,7 +44,10 @@ source=source.slice(0,start)+`
   await occasion.selectOption(intent);await season.selectOption(weather);await focus.selectOption(shirtId);
   await page.locator('#createCollectionOutfits').click();
   await page.waitForFunction(()=>document.querySelector('#createCollectionOutfits')?.disabled===false&&
-   /Here are|No suitable combination/.test(document.querySelector('#stylistStatus')?.textContent||''),null,{timeout:30000});
+   /^(Here are [0-9]+ outfit options? from your collection\\.|No saved pieces match this request\\. Try changing the plan, season, style preference, or selected piece\\.)$/.test(document.querySelector('#stylistStatus')?.textContent||''),null,{timeout:30000});
+  const status=await page.locator('#stylistStatus').innerText();
+  if(expected)assert.match(status,/^Here are [0-9]+ outfit options? from your collection\\.$/);
+  else assert.equal(status,'No saved pieces match this request. Try changing the plan, season, style preference, or selected piece.');
   assert.equal(await cards.count()>0,expected,'P1640 '+intent+' '+weather+' contextual eligibility');
   if(expected)assert.match(await cards.first().innerText(),/Includes P99 Black Shirt/);
  }
