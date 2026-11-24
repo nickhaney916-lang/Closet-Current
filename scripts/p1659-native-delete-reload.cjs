@@ -12,8 +12,9 @@ source=source.replace(anchor,anchor+`
     saved:[{name:'Saved outfit',slots:{top:'shirt',bottom:'jeans'}},{name:'Unrelated outfit',slots:{bottom:'jeans'}}]};
    const wear={id:'outfit-wear-history-v1',events:[{synthetic:true}]};
    await storage(page,owner,{items:[row,second],state:[marker,originalBoard,{id:'draft',batch:[]},wear]});
-   await page.reload({waitUntil:'domcontentloaded'});
-   await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));
+   await Promise.all([page.waitForNavigation(),page.evaluate(()=>document.getElementById('logout').click())]);
+   await login(page,owner);
+   assert.deepEqual(await page.evaluate(()=>({owner:window.closetAuth.user?.id,ids:items.map(x=>x.id).sort(),recovery:startupWardrobeRecoveryCount,hasDB:!!db})),{owner,ids:['jeans','shirt'],recovery:0,hasDB:true},'fixture must be valid before deletion');
    await page.locator('nav.main-nav button.tab[data-view="closet"]').click();
    await page.locator('#closetAllPieces').click();
    const card=page.locator('#closetGrid .card').filter({has:page.getByRole('heading',{name:row.name,exact:true})});
@@ -28,7 +29,8 @@ source=source.replace(anchor,anchor+`
    assert.equal(deleted.items[0].id,'jeans');
    assert.equal(hash(Buffer.from(deleted.items[0].originalPhoto.image.split(',')[1],'base64')),hash(damagedBytes));
    assert.deepEqual(deleted.state.find(x=>x.id===wear.id),wear);
-   await page.reload({waitUntil:'domcontentloaded'});
+   await Promise.all([page.waitForNavigation(),page.evaluate(()=>document.getElementById('logout').click())]);
+   await login(page,owner);
    const locked=await page.evaluate(async()=>{await outfitBoardReady;return !db&&startupWardrobeRecoveryCount>0;});
    if(process.env.P1659_EXPECT_RED==='1'){
     assert.equal(locked,true,'baseline must reproduce actual recovery lock');
