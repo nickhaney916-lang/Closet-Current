@@ -50,6 +50,15 @@ export async function buildOriginalJPEGTexturedFront89({
   if(info.channels!==3||info.width<4||info.height<4||
      info.width*info.height>16000000||data.length!==info.width*info.height*3)
    return refused('decoded-original-jpeg-rgb-layout-invalid');
+  // The proposal grid may be a non-aspect-preserving resize of the full
+  // source image. UVs identify full-image coordinates; express geometry in
+  // native decoded-image aspect units, not proposal-grid aspect units.
+  // No EXIF camera orientation, physical size or unseen surface is inferred.
+  const sourceAspect=info.width/info.height;
+  const positions=new Float32Array(panel.positions);
+  for(let i=0;i<positions.length/3;i++){
+   positions[3*i]=(panel.uv[2*i]-.5)*sourceAspect;
+  }
   const rgba=new Uint8Array(width*height*4);
   let copied=0;
   for(let y=0;y<height;y++)for(let x=0;x<width;x++){
@@ -74,7 +83,9 @@ export async function buildOriginalJPEGTexturedFront89({
    originalSourcePixelSampling:'nearest original decoded RGB, no generated colors',
    researchMaskSHA256:sourceMaskSHA256,
    textureSHA256:sha256(rgba),textureDimensions:[width,height],
-   textureRGBA:rgba,positions:panel.positions,uv:panel.uv,indices:panel.indices,
+   textureRGBA:rgba,positions,uv:panel.uv,indices:panel.indices,
+   geometryAspectBasis:'native decoded original RGB width/height; nonmetric',
+   decodedOriginalAspect:sourceAspect,
    originalRGBForegroundPixels:copied,sourceFullImageWasReencoded:false,
    maskGroundTruthApproved:false,originalSourceAngleIndependentlyAdjudicated:false,
    observedFrontOnly:true,unseenSideOrBackInvented:false,
