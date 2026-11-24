@@ -901,11 +901,59 @@ function photoEditorSessionLease(){
   try{return assertCurrent();}catch{return false;}
  }};
 }
+// A pending identity suggestion is only a proposal for this exact uncut
+// original and row. It is not a reviewed field or permission to save.
+function pendingIdentitySuggestion(item){
+ const proposal=item.localChoices?.[0];
+ if(!item.requiresOwnershipConfirmation||item.scanFailed||item.userAdjusted||
+    !proposal||proposal.kind!=='owner-identity-review-v1'||
+    !item.id||!item.ownerId||proposal.recordId!==item.id||proposal.ownerId!==item.ownerId||
+    !/^[a-f0-9]{64}$/i.test(item.sourceSHA256||'')||
+    proposal.sourceSHA256!==item.sourceSHA256||item.originalPhoto?.sha256!==item.sourceSHA256||
+    !item.image||item.image!==item.originalPhoto?.image||
+    item.outfitSourceId||item.cropBounds||item.segmentHint||item.recognitionPhoto||
+    !Object.hasOwn(clothingSchema.types,proposal.category)||
+    !(proposal.itemType==='Unknown'||clothingSchema.types[proposal.category].includes(proposal.itemType)))
+  return null;
+ return {category:proposal.category,itemType:proposal.itemType};
+}
+function mountPendingIdentitySuggestion(form,item,editorSession,dialog,canApply){
+ const proposed=pendingIdentitySuggestion(item),openingImage=item.image;
+ if(!proposed)return null;
+ const box=node('div',null,'recognition-review-suggestion');
+ box.append(node('p','Photo suggests '+proposed.category+
+  (proposed.itemType==='Unknown'?' (type not confirmed)':' · '+proposed.itemType)+
+  '. Compare with your original photograph. Applying this suggestion does not save it.','fine'));
+ const use=node('button','Use suggested identity','secondary');use.type='button';
+ use.onclick=()=>{
+  if(!editorSession.current()||!dialog.open||!use.isConnected||!canApply()||
+     !batch.includes(item)||localPending.has(item.id)||item.image!==openingImage)return;
+  // The editor sets a transient userAdjusted flag while open. Recheck the
+  // same persisted proposal without treating that flag as approval.
+  const now=pendingIdentitySuggestion({...item,userAdjusted:false});
+  if(!now||now.category!==proposed.category||now.itemType!==proposed.itemType)return;
+  const category=form.querySelector('select[aria-label="Main category"]');
+  const type=form.querySelector('select[aria-label="Item type"]');
+  if(!category||!type)return;
+  if(category.value!==now.category){
+   category.value=now.category;
+   category.dispatchEvent(new Event('input',{bubbles:true}));
+  }
+  if(now.itemType!=='Unknown'){
+   type.value=now.itemType;
+   type.dispatchEvent(new Event('input',{bubbles:true}));
+  }
+  use.disabled=true;
+ };
+ box.append(use);form.prepend(box);return use;
+}
 function adjustPhoto(item){
  if(stream||cameraOpening)stopCamera();
  const dialog=document.createElement('dialog');dialog.className='photo-adjust clothing-editor';
  const form=node('form'),draft=structuredClone(item),collect=clothingFields(form,draft);
  const editorSession=photoEditorSessionLease();
+ if(batch.includes(item)&&!items.some(x=>x.id===item.id))
+  mountPendingIdentitySuggestion(form,item,editorSession,dialog,()=>!save.disabled);
  const evidence=item.recognitionDiagnostics?.outerwearRecovery;
  if(evidence?.outerwearReviewSuggested&&draft.category!=='Outerwear'){
   const suggestion=node('div',null,'recognition-review-suggestion');
@@ -1021,6 +1069,8 @@ function adjustPhoto(item){
   if(typeof captureProof01Active!=='undefined'&&captureProof01Active&&
      (!captureProofOwner()||item.ownerId&&item.ownerId!==captureProofOwner()))
    throw Error('Owner changed. Sign in again before saving this photo.');
+  // Suggestions are pending-review metadata, never saved owner facts.
+  delete value.localChoices;
   if(typeof ClothingMemory!=='undefined')Object.assign(value,ClothingMemory.confirm(value));
   // COLOR41: Save does not prove an AI-estimated color was changed by the user.
   // clothingFields itself marks colorSource='user' on explicit color input.
@@ -2684,6 +2734,7 @@ async function recognizeItem(item){
  const scanStarted=Date.now();let savingIndexed=false,index04ApprovedOwner=null;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
  try{
   if(reviewInterrupted())return false;
+  item.localChoices=[];
   const quality=await checkPhoto(item.recognitionPhoto?.image||item.image);
   if(!sameRecognitionLease()||reviewInterrupted())return false;
   if(quality.blank){
@@ -2751,6 +2802,13 @@ async function recognizeItem(item){
   if(subtypeReviewRequired||categoryOnly||riskySubtypeReview){
    // Keep existing fields and original source; do not apply predictions or index.
    item.requiresOwnershipConfirmation=true;item.localAnalyzed=true;item.localChoices=[];
+   if(claimsIdentity){
+    item.localChoices=[{kind:'owner-identity-review-v1',recordId:item.id,ownerId:item.ownerId,
+     sourceSHA256:item.sourceSHA256,category:topChoice.category,itemType:topChoice.itemType}];
+    if(!item.id||!item.ownerId||!/^[a-f0-9]{64}$/i.test(item.sourceSHA256||'')||
+       item.originalPhoto?.sha256!==item.sourceSHA256||!item.image||item.image!==item.originalPhoto?.image||
+       item.outfitSourceId||item.cropBounds||item.segmentHint||item.recognitionPhoto)item.localChoices=[];
+   }
    const suggestion=claimsIdentity?'Photo suggests '+topChoice.category+(categoryOnly?'':' · '+topChoice.itemType)+'. ':'';
    item.localStatus=suggestion+'Garment category or subtype needs confirmation. Original photo kept. Confirm category, type and color in Adjust.';
    return true;
