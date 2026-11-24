@@ -3,6 +3,7 @@ on:
   pull_request:
     branches: [research/p1644-regression-closure-HOLD]
     paths:
+      - public/app.js
       - scripts/p1650-mobile-performance.cjs
       - .github/workflows/p1650-mobile-performance-HOLD.yml
 permissions:
@@ -25,13 +26,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Confirm exact source and benchmark-only scope
+      - name: Confirm exact source and confined paging changes
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           git merge-base --is-ancestor 949adddc4c05538586cca5107abf03fd5246283c HEAD
-          git diff --exit-code 949adddc4c05538586cca5107abf03fd5246283c HEAD -- . ':(exclude)scripts/p1650-mobile-performance.cjs' ':(exclude).github/workflows/p1650-mobile-performance-HOLD.yml'
+          git diff --exit-code 949adddc4c05538586cca5107abf03fd5246283c HEAD -- . ':(exclude)public/app.js' ':(exclude)scripts/p1650-mobile-performance.cjs' ':(exclude).github/workflows/p1650-mobile-performance-HOLD.yml'
+          test "$(git rev-parse HEAD:public/app.js)" = "90c4ec357ea2a04dc820d556ffe2e1d73812ed14"
+          git show ea8ff9d4121168e9aea0d6def588a1340d7283dc:public/app.js > "$RUNNER_TEMP/p1650-parent-app.js"
           node --check scripts/p1650-mobile-performance.cjs
+          node --check public/app.js
           git log -1 --format='commit %H tree %T'
       - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - run: node scripts/build.mjs
@@ -49,17 +53,28 @@ jobs:
       - if: matrix.check == 'chromium' || matrix.check == 'webkit'
         run: npx playwright install --with-deps "${{ matrix.check }}"
       - if: matrix.check == 'chromium' || matrix.check == 'webkit'
-        name: Actual mobile viewport wardrobe performance baseline
+        name: Same-run actual mobile viewport parent RED and optimized candidate GREEN
         env:
           P99_ENGINE: ${{ matrix.check }}
           P1650_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
           M58_ENGINE: ${{ matrix.check }}
-        run: P99_WIDTH=390 node scripts/p1650-mobile-performance.cjs
+        run: |
+          set -euo pipefail
+          cp dist/app.js "$RUNNER_TEMP/p1650-candidate-app.js"
+          trap 'cp "$RUNNER_TEMP/p1650-candidate-app.js" dist/app.js' EXIT
+          cp "$RUNNER_TEMP/p1650-parent-app.js" dist/app.js
+          P1650_VARIANT=parent P1650_SOURCE_SHA=ea8ff9d4121168e9aea0d6def588a1340d7283dc P99_WIDTH=390 node scripts/p1650-mobile-performance.cjs
+          cp "benchmark/parallel99-normal-journey/$P99_ENGINE/390/P1650-PERFORMANCE.json" "benchmark/parallel99-normal-journey/$P99_ENGINE/390/P1650-PARENT.json"
+          cp "$RUNNER_TEMP/p1650-candidate-app.js" dist/app.js
+          P1650_VARIANT=candidate P99_WIDTH=390 node scripts/p1650-mobile-performance.cjs
+          node -e 'const fs=require("fs"),root="benchmark/parallel99-normal-journey/"+process.env.P99_ENGINE+"/390/",a=JSON.parse(fs.readFileSync(root+"P1650-PARENT.json")),b=JSON.parse(fs.readFileSync(root+"P1650-PERFORMANCE.json")); for(const x of a.summaries.filter(s=>s.key.endsWith(":expand-page"))){const y=b.summaries.find(s=>s.key===x.key);if(!y||x.n!==y.n)throw Error("unmatched workload"); console.log("P1650_COMPARISON "+JSON.stringify({engine:a.engine,key:x.key,n:x.n,parentMs:x.medianMs,candidateMs:y.medianMs,reductionPct:100*(1-y.medianMs/x.medianMs)}));}'
       - if: always() && (matrix.check == 'chromium' || matrix.check == 'webkit')
         uses: actions/upload-artifact@v4
         with:
           name: p1650-performance-${{ matrix.check }}
-          path: benchmark/parallel99-normal-journey/${{ matrix.check }}/390/P1650-PERFORMANCE.json
+          path: |
+            benchmark/parallel99-normal-journey/${{ matrix.check }}/390/P1650-PERFORMANCE.json
+            benchmark/parallel99-normal-journey/${{ matrix.check }}/390/P1650-PARENT.json
           if-no-files-found: warn
       - if: matrix.check == 'chromium' || matrix.check == 'webkit'
         name: Inherited ordinary app journeys
