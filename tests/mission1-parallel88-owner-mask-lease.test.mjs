@@ -3647,3 +3647,36 @@ test('P88 delayed automatic scan must not adopt a replaced owner or database lea
   assert.equal(item.image,'data:image/jpeg;base64,ORIGINAL');
  }
 });
+
+test('P88 unexpected recognition rejection cannot strand the remaining queue',async()=>{
+ const start=appSource.indexOf('function queueAutomatic(');
+ const end=appSource.indexOf('// The exact signed account and per-owner storage',start);
+ assert.ok(start>=0&&end>start);
+ for(const kind of ['ordinary','manual','owner','finalized','valid']){
+  const calls=[],bad={id:'bad',image:'data:image/jpeg;base64,ORIGINAL'},good={id:'good',image:'data:image/jpeg;base64,SECOND'},fresh={id:'new',image:'data:image/jpeg;base64,FRESH'};
+  const c={automaticRunning:true,automaticQueue:[],pendingScanLease859:new Map(),localPending:new Set(),
+   batch:[bad,good],window:{closetAuth:{user:{id:'owner-A'}}},db:{name:'closet-current-user-owner-A'},
+   render(){},scheduleMemoryReview(){},async recognizeItem(item){
+    calls.push(item.id);
+    if(item!==bad||kind==='valid'){item.localAnalyzed=true;return;}
+    if(kind==='manual'){item.userAdjusted=true;item.localStatus='Owner correction';}
+    if(kind==='owner'){c.window.closetAuth.user={id:'owner-B'};c.batch.push(fresh);c.queueAutomatic(fresh);}
+    if(kind==='finalized'){c.pendingScanLease859.delete(item.id);c.localPending.delete(item.id);item.localAnalyzed=true;item.localStatus='Already finalized';}
+    throw Error('unexpected recognition rejection');
+   }};
+  vm.createContext(c);vm.runInContext(appSource.slice(start,end),c);
+  c.queueAutomatic(bad);c.queueAutomatic(good);
+  c.automaticRunning=false;await c.drainAutomatic();
+  assert.deepEqual(calls,kind==='owner'?['bad','new']:['bad','good']);
+  assert.equal(c.pendingScanLease859.size,0);assert.equal(c.localPending.size,0);
+  assert.equal(c.automaticQueue.length,0);assert.equal(c.automaticRunning,false);
+  assert.equal(bad.image,'data:image/jpeg;base64,ORIGINAL');
+  assert.equal(Boolean(bad.scanFailed),kind==='ordinary');
+  if(kind==='ordinary'){
+   assert.equal(bad.localAnalyzed,false);assert.equal(bad.requiresOwnershipConfirmation,true);
+   assert.match(bad.localStatus,/Original photo kept/);
+  }
+  if(kind==='manual')assert.equal(bad.localStatus,'Owner correction');
+  if(kind==='finalized')assert.equal(bad.localStatus,'Already finalized');
+ }
+});
