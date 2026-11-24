@@ -1,0 +1,56 @@
+{
+  "schema": "p75-query-plan-v1",
+  "policy": "SEARCH TERMS ONLY — NO GROUND TRUTH",
+  "maxOriginalsPerQuery": 4,
+  "searches": [
+    {
+      "family": "tops",
+      "query": "filetype:bitmap blouse clothing flat lay"
+    },
+    {
+      "family": "tops",
+      "query": "filetype:bitmap t-shirt garment clothing"
+    },
+    {
+      "family": "bottoms",
+      "query": "filetype:bitmap trousers jeans garment"
+    },
+    {
+      "family": "bottoms",
+      "query": "filetype:bitmap skirt textile museum"
+    },
+    {
+      "family": "dresses",
+      "query": "filetype:bitmap dress garment museum"
+    },
+    {
+      "family": "outerwear",
+      "query": "filetype:bitmap coat jacket garment museum"
+    },
+    {
+      "family": "footwear",
+      "query": "filetype:bitmap pair of shoes sneakers"
+    },
+    {
+      "family": "footwear",
+      "query": "filetype:bitmap leather boots footwear"
+    },
+    {
+      "family": "accessories",
+      "query": "filetype:bitmap handbag belt clothing accessory"
+    },
+    {
+      "family": "outerwear",
+      "query": "filetype:bitmap denim jacket clothing"
+    },
+    {
+      "family": "footwear",
+      "query": "filetype:bitmap sandals footwear photograph"
+    },
+    {
+      "family": "accessories",
+      "query": "filetype:bitmap cap hat garment museum"
+    }
+  ],
+  "blindCandidateDisclosure": "FORBIDDEN: Public query outputs and candidate metadata can be used for TRAIN/DEV discovery only."
+}

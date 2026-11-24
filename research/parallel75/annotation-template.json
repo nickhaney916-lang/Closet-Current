@@ -1,0 +1,27 @@
+{
+  "schema": "p75-v1",
+  "reviewerId": null,
+  "sourceSha256": null,
+  "method": "independent-human",
+  "predictionsExposed": false,
+  "reviewedAt": null,
+  "labels": {
+    "presence": null,
+    "category": "Unknown",
+    "subtype": "Unknown",
+    "primaryColor": "Unknown",
+    "secondaryColor": "Unknown",
+    "multicolor": false,
+    "colorCast": false,
+    "instanceCount": 0,
+    "instances": [],
+    "wardrobeUnit": "unknown",
+    "quality": {
+      "lighting": "unknown",
+      "focus": "unknown",
+      "framing": "unknown",
+      "background": "unknown"
+    }
+  },
+  "annotationStatus": "UNLABELED — external independent human must personally inspect original; this template is NEVER a truth receipt"
+}
