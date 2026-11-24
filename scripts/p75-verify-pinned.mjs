@@ -42,6 +42,23 @@ for(let i=0;i<rows.length;i++){
 function clean(s){return String(s||'').replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/\s+/g,' ').trim().slice(0,400);}
 function canonLicense(url){try{const u=new URL(url);if(u.hostname==='creativecommons.org'&&u.protocol==='http:')u.protocol='https:';return u.toString();}catch{return url;}}
 const headers={'User-Agent':'ClosetCurrentP75PinnedAudit/1.0 (https://github.com/nickhaney916-lang/Closet-Current; no uploads)','Accept':'application/json'};
+async function recheckFetch(url,label){
+ for(let attempt=0;attempt<3;attempt++){
+  let response;
+  try{
+   response=await fetch(url,{headers,signal:AbortSignal.timeout(30000)});
+  }catch(error){
+   if(attempt===2)throw new Error(label+' request failed',{cause:error});
+  }
+  if(response?.ok)return response;
+  if(response&&(![429,500,502,503,504].includes(response.status)||attempt===2))
+   throw Error(label+' HTTP '+response.status);
+  const retryHeader=response?.headers.get('retry-after');
+  const retryAfter=Number(retryHeader);
+  if(retryAfter>30)throw Error(label+' HTTP '+response.status+' retry deferred by source');
+  await new Promise(resolve=>setTimeout(resolve,Math.max(retryAfter*1000||0,1500*(attempt+1))));
+ }
+}
 const networkLimit=Number(process.env.P75_RECHECK_LIMIT||0);
 if(!Number.isInteger(networkLimit)||networkLimit<0||networkLimit>rows.length)throw Error('Unsafe pinned recheck count');
 async function imageDhash(bytes){
@@ -55,8 +72,7 @@ const recheckRows=footwearMode?[...firstByFamily,...rows.filter(row=>!firstByFam
 for(const row of recheckRows.slice(0,networkLimit)){
  const title=decodeURIComponent(new URL(row.sourcePage).pathname.replace(/^\/wiki\//,'')).replace(/_/g,' ');
  const params=new URLSearchParams({action:'query',titles:title,prop:'imageinfo',iiprop:'url|size|sha1|mime|extmetadata',format:'json',formatversion:'2'});
- const res=await fetch('https://commons.wikimedia.org/w/api.php?'+params,{headers,signal:AbortSignal.timeout(30000)});
- if(!res.ok)throw Error('Cannot recheck Commons current provenance');
+ const res=await recheckFetch('https://commons.wikimedia.org/w/api.php?'+params,'Commons provenance '+row.id);
  const data=await res.json(),api=data.query?.pages?.[0]?.imageinfo?.[0];
  if(!api||!originalURL(api.url)||canonicalOriginalURL(api.url)!==row.originalURL||
  api.sha1!==row.commonsSha1||api.size!==row.byteLength||api.mime!==row.mime||
@@ -65,9 +81,9 @@ for(const row of recheckRows.slice(0,networkLimit)){
  canonLicense(clean(api.extmetadata?.LicenseUrl?.value))!==row.licenseURL||
  clean(api.extmetadata?.Artist?.value)!==row.artist)
   throw Error('Current Commons original/licensing/attribution changed: curator must re-evaluate');
- const photo=await fetch(row.originalURL,{headers,signal:AbortSignal.timeout(30000)});
- if(!photo.ok||!originalURL(photo.url)||photo.headers.get('content-length')&&Number(photo.headers.get('content-length'))>12*1024*1024)
-  throw Error('Pinned original unavailable/untrusted');
+ const photo=await recheckFetch(row.originalURL,'Pinned original '+row.id);
+ if(!originalURL(photo.url)||Number(photo.headers.get('content-length'))>12*1024*1024)
+  throw Error('Pinned original has an untrusted redirect or size: '+row.id);
  const bytes=Buffer.from(await photo.arrayBuffer());
  if(!verifyOriginalBytes(row,bytes)||await imageDhash(bytes)!==row.dhash64)throw Error('Original bytes/perceptual identity changed');
  const metadata=await sharp(bytes,{limitInputPixels:40_000_000}).metadata();
