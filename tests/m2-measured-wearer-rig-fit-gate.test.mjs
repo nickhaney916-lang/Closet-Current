@@ -421,7 +421,7 @@ test('nonincident self-contact blocks correction even with distant body and reco
  safe(clear);assert.ok(clear.correctedPose);
  assert.ok(clear.correctionSegmentNonincidentSelfReceipts.every(p=>p.clear));
 });
-test('shared indexed topology is explicitly excluded, never certified as adjacent foldover free',()=>{
+test('shared indexed topology uses a separate incident guard, never full physical foldover certification',()=>{
  const x={rest:[0,0,0,1,0,0,0,1,0,1,1,0],pose:[0,0,0,2,0,0,0,2,0,2,2,0],
   indices:[0,1,2,1,3,2],expectedFaces:2,expectedVertices:4,
   obstacles:[{kind:'body',vertices:[0,0,3,2,0,3,0,2,3],indices:[0,1,2]}]};
@@ -439,4 +439,32 @@ test('two moving nonincident surfaces are checked against each other',()=>{
  assert.equal(r.stopReason,'SWEPT_NONINCIDENT_SELF_OVERLAP_UNRESOLVED');
  assert.equal(r.correctionSegmentNonincidentSelfReceipts[0].movingFacesIndexed,2);
  assert.equal(r.correctionSegmentNonincidentSelfReceipts[0].broadphasePairsExamined,1);
+});
+
+test('incident shared-edge foldover blocks correction while an ordinary seam is separated',()=>{
+ const body={kind:'body',vertices:[0,0,3,2,0,3,0,2,3],indices:[0,1,2]};
+ const x={rest:[0,0,0,1,0,0,0,1,0,1,1,0],pose:[0,0,0,2,0,0,0,2,0,2,2,0],
+  indices:[0,1,2,1,3,2],expectedFaces:2,expectedVertices:4,obstacles:[body]};
+ const clear=guarded(x);safe(clear);assert.ok(clear.correctedPose);
+ assert.ok(clear.correctionSegmentNonincidentSelfReceipts.every(p=>p.clear&&p.incidentPairsSeparated===1));
+ const folded={...x,rest:[0,0,0,1,0,0,0,1,0,.3,.3,0],pose:[0,0,0,2,0,0,0,2,0,.6,.6,0]};
+ const original=JSON.stringify(folded),r=guarded(folded);safe(r);
+ assert.equal(r.correctedPose,null);assert.equal(r.stopReason,'SWEPT_INCIDENT_FOLDOVER_UNRESOLVED');
+ const w=r.correctionSegmentNonincidentSelfReceipts[0];
+ assert.equal(w.incidentPairsExcluded,1);assert.equal(w.incidentPairsSeparated,0);
+ assert.equal(w.frontFaceOrdinal,0);assert.equal(w.otherFrontFaceOrdinal,1);
+ assert.equal(JSON.stringify(folded),original);
+});
+test('shared-vertex rays must remain strictly separated throughout correction',()=>{
+ const body={kind:'body',vertices:[0,0,3,2,0,3,0,2,3],indices:[0,1,2]};
+ const x={rest:[0,0,0,1,0,0,0,1,0,-1,0,0,0,-1,0],
+  pose:[0,0,0,2,0,0,0,2,0,-2,0,0,0,-2,0],indices:[0,1,2,0,3,4],
+  expectedFaces:2,expectedVertices:5,obstacles:[body]};
+ const clear=guarded(x);safe(clear);assert.ok(clear.correctedPose);
+ assert.equal(clear.incidentMovingFaceFoldoverGuardEnabled,true);
+ assert.ok(clear.correctionSegmentNonincidentSelfReceipts.every(p=>p.incidentPairsSeparated===1));
+ const sameSide={...x,rest:[0,0,0,1,0,0,0,1,0,.5,0,0,0,.5,0],
+  pose:[0,0,0,2,0,0,0,2,0,1,0,0,0,1,0]};
+ const bad=guarded(sameSide);safe(bad);assert.equal(bad.correctedPose,null);
+ assert.equal(bad.stopReason,'SWEPT_INCIDENT_FOLDOVER_UNRESOLVED');
 });
