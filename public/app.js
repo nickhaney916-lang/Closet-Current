@@ -1086,6 +1086,13 @@ function adjustPhoto(item){
    const review={
     confirmed:true,recordId:item.id,originalSHA256:item.sourceSHA256,
     category:value.category,itemType:value.itemType,color:value.color,
+    // The native atomic writer must receive the editor's submitted details,
+    // not the original draft's older metadata. No source fields are included.
+    ...(nativeCanonical167Active?{wardrobeDetails:{
+     sleeveLength:value.sleeveLength,pattern:value.pattern,fit:value.fit,
+     seasons:[...value.seasons],brand:value.brand,size:value.size,
+     material:value.material,occasion:value.occasion,notes:value.notes||''
+    }}:{}),
     name:value.name,singleGarmentConfirmed:!multi&&garmentConfirmed120.checked,
     instanceConfirmed:multi&&garmentConfirmed120.checked,
     ...(multi?{cutoutSHA256:item.segmentHint?.cutoutSHA256}:{}),
