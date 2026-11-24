@@ -317,7 +317,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
  const captureUser88=captureOwner88();lastOutfitOwner88={user:captureUser88,id:captureUser88?.id||null};
  $('outfitRetry').hidden=true;$('outfitSaveStatus').textContent='';
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('outfit_split_start');
- const job={id:crypto.randomUUID(),sourceId,ownerId:unit70Owner(),ownerRef88:captureUser88,started:Date.now(),phase:'loading',worker:null,timer:null,added:0,colorNotes:[],messageQueue:Promise.resolve(),sourceDigest:outfitColor76?originalSha256ForColor76(image):null,unit70SourceDigest:outfitUnits70&&!outfitColor76?originalSha256ForColor76(image):null};outfitSplitJob=job;
+ const job={id:crypto.randomUUID(),sourceId,ownerId:unit70Owner(),ownerRef88:captureUser88,started:Date.now(),phase:'loading',worker:null,timer:null,added:0,received:0,colorNotes:[],messageQueue:Promise.resolve(),sourceDigest:outfitColor76?originalSha256ForColor76(image):null,unit70SourceDigest:outfitUnits70&&!outfitColor76?originalSha256ForColor76(image):null};outfitSplitJob=job;
  const timeout=()=>finishOutfitSplit(job,'Outfit separation timed out. Your existing and separated photos are kept. Try again with one person, head to toe.',true);
  const touch=()=>{clearTimeout(job.timer);const remaining=300000-(Date.now()-job.started);job.timer=setTimeout(timeout,Math.max(0,Math.min(60000,remaining)));};touch();
  $('outfitSplitStatus').textContent='Preparing…';
@@ -410,6 +410,9 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     // a separate human physical-unit decision before being saved.
     const hint88=unresolved88?{...p.hint,componentReviewStatus:'unresolved_fragments_keep_source_mask'}:
      split88?{...p.hint,componentReviewStatus:'owner_must_confirm_garment_units'}:p.hint;
+    // Count verified worker deliveries, not newly inserted drafts: a retry
+    // may legitimately coalesce an identical pending frame.
+    job.received++;
     if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:hint88,recognitionPhoto:p.recognitionPhoto,originalPhoto:{image},cropBounds:p.cropBounds,colorEstimate:safeColorEstimate76,
       ...(outfitUnits70?{reconciliation70:{...p.reconciliation70,ownerId:job.ownerId,colorEstimate:safeColorEstimate76||null},reconciliation70Status:'unresolved'}:{})})){
       job.added++;if(colorNote76)job.colorNotes.push(colorNote76);
@@ -417,6 +420,10 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     renderOutfitCapture();return;
    }
    if(data.type==='done'){
+    if(!Number.isSafeInteger(data.count)||data.count<0||data.count!==job.received){
+     finishOutfitSplit(job,'Outfit separation returned an incomplete result. Your original and earlier accepted drafts are kept; retry or photograph items individually.',true);
+     return;
+    }
     // P88 real, human-annotated public validation: the shoe-only-conservative
     // split matched 27/53 garment masks. Small/accessory items were often
     // missing; multiple disconnected garments are not verified owned units.
