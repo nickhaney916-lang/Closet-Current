@@ -5,7 +5,7 @@ import {resolve,extname,join} from 'node:path';
 import {chromium,webkit} from 'playwright';
 const root=resolve('dist'),output=resolve(process.argv[2]||'benchmark/parallel70-browser');
 const types={'.html':'text/html','.css':'text/css','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json'};
-const html='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/app-theme.css"></head><body><section id="review" class="view"><div id="outfitPieceActions"><h3>Your outfit pieces</h3><p id="outfitPieceSummary"></p><div id="outfitUnitReview70" class="unit70-panel" hidden></div><button id="useCapturedOutfit"></button><p id="outfitSaveStatus"></p></div></section><section id="scan" class="view" hidden></section><p id="outfitSplitStatus"></p><button id="outfitRetry" hidden></button><input id="outfitCamera" type="file" style="display:block;max-width:100%"><input id="outfitUpload" type="file" style="display:block;max-width:100%"></body></html>';
+const html='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/app-theme.css"></head><body><section id="review" class="view"><div id="outfitPieceActions"><h3>Your outfit pieces</h3><p id="outfitPieceSummary"></p><div id="outfitUnitReview70" class="unit70-panel" hidden></div><button id="useCapturedOutfit"></button><p id="outfitSaveStatus"></p></div></section><section id="scan" class="view" hidden></section><p id="outfitSplitStatus"></p><button id="outfitRetry" hidden></button><input id="outfitCamera" type="file" style="display:block;max-width:100%"><input id="outfitUpload" type="file" style="display:block;max-width:100%"><span id="sessionCount" hidden></span><span id="reviewCount" hidden></span><img id="lastCaptureImage" hidden></body></html>';
 const server=createServer(async(req,res)=>{
  try{
   const path=new URL(req.url,'http://localhost').pathname;
@@ -18,8 +18,8 @@ await new Promise(f=>server.listen(0,'127.0.0.1',f));const port=server.address()
 const scaffold=[
  "let batch=[],items=[],busy=false,session=0,recognitionAssetVersion='',categories=['Uncategorized','Tops','Bottoms','Shoes','Outerwear','Dresses','Accessories'],localPending=new Set();",
  "window.closetAuth={user:{id:'owner-70'}};window.confirm=()=>true;window.workerRecord=null;",
- "const $=id=>document.getElementById(id);const closetReady=Promise.resolve(),outfitBoardReady=Promise.resolve();",
- "function recordDeviceEvent(){}function stopCamera(){}function controls(){}",
+ "const $=id=>document.getElementById(id);let db;const closetReady=new Promise((resolve,reject)=>{const req=indexedDB.open('closet-current-user-owner-70',1);req.onupgradeneeded=()=>req.result.createObjectStore('state',{keyPath:'id'});req.onsuccess=()=>{db=req.result;resolve();};req.onerror=()=>reject(req.error);});const outfitBoardReady=closetReady;",
+ "function recordDeviceEvent(){}function stopCamera(){}function controls(){}function queueAutomatic(){}const sessionCapturedIds=new Set();const queued=work=>Promise.resolve().then(work);",
  "function switchView(view){document.querySelector('#review').hidden=view!=='review';document.querySelector('#scan').hidden=view!=='scan';}",
  "function persistDraft(){window.draftBackup=structuredClone(batch);return Promise.resolve();}",
  "let count=0;",
@@ -35,7 +35,10 @@ async function runCase(engine,width){
   const page=await browser.newPage({viewport:{width,height:900},deviceScaleFactor:1});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:'+port+'/trial70.html?outfitInstances840=1&outfitUnits70=1');
+  await page.addScriptTag({url:'http://127.0.0.1:'+port+'/taxonomy.js'});
+  await page.addScriptTag({url:'http://127.0.0.1:'+port+'/clothing-details.js'});
   await page.addScriptTag({content:scaffold});
+  await page.evaluate(()=>closetReady);
   await page.addScriptTag({url:'http://127.0.0.1:'+port+'/outfit-capture.js'});
   const sha=n=>n.toString(16).padStart(64,'0');
   const photos=await page.evaluate(async()=>{
@@ -55,10 +58,10 @@ async function runCase(engine,width){
    window.startOutfitSplit(photos.scene,'source-1');
    for(const [image,x,mask] of [[photos.a,.15,hashes[0]],[photos.b,.4,hashes[1]]]){
     window.workerRecord.onmessage({data:{id:window.workerRecord.request.id,type:'piece',
-     piece:{image,
+     piece:{image,label:'Shoes',requiresReview:true,instanceMethod:'connected_footwear_component',
       hint:{categories:['Shoes'],types:[],clipped:false},
       cropBounds:{x,y:.67,width:.12,height:.14},
-      colorEstimate:{color:'Black',support:.94},
+      colorEstimate:{color:'Black',source:'photo-estimate',support:.94},
       reconciliation70:{sourceSha256:photos.sourceSha256,maskSha256:mask,instanceOrdinal:0}}}});
    }
    window.workerRecord.onmessage({data:{id:window.workerRecord.request.id,type:'done',count:2}});
@@ -86,7 +89,7 @@ async function runCase(engine,width){
    [1,0,'paired_confirmed',photos.b,true]);
   assert.equal(state.photo,photos.scene);
   await page.getByRole('button',{name:'Separate regions again'}).click();
-  await page.waitForFunction(()=>batch.length===2&&batch.every(x=>x.reconciliation70Status==='separate_confirmed'));
+  await page.waitForFunction(()=>session===1&&batch.length===2&&batch.every(x=>x.reconciliation70Status==='separate_confirmed'));
   assert.equal(await page.evaluate(()=>items.length),0);
   await page.screenshot({path:join(output,engine.name()+'-'+width+'.png'),fullPage:true});
   const overflow=await page.evaluate(()=>({viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,
