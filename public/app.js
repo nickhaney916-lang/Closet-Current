@@ -2268,6 +2268,25 @@ window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefau
 // Startup recovery is a display-only projection; never rewrite or delete
 // the private stored rows to repair their shape. Conflicting IDs are all
 // withheld, not resolved by choosing whichever record arrived first.
+// Read saved and unfinished garments in one native snapshot. Separate
+// transactions can straddle another tab's atomic draft-to-saved commit.
+function readStartupWardrobeSnapshot(ownerDB){
+ return new Promise((resolve,reject)=>{
+  let tx;
+  try{
+   tx=ownerDB.transaction(['items','state'],'readonly');
+   const saved=tx.objectStore('items').getAll();
+   const draft=tx.objectStore('state').get('draft');
+   tx.oncomplete=()=>{
+    const record=draft.result;
+    const batch=record===undefined?[]:record?.batch;
+    const draftContainerDamaged=!Array.isArray(batch);
+    resolve({loadedItems:saved.result,loadedDraft:draftContainerDamaged?[]:batch,draftContainerDamaged});
+   };
+   tx.onabort=tx.onerror=()=>reject(tx.error||Error('CLOSET_STARTUP_SNAPSHOT_READ_FAILED'));
+  }catch(error){reject(error);}
+ });
+}
 function partitionStartupWardrobe(saved,drafts,owner){
  if(!Array.isArray(saved)||!Array.isArray(drafts)||typeof owner!=='string'||!owner)
   throw Error('CLOSET_STARTUP_INVALID_ROSTER');
@@ -2330,16 +2349,7 @@ const closetReady=(async()=>{
   auth.assertCurrent?.();
   // Keep both asynchronous reads on the initiating account's DB. Do not
   // publish either owner's photos until the entire local roster loads.
-  const loadedItems=await readAllFrom(connection);
-  if(!current()){connection.close();return;}
-  let loadedDraft,draftContainerDamaged=false;
-  try{loadedDraft=await readDraftFrom(connection);}
-  catch(error){
-   // The draft container may be corrupt even when every saved garment is
-   // intact. Show only the valid saved projection; never reopen writes.
-   if(error?.message!=='CLOSET_CAPTURE_INVALID_PERSISTED_DRAFT')throw error;
-   loadedDraft=[];draftContainerDamaged=true;
-  }
+  const {loadedItems,loadedDraft,draftContainerDamaged}=await readStartupWardrobeSnapshot(connection);
   if(!current()){connection.close();return;}
   auth.assertCurrent?.();
   if(db&&db!==connection){connection.close();return;}
