@@ -403,3 +403,40 @@ test('swept projection never clears touching or near ambiguous coplanar bounds',
   assert.equal(r.stopReason,'SWEPT_OBSTACLE_OVERLAP_UNRESOLVED');
  }
 });
+
+test('nonincident self-contact blocks correction even with distant body and records indexed witness',()=>{
+ const body={kind:'body',vertices:[0,0,3,2,0,3,0,2,3],indices:[0,1,2]};
+ const x={rest:[0,0,0,1,0,0,0,1,0,.2,.2,0,.4,.2,0,.2,.4,0],
+  pose:[0,0,0,2,0,0,0,1,0,.2,.2,0,.4,.2,0,.2,.4,0],
+  indices:[0,1,2,3,4,5],expectedFaces:2,expectedVertices:6,obstacles:[body]};
+ const original=JSON.stringify(x),r=guarded(x);safe(r);
+ assert.equal(r.correctedPose,null);assert.equal(r.stopReason,'SWEPT_NONINCIDENT_SELF_OVERLAP_UNRESOLVED');
+ assert.equal(r.correctionSegmentObstacleReceipts.length,0);
+ const w=r.correctionSegmentNonincidentSelfReceipts[0];
+ assert.equal(w.clear,false);assert.equal(w.frontFaceOrdinal,0);assert.equal(w.otherFrontFaceOrdinal,1);
+ assert.equal(w.movingFacesIndexed,1);assert.equal(w.budgetExceeded,false);
+ assert.equal(JSON.stringify(x),original);
+ const clear=guarded({...x,rest:x.rest.map((v,i)=>i>=9&&i%3===2?2:v),
+  pose:x.pose.map((v,i)=>i>=9&&i%3===2?2:v)});
+ safe(clear);assert.ok(clear.correctedPose);
+ assert.ok(clear.correctionSegmentNonincidentSelfReceipts.every(p=>p.clear));
+});
+test('shared indexed topology is explicitly excluded, never certified as adjacent foldover free',()=>{
+ const x={rest:[0,0,0,1,0,0,0,1,0,1,1,0],pose:[0,0,0,2,0,0,0,2,0,2,2,0],
+  indices:[0,1,2,1,3,2],expectedFaces:2,expectedVertices:4,
+  obstacles:[{kind:'body',vertices:[0,0,3,2,0,3,0,2,3],indices:[0,1,2]}]};
+ const r=guarded(x);safe(r);assert.ok(r.correctedPose);
+ assert.ok(r.correctionSegmentNonincidentSelfReceipts.every(p=>p.clear&&p.incidentPairsExcluded===1));
+ assert.equal(r.incidentFaceFoldoverOrStationarySelfContactCertified,false);
+ assert.equal(r.unchangedFaceOrSelfContactCertified,false);
+});
+test('two moving nonincident surfaces are checked against each other',()=>{
+ const x={rest:[0,0,0,1,0,0,0,1,0,.2,.2,0,1.2,.2,0,.2,1.2,0],
+  pose:[0,0,0,2,0,0,0,2,0,.2,.2,0,2.2,.2,0,.2,2.2,0],
+  indices:[0,1,2,3,4,5],expectedFaces:2,expectedVertices:6,
+  obstacles:[{kind:'body',vertices:[0,0,3,2,0,3,0,2,3],indices:[0,1,2]}]};
+ const r=guarded(x);safe(r);assert.equal(r.correctedPose,null);
+ assert.equal(r.stopReason,'SWEPT_NONINCIDENT_SELF_OVERLAP_UNRESOLVED');
+ assert.equal(r.correctionSegmentNonincidentSelfReceipts[0].movingFacesIndexed,2);
+ assert.equal(r.correctionSegmentNonincidentSelfReceipts[0].broadphasePairsExamined,1);
+});
