@@ -105,6 +105,34 @@ insert(" advance('logout-and-other-owner-no-original-pixels');",`
  assert.equal(await history.getByRole('button',{name:'Open saved outfit'}).count(),0);
  assert.equal(await history.getByText('Broken record',{exact:true}).count(),0);
  assert.equal((await wearRow()).events.length,2,'A still owns history at sign-out');
+ // Inherited recovery guard closes the regular app DB after a stale saved
+ // board references a deleted garment. Verify recovery leaves the log intact.
+ await page.reload({waitUntil:'domcontentloaded'});
+ const recovery=await page.evaluate(async()=>{
+  await outfitBoardReady;
+  return {locked:!db,count:startupWardrobeRecoveryCount};
+ });
+ if(recovery.locked){
+  assert.ok(recovery.count>0);
+  await page.locator('#moreMenu summary').click();
+  await page.locator('#moreMenu button.tab[data-view="builder"]').click();
+  await openWear();
+  await status.getByText('Wear history is unavailable until your private wardrobe is ready.').waitFor();
+  const durable=await page.evaluate(()=>new Promise((resolve,reject)=>{
+   const request=indexedDB.open('closet-current-user-p99-A');
+   request.onupgradeneeded=()=>request.transaction.abort();
+   request.onerror=()=>reject(request.error);
+   request.onsuccess=()=>{
+    const ownerDB=request.result,tx=ownerDB.transaction('state');
+    const read=tx.objectStore('state').get('outfit-wear-history-v1');
+    tx.oncomplete=()=>{ownerDB.close();resolve(read.result?.events.length);};
+    tx.onabort=()=>{ownerDB.close();reject(tx.error);};
+   };
+  }));
+  assert.equal(durable,2);
+  console.log('P1656_INHERITED_DELETE_RELOAD_RECOVERY',engine,width,'wear history retained');
+ }
+
 `);
 insert(" assert.equal(await page.locator('#closetCount').innerText(),'0',",`
  assert.equal(await wearRow(),undefined);

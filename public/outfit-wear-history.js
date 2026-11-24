@@ -117,7 +117,10 @@ function renderOutfitWearHistory(){
  if(!outfitWearEvents.length)history.append(node('li','No outfits recorded yet.'));
  for(const entry of outfitWearEvents){
   const row=node('li');
-  const parts=Object.values(entry.slots).map(id=>roster.get(id)?.name||'Unavailable piece');
+  const parts=Object.values(entry.slots).map(id=>{
+   const item=roster.get(id);
+   return item?(item.name||item.category):'Unavailable piece';
+  });
   const undo=node('button','Undo wear record','secondary');
   undo.type='button';undo.disabled=outfitWearBusy;
   undo.setAttribute('aria-label','Undo wear record for '+entry.name+' on '+displayWearDay(entry.day));
@@ -194,11 +197,17 @@ async function changeOutfitWear(action,value){
   if(session.current()){outfitWearBusy=false;renderOutfitWearHistory();}
  }
 }
-$('outfitWearPanel').addEventListener('toggle',()=>{
- if($('outfitWearPanel').open){
-  if(outfitWearLoaded)renderOutfitWearHistory();
-  else void changeOutfitWear('read');
+$('outfitWearPanel').addEventListener('toggle',async()=>{
+ const panel=$('outfitWearPanel');
+ if(!panel.open)return;
+ await outfitBoardReady;
+ if(!panel.open||$('appShell').hidden)return;
+ if(!outfitWearSession()){
+  $('outfitWearStatus').textContent='Wear history is unavailable until your private wardrobe is ready.';
+  return;
  }
+ if(outfitWearLoaded)renderOutfitWearHistory();
+ else void changeOutfitWear('read');
 });
 $('resetOutfitWear').onclick=()=>{
  if(outfitWearSession()&&confirm('Clear all outfit wear history on this device?'))void changeOutfitWear('reset');
