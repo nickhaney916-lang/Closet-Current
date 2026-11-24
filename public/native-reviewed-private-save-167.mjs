@@ -110,6 +110,35 @@ async function snapshot(db){
   }catch{reject(Error('PHOTO119 owner snapshot failed'));}
  });
 }
+// Accept only the existing normalized optional clothing fields. This is
+// owner-entered metadata, not evidence of model accuracy or 3D eligibility.
+function reviewedWardrobeDetails(details){
+ if(details===undefined)return {};
+ if(!details||typeof details!=='object'||Array.isArray(details))return null;
+ const enums={
+  sleeveLength:['Unknown','Sleeveless','Short sleeve','Elbow length','Three-quarter sleeve','Long sleeve','Not applicable'],
+  pattern:['Unknown','Solid','Striped','Floral','Plaid','Checked','Polka dot','Animal print','Graphic','Other'],
+  fit:['Unknown','Fitted','Regular','Relaxed','Oversized','Not applicable']
+ };
+ const seasonOptions=['Spring','Summer','Fall','Winter','All seasons'];
+ const textLimits={brand:120,size:120,material:120,occasion:120,notes:500};
+ const keys=[...Object.keys(enums),'seasons',...Object.keys(textLimits)];
+ if(Object.keys(details).length!==keys.length||keys.some(k=>!Object.hasOwn(details,k)))return null;
+ const value={};
+ for(const [key,options] of Object.entries(enums)){
+  if(!options.includes(details[key]))return null;
+  value[key]=details[key];
+ }
+ if(!Array.isArray(details.seasons)||details.seasons.some(s=>!seasonOptions.includes(s))||
+    new Set(details.seasons).size!==details.seasons.length||
+    (details.seasons.includes('All seasons')&&details.seasons.length!==1))return null;
+ value.seasons=seasonOptions.filter(s=>details.seasons.includes(s));
+ for(const [key,max] of Object.entries(textLimits)){
+  if(typeof details[key]!=='string'||details[key].length>max)return null;
+  value[key]=details[key];
+ }
+ return value;
+}
 function validateReview(review,record,sourceSHA){
  if(!review||review.confirmed!==true||review.recordId!==record.id||
     review.originalSHA256!==sourceSHA||
@@ -219,6 +248,8 @@ export async function commitHumanReviewedPhoto119({
  if(!first.verified)return verdict('review-required','original-source-unverified');
  const mode=validateReview(review,record,sourceSHA);
  if(!mode)return verdict('review-required','human-review-incomplete');
+ const wardrobeDetails=reviewedWardrobeDetails(review.wardrobeDetails);
+ if(wardrobeDetails===null)return verdict('review-required','invalid-owner-wardrobe-details');
  // A display preview is NOT a second photographed garment, verified cutout,
  // independently proven reduction of the original, or a release-eligible 3D.
  // Admit this owner-reviewed SOURCE+DISPLAY pair only when the actual JPEG
@@ -264,7 +295,7 @@ export async function commitHumanReviewedPhoto119({
  // Do not promote the original whole-photo classifier output to an individual
  // garment. Record only the exact human-reviewed category/subtype/color.
  const value=structuredClone({
-  ...record,ownerId,category:review.category,itemType:review.itemType,
+  ...record,...wardrobeDetails,ownerId,category:review.category,itemType:review.itemType,
   color:review.color,name:review.name&&validText(review.name,120)
    ?review.name:review.color+' '+review.itemType,
   // M31: PHOTO119's owner-confirmed original SHA and category/type/color are
@@ -284,6 +315,8 @@ export async function commitHumanReviewedPhoto119({
   indexingLevel:'human-reviewed-specific-type',
   savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()
  });
+ // This explicitly reviewed record no longer has a pending AI suggestion.
+ if(review.wardrobeDetails!==undefined){delete value.localChoices;value.requiresOwnershipConfirmation=false;}
  checkLive({db,ownerId,currentOwner,assertLease,record,review,initial});
  if(photoIdentity(record)!==sourceStart)
   fail('original JPEG source changed during correction review');
