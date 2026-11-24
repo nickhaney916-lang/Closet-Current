@@ -230,7 +230,7 @@ test('recognized outfit cutouts automatically save as individual closet items',a
  assert.equal(stored.length,1);assert.equal(c.items.length,1);assert.equal(c.batch.length,0);assert.equal(c.items[0].itemType,'Polo');assert.equal(c.items[0].requiresOwnershipConfirmation,false);assert.equal(c.items[0].outfitSourceId,'capture');
 });
 test('clipped cutouts and segmentation/category disagreements do not get guessed labels',async()=>{
- for(const hint of [{categories:['Bottoms'],types:[],clipped:false},{categories:['Tops'],types:[],clipped:true},{categories:['Tops'],types:['Polo'],clipped:false}]){
+ for(const hint of [{categories:['Bottoms'],types:[],clipped:false},{categories:['Tops'],types:[],clipped:true},{categories:['Tops'],types:['T-shirt'],clipped:false}]){
   const {c,stored}=setup();c.candidate('outfit-top',{outfitSourceId:'capture',segmentHint:hint});await done(c);assert.equal(stored.length,0);assert.equal(c.batch[0].category,'Uncategorized');assert.equal(c.batch[0].itemType,'Unknown');
  }
 });
@@ -263,4 +263,10 @@ test('outfit recognition uses original crop texture while masked garment color w
  let modelImage,qualityImage;const {c,stored}=setup({quality:async image=>{qualityImage=image;return {blank:false,signature:[1,2,3],aspect:1,colorEstimate:{color:'White'}};},request:async(type,image)=>{modelImage=image;return {strong:true,choices:[choice],details:{color:'Red',pattern:'Solid'}};}});
  c.candidate('isolated-display',{outfitSourceId:'capture',recognitionPhoto:{image:'raw-textured-crop'},originalPhoto:{image:'whole-outfit'},cropBounds:{x:.1,y:.2,width:.3,height:.4},colorEstimate:{color:'Blue'},segmentHint:{categories:['Tops'],types:[],clipped:false}});await done(c);
  assert.equal(modelImage,'raw-textured-crop');assert.equal(qualityImage,'raw-textured-crop');assert.equal(stored.length,1);assert.equal(stored[0].image,'isolated-display');assert.equal(stored[0].color,'Blue');assert.equal(stored[0].name,'Blue Polo');assert.equal(stored[0].colorMethod,'garment-mask');assert.equal(stored[0].originalPhoto.image,'whole-outfit');assert.equal(stored[0].recognitionPhoto.image,'raw-textured-crop');
+});
+
+test('invalid strong Shirt subtype fails closed and retains the original draft',async()=>{
+ const {c,stored}=setup({result:{strong:true,choices:[{category:'Tops',itemType:'Shirt',label:'shirt'}],details:{color:'Blue'}}});
+ c.candidate('invalid');await done(c);assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.batch.length,1);
+ const row=c.batch[0];assert.equal(row.image,'invalid');assert.equal(row.category,'Uncategorized');assert.equal(row.itemType,'Unknown');assert.equal(row.scanFailed,true);assert.equal(row.requiresOwnershipConfirmation,true);assert.match(row.localStatus,/invalid garment information/);
 });
