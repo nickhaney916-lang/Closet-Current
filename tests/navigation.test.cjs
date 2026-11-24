@@ -5,7 +5,7 @@ function setup(){
  const elements=Object.fromEntries(names.map(id=>[id,{id,hidden:id!=='home',classList:{contains:()=>true}}]));
  const tabs=names.map(view=>({dataset:{view},attributes:{},classList:{toggle(){}},setAttribute(k,v){this.attributes[k]=v;},removeAttribute(k){delete this.attributes[k];}}));
  const more={open:true,classList:{toggle(k,v){more.active=v;}}};
- const c={stream:null,cameraOpening:false,render(){},stopCamera(){c.stopped=true;c.stream=null;},$:()=>more,document:{getElementById:id=>elements[id],querySelectorAll:selector=>selector==='.view'?Object.values(elements):tabs}};
+ const c={stream:null,cameraOpening:false,startupWardrobeRecoveryCount:0,render(){},stopCamera(){c.stopped=true;c.stream=null;},ownerCurrent:true,refreshes:0,ownerWardrobeMutationLease:()=>({assertLease(){if(!c.ownerCurrent)throw Error('revoked owner');}}),refreshStylistFocusItems(){c.refreshes++;},signedIn:true,$:id=>id==='authGate'?{hidden:c.signedIn}:id==='appShell'?{hidden:!c.signedIn}:more,document:{getElementById:id=>elements[id],querySelectorAll:selector=>selector==='.view'?Object.values(elements):tabs}};
  vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function switchView('),source.indexOf("document.querySelectorAll('.tab').forEach(b=>")),c);return {c,elements,tabs,more};
 }
 test('every existing feature remains reachable with one visible view and correct navigation state',()=>{
@@ -16,4 +16,12 @@ test('navigation stops a camera before opening another feature',()=>{
 });
 test('invalid navigation leaves the active screen and camera untouched',()=>{
  const {c,elements}=setup();c.stream={};c.switchView('unknown');assert.equal(c.stopped,undefined);assert.equal(elements.home.hidden,false);
+});
+
+test('Stylist navigation refreshes only current signed owner outside recovery',()=>{
+ const {c}=setup();c.switchView('stylist');assert.equal(c.refreshes,1);
+ c.switchView('closet');assert.equal(c.refreshes,1);
+ c.ownerCurrent=false;c.switchView('stylist');assert.equal(c.refreshes,1);
+ c.ownerCurrent=true;c.signedIn=false;c.switchView('stylist');assert.equal(c.refreshes,1);
+ c.signedIn=true;c.startupWardrobeRecoveryCount=1;c.switchView('stylist');assert.equal(c.refreshes,1);
 });
