@@ -12,7 +12,7 @@ import {spawnSync} from 'node:child_process';
 const pins={
  runner:'5f999c1dc440539cec143f7c7de48b8fe88dd91e',
  registration:'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb',
- addon:'27b6dc01bbc9a47175fd6b9dd67b40bed913d89c'
+ addon:'2b83773823b41aca38065373e66256ebe20d9be4'
 };
 const sha=b=>createHash('sha1').update('blob '+Buffer.byteLength(b)+'\0')
  .update(b).digest('hex');
@@ -43,7 +43,7 @@ const routeLines=[
  "    const addonSource=await readFile('research/parallel89/real-original-simultaneous-spine03-spine04-browser-addon89.mjs','utf8');",
  "    const blobSha=t=>createHash('sha1').update('blob '+Buffer.byteLength(t)+'\\0').update(t).digest('hex');",
  "    assert.equal(blobSha(originalSource),'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb');",
- "    assert.equal(blobSha(addonSource),'27b6dc01bbc9a47175fd6b9dd67b40bed913d89c');",
+ "    assert.equal(blobSha(addonSource),'2b83773823b41aca38065373e66256ebe20d9be4');",
  "    await route.fulfill({status:200,contentType:'text/javascript',body:originalSource+'\\n'+addonSource});",
  "   });",
  routeAnchor
@@ -68,6 +68,19 @@ const verifyLines=[
  "   assert.equal(trial.actualOriginalCorrectedXYZRatherThanZeroSeed,true);",
  "   assert.ok(trial.originalCorrectedVsHistoricalZeroSeedDistanceRigUnits>.0001);",
  "   assert.equal(trial.other161BoneLocalPoseTransformsImmutable,true);",
+ "   const proportions=trial.sampledOriginalFrontProportionAudit;",
+ "   assert.equal(proportions.sampledPoseCount,16);",
+ "   assert.equal(proportions.originalFrontFaces,35262);",
+ "   assert.ok(proportions.uniqueOriginalFrontEdges>35262);",
+ "   assert.equal(proportions.sampledPoseDistortion.length,16);",
+ "   assert.ok(proportions.sampledPoseDistortion.every(p=>",
+ "    Number.isFinite(p.maximumEdgeLengthRatio)&&Number.isFinite(p.maximumTriangleAreaRatio)));",
+ "   assert.equal(proportions.sampledPoseDistortion[4].minimumEdgeLengthRatio,1);",
+ "   assert.equal(proportions.sampledPoseDistortion[4].maximumTriangleAreaRatio,1);",
+ "   assert.equal(proportions.sampledPoseDistortion[4].edgesOutsideResearchBand,0);",
+ "   assert.equal(proportions.continuousMotionOrMaterialStrainCertified,false);",
+ "   assert.equal(proportions.consumer3DAdmitted,false);",
+ "   assert.equal(proportions.familyAlpha,'HOLD');",
  "   const audit=trial.trueSimultaneousTwoJointFullIndexedAudit;",
  "   assert.equal(audit.originalFrontFaceCount,35262);",
  "   assert.equal(audit.originalBodyFaceCount,109064);",
