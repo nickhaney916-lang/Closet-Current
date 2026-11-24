@@ -28,7 +28,7 @@ source=source.slice(0,start)+`
     const saved=quantity?[original]:[];
     for(let i=1;i<quantity;i++){
      const suffix=String(i).padStart(2,'0');
-     const board={...original,name:i===1||i===2?'P1671 Twin':'P1671 Look '+suffix};
+     const board={...original,name:i===1||i===2?'P1671 Twin':'P1671 Look catalog-'+suffix};
      if(i===1)board.slots={top:original.slots.top};
      if(i===2)board.slots={bottom:original.slots.bottom};
      saved.push(board);
@@ -80,7 +80,7 @@ source=source.slice(0,start)+`
   await seed(size);
   if(!${baseline})await waitCount(size+' saved outfits');
   assert.equal(await visible().count(),size,'initial result count at '+size+' input '+(${baseline}?'none':await input.inputValue()));
-  const target='P1671 Look '+String(size-1).padStart(2,'0');
+  const target='P1671 Look catalog-'+String(size-1).padStart(2,'0');
   if(${baseline}){
    const labels=await grid.locator('button').allTextContents();
    assert.ok(labels.includes(target));
@@ -159,7 +159,7 @@ source=source.slice(0,start)+`
   await input.fill('revised purple');
   await page.getByText('No saved outfits match this search.').waitFor();
   assert.equal(await count.innerText(),'0 of 50 saved outfits');
-  await input.fill('p1671 look 49');
+  await input.fill('p1671 look catalog-49');
   await page.locator('.account-menu summary').click();
   await page.locator('#logout').click();
   await page.locator('#authGate').waitFor({state:'visible'});
