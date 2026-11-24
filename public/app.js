@@ -744,8 +744,13 @@ function saveSourceBoundPiece88(value,nextBatch,lease){
  // different tab's unfinished original when clearing this reviewed draft.
  if(!sourceSaveLeaseLive88(lease))return Promise.reject(Error('P88_STALE_SOURCE_OWNER'));
  if(lease.wasDraft!==true)return Promise.reject(Error('P88_SOURCE_REVIEW_INSERT_ONLY'));
+ // The owner-reviewed payload and pending region must remain exact while
+ // preflight and the durable draft read are pending, including receipt fields.
+ const valueRevision=JSON.stringify(value),draftRevision=JSON.stringify(lease.item);
+ const reviewUnchanged=()=>JSON.stringify(value)===valueRevision&&
+  JSON.stringify(lease.item)===draftRevision;
  return queued(()=>{
-  if(!sourceSaveLeaseLive88(lease)||
+  if(!reviewUnchanged()||!sourceSaveLeaseLive88(lease)||
    value.id!==lease.item.id||
    value.originalPhoto?.image!==lease.original||value.image!==lease.image||
    value.recognitionPhoto?.image!==lease.review||
@@ -778,7 +783,7 @@ function saveSourceBoundPiece88(value,nextBatch,lease){
     const read=stateStore.get('draft');
     read.onsuccess=()=>{
      try{
-      if(!sourceSaveLeaseLive88(lease)||
+      if(!reviewUnchanged()||!sourceSaveLeaseLive88(lease)||
        draftStoreRevision88!==expected||
        JSON.stringify(read.result?.batch??null)!==expected||
        JSON.stringify(batch)!==liveBatchRevision||
