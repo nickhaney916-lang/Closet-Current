@@ -43,7 +43,7 @@ window.run843=async type=>{
  recognitionUnavailable=false;recognitionState.phase='ready';
  mockResult=type==='partial'?{strong:false,categoryConfirmed:true,categoryOnly:true,
   choices:[{category:'Tops',itemType:'Unknown',label:'Tops'}],details:{}}:
- {strong:true,categoryConfirmed:true,categoryOnly:false,
+ {strong:true,categoryConfirmed:false,categoryOnly:false,
   choices:[{category:'Tops',itemType:'T-shirt',label:'a T-shirt'}],details:{}};
  await recognizeItem(batch[0]);
  return {writes,count:items.length,pending:batch.length,
