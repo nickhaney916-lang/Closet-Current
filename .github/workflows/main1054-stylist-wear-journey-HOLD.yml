@@ -1,0 +1,42 @@
+name: MAIN1054 Stylist-to-wear journey HOLD
+on:
+  pull_request:
+    branches: [research/main1054-unified-wear-history-HOLD]
+permissions:
+  contents: read
+jobs:
+  mobile:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'research/main1054-stylist-wear-journey-HOLD'
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify accepted candidate and test-only scope
+        run: |
+          set -euo pipefail
+          parent=2c3196f9c4d6fc8b516a0aae798e14cfb347896d
+          test "$(git rev-parse HEAD^)" = "$parent"
+          git diff --exit-code "$parent" HEAD -- . \
+            ':(exclude).github/workflows/main1054-stylist-wear-journey-HOLD.yml' \
+            ':(exclude)scripts/main1054-stylist-wear-journey.cjs'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - run: npx playwright install --with-deps "${{ matrix.engine }}"
+      - run: node scripts/build.mjs
+      - name: Exercise normal owner review, Stylist save and explicit wear
+        env:
+          P99_ENGINE: ${{ matrix.engine }}
+        run: |
+          for width in 320 390 430; do
+            P99_WIDTH="$width" node scripts/main1054-stylist-wear-journey.cjs
+          done
