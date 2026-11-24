@@ -19,6 +19,7 @@ for(const kind of cases)test('review revision '+kind,async()=>{
   if(kind==='worker-rejection')item.color='Green';
  };
  const c={item,structuredClone,Date,batch:[item],items:[],captureOperationEpoch:0,
+ categories:['Tops','Bottoms'],clothingSchema:{types:{Tops:['T-shirt','Sweatshirt','Blouse'],Bottoms:['Jeans']}},
  recognitionState:{activeId:null,phase:'ready'},localPending:new Set([item.id]),
  recognitionUnavailable:false,localReady:kind!=='loading-category',render(){},message(){},$:()=>({}),
  checkPhoto:async()=>{if(kind==='quality-color')change();return {blank:false,colorEstimate:'Yellow',signature:'sig',aspect:1}},
