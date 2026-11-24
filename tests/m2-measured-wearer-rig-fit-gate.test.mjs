@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assessMetricGarmentToWearerFit as assess,auditSampledOriginalFrontProportions as audit,trialBoundedOriginalFrontCorrection as correct,trialCoordinatedOriginalFrontCorrection as coordinate}
+import {assessMetricGarmentToWearerFit as assess,auditSampledOriginalFrontProportions as audit,trialBoundedOriginalFrontCorrection as correct,trialCoordinatedOriginalFrontCorrection as coordinate,trialProgressiveOriginalFrontStabilization as progressive}
  from '../research/parallel89/measured-wearer-to-licensed-rig-garment-fit89.mjs';
 
 const sourceSHA='a'.repeat(64),rigSHA='b'.repeat(64);
@@ -310,5 +310,36 @@ test('coordinated correction refuses undistorted, collapsed and invalid inputs',
   [[NaN,0,0,1,0,0,0,1,0],'BLOCKED_INVALID_SAMPLED_ORIGINAL_FRONT_GEOMETRY']]){
   const r=coordinate({rest,pose,indices,expectedFaces:1,expectedVertices:3});safe(r);
   assert.equal(r.decision,expected);assert.equal(r.correctedPose,null);
+ }
+});
+
+test('progressive stabilization improves multiple passes but never rebases cumulative travel',()=>{
+ const rest=[0,0,0,1,0,0,0,1,0,1,1,0],pose=[0,0,0,2,0,0,0,2,0,2,2,0],indices=[0,1,2,1,3,2];
+ const x={rest,pose,indices,expectedFaces:2,expectedVertices:4},original=JSON.stringify(x);
+ const r=progressive(x);safe(r);
+ assert.equal(r.decision,'RESEARCH_ONLY_PROGRESSIVE_STABILIZATION_CANDIDATE');
+ assert.equal(r.passes.length,2);assert.equal(r.stopReason,'CUMULATIVE_TRAVEL_LIMIT');
+ assert.ok(r.after.maximumEdgeLengthRatio<r.passes[0].maximumEdgeLengthRatio);
+ assert.ok(r.after.maximumTriangleAreaRatio<r.passes[0].maximumTriangleAreaRatio);
+ assert.ok(r.maximumCumulativeTravelFraction<=.05);
+ assert.ok(r.passes[1].maximumCumulativeTravelFraction>r.passes[0].maximumCumulativeTravelFraction);
+ const first=coordinate(x),second=coordinate({...x,pose:first.correctedPose});
+ assert.deepEqual(Array.from(r.correctedPose),Array.from(second.correctedPose));
+ assert.equal(JSON.stringify(x),original);
+ assert.equal(r.correctionAppliedToLiveMesh,false);
+ assert.equal(r.materialOrCollisionCertified,false);
+});
+test('progressive stabilization refuses a neighboring-region regression without changing source',()=>{
+ const rest=[0,0,0,1,0,0,0,1,0,1,1,0],pose=[0,0,0,1.2,0,0,0,.9,0,.8,1,0],indices=[0,1,2,1,3,2];
+ const x={rest,pose,indices,expectedFaces:2,expectedVertices:4},original=JSON.stringify(x);
+ const r=progressive(x);safe(r);assert.equal(r.correctedPose,null);
+ assert.equal(r.stopReason,'RESEARCH_ONLY_COORDINATED_CORRECTION_REJECTED');
+ assert.equal(r.passes.length,0);assert.equal(JSON.stringify(x),original);
+});
+test('progressive stabilization never alters rigid or invalid geometry',()=>{
+ const rest=[0,0,0,1,0,0,0,1,0],indices=[0,1,2];
+ for(const pose of [rest,[0,0,0,1,0,0,2,0,0],[NaN,0,0,1,0,0,0,1,0]]){
+  const r=progressive({rest,pose,indices,expectedFaces:1,expectedVertices:3});safe(r);
+  assert.equal(r.correctedPose,null);
  }
 });
