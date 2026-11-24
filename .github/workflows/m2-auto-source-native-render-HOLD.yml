@@ -1,0 +1,52 @@
+name: M2 automatic original photo native render HOLD
+on:
+  push:
+    branches: [research/m2-auto-source-native-render-20261123-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  native-view-plane:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P89_BROWSER: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact parent and confined test paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor a7aa6f3dc51df222d27947cf810a448eca558e69 HEAD
+          while IFS= read -r p; do
+            case "$p" in
+              scripts/test-parallel89-automatic-source-native-render.mjs|.github/workflows/m2-auto-source-native-render-HOLD.yml) ;;
+              *) echo "Unexpected scope: $p"; exit 1 ;;
+            esac
+          done < <(git diff --name-only a7aa6f3dc51df222d27947cf810a448eca558e69 HEAD)
+      - name: Pinned native browser and image decoder
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1
+      - name: Genuine browser WebGL2 original-photo auto-mask mesh pixel oracle
+        run: node scripts/test-parallel89-automatic-source-native-render.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M2-native-source-render-${{ matrix.engine }}
+          path: benchmark/m2-native-source-render-HOLD/
+          retention-days: 7
+          if-no-files-found: warn
