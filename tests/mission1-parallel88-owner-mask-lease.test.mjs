@@ -3766,3 +3766,39 @@ test('P88 background recognition cannot replace newer owner fields or attach sta
   }
  }
 });
+
+test('P88 reviewed insertion must pin submitted metadata and live draft throughout storage preflight',async()=>{
+ const begin=appSource.indexOf('function savePiece(');
+ const end=appSource.indexOf('// Saved-item edits must be scoped',begin);
+ assert.ok(begin>=0&&end>begin);
+ for(const kind of ['value-queue','draft-queue','value-read','draft-read','valid']){
+  const item={id:'x',image:'data:image/jpeg;base64,ORIGINAL',category:'Tops',color:'Blue',itemType:'T-shirt'};
+  const value={...item,color:'Green'},batch=[item],writes=[];
+  const lease={item,wasDraft:true,image:item.image,maskRevision:'null',cropRevision:'null',evidenceRevision:'{}'};
+  const mutate=()=>{
+   if(kind==='value-queue'||kind==='value-read')value.color='Red';
+   if(kind==='draft-queue'||kind==='draft-read')item.itemType='Sweatshirt';
+  };
+  const c={item,value,batch,lease,writes,structuredClone,draftStoreRevision88:JSON.stringify(batch),
+   reviewedSaveLeaseLive88:()=>true,ordinarySourceEvidence88:()=> '{}',reviewedDistinctPhotoReceiptValid88:()=>true,
+   queued:async fn=>{if(kind.endsWith('queue'))mutate();return fn();}};
+  lease.ownerDb={transaction(){
+   let aborted=false;
+   const tx={abort(){aborted=true;tx.onabort?.();},objectStore(store){
+    return {get(){const req={result:{batch:JSON.parse(c.draftStoreRevision88)}};
+     queueMicrotask(()=>{if(kind.endsWith('read'))mutate();req.onsuccess();if(!aborted)tx.oncomplete?.();});return req;},
+     add(v){writes.push({store,value:structuredClone(v)});},put(v){writes.push({store,value:structuredClone(v)});}};
+   }};
+   return tx;
+  }};
+  vm.createContext(c);vm.runInContext(appSource.slice(begin,end),c);
+  const save=c.savePiece(value,[],lease);
+  if(kind==='valid'){
+   await save;assert.equal(writes.length,2);assert.equal(writes[0].value.color,'Green');
+  }else{
+   await assert.rejects(save,/P88_REVOKED_REVIEWED_SAVE|P88_DRAFT_STORAGE_CHANGED/);
+   assert.equal(writes.length,0);assert.equal(batch[0],item);
+  }
+  assert.equal(item.image,'data:image/jpeg;base64,ORIGINAL');
+ }
+});
