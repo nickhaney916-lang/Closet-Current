@@ -36,19 +36,7 @@ jobs:
             echo 'Original source unexpectedly passed'; cat /tmp/draft-red.log; exit 1
           fi
           cat /tmp/draft-red.log
-          grep -Eq '^# fail 11 /tmp/draft-red.log
-          node --check public/app.js
-          node --test tests/main1054-malformed-draft-insert-veto.test.mjs
-      - name: Run actual Chromium and WebKit native IndexedDB synthetic owner regression
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
-          npx playwright install --with-deps chromium webkit
-          NATIVE_DRAFT_BROWSER=1 node --test tests/main1054-malformed-draft-insert-veto.test.mjs
-      - name: Offline application build
-        run: node scripts/build.mjs
- /tmp/draft-red.log
+          grep -Eq '^# fail 11$' /tmp/draft-red.log
           node --check public/app.js
           node --test tests/main1054-malformed-draft-insert-veto.test.mjs
       - name: Run actual Chromium and WebKit native IndexedDB synthetic owner regression
