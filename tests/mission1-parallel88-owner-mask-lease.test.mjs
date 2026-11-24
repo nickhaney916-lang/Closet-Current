@@ -3680,3 +3680,51 @@ test('P88 unexpected recognition rejection cannot strand the remaining queue',as
   if(kind==='finalized')assert.equal(bad.localStatus,'Already finalized');
  }
 });
+
+test('P88 malformed classifier identity envelopes remain original-photo drafts',async()=>{
+ const start=appSource.indexOf('async function recognizeItem(item){');
+ const end=appSource.indexOf('async function recognizeBatch(){',start);
+ assert.ok(start>=0&&end>start);
+ const choice={category:'Tops',itemType:'T-shirt',label:'a t-shirt',score:.9};
+ const invalid=[
+  {strong:'true',choices:[choice]},
+  {strong:true,choices:[{...choice,category:'Invented'}]},
+  {strong:true,choices:[{...choice,itemType:'Boots'}]},
+  {strong:true,choices:[{...choice,itemType:'Unknown'}]},
+  {strong:true,choices:[{...choice,score:NaN}]},
+  {strong:true,choices:[{...choice,score:-.1}]},
+  {strong:true,choices:[{...choice,score:1.1}]},
+  {strong:true,categoryConfirmed:true,categoryOnly:true,choices:[choice]}
+ ];
+ const valid=[
+  {strong:true,choices:[choice],details:{}},
+  {strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{...choice,itemType:'Unknown'}]},
+  {strong:false,choices:[]}
+ ];
+ for(const result of [...invalid,...valid]){
+  const item={id:'x',image:'data:image/jpeg;base64,ORIGINAL',category:'Uncategorized',itemType:'Unknown',color:'Blue'};
+  let saves=0;
+  const c={item,batch:[item],items:[],localPending:new Set(['x']),recognitionState:{},
+   photoQualityHints73:new Map(),categories:['Uncategorized','Tops','Shoes'],
+   clothingSchema:{types:{Tops:['T-shirt'],Shoes:['Boots']}},
+   ClothingDetails:{fillColor:()=>({}),fill:()=>({})},
+   checkPhoto:async()=>({signature:[],aspect:1}),similarPhotos:()=>false,
+   localReady:true,recognitionUnavailable:false,localRequest:async()=>result,
+   render(){},persistDraft(){},$:()=>({}),segmentationAllows:()=>true,
+   applyLocalChoice(value,selected){value.category=selected.category;value.itemType=selected.itemType;},
+   automaticAdmissionCore842:()=>true,saveIndexed:async()=>{saves++;return true;}};
+  vm.createContext(c);vm.runInContext(appSource.slice(start,end),c);
+  await c.recognizeItem(item);
+  assert.equal(item.image,'data:image/jpeg;base64,ORIGINAL');
+  assert.equal(c.localPending.size,0);
+  if(invalid.includes(result)){
+   assert.equal(saves,0);assert.equal(item.category,'Uncategorized');
+   assert.equal(item.itemType,'Unknown');assert.equal(item.requiresOwnershipConfirmation,true);
+   assert.match(item.localStatus,/invalid garment information/);
+  }else{
+   assert.equal(saves,result.strong?1:0);
+   assert.equal(item.category,result.choices[0]?.category||'Uncategorized');
+   assert.doesNotMatch(item.localStatus,/invalid garment information/);
+  }
+ }
+});
