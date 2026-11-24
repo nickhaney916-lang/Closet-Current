@@ -353,7 +353,8 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
  try{await queued(()=>new Promise((resolve,reject)=>{
   assertOwner();proof33?.assertCurrent();
   const draftSlots=replacement===null?Object.entries(current.slots):[];
-  const tx=ownerDB.transaction(candidate||proof33||draftSlots.length?['state','items']:'state','readwrite'),store=tx.objectStore('state');
+  const draftStores=draftSlots.length?['state','items']:'state';
+  const tx=ownerDB.transaction(candidate||proof33?['state','items']:draftStores,'readwrite'),store=tx.objectStore('state');
   let failure,saved,keepStoredDraft=false;
   if(candidate||proof33)for(const [slotId,id]of Object.entries(candidate?.slots||current.slots)){
    const selected=tx.objectStore('items').get(id);
