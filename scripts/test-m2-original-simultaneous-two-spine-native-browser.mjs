@@ -12,7 +12,7 @@ import {spawnSync} from 'node:child_process';
 const pins={
  runner:'5f999c1dc440539cec143f7c7de48b8fe88dd91e',
  registration:'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb',
- addon:'2b83773823b41aca38065373e66256ebe20d9be4'
+ addon:'953ecfce9b4e267ea7dac22edbac62050287736f'
 };
 const sha=b=>createHash('sha1').update('blob '+Buffer.byteLength(b)+'\0')
  .update(b).digest('hex');
@@ -43,7 +43,7 @@ const routeLines=[
  "    const addonSource=await readFile('research/parallel89/real-original-simultaneous-spine03-spine04-browser-addon89.mjs','utf8');",
  "    const blobSha=t=>createHash('sha1').update('blob '+Buffer.byteLength(t)+'\\0').update(t).digest('hex');",
  "    assert.equal(blobSha(originalSource),'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb');",
- "    assert.equal(blobSha(addonSource),'2b83773823b41aca38065373e66256ebe20d9be4');",
+ "    assert.equal(blobSha(addonSource),'953ecfce9b4e267ea7dac22edbac62050287736f');",
  "    await route.fulfill({status:200,contentType:'text/javascript',body:originalSource+'\\n'+addonSource});",
  "   });",
  routeAnchor
@@ -81,6 +81,18 @@ const verifyLines=[
  "   assert.equal(proportions.continuousMotionOrMaterialStrainCertified,false);",
  "   assert.equal(proportions.consumer3DAdmitted,false);",
  "   assert.equal(proportions.familyAlpha,'HOLD');",
+ "   const correction=trial.sampledWorstPoseBoundedCorrection;",
+ "   assert.ok(Number.isInteger(correction.worstPoseIndex)&&correction.worstPoseIndex>=0&&correction.worstPoseIndex<16);",
+ "   assert.equal(correction.correctionAppliedToLiveMesh,false);",
+ "   assert.equal(correction.materialOrCollisionCertified,false);",
+ "   assert.equal(correction.consumer3DAdmitted,false);",
+ "   assert.equal(correction.correctedPose,undefined);",
+ "   assert.ok(correction.before.worstOriginalEdge.vertexIndices.every(i=>i>=0&&i<17985));",
+ "   assert.ok(correction.before.worstOriginalFace.faceOrdinal<35262);",
+ "   if(correction.decision==='RESEARCH_ONLY_BOUNDED_EDGE_CORRECTION_CANDIDATE'){",
+ "    assert.ok(correction.maximumEndpointDisplacementRigUnits<=.02*correction.before.worstOriginalEdge.restLength);",
+ "    assert.ok(correction.after.collapsedFaces<=correction.before.collapsedFaces);",
+ "   }else assert.ok(['RESEARCH_ONLY_NO_SAFE_EDGE_CORRECTION_ATTEMPT','RESEARCH_ONLY_CORRECTION_REJECTED_NO_GLOBAL_IMPROVEMENT'].includes(correction.decision));",
  "   const audit=trial.trueSimultaneousTwoJointFullIndexedAudit;",
  "   assert.equal(audit.originalFrontFaceCount,35262);",
  "   assert.equal(audit.originalBodyFaceCount,109064);",
