@@ -51,7 +51,7 @@ jobs:
           ln -s ../node_modules .m2-immutable-licensed-body/node_modules
           cd .m2-immutable-licensed-body
           node research/three-d-20/restore-approved-models.mjs
-      - name: Accepted native original rig poses: nonlocal self-contact and hinge bending
+      - name: Accepted native original rig poses - nonlocal self-contact and hinge bending
         run: node scripts/test-parallel89-category-self-contact-bending.mjs .m2-immutable-licensed-body
       - name: Unchanged application build
         if: matrix.engine == 'chromium'
