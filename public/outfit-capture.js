@@ -344,6 +344,24 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
      finishOutfitSplit(job,'A clothing region could not be verified. Your original and earlier accepted drafts are kept; retry or photograph items individually.',true);
      return;
     }
+    // The pinned outfit worker emits only these coarse semantic hints.
+    // Optional legacy fields may be absent, but supplied values must be valid.
+    const hintCategories=p.hint.categories,hintTypes=p.hint.types,bounds=p.cropBounds;
+    const hintTypeCategories={Hat:'Accessories',Sunglasses:'Accessories',Skirt:'Bottoms',Belt:'Accessories',Bag:'Accessories',Scarf:'Accessories'};
+    const validBounds=bounds==null||(typeof bounds==='object'&&!Array.isArray(bounds)&&
+     [bounds.x,bounds.y,bounds.width,bounds.height].every(Number.isFinite)&&
+     bounds.x>=0&&bounds.y>=0&&bounds.width>0&&bounds.height>0&&
+     bounds.x+bounds.width<=1+1e-12&&bounds.y+bounds.height<=1+1e-12);
+    if(!hintCategories.length||hintCategories.length>2||new Set(hintCategories).size!==hintCategories.length||
+     hintCategories.some(x=>x==='Uncategorized')||
+     hintTypes.some(x=>typeof x!=='string'||!Object.hasOwn(hintTypeCategories,x)||!hintCategories.includes(hintTypeCategories[x]))||
+     new Set(hintTypes).size!==hintTypes.length||
+     (p.hint.clipped!==undefined&&typeof p.hint.clipped!=='boolean')||
+     (p.hint.confidence!==undefined&&(!Number.isFinite(p.hint.confidence)||p.hint.confidence<0||p.hint.confidence>1))||
+     !validBounds){
+     finishOutfitSplit(job,'A clothing region returned invalid recognition metadata. Your original and earlier accepted drafts are kept; retry or photograph items individually.',true);
+     return;
+    }
     if(p.recognitionPhoto!=null&&(typeof p.recognitionPhoto!=='object'||Array.isArray(p.recognitionPhoto)||
      typeof p.recognitionPhoto.image!=='string'||p.recognitionPhoto.image.length>8000000||
      !/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.recognitionPhoto.image))){
