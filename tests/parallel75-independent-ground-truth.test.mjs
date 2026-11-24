@@ -203,3 +203,39 @@ test('public audit never fabricates reviewer counts or blind eligibility',()=>{
  assert.equal(v.candidates,1);assert.equal(v.humanLabeled,0);assert.equal(v.doubleHumanVerified,0);
  assert.equal(v.sealedBlindEligible,0);assert.equal(v.modelAccuracyGain,'UNKNOWN');
 });
+
+test('footwear distinctions are signed, validated and included in human agreement',()=>{
+ const {registry,fingerprint,review}=signedFixture();
+ const sneaker={...goodLabel(),category:'Shoes',subtype:'Sneakers',footwearProfile:'low-top'};
+ assert.deepEqual(validateLabel(sneaker),[]);
+ assert.ok(validateLabel({...sneaker,subtype:'Ankle boots'}).includes('footwear profile'));
+ assert.ok(validateLabel({...sneaker,shoeShapedNonwearable:true}).includes('nonwearable look-alike'));
+ const a=review(0,sneaker),b=review(1,{...sneaker,footwearProfile:'high-top'});
+ assert.equal(independentAgreement(record(),[a,b],registry,fingerprint).eligible,false);
+ assert.ok(verifyHumanReceipt(record(),{...a,labels:b.labels},registry,fingerprint).includes('unsigned/edited review'));
+});
+
+test('footwear coverage counts independent physical objects and blocks publisher leakage',async()=>{
+ const {footwearCoverage}=await import('../scripts/p75-footwear-coverage.mjs');
+ const subtypes=['Sneakers','Flats','Heels','Sandals','Ankle boots','Tall boots','Loafers','negative'];
+ const sample=['development','blind'].flatMap(split=>subtypes.flatMap(subtype=>
+  Array.from({length:10},(_,i)=>({
+   source:{split,sourceGroupId:[split,subtype,i].join('-'),publisherGroupId:split+'-'+(i%2)},
+   labels:subtype==='negative'?{presence:'nonclothing',shoeShapedNonwearable:true}:
+    {presence:'single-garment',category:'Shoes',subtype,wardrobeUnit:'single-unit',
+     footwearProfile:i%2?'low-top':'high-top'}
+  }))));
+ assert.equal(footwearCoverage(sample).ready,true);
+ assert.equal(footwearCoverage(sample.slice(1)).ready,false);
+ assert.ok(footwearCoverage([...sample,sample[0]]).issues.includes('repeated physical object group'));
+ const blind=sample[80];
+ assert.ok(footwearCoverage([...sample.slice(0,80),{...blind,source:{
+  ...blind.source,publisherGroupId:sample[0].source.publisherGroupId}},...sample.slice(81)])
+  .issues.includes('publisher group crosses development and blind'));
+});
+
+test('Auckland Museum accession matches alternate views, including historical references',()=>{
+ const candidate={sourcePage:'https://commons.wikimedia.org/wiki/File:Boots,_pair_woman%27s_(AM_1992.157-1).jpg'};
+ const historical={sourcePage:'https://commons.wikimedia.org/wiki/File:Boots,_pair_woman%27s_(AM_1992.157-15).jpg'};
+ assert.deepEqual(checkOverlap(candidate,[historical]),['same-garment-or-publisher-object']);
+});

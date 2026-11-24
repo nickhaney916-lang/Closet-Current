@@ -6,7 +6,8 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {resolve,relative,isAbsolute} from 'node:path';
 import {createPrivateKey,createPublicKey,sign,verify as cryptoVerify} from 'node:crypto';
 import {canonical,sha256,SCHEMA,validateLabel,verifiedSource,priorExposures,
- checkOverlap,validatePartition,independentAgreement,verifyHumanReceipt,verifyCuratorApproval,sourceKey} from './p75-dataset-core.mjs';
+ verifyOriginalBytes,checkOverlap,validatePartition,independentAgreement,verifyHumanReceipt,verifyCuratorApproval,sourceKey} from './p75-dataset-core.mjs';
+import {footwearCoverage} from './p75-footwear-coverage.mjs';
 function externalFile(p){
  if(!p)throw Error('An explicitly supplied absolute external path is required');
  const q=resolve(p),rel=relative(process.cwd(),q);
@@ -34,7 +35,8 @@ if(command==='sign'){
  console.log('P75 signed local HUMAN-CLAIMED receipt; external registrar human-vetting still REQUIRED. No garment labels printed.');
 }else if(command==='audit'){
  noCI();
- const [bundlePath,registryPath]=args.map(externalFile);
+ const [bundlePath,registryPath]=args.slice(0,2).map(externalFile);
+ const footwearMode=args[2]==='--footwear';
  const fingerprint=process.env.P75_APPROVED_REGISTRAR_FINGERPRINT;
  const bundle=JSON.parse(await readFile(bundlePath,'utf8')),registry=JSON.parse(await readFile(registryPath,'utf8'));
  const approved=/^[a-f0-9]{64}$/.test(fingerprint||'')&&
@@ -54,7 +56,12 @@ if(command==='sign'){
  try{legacyLedgerOK=oldUnfingerprinted===0&&cryptoVerify(null,Buffer.from(canonical(visualAuditPayload)),
   createPublicKey(registry.registrarPublicKey),Buffer.from(bundle.exposureAudit?.signature||'','base64'));}catch{}
  if(legacyLedgerOK)for(const r of old)r.dhash64=map[r.sha256];
- const issues=validatePartition(bundle.sources,old);
+ const publicPins=['pinned-public-training-development-candidates.json','pinned-public-footwear-candidates.json'];
+ const publicCandidates=(await Promise.all(publicPins.map(async name=>
+  JSON.parse(await readFile('research/parallel75/'+name,'utf8')).rows))).flat();
+ const allExposed=[...old,...publicCandidates];
+ const issues=validatePartition(bundle.sources,allExposed);
+ const reviewedFootwear=[];
  let singleHuman=0,dualHuman=0,blindEligible=0,trainEligible=0,developmentEligible=0;
  let agreementEqual=0,agreementTotal=0;
  for(const source of bundle.sources){
@@ -78,16 +85,28 @@ if(command==='sign'){
   if(verifiedSource(source).length)issues.push('promoted source original/rights metadata unverified');
   if(source.split==='train'&&curatorOK&&independentDistinct.size>=1)trainEligible++;
   if(source.split==='development'&&curatorOK&&independentDistinct.size>=1)developmentEligible++;
+  if(footwearMode){
+   if(!agreement.eligible)issues.push('footwear requires two agreeing attested human labels');
+   let originalOK=false;
+   try{
+    const path=externalFile(bundle.originalPaths?.[source.sha256]);
+    originalOK=verifyOriginalBytes(source,await readFile(path));
+   }catch{}
+   if(!originalOK)issues.push('footwear original absent or fails byte verification');
+   if(curatorOK&&agreement.eligible&&originalOK)reviewedFootwear.push({source,labels:valid[0].labels});
+  }
   if(source.split==='blind'){
    if(!legacyLedgerOK)issues.push('sealed blind requires complete signed fingerprint ledger for all historical exposed originals');
-   const overlap=checkOverlap(source,old,bundle.sources.filter(x=>x!==source));
+   const overlap=checkOverlap(source,allExposed,bundle.sources.filter(x=>x!==source));
    if(overlap.length)issues.push('blind leakage or duplicate');
    if(!agreement.eligible)issues.push('two non-tuned independently verified human labels required');
    if(curatorOK&&agreement.eligible&&legacyLedgerOK&&!overlap.length&&verifiedSource(source).length===0)
      blindEligible++;
   }
  }
- const report={sources:bundle.sources.length,oldExposedSources:old.length,
+ const coverage=footwearMode?footwearCoverage(reviewedFootwear):null;
+ if(coverage)issues.push(...coverage.issues);
+ const report={...(coverage?{footwearCoverageReady:coverage.ready&&issues.length===0}:{}),sources:bundle.sources.length,oldExposedSources:old.length,
   oldSourceFingerprintMissing:oldUnfingerprinted,atLeastOneAttestedHuman:singleHuman,
   twoHumanConsensus:dualHuman,
   comparisonAgreement:{equal:agreementEqual,total:agreementTotal,
@@ -104,10 +123,13 @@ if(command==='sign'){
   if(!salt||salt.length<32)throw Error('Blind seal requires non-public 32+ byte custodian salt');
   console.log('P75_SEALED_BLIND_COMMITMENT '+JSON.stringify({
    count:blindEligible,commitment:sha256(salt+'|'+canonical(bundle.sources.filter(r=>r.split==='blind')
-    .map(r=>({sha256:r.sha256,sourceGroupId:r.sourceGroupId})).sort((a,b)=>a.sha256.localeCompare(b.sha256)))),
+    .map(r=>({sha256:r.sha256,sourceGroupId:r.sourceGroupId,
+     ...(footwearMode?{publisherGroupId:r.publisherGroupId,
+      reviews:bundle.reviews[r.sha256].slice().sort((a,b)=>a.reviewerId.localeCompare(b.reviewerId))}:{}),
+    })).sort((a,b)=>a.sha256.localeCompare(b.sha256)))),
    labelsPublished:0,photosPublished:0,modelScored:false}));
  }
 }else{
- console.error('P75 offline usage: sign ABS_DRAFT ABS_RATER_PRIVATE_KEY ABS_NEW_RECEIPT | audit ABS_PRIVATE_BUNDLE ABS_OWNER_VETTED_REGISTRY');
+ console.error('P75 offline usage: sign ABS_DRAFT ABS_RATER_PRIVATE_KEY ABS_NEW_RECEIPT | audit ABS_PRIVATE_BUNDLE ABS_OWNER_VETTED_REGISTRY [--footwear]');
  process.exitCode=2;
 }

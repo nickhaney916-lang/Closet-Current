@@ -8,13 +8,19 @@ import {createHash} from 'node:crypto';
 import sharp from 'sharp';
 import {verifiedSource,verifyOriginalBytes,priorExposures,checkOverlap,
  sourceKey,originalURL,canonicalOriginalURL,sourceSeriesHint} from './p75-dataset-core.mjs';
-const pinned=JSON.parse(await readFile('research/parallel75/pinned-public-training-development-candidates.json','utf8'));
+const footwearMode=process.argv.includes('--footwear');
+const pinName=footwearMode?'pinned-public-footwear-candidates.json':'pinned-public-training-development-candidates.json';
+const pinned=JSON.parse(await readFile('research/parallel75/'+pinName,'utf8'));
 if(pinned.schema!=='p75-public-candidates-pin-v1'||pinned.blinded!==false||pinned.eligibleForBlind!==false||
- !Array.isArray(pinned.rows)||!pinned.rows.length||pinned.rows.length>100||!pinned.sourceAuditHead)
+ !Array.isArray(pinned.rows)||!pinned.rows.length||pinned.rows.length>(footwearMode?192:100)||!pinned.sourceAuditHead)
  throw Error('Invalid public pinned receipt');
 const paths=['benchmark/locked-photo-sources.json','benchmark/manifest-holdout-16.json',
  'benchmark/manifest-reviewed-32.json','benchmark/manifest-fresh-11.json'];
 const old=priorExposures(Object.fromEntries(await Promise.all(paths.map(async path=>[path,JSON.parse(await readFile(path,'utf8'))]))));
+if(footwearMode){
+ const existing=JSON.parse(await readFile('research/parallel75/pinned-public-training-development-candidates.json','utf8'));
+ old.push(...existing.rows);
+}
 const rows=pinned.rows,shaSet=new Set(),pageSet=new Set(),suspected=new Set();
 let oldOverlap=0;
 for(let i=0;i<rows.length;i++){
@@ -27,7 +33,10 @@ for(let i=0;i<rows.length;i++){
   throw Error('Public pinned dataset contains forbidden answer/key-like fields');
  if(shaSet.has(r.sha256)||pageSet.has(sourceKey(r.sourcePage)))throw Error('Pinned file hashes/pages not unique');
  shaSet.add(r.sha256);pageSet.add(sourceKey(r.sourcePage));
- if(checkOverlap(r,old).length)oldOverlap++;
+ const historicalFlags=checkOverlap(r,old);
+ if(footwearMode&&(historicalFlags.includes('exact-sha256')||historicalFlags.includes('same-commons-page')))
+  throw Error('Footwear receipt duplicates a previous source');
+ if(historicalFlags.length)oldOverlap++;
  if(checkOverlap(r,rows.filter((_,j)=>j!==i)).length)suspected.add(r.sha256);
 }
 function clean(s){return String(s||'').replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/\s+/g,' ').trim().slice(0,400);}
@@ -41,8 +50,10 @@ async function imageDhash(bytes){
  let value=0n;for(let y=0;y<8;y++)for(let x=0;x<8;x++)value=(value<<1n)|BigInt(data[y*9+x]>data[y*9+x+1]?1:0);
  return value.toString(16).padStart(16,'0');
 }
-for(let i=0;i<networkLimit;i++){
- const row=rows[i],title=decodeURIComponent(new URL(row.sourcePage).pathname.replace(/^\/wiki\//,'')).replace(/_/g,' ');
+const firstByFamily=rows.filter((row,index)=>rows.findIndex(r=>r.discoveryFamily===row.discoveryFamily)===index);
+const recheckRows=footwearMode?[...firstByFamily,...rows.filter(row=>!firstByFamily.includes(row))]:rows;
+for(const row of recheckRows.slice(0,networkLimit)){
+ const title=decodeURIComponent(new URL(row.sourcePage).pathname.replace(/^\/wiki\//,'')).replace(/_/g,' ');
  const params=new URLSearchParams({action:'query',titles:title,prop:'imageinfo',iiprop:'url|size|sha1|mime|extmetadata',format:'json',formatversion:'2'});
  const res=await fetch('https://commons.wikimedia.org/w/api.php?'+params,{headers,signal:AbortSignal.timeout(30000)});
  if(!res.ok)throw Error('Cannot recheck Commons current provenance');

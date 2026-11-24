@@ -1,0 +1,153 @@
+{
+  "schema": "p75-query-plan-v1",
+  "policy": "SEARCH TERMS ONLY \u2014 NO GROUND TRUTH",
+  "maxOriginalsPerQuery": 9,
+  "searches": [
+    {
+      "family": "sneakers",
+      "query": "filetype:bitmap high-top sneakers pair"
+    },
+    {
+      "family": "ankle-boots",
+      "query": "filetype:bitmap Chelsea boots pair"
+    },
+    {
+      "family": "tall-boots",
+      "query": "filetype:bitmap riding boots tall pair"
+    },
+    {
+      "family": "flats",
+      "query": "filetype:bitmap ballet flats shoes pair"
+    },
+    {
+      "family": "heels",
+      "query": "filetype:bitmap high heel pumps pair"
+    },
+    {
+      "family": "sandals",
+      "query": "filetype:bitmap leather sandals pair"
+    },
+    {
+      "family": "loafers",
+      "query": "filetype:bitmap penny loafers pair"
+    },
+    {
+      "family": "nonwearable-lookalikes",
+      "query": "filetype:bitmap shoe shaped vessel ceramic"
+    },
+    {
+      "family": "sneakers",
+      "query": "filetype:bitmap vintage tennis sneakers pair"
+    },
+    {
+      "family": "ankle-boots",
+      "query": "filetype:bitmap ankle boots footwear pair"
+    },
+    {
+      "family": "tall-boots",
+      "query": "filetype:bitmap knee-high boots leather pair"
+    },
+    {
+      "family": "flats",
+      "query": "filetype:bitmap ballet pumps flat shoes"
+    },
+    {
+      "family": "heels",
+      "query": "filetype:bitmap stiletto shoes pair"
+    },
+    {
+      "family": "sandals",
+      "query": "filetype:bitmap strappy sandals footwear"
+    },
+    {
+      "family": "loafers",
+      "query": "filetype:bitmap tassel loafers pair"
+    },
+    {
+      "family": "nonwearable-lookalikes",
+      "query": "filetype:bitmap shoe shaped glass bottle"
+    },
+    {
+      "family": "sneakers",
+      "query": "filetype:bitmap running sneakers pair"
+    },
+    {
+      "family": "ankle-boots",
+      "query": "filetype:bitmap chukka boots pair"
+    },
+    {
+      "family": "tall-boots",
+      "query": "filetype:bitmap rubber wellington boots pair"
+    },
+    {
+      "family": "flats",
+      "query": "filetype:bitmap women flat shoes pair"
+    },
+    {
+      "family": "heels",
+      "query": "filetype:bitmap platform heel shoes pair"
+    },
+    {
+      "family": "sandals",
+      "query": "filetype:bitmap Birkenstock sandals pair"
+    },
+    {
+      "family": "loafers",
+      "query": "filetype:bitmap leather loafers pair"
+    },
+    {
+      "family": "nonwearable-lookalikes",
+      "query": "filetype:bitmap shoe sculpture miniature ornament"
+    }
+  ],
+  "supplement": [
+    {
+      "family": "nonwearable-lookalikes",
+      "category": "Shoe-shaped objects"
+    },
+    {
+      "family": "nonwearable-lookalikes",
+      "category": "Boot-shaped objects"
+    },
+    {
+      "family": "nonwearable-lookalikes",
+      "category": "Shoe-shaped food"
+    },
+    {
+      "family": "nonwearable-lookalikes",
+      "category": "Shoe-shaped pendants"
+    },
+    {
+      "family": "nonwearable-lookalikes",
+      "category": "Shoe-shaped signs"
+    },
+    {
+      "family": "sandals",
+      "category": "Sandals"
+    },
+    {
+      "family": "sandals",
+      "category": "Flip-flops"
+    },
+    {
+      "family": "sandals",
+      "category": "Birkenstock sandals"
+    },
+    {
+      "family": "ankle-boots",
+      "category": "Chelsea boots"
+    },
+    {
+      "family": "tall-boots",
+      "category": "Knee-high boots"
+    },
+    {
+      "family": "loafers",
+      "category": "Loafers"
+    },
+    {
+      "family": "nonwearable-lookalikes",
+      "query": "filetype:bitmap shoe shaped ceramic vessel shoe ornament"
+    }
+  ]
+}

@@ -92,15 +92,22 @@ export function verifiedSource(row,{now=new Date(),maxAgeDays=90}={}){
  return issues;
 }
 /** Never call output "human approved": Commons machine metadata cannot show consent. */
+function aucklandAccession(row){
+ const file=sourceKey(row.sourcePage);
+ return file?.match(/\(am\s+([0-9]+(?:\.[0-9]+)*)(?:-[0-9]+)?\)/)?.[1];
+}
 export function checkOverlap(candidate,exposed,accepted=[],{nearThreshold=6}={}){
  const flags=new Set(),k=sourceKey(candidate.sourcePage);
- const probes=[...exposed,...accepted];
+ const probes=[...exposed,...accepted],accession=aucklandAccession(candidate);
  for(const old of probes){
   if(old===candidate)continue;
   if(candidate.sha256&&candidate.sha256===old.sha256)flags.add('exact-sha256');
   if(k&&k===sourceKey(old.sourcePage||old.source||old.attribution?.source))flags.add('same-commons-page');
   if(candidate.objectKey&&old.objectKey&&candidate.objectKey===old.objectKey)flags.add('same-garment-or-publisher-object');
-  if(candidate.seriesKey&&old.seriesKey&&candidate.seriesKey===old.seriesKey)flags.add('same-publisher-series');
+  const series=candidate.seriesKey||sourceSeriesHint(candidate.sourcePage);
+  const oldSeries=old.seriesKey||sourceSeriesHint(old.sourcePage);
+  if(series&&series===oldSeries)flags.add('same-publisher-series');
+  if(accession&&accession===aucklandAccession(old))flags.add('same-garment-or-publisher-object');
   const distance=hamming64(candidate.dhash64,old.dhash64);
   if(distance!==null&&distance<=nearThreshold)flags.add('pixel-near-duplicate');
  }
@@ -157,6 +164,13 @@ export function validateLabel(label){
  if(!['single-garment','multiple-garments','whole-outfit','nonclothing','uncertain'].includes(label.presence))errors.push('presence');
  if(!Object.hasOwn(CATEGORIES,label.category)&&label.category!=='Unknown')errors.push('category');
  if(label.subtype!=='Unknown'&&!CATEGORIES[label.category]?.includes(label.subtype))errors.push('subtype');
+ if(label.footwearProfile!==undefined){
+  if(label.category!=='Shoes'||label.subtype!=='Sneakers'||
+   !['low-top','high-top','unknown'].includes(label.footwearProfile))errors.push('footwear profile');
+ }
+ if(label.shoeShapedNonwearable!==undefined&&
+  (label.shoeShapedNonwearable!==true||label.presence!=='nonclothing'||label.category!=='Unknown'||
+   label.subtype!=='Unknown'||label.instanceCount!==0))errors.push('nonwearable look-alike');
  if(!COLORS.includes(label.primaryColor)||!['Unknown',...COLORS].includes(label.secondaryColor))errors.push('color');
  if(typeof label.multicolor!=='boolean'||typeof label.colorCast!=='boolean')errors.push('color flags');
  if(!Number.isInteger(label.instanceCount)||label.instanceCount<0||label.instanceCount>20)errors.push('instance count');
@@ -207,15 +221,26 @@ export function verifyCuratorApproval(source,registry,approvedFingerprint){
    garmentHumanVerified:true,sourceGroupApproved:true,
    legalEvidenceSha256:source.legalEvidenceSha256,
    consentStatus:source.consentStatus,curatorReviewedAt:source.curatorReviewedAt};
+  if(source.publisherGroupId!==undefined)signed.publisherGroupId=source.publisherGroupId;
   return signatureOK(signed,source.curatorApprovalSignature,registry.registrarPublicKey);
  }catch{return false;}
 }
 export function independentAgreement(row,receipts,registry,approvedRegistrarFingerprint){
  if(!Array.isArray(receipts)||receipts.length<2)return {eligible:false,agreement:null,issues:['two independently attested human reviews required']};
- const issues=[],reviewers=new Set();
- for(const receipt of receipts){issues.push(...verifyHumanReceipt(row,receipt,registry,approvedRegistrarFingerprint));reviewers.add(receipt.reviewerId);}
- if(reviewers.size<2)issues.push('same human twice');
+ const issues=[],reviewers=new Set(),reviewerKeys=new Set();
+ for(const receipt of receipts){
+  const receiptIssues=verifyHumanReceipt(row,receipt,registry,approvedRegistrarFingerprint);
+  issues.push(...receiptIssues);
+  if(receiptIssues.length)continue;
+  reviewers.add(receipt.reviewerId);
+  const entry=registry.reviewers.find(r=>r.reviewerId===receipt.reviewerId);
+  reviewerKeys.add(sha256(createPublicKey(entry.publicKey).export({type:'spki',format:'der'})));
+ }
+ if(reviewers.size<2||reviewerKeys.size<2)issues.push('same human twice');
  const fields=['presence','category','subtype','primaryColor','secondaryColor','multicolor','instanceCount','wardrobeUnit'];
+ for(const field of ['footwearProfile','shoeShapedNonwearable']){
+  if(receipts.some(r=>r.labels?.[field]!==undefined))fields.push(field);
+ }
  const agreeing=fields.filter(k=>receipts.every(r=>r.labels?.[k]===receipts[0].labels?.[k]));
  if(agreeing.length!==fields.length)issues.push('independent disagreement requires blinded third-party adjudication');
  return {eligible:issues.length===0,agreement:{equal:agreeing.length,total:fields.length,ratio:agreeing.length/fields.length},issues:[...new Set(issues)]};

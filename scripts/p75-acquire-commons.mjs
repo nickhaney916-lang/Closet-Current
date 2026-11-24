@@ -8,16 +8,40 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import sharp from 'sharp';
 import {sha256,verifiedSource,checkOverlap,priorExposures,sourceKey,sourceSeriesHint,originalURL,canonicalOriginalURL,rightsOK,publicAuditReport,SCHEMA} from './p75-dataset-core.mjs';
-const plan=JSON.parse(await readFile('research/parallel75/queries.json','utf8'));
-if(plan.schema!=='p75-query-plan-v1'||!Array.isArray(plan.searches)||plan.searches.length>12)throw Error('Invalid bounded search plan.');
+const footwearMode=process.argv.includes('--footwear');
+const supplement=process.argv.includes('--supplement');
+if(supplement&&!footwearMode)throw Error('Supplement requires footwear mode');
+const planFile=footwearMode?'footwear-queries.json':'queries.json';
+const plan=JSON.parse(await readFile('research/parallel75/'+planFile,'utf8'));
+if(plan.schema!=='p75-query-plan-v1'||!Array.isArray(plan.searches)||plan.searches.length>(footwearMode?24:12))throw Error('Invalid bounded search plan.');
+const tasks=supplement?plan.supplement:plan.searches;
+if(!Array.isArray(tasks)||!tasks.length||tasks.length>24)throw Error('Invalid discovery tasks');
+const prefix=footwearMode?'runtime-footwear':'runtime';
+const candidatePath='research/parallel75/'+prefix+'-candidates-UNLABELED-EXPOSED.json';
 const filenames=['benchmark/locked-photo-sources.json','benchmark/manifest-holdout-16.json',
  'benchmark/manifest-reviewed-32.json','benchmark/manifest-fresh-11.json'];
 const manifests=Object.fromEntries(await Promise.all(filenames.map(async name=>[name,JSON.parse(await readFile(name,'utf8'))])));
 const exposed=priorExposures(manifests),already=new Set(exposed.map(x=>sourceKey(x.sourcePage)).filter(Boolean));
-const maxDownloads=Number(process.env.P75_MAX_ORIGINALS||36);
-if(!Number.isInteger(maxDownloads)||maxDownloads<1||maxDownloads>48)throw Error('Unsafe maximum original count');
-const maxPerQuery=Math.min(4,Number(plan.maxOriginalsPerQuery||3));
-const seen=new Set(),discovered=[],failures={},requests={attempts:0,success:0};
+const maxDownloads=Number(process.env.P75_MAX_ORIGINALS||(footwearMode?160:36));
+if(!Number.isInteger(maxDownloads)||maxDownloads<1||maxDownloads>(footwearMode?192:48))throw Error('Unsafe maximum original count');
+const maxPerQuery=Math.min(footwearMode?9:4,Number(plan.maxOriginalsPerQuery||3));
+const pinned=footwearMode
+ ?JSON.parse(await readFile('research/parallel75/pinned-public-training-development-candidates.json','utf8')).rows
+ :[];
+for(const row of pinned)already.add(sourceKey(row.sourcePage));
+const existingHashes=new Set([...exposed,...pinned].map(row=>row.sha256));
+const sourceCounts=new Map();
+const discovered=supplement?JSON.parse(await readFile(candidatePath,'utf8')):[];
+const seen=new Set();
+for(const row of discovered){
+ if(verifiedSource(row).length||row.split!=='quarantine'||row.sourceGroupApproved||row.garmentHumanVerified)
+  throw Error('Supplement requires valid quarantined original receipts');
+ seen.add(sourceKey(row.sourcePage));
+ existingHashes.add(row.sha256);
+ const key=row.discoveryFamily+'|'+row.artist.normalize('NFKC').toLowerCase();
+ sourceCounts.set(key,(sourceCounts.get(key)||0)+1);
+}
+const failures={},requests={attempts:0,success:0};
 
 const headers={'User-Agent':'ClosetCurrentP75DatasetAudit/1.0 (https://github.com/nickhaney916-lang/Closet-Current; research provenance, NO user data)','Accept':'application/json'};
 const count=x=>failures[x]=(failures[x]||0)+1;
@@ -32,11 +56,18 @@ function dHash(bytes){
   return value.toString(16).padStart(16,'0');
  });
 }
-for(const task of plan.searches){
+for(const task of tasks){
  if(discovered.length>=maxDownloads)break;
- if(typeof task.query!=='string'||!task.query.startsWith('filetype:bitmap ')||task.query.length>120)throw Error('Unsafe query');
- const params=new URLSearchParams({action:'query',generator:'search',gsrsearch:task.query,gsrnamespace:'6',gsrlimit:'25',
+ const params=new URLSearchParams({action:'query',
   prop:'imageinfo',iiprop:'url|size|sha1|mime|extmetadata',format:'json',formatversion:'2'});
+ if(supplement&&typeof task.category==='string'&&/^[A-Za-z -]{2,65}$/.test(task.category)){
+  for(const [key,value] of Object.entries({generator:'categorymembers',gcmtitle:'Category:'+task.category,
+   gcmtype:'file',gcmlimit:'35'}))params.set(key,value);
+ }else{
+  if(typeof task.query!=='string'||!task.query.startsWith('filetype:bitmap ')||task.query.length>120)throw Error('Unsafe query');
+  for(const [key,value] of Object.entries({generator:'search',gsrsearch:task.query,gsrnamespace:'6',gsrlimit:'25'}))
+   params.set(key,value);
+ }
  let pages=[];
  try{
   const response=await fetch(api+'?'+params,{headers,signal:AbortSignal.timeout(20000)});
@@ -59,10 +90,13 @@ for(const task of plan.searches){
   if(already.has(srcKey)||seen.has(srcKey)){count('historically-exposed-or-repeated');continue;}
   if(!rightsOK(lic,licURL)){count('rights-metadata-unacceptable');continue;}
   const artist=clean(meta.Artist?.value),title=clean(page.title);
+  const sourceBucket=task.family+'|'+artist.normalize('NFKC').toLowerCase();
+  if(footwearMode&&(sourceCounts.get(sourceBucket)||0)>=3){count('candidate-attribution-cap');continue;}
   if(!artist||!title){count('attribution-incomplete');continue;}
   if(!['image/jpeg','image/png','image/webp'].includes(info.mime)||!Number.isInteger(info.size)||info.size<10000||info.size>12*1024*1024||!/^[a-f0-9]{40}$/.test(info.sha1||'')){count('unsupported-original');continue;}
   seen.add(srcKey);
   let bytes;
+  await new Promise(resolve=>setTimeout(resolve,300));
   try{
    let res;
    for(let attempt=0;attempt<3;attempt++){
@@ -95,7 +129,10 @@ for(const task of plan.searches){
    // No garment name, category, subtype or color is assigned from metadata.
    row.dhash64=await dHash(bytes);
    const issues=verifiedSource(row);if(issues.length)throw Error('Source verification invalid: '+issues.join(','));
-   row.overlapFlags=checkOverlap(row,exposed,discovered);
+   if(footwearMode&&existingHashes.has(row.sha256)){count('exact-byte-duplicate');continue;}
+   row.overlapFlags=checkOverlap(row,[...exposed,...pinned],discovered);
+   existingHashes.add(row.sha256);
+   sourceCounts.set(sourceBucket,(sourceCounts.get(sourceBucket)||0)+1);
    discovered.push(row);taken++;
   }catch(e){
    const message=String(e?.message||'');
@@ -105,28 +142,28 @@ for(const task of plan.searches){
     message.startsWith('DOWNLOAD-OVERSIZE')?'oversize-original':
     'download-or-decoder-verification-failed');
   }
-  await new Promise(resolve=>setTimeout(resolve,300));
   // Deliberately do not retain or upload the original JPEG bytes.
   bytes=null;
  }
+ if(footwearMode)console.error('P75 footwear discovery query complete',task.family,taken);
 }
 const numeric=publicAuditReport(discovered,exposed);
-const summary={schema:'p75-audit-summary-v1',queryCount:plan.searches.length,historicalExposedUniqueSources:exposed.length,
+const summary={schema:'p75-audit-summary-v1',queryCount:tasks.length,historicalExposedUniqueSources:exposed.length,
  historicalSourcePages:new Set(exposed.map(x=>sourceKey(x.sourcePage)).filter(Boolean)).size,
  ...numeric,rateLimitSafeSearchCalls:requests.attempts,searchSuccesses:requests.success,
  rejectedByReason:failures,
  humanGarmentTruth:0,humanColorTruth:0,humanSubtypeTruth:0,instanceMasksHumanTruth:0,shoePairHumanTruth:0,
- plannedTarget:240,planningGap:Math.max(0,240-discovered.length),uniquePhysicalGarmentGroupsHumanVerified:0,
+ plannedTarget:footwearMode?160:240,planningGap:Math.max(0,(footwearMode?160:240)-discovered.length),uniquePhysicalGarmentGroupsHumanVerified:0,
  flaggedSamePublisherSeries:discovered.filter(r=>r.overlapFlags?.includes('same-publisher-series')).length,
  train:0,development:0,sealedBlind:0,
  originalBytesCommitted:0,originalBytesPublished:0,blindLabelsPublished:0,
  disclosure:'ALL source URLs are development-exposed candidates and may NEVER become independent sealed blind without a new hidden acquisition protocol.'};
 await mkdir('research/parallel75',{recursive:true});
-await writeFile('research/parallel75/runtime-candidates-UNLABELED-EXPOSED.json',JSON.stringify(discovered,null,2)+'\n');
-await writeFile('research/parallel75/runtime-summary-PUBLIC.json',JSON.stringify(summary,null,2)+'\n');
+await writeFile(candidatePath,JSON.stringify(discovered,null,2)+'\n');
+await writeFile('research/parallel75/'+prefix+'-summary-PUBLIC.json',JSON.stringify(summary,null,2)+'\n');
 console.log('P75_ORIGINAL_BYTES_PROVENANCE_AUDIT '+JSON.stringify(summary));
 // Public train/dev-research-only source receipts, no photo bytes/annotations/sealed data.
 // This permits immutable pinning to a new manifest after exact source hashes pass.
-console.log('P75_PUBLIC_UNLABELED_PROVENANCE_RECORDS '+JSON.stringify(discovered));
+if(!footwearMode)console.log('P75_PUBLIC_UNLABELED_PROVENANCE_RECORDS '+JSON.stringify(discovered));
 // Missing Commons access is a truthful acquisition blocker, not a passing acquisition.
 if(!requests.success)process.exitCode=2;

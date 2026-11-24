@@ -47,3 +47,29 @@ At executable source/series-check commit 00b23e971932eaaea6a6c54731294d267f2e29b
 - #71 is the eventual independent sealed blind scoring owner; **#75 does not score a model and never reports a model accuracy gain**.
 - Signed identities, two real human raters, curator permissions/legal evidence, exact physical garment grouping, complete source-group near-duplicate audit versus old photos, truly nonpublic new blind acquisitions, sufficient category diversity, offline blind handoff and human disagreement reconciliation are **BLOCKED pending outside independent humans/authorized access**.
 - Family Alpha HOLD #255 stays OPEN. No merge/no deploy.
+
+## P0 footwear recovery (November 23, 2026 PT)
+
+**P0 remains blocked on independent human ground truth and evaluator custody.** The [Mission 1 provenance audit](https://github.com/nickhaney916-lang/Closet-Current/commit/26e1042564394547f0e9ec88e113a12631d1625e) identified three nonwearable entries among 20 legacy positive footwear labels. The four retained boot photographs belong to one Auckland Museum source group. The corrected audit ledger stays separate from the legacy model fixtures.
+
+All 34 executed Commons discovery calls succeeded across the initial search, a footwear category supplement and a shoe-shaped object supplement. Each of the **172 new receipts** records an exact original-file SHA-256, the Commons SHA-1 and byte count matched against the downloaded original, decoded dimensions and orientation, perceptual hash, source URL, author and compatible license metadata. The ledger contains no photograph bytes or receipts asserting human approval. A metadata match alone cannot establish reuse eligibility, photographed-person permissions or an independently labeled object.
+
+| Discovery bucket | Distinct byte receipts | Distinct attribution strings | Receipts with overlap flags |
+| --- | ---: | ---: | ---: |
+| Sneakers | 15 | 12 | 0 |
+| Ankle boots | 15 | 8 | 6 |
+| Tall boots | 22 | 15 | 0 |
+| Flats | 15 | 14 | 2 |
+| Heels | 27 | 22 | 2 |
+| Sandals | 19 | 16 | 3 |
+| Loafers | 23 | 20 | 0 |
+| Nonwearable look-alikes | 36 | 30 | 2 |
+| Total | 172 | | 15 |
+
+Attribution strings can represent aliases or the same collection. Search buckets are provisional. The receipts include false matches, worn footwear requiring the existing consent review, and alternate views. Recomputed overlap checks identified 3 receipts with a historical-source overlap flag and 15 flagged across the combined comparison. Auckland accession matching now catches differently numbered views of the same catalogued object, including in the historical benchmark. A 23-original visual spot check confirmed useful product-only photographs as well as unsuitable or ambiguous results. For development curator triage, start with candidate suffixes 0004, 0087, 0007, 0008, 0056, 0057, 0017, 0026, 0027, 0113, 0114, 0042, 0076, 0043 and 0044. These are preliminary visual leads. Use the signed human review process before assigning labels.
+
+- **Mission 1 #1172/#1175 and model research #892:** use the public candidate ledger as a development sourcing lead. Independently approved development objects and labels are both **0**. The ledger is ineligible for blind use and cannot support an accuracy claim.
+- **Independent evaluator #929:** sealed photos, labels and verified groups are all **0**. A genuine handoff requires a vetted registrar, two independent human reviewers, signed source rights/consent and grouping, the signed historical fingerprint audit and an evaluator-controlled offline channel for unexposed originals. The evaluator can then freeze the reviewed cohort against frozen candidate models. The audit emits only aggregate status and a salted commitment that binds the signed blind review receipts. Keep source originals and labels in evaluator custody outside Git and CI.
+- Target shortfall in verified physical objects remains **140 wearable and 20 hard negatives**. The positive goal is 10 development and 10 blind objects per subtype, plus 10 hard negatives per split. Both splits must have independent publisher coverage, and the sneaker cohort must include low- and high-tops.
+
+Run `node scripts/p75-acquire-commons.mjs --footwear` for the development search and add `--supplement` to extend a local discovery receipt with the targeted Commons categories. Run `node scripts/p75-verify-pinned.mjs --footwear` for a frozen-ledger audit. Set `P75_RECHECK_LIMIT=8` for a current-source recheck across the eight search buckets. The private `p75-review-offline.mjs audit … --footwear` mode binds reviews to exact original files, compares publisher and physical groups, verifies independent signatures and fails closed on target shortfalls. Family Alpha HOLD #255 continues.
