@@ -132,7 +132,7 @@
  async function request(path,body,token,method='POST'){
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
   try{
-   const res=await fetch(URL+'/auth/v1/'+path,{method,signal:controller.signal,headers:{'apikey':KEY,'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},...(method==='GET'?{}:{body:JSON.stringify(body)})});
+   const res=await fetch(URL+'/auth/v1/'+path,{method,signal:controller.signal,redirect:'error',cache:'no-store',headers:{'apikey':KEY,'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},...(method==='GET'?{}:{body:JSON.stringify(body)})});
    let data;
    try{data=await res.json();}catch{data=null;}
    if(!data||typeof data!=='object'||Array.isArray(data)){
