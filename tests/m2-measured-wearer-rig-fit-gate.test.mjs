@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assessMetricGarmentToWearerFit as assess,auditSampledOriginalFrontProportions as audit,trialBoundedOriginalFrontCorrection as correct}
+import {assessMetricGarmentToWearerFit as assess,auditSampledOriginalFrontProportions as audit,trialBoundedOriginalFrontCorrection as correct,trialCoordinatedOriginalFrontCorrection as coordinate}
  from '../research/parallel89/measured-wearer-to-licensed-rig-garment-fit89.mjs';
 
 const sourceSHA='a'.repeat(64),rigSHA='b'.repeat(64);
@@ -278,5 +278,37 @@ test('bounded correction rejects rigid, collapsed, invalid and unimproved global
   const r=correct({rest,pose,indices,expectedFaces:1,expectedVertices:3});safe(r);
   assert.equal(r.decision,expected);assert.equal(r.correctedPose,null);
   assert.equal(r.correctionAppliedToLiveMesh,false);
+ }
+});
+
+test('coordinated correction improves adjacent stretched faces where single edge fails',()=>{
+ const rest=[0,0,0,1,0,0,0,1,0,1,1,0],pose=[0,0,0,2,0,0,0,2,0,2,2,0],indices=[0,1,2,1,3,2];
+ const x={rest,pose,indices,expectedFaces:2,expectedVertices:4},original=JSON.stringify(x);
+ assert.equal(correct(x).correctedPose,null);
+ const r=coordinate(x);safe(r);
+ assert.equal(r.decision,'RESEARCH_ONLY_COORDINATED_CORRECTION_CANDIDATE');
+ assert.equal(r.selectedDistortedEdges,5);assert.equal(r.movedVertices,4);
+ assert.ok(r.after.maximumEdgeLengthRatio<2);
+ assert.ok(r.after.maximumTriangleAreaRatio<4);
+ assert.ok(r.maximumVertexStepFractionOfShortestIncidentRestEdge<=.020000000001);
+ assert.equal(r.trials.at(-1).newBadEdges,0);assert.equal(r.trials.at(-1).newBadFaces,0);
+ assert.equal(r.trials.at(-1).flippedOrOrthogonalFaces,0);
+ assert.equal(JSON.stringify(x),original);
+ assert.equal(r.correctionAppliedToLiveMesh,false);
+});
+test('coordinated correction refuses new neighboring distortion despite backtracking',()=>{
+ const rest=[0,0,0,1,0,0,0,1,0,1,1,0],pose=[0,0,0,1.2,0,0,0,.9,0,.8,1,0],indices=[0,1,2,1,3,2];
+ const r=coordinate({rest,pose,indices,expectedFaces:2,expectedVertices:4});safe(r);
+ assert.equal(r.decision,'RESEARCH_ONLY_COORDINATED_CORRECTION_REJECTED');
+ assert.equal(r.correctedPose,null);assert.equal(r.trials.length,4);
+ assert.ok(r.trials.every(t=>t.newBadEdges>0));
+});
+test('coordinated correction refuses undistorted, collapsed and invalid inputs',()=>{
+ const rest=[0,0,0,1,0,0,0,1,0],indices=[0,1,2];
+ for(const [pose,expected] of [[rest,'RESEARCH_ONLY_NO_COORDINATED_CORRECTION_ATTEMPT'],
+  [[0,0,0,1,0,0,2,0,0],'RESEARCH_ONLY_NO_COORDINATED_CORRECTION_ATTEMPT'],
+  [[NaN,0,0,1,0,0,0,1,0],'BLOCKED_INVALID_SAMPLED_ORIGINAL_FRONT_GEOMETRY']]){
+  const r=coordinate({rest,pose,indices,expectedFaces:1,expectedVertices:3});safe(r);
+  assert.equal(r.decision,expected);assert.equal(r.correctedPose,null);
  }
 });
