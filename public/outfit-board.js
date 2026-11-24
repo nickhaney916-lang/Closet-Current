@@ -786,7 +786,7 @@ function renderTrendReferences(){const grid=$('boardTrendSources');grid.replaceC
 renderTrendReferences();
 const outfitBoardReady=(async()=>{
  await closetReady;
- if(startupWardrobeRecoveryCount)return;
+ if(!db)return;
  let nativeMountLease=null,ordinaryBoardLease=null;
  if(nativeLossless04Active){
   nativeMountLease=beginNativeBoardMountLease();

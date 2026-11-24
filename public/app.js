@@ -142,11 +142,7 @@ window.addEventListener('closet:session-locked',()=>{
  if(memoryReviewTimer!==null){clearTimeout(memoryReviewTimer);memoryReviewTimer=null;}
  memoryReviewRunning=false;
  try{db?.close();}catch{}
- db=null;items=[];batch=[];failedDraftCaptures.clear();
- if(startupWardrobeRecoveryCount){
-  for(const id of ['closetGrid','reviewGrid','scanResults'])$(id)?.replaceChildren();
-  startupWardrobeRecoveryCount=0;
- }
+ db=null;items=[];batch=[];startupWardrobeRecoveryCount=0;failedDraftCaptures.clear();
  for(const image of document.querySelectorAll('#appShell img, dialog img')){
   const source=image.getAttribute('src');
   if(source?.startsWith('blob:'))URL.revokeObjectURL(source);

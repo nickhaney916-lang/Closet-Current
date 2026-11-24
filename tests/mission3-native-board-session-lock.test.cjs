@@ -228,6 +228,7 @@ function defaultLoadFixture(){
   currentBoard:{name:'',slots:{}},savedOutfitBoards:[],
   boardExpectedStoredDraft:'null',boardCommittedDraft:null,
   boardInitialized:false,items:[],
+  assertCompleteWardrobe(){},
   cleanOutfitBoard:value=>JSON.parse(JSON.stringify(value||{})),
   syncBoardInputs(){events.push('sync')},
   renderOutfitBoard(){events.push('render')},
