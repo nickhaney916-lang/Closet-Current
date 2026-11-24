@@ -129,6 +129,7 @@ function nativeLossless04RestoreSafe(){
   }
   assertLease();
   await window.closetCloud.start(ownerDB,{
+   assertCompleteWardrobe,
    capture(work){
     assertLease();
     const result=writes.then(async()=>{

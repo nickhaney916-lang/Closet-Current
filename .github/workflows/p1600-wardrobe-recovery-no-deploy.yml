@@ -1,0 +1,87 @@
+name: P1600 wardrobe recovery NO DEPLOY
+on:
+  push:
+    branches: [research/p1600-wardrobe-recovery-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser-red-green:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+          npx playwright install --with-deps chromium webkit
+      - name: Reproduce on immutable donor and verify corrected full application
+        run: |
+          set -euo pipefail
+          BASE=ae7b7fbf1135bf2c4b9556fc526ace153626ce8b
+          git merge-base --is-ancestor "$BASE" HEAD
+          mkdir "$RUNNER_TEMP/p1600-donor"
+          git archive "$BASE" public | tar -x -C "$RUNNER_TEMP/p1600-donor"
+          if P1600_PUBLIC_ROOT="$RUNNER_TEMP/p1600-donor/public" node scripts/test-p1600-wardrobe-recovery-browser.mjs > "$RUNNER_TEMP/p1600-red.log" 2>&1; then
+            cat "$RUNNER_TEMP/p1600-red.log"
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/p1600-red.log"
+          for engine in chromium webkit; do
+            grep -F "$engine late corruption {\"exported\":true,\"askedToImport\":true,\"overwritten\":true}" "$RUNNER_TEMP/p1600-red.log"
+            grep -F "$engine recovery projection {\"visible\":false}" "$RUNNER_TEMP/p1600-red.log"
+          done
+          node scripts/test-p1600-wardrobe-recovery-browser.mjs | tee "$RUNNER_TEMP/p1600-green.log"
+          node scripts/test-mission3-default-export-owner-snapshot-browser.mjs "$RUNNER_TEMP/p1600-export"
+          node scripts/test-mission3-default-atomic-import-browser.mjs "$RUNNER_TEMP/p1600-import"
+          node scripts/test-mission3-cloud-restore-owner-browser.mjs "$RUNNER_TEMP/p1600-cloud"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p1600-synthetic-red-green
+          path: ${{ runner.temp }}/p1600-*.log
+  full-regression-comparison:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Build and run complete test inventory against both heads
+        run: |
+          set -euo pipefail
+          git worktree add --detach "$RUNNER_TEMP/p1600-baseline" ae7b7fbf1135bf2c4b9556fc526ace153626ce8b
+          ln -s "$PWD/node_modules" "$RUNNER_TEMP/p1600-baseline/node_modules"
+          (
+            cd "$RUNNER_TEMP/p1600-baseline"
+            node scripts/build.mjs
+            node --test --test-reporter=tap --test-concurrency=1 tests/*.cjs tests/*.mjs > "$RUNNER_TEMP/p1600-baseline.tap" || test "$?" -eq 1
+          )
+          node scripts/build.mjs
+          node --test --test-reporter=tap --test-concurrency=1 tests/*.cjs tests/*.mjs > "$RUNNER_TEMP/p1600-head.tap" || test "$?" -eq 1
+          for revision in baseline head; do
+            log="$RUNNER_TEMP/p1600-$revision.tap"
+            tail -8 "$log"
+            grep -Eq '^# tests [1-9][0-9]+$' "$log"
+            sed -nE 's/^ *not ok [0-9]+ - (.*)$/\1/p' "$log" | LC_ALL=C sort > "$log.failures"
+          done
+          LC_ALL=C comm -13 "$RUNNER_TEMP/p1600-baseline.tap.failures" "$RUNNER_TEMP/p1600-head.tap.failures" | tee "$RUNNER_TEMP/p1600-new-failures"
+          test ! -s "$RUNNER_TEMP/p1600-new-failures"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p1600-full-regression-comparison
+          path: |
+            ${{ runner.temp }}/p1600-*.tap
+            ${{ runner.temp }}/p1600-*.tap.failures
+            ${{ runner.temp }}/p1600-new-failures
