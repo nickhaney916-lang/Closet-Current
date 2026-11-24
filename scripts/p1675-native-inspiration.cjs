@@ -75,10 +75,28 @@ replace(anchor,`
   assert.equal(await page.locator('#inspirationPreview').getAttribute('src'),resized);
   assert.match(await page.locator('#matchSummary').innerText(),/2 of 2 close matches/);
   assert.equal(await rowCount(),2);
+  // Exercise cancel and confirmed deletion, then explicitly re-save the reviewed look.
+  page.once('dialog',dialog=>dialog.dismiss());
+  await edited.getByRole('button',{name:'Delete',exact:true}).click();
+  assert.equal(await edited.count(),1);
+  page.once('dialog',dialog=>dialog.accept());
+  await edited.getByRole('button',{name:'Delete',exact:true}).click();
+  await edited.waitFor({state:'detached'});
+  assert.equal(await page.locator('#savedLooks .saved-look').count(),0);
+  await page.locator('#saveLook').click();
+  await edited.waitFor();
+  assert.equal(await edited.count(),1);
   // Keep the saved private reference for inherited backup/restore and owner swap.
   console.log('P1675_NATIVE_INSPIRATION_PASS',engine,width);
  }
 `+anchor);
+replace("  assert(data.outfitBoard?.saved?.some(x=>x.name===outfitName));",`
+  assert(data.outfitBoard?.saved?.some(x=>x.name===outfitName));
+  if(process.env.P1675_BASELINE!=='1'){
+   const look=data.looks?.find(x=>x.title==='P1675 edited inspiration');
+   assert.ok(look&&look.pieces.length===2&&look.image.startsWith('data:image/jpeg;base64,'));
+  }
+`);
 replace(" await signIn('p99-B');",`
  await signIn('p99-B');
  if(process.env.P1675_BASELINE!=='1'){
