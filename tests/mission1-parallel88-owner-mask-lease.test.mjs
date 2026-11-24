@@ -3379,3 +3379,29 @@ test('P88 incomplete opt-in instance receipts never downgrade physical owner rev
  legacy.emit({type:'piece',piece:{...base,requiresReview:undefined}});
  assert.equal(legacy.c.batch.length,1);assert.equal(legacy.c.items.length,0);
 });
+
+test('P88 malformed outfit region is a retryable partial failure, not successful completion',()=>{
+ const good={image:'data:image/jpeg;base64,PIECE',hint:{categories:['Shoes'],types:[]},
+  instanceMethod:'connected_footwear_component',requiresReview:true};
+ const invalid=[null,{...good,image:'bad'},
+  {...good,hint:{categories:['Invalid'],types:[]}},
+  {...good,recognitionPhoto:{image:'bad'}}];
+ for(const href of ['https://example.test/closet','https://example.test/closet?outfitInstances840=1']){
+  for(const piece of invalid){
+   const h=captureHarness({ownerId:'owner-A',href});
+   h.emit({type:'piece',piece:good});
+   h.emit({type:'piece',piece});
+   h.emit({type:'done',count:2});
+   assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);
+   assert.equal(h.c.worker.closed,true);
+   assert.equal(h.node('outfitRetry').hidden,false);
+   assert.match(h.node('outfitSplitStatus').textContent,/A clothing region could not be verified/);
+   assert.equal(vm.runInContext('lastOutfitPhoto',h.c),'data:image/jpeg;base64,ORIGINAL');
+   assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,ORIGINAL');
+  }
+ }
+ const h=captureHarness({ownerId:'owner-A',href:'https://example.test/closet'});
+ h.emit({type:'piece',piece:good});h.emit({type:'done',count:1});
+ assert.equal(h.node('outfitRetry').hidden,true);
+ assert.match(h.node('outfitSplitStatus').textContent,/1 tentative clothing regions cropped/);
+});
