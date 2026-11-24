@@ -439,7 +439,7 @@ function progressiveWithGuard({rest,pose,indices,expectedFaces,expectedVertices}
    if(n[0]*q[0]+n[1]*q[1]+n[2]*q[2]<=0){originalNormalConflict=true;break;}
   }
   if(originalNormalConflict){stopReason="ORIGINAL_POSE_NORMAL_CONFLICT";break;}
-  if(guard){const receipt=guard(current,candidate);if(!receipt.clear){stopReason='SWEPT_OBSTACLE_OVERLAP_UNRESOLVED';break;}}
+  if(guard){const receipt=guard(current,candidate);if(!receipt.clear){stopReason=receipt.reason||'SWEPT_OBSTACLE_OVERLAP_UNRESOLVED';break;}}
   traveled.set(travel);maxTravel=nextMax;current=candidate;last=result.after;
   passes.push({pass:i+1,maximumCumulativeTravelFraction:maxTravel,
    minimumEdgeLengthRatio:last.minimumEdgeLengthRatio,maximumEdgeLengthRatio:last.maximumEdgeLengthRatio,
@@ -499,14 +499,14 @@ export function trialObstacleGuardedOriginalFrontStabilization({
  const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
  const triangleEdges=t=>[sub(t[1],t[0]),sub(t[2],t[1]),sub(t[0],t[2])];
  const points=(v,ids)=>ids.map(i=>[v[3*i],v[3*i+1],v[3*i+2]]);
- const separation=(start,end,fixed)=>{
-  const groups=[start,end,fixed].map(triangleEdges);
+ const separation=(start,end,fixed,fixedEnd=fixed)=>{
+  const groups=[start,end,fixed,fixedEnd].map(triangleEdges);
   const normals=groups.map(e=>cross(e[0],e[1]));
   const axes=[...normals];
   for(const n of normals)for(const es of groups)for(const e of es)axes.push(cross(n,e));
-  for(const es of groups.slice(0,2))for(const e of es)for(const q of groups[2])axes.push(cross(e,q));
+  for(const es of groups.slice(0,2))for(const e of es)for(const other of groups.slice(2))for(const q of other)axes.push(cross(e,q));
   const moving=[...start,...end],origin=fixed[0];
-  const localA=moving.map(p=>sub(p,origin)),localB=fixed.map(p=>sub(p,origin));
+  const localA=moving.map(p=>sub(p,origin)),localB=[...fixed,...fixedEnd].map(p=>sub(p,origin));
   for(const axis of axes){
    const length=Math.hypot(...axis);if(!finite(length)||length<=1e-14)continue;
    const u=axis.map(x=>x/length);
@@ -539,8 +539,40 @@ export function trialObstacleGuardedOriginalFrontStabilization({
    rows.push({b:bounds(v,ids),ids,obstacleIndex:oi,kind:o.kind,faceOrdinal:k/3});
   }
  }
- const tree=build(rows),receipts=[];
+ const tree=build(rows),receipts=[],selfReceipts=[];
+ // A shared topological vertex is intentionally excluded: common seam/edge
+ // contact is expected, and this guard cannot certify adjacent fold-over.
+ // All nonincident pairs involving a moving face are candidates, including
+ // two moving faces. Convex endpoint hull separation is sufficient only.
+ const selfGuard=(from,to)=>{
+  const faces=[];
+  for(let k=0;k<indices.length;k+=3){
+   const ids=[indices[k],indices[k+1],indices[k+2]];
+   faces.push({ids,faceOrdinal:k/3,b:bounds(from,ids,to),
+    moving:ids.some(i=>[0,1,2].some(j=>from[3*i+j]!==to[3*i+j]))});
+  }
+  const selfTree=build(faces.slice()),moving=faces.filter(f=>f.moving);
+  let broadphasePairsExamined=0,separatedSweptPairs=0,incidentPairsExcluded=0,budgetExceeded=false;
+  for(const f of moving){
+   const start=points(from,f.ids),end=points(to,f.ids);
+   const hit=query(selfTree,f.b,g=>{
+    if(g.faceOrdinal===f.faceOrdinal||(g.moving&&g.faceOrdinal<f.faceOrdinal))return false;
+    if(f.ids.some(i=>g.ids.includes(i))){incidentPairsExcluded++;return false;}
+    if(broadphasePairsExamined>=250000){budgetExceeded=true;return true;}
+    broadphasePairsExamined++;
+    if(separation(start,end,points(from,g.ids),points(to,g.ids))){separatedSweptPairs++;return false;}
+    return true;
+   });
+   if(hit){const receipt={clear:false,reason:'SWEPT_NONINCIDENT_SELF_OVERLAP_UNRESOLVED',
+    movingFacesIndexed:moving.length,broadphasePairsExamined,separatedSweptPairs,
+    incidentPairsExcluded,budgetExceeded,frontFaceOrdinal:f.faceOrdinal,
+    otherFrontFaceOrdinal:hit.faceOrdinal};selfReceipts.push(receipt);return receipt;}
+  }
+  const receipt={clear:true,movingFacesIndexed:moving.length,broadphasePairsExamined,
+   separatedSweptPairs,incidentPairsExcluded,budgetExceeded:false};selfReceipts.push(receipt);return receipt;
+ };
  const guard=(from,to)=>{
+  const self=selfGuard(from,to);if(!self.clear)return self;
   let movingFacesExamined=0,broadphasePairsExamined=0,separatedSweptPairs=0,budgetExceeded=false;
   for(let k=0;k<indices.length;k+=3){
    const ids=[indices[k],indices[k+1],indices[k+2]];
@@ -563,6 +595,9 @@ export function trialObstacleGuardedOriginalFrontStabilization({
  };
  const result=progressiveWithGuard(input,guard);
  return {...result,correctionSegmentObstacleReceipts:receipts,
+  correctionSegmentNonincidentSelfReceipts:selfReceipts,
+  nonincidentMovingFaceSelfBroadphaseEnabled:true,
+  incidentFaceFoldoverOrStationarySelfContactCertified:false,
   fixedObstacleFacesIndexed:rows.length,suppliedLayerCount:obstacles.filter(o=>o.kind==='layer').length,
   sweptMovingFaceBoundsOnly:false,conservativeSweptProjectionSeparation:true,
   unchangedFaceOrSelfContactCertified:false,
