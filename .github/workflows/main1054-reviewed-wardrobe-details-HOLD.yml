@@ -6,6 +6,7 @@ on:
       - public/app.js
       - public/native-reviewed-private-save-167.mjs
       - tests/main1054-reviewed-wardrobe-details.test.mjs
+      - tests/mission3-reviewed-editor-postcommit-lease.test.cjs
       - scripts/test-main1054-reviewed-wardrobe-details-browser.cjs
       - .github/workflows/main1054-reviewed-wardrobe-details-HOLD.yml
 permissions:
@@ -33,11 +34,12 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           git merge-base --is-ancestor 949adddc4c05538586cca5107abf03fd5246283c HEAD
-          git diff --exit-code 949adddc4c05538586cca5107abf03fd5246283c HEAD -- . ':(exclude)public/app.js' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)tests/main1054-reviewed-wardrobe-details.test.mjs' ':(exclude)scripts/test-main1054-reviewed-wardrobe-details-browser.cjs' ':(exclude).github/workflows/main1054-reviewed-wardrobe-details-HOLD.yml'
+          git diff --exit-code 949adddc4c05538586cca5107abf03fd5246283c HEAD -- . ':(exclude)public/app.js' ':(exclude)public/native-reviewed-private-save-167.mjs' ':(exclude)tests/main1054-reviewed-wardrobe-details.test.mjs' ':(exclude)tests/mission3-reviewed-editor-postcommit-lease.test.cjs' ':(exclude)scripts/test-main1054-reviewed-wardrobe-details-browser.cjs' ':(exclude).github/workflows/main1054-reviewed-wardrobe-details-HOLD.yml'
           test "$(git rev-parse HEAD:public/app.js)" = "cf636441c4c2ea0e03698c4b8be6eabda7026223"
           test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = "3227633c67528e615779065b1dae6f12dbc1e482"
           test "$(git rev-parse HEAD:tests/main1054-reviewed-wardrobe-details.test.mjs)" = "6989c28f5678ce8d94b18836e811b517330a3330"
           test "$(git rev-parse HEAD:scripts/test-main1054-reviewed-wardrobe-details-browser.cjs)" = "fa27be3ebf7b4c5b76361828fc798f54d4078cdd"
+          test "$(git rev-parse HEAD:tests/mission3-reviewed-editor-postcommit-lease.test.cjs)" = "9812c1b0f77d69032482ce122eadedc503e6ad49"
           git show f0236e34ce73207183444c58f5475a4e0606a2ed:public/app.js > "$RUNNER_TEMP/suggestion-parent-app.js"
           git show 234176ed23dc56d7338f8de0646d591fda9e83a2:public/app.js > "$RUNNER_TEMP/subtype-parent-app.js"
           git show 53ef0f5339c6e520705dd7868f94229c05eff4ac:public/app.js > "$RUNNER_TEMP/envelope-parent-app.js"
@@ -73,6 +75,7 @@ jobs:
           grep -F 'sleeveLength' "$RUNNER_TEMP/metadata-red.log"
           cp "$RUNNER_TEMP/metadata-candidate.mjs" public/native-reviewed-private-save-167.mjs
           node --test tests/main1054-reviewed-wardrobe-details.test.mjs
+          node --test tests/mission3-reviewed-editor-postcommit-lease.test.cjs
       - if: matrix.check == 'regression'
         run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
       - if: matrix.check == 'storage'
