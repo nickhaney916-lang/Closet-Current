@@ -459,7 +459,8 @@ function progressiveWithGuard({rest,pose,indices,expectedFaces,expectedVertices}
  * exact contact solver. Overlapping AABBs require a strict separating
  * projection of all six swept endpoints from the obstacle triangle.
  * Otherwise unresolved. No claim about unchanged faces, self-contact,
- * cloth thickness, unsupplied layers, or moving obstacles. */
+ * cloth thickness or unsupplied layers. Optional endVertices model one
+ * explicit linear obstacle segment, NOT the nonlinear animated joint path. */
 export function trialObstacleGuardedOriginalFrontStabilization({
  rest,pose,indices,expectedFaces,expectedVertices,obstacles
 }={}){
@@ -525,10 +526,12 @@ export function trialObstacleGuardedOriginalFrontStabilization({
   return query(node.left,b,unresolved)||query(node.right,b,unresolved);
  };
  const rows=[];
+ let movingObstacleFaces=0;
  for(let oi=0;oi<obstacles.length;oi++){
-  const o=obstacles[oi],v=o.vertices,ix=o.indices;
+  const o=obstacles[oi],v=o.vertices,ix=o.indices,end=o.endVertices===undefined?v:o.endVertices;
   if(!goodBuffer(v)||v.length<9||v.length%3||v.length>3000000||
    !Array.from(v).every(n=>finite(n)&&Math.abs(n)<=10000)||
+   !goodBuffer(end)||end.length!==v.length||!Array.from(end).every(n=>finite(n)&&Math.abs(n)<=10000)||
    !(Array.isArray(ix)||ix instanceof Uint16Array||ix instanceof Uint32Array)||
    ix.length<3||ix.length%3||ix.length>6000000||
    rows.length+ix.length/3>2000000)return denied('BLOCKED_INVALID_FIXED_OBSTACLE_GEOMETRY');
@@ -536,7 +539,9 @@ export function trialObstacleGuardedOriginalFrontStabilization({
    const ids=[ix[k],ix[k+1],ix[k+2]];
    if(!ids.every(i=>Number.isSafeInteger(i)&&i>=0&&i<v.length/3)||
     new Set(ids).size!==3)return denied('BLOCKED_INVALID_FIXED_OBSTACLE_GEOMETRY');
-   rows.push({b:bounds(v,ids),ids,obstacleIndex:oi,kind:o.kind,faceOrdinal:k/3});
+   const moving=ids.some(i=>[0,1,2].some(j=>v[3*i+j]!==end[3*i+j]));
+   if(moving)movingObstacleFaces++;
+   rows.push({b:bounds(v,ids,end),ids,moving,obstacleIndex:oi,kind:o.kind,faceOrdinal:k/3});
   }
  }
  const tree=build(rows),receipts=[],selfReceipts=[];
@@ -615,13 +620,16 @@ export function trialObstacleGuardedOriginalFrontStabilization({
   let movingFacesExamined=0,broadphasePairsExamined=0,separatedSweptPairs=0,budgetExceeded=false;
   for(let k=0;k<indices.length;k+=3){
    const ids=[indices[k],indices[k+1],indices[k+2]];
-   if(!ids.some(i=>[0,1,2].some(j=>from[3*i+j]!==to[3*i+j])))continue;
+   const movingFront=ids.some(i=>[0,1,2].some(j=>from[3*i+j]!==to[3*i+j]));
+   if(!movingFront&&!movingObstacleFaces)continue;
    movingFacesExamined++;
    const start=points(from,ids),end=points(to,ids);
    const hit=query(tree,bounds(from,ids,to),r=>{
+    if(!movingFront&&!r.moving)return false;
     if(broadphasePairsExamined>=250000){budgetExceeded=true;return true;}
     broadphasePairsExamined++;
-    if(separation(start,end,points(obstacles[r.obstacleIndex].vertices,r.ids))){separatedSweptPairs++;return false;}
+    const o=obstacles[r.obstacleIndex];
+    if(separation(start,end,points(o.vertices,r.ids),points(o.endVertices===undefined?o.vertices:o.endVertices,r.ids))){separatedSweptPairs++;return false;}
     return true;
    });
    if(hit){
@@ -638,7 +646,10 @@ export function trialObstacleGuardedOriginalFrontStabilization({
   nonincidentMovingFaceSelfBroadphaseEnabled:true,
   incidentMovingFaceFoldoverGuardEnabled:true,
   incidentFaceFoldoverOrStationarySelfContactCertified:false,
-  fixedObstacleFacesIndexed:rows.length,suppliedLayerCount:obstacles.filter(o=>o.kind==='layer').length,
+  fixedObstacleFacesIndexed:rows.length-movingObstacleFaces,
+  totalObstacleFacesIndexed:rows.length,movingObstacleFacesIndexed:movingObstacleFaces,
+  suppliedLayerCount:obstacles.filter(o=>o.kind==='layer').length,
+  linearObstacleEndpointSweepOnly:true,nonlinearAnimatedJointPathCertified:false,
   sweptMovingFaceBoundsOnly:false,conservativeSweptProjectionSeparation:true,
   unchangedFaceOrSelfContactCertified:false,
   fullLayeredOutfitCollisionCertified:false};
