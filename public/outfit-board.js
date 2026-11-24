@@ -684,8 +684,12 @@ function renderSavedOutfitBoards(){
  // Bind saved outfit cards to the owner who produced their labels and IDs.
  // A stale click must not select a former owner's outfit in a new session.
  const savedListLease=nativeLossless04Active?null:beginOwnerBoardUiLease();
- if(!nativeLossless04Active&&!savedListLease)return;
- if(!savedOutfitBoards.length){grid.append(node('p','Save a combination to return to it later.'));return;}
+ if(!nativeLossless04Active&&!savedListLease){window.refreshSavedOutfitSearch?.(null);return;}
+ if(!savedOutfitBoards.length){
+  grid.append(node('p','Save a combination to return to it later.'));
+  window.refreshSavedOutfitSearch?.(savedListLease);
+  return;
+ }
  for(const [index,value] of savedOutfitBoards.entries()){
   const label=(value.name||'My outfit')+(nativeLossless04Active&&Object.values(value.slots||{}).some(id=>!items.find(x=>x.id===id))?' · missing piece':'');
   const b=node('button',label,'secondary');b.type='button';
@@ -699,6 +703,7 @@ function renderSavedOutfitBoards(){
   if(wear){b.dataset.wearSavedIndex=String(index);const row=node('div',null,'board-saved-wear');row.append(b,wear);grid.append(row);}
   else grid.append(b);
  }
+ window.refreshSavedOutfitSearch?.(savedListLease);
 }
 async function importBoardBackup(value){
  if(nativeLossless04Active)
