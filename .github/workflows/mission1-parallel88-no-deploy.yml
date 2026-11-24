@@ -685,6 +685,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Historical source metadata is immutable; a change requires a new reviewed receipt.
+          test "$(git hash-object benchmark/locked-photo-sources.json)" = 5af9b4412e861d6cb6c638e4a414aedcb813f16e
           node --input-type=module <<'JS'
           import assert from 'node:assert/strict';
           import {readFile,writeFile,mkdir} from 'node:fs/promises';
@@ -721,10 +723,20 @@ jobs:
           ];
           const validate=(entries,manifest,sources)=>{
            if(entries.length!==20||new Set(entries.map(x=>x[0])).size!==20)throw Error('ledger coverage');
+           for(const key of ['id','image','sha256']){
+            if(sources.some(s=>typeof s[key]!=='string'||!s[key])||new Set(sources.map(s=>s[key])).size!==sources.length)throw Error('duplicate or missing source '+key);
+           }
+           if(new Set(manifest.map(m=>m.id)).size!==manifest.length)throw Error('duplicate manifest ID');
            const positive=manifest.filter(x=>x.expectedCategory==='Shoes');
            if(positive.length!==20||new Set(positive.map(x=>x.id)).size!==20)throw Error('manifest coverage');
            for(const [id,group,kind,sha,title] of entries){
            const s=sources.find(x=>x.id===id),m=positive.find(x=>x.id===id);
+           if(s?.id!==s?.attribution?.id||m?.image!==s?.image||m?.verified!==true||s?.verified!==true||
+              (m?.source!==undefined&&m.source!==s.attribution.source)||
+              (m?.sha256!==undefined&&m.sha256!==s.sha256)||
+              (m?.attribution!==undefined&&JSON.stringify(m.attribution)!==JSON.stringify(s.attribution))||
+              !/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/.test(s?.attribution?.source||'')||
+              !['CC0','CC BY 2.0','CC BY 4.0','CC BY-SA 4.0'].includes(s?.attribution?.license))throw Error('inconsistent source receipt: '+id);
            if(!s?.verified||!s.attribution?.license||s.sha256!==sha||s.attribution.title!==title||!m||!group||!['Sneakers','Boots','EXCLUDE'].includes(kind)||m.expectedType!==(kind==='EXCLUDE'?'Boots':kind))throw Error('source ledger drift: '+id);
            }
            const retained=entries.filter(x=>x[2]!=='EXCLUDE');
@@ -744,6 +756,20 @@ jobs:
           assert.throws(()=>validate([...ledger.slice(0,-1),ledger[0]],manifest,sources));
           assert.throws(()=>validate(ledger.map((x,i)=>i===0?[...x.slice(0,3),'0'.repeat(64),x[4]]:x),manifest,sources));
           assert.throws(()=>validate(ledger.map((x,i)=>i===0?[...x.slice(0,4),'different title']:x),manifest,sources));
+          const mutate=(rows,id,fn)=>rows.map(x=>x.id===id?fn(structuredClone(x)):x);
+          const attacks=[
+           ['duplicate ID',manifest,[...sources,sources[0]]],
+           ['duplicate SHA',manifest,mutate(sources,sources[0].id,x=>({...x,sha256:sources[1].sha256}))],
+           ['duplicate image path',manifest,mutate(sources,sources[0].id,x=>({...x,image:sources[1].image}))],
+           ['invalid license',manifest,mutate(sources,'commons-0077',x=>({...x,attribution:{...x.attribution,license:'Unknown'}}))],
+           ['invalid source page',manifest,mutate(sources,'commons-0078',x=>({...x,attribution:{...x.attribution,source:'https://example.invalid/other'}}))],
+           ['invalid attribution ID',manifest,mutate(sources,'commons-0077',x=>({...x,attribution:{...x.attribution,id:'wrong'}}))],
+           ['manifest image drift',mutate(manifest,'commons-0077',x=>({...x,image:'wrong.jpg'})),sources],
+           ['manifest unverified',mutate(manifest,'commons-0077',x=>({...x,verified:false})),sources],
+           ['duplicate nonshoe manifest ID',[...manifest,manifest.find(x=>x.expectedCategory!=='Shoes')],sources]
+          ];
+          for(const [name,m,s] of attacks)assert.throws(()=>validate(ledger,m,s),undefined,name);
+          console.log('P88_FOOTWEAR_RECEIPT_TAMPER_REGRESSION '+attacks.length+'/'+attacks.length+' PASS');
           await mkdir('benchmark/output-footwear-source-audit',{recursive:true});
           await writeFile('benchmark/output-footwear-source-audit/audit.json',JSON.stringify({schema:'p88-footwear-source-audit-v1',status:'BLOCKED_BOOT_SOURCE_DIVERSITY',result,ledger},null,2));
           console.log('P88_FOOTWEAR_SOURCE_AUDIT '+JSON.stringify({status:'BLOCKED_BOOT_SOURCE_DIVERSITY',...result}));
