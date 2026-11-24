@@ -434,6 +434,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     finishOutfitSplit(job,result,false);
    }
    else if(data.type==='error')finishOutfitSplit(job,job.added?'Some pieces are kept; the rest could not be separated. Try again.':'This outfit could not be separated. Try another clear photo of one person, head to toe.',true);
+   else finishOutfitSplit(job,'Outfit separation returned an unreadable message. Your original and earlier accepted drafts are kept; retry or photograph items individually.',true);
   };
   job.worker.onmessage=event=>{
    // Legacy behavior remains synchronous when unit70 is disabled.
@@ -444,6 +445,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     finishOutfitSplit(job,'Research verification interrupted. Your original and already separated photos remain for manual review.',true));
   };
   job.worker.onerror=()=>finishOutfitSplit(job,'Outfit separation could not start. Your existing photos are kept. Try again.',true);
+  job.worker.onmessageerror=()=>finishOutfitSplit(job,'Outfit separation returned an unreadable message. Your original and earlier accepted drafts are kept; retry or photograph items individually.',true);
   job.worker.postMessage({id:job.id,image,...(outfitInstances840?{instanceReview840:true}:{}),...(outfitUnits70?{instanceReview70:true}:{}),...(outfitColor76?{color76:true,ownerId:job.ownerId}:{})});
  }catch{finishOutfitSplit(job,'Outfit separation is unavailable on this device. Try again or use individual clothing photos.',true);}
 }
