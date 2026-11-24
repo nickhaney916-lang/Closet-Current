@@ -3802,3 +3802,50 @@ test('P88 reviewed insertion must pin submitted metadata and live draft througho
   assert.equal(item.image,'data:image/jpeg;base64,ORIGINAL');
  }
 });
+
+test('P88 source-bound reviewed insertion pins payload and pending region through storage admission',async()=>{
+ const begin=appSource.indexOf('function saveSourceBoundPiece88(');
+ const end=appSource.indexOf('// Mission 1 #88: unresolved',begin);
+ assert.ok(begin>=0&&end>begin);
+ for(const kind of ['value-queue','value-read','receipt-read','draft-queue','draft-read','valid']){
+  const item={id:'x',image:'data:image/jpeg;base64,CROP',originalPhoto:{image:'data:image/jpeg;base64,ORIGINAL'},
+   recognitionPhoto:{image:'data:image/jpeg;base64,REVIEW'},outfitSourceId:'source',
+   reconciliation70:{sourceSha256:'sha',maskSha256:'mask',ownerId:'A'},reconciliation70Status:'separate_confirmed',
+   category:'Tops',color:'Blue',itemType:'T-shirt'};
+  const value=structuredClone(item),batch=[item],items=[],writes=[];
+  value.ownerSourceReview88={category:'Tops',color:'Blue',itemType:'T-shirt',threeDReady:false};
+  const lease={item,wasDraft:true,image:item.image,original:item.originalPhoto.image,
+   review:item.recognitionPhoto.image,cropRevision:'null',hintRevision:'null',
+   receiptRevision:JSON.stringify(item.reconciliation70),source:'sha',mask:'mask',ownerId:'A',
+   status:'separate_confirmed',sourceId:'source',groupRevision:'same'};
+  const mutate=()=>{
+   if(kind==='value-queue')value.name='changed';
+   if(kind==='value-read')value.color='Red';
+   if(kind==='receipt-read')value.ownerSourceReview88.threeDReady=true;
+   if(kind==='draft-queue'||kind==='draft-read')item.itemType='Sweatshirt';
+  };
+  const c={item,value,batch,items,lease,structuredClone,draftStoreRevision88:JSON.stringify(batch),
+   sourceSaveLeaseLive88:()=>true,sourceGroupRevision88:()=> 'same',
+   reviewedSourceReceiptValid88:v=>v.ownerSourceReview88.color===v.color&&v.ownerSourceReview88.threeDReady===false,
+   unit70OwnerEvidenceValid:()=>true,duplicateUnit70InCloset:()=>false,
+   queued:async fn=>{if(kind.endsWith('queue'))mutate();return fn();}};
+  lease.ownerDb={transaction(){
+   let aborted=false;
+   const tx={abort(){aborted=true;tx.onabort?.();},objectStore(store){
+    return {get(){const req={result:{batch:JSON.parse(c.draftStoreRevision88)}};
+     queueMicrotask(()=>{if(kind.endsWith('read'))mutate();req.onsuccess();if(!aborted)tx.oncomplete?.();});return req;},
+     add(v){writes.push({store,value:structuredClone(v)});},put(v){writes.push({store,value:structuredClone(v)});}};
+   }};return tx;
+  }};
+  vm.createContext(c);vm.runInContext(appSource.slice(begin,end),c);
+  const save=c.saveSourceBoundPiece88(value,[],lease);
+  if(kind==='valid'){
+   await save;assert.equal(writes.length,2);assert.equal(writes[0].value.color,'Blue');
+   assert.equal(writes[0].value.ownerSourceReview88.threeDReady,false);
+  }else{
+   await assert.rejects(save,/P88_REVOKED_SOURCE_SAVE|P88_SOURCE_DRAFT_STORAGE_CHANGED/);
+   assert.equal(writes.length,0);assert.equal(batch[0],item);
+  }
+  assert.equal(item.originalPhoto.image,'data:image/jpeg;base64,ORIGINAL');
+ }
+});
