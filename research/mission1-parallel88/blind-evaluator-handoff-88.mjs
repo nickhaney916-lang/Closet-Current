@@ -1,0 +1,285 @@
+/**
+ * Mission #88 -> independently governed #75/#79 -> #71 blind evaluation.
+ * Strict PUBLIC model-definition freeze + PRIVATE, two-authority SIGNATURE
+ * verification only. Does NOT read originals, human labels, masks, reviewers,
+ * score any model, sign a receipt, or authorize a release/production save.
+ * The #75 custodian must independently complete their FULL ORIGINAL/BYTES,
+ * rights, source-group, duplicate, human and sealed-ledger audit beforehand.
+ */
+import {createHash,createPublicKey,verify as cryptoVerify} from 'node:crypto';
+import {open,lstat,realpath} from 'node:fs/promises';
+import {constants} from 'node:fs';
+import {resolve,relative,isAbsolute,join,dirname,sep} from 'node:path';
+import {fileURLToPath} from 'node:url';
+const CHECKOUT_ROOT_88=resolve(dirname(fileURLToPath(import.meta.url)),'..','..');
+export const P88_BLIND_HANDOFF_SCHEMA='p88-blind-evaluator-handoff/v1';
+export const P88_FROZEN_CANDIDATE=Object.freeze({
+ schema:'p88-fashion-onnx-candidate-freeze/v1',
+ model:'louisJLN/yolo8-fashionpedia',architecture:'yolov8n',
+ modelOnnxSha256:'6b581af3abe2b4ae97a84cbe9aef5ae37207a68ee966d22b0b8d7969d79e6920',
+ modelSourceRevision:'3d5c557',
+ sourceExperimentCommit:'d6733249e96dba914c8cba2fcb936efef6fd8c35',
+ inputSize:640,scoreCutoff:0.10,nonMaxSuppressionIoU:0.50,
+ matchedOriginalBoxIoU:0.50,
+ perClassMatch:'exact-fashionpedia-category-one-to-one',
+ outputScope:'27 main classes; 13/13 historical accessory categories representable',
+ nativeAppUnaffected:true,ownerReviewMandatory:true,
+ automaticClosetSave:false,modelsNeverTrainedHere:true,
+ developmentEvidenceOnly:true,notProspectiveBlindAccuracy:true,
+ originalExposedPhotoManifestSha256:'b76e9890bda49c58c6adbbafb6f7dd738f4dcf604357fc56aa0b6e770ebe35bd'
+});
+const SHA=/^[a-f0-9]{64}$/;
+export const sha256=x=>createHash('sha256').update(x).digest('hex');
+export function canonicalP88(value){
+ if(value===null)return 'null';
+ if(typeof value==='string'||typeof value==='boolean')return JSON.stringify(value);
+ if(typeof value==='number'){
+  if(!Number.isFinite(value))throw Error('P88_NONFINITE_CANONICAL');
+  return JSON.stringify(value);
+ }
+ if(Array.isArray(value))return '['+value.map(canonicalP88).join(',')+']';
+ if(value&&typeof value==='object'){
+  const keys=Object.keys(value).sort();
+  if(keys.some(k=>value[k]===undefined))throw Error('P88_UNDEFINED_CANONICAL');
+  return '{'+keys.map(k=>JSON.stringify(k)+':'+canonicalP88(value[k])).join(',')+'}';
+ }
+ throw Error('P88_UNSUPPORTED_CANONICAL');
+}
+export const frozenCandidateDigest88=sha256(canonicalP88(P88_FROZEN_CANDIDATE));
+const sourceFields=[
+ 'schema','candidateDigest','auditDigest','historicalExposureLedgerDigest',
+ 'sealedBlindCommitment','rightsEvidenceDigest','sourceGroupCount',
+ 'sealedBlindPhotoCount','approvedOriginalsCount','dualHumanReviewedCount',
+ 'verifiedIndependentHumanReviewers','unresolvedDisagreements',
+ 'historicalExposureComplete','prospectiveSourceAndPhotographerDisjoint',
+ 'pretrainedModelTrainingDisjointnessVerified',
+ 'fullSourceBytesAndLicenseVerified','humanRightsAndConsentApproved',
+ 'sourceGroupsIndependentlyVerified','noPriorModelOrAnswerExposure',
+ 'answerKeysOutsideRepository','auditedAt','expiresAt','signature'
+];
+const evaluatorFields=[
+ 'schema','candidateDigest','sourceAuditPayloadDigest',
+ 'sealedBlindCommitment','independentEvaluatorAuthorized',
+ 'independentFromModelDevelopment','willEvaluateBlindOnlyOnce',
+ 'answersNotPreviouslyExposed','acceptedAt','signature'
+];
+const packetFields=['schema','sourceAudit','sourceAuditPublicKey','evaluatorApproval','evaluatorPublicKey'];
+const exactKeys=(obj,keys)=>obj&&typeof obj==='object'&&!Array.isArray(obj)&&
+ Object.keys(obj).length===keys.length&&keys.every(k=>Object.hasOwn(obj,k));
+const ISO=x=>typeof x==='string'&&
+ /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z$/.test(x)&&
+ Number.isFinite(Date.parse(x));
+const isSha=x=>typeof x==='string'&&SHA.test(x);
+function identityKey(pem,fingerprint){
+ if(!isSha(fingerprint)||typeof pem!=='string'||pem.length>8192)return null;
+ try{
+  const key=createPublicKey(pem);
+  if(key.asymmetricKeyType!=='ed25519')return null;
+  const actual=sha256(key.export({format:'der',type:'spki'}));
+  return actual===fingerprint?key:null;
+ }catch{return null;}
+}
+function verifiedApproval(body,signature,key){
+ if(!key||typeof signature!=='string'||
+    !/^[A-Za-z0-9+/]+={0,2}$/.test(signature)||signature.length>256)return false;
+ try{return cryptoVerify(null,Buffer.from(canonicalP88(body)),
+  key,Buffer.from(signature,'base64'));}
+ catch{return false;}
+}
+/** Structure & cryptographic custody preflight only, NEVER model approval. */
+export function verifyBlindEvaluatorHandoff88(packet,{
+ p75RegistrarFingerprint=null,p71EvaluatorFingerprint=null,now=new Date()
+}={}){
+ const errors=[];
+ if(!exactKeys(packet,packetFields)||packet.schema!==P88_BLIND_HANDOFF_SCHEMA)
+  return {status:'BLOCKED',errors:['INVALID_PRIVATE_HANDOFF_SCHEMA'],
+   modelPromotionAllowed:false,accuracyMeasured:false,familyAlphaHold:true};
+ const a=packet.sourceAudit,b=packet.evaluatorApproval;
+ if(!exactKeys(a,sourceFields)||a.schema!=='p88-p75-signed-audit/v1')
+  errors.push('INVALID_P75_AUDIT_CONTRACT');
+ if(!exactKeys(b,evaluatorFields)||b.schema!=='p88-p71-evaluator-authorization/v1')
+  errors.push('INVALID_P71_AUTHORIZATION_CONTRACT');
+ if(errors.length)return {status:'BLOCKED',errors,modelPromotionAllowed:false,
+  accuracyMeasured:false,familyAlphaHold:true};
+ const candidate=frozenCandidateDigest88;
+ if(a.candidateDigest!==candidate||b.candidateDigest!==candidate)
+  errors.push('CANDIDATE_FREEZE_MISMATCH');
+ for(const k of ['auditDigest','historicalExposureLedgerDigest',
+  'sealedBlindCommitment','rightsEvidenceDigest'])
+  if(!isSha(a[k]))errors.push('MISSING_DIGEST_'+k.toUpperCase());
+ if(a.sealedBlindCommitment===P88_FROZEN_CANDIDATE.originalExposedPhotoManifestSha256)
+  errors.push('EXPOSED_DEVELOPMENT_MANIFEST_NOT_BLIND');
+ for(const k of ['sourceGroupCount','sealedBlindPhotoCount',
+  'approvedOriginalsCount','dualHumanReviewedCount','verifiedIndependentHumanReviewers',
+  'unresolvedDisagreements'])
+  if(!Number.isSafeInteger(a[k])||a[k]<0||a[k]>100000)
+   errors.push('INVALID_AUDIT_COUNT_'+k.toUpperCase());
+ if(a.sourceGroupCount<60||a.sealedBlindPhotoCount<60||
+    a.approvedOriginalsCount<a.sealedBlindPhotoCount||
+    a.dualHumanReviewedCount<a.sealedBlindPhotoCount||
+    a.verifiedIndependentHumanReviewers<2||
+    a.unresolvedDisagreements!==0)errors.push('P75_BLIND_HUMAN_COVERAGE_INCOMPLETE');
+ for(const k of ['historicalExposureComplete','prospectiveSourceAndPhotographerDisjoint',
+  'pretrainedModelTrainingDisjointnessVerified',
+  'fullSourceBytesAndLicenseVerified','humanRightsAndConsentApproved',
+  'sourceGroupsIndependentlyVerified','noPriorModelOrAnswerExposure',
+  'answerKeysOutsideRepository'])
+  if(a[k]!==true)errors.push('P75_REQUIRED_AUDIT_FLAG_'+k.toUpperCase());
+ if(!(now instanceof Date)||!Number.isFinite(now.getTime())||
+    !ISO(a.auditedAt)||!ISO(a.expiresAt)||
+    Date.parse(a.auditedAt)>Date.parse(a.expiresAt)||
+    Date.parse(a.expiresAt)-Date.parse(a.auditedAt)>7*86400000||
+    now.getTime()<Date.parse(a.auditedAt)-60000||
+    now.getTime()>Date.parse(a.expiresAt))
+  errors.push('EXPIRED_OR_UNTRUSTED_P75_ATTESTATION');
+ if(b.sourceAuditPayloadDigest!==sha256(canonicalP88(
+   Object.fromEntries(sourceFields.filter(k=>k!=='signature').map(k=>[k,a[k]]))))||
+    b.sealedBlindCommitment!==a.sealedBlindCommitment)
+  errors.push('P71_NOT_BOUND_TO_THIS_P75_AUDIT');
+ for(const k of ['independentEvaluatorAuthorized','independentFromModelDevelopment',
+  'willEvaluateBlindOnlyOnce','answersNotPreviouslyExposed'])
+  if(b[k]!==true)errors.push('P71_EVALUATOR_SCOPE_NOT_APPROVED');
+ if(!ISO(b.acceptedAt)||Date.parse(b.acceptedAt)<Date.parse(a.auditedAt)||
+    Date.parse(b.acceptedAt)>Date.parse(a.expiresAt)||
+    now.getTime()<Date.parse(b.acceptedAt)-60000)
+  errors.push('UNTRUSTED_P71_ACCEPTANCE_TIME');
+ if(!isSha(p75RegistrarFingerprint)||!isSha(p71EvaluatorFingerprint)||
+    p75RegistrarFingerprint===p71EvaluatorFingerprint)
+  errors.push('SEPARATE_EXTERNALLY_PINNED_AUTHORITIES_REQUIRED');
+ const p75=identityKey(packet.sourceAuditPublicKey,p75RegistrarFingerprint);
+ const p71=identityKey(packet.evaluatorPublicKey,p71EvaluatorFingerprint);
+ if(!p75||!p71)errors.push('REGISTRAR_OR_EVALUATOR_KEY_NOT_INDEPENDENTLY_APPROVED');
+ if(!verifiedApproval(Object.fromEntries(sourceFields.filter(k=>k!=='signature')
+  .map(k=>[k,a[k]])),a.signature,p75))errors.push('INVALID_SIGNED_P75_AUDIT');
+ if(!verifiedApproval(Object.fromEntries(evaluatorFields.filter(k=>k!=='signature')
+  .map(k=>[k,b[k]])),b.signature,p71))errors.push('INVALID_SIGNED_P71_AUTHORIZATION');
+ // Never output sensitive source photo IDs, label contents, signatures, keys,
+ // source URL, split assignments or private per-item SHA receipts.
+ return {
+  status:errors.length?'BLOCKED':'SIGNED_CUSTODY_PREFLIGHT_ONLY',
+  errors:[...new Set(errors)].sort(),
+  candidateDigest:candidate,
+  independentBlindScorePerformed:false,accuracyMeasured:false,
+  canSendRestrictedHandoffToP71:errors.length===0,
+  modelPromotionAllowed:false,automaticSaveAllowed:false,
+  familyAlphaHold:true,releaseApproval:false
+ };
+}
+function beneath88(path,root){
+ const rel=relative(root,path);
+ return rel===''||(rel!=='..'&&!rel.startsWith('..'+sep)&&!isAbsolute(rel));
+}
+/** Validate the REAL location of a synthetic or authorized offline custody file.
+ * Pure path/metadata preflight; does not read any file content.
+ * Refuse checkout paths, symlinked aliases, directories, devices, pipes, and
+ * oversized envelopes before opening private input.
+ */
+export async function externalPrivateFile88(path,{cwd=CHECKOUT_ROOT_88}={}){
+ if(typeof path!=='string'||!isAbsolute(path))
+  throw Error('PRIVATE_ABSOLUTE_PATH_REQUIRED');
+ const full=resolve(path);
+ const checkout=await realpath(cwd);
+ const target=await realpath(full);
+ if(beneath88(full,resolve(cwd))||beneath88(target,checkout))
+  throw Error('PRIVATE_CUSTODY_MUST_STAY_OUTSIDE_GIT');
+ if(target!==full)throw Error('PRIVATE_HANDOFF_SYMLINK_PATH_FORBIDDEN');
+ const meta=await lstat(full);
+ if(!meta.isFile())throw Error('PRIVATE_HANDOFF_REGULAR_FILE_REQUIRED');
+ if(meta.size>50000)throw Error('PRIVATE_HANDOFF_TOO_LARGE');
+ return full;
+}
+/** This private 0700 directory protects ONE local offline evaluator's cohort.
+ * The directory must be owner-controlled and durable. This cannot prove global
+ * replay prevention across independent ledgers, reinstalls or compromised hosts.
+ */
+export async function externalPrivateLedgerDirectory88(path,{cwd=CHECKOUT_ROOT_88}={}){
+ if(typeof path!=='string'||!isAbsolute(path))
+  throw Error('PRIVATE_LEDGER_ABSOLUTE_PATH_REQUIRED');
+ const full=resolve(path),checkout=await realpath(cwd),target=await realpath(full);
+ if(beneath88(full,resolve(cwd))||beneath88(target,checkout))
+  throw Error('PRIVATE_LEDGER_MUST_STAY_OUTSIDE_GIT');
+ if(target!==full)throw Error('PRIVATE_LEDGER_SYMLINK_PATH_FORBIDDEN');
+ const meta=await lstat(full);
+ if(!meta.isDirectory())throw Error('PRIVATE_LEDGER_DIRECTORY_REQUIRED');
+ if((meta.mode&0o077)!==0||
+    (typeof process.getuid==='function'&&meta.uid!==process.getuid()))
+  throw Error('PRIVATE_LEDGER_OWNER_ONLY_REQUIRED');
+ return full;
+}
+function blockedReservation88(verdict,reason){
+ return {...verdict,status:'BLOCKED',errors:[reason],
+  canSendRestrictedHandoffToP71:false,oneTimePrivateReservationCreated:false};
+}
+/** Reserve the entire blind source cohort once; do not reserve individual
+ * model experiments separately. The ledger stores no photo, label or key.
+ */
+export async function reserveBlindEvaluatorHandoff88(packet,{
+ ledgerDir=null,...trust
+}={}){
+ const verdict=verifyBlindEvaluatorHandoff88(packet,trust);
+ if(verdict.status!=='SIGNED_CUSTODY_PREFLIGHT_ONLY')
+  return {...verdict,oneTimePrivateReservationCreated:false};
+ if(!ledgerDir)return blockedReservation88(verdict,'PRIVATE_LEDGER_REQUIRED');
+ try{
+  const dir=await externalPrivateLedgerDirectory88(ledgerDir);
+  const digest=sha256('p88-private-sealed-cohort-reservation/v1:'+
+   packet.sourceAudit.sealedBlindCommitment);
+  const marker=join(dir,'consumed-'+digest+'.lock');
+  let file;
+  try{
+   file=await open(marker,constants.O_CREAT|constants.O_EXCL|
+    constants.O_WRONLY|constants.O_NOFOLLOW,0o600);
+  }catch(e){
+   if(e?.code==='EEXIST')
+    return blockedReservation88(verdict,'PRIVATE_LEDGER_ALREADY_RESERVED');
+   throw e;
+  }
+  try{
+   await file.writeFile('p88-offline-reservation-only/v1\n','utf8');
+   await file.sync();
+  }finally{await file.close();}
+  return {...verdict,oneTimePrivateReservationCreated:true,
+   reservationScope:'ONE_OWNER_CONTROLLED_LOCAL_LEDGER_ONLY'};
+ }catch{
+  return blockedReservation88(verdict,'PRIVATE_LEDGER_WRITE_OR_TRUST_FAILURE');
+ }
+}
+if(process.argv[1]&&new URL('file:'+resolve(process.argv[1])).href===import.meta.url){
+ // Private, externally approved custodian-only preflight; never run in Actions.
+ if(!['inspect','reserve'].includes(process.argv[2])||process.argv.length!==4)
+  throw Error('Usage: node blind-evaluator-handoff-88.mjs inspect|reserve ABS_PRIVATE_SIGNED_ENVELOPE');
+ if(process.env.CI||process.env.GITHUB_ACTIONS)
+  throw Error('PRIVATE_BLIND_HANDOFF_FORBIDDEN_IN_CI');
+ const name=await externalPrivateFile88(process.argv[3]);
+ // NOFOLLOW guards against a final-path symlink swap after preflight.
+ // NONBLOCK + descriptor.stat refuse named pipes and devices before read.
+ const handle=await open(name,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
+ let packet;
+ try{
+  const meta=await handle.stat();
+  if(!meta.isFile())throw Error('PRIVATE_HANDOFF_REGULAR_FILE_REQUIRED');
+  if(meta.size>50000)throw Error('PRIVATE_HANDOFF_TOO_LARGE');
+  // Never buffer unbounded content even if an external writer grows the file
+  // between metadata preflight and the descriptor read.
+  const buffer=Buffer.alloc(50001);
+  let length=0;
+  while(length<buffer.length){
+   const {bytesRead}=await handle.read(buffer,length,buffer.length-length,null);
+   if(bytesRead===0)break;
+   length+=bytesRead;
+  }
+  if(length>50000)throw Error('PRIVATE_HANDOFF_TOO_LARGE');
+  packet=JSON.parse(buffer.toString('utf8',0,length));
+ }finally{await handle.close();}
+ const trust={
+  p75RegistrarFingerprint:process.env.P88_APPROVED_P75_REGISTRAR_FINGERPRINT,
+  p71EvaluatorFingerprint:process.env.P88_APPROVED_P71_EVALUATOR_FINGERPRINT
+ };
+ const outcome=process.argv[2]==='reserve'
+  ?await reserveBlindEvaluatorHandoff88(packet,{
+   ...trust,ledgerDir:process.env.P88_PRIVATE_LEDGER_DIR
+  })
+  :verifyBlindEvaluatorHandoff88(packet,trust);
+ console.log('P88_PRIVATE_CUSTODY_PREFLIGHT '+JSON.stringify(outcome));
+ if(outcome.status==='BLOCKED')process.exitCode=3;
+}
