@@ -24,7 +24,7 @@ jobs:
           BASE=f2befed4c776786dc11843b98fafec72f2d9c202
           git merge-base --is-ancestor "$BASE" HEAD
           test "$(git rev-parse "$BASE:public/app.js")" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
-          test "$(git rev-parse HEAD:public/app.js)" = a57d07261820fd2c50fc0f9b3d7b3a86ac17fecd
+          test "$(git rev-parse HEAD:public/app.js)" = b241ce393458b9960fe5bc1b6c503676616574b8
           test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 3
           git diff --name-only "$BASE" HEAD | grep -Fx public/app.js
           git diff --name-only "$BASE" HEAD | grep -Fx tests/main1054-malformed-draft-insert-veto.test.mjs
@@ -36,7 +36,19 @@ jobs:
             echo 'Original source unexpectedly passed'; cat /tmp/draft-red.log; exit 1
           fi
           cat /tmp/draft-red.log
-          grep -Eq '^# fail 5$' /tmp/draft-red.log
+          grep -Eq '^# fail 11 /tmp/draft-red.log
+          node --check public/app.js
+          node --test tests/main1054-malformed-draft-insert-veto.test.mjs
+      - name: Run actual Chromium and WebKit native IndexedDB synthetic owner regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+          NATIVE_DRAFT_BROWSER=1 node --test tests/main1054-malformed-draft-insert-veto.test.mjs
+      - name: Offline application build
+        run: node scripts/build.mjs
+ /tmp/draft-red.log
           node --check public/app.js
           node --test tests/main1054-malformed-draft-insert-veto.test.mjs
       - name: Run actual Chromium and WebKit native IndexedDB synthetic owner regression
