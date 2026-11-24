@@ -1,0 +1,50 @@
+name: M2 real source silhouette topology HOLD
+on:
+  push:
+    branches: [research/m2-multicategory-silhouette-topology-20261123-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  real-original-texture-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable parent and only three scoped research paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 30f7ae5e9ae34d3bbd8b89e9b4d87effc002a6d7 HEAD
+          while IFS= read -r p; do
+            case "$p" in
+              research/parallel89/source-original-texture-transfer89.mjs|tests/parallel89-multicategory-silhouette-topology.test.mjs|.github/workflows/m2-multicategory-silhouette-topology-HOLD.yml) ;;
+              *) echo "Unexpected scope: $p"; exit 1 ;;
+            esac
+          done < <(git diff --name-only 30f7ae5e9ae34d3bbd8b89e9b4d87effc002a6d7 HEAD)
+      - name: Existing pinned dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Original source RED before correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 30f7ae5e9ae34d3bbd8b89e9b4d87effc002a6d7:research/parallel89/source-original-texture-transfer89.mjs > research/parallel89/.edge-baseline.mjs
+          trap 'rm -f research/parallel89/.edge-baseline.mjs' EXIT
+          if M2_EDGE_BASELINE=1 node --test tests/parallel89-multicategory-silhouette-topology.test.mjs > baseline.log 2>&1; then
+            cat baseline.log
+            exit 1
+          fi
+          cat baseline.log
+          grep -F 'SILHOUETTE_POINT_WELD' baseline.log
+      - name: Corrected source GREEN and inherited texture and aspect tests
+        run: node --test tests/parallel89-multicategory-silhouette-topology.test.mjs tests/parallel89-multicategory-texture-detail.test.mjs tests/parallel89-multicategory-original-aspect.test.mjs tests/parallel89-source-original-texture-transfer.test.mjs
+      - name: Unchanged application build
+        run: node scripts/build.mjs
+      - name: Full inherited Node regression
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
