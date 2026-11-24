@@ -3729,3 +3729,40 @@ test('P88 malformed classifier identity envelopes remain original-photo drafts',
   }
  }
 });
+
+test('P88 background recognition cannot replace newer owner fields or attach stale model evidence',async()=>{
+ const start=appSource.indexOf('async function recognizeItem(item){');
+ const end=appSource.indexOf('async function recognizeBatch(){',start);
+ assert.ok(start>=0&&end>start);
+ for(const kind of ['quality','quality-rejection','loading','inference','manual','rejection','valid','unrelated-error']){
+  const item={id:'x',image:'data:image/jpeg;base64,ORIGINAL',category:'Uncategorized',itemType:'Unknown',color:'Blue'};
+  const edit=()=>Object.assign(item,{category:'Shoes',itemType:'Boots',color:'Brown',name:'Owner boots',pattern:'Plaid'});
+  let saves=0,calls=0;
+  const c={item,batch:[item],items:[],localPending:new Set(['x']),recognitionState:{},photoQualityHints73:new Map(),
+   categories:['Uncategorized','Tops','Shoes'],clothingSchema:{types:{Tops:['T-shirt'],Shoes:['Boots']}},
+   ClothingMemory:{valid:()=>true},ClothingDetails:{fillColor:()=>({color:'Blue'}),fill:()=>({pattern:'Solid'})},
+   checkPhoto:async()=>{if(['quality','quality-rejection'].includes(kind))edit();if(kind==='quality-rejection')throw Error('old quality failure');return {signature:[],aspect:1};},
+   similarPhotos:()=>false,localReady:kind!=='loading',recognitionUnavailable:false,
+   enableLocal:async()=>{if(kind==='loading')edit();},
+   localRequest:async()=>{
+    calls++;if(['inference','manual','rejection'].includes(kind))edit();
+    if(kind==='manual')item.userAdjusted=true;
+    if(kind==='rejection')throw Error('old model failure');
+    return {strong:true,choices:[{category:'Tops',itemType:'T-shirt',score:.9}],details:{},recognitionMemory:{stale:true},diagnostics:{stale:true}};
+   },render(){},persistDraft(){},$:()=>({}),segmentationAllows:()=>true,
+   applyLocalChoice(value,choice){if(value.category==='Uncategorized')value.category=choice.category;if(value.category===choice.category)value.itemType=choice.itemType;if(kind==='unrelated-error')throw Error('identity application failed');},
+   automaticAdmissionCore842:()=>true,saveIndexed:async()=>{saves++;return true;}};
+  vm.createContext(c);vm.runInContext(appSource.slice(start,end),c);
+  await c.recognizeItem(item);
+  assert.equal(item.image,'data:image/jpeg;base64,ORIGINAL');assert.equal(c.localPending.size,0);
+  if(kind==='valid'){assert.equal(saves,1);assert.equal(item.itemType,'T-shirt');}
+  else if(kind==='unrelated-error'){assert.equal(saves,0);assert.equal(item.scanFailed,true);assert.equal(item.localAnalyzed,false);}
+  else{
+   assert.equal(saves,0);assert.equal(item.category,'Shoes');assert.equal(item.itemType,'Boots');
+   assert.equal(item.color,'Brown');assert.equal(item.name,'Owner boots');assert.equal(item.pattern,'Plaid');
+   assert.equal(item.recognitionMemory,undefined);assert.equal(item.recognitionDiagnostics,undefined);
+   assert.equal(item.requiresOwnershipConfirmation,true);assert.equal(c.recognitionUnavailable,false);
+   if(['quality','quality-rejection','loading'].includes(kind))assert.equal(calls,0);
+  }
+ }
+});
