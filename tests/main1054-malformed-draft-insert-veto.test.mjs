@@ -123,7 +123,8 @@ if(process.env.NATIVE_DRAFT_BROWSER==='1'){
 
 const taxonomy=await readFile(new URL('../public/taxonomy.js',import.meta.url),'utf8');
 const bootStart=app.indexOf('const closetReady=(async()=>{'),bootEnd=app.indexOf('\n})();',bootStart)+6;
-const recoveryStart=app.indexOf('function partitionStartupWardrobe(');
+const snapshotStart=app.indexOf('function readStartupWardrobeSnapshot(');
+const recoveryStart=snapshotStart>=0?snapshotStart:app.indexOf('function partitionStartupWardrobe(');
 assert.ok(bootStart>=0&&bootEnd>bootStart);
 const bootSource=(recoveryStart>=0?app.slice(recoveryStart,bootStart):'')+app.slice(bootStart,bootEnd);
 const photo='data:image/jpeg;base64,AA==';
@@ -160,7 +161,11 @@ async function runStartup(c,connection,readAllFrom,readDraftFrom){
  return fn({closetAuth:auth},0,connection,async()=>connection,readAllFrom,readDraftFrom,()=>{});
 }
 for(const c of startupCases)test('startup roster: '+c.name,async()=>{
- let closes=0;const connection={close(){closes++;}};
+ let closes=0;const connection={close(){closes++;},transaction(stores,mode){
+  assert.deepEqual(stores,['items','state']);assert.equal(mode,'readonly');
+  const tx={objectStore:name=>name==='items'?{getAll:()=>({result:structuredClone(c.saved)})}:{get:()=>({result:structuredClone({id:'draft',batch:c.drafts})})}};
+  queueMicrotask(()=>tx.oncomplete());return tx;
+ }};
  const readDraft=new Function(readSource+'\nreturn readDraftFrom;')();
  const result=await runStartup(c,connection,async()=>structuredClone(c.saved),()=>{
   const req={result:structuredClone({id:'draft',batch:c.drafts})};
@@ -203,6 +208,62 @@ if(process.env.NATIVE_DRAFT_BROWSER==='1'){
     verifyStartup(c,result.result);assert.deepEqual(result.after,result.before);
    }
    console.log('NATIVE_STARTUP_WARDROBE_RECOVERY '+name+' '+startupCases.length+'/'+startupCases.length+' PASS');
+  }finally{await browser.close();}
+ });
+}
+
+test('startup atomic snapshot: concurrent draft-to-saved transfer never vanishes',async()=>{
+ const c={saved:[],drafts:[validDraft],expectedSaved:[],expectedDraft:['draft-valid'],invalid:0};
+ let snapshotCount=0;
+ const connection={close(){},transaction(stores,mode){
+  assert.deepEqual(stores,['items','state']);assert.equal(mode,'readonly');snapshotCount++;
+  const tx={objectStore:name=>name==='items'?{getAll:()=>({result:[]})}:{get:()=>({result:{id:'draft',batch:[structuredClone(validDraft)]}})}};
+  queueMicrotask(()=>tx.oncomplete());return tx;
+ }};
+ // Simulate the other tab committing between the two old independent reads.
+ const result=await runStartup(c,connection,async()=>[],async()=>[]);
+ verifyStartup(c,result);assert.equal(snapshotCount,1);
+});
+if(process.env.NATIVE_DRAFT_BROWSER==='1'){
+ const {chromium,webkit}=await import('playwright');
+ for(const [name,engine] of Object.entries({chromium,webkit}))test('actual '+name+' atomic startup snapshot during cross-tab save',async()=>{
+  const browser=await engine.launch({headless:true});
+  try{
+   const page=await browser.newPage();
+   await page.route('https://startup-atomic.invalid/**',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><title>Atomic startup fixture</title>'}));
+   await page.goto('https://startup-atomic.invalid/');
+   const result=await page.evaluate(async ({taxonomy,bootSource,validDraft})=>{
+    const dbName='closet-current-user-synthetic-owner';
+    const connect=()=>new Promise((resolve,reject)=>{
+     const r=indexedDB.open(dbName,1);
+     r.onupgradeneeded=()=>{r.result.createObjectStore('items',{keyPath:'id'});r.result.createObjectStore('state',{keyPath:'id'});};
+     r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+    });
+    const connection=await connect(),writer=await connect();
+    const done=tx=>new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onabort=tx.onerror=()=>reject(tx.error);});
+    const setup=writer.transaction(['items','state'],'readwrite'),setupDone=done(setup);
+    setup.objectStore('state').put({id:'draft',batch:[validDraft]});await setupDone;
+    const read=(db,store,key)=>new Promise((resolve,reject)=>{const s=db.transaction(store).objectStore(store),r=key?s.get(key):s.getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+    let transfer,atomicReads=0;
+    const commit=()=>{if(!transfer){
+     const tx=writer.transaction(['items','state'],'readwrite');transfer=done(tx);
+     tx.objectStore('items').put(validDraft);tx.objectStore('state').put({id:'draft',batch:[]});
+    }return transfer;};
+    const wrapper={close:()=>connection.close(),transaction(stores,mode){
+     const tx=connection.transaction(stores,mode);atomicReads++;commit();return tx;
+    }};
+    const oldRead=async()=>{const rows=await read(connection,'items');await commit();return rows;};
+    const oldDraft=async()=>(await read(connection,'state','draft')).batch;
+    const auth={user:{id:'synthetic-owner'},ready:Promise.resolve(),assertCurrent(){}};
+    const code='let db,items=[],batch=[],startupWardrobeRecoveryCount=0,renders=0,queued=[];const render=()=>renders++;const queueAutomatic=item=>queued.push(item.id);'+taxonomy+'\n'+bootSource+'\nreturn closetReady.then(()=>({items,batch,recovery:startupWardrobeRecoveryCount,open:db===connection,renders,queued}));';
+    const result=await new Function('window','captureOperationEpoch','connection','openDB','readAllFrom','readDraftFrom','message',code)({closetAuth:auth},0,wrapper,async()=>wrapper,oldRead,oldDraft,()=>{});
+    await commit();
+    const durable={items:await read(writer,'items'),batch:(await read(writer,'state','draft')).batch};
+    connection.close();writer.close();return {result,durable,atomicReads};
+   },{taxonomy,bootSource,validDraft});
+   verifyStartup({expectedSaved:[],expectedDraft:['draft-valid'],invalid:0},result.result);
+   assert.equal(result.atomicReads,1);assert.deepEqual(result.durable,{items:[validDraft],batch:[]});
+   console.log('NATIVE_STARTUP_ATOMIC_SNAPSHOT '+name+' PASS');
   }finally{await browser.close();}
  });
 }
