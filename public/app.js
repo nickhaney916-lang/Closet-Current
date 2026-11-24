@@ -105,8 +105,13 @@ function savePiece(value,nextBatch,lease){
   return Promise.reject(Error('P88_REVIEWED_DRAFT_INSERT_ONLY'));
  if(!reviewedDistinctPhotoReceiptValid88(value,lease))
   return Promise.reject(Error('P88_DISTINCT_OWNER_DECISION_REQUIRED'));
+ // Capture the submitted value and live draft revision before asynchronous
+ // preflight. Owner confirmation cannot authorize a later mutated payload.
+ const valueRevision=JSON.stringify(value),draftRevision=JSON.stringify(lease.item);
+ const reviewUnchanged=()=>JSON.stringify(value)===valueRevision&&
+  JSON.stringify(lease.item)===draftRevision;
  return queued(()=>{
-  if(!reviewedSaveLeaseLive88(lease)||value.id!==lease.item.id||
+  if(!reviewUnchanged()||!reviewedSaveLeaseLive88(lease)||value.id!==lease.item.id||
    value.image!==lease.image||value.originalPhoto?.image!==lease.original||
    value.recognitionPhoto?.image!==lease.recognition||
    value.outfitSourceId!==lease.sourceId||
@@ -130,7 +135,7 @@ function savePiece(value,nextBatch,lease){
     const read=stateStore.get('draft');
     read.onsuccess=()=>{
      try{
-      if(!reviewedSaveLeaseLive88(lease)||
+      if(!reviewUnchanged()||!reviewedSaveLeaseLive88(lease)||
        draftStoreRevision88!==expected||
        JSON.stringify(read.result?.batch??null)!==expected||
        JSON.stringify(batch)!==liveBatchRevision||
