@@ -3508,3 +3508,50 @@ test('P88 recognition crop must contain a string JPEG rather than a coercible va
   }
  }
 });
+
+test('P88 worker metadata must agree with the pinned semantic hint and normalized crop contract',()=>{
+ const piece={image:'data:image/jpeg;base64,PIECE',hint:{categories:['Shoes'],types:[]},
+  instanceMethod:'connected_footwear_component',requiresReview:true};
+ const invalid=[
+  {hint:{categories:[],types:[]}},
+  {hint:{categories:['Shoes','Shoes'],types:[]}},
+  {hint:{categories:['Uncategorized'],types:[]}},
+  {hint:{categories:['Shoes'],types:[42]}},
+  {hint:{categories:['Shoes'],types:['Invented']}},
+  {hint:{categories:['Shoes'],types:['Hat']}},
+  {hint:{categories:['Accessories'],types:['Hat','Hat']}},
+  {hint:{...piece.hint,clipped:'false'}},
+  {hint:{...piece.hint,confidence:-.1}},
+  {hint:{...piece.hint,confidence:NaN}},
+  {cropBounds:{x:-.1,y:0,width:.5,height:.5}},
+  {cropBounds:{x:0,y:0,width:0,height:.5}},
+  {cropBounds:{x:.9,y:0,width:.2,height:1}},
+  {cropBounds:{x:'0',y:0,width:1,height:1}}
+ ];
+ const valid=[
+  {hint:{categories:['Tops','Outerwear'],types:[],clipped:false,confidence:.8}},
+  {hint:{categories:['Accessories'],types:['Hat'],clipped:true,confidence:1},cropBounds:{x:.1,y:.2,width:.9,height:.8}},
+  {}
+ ];
+ for(const href of ['https://example.test/closet','https://example.test/closet?outfitInstances840=1']){
+  for(const patch of invalid){
+   const h=captureHarness({ownerId:'owner-A',href});
+   h.emit({type:'piece',piece});
+   h.emit({type:'piece',piece:{...piece,...patch}});
+   h.emit({type:'done',count:2});
+   assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);
+   assert.equal(h.c.worker.closed,true);assert.equal(h.c.busy,false);
+   assert.equal(h.node('outfitRetry').hidden,false);
+   assert.match(h.node('outfitSplitStatus').textContent,/invalid recognition metadata/);
+   assert.equal(vm.runInContext('lastOutfitPhoto',h.c),'data:image/jpeg;base64,ORIGINAL');
+   assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,ORIGINAL');
+  }
+  for(const patch of valid){
+   const h=captureHarness({ownerId:'owner-A',href});
+   h.emit({type:'piece',piece:{...piece,...patch}});
+   h.emit({type:'done',count:1});
+   assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);
+   assert.equal(h.node('outfitRetry').hidden,true);
+  }
+ }
+});
