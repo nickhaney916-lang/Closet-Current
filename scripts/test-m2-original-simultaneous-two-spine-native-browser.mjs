@@ -12,7 +12,7 @@ import {spawnSync} from 'node:child_process';
 const pins={
  runner:'5f999c1dc440539cec143f7c7de48b8fe88dd91e',
  registration:'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb',
- addon:'49d5fcdec63be3544af8b76ac090d12a9e6a71af'
+ addon:'20a9e30529a30d013e7c35dc025229be0c5ea88f'
 };
 const sha=b=>createHash('sha1').update('blob '+Buffer.byteLength(b)+'\0')
  .update(b).digest('hex');
@@ -43,7 +43,7 @@ const routeLines=[
  "    const addonSource=await readFile('research/parallel89/real-original-simultaneous-spine03-spine04-browser-addon89.mjs','utf8');",
  "    const blobSha=t=>createHash('sha1').update('blob '+Buffer.byteLength(t)+'\\0').update(t).digest('hex');",
  "    assert.equal(blobSha(originalSource),'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb');",
- "    assert.equal(blobSha(addonSource),'49d5fcdec63be3544af8b76ac090d12a9e6a71af');",
+ "    assert.equal(blobSha(addonSource),'20a9e30529a30d013e7c35dc025229be0c5ea88f');",
  "    await route.fulfill({status:200,contentType:'text/javascript',body:originalSource+'\\n'+addonSource});",
  "   });",
  routeAnchor
@@ -116,6 +116,23 @@ const verifyLines=[
  "   assert.ok(progressive.passes.every(p=>p.maximumCumulativeTravelFraction<=.05));",
  "   assert.ok(['RESEARCH_ONLY_PROGRESSIVE_STABILIZATION_CANDIDATE','RESEARCH_ONLY_PROGRESSIVE_STABILIZATION_REFUSED'].includes(progressive.decision));",
  "   assert.equal(progressive.familyAlpha,'HOLD');",
+ "   const guarded=trial.sampledWorstPoseFixedBodyCorrectionGuard;",
+ "   assert.equal(guarded.worstPoseIndex,correction.worstPoseIndex);",
+ "   assert.equal(guarded.fixedObstacleFacesIndexed,109064);",
+ "   assert.equal(guarded.suppliedLayerCount,0);",
+ "   assert.equal(guarded.fullLayeredOutfitCollisionCertified,false);",
+ "   assert.equal(guarded.correctionAppliedToLiveMesh,false);",
+ "   assert.equal(guarded.consumer3DAdmitted,false);",
+ "   assert.equal(guarded.correctedPose,undefined);",
+ "   assert.equal(guarded.familyAlpha,'HOLD');",
+ "   assert.equal(guarded.sweptMovingFaceBoundsOnly,true);",
+ "   assert.ok(guarded.correctionSegmentObstacleReceipts.filter(r=>r.clear).length===guarded.passes.length);",
+ "   if(guarded.stopReason==='SWEPT_OBSTACLE_OVERLAP_UNRESOLVED'){",
+ "    const witness=guarded.correctionSegmentObstacleReceipts.at(-1);",
+ "    assert.equal(witness.clear,false);assert.equal(witness.obstacleKind,'body');",
+ "    assert.ok(witness.frontFaceOrdinal>=0&&witness.frontFaceOrdinal<35262);",
+ "    assert.ok(witness.obstacleFaceOrdinal>=0&&witness.obstacleFaceOrdinal<109064);",
+ "   }",
  "   const audit=trial.trueSimultaneousTwoJointFullIndexedAudit;",
  "   assert.equal(audit.originalFrontFaceCount,35262);",
  "   assert.equal(audit.originalBodyFaceCount,109064);",
