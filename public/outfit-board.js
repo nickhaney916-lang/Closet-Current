@@ -643,8 +643,8 @@ function renderBoardSuggestions(){
  const suggestionsCurrent=()=>suggestionLease?.current()&&
   (!nativeLossless04Active||(nativeLossless04===suggestionConsumer&&
    suggestionConsumer?.status?.().active===true));
- const target=$('boardTarget').value||'shoes',slot=outfitSlots.find(s=>s.id===target),owned=closetGapOptions(target,currentBoard,items).slice(0,3);
- $('boardGapStatus').textContent=(['bag','accessory','finish'].includes(target)?'Optional finishing ideas. No accessory photos are needed. ':'')+(currentBoard.slots[target]?'Alternatives for your '+slot.label.toLowerCase()+'. ':'Ideas for the '+slot.label.toLowerCase()+' space. ')+(owned.length?'Try a piece you already own first.':'Compare the directions below, then open a purchase source.');
+ const target=$('boardTarget').value||'shoes',slot=outfitSlots.find(s=>s.id===target),assessment=assessBoardGap(target,currentBoard,items),owned=assessment.owned;
+ $('boardGapStatus').textContent=assessment.status;
  const ownGrid=$('boardOwnedOptions');ownGrid.replaceChildren();
  for(const item of owned){const b=node('button',null,'board-owned-pick');b.type='button';const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('span','Already in your closet'),node('strong',item.name),node('small','Use this piece'));
   // This owner-private alternatives button bypasses the modal picker.
@@ -663,8 +663,9 @@ function renderBoardSuggestions(){
  };ownGrid.append(b);}
  const grid=$('boardRecommendations');grid.replaceChildren();
  if((target==='bottom'||(!nativeLossless04Active&&slot.level))&&items.find(x=>x.id===currentBoard.slots.top)?.category==='Dresses'){$('boardGapStatus').textContent='Choose shoes or optional finishing ideas for your dress.';ownGrid.replaceChildren();return;}
- for(const idea of wardrobeGapIdeas(target,currentBoard,items)){
-  const card=node('article',null,'gap-idea-card');card.append(node('p',idea.trendSource?'TREND-INSPIRED DIRECTION':'STYLING DIRECTION','eyebrow'),node('h3',idea.color+' '+(idea.label||idea.type)),node('p',idea.reason));
+ for(const idea of assessment.ideas){
+  const card=node('article',null,'gap-idea-card');card.append(node('p',idea.trendSource?'NOT OWNED · TREND-INSPIRED DIRECTION':'NOT OWNED · STYLING DIRECTION','eyebrow'),node('h3',idea.color+' '+(idea.label||idea.type)),node('p',idea.reason));
+  for(const combination of idea.combinationExamples)card.append(node('p','Could combine with your '+combination+'. Check fit and comfort.','fine'));
   if(idea.trendSource)card.append(boardLink('Read the magazine reference',idea.trendSource.url));
   const preview=node('button','Try this idea on the board','secondary');preview.type='button';preview.onclick=()=>{
    if(!suggestionsCurrent()||preview.isConnected===false||
