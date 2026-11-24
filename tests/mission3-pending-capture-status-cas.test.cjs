@@ -61,7 +61,7 @@ function harness(db,owner){
   captureProofOwner:()=>ctx.window.closetAuth.user?.id===owner&&ctx.db===db?owner:null,
   ClothingDetails:{fillColor:item=>({...item})},
   checkPhoto:async()=>({blank:false,signature:'synthetic',aspect:1,colorEstimate:null}),
-  localRequest:async()=>({choices:[{category:'Tops',itemType:'Shirt'}],strong:false,details:{}}),
+  localRequest:async()=>({choices:[{category:'Tops',itemType:'Polo'}],strong:false,details:{}}),
   enableLocal:async()=>{},segmentationAllows:()=>true,
   saveIndexed:async()=>false,applyLocalChoice:()=>{},
   queueAutomatic:item=>ctx.events.push('queued:'+item.id),
@@ -82,7 +82,12 @@ function harness(db,owner){
   });
   queued=current.catch(()=>{});return current;
  };
- vm.createContext(ctx);for(const code of [cas,writer,candidate,recognition])vm.runInContext(code,ctx);
+ vm.createContext(ctx);
+ // Worker admission depends on the actual browser taxonomy, not a fabricated
+ // 'Shirt' subtype or missing category globals. Keep the transaction double.
+ vm.runInContext(readFileSync('public/taxonomy.js','utf8'),ctx);
+ vm.runInContext("const categories=['Uncategorized',...Object.keys(clothingSchema.types)];",ctx);
+ for(const code of [cas,writer,candidate,recognition])vm.runInContext(code,ctx);
  return {ctx,open:img=>ctx.candidate(img,{sourceProof:proof(img,owner),requireDraftCommit:true}),
   drain:()=>queued,failWrites:flag=>blockWrites=flag,
   revoke:()=>{ctx.captureOperationEpoch++;ctx.window.closetAuth.user=null;}};
@@ -387,7 +392,7 @@ test('refused automatic index reports non-success and commits an honest pending-
   f.ctx.captureProof01Active=false;
   f.ctx.ClothingDetails.fill=item=>({...item});
   f.ctx.localRequest=async()=>({
-   strong:true,choices:[{category:'Tops',itemType:'Shirt',label:'a shirt'}],details:{}
+   strong:true,choices:[{category:'Tops',itemType:'Polo',label:'a polo shirt'}],details:{}
   });
   f.ctx.saveIndexed=async()=>false;
   const result=await f.ctx.recognizeItem(f.ctx.batch[0]);
@@ -409,7 +414,7 @@ test('refused automatic index plus failed review CAS never returns success or de
   f.ctx.captureProof01Active=false;
   f.ctx.ClothingDetails.fill=item=>({...item});
   f.ctx.localRequest=async()=>({
-   strong:true,choices:[{category:'Tops',itemType:'Shirt',label:'a shirt'}],details:{}
+   strong:true,choices:[{category:'Tops',itemType:'Polo',label:'a polo shirt'}],details:{}
   });
   f.ctx.saveIndexed=async()=>false;
   f.ctx.queued=()=>Promise.reject(Error('Synthetic review quota'));
@@ -447,7 +452,7 @@ function activateExactSourceAutoIndex(f){
  };
  f.ctx.nativeIndex07Refresh=async()=>{};
  f.ctx.localRequest=async()=>({
-  strong:true,choices:[{category:'Tops',itemType:'Shirt',label:'a shirt'}],details:{}
+  strong:true,choices:[{category:'Tops',itemType:'Polo',label:'a polo shirt'}],details:{}
  });
 }
 test('exact initial review snapshot permits a legitimate save and preserves another tab photo',async()=>{
@@ -461,7 +466,7 @@ test('exact initial review snapshot permits a legitimate save and preserves anot
   assert.equal(saved.length,1);
   assert.equal(saved[0].originalPhoto.image,first);
   assert.equal(saved[0].sourceSHA256,sha);
-  assert.equal(saved[0].itemType,'Shirt');
+  assert.equal(saved[0].itemType,'Polo');
   assert.deepEqual(pending.map(r=>r.image),[second]);
   assert.equal(pending[0].originalPhoto.image,second);
  }finally{aDB.close();bDB.close();}
@@ -510,4 +515,21 @@ test('production automatic index compares the entire initiating draft, not only 
  assert.match(autoIndex,/JSON\.stringify\(normalizeClothing\(draft\)\)/);
  assert.match(autoIndex,/JSON\.stringify\(normalizeClothing\(expectedDraftForIndex\)\)/);
  assert.match(recognition,/saveIndexed\(item,index04ApprovedOwner,expectedDraftForRecognition\)/);
+});
+
+// Risky subtype policy must not conceal CAS failures or consume another tab's
+// original. The non-risky Polo controls above still execute the actual writer.
+test('risky subtype stays pending and preserves second-tab original with actual CAS',async()=>{
+ const owner=randomUUID(),aDB=await open(owner),bDB=await open(owner);
+ try{
+  const a=harness(aDB,owner),b=harness(bDB,owner);
+  await a.open(first);await b.open(second);activateExactSourceAutoIndex(a);
+  a.ctx.localRequest=async()=>({strong:true,choices:[{category:'Tops',itemType:'T-shirt',label:'a T-shirt'}],details:{}});
+  assert.equal(await a.ctx.recognizeItem(a.ctx.batch[0]),true);
+  const pending=await read(bDB);assert.equal(pending.length,2);
+  assert.equal(pending[0].originalPhoto.image,first);assert.equal(pending[0].sourceSHA256,sha);
+  assert.equal(pending[0].category,'Uncategorized');assert.equal(pending[0].itemType,'Unknown');
+  assert.equal(pending[0].requiresOwnershipConfirmation,true);assert.match(pending[0].localStatus,/needs confirmation/);
+  assert.equal(pending[1].originalPhoto.image,second);assert.deepEqual(await readSaved(aDB),[]);
+ }finally{aDB.close();bDB.close();}
 });
