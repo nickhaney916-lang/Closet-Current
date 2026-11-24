@@ -343,6 +343,7 @@ jobs:
 
   # P0 isolated prompt-scoring experiment. No product or admission changes.
   footwear-prompt-ensemble-NO-DEPLOY:
+    needs: footwear-source-audit-NO-DEPLOY
     if: "${{ startsWith(github.event.head_commit.message, 'research(m1 #88): footwear') }}"
     runs-on: ubuntu-24.04
     timeout-minutes: 35
@@ -364,6 +365,13 @@ jobs:
           mkdir -p benchmark/output-footwear-p0
           node --input-type=module -e "import fs from 'node:fs';const rows=['benchmark/manifest-reviewed-32.json','benchmark/manifest-holdout-16.json'].flatMap(p=>JSON.parse(fs.readFileSync(p)));if(rows.length!==48||new Set(rows.map(x=>x.id)).size!==48||!rows.some(x=>x.id==='commons-0078'&&x.expectedType==='Sneakers'))throw Error('P0 required exposed sources missing');fs.writeFileSync('benchmark/output-footwear-p0/manifest.json',JSON.stringify(rows));"
           node scripts/run-browser-photo-benchmark.mjs benchmark/output-footwear-p0/manifest.json benchmark/output-footwear-p0
+      - name: Download same-run verified evidence-admission tool
+        uses: actions/download-artifact@v4
+        with:
+          name: p88-footwear-source-audit
+          path: benchmark/output-footwear-source-audit
+      - name: Require complete authentic execution coverage before computing research scores
+        run: node benchmark/output-footwear-source-audit/require-complete-results.mjs benchmark/output-footwear-p0/manifest.json benchmark/output-footwear-p0/results.json
       - name: Compare neutral versus balanced pinned color-prompt logits on the SAME real image embeddings
         shell: bash
         run: |
@@ -546,6 +554,7 @@ jobs:
           retention-days: 14
 
   footwear-framing-NO-DEPLOY:
+    needs: footwear-source-audit-NO-DEPLOY
     if: "${{ startsWith(github.event.head_commit.message, 'research(m1 #88): framing') }}"
     runs-on: ubuntu-24.04
     timeout-minutes: 35
@@ -595,6 +604,13 @@ jobs:
           git diff --exit-code -- public
       - name: Execute genuine model inference and original-center framing on all 59 locked photos
         run: node scripts/run-browser-photo-benchmark.mjs benchmark/output-footwear-framing/manifest.json benchmark/output-footwear-framing
+      - name: Download same-run verified evidence-admission tool
+        uses: actions/download-artifact@v4
+        with:
+          name: p88-footwear-source-audit
+          path: benchmark/output-footwear-source-audit
+      - name: Require complete authentic execution coverage before computing research scores
+        run: node benchmark/output-footwear-source-audit/require-complete-results.mjs benchmark/output-footwear-framing/manifest.json benchmark/output-footwear-framing/results.json
       - name: Compare fixed frame views and predeclared agreement rule against whole-image rank without fitting
         shell: bash
         run: |
@@ -833,6 +849,19 @@ jobs:
           for(const [manifest,results] of invalid)assert.throws(()=>gate(manifest,results));
           console.log('P88_COMPLETE_EVIDENCE_GATE '+invalid.length+'/'+invalid.length+' rejected; 4/4 valid executions retained');
           JS
+      - name: Exercise the real evidence-admission CLI before publishing it
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=benchmark/output-footwear-source-audit
+          printf '%s\n' '[{"id":"one","mode":"single"},{"id":"two","mode":"single"}]' > /tmp/p88-manifest.json
+          printf '%s\n' '[{"id":"one","prediction":{"category":"Shoes"}},{"id":"two","prediction":{"category":null}}]' > /tmp/p88-valid.json
+          printf '%s\n' '[{"id":"one","prediction":{"category":"Shoes"}},{"id":"two","prediction":{"category":"Shoes"},"error":"runtime_error"}]' > /tmp/p88-invalid.json
+          node "$ROOT/require-complete-results.mjs" /tmp/p88-manifest.json /tmp/p88-valid.json
+          if node "$ROOT/require-complete-results.mjs" /tmp/p88-manifest.json /tmp/p88-invalid.json; then
+            echo 'Invalid execution admitted'; exit 1
+          fi
+          echo 'P88_COMPLETE_EVIDENCE_CLI_VALID_AND_INVALID PASS'
       - name: Upload source eligibility ledger only
         uses: actions/upload-artifact@v4
         with:
@@ -843,6 +872,7 @@ jobs:
           retention-days: 14
 
   footwear-hard-negative-NO-DEPLOY:
+    needs: footwear-source-audit-NO-DEPLOY
     if: "${{ startsWith(github.event.head_commit.message, 'research(m1 #88): hard-negative') }}"
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -884,6 +914,13 @@ jobs:
           git diff --exit-code -- public
       - name: Run unchanged FashionCLIP browser classification on ten exposed inputs
         run: node scripts/run-browser-photo-benchmark.mjs benchmark/output-footwear-hard-negative/manifest.json benchmark/output-footwear-hard-negative
+      - name: Download same-run verified evidence-admission tool
+        uses: actions/download-artifact@v4
+        with:
+          name: p88-footwear-source-audit
+          path: benchmark/output-footwear-source-audit
+      - name: Require complete authentic execution coverage before computing research scores
+        run: node benchmark/output-footwear-source-audit/require-complete-results.mjs benchmark/output-footwear-hard-negative/manifest.json benchmark/output-footwear-hard-negative/results.json
       - name: Report shoe-shaped nonwearable false positives and distinguish raw score from application suggestion
         shell: bash
         run: |
@@ -942,6 +979,7 @@ jobs:
           retention-days: 14
 
   footwear-negative-contrast-NO-DEPLOY:
+    needs: footwear-source-audit-NO-DEPLOY
     if: "${{ startsWith(github.event.head_commit.message, 'research(m1 #88): negative-contrast') }}"
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -983,6 +1021,13 @@ jobs:
           git diff --exit-code -- public
       - name: Run unchanged FashionCLIP browser classification on all 59 exposed inputs
         run: node scripts/run-browser-photo-benchmark.mjs benchmark/output-footwear-negative-contrast/manifest.json benchmark/output-footwear-negative-contrast
+      - name: Download same-run verified evidence-admission tool
+        uses: actions/download-artifact@v4
+        with:
+          name: p88-footwear-source-audit
+          path: benchmark/output-footwear-source-audit
+      - name: Require complete authentic execution coverage before computing research scores
+        run: node benchmark/output-footwear-source-audit/require-complete-results.mjs benchmark/output-footwear-negative-contrast/manifest.json benchmark/output-footwear-negative-contrast/results.json
       - name: Encode two descriptive nonwearable contrast ensembles using pinned original text model
         shell: bash
         run: |
