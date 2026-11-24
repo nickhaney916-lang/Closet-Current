@@ -296,3 +296,89 @@ export function trialBoundedOriginalFrontCorrection({rest,pose,indices,expectedF
   correctionAppliedToLiveMesh:false,materialOrCollisionCertified:false
  });
 }
+
+/** Coordinated Jacobi-style research trial on a detached XYZ copy.
+ * Each vertex has a total step cap of 2% of its shortest incident rest edge.
+ * No new out-of-band edge/face may be hidden by improvements elsewhere.
+ * No physical material, contact, continuous-motion or wearable claim. */
+export function trialCoordinatedOriginalFrontCorrection({rest,pose,indices,expectedFaces,expectedVertices}={}){
+ const input={rest,indices,expectedFaces,expectedVertices};
+ const baseline=auditSampledOriginalFrontProportions({...input,poses:[pose]});
+ const reject=(decision,extra={})=>fail(decision,{...extra,correctedPose:null,
+  correctionAppliedToLiveMesh:false,materialOrCollisionCertified:false});
+ if(!baseline.sampledPoseDistortion)return reject(baseline.decision);
+ const before=baseline.sampledPoseDistortion[0];
+ if(!before.edgesOutsideResearchBand||before.collapsedFaces||before.minimumEdgeLengthRatio===0)
+  return reject("RESEARCH_ONLY_NO_COORDINATED_CORRECTION_ATTEMPT",{before});
+ const edges=new Map(),faces=[],caps=new Float64Array(expectedVertices).fill(Infinity),
+  delta=new Float64Array(pose.length),degree=new Uint32Array(expectedVertices);
+ const dist=(v,a,b)=>Math.hypot(v[3*a]-v[3*b],v[3*a+1]-v[3*b+1],v[3*a+2]-v[3*b+2]);
+ const normal=(v,a,b,c)=>{
+  const x=v[3*b]-v[3*a],y=v[3*b+1]-v[3*a+1],z=v[3*b+2]-v[3*a+2],
+   u=v[3*c]-v[3*a],w=v[3*c+1]-v[3*a+1],q=v[3*c+2]-v[3*a+2];
+  return [y*q-z*w,z*u-x*q,x*w-y*u];
+ };
+ const outside=r=>r<.9||r>1.1;
+ for(let k=0;k<indices.length;k+=3){
+  const a=indices[k],b=indices[k+1],c=indices[k+2],n=normal(pose,a,b,c),
+   base=Math.hypot(...normal(rest,a,b,c));
+  faces.push({a,b,c,n,base,prior:Math.hypot(...n)/base});
+  for(const [i,j] of [[a,b],[b,c],[c,a]]){
+   const lo=Math.min(i,j),hi=Math.max(i,j),key=lo*expectedVertices+hi;
+   if(edges.has(key))continue;
+   const L=dist(rest,lo,hi),length=dist(pose,lo,hi);
+   edges.set(key,{a:lo,b:hi,L,prior:length/L});
+   caps[lo]=Math.min(caps[lo],.02*L);caps[hi]=Math.min(caps[hi],.02*L);
+  }
+ }
+ let selected=0;
+ for(const {a,b,L,prior} of edges.values()){
+  if(!outside(prior))continue;
+  selected++;degree[a]++;degree[b]++;
+  const length=prior*L,shift=Math.max(-.02*L,Math.min(.02*L,(length-L)/2));
+  for(let k=0;k<3;k++){
+   const move=shift*(pose[3*b+k]-pose[3*a+k])/length;
+   delta[3*a+k]+=move;delta[3*b+k]-=move;
+  }
+ }
+ let maxFraction=0,moved=0;
+ for(let i=0;i<expectedVertices;i++){
+  if(!degree[i])continue;
+  const p=3*i;
+  for(let k=0;k<3;k++)delta[p+k]/=degree[i];
+  const d=Math.hypot(delta[p],delta[p+1],delta[p+2]);
+  if(!d)continue;
+  const scale=Math.min(1,caps[i]/d);
+  for(let k=0;k<3;k++)delta[p+k]*=scale;
+  maxFraction=Math.max(maxFraction,d*scale/(caps[i]/.02));moved++;
+ }
+ const err=(lo,hi)=>Math.max(Math.abs(lo-1),Math.abs(hi-1));
+ const edgeErr=p=>err(p.minimumEdgeLengthRatio,p.maximumEdgeLengthRatio);
+ const areaErr=p=>err(p.minimumTriangleAreaRatio,p.maximumTriangleAreaRatio);
+ const trials=[];
+ for(const step of [1,.5,.25,.125]){
+  const candidate=Float64Array.from(pose,(v,i)=>v+step*delta[i]);
+  const audit=auditSampledOriginalFrontProportions({...input,poses:[candidate]});
+  if(!audit.sampledPoseDistortion)continue;
+  const after=audit.sampledPoseDistortion[0];
+  let newBadEdges=0,newBadFaces=0,flippedOrOrthogonalFaces=0;
+  for(const {a,b,L,prior} of edges.values())if(!outside(prior)&&outside(dist(candidate,a,b)/L))newBadEdges++;
+  for(const {a,b,c,n,base,prior} of faces){
+   const q=normal(candidate,a,b,c);
+   if(!outside(prior)&&outside(Math.hypot(...q)/base))newBadFaces++;
+   if(q[0]*n[0]+q[1]*n[1]+q[2]*n[2]<=0)flippedOrOrthogonalFaces++;
+  }
+  trials.push({step,newBadEdges,newBadFaces,flippedOrOrthogonalFaces});
+  if(newBadEdges||newBadFaces||flippedOrOrthogonalFaces||
+   !(edgeErr(after)<edgeErr(before)-1e-12)||
+   areaErr(after)>areaErr(before)+1e-12||
+   after.edgesOutsideResearchBand>before.edgesOutsideResearchBand||
+   after.facesOutsideResearchBand>before.facesOutsideResearchBand||after.collapsedFaces>before.collapsedFaces)continue;
+  return fail("RESEARCH_ONLY_COORDINATED_CORRECTION_CANDIDATE",{
+   before,after,correctedPose:candidate,selectedDistortedEdges:selected,movedVertices:moved,
+   maximumVertexStepFractionOfShortestIncidentRestEdge:maxFraction*step,
+   trials,correctionAppliedToLiveMesh:false,materialOrCollisionCertified:false
+  });
+ }
+ return reject("RESEARCH_ONLY_COORDINATED_CORRECTION_REJECTED",{before,selectedDistortedEdges:selected,trials});
+}
