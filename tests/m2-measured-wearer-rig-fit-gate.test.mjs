@@ -376,3 +376,30 @@ test('obstacle guard refuses absent body, malformed bounds and out-of-range indi
   assert.ok(r.decision.startsWith('BLOCKED_'));
  }
 });
+
+test('strict swept projection clears harmless overlapping bounding boxes, not unresolved contacts',()=>{
+ const x={rest:[0,0,0,1,0,0,0,1,0],pose:[0,0,0,2,0,0,0,1,0],indices:[0,1,2],expectedFaces:1,expectedVertices:3};
+ const far={kind:'body',vertices:[1.6,.8,0,1.8,.8,0,1.6,.9,0],indices:[0,1,2]};
+ const near={kind:'layer',vertices:[.2,.2,0,.4,.2,0,.2,.4,0],indices:[0,1,2]};
+ const input={...x,obstacles:[far]},original=JSON.stringify(input);
+ const r=guarded(input);safe(r);
+ assert.equal(r.decision,'RESEARCH_ONLY_PROGRESSIVE_STABILIZATION_CANDIDATE');
+ assert.equal(r.conservativeSweptProjectionSeparation,true);
+ assert.ok(r.passes.length>0);
+ assert.ok(r.correctionSegmentObstacleReceipts.every(p=>p.clear&&p.separatedSweptPairs===1&&p.broadphasePairsExamined===1));
+ assert.equal(JSON.stringify(input),original);
+ const blocked=guarded({...x,obstacles:[far,near]});safe(blocked);
+ assert.equal(blocked.correctedPose,null);
+ const w=blocked.correctionSegmentObstacleReceipts[0];
+ assert.equal(w.clear,false);assert.equal(w.separatedSweptPairs,1);
+ assert.equal(w.broadphasePairsExamined,2);assert.equal(w.obstacleKind,'layer');
+});
+test('swept projection never clears touching or near ambiguous coplanar bounds',()=>{
+ const x={rest:[0,0,0,1,0,0,0,1,0],pose:[0,0,0,2,0,0,0,1,0],indices:[0,1,2],expectedFaces:1,expectedVertices:3};
+ for(const z of [0,1e-10]){
+  const body={kind:'body',vertices:[0,1,z,.1,1,z,0,1.1,z],indices:[0,1,2]};
+  const r=guarded({...x,obstacles:[body]});safe(r);
+  assert.equal(r.correctedPose,null);
+  assert.equal(r.stopReason,'SWEPT_OBSTACLE_OVERLAP_UNRESOLVED');
+ }
+});
