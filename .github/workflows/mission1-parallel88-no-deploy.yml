@@ -28,10 +28,18 @@ jobs:
           BASE=ab68cbbbd54376bbc9c099fc3504d1cc00ba632c
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD | tee /tmp/m1-88-paths
-          test "$(wc -l < /tmp/m1-88-paths)" -eq 18
+          # Seven exact test-only donor blobs from verified #1606; no expanded app/cloud scope.
+          test "$(wc -l < /tmp/m1-88-paths)" -eq 25
           while IFS= read -r p; do
             case "$p" in
               public/outfit-instance-review-840.mjs|public/outfit-capture.js|public/app.js|tests/mission1-parallel88-instance-conservation.test.mjs|tests/mission1-parallel88-owner-mask-lease.test.mjs|scripts/test-m1-owner-pair-admission-846.mjs|scripts/test-p82-review-browser.mjs|research/mission1-parallel88/REPORT.md|research/mission1-parallel88/frozen-public-validation-68.json|research/mission1-parallel88/recover-public-validation-88.py|research/mission1-parallel88/run-public-validation-88.mjs|research/mission1-parallel88/exposed-threshold-probes-88.mjs|research/mission1-parallel88/run-coco-accessory-88.mjs|research/mission1-parallel88/run-fashion-onnx-88.mjs|research/mission1-parallel88/fashion-onnx-probes-88.mjs|research/mission1-parallel88/blind-evaluator-handoff-88.mjs|research/mission1-parallel88/score-public-validation-88.py|.github/workflows/mission1-parallel88-no-deploy.yml) ;;
+              scripts/run-parallel70-browser.mjs) test "$(git rev-parse "HEAD:$p")" = '50ba260b4835cdd75453c2d8de7c4169afa8913e' || { echo "P88_UNVERIFIED_TEST_BLOB $p"; exit 1; } ;;
+              scripts/test-m1-review-first-default-843.mjs) test "$(git rev-parse "HEAD:$p")" = '2398d19caeffde57d7f93103a71fb8af74f8545c' || { echo "P88_UNVERIFIED_TEST_BLOB $p"; exit 1; } ;;
+              scripts/test-parallel76-color-browser.mjs) test "$(git rev-parse "HEAD:$p")" = '26f83542432e1edc98caa30b21e64a2bc8ffec0f' || { echo "P88_UNVERIFIED_TEST_BLOB $p"; exit 1; } ;;
+              tests/mission1-automatic-admission-842.test.cjs) test "$(git rev-parse "HEAD:$p")" = 'e5fbd8ad5045913178e399aee7a5cf5b667f0a04' || { echo "P88_UNVERIFIED_TEST_BLOB $p"; exit 1; } ;;
+              tests/mission1-color-owner-learning-integration-848.test.mjs) test "$(git rev-parse "HEAD:$p")" = '94706224abb35107d20f1931b110251738675e85' || { echo "P88_UNVERIFIED_TEST_BLOB $p"; exit 1; } ;;
+              tests/mission1-integrated-advice-review-845.test.cjs) test "$(git rev-parse "HEAD:$p")" = '10577dbe68ef712ee1f7b73207f09282bd9860cd' || { echo "P88_UNVERIFIED_TEST_BLOB $p"; exit 1; } ;;
+              tests/mission1-review-first-default-843.test.cjs) test "$(git rev-parse "HEAD:$p")" = 'e5a9b8ea31f65643ffcac200b829cb262eaa151f' || { echo "P88_UNVERIFIED_TEST_BLOB $p"; exit 1; } ;;
               *) echo "P88_UNAUTHORIZED_PATH $p"; exit 1 ;;
             esac
           done < /tmp/m1-88-paths
