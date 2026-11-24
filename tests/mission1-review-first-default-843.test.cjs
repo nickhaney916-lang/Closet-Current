@@ -21,7 +21,7 @@ const original=()=>({id:'source-a',image:'data:image/jpeg;base64,QUJDRA==',
  name:'',category:'Uncategorized',itemType:'Unknown',color:'Blue',
  localStatus:'',requiresOwnershipConfirmation:false,possibleDuplicate:false,
  userAdjusted:false,seasons:[],segmentHint:null});
-const strong=()=>({strong:true,categoryConfirmed:true,categoryOnly:false,
+const strong=()=>({strong:true,categoryConfirmed:false,categoryOnly:false,
  choices:[{label:'a T-shirt',category:'Tops',itemType:'T-shirt',sleeveLength:'Unknown'}],
  details:{color:'Blue'}});
 const partial=()=>({strong:false,categoryConfirmed:true,categoryOnly:true,

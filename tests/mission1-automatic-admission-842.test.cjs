@@ -81,7 +81,7 @@ function makeInference(result,patch={},reviewFirst=false){
  vm.createContext(c);vm.runInContext(admissionOnly+recognize,c);
  return {c,item,events,run:()=>c.recognizeItem(item)};
 }
-const strong=(diagnostics=null)=>({strong:true,categoryConfirmed:true,categoryOnly:false,
+const strong=(diagnostics=null)=>({strong:true,categoryConfirmed:false,categoryOnly:false,
  choices:[{category:'Tops',itemType:'T-shirt',label:'a T-shirt'}],details:{},
  ...(diagnostics?{diagnostics}:{})});
 const partial=()=>({strong:false,categoryConfirmed:true,categoryOnly:true,

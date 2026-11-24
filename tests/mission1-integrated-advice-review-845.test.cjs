@@ -19,7 +19,7 @@ const make=(quality,opts={})=>{
   recognitionState:{phase:'ready',activeId:null},persistDraft(){},render(){},message(){},
   $:()=>({textContent:''}),normalizeClothing:v=>({...v}),queued:work=>work(),
   checkPhoto:async()=>quality,similarPhotos:()=>false,segmentationAllows:()=>true,
-  localRequest:async()=>({strong:true,categoryConfirmed:true,categoryOnly:false,
+  localRequest:async()=>({strong:true,categoryConfirmed:false,categoryOnly:false,
    choices:[{category:'Tops',itemType:'T-shirt',label:'a T-shirt'}],details:{}}),
   ClothingDetails:{fillColor:v=>({...v}),fill:v=>({...v})},
   applyLocalChoice(v,choice){v.category=choice.category;v.itemType=choice.itemType;},

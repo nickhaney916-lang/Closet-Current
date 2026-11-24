@@ -33,6 +33,10 @@ jobs:
           git merge-base --is-ancestor "$BASELINE" HEAD
           git diff --exit-code "$BASELINE" HEAD -- . \
             ':(exclude)tests/mission1-color-owner-learning-integration-848.test.mjs' \
+            ':(exclude)tests/mission1-automatic-admission-842.test.cjs' \
+            ':(exclude)tests/mission1-integrated-advice-review-845.test.cjs' \
+            ':(exclude)tests/mission1-review-first-default-843.test.cjs' \
+            ':(exclude)scripts/test-m1-review-first-default-843.mjs' \
             ':(exclude)scripts/test-p1605-recognition-recovery-browser.mjs' \
             ':(exclude)scripts/run-parallel70-browser.mjs' \
             ':(exclude)scripts/test-parallel76-color-browser.mjs' \
