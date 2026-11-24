@@ -468,3 +468,36 @@ test('shared-vertex rays must remain strictly separated throughout correction',(
  const bad=guarded(sameSide);safe(bad);assert.equal(bad.correctedPose,null);
  assert.equal(bad.stopReason,'SWEPT_INCIDENT_FOLDOVER_UNRESOLVED');
 });
+
+test('moving obstacle sweep blocks inter-endpoint crossing even when both endpoints are separated',()=>{
+ const x={rest:[0,0,0,1,0,0,0,1,0],pose:[0,0,0,2,0,0,0,1,0],indices:[0,1,2],expectedFaces:1,expectedVertices:3};
+ const body={kind:'body',vertices:[.2,.2,1,.4,.2,1,.2,.4,1],endVertices:[.2,.2,-1,.4,.2,-1,.2,.4,-1],indices:[0,1,2]};
+ const original=JSON.stringify(body);
+ for(const kind of ['body','layer']){
+  const obstacles=kind==='body'?[body]:[{...body,endVertices:undefined},{...body,kind}];
+  const r=guarded({...x,obstacles});safe(r);
+  assert.equal(r.correctedPose,null);assert.equal(r.stopReason,'SWEPT_OBSTACLE_OVERLAP_UNRESOLVED');
+  assert.equal(r.movingObstacleFacesIndexed,1);
+  assert.equal(r.correctionSegmentObstacleReceipts[0].obstacleKind,kind);
+ }
+ const r=guarded({...x,obstacles:[{...body,endVertices:[.2,.2,2,.4,.2,2,.2,.4,2]}]});safe(r);
+ assert.ok(r.correctedPose);assert.equal(r.linearObstacleEndpointSweepOnly,true);
+ assert.equal(r.nonlinearAnimatedJointPathCertified,false);
+ assert.equal(JSON.stringify(body),original);
+});
+test('moving body checks stationary garment faces, not only changed correction vertices',()=>{
+ const x={rest:[0,0,0,1,0,0,0,1,0,5,0,0,6,0,0,5,1,0],
+  pose:[0,0,0,2,0,0,0,1,0,5,0,0,6,0,0,5,1,0],
+  indices:[0,1,2,3,4,5],expectedFaces:2,expectedVertices:6};
+ const body={kind:'body',vertices:[5.2,.2,1,5.4,.2,1,5.2,.4,1],endVertices:[5.2,.2,-1,5.4,.2,-1,5.2,.4,-1],indices:[0,1,2]};
+ const r=guarded({...x,obstacles:[body]});safe(r);
+ assert.equal(r.correctedPose,null);assert.equal(r.correctionSegmentObstacleReceipts[0].frontFaceOrdinal,1);
+});
+test('invalid moving endpoint buffers are refused',()=>{
+ const x={rest:[0,0,0,1,0,0,0,1,0],pose:[0,0,0,2,0,0,0,1,0],indices:[0,1,2],expectedFaces:1,expectedVertices:3};
+ const body={kind:'body',vertices:[0,0,3,2,0,3,0,2,3],indices:[0,1,2]};
+ for(const endVertices of [null,[],[NaN,...body.vertices.slice(1)]]){
+  const r=guarded({...x,obstacles:[{...body,endVertices}]});safe(r);
+  assert.equal(r.decision,'BLOCKED_INVALID_FIXED_OBSTACLE_GEOMETRY');assert.equal(r.correctedPose,null);
+ }
+});
