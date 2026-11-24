@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assessMetricGarmentToWearerFit as assess,auditSampledOriginalFrontProportions as audit}
+import {assessMetricGarmentToWearerFit as assess,auditSampledOriginalFrontProportions as audit,trialBoundedOriginalFrontCorrection as correct}
  from '../research/parallel89/measured-wearer-to-licensed-rig-garment-fit89.mjs';
 
 const sourceSHA='a'.repeat(64),rigSHA='b'.repeat(64);
@@ -247,5 +247,36 @@ test('sampled geometry audit counts shared indexed edges once and refuses missin
   const x=fixture();change(x);const r=audit(x);safe(r);
   assert.equal(r.decision,'BLOCKED_INVALID_SAMPLED_ORIGINAL_FRONT_GEOMETRY');
   assert.equal(r.sampledPoseDistortion,undefined);
+ }
+});
+
+test('bounded local edge correction identifies original indexed witnesses and improves a distorted copy',()=>{
+ const rest=[0,0,0,1,0,0,0,1,0],pose=[0,0,0,2,0,0,0,1,0],indices=[0,1,2];
+ const input={rest,pose,indices,expectedFaces:1,expectedVertices:3},original=JSON.stringify(input);
+ const r=correct(input);safe(r);
+ assert.equal(r.decision,'RESEARCH_ONLY_BOUNDED_EDGE_CORRECTION_CANDIDATE');
+ assert.deepEqual(r.before.worstOriginalEdge.vertexIndices,[0,1]);
+ assert.deepEqual(r.before.worstOriginalFace.vertexIndices,[0,1,2]);
+ assert.equal(r.before.maximumEdgeLengthRatio,2);
+ assert.equal(r.after.maximumEdgeLengthRatio,1.96);
+ assert.equal(r.after.maximumTriangleAreaRatio,1.96);
+ assert.equal(r.maximumEndpointDisplacementRigUnits,.02);
+ assert.equal(r.correctedPose[0]+r.correctedPose[3],pose[0]+pose[3]);
+ assert.equal(r.correctedPose[6],pose[6]);
+ assert.equal(JSON.stringify(input),original);
+ assert.equal(r.correctionAppliedToLiveMesh,false);
+ assert.equal(r.materialOrCollisionCertified,false);
+});
+test('bounded correction rejects rigid, collapsed, invalid and unimproved global shape',()=>{
+ const rest=[0,0,0,1,0,0,0,1,0],indices=[0,1,2];
+ for(const [pose,expected] of [
+  [[2,3,4,2,4,4,1,3,4],'RESEARCH_ONLY_NO_SAFE_EDGE_CORRECTION_ATTEMPT'],
+  [[0,0,0,1,0,0,2,0,0],'RESEARCH_ONLY_NO_SAFE_EDGE_CORRECTION_ATTEMPT'],
+  [[NaN,0,0,1,0,0,0,1,0],'BLOCKED_INVALID_SAMPLED_ORIGINAL_FRONT_GEOMETRY'],
+  [[0,0,0,2,0,0,0,2,0],'RESEARCH_ONLY_CORRECTION_REJECTED_NO_GLOBAL_IMPROVEMENT']
+ ]){
+  const r=correct({rest,pose,indices,expectedFaces:1,expectedVertices:3});safe(r);
+  assert.equal(r.decision,expected);assert.equal(r.correctedPose,null);
+  assert.equal(r.correctionAppliedToLiveMesh,false);
  }
 });
