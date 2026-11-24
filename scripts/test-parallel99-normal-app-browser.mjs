@@ -226,6 +226,41 @@ try{
   assert.equal(row.ownerPrivate,true);assert.equal(row.ownerReviewed,true);
   assert.equal(row.colorSource,'user');assert.equal(row.ready3D,false);
  }
+ if(process.env.P1636_FOCUS==='1'){
+  advance('p1636-returning-owner-pinned-stylist');
+  const staleExpected=process.env.P1636_EXPECT_STALE==='1';
+  // The two garments were added through the ordinary chooser and explicitly
+  // reviewed. Reopen the real app before exercising recommendations.
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>document.querySelector('#appShell')?.hidden===false&&
+   document.querySelector('#closetCount')?.textContent==='2',null,{timeout:30000});
+  await page.locator('nav.main-nav button.tab[data-view="stylist"]').click();
+  const focus=page.locator('#stylistFocusItem');
+  const shirtId=await focus.locator('option').filter({hasText:shirtName}).getAttribute('value');
+  const jeansId=await focus.locator('option').filter({hasText:jeansName}).getAttribute('value');
+  assert(shirtId&&jeansId&&shirtId!==jeansId);
+  const cards=page.locator('#styledCollectionResults .styled-outfit');
+  await focus.selectOption(shirtId);
+  await page.locator('#stylistOccasion').selectOption('Casual');
+  await page.locator('#createCollectionOutfits').click();
+  await cards.first().waitFor({state:'visible',timeout:30000});
+  assert.match(await cards.first().innerText(),/Includes P99 Black Shirt/);
+  await focus.selectOption(jeansId);
+  const staleCount=await cards.count();
+  assert.equal(staleCount>0,staleExpected,'P1636 manual focus stale-card reproduction');
+  await page.locator('#createCollectionOutfits').click();
+  await page.waitForFunction(()=>document.querySelector('#styledCollectionResults .styled-outfit')?.textContent.includes('Includes P99 Blue Jeans'),null,{timeout:30000});
+  // Match the normal My Closet card's programmatic focus + requestSubmit
+  // sequence, without injecting any garments or recommendations.
+  const duringSubmit=await page.evaluate(id=>{
+   document.querySelector('#stylistFocusItem').value=id;
+   document.querySelector('#styleCollectionForm').requestSubmit();
+   return document.querySelectorAll('#styledCollectionResults .styled-outfit').length;
+  },shirtId);
+  assert.equal(duringSubmit>0,staleExpected,'P1636 programmatic focus stale-card reproduction');
+  await page.waitForFunction(()=>document.querySelector('#styledCollectionResults .styled-outfit')?.textContent.includes('Includes P99 Black Shirt'),null,{timeout:30000});
+  console.log('P1636 pinned focus '+engine+' '+width+' '+(staleExpected?'RED reproduced':'GREEN')+' manual/programmatic');
+ }
  advance('normal-chooser-cancel-duplicate-and-oversize-no-write');
  await page.locator('nav.main-nav button.tab[data-view="home"]').click();
  await page.locator('#home button.home-action[data-go-view="scan"]').click();

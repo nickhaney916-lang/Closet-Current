@@ -233,6 +233,9 @@ $('styleCollectionForm').onsubmit=async event=>{
  button.disabled=true;
  $('stylistStatus').textContent='Matching your clothes with the latest verified trends…';
  try{
+  // A new request supersedes visible cards, including programmatic focus changes.
+  styledCollectionResults=[];
+  renderStyledCollection();
   await closetReady;
   if(!lease.current())return;
   refreshStylistFocusItems();
@@ -264,7 +267,7 @@ $('styleCollectionForm').onsubmit=async event=>{
    button.disabled=false;
  }
 };
-for(const id of ['stylistOccasion','stylistAudience','stylistSeason'])$(id).onchange=()=>{
+for(const id of ['stylistOccasion','stylistAudience','stylistSeason','stylistFocusItem'])$(id).onchange=()=>{
  // A preference edit explicitly replaces the earlier request, even if the
  // user returns to the previous value before its trend fetch resolves.
  styledCollectionRequestSerial++;

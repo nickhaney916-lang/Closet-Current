@@ -88,10 +88,27 @@ function styleOwnedCollection(closet,request={},library=null){
  }
  candidates.sort((a,b)=>a.missing.length-b.missing.length||b.score-a.score);
  const results=[];
- for(const candidate of candidates){
+ const addCandidate=candidate=>{
   const signature=Object.entries(candidate.board.slots).sort().map(([k,v])=>k+':'+v).join('|');
-  if(results.some(x=>x.signature===signature))continue;
-  results.push({...candidate,signature});if(results.length===3)break;
+  if(results.some(x=>x.signature===signature))return false;
+  results.push({...candidate,signature});return true;
+ };
+ // Preserve completeness first and the best-ranked look in each group.
+ // Prefer different base garments before offering shoe-only variants.
+ // If the closet has only one core combination, real owned shoe variants
+ // remain useful; never manufacture inventory or promote a partial look.
+ for(const missingCount of new Set(candidates.map(x=>x.missing.length))){
+  const group=candidates.filter(x=>x.missing.length===missingCount),cores=new Set();
+  for(const candidate of group){
+   const core=JSON.stringify([candidate.board.slots.top||null,candidate.board.slots.bottom||null]);
+   if(cores.has(core))continue;
+   if(addCandidate(candidate))cores.add(core);
+   if(results.length===3)return results;
+  }
+  for(const candidate of group){
+   addCandidate(candidate);
+   if(results.length===3)return results;
+  }
  }
  return results;
 }
