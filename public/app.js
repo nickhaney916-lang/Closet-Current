@@ -1853,7 +1853,7 @@ async function recognizeItem(item){
      clothingSchema.types[topChoice.category].includes(topChoice.itemType))))&&
    (topChoice.score===undefined||(Number.isFinite(topChoice.score)&&topChoice.score>=0&&topChoice.score<=1));
   if(!validFlags||(claimsIdentity&&!validChoice)){
-   item.localAnalyzed=true;item.localChoices=[];item.requiresOwnershipConfirmation=true;
+   item.localAnalyzed=false;item.scanFailed=true;item.localChoices=[];item.requiresOwnershipConfirmation=true;
    item.localStatus=item.userAdjusted?'Your adjustments are preserved. Save this piece when ready.':
     'Recognition returned invalid garment information. Original photo kept. Confirm details in Adjust or retry.';
    return true;
