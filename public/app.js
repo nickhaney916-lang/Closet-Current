@@ -2033,7 +2033,7 @@ $('export').onclick=async()=>{
   const result=await exportDurableOwnerBackupM3({
    ownerDB:exportLease.ownerDB,
    ownerId:window.closetAuth.user.id,
-   assertLease:assertExport,
+   assertCompleteWardrobe,assertLease:assertExport,
    assertIdle:()=>{
     if(!idle())throw Error('An original photo or outfit changed during backup export. Retry after saving.');
    }
@@ -2219,7 +2219,7 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
   const ownerId=window.closetAuth?.user?.id;
   const prepared=await prepareDefaultAtomicM3({
    data,ownerDB:importLease.ownerDB,ownerId,assertLease:assertImport,
-   normalizeClothing,validLook,cleanOutfitBoard
+   normalizeClothing,validLook,cleanOutfitBoard,assertCompleteWardrobe
   });
   assertImport();
   if(!idle())throw Error('Your photo or outfit changed during backup validation. Retry when it is saved.');
@@ -2311,16 +2311,46 @@ function partitionStartupWardrobe(saved,drafts,owner){
  });
  return {items:select(saved),batch:select(drafts),get invalid(){return invalid;}};
 }
+function assertCompleteWardrobe(saved,state,owner){
+ const incomplete=()=>Object.assign(Error(
+  'Wardrobe recovery required. A stored garment, unfinished photo or outfit could not be verified. Keep this device and your original backup; reload after recovery.'
+ ),{code:'CLOSET_INCOMPLETE_WARDROBE'});
+ const draft=state.find(row=>row.id==='draft');
+ let roster;
+ try{roster=partitionStartupWardrobe(saved,draft===undefined?[]:draft.batch,owner);}
+ catch{throw incomplete();}
+ if(roster.invalid)throw incomplete();
+ const looks=state.find(row=>row.id==='looks');
+ if(looks!==undefined&&!Array.isArray(looks.looks))throw incomplete();
+ const board=state.find(row=>row.id==='outfit-board');
+ if(board===undefined)return;
+ const ids=new Set(roster.items.map(row=>row.id));
+ const validOutfit=outfit=>{
+  if(!outfit||Object.getPrototypeOf(outfit)!==Object.prototype||
+     !outfit.slots||Object.getPrototypeOf(outfit.slots)!==Object.prototype)return false;
+  const references=Object.values(outfit.slots);
+  return new Set(references).size===references.length&&references.every(id=>ids.has(id));
+ };
+ if(!Array.isArray(board.saved)||!validOutfit(board.current)||!board.saved.every(validOutfit))
+  throw incomplete();
+}
 function renderStartupWardrobeRecovery(){
  // No regular edit, crop, index, styling or automatic-recognition controls
  // are constructed from an incomplete roster. Keep the native DB closed.
  $('reviewCount').textContent=batch.length;
  $('closetCount').textContent=items.length;
  $('sessionCount').textContent=session;
- const warning='Some stored clothing records need recovery. '+startupWardrobeRecoveryCount+
+ const warning='Some stored wardrobe records need recovery. '+startupWardrobeRecoveryCount+
   ' record(s) could not be displayed. Your remaining photos are view-only; no stored records were deleted. Keep your original backup and reload after recovery.';
  message(warning);
  controls(true);
+ $('closetCollection').hidden=false;
+ $('closetLayout').classList.add('is-browsing');
+ $('closetCollectionTitle').textContent='Available clothing';
+ $('closetBack').hidden=true;
+ $('closetCollection').querySelector('.closet-refine').hidden=true;
+ for(const id of ['export','import','saveBoard','closetSaveLook','closetStyleLook','search'])
+  $(id).disabled=true;
  for(const [id,rows] of [['closetGrid',items],['reviewGrid',batch],['scanResults',batch]]){
   const grid=$(id);grid.replaceChildren();
   grid.append(node('p',warning,'fine'));
