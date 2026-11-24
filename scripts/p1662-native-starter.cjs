@@ -10,6 +10,11 @@ function replace(anchor,body){
  source=source.replace(anchor,body);
 }
 if(!baseline){
+ replace("['commons-0003','commons-0023'].map(loadOriginal)","['commons-0003','commons-0023','validation-0019'].map(loadOriginal)");
+ replace(" const before=await rowCount();\n assert.equal(before,category==='Tops'?0:1,'unreviewed model output silently saved');",`
+ const before=await rowCount();
+ assert.equal(before,['Tops','Bottoms','Shoes'].indexOf(category),'unreviewed model output silently saved');
+`);
  const start=source.indexOf(" await page.locator('#home button.home-action[data-go-view=\"scan\"]').click();");
  const end=source.indexOf(" await page.locator('#reviewGrid .photo-result",start);
  if(start<0||end<=start)throw Error('Chooser journey anchor changed');
@@ -18,7 +23,7 @@ if(!baseline){
  await page.getByRole('button',{name:'Choose a clothing photo',exact:true}).click();
  const chooser=await waitingChooser;
  assert.equal(await page.locator('#scan').isVisible(),true);
- assert.equal(await rowCount(),category==='Tops'?0:1);
+ assert.equal(await rowCount(),['Tops','Bottoms','Shoes'].indexOf(category));
  await chooser.setFiles({name:source.name+'.jpg',mimeType:'image/jpeg',buffer:source.bytes});
 `+source.slice(end);
 }
@@ -85,8 +90,24 @@ source=source.slice(0,start)+`
   assert.equal(await card.locator('figure').count(),2);
   await card.getByRole('button',{name:'Save outfit'}).click();
   await card.getByRole('button',{name:'Saved',exact:true}).waitFor();
-  // Synthetic extra wardrobe metadata only. Real originals were independently
-  // hash-checked above. No inference or photo proof claim for these rows.
+  const shoeName='P1662 reviewed sneaker';
+  await addFromNormalChooser(originals[2],shoeName,'Shoes','Sneakers','Black');
+  const shoe=await page.evaluate(async name=>{
+   const row=(await readAll()).find(item=>item.name===name);
+   const bytes=Uint8Array.from(atob(row.originalPhoto.image.split(',')[1]),char=>char.charCodeAt(0));
+   const hash=new Uint8Array(await crypto.subtle.digest('SHA-256',bytes));
+   return {hash:[...hash].map(byte=>byte.toString(16).padStart(2,'0')).join(''),
+    receipt:row.sourceSHA256,owner:row.ownerId,reviewed:row.ownerReviewed};
+  },shoeName);
+  assert.deepEqual(shoe,{hash:originals[2].sha,receipt:originals[2].sha,owner:'p99-A',reviewed:true});
+  await goHome();
+  await guide.getByRole('button',{name:'Create an outfit'}).click();
+  await card.getByText('A complete outfit using clothes you own.').waitFor();
+  assert.equal(await card.locator('figure').count(),3);
+  await card.getByRole('button',{name:'Save outfit'}).click();
+  await card.getByRole('button',{name:'Saved',exact:true}).waitFor();
+  // Grow from the three independently hash-checked photos with synthetic
+  // metadata only. No inference or source proof claim for these extra rows.
   const append=async count=>page.evaluate(async count=>{
    const tx=db.transaction('items','readwrite'),store=tx.objectStore('items');
    for(let i=0;i<count;i++){
@@ -105,12 +126,10 @@ source=source.slice(0,start)+`
    await guide.getByRole('button',{name:'Create an outfit'}).waitFor();
    assert.equal(await mobileFit(),true);
   };
-  await append(3);
+  await append(2);
   await reloadAt(5);
   await guide.getByRole('button',{name:'Create an outfit'}).click();
   await card.getByText('A complete outfit using clothes you own.').waitFor();
-  await card.getByRole('button',{name:'Save outfit'}).click();
-  await card.getByRole('button',{name:'Saved',exact:true}).waitFor();
   const history=await page.evaluate(()=>new Promise((resolve,reject)=>{
    const request=db.transaction('state').objectStore('state').get('outfit-wear-history-v1');
    request.onsuccess=()=>resolve(request.result);
@@ -133,7 +152,7 @@ source=source.slice(0,start)+`
   assert.equal(await rowCount(),0);
   assert.equal(await page.locator('.styled-outfit').count(),0);
   assert.deepEqual(errors,[]);
-  console.log('P1662_NATIVE_GREEN',engine,width,'gallery opening 3 to 1; recommendation and save 3 to 2; 0/1/2/5/10 pieces; original hashes; isolated owner');
+  console.log('P1662_NATIVE_GREEN',engine,width,'gallery opening 3 to 1; recommendation and save 3 to 2; 0/1/2/3/5/10 pieces; three reviewed original hashes; isolated owner');
  }
 `+source.slice(end);
 const runner='scripts/.p1662-starter-'+randomUUID()+'.mjs';
