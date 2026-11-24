@@ -2805,7 +2805,9 @@ async function recognizeItem(item){
    if(claimsIdentity){
     item.localChoices=[{kind:'owner-identity-review-v1',recordId:item.id,ownerId:item.ownerId,
      sourceSHA256:item.sourceSHA256,category:topChoice.category,itemType:topChoice.itemType}];
-    if(!pendingIdentitySuggestion(item))item.localChoices=[];
+    if(!item.id||!item.ownerId||!/^[a-f0-9]{64}$/i.test(item.sourceSHA256||'')||
+       item.originalPhoto?.sha256!==item.sourceSHA256||!item.image||item.image!==item.originalPhoto?.image||
+       item.outfitSourceId||item.cropBounds||item.segmentHint||item.recognitionPhoto)item.localChoices=[];
    }
    const suggestion=claimsIdentity?'Photo suggests '+topChoice.category+(categoryOnly?'':' · '+topChoice.itemType)+'. ':'';
    item.localStatus=suggestion+'Garment category or subtype needs confirmation. Original photo kept. Confirm category, type and color in Adjust.';
