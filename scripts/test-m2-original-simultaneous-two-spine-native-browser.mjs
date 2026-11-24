@@ -12,7 +12,7 @@ import {spawnSync} from 'node:child_process';
 const pins={
  runner:'5f999c1dc440539cec143f7c7de48b8fe88dd91e',
  registration:'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb',
- addon:'20a9e30529a30d013e7c35dc025229be0c5ea88f'
+ addon:'ff7ead5302e45b872cb30bcbc7b684da3bff0822'
 };
 const sha=b=>createHash('sha1').update('blob '+Buffer.byteLength(b)+'\0')
  .update(b).digest('hex');
@@ -43,7 +43,7 @@ const routeLines=[
  "    const addonSource=await readFile('research/parallel89/real-original-simultaneous-spine03-spine04-browser-addon89.mjs','utf8');",
  "    const blobSha=t=>createHash('sha1').update('blob '+Buffer.byteLength(t)+'\\0').update(t).digest('hex');",
  "    assert.equal(blobSha(originalSource),'b211d807c0ccc3c4a7b0eeec339f23bb4692afcb');",
- "    assert.equal(blobSha(addonSource),'20a9e30529a30d013e7c35dc025229be0c5ea88f');",
+ "    assert.equal(blobSha(addonSource),'ff7ead5302e45b872cb30bcbc7b684da3bff0822');",
  "    await route.fulfill({status:200,contentType:'text/javascript',body:originalSource+'\\n'+addonSource});",
  "   });",
  routeAnchor
@@ -127,6 +127,19 @@ const verifyLines=[
  "   assert.equal(guarded.familyAlpha,'HOLD');",
  "   assert.equal(guarded.sweptMovingFaceBoundsOnly,false);",
  "   assert.equal(guarded.conservativeSweptProjectionSeparation,true);",
+ "   const movingBody=trial.sampledWorstPoseLinearBodySweepGuard;",
+ "   assert.equal(movingBody.worstPoseIndex,guarded.worstPoseIndex);",
+ "   assert.ok(movingBody.nextGridIndex!==movingBody.worstPoseIndex);",
+ "   assert.equal(movingBody.totalObstacleFacesIndexed,109064);",
+ "   assert.ok(movingBody.movingObstacleFacesIndexed>0);",
+ "   assert.equal(movingBody.fixedObstacleFacesIndexed+movingBody.movingObstacleFacesIndexed,109064);",
+ "   assert.equal(movingBody.linearObstacleEndpointSweepOnly,true);",
+ "   assert.equal(movingBody.nonlinearAnimatedJointPathCertified,false);",
+ "   assert.equal(movingBody.correctionAppliedToLiveMesh,false);",
+ "   assert.equal(movingBody.consumer3DAdmitted,false);",
+ "   assert.equal(movingBody.correctedPose,undefined);",
+ "   assert.equal(movingBody.familyAlpha,'HOLD');",
+ "   assert.ok(movingBody.correctionSegmentObstacleReceipts.filter(r=>r.clear).length===movingBody.passes.length);",
  "   assert.equal(guarded.nonincidentMovingFaceSelfBroadphaseEnabled,true);",
  "   assert.equal(guarded.incidentMovingFaceFoldoverGuardEnabled,true);",
  "   assert.ok(guarded.correctionSegmentNonincidentSelfReceipts.every(r=>r.incidentPairsSeparated<=r.incidentPairsExcluded));",
