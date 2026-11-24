@@ -918,7 +918,7 @@ function pendingIdentitySuggestion(item){
  return {category:proposal.category,itemType:proposal.itemType};
 }
 function mountPendingIdentitySuggestion(form,item,editorSession,dialog,canApply){
- const proposed=pendingIdentitySuggestion(item);
+ const proposed=pendingIdentitySuggestion(item),openingImage=item.image;
  if(!proposed)return null;
  const box=node('div',null,'recognition-review-suggestion');
  box.append(node('p','Photo suggests '+proposed.category+
@@ -927,7 +927,7 @@ function mountPendingIdentitySuggestion(form,item,editorSession,dialog,canApply)
  const use=node('button','Use suggested identity','secondary');use.type='button';
  use.onclick=()=>{
   if(!editorSession.current()||!dialog.open||!use.isConnected||!canApply()||
-     !batch.includes(item)||localPending.has(item.id))return;
+     !batch.includes(item)||localPending.has(item.id)||item.image!==openingImage)return;
   // The editor sets a transient userAdjusted flag while open. Recheck the
   // same persisted proposal without treating that flag as approval.
   const now=pendingIdentitySuggestion({...item,userAdjusted:false});
