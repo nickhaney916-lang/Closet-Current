@@ -774,11 +774,72 @@ jobs:
           await writeFile('benchmark/output-footwear-source-audit/audit.json',JSON.stringify({schema:'p88-footwear-source-audit-v1',status:'BLOCKED_BOOT_SOURCE_DIVERSITY',result,ledger},null,2));
           console.log('P88_FOOTWEAR_SOURCE_AUDIT '+JSON.stringify({status:'BLOCKED_BOOT_SOURCE_DIVERSITY',...result}));
           JS
+      - name: Verify complete result evidence before legacy historical benchmark scoring
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p benchmark/output-footwear-source-audit
+          cat > benchmark/output-footwear-source-audit/require-complete-results.mjs <<'JS'
+          import {readFileSync} from 'node:fs';
+          import {pathToFileURL} from 'node:url';
+          // Historical research admission only. This is not independent
+          // human-ground-truth, release acceptance or automatic-save authority.
+          export function requireCompleteResults(manifest,results){
+           if(!Array.isArray(manifest)||!manifest.length||!Array.isArray(results))throw Error('invalid evidence arrays');
+           const ids=new Set();
+           for(const m of manifest){
+            if(!m||typeof m.id!=='string'||!m.id.trim()||ids.has(m.id)||!['single','outfit'].includes(m.mode))throw Error('invalid or duplicate manifest ID');
+            ids.add(m.id);
+           }
+           const seen=new Set();
+           for(const r of results){
+            if(!r||typeof r.id!=='string'||!ids.has(r.id)||seen.has(r.id))throw Error('unknown or duplicate result ID');
+            if(Object.hasOwn(r,'error')&&r.error!==null&&r.error!==false&&r.error!=='')throw Error('runtime error cannot be scored as a successful inference');
+            const m=manifest.find(x=>x.id===r.id);
+            if(m.mode==='single'&&(!r.prediction||typeof r.prediction!=='object'||Array.isArray(r.prediction)))throw Error('missing prediction envelope');
+            if(m.mode==='outfit'&&!Array.isArray(r.predictedPieces))throw Error('missing outfit prediction envelope');
+            seen.add(r.id);
+           }
+           if(seen.size!==ids.size)throw Error('incomplete result coverage');
+           return {complete:true,manifestCount:ids.size,resultCount:seen.size,independentBlind:false,productionPromotion:false};
+          }
+          if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
+           const [manifest,results]=process.argv.slice(2);
+           if(!manifest||!results)throw Error('usage: require-complete-results.mjs manifest.json results.json');
+           console.log(JSON.stringify(requireCompleteResults(JSON.parse(readFileSync(manifest,'utf8')),JSON.parse(readFileSync(results,'utf8')))));
+          }
+          JS
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {requireCompleteResults as gate} from './benchmark/output-footwear-source-audit/require-complete-results.mjs';
+          const m=[{id:'a',mode:'single',expectedCategory:'Shoes',expectedType:'Sneakers'},{id:'b',mode:'single',expectedCategory:'Shoes',expectedType:'Ankle boots'}];
+          const r=m.map(x=>({id:x.id,prediction:{category:x.expectedCategory,type:x.expectedType},strong:true}));
+          assert.equal(gate(m,r).complete,true);
+          // Wrong predictions and genuine abstentions are valid evidence,
+          // not invalid executions; scoring must still count their errors.
+          assert.equal(gate(m,[r[0],{id:'b',prediction:{category:null,type:null},strong:false}]).complete,true);
+          assert.equal(gate(m,[r[0],{id:'b',prediction:{category:'Tops',type:'T-shirt'}}]).complete,true);
+          assert.equal(gate([{id:'outfit',mode:'outfit'}],[{id:'outfit',predictedPieces:[]}]).complete,true);
+          const invalid=[
+           [[...m,m[0]],r],
+           [m,[...r,{...r[0],id:'extra'}]],
+           [m,[r[0],{...r[1],error:'runtime_error'}]],
+           [m,[r[0]]],
+           [m,[r[0],r[0]]],
+           [m,[r[0],{id:'b'}]],
+           [[{id:'outfit',mode:'outfit'}],[{id:'outfit'}]],
+           [[],[]]
+          ];
+          for(const [manifest,results] of invalid)assert.throws(()=>gate(manifest,results));
+          console.log('P88_COMPLETE_EVIDENCE_GATE '+invalid.length+'/'+invalid.length+' rejected; 4/4 valid executions retained');
+          JS
       - name: Upload source eligibility ledger only
         uses: actions/upload-artifact@v4
         with:
           name: p88-footwear-source-audit
-          path: benchmark/output-footwear-source-audit/audit.json
+          path: |
+            benchmark/output-footwear-source-audit/audit.json
+            benchmark/output-footwear-source-audit/require-complete-results.mjs
           retention-days: 14
 
   footwear-hard-negative-NO-DEPLOY:
