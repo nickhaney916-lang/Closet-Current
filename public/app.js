@@ -1411,6 +1411,17 @@ function renderPhotoResults(grid,results){
   card.append(image,body);grid.append(card);
  }
 }
+// Weekly memory review updates recognition evidence, not the visible saved
+// garment metadata or outfit slots. Refresh only its affected UI surfaces;
+// normal user mutations and navigation still use the complete render.
+function refreshRecognitionMemorySurfaces(){
+ if(startupWardrobeRecoveryCount){renderStartupWardrobeRecovery();return;}
+ $('reviewCount').textContent=batch.length;$('closetCount').textContent=items.length;$('sessionCount').textContent=session;
+ renderRecognitionNotice();
+ const results=[...batch,...items.filter(item=>sessionCapturedIds.has(item.id))];
+ renderPhotoResults($('reviewGrid'),results);
+ renderPhotoResults($('scanResults'),results);
+}
 function render(){
  if(startupWardrobeRecoveryCount){renderStartupWardrobeRecovery();return;}
  const previousFocus=document.activeElement,focusedCard=previousFocus?.closest?.('#closetGrid .card'),
@@ -2598,16 +2609,17 @@ function localRequest(type,image,itemId,hint){
   }catch{stopRecognitionWorker('Recognition could not start. Try again or use Adjust.');reject(Error('Recognition could not start.'));}
  });
 }
-async function enableLocal(){
+async function enableLocal({backgroundMemory=false}={}){
  if(localReady)return true;
+ const refreshScannerUi=()=>backgroundMemory?refreshRecognitionMemorySurfaces():render();
  if(!localLoadPromise){
   const epoch=captureOperationEpoch;
   const loading=(async()=>{
-   recognitionState.phase='loading';recognitionState.percent=null;if(typeof recordDeviceEvent==='function')recordDeviceEvent('setup_start');const setupStarted=Date.now();render();
+   recognitionState.phase='loading';recognitionState.percent=null;if(typeof recordDeviceEvent==='function')recordDeviceEvent('setup_start');const setupStarted=Date.now();refreshScannerUi();
    try{
     await localRequest('load');
     if(epoch!==captureOperationEpoch)throw Error('Recognition account session ended');
-    localReady=true;recognitionUnavailable=false;scheduleMemoryReview();if(typeof recordDeviceEvent==='function')recordDeviceEvent('setup_ready',{durationMs:Date.now()-setupStarted});recognitionState.phase='ready';recognitionState.percent=null;render();return true;
+    localReady=true;recognitionUnavailable=false;scheduleMemoryReview();if(typeof recordDeviceEvent==='function')recordDeviceEvent('setup_ready',{durationMs:Date.now()-setupStarted});recognitionState.phase='ready';recognitionState.percent=null;refreshScannerUi();return true;
    }catch(error){if(epoch===captureOperationEpoch){recognitionState.phase='failed';renderRecognitionNotice();}throw error;}
    finally{if(localLoadPromise===loading)localLoadPromise=null;}
   })();
@@ -3034,7 +3046,7 @@ async function reviewRecognitionMemory(){
  if(!targets.length)return;
  memoryReviewRunning=true;let completed=0;
  try{
-  if(!localReady)await enableLocal();
+  if(!localReady)await enableLocal({backgroundMemory:true});
   if(!lease.current())return;
   for(const target of targets){
    if(!lease.current()||busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))break;
@@ -3052,7 +3064,7 @@ async function reviewRecognitionMemory(){
   }
  }finally{
   if(lease.current()){
-   memoryReviewRunning=false;render();
+   memoryReviewRunning=false;refreshRecognitionMemorySurfaces();
    if(completed===8&&!memoryReviewTimer){
     const timer=setTimeout(()=>{
      if(memoryReviewTimer!==timer||!lease.current())return;
