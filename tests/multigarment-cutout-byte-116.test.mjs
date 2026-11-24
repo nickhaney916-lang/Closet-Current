@@ -85,34 +85,34 @@ test('PHOTO116 original-photo JPEG byte identity still controls the source of ev
  assert.equal(result.autoSaveSafe,false);
  assert.ok(result.reviewReasons.includes('original-JPEG-identity-not-verified'));
 });
-test('PHOTO116 changing source or reviewed cutout while SECOND async hash pending must fail closed',async()=>{
+test('PHOTO116 changing source or reviewed cutout while SECOND async hash pending must fail closed',{timeout:5000},async()=>{
  let resume,call=0;
+ const digestStarted=new Promise(resolve=>{resume=resolve;});
  const provider={subtle:{digest:async(_,b)=>{
   call++;
   if(call===1)return webcrypto.subtle.digest('SHA-256',b);
-  return new Promise(resolve=>{resume=()=>webcrypto.subtle.digest('SHA-256',b).then(resolve);});
+  return new Promise(resolve=>resume(()=>webcrypto.subtle.digest('SHA-256',b).then(resolve)));
  }}};
  const r=make();
  const promise=evaluate(r,[],{cryptoProvider:provider});
- for(let i=0;i<100&&typeof resume!=='function';i++)await new Promise(resolve=>setImmediate(resolve));
- assert.equal(typeof resume,'function');
+ const finishDigest=await digestStarted;
  r.segmentHint.cutoutImage=jpg(cut2);
- resume();
+ finishDigest();
  await assert.rejects(promise,/INDEX-04 source, reviewed color or recognition changed during original JPEG proof/);
  assert.equal(call,2);
 });
-test('PHOTO116 owner switch during cutout SHA verification is rejected before any private index decision',async()=>{
+test('PHOTO116 owner switch during cutout SHA verification is rejected before any private index decision',{timeout:5000},async()=>{
  let resume,second=0,currentOwner=owner;
+ const digestStarted=new Promise(resolve=>{resume=resolve;});
  const provider={subtle:{digest:async(_,b)=>{
   second++;
   if(second===1)return webcrypto.subtle.digest('SHA-256',b);
-  return new Promise(resolve=>{resume=()=>webcrypto.subtle.digest('SHA-256',b).then(resolve);});
+  return new Promise(resolve=>resume(()=>webcrypto.subtle.digest('SHA-256',b).then(resolve)));
  }}};
  const pending=evaluate(make(),[],{cryptoProvider:provider,currentOwner:()=>currentOwner});
- for(let i=0;i<100&&typeof resume!=='function';i++)await new Promise(resolve=>setImmediate(resolve));
- assert.equal(typeof resume,'function');
+ const finishDigest=await digestStarted;
  currentOwner='different-owner';
- resume();
+ finishDigest();
  await assert.rejects(pending,/INDEX-04 owner changed during cutout JPEG proof/);
 });
 test('PHOTO116 single-garment original flow remains unchanged and safe for genuine SHA verified toy JPEG',async()=>{

@@ -111,5 +111,5 @@ test('wrong source SHA or unverified source cannot clear failed draft marker',as
 });
 test('ephemeral pending draft retries are cleared on owner session lock',()=>{
  if(parent)return;
- assert.match(source,/db=null;items=\[\];batch=\[\];failedDraftCaptures\.clear\(\)/);
+ assert.match(source,/db=null;items=\[\];batch=\[\];startupWardrobeRecoveryCount=0;failedDraftCaptures\.clear\(\)/);
 });

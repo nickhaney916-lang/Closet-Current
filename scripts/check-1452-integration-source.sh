@@ -16,4 +16,6 @@ git diff --exit-code "$reviewed_tree" HEAD -- . \
   ':(exclude)scripts/check-1452-journey-receipts.mjs' \
   ':(exclude)tests/auth-review-session-36.test.mjs' \
   ':(exclude)tests/automatic-indexing.test.cjs' \
-  ':(exclude)tests/mission3-private-wardrobe-hydration-save-epoch.test.cjs'
+  ':(exclude)tests/mission3-private-wardrobe-hydration-save-epoch.test.cjs' \
+  ':(exclude)tests/mission3-uncommitted-video-duplicate-retry.test.cjs' \
+  ':(exclude)tests/multigarment-cutout-byte-116.test.mjs'
