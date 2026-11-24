@@ -86,8 +86,20 @@ const workload=String.raw`
    await page.locator('#closetAllPieces').click();
    while(await page.getByRole('button',{name:'Show more clothing'}).count()){
     const old=await page.locator(cardSelector).count();
+    await page.evaluate(()=>{window.__p1650PriorCards=[...document.querySelectorAll('#closetGrid .card')];});
     await measure('expand-page',size,repeat,()=>page.getByRole('button',{name:'Show more clothing'}).click());
-    assert.ok(await page.locator(cardSelector).count()>old,'pagination made no progress');
+    const retained=await page.evaluate(()=>{
+     const previous=window.__p1650PriorCards,now=[...document.querySelectorAll('#closetGrid .card')];
+     const count=previous.filter((card,i)=>card===now[i]&&card.isConnected).length;
+     delete window.__p1650PriorCards;return count;
+    });
+    const total=await page.locator(cardSelector).count();
+    assert.ok(total>old,'pagination made no progress');
+    assert.equal(total,Math.min(size,old+48),'page expansion size changed');
+    measurements.at(-1).retainedPriorCards=retained;
+    measurements.at(-1).priorCards=old;
+    if(process.env.P1650_VARIANT==='parent')assert.equal(retained,0,'parent must reproduce replacement');
+    if(process.env.P1650_VARIANT==='candidate')assert.equal(retained,old,'existing card identity must survive expansion');
    }
    assert.equal(await page.locator(cardSelector).count(),size);
    const ids=await page.locator(cardSelector).evaluateAll(cards=>cards.map(x=>x.dataset.itemId));
@@ -120,7 +132,7 @@ const workload=String.raw`
   values.sort((a,b)=>a-b);const m=Math.floor(values.length/2);
   return {key,n:values.length,medianMs:values.length%2?values[m]:(values[m-1]+values[m])/2,minMs:values[0],maxMs:values.at(-1)};
  });
- await writeFile(join(out,'P1650-PERFORMANCE.json'),JSON.stringify({engine,width,source:process.env.P1650_SOURCE_SHA??null,fixture:'2 reviewed public originals plus generated legacy JPEG rows',physicalDevice:false,measurement:'Playwright action plus two animation frames; loaded image count is not decode timing; heap/long tasks null when unsupported',measurements,summaries,sourceReceiptsPreserved:true,ownerIsolation:true},null,2)+'\n');
+ await writeFile(join(out,'P1650-PERFORMANCE.json'),JSON.stringify({engine,width,source:process.env.P1650_SOURCE_SHA??null,variant:process.env.P1650_VARIANT??null,fixture:'2 reviewed public originals plus generated legacy JPEG rows',physicalDevice:false,measurement:'Playwright action plus two animation frames; loaded image count is not decode timing; heap/long tasks null when unsupported',measurements,summaries,sourceReceiptsPreserved:true,ownerIsolation:true},null,2)+'\n');
  console.log('P1650_SUMMARY '+JSON.stringify(summaries));
 `;
 const output='scripts/.p1650-performance-runner.mjs';
