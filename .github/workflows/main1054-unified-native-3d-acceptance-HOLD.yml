@@ -23,14 +23,17 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - name: Immutable accepted unified source and two-file-only test harness
+      - name: Immutable accepted unified source and five-file-only acceptance harness
         run: |
           set -eu
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           git merge-base --is-ancestor 2c3196f9c4d6fc8b516a0aae798e14cfb347896d HEAD
-          test "$(git diff --name-only 2c3196f9c4d6fc8b516a0aae798e14cfb347896d HEAD | wc -l)" -eq 2
-          git diff --exit-code 2c3196f9c4d6fc8b516a0aae798e14cfb347896d HEAD -- . ':(exclude).github/workflows/main1054-unified-native-3d-acceptance-HOLD.yml' ':(exclude)scripts/main1054-stylist-wear-journey.cjs'
+          test "$(git diff --name-only 2c3196f9c4d6fc8b516a0aae798e14cfb347896d HEAD | wc -l)" -eq 5
+          git diff --exit-code 2c3196f9c4d6fc8b516a0aae798e14cfb347896d HEAD -- . ':(exclude).github/workflows/main1054-unified-native-3d-acceptance-HOLD.yml' ':(exclude)scripts/main1054-stylist-wear-journey.cjs' ':(exclude)scripts/test-native-mobile-09-browser.mjs' ':(exclude)scripts/test-native-index-live-07-browser.mjs' ':(exclude)scripts/test-native-photo-readiness-08-browser.mjs'
+          test "$(git rev-parse HEAD:scripts/test-native-mobile-09-browser.mjs)" = 5bd2b58d6d2ff981d02854e609234e603d5e12c2
+          test "$(git rev-parse HEAD:scripts/test-native-index-live-07-browser.mjs)" = 807377c7cb1bd46b579a91447ad5d56a08dff8c5
+          test "$(git rev-parse HEAD:scripts/test-native-photo-readiness-08-browser.mjs)" = 6a0552067224522fbea9452a15c8401d69e08c5a
           test "$(git rev-parse HEAD:scripts/main1054-stylist-wear-journey.cjs)" = 7c9f8cf9b0fb8121fe898d893e0bc087f637f843
           test "$(git rev-parse HEAD:public/app.js)" = 95c2cc663ce84509565e9a5b533756990f2ccc43
           test "$(git rev-parse HEAD:public/outfit-board.js)" = 4ab345d9d8ea94e9567b4eafd698ce83e11e1e25

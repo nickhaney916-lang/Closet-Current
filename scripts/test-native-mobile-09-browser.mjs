@@ -250,12 +250,25 @@ try{
   await editor.locator('select[aria-label="Main category"]').selectOption('Tops');
   await editor.locator('select[aria-label="Item type"]').selectOption('T-shirt');
   await editor.locator('input[aria-label="Color"]').fill('Red');
+  // Current canonical save requires both explicit owner confirmations.
+  // Prove the old unconfirmed submission cannot write the original.
+  const verifiedDetails=editor.getByRole('checkbox',{name:'I verified the category, clothing type and color',exact:true});
+  const verifiedGarment=editor.getByRole('checkbox',{name:'I confirmed this photo shows one garment',exact:true});
+  assert.equal(await verifiedDetails.isChecked(),false);
+  assert.equal(await verifiedGarment.isChecked(),false);
+  assert.equal((await readItems(page)).some(x=>x.id===newId),false);
+  await editor.locator('button.primary').filter({hasText:'Save changes'}).click();
+  assert.equal(await editor.isVisible(),true,'Unconfirmed review must remain open');
+  assert.equal((await readItems(page)).some(x=>x.id===newId),false,'Unconfirmed garment must never save');
+  await verifiedDetails.check();
+  await verifiedGarment.check();
   await editor.locator('button.primary').filter({hasText:'Save changes'}).click();
   await page.waitForFunction(id=>items.some(x=>x.id===id)&&
    !batch.some(x=>x.id===id)&&
    window.closetIndex02?.state().total===6,newId,{timeout:30000});
   const newStored=(await readItems(page)).find(x=>x.id===newId);
   assert.ok(newStored&&newStored.ownerId==='native05-A');
+  assert.equal(newStored.ownerReviewed,true,'Durable save must record explicit owner review');
   assert.equal(newStored.category,'Tops');
   assert.equal(newStored.itemType,'T-shirt');
   assert.equal(newStored.color,'Red');
