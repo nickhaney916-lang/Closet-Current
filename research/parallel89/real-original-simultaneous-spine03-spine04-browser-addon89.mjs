@@ -169,6 +169,21 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    guardedReceipt.consumer3DAdmitted===false&&
    guardedReceipt.fullLayeredOutfitCollisionCertified===false,
    'fixed-body-correction-guard-must-not-certify-unsupplied-layers');
+  // A distinct research segment: linearly sweep the body from this actual
+  // original sampled pose to the neighboring measured grid pose. This is
+  // not the nonlinear joint trajectory; retain the separate angular audit.
+  const nextGridIndex=worstPoseIndex===0?1:0;
+  const movingBodyGuard=trialObstacleGuardedOriginalFrontStabilization({
+   rest:grid[4].front,pose:poseBuffers[worstPoseIndex],indices:frontIndices,
+   expectedFaces:35262,expectedVertices:x.sourceFrontN,
+   obstacles:[{kind:'body',vertices:fixedBodyPose,endVertices:grid[nextGridIndex].body,indices:bodyIndices}]
+  });
+  const {correctedPose:discardedMovingBodyCopy,...movingBodyReceipt}=movingBodyGuard;
+  invariant(movingBodyReceipt.totalObstacleFacesIndexed===109064&&
+   movingBodyReceipt.nonlinearAnimatedJointPathCertified===false&&
+   movingBodyReceipt.correctionAppliedToLiveMesh===false&&
+   movingBodyReceipt.consumer3DAdmitted===false,
+   'linear-moving-body-trial-must-not-certify-joint-motion');
   const evaluator=evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase({
    frontGridPoses:grid.map(x=>x.front),
    bodyGridPoses:grid.map(x=>x.body),
@@ -338,6 +353,7 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    sampledWorstPoseCoordinatedCorrection:{worstPoseIndex,...coordinatedReceipt},
    sampledWorstPoseProgressiveStabilization:{worstPoseIndex,...progressiveReceipt},
    sampledWorstPoseFixedBodyCorrectionGuard:{worstPoseIndex,...guardedReceipt},
+   sampledWorstPoseLinearBodySweepGuard:{worstPoseIndex,nextGridIndex,...movingBodyReceipt},
    originalGarmentToBodyMeasuredWearerFitGate:originalMeasuredWearerFit,
    unmeasuredOriginalMuseumFivePointPhotoPlane:museumFivePointPhotoPlane,
    museumOriginalPartARealPhysicalDimensionEvidence:museumRealPhysicalPartA,
