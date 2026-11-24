@@ -116,10 +116,10 @@ function assessBoardGap(slotId,board,closet){
      if(!['top','bottom','shoes'].includes(slotId))pieces.push(candidate);
      if(new Set(pieces.map(x=>x.id)).size!==pieces.length||stylistHarmony(pieces)<0)continue;
      const actual=pieces.filter(x=>x!==candidate);
-     const key=JSON.stringify(actual.map(x=>x.id).sort());
-     if(!actual.length||seen.has(key))continue;
-     seen.add(key);
-     examples.push(actual.map(x=>String(x.name||x.itemType)+' ('+x.color+')').join(' + '));
+     const label=actual.map(x=>String(x.name||x.itemType)+' ('+x.color+')').join(' + ');
+     if(!actual.length||seen.has(label))continue;
+     seen.add(label);
+     examples.push(label);
      if(examples.length===2)return examples;
     }
    }
