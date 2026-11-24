@@ -15,7 +15,8 @@ const get=(from,to)=>{
 const header=baseline?'':get('function ownerWardrobeMutationLease(){','function writeAll(values){');
 const write=get('function writeAll(values){','// Compare the persisted garment inside the same transaction');
 const remove=get(baseline?'function removeItem(id){':'function removeItem(id,expected){','function persistDraft(');
-const mutators=header+write+'\n'+remove;
+const unlink=source.includes('function unlinkDeletedGarmentFromOutfits(')?get('function unlinkDeletedGarmentFromOutfits(', 'function removeItem(id,expected){'):'';
+const mutators=header+write+'\n'+unlink+remove;
 const oldId='garment-shared-id';
 function deferred(){
  let resolve,reject;
@@ -28,7 +29,7 @@ function privateDB(owner,{holdCommit=false}={}){
  const txGate=deferred();
  const actions=[],events=[];
  const db={name:'closet-current-user-'+owner,transaction(store,mode){
-  assert.equal(store,'items');assert.equal(mode,'readwrite');
+  assert.ok(store==='items'||JSON.stringify(store)===JSON.stringify(['items','state']));assert.equal(mode,'readwrite');
   const pending=[];
   let aborted=false,scheduled=false;
   const commit=async()=>{
@@ -45,8 +46,9 @@ function privateDB(owner,{holdCommit=false}={}){
    oncomplete:null,onerror:null,onabort:null,error:null,
    abort(){aborted=true;queueMicrotask(()=>tx.onabort?.());},
    objectStore(name){
-    assert.equal(name,'items');
+    assert.ok(name==='items'||name==='state');
     return {
+     getAll(){const request={result:null,onsuccess:null};queueMicrotask(()=>{if(aborted)return;request.result=name==='items'?structuredClone([...rows.values()]):[];request.onsuccess?.();});return request;},
      get(id){
       const request={result:null,onsuccess:null};
       queueMicrotask(()=>{
@@ -74,7 +76,8 @@ function fixture({holdQueue=false,holdCommit=false,holdRefresh=false}={}){
   db:current,captureOperationEpoch:epoch,window:{closetAuth:auth},
   queued:fn=>holdQueue?gate.promise.then(fn):fn(),
   nativeIndex07Refresh:()=>{actions.push('refresh:'+auth.user?.id);return holdRefresh?refresh.promise:Promise.resolve();},
-  structuredClone,normalizeClothing:x=>x
+  structuredClone,normalizeClothing:x=>x,
+  assertCompleteWardrobe(rows,state,owner){assert.ok(rows.every(row=>row.ownerId===owner));assert.equal(state.length,0);}
  };
  vm.createContext(ctx);vm.runInContext(mutators,ctx);
  return {ctx,a,b,actions,releaseQueue:()=>gate.resolve(),releaseRefresh:()=>refresh.resolve(),

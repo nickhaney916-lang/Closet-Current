@@ -165,6 +165,16 @@ function switchView(view){
  document.querySelectorAll('.tab').forEach(x=>{const active=x.dataset.view===view;x.classList.toggle('active',active);if(active)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current');});
  const more=$('moreMenu');if(more){more.open=false;more.classList.toggle('has-active',['builder','trends','review','devicecheck'].includes(view));}
  render();
+ // Normal saved-item mutations need not activate the research-only index
+ // bridge. Rebuild the pinned selector from the current signed wardrobe
+ // when entering Stylist, including after save, edit, delete or restore.
+ if(view==='stylist'&&!startupWardrobeRecoveryCount&&
+    $('authGate')?.hidden===true&&$('appShell')?.hidden===false&&
+    typeof refreshStylistFocusItems==='function'){
+  let currentOwner=false;
+  try{ownerWardrobeMutationLease().assertLease();currentOwner=true;}catch{}
+  if(currentOwner)refreshStylistFocusItems();
+ }
  const section=document.getElementById(view);section.scrollIntoView?.({block:'start',behavior:'instant'});
  const heading=section.querySelector?.('h1,h2');if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true});}
 }
@@ -322,9 +332,19 @@ function saveEditedGarment(updated,expected){
   tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('Changes were not saved'));
  })).then(async value=>{assertOwner();await nativeIndex07Refresh();assertOwner();return value;});
 }
+// A deliberate deletion can remove this exact ID from named outfits and the
+// current draft, but must never "repair" an unrelated damaged wardrobe.
+function unlinkDeletedGarmentFromOutfits(board,id){
+ if(board===undefined)return undefined;
+ const unlink=outfit=>{
+  if(!Object.values(outfit.slots).includes(id))return outfit;
+  return {...outfit,slots:Object.fromEntries(Object.entries(outfit.slots).filter(([,value])=>value!==id))};
+ };
+ return {...board,current:unlink(board.current),saved:board.saved.map(unlink)};
+}
 function removeItem(id,expected){
  const {ownerDB,assertLease}=ownerWardrobeMutationLease();
- // A delete is destructive: the owner must have reviewed the *exact* saved
+ // A delete is destructive: the owner must have reviewed the exact saved
  // row. Never delete merely by ID if another tab changed the garment.
  const reviewed=expected?structuredClone(expected):null;
  if(!reviewed||reviewed.id!==id)
@@ -332,24 +352,43 @@ function removeItem(id,expected){
  return queued(()=>new Promise((resolve,reject)=>{
   try{
    assertLease();
-   const tx=ownerDB.transaction('items','readwrite'),store=tx.objectStore('items');
-   let failure;
-   const request=store.get(id);
-   request.onsuccess=()=>{
+   const tx=ownerDB.transaction(['items','state'],'readwrite'),store=tx.objectStore('items'),state=tx.objectStore('state');
+   let failure,remaining=2;
+   const rows=store.getAll(),states=state.getAll();
+   const commit=()=>{
     try{
      assertLease();
-     if(!request.result||
-        JSON.stringify(normalizeClothing(request.result))!==
-        JSON.stringify(normalizeClothing(reviewed)))
+     if(--remaining!==0)return;
+     const stored=rows.result.find(row=>row.id===id);
+     if(!stored||JSON.stringify(normalizeClothing(stored))!==JSON.stringify(normalizeClothing(reviewed)))
       throw Error('CLOSET_STALE_DELETE_REOPEN_EDITOR');
+     // Validate the complete pre-delete durable state; unrelated corruption
+     // remains fail-closed. Hold both stores until unlink and delete commit.
+     assertCompleteWardrobe(rows.result,states.result,window.closetAuth.user.id);
+     const board=states.result.find(row=>row.id==='outfit-board');
+     const next=unlinkDeletedGarmentFromOutfits(board,id);
+     const nextState=states.result.map(row=>row===board?next:row);
+     assertCompleteWardrobe(rows.result.filter(row=>row.id!==id),nextState,window.closetAuth.user.id);
+     if(board&&JSON.stringify(board)!==JSON.stringify(next))state.put(next);
      store.delete(id);
     }catch(error){failure=error;try{tx.abort();}catch{}}
    };
+   rows.onsuccess=commit;states.onsuccess=commit;
    tx.oncomplete=()=>{try{assertLease();resolve();}catch(error){reject(error);}};
    tx.onerror=tx.onabort=()=>reject(failure||tx.error||
     Error('Private garment removal interrupted'));
   }catch(error){reject(error);}
  })).then(async value=>{assertLease();await nativeIndex07Refresh();assertLease();return value;});
+}
+async function refreshOutfitsAfterGarmentDeletion(assertLease){
+ assertLease();
+ // Do not overwrite a newer unsaved draft: the ordinary reload helper
+ // already handles durable draft conflicts and protects owner/session.
+ if(typeof reloadCloudBoard==='function'&&typeof nativeLossless04Active!=='undefined'&&!nativeLossless04Active){
+  try{await reloadCloudBoard({ownerDB:db,assertLease});}
+  catch{assertLease();message('Clothing deleted. Reload to refresh saved outfits.');}
+ }
+ assertLease();
 }
 // Mutate only owner-reviewed pending photo rows against their actual durable
 // versions. Never replace the whole persisted batch with a stale tab snapshot.
@@ -1051,13 +1090,17 @@ function adjustPhoto(item){
  if(!correction10)item.userAdjusted=true;
  remove.onclick=async()=>{try{
    editorSession.assertCurrent();
-   if(expectedSavedRow)await removeItem(item.id,expectedSavedRow);
+   if(expectedSavedRow){
+    if(!confirm('Delete this closet piece? It will also be removed from saved outfits and the current outfit draft. Other pieces and outfit names will be kept.'))return;
+    editorSession.assertCurrent();await removeItem(item.id,expectedSavedRow);
+   }
    else if(expectedDraftRow)await persistDraft({required:true,mode:'remove',expected:expectedDraftRow});
    else throw Error('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS');
    editorSession.assertCurrent();
    items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);
    sessionCapturedIds.delete(item.id);failedDraftCaptures.delete(item.id);
-   dialog.close();render();
+   if(expectedSavedRow)await refreshOutfitsAfterGarmentDeletion(editorSession.assertCurrent);
+   editorSession.assertCurrent();dialog.close();render();
   }catch(error){if(!editorSession.current())return;
    message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?
    'This clothing piece changed in another tab. Reload My Closet before removing it.':
@@ -1552,14 +1595,15 @@ function render(){
   assertCard();
   // Confirm only the exact saved row originally displayed to this owner.
   const expected=structuredClone(item);
-  if(!confirm('Delete this closet piece?'))return;
+  if(!confirm('Delete this closet piece? It will also be removed from saved outfits and the current outfit draft. Other pieces and outfit names will be kept.'))return;
   assertCard();
   await removeItem(item.id,expected);
   assertCard();
   // Preserve the original same-owner ID semantics: discard any redundant
   // visible copies of the one durable row whose ID was CAS-deleted.
   items=items.filter(x=>x.id!==item.id);
-  render();
+  await refreshOutfitsAfterGarmentDeletion(lease.assertLease);
+  lease.assertLease();render();
  }catch(error){
   // A revoked (including same-ID re-login) operation has no authority to
   // update the replacement account's message, image grid or deletion state.

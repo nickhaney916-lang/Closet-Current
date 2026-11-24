@@ -44,7 +44,7 @@ function fixture({owner='A',confirmDelete=true,present=true}={}){
   message(value){events.push('message:'+ctx.window.closetAuth?.user?.id+':'+value);},
   del:{},structuredClone
  };
- vm.createContext(ctx);vm.runInContext(liveLease+'\n'+liveDelete,ctx);
+ vm.createContext(ctx);vm.runInContext(liveLease+'\n'+(app.includes('async function refreshOutfitsAfterGarmentDeletion(')?segment('async function refreshOutfitsAfterGarmentDeletion(', '// Mutate only owner-reviewed pending photo rows'):'')+'\n'+liveDelete,ctx);
  assert.equal(typeof ctx.del.onclick,'function');
  return {ctx,a,b,dbA,dbB,authA,authB,wait,events,calls,
   switchToB(){

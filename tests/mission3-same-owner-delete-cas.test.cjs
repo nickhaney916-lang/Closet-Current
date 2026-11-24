@@ -15,7 +15,7 @@ const extract=(start,end)=>{
 const exact=[
  extract('function queued(work){','let db,items='),
  extract('function ownerWardrobeMutationLease(){','function writeAll(values){'),
- extract('function removeItem(id,expected){','function persistDraft(')
+ extract(app.includes('function unlinkDeletedGarmentFromOutfits(')?'function unlinkDeletedGarmentFromOutfits(':'function removeItem(id,expected){','function persistDraft(')
 ].join('\n');
 const flush=async()=>{for(let i=0;i<35;i++)await Promise.resolve();};
 const initial={id:'garment-one',name:'Original blue shirt',ownerId:'synthetic-A',
@@ -24,9 +24,10 @@ const initial={id:'garment-one',name:'Original blue shirt',ownerId:'synthetic-A'
 const clone=structuredClone;
 function mockDB(owner,records){
  const db={name:'closet-current-user-'+owner};
- db.transaction=()=>{
+ db.transaction=(names)=>{
   let tx,done=false,aborted=false;
   const store={
+   getAll(){const request={result:undefined,onsuccess:null};queueMicrotask(()=>{if(aborted)return;request.result=clone([...records.values()]);request.onsuccess?.();});return request;},
    get(id){
     const request={result:undefined,onsuccess:null};
     queueMicrotask(()=>{
@@ -45,7 +46,7 @@ function mockDB(owner,records){
    }
   };
   tx={
-   objectStore:()=>store,abort(){
+   objectStore:name=>name==='items'?store:{getAll(){const request={result:[],onsuccess:null};queueMicrotask(()=>{if(!aborted)request.onsuccess?.();});return request;}},abort(){
     if(aborted||done)return;
     aborted=true;queueMicrotask(()=>tx.onabort?.());
    },
@@ -66,6 +67,7 @@ function fixture(){
   closetIndex02:{refresh:()=>events.push('index:'+ctx.window.closetAuth.user?.id)}
  },captureOperationEpoch:0,writes:Promise.resolve(),structuredClone,
  Promise,Error,JSON,queueMicrotask,normalizeClothing:x=>x,
+ assertCompleteWardrobe(rows,state,owner){assert.ok(rows.every(row=>row.ownerId===owner));assert.equal(state.length,0);},
  nativeIndex07Refresh:async()=>events.push('nativeIndex'),
  message:s=>events.push('message:'+s)};
  vm.createContext(ctx);vm.runInContext(exact,ctx);
