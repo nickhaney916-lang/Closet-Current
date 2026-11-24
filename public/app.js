@@ -1791,11 +1791,24 @@ async function recognizeItem(item){
  // state. P854 source-executed synthetic fixtures have no app queue map.
  const lease859=typeof pendingScanLease859==='undefined'?null:pendingScanLease859.get(item.id);
  if(lease859&&lease859.item!==item)return false;
+ // A live source is not permission to replace a newer owner decision.
+ const ownerFields854=()=>JSON.stringify(['category','itemType','color','colorSource','colorMethod',
+  'name','sleeveLength','pattern','fit','notes','seasons','ownerConfirmed','ownerReviewed',
+  'confirmedDetails','ownerSourceReview88','requiresOwnershipConfirmation'].map(key=>item[key]));
+ let ownerFieldsAtScan854=ownerFields854();
+ const ownerReviewInterrupted854=()=>{
+  if(!item.userAdjusted&&ownerFields854()===ownerFieldsAtScan854)return false;
+  item.localAnalyzed=true;item.requiresOwnershipConfirmation=true;
+  item.localStatus='Your adjustments are preserved. Confirm details before saving.';
+  return true;
+ };
  const scanStarted=Date.now();let savingIndexed=false;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
  try{
+  if(ownerReviewInterrupted854())return true;
   const source73=original854||source854,owner73=owner854?.id??null;
   const quality=await checkPhoto(source73);
   if(!live854())return false;
+  if(ownerReviewInterrupted854())return true;
   if(quality.captureGuidance&&source73===(item.recognitionPhoto?.image||item.image)&&
      owner73===(typeof window==='undefined'?null:window.closetAuth?.user?.id)){
    photoQualityHints73.set(item.id,{item,source:source73,owner:owner73,advice:quality.captureGuidance.advice||[]});
@@ -1812,6 +1825,7 @@ async function recognizeItem(item){
    return true;
   }
   if(!item.userAdjusted)Object.assign(item,ClothingDetails.fillColor(item,quality.colorEstimate));item.visualSignature=quality.signature;item.visualAspect=quality.aspect;
+  ownerFieldsAtScan854=ownerFields854();
   const matches=[...items,...batch].filter(x=>x.id!==item.id);
   // P864: the review scanner may discover a byte-identical previously
   // saved photo AFTER the pending original was accepted. Never silently
@@ -1830,9 +1844,11 @@ async function recognizeItem(item){
   try{
    if(!localReady)await enableLocal();
    if(!live854())return false;
+   if(ownerReviewInterrupted854())return true;
    result=await localRequest('classify',source73,item.id,item.segmentHint);
-  }catch(error){if(!live854())return false;recognitionUnavailable=true;throw error;}
+  }catch(error){if(!live854())return false;if(ownerReviewInterrupted854())return true;recognitionUnavailable=true;throw error;}
   if(!live854())return false;
+  if(ownerReviewInterrupted854())return true;
   // Validate the classifier envelope before it can change draft identity
   // or feed automatic indexing. An uncertain result is not a strong match.
   const topChoice=result?.choices?.[0];
@@ -1908,6 +1924,7 @@ async function recognizeItem(item){
  }catch(error){
   // An asynchronous old photo/owner error cannot become a new user's error.
   if(!live854())return false;
+  if(!savingIndexed&&ownerReviewInterrupted854())return true;
   item.localAnalyzed=false;item.scanFailed=true;item.saveFailed=savingIndexed;if(!item.visualSignature&&typeof recordDeviceEvent==='function')recordDeviceEvent('photo_check_failed',{stage:'photo_check',durationMs:Date.now()-scanStarted});if(recognitionUnavailable)recognitionState.phase='failed';
   if(savingIndexed){recognitionState.phase='save-failed';item.localStatus='Could not save this piece. Keep this page open, check device storage, then try again or use Adjust.';}
   else if(!item.visualSignature)item.localStatus='Could not read this photo. Retake it or adjust details.';
