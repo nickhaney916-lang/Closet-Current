@@ -352,7 +352,8 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
  ++boardPendingWrites;
  try{await queued(()=>new Promise((resolve,reject)=>{
   assertOwner();proof33?.assertCurrent();
-  const tx=ownerDB.transaction(candidate||proof33?['state','items']:'state','readwrite'),store=tx.objectStore('state');
+  const draftSlots=replacement===null?Object.entries(current.slots):[];
+  const tx=ownerDB.transaction(candidate||proof33||draftSlots.length?['state','items']:'state','readwrite'),store=tx.objectStore('state');
   let failure,saved,keepStoredDraft=false;
   if(candidate||proof33)for(const [slotId,id]of Object.entries(candidate?.slots||current.slots)){
    const selected=tx.objectStore('items').get(id);
@@ -391,7 +392,21 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
    saved=structuredClone(replacement===null?(request.result?.saved||[]):replacement);
    if(!Array.isArray(saved)||saved.length>50)throw Error('Saved outfit storage needs review. Reload your closet.');
    if(candidate){if(saved.length>=50)throw Error('You can save up to 50 outfits.');saved.push(candidate);}
-   store.put({id:'outfit-board',current:keepStoredDraft?(request.result?.current??null):current,saved});
+   const put=()=>store.put({id:'outfit-board',current:keepStoredDraft?(request.result?.current??null):current,saved});
+   if(keepStoredDraft||!draftSlots.length){put();return;}
+   // Validate the draft actually being published, even when no named outfit
+   // is being saved. The items lock orders this check with garment deletion.
+   let remaining=draftSlots.length;
+   for(const [slotId,id] of draftSlots){
+    const selected=tx.objectStore('items').get(id);
+    selected.onsuccess=()=>{try{
+     assertOwner();proof33?.assertCurrent();
+     const row=selected.result,slot=outfitSlots.find(x=>x.id===slotId);
+     if(!row||!slot||(row.ownerId&&row.ownerId!==owner)||!slotAllows(slot,normalizeClothing(row)))
+      throw outfitWardrobeChanged();
+     if(--remaining===0)put();
+    }catch(error){failure=error;tx.abort();}};
+   }
   }catch(error){failure=error;tx.abort();}};
   tx.oncomplete=()=>{try{assertOwner();proof33?.assertCurrent();proof33?.consume();savedOutfitBoards=structuredClone(saved);if(!keepStoredDraft){boardCommittedDraft=JSON.stringify(current);boardExpectedStoredDraft=JSON.stringify(current);boardConflictDraft=null;}resolve();}catch(error){reject(error);}};
   tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('Could not save this outfit.'));
@@ -461,6 +476,11 @@ async function storeBoard({replaceDraft=null}={}){
   if(!lease.current()||serial!==boardStatusSerial)return false;
   if(error?.code==='OUTFIT_DRAFT_CONFLICT'){
    boardDraftStatus('Another tab changed this outfit draft. Your changes are still here. Load latest replaces your unsaved changes, or choose Save my draft instead.');
+   return false;
+  }
+  if(error?.code==='OUTFIT_WARDROBE_CHANGED'){
+   $('refreshOutfitWardrobe').hidden=false;
+   boardDraftStatus('Selected clothing changed. Refresh your closet, then review and save this draft. Your draft is still here.');
    return false;
   }
   boardDraftStatus('This outfit could not be saved. Your changes are still here. Retry saving changes before leaving.',true);
