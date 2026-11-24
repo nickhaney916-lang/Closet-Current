@@ -418,7 +418,20 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
      // An unbound/stale/cross-photo proposal must not let the older worker
      // color slip through as a confident fallback. Keep the photo for Adjust.
     }
-    const safeColorEstimate76=verifiedColor76?p.colorEstimate:null;
+    // The pinned maskedPalette emits a dominant color only at >=60% support.
+    // An invalid optional estimate must not discard an otherwise valid garment
+    // or acquire the trusted garment-mask color method. Keep it for manual review.
+    const estimate=p.colorEstimate;
+    const validEstimate=estimate&&typeof estimate==='object'&&!Array.isArray(estimate)&&
+     approvedColorNames76.has(estimate.color)&&estimate.color!=='Multicolor'&&
+     estimate.source==='photo-estimate'&&Number.isFinite(estimate.support)&&
+     estimate.support>=.6&&estimate.support<=1&&
+     (estimate.needsConfirmation===undefined||estimate.needsConfirmation===false)&&
+     (estimate.secondaryColor==null||(approvedColorNames76.has(estimate.secondaryColor)&&
+       estimate.secondaryColor!=='Multicolor'&&estimate.secondaryColor!==estimate.color));
+    const safeColorEstimate76=verifiedColor76&&validEstimate?{
+     color:estimate.color,source:'photo-estimate',support:estimate.support,
+     secondaryColor:estimate.secondaryColor??null}:null;
     // P88: the P82 source-pinned worker already forwards instanceMethod.
     // Translate ONLY this exact opt-in diagnostic method into an owner draft
     // veto. Do not modify the frozen worker or trust free-text worker status.
