@@ -24,7 +24,7 @@ jobs:
           BASE=f2befed4c776786dc11843b98fafec72f2d9c202
           git merge-base --is-ancestor "$BASE" HEAD
           test "$(git rev-parse "$BASE:public/app.js")" = 835b4ad1f4a4a7f520aad5afd225134e5ea56e2d
-          test "$(git rev-parse HEAD:public/app.js)" = a65494577009384979b29c2c1a05b5fedadbf988
+          test "$(git rev-parse HEAD:public/app.js)" = 9ab3d95f0f9e60a1606e91771ed1c9dbe3de9693
           test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 3
           git diff --name-only "$BASE" HEAD | grep -Fx public/app.js
           git diff --name-only "$BASE" HEAD | grep -Fx tests/main1054-malformed-draft-insert-veto.test.mjs
@@ -37,7 +37,7 @@ jobs:
             echo 'Original source unexpectedly passed'; cat /tmp/draft-red.log; exit 1
           fi
           cat /tmp/draft-red.log
-          grep -Eq '^# fail 20$' /tmp/draft-red.log
+          grep -Eq '^# fail 26$' /tmp/draft-red.log
           node --check public/app.js
           node --test tests/main1054-malformed-draft-insert-veto.test.mjs
       - name: Run actual Chromium and WebKit native IndexedDB synthetic owner regression
