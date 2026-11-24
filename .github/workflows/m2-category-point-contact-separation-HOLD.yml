@@ -1,0 +1,68 @@
+name: M2 category source corner contact separation HOLD
+on:
+  push:
+    branches: [research/m2-category-point-contact-separation-20261123-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  native-static-contact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P89_BROWSER: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact parent and confined research paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 5de1dd2623e6a9748f24be14327769c47dba88e5 HEAD
+          while IFS= read -r p; do
+            case "$p" in
+              research/parallel89/category-point-contact-separation89.mjs|scripts/test-parallel89-category-point-contact-separation.mjs|.github/workflows/m2-category-point-contact-separation-HOLD.yml) ;;
+              *) echo "Unexpected scope: $p"; exit 1 ;;
+            esac
+          done < <(git diff --name-only 5de1dd2623e6a9748f24be14327769c47dba88e5 HEAD)
+      - name: Existing pinned dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Restore exact original licensed body donor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .m2-immutable-licensed-body df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.m2-immutable-licensed-body"
+          ln -s ../node_modules .m2-immutable-licensed-body/node_modules
+          cd .m2-immutable-licensed-body
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Actual original and repaired source corner contact comparison
+        run: node scripts/test-parallel89-category-point-contact-separation.mjs .m2-immutable-licensed-body
+      - name: Unchanged application build
+        if: matrix.engine == 'chromium'
+        run: node scripts/build.mjs
+      - name: Full inherited Node regression
+        if: matrix.engine == 'chromium'
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M2-category-static-contact-${{ matrix.engine }}-HOLD
+          path: benchmark/m2-category-point-contact-separation-HOLD/
+          retention-days: 7
+          if-no-files-found: warn
