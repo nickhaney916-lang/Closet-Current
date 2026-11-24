@@ -807,6 +807,7 @@ function renderTrendReferences(){const grid=$('boardTrendSources');grid.replaceC
 renderTrendReferences();
 const outfitBoardReady=(async()=>{
  await closetReady;
+ if(!db)return;
  let nativeMountLease=null,ordinaryBoardLease=null;
  if(nativeLossless04Active){
   nativeMountLease=beginNativeBoardMountLease();
@@ -943,11 +944,15 @@ const outfitBoardReady=(async()=>{
     r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
    });
    if(!ordinaryBoardLease.current())return;
+   assertCompleteWardrobe(items,state===undefined?[]:[state],window.closetAuth.user.id);
    boardExpectedStoredDraft=JSON.stringify(state?.current??null);
    if(state){currentBoard=cleanOutfitBoard(state.current,items);
     savedOutfitBoards=(state.saved||[]).slice(0,50).map(x=>cleanOutfitBoard(x,items));}
-  }catch{
+  }catch(error){
    if(!ordinaryBoardLease.current())return;
+   if(error?.code==='CLOSET_INCOMPLETE_WARDROBE'){
+    ownerDB.close();db=null;startupWardrobeRecoveryCount=1;render();return;
+   }
    $('boardSaveStatus').textContent='Saved outfits could not be loaded.';
   }
  }
