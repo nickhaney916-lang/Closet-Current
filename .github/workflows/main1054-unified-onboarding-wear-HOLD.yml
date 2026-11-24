@@ -1,0 +1,172 @@
+name: MAIN1054 unified onboarding and private wear HOLD
+on:
+  pull_request:
+    branches: [research/main1054-starter-wardrobe-HOLD]
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'research/main1054-unified-onboarding-wear-HOLD'
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [regression, chromium, webkit, storage]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact accepted parent and all integrated source receipts
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          git merge-base --is-ancestor 1869baf7339e01d261dc2264f1ddb7fcfeae3e05 HEAD
+          git merge-base --is-ancestor 606b18c75183c1d6ce1da2966bffb16ba206dba3 HEAD
+          git merge-base --is-ancestor 61ca5603ef5f23f190bfe9d36218e0a6fdf6a65e HEAD
+          git merge-base --is-ancestor 2c3196f9c4d6fc8b516a0aae798e14cfb347896d HEAD
+          test "$(git diff --name-only 61ca5603ef5f23f190bfe9d36218e0a6fdf6a65e HEAD | wc -l)" -eq 2
+          git diff --exit-code 61ca5603ef5f23f190bfe9d36218e0a6fdf6a65e HEAD -- . ':(exclude).github/workflows/main1054-unified-onboarding-wear-HOLD.yml' ':(exclude)scripts/main1054-stylist-wear-journey.cjs'
+          test "$(git rev-parse HEAD:scripts/main1054-stylist-wear-journey.cjs)" = "7c9f8cf9b0fb8121fe898d893e0bc087f637f843"
+          test "$(git rev-parse HEAD:public/app-theme.css)" = "d214a65d9c884a9dc0e4b95efd787edca8439cc1"
+          test "$(git rev-parse HEAD:public/closet-stylist.js)" = "5535a75bb5b6aad5805923a3742cc8edbc94e09e"
+          test "$(git rev-parse HEAD:public/navigation.js)" = "56b007f44e5df22d3f2389d2eb2e736274182993"
+          test "$(git rev-parse HEAD:public/starter-wardrobe.js)" = "47fc06d1a26bcc94f2cb742a9484c771956cffe5"
+          test "$(git rev-parse HEAD:scripts/p1662-native-starter.cjs)" = "f2e72268cbe091c68a737cf916e5ddb4a9463757"
+          test "$(git rev-parse HEAD:tests/p1662-starter-wardrobe.test.cjs)" = "84a6df118fb69b88b92f9f7710e3e63c1eee5bd9"
+          test "$(git rev-parse HEAD:.github/workflows/main1054-starter-wardrobe-HOLD.yml)" = "5feb859e821e6a64e95891c0a16e072fe9db91f4"
+          test "$(git rev-parse HEAD:public/index.html)" = "2b5ad769a71921838634f9a4c0943816f52ffaea"
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = "4ab345d9d8ea94e9567b4eafd698ce83e11e1e25"
+          test "$(git rev-parse HEAD:public/style.css)" = "5ccde75a571f92b1bd1b977ce8011630ace2bcc9"
+          test "$(git rev-parse HEAD:public/outfit-wear-history.js)" = "09e770d72eff9478d30af8858c9ae8f67b70a6c2"
+          test "$(git rev-parse HEAD:tests/p1656-outfit-wear.test.cjs)" = "dbcd2e121c154602dfd58a8064aeec2c6d7a73f4"
+          test "$(git rev-parse HEAD:scripts/p1656-native-wear.cjs)" = "ba156dd0eaa24cd584027c4d2267c33104048e54"
+          test "$(git rev-parse HEAD:public/app.js)" = "95c2cc663ce84509565e9a5b533756990f2ccc43"
+          test "$(git rev-parse HEAD:public/closet-stylist-engine.js)" = "6ed727e123e8b267d28346138511cd45d40948c9"
+          test "$(git rev-parse HEAD:scripts/p1640-contextual-handoff.cjs)" = "01bc0de6ebe1027fa1b44f5754d1cf14a6820d03"
+          test "$(git rev-parse HEAD:scripts/p1640-native-context.cjs)" = "2f5ff2b17959f08006c5a1b4f10a173a1c5a58e9"
+          test "$(git rev-parse HEAD:tests/navigation.test.cjs)" = "2aa4cef209f8d57579dd0e7118f1ce195720d2ac"
+          test "$(git rev-parse HEAD:tests/p1640-contextual-styling.test.cjs)" = "a5caa9a93bcb6e89b10b83a4b4f5b4a78ad5c87e"
+          test "$(git rev-parse HEAD:scripts/p1659-native-delete-reload.cjs)" = "f682a33160a97c8562caa33aca8af83f38195eab"
+          test "$(git rev-parse HEAD:tests/mission3-private-mutation-epoch.test.cjs)" = "c28f59096df29ec8edbe9f0773e1903e88659849"
+          test "$(git rev-parse HEAD:tests/mission3-reviewed-editor-postcommit-lease.test.cjs)" = "59aa5abbba86147702bb8541776276c0b8a6fd2d"
+          test "$(git rev-parse HEAD:tests/mission3-same-owner-delete-cas.test.cjs)" = "78595d041dc25cfd5f0675ea15ab54b1fa93b408"
+          test "$(git rev-parse HEAD:tests/mission3-saved-card-delete-session-cas.test.cjs)" = "b1bc995bbda9c0d73db25bf5a4b37a8246b8ef37"
+          git show 07ec40dd26ede456907b89c6caf40bd15118ef6f:public/app.js > "$RUNNER_TEMP/p1650-parent-app.js"
+          git show 21108c29e66af063c5c52fb146a880023e7b6534:public/app.js > "$RUNNER_TEMP/delete-parent.js"
+          git show 07ec40dd26ede456907b89c6caf40bd15118ef6f:public/closet-stylist-engine.js > "$RUNNER_TEMP/p1640-parent-engine.js"
+          node scripts/p1640-contextual-handoff.cjs "$RUNNER_TEMP/p1640-parent-engine.js" "$RUNNER_TEMP/p1640-expected-engine.js"
+          cmp "$RUNNER_TEMP/p1640-expected-engine.js" public/closet-stylist-engine.js
+          test "$(git rev-parse HEAD:scripts/p1650-mobile-performance.cjs)" = "2225b04e2b1aa6b1d24bf44597fb43e80dac2bcc"
+          test "$(git rev-parse HEAD:public/closet-browser.js)" = "cd7cfd1459368e2131388f291ed6d171c7406f2a"
+          test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = "3227633c67528e615779065b1dae6f12dbc1e482"
+          node --check public/app.js
+          node --check scripts/p1659-native-delete-reload.cjs
+          node --check scripts/p1656-native-wear.cjs
+          node --check scripts/p1662-native-starter.cjs
+          node --check scripts/main1054-stylist-wear-journey.cjs
+          git log -1 --format='commit %H tree %T'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: node scripts/build.mjs
+      - if: matrix.check == 'regression'
+        run: |
+          set -euo pipefail
+          if P1640_BASELINE=1 P1640_ENGINE_SOURCE="$RUNNER_TEMP/p1640-parent-engine.js" node --test tests/p1640-contextual-styling.test.cjs > "$RUNNER_TEMP/context-red.log" 2>&1; then cat "$RUNNER_TEMP/context-red.log"; exit 1; fi
+          grep -F 'not ok 25 - pinned excluded season cannot bypass eligibility' "$RUNNER_TEMP/context-red.log"
+          node --test tests/p1640-contextual-styling.test.cjs
+          node --test tests/p1662-starter-wardrobe.test.cjs
+          node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
+      - if: matrix.check == 'storage'
+        run: npx playwright install --with-deps chromium webkit
+      - if: matrix.check == 'storage'
+        run: |
+          set -euo pipefail
+          node scripts/test-main1054-reviewed-payload-native.mjs
+          CONFLICT_OUT="$RUNNER_TEMP/review-concurrency" node scripts/test-outfit-draft-conflicts-browser.mjs
+          node scripts/test-p1600-wardrobe-recovery-browser.mjs
+          node scripts/test-mission3-lossless-v4-owner-acceptance-browser.mjs "$RUNNER_TEMP/review-backup"
+      - if: matrix.check == 'chromium' || matrix.check == 'webkit'
+        run: npx playwright install --with-deps "${{ matrix.check }}"
+      - if: matrix.check == 'chromium' || matrix.check == 'webkit'
+        name: Same-run actual mobile viewport parent RED and optimized candidate GREEN
+        env:
+          P99_ENGINE: ${{ matrix.check }}
+          P1650_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+          M58_ENGINE: ${{ matrix.check }}
+        run: |
+          set -euo pipefail
+          cp dist/app.js "$RUNNER_TEMP/p1650-candidate-app.js"
+          trap 'cp "$RUNNER_TEMP/p1650-candidate-app.js" dist/app.js' EXIT
+          cp "$RUNNER_TEMP/p1650-parent-app.js" dist/app.js
+          P1650_VARIANT=parent P1650_SOURCE_SHA=07ec40dd26ede456907b89c6caf40bd15118ef6f P99_WIDTH=390 node scripts/p1650-mobile-performance.cjs
+          cp "benchmark/parallel99-normal-journey/$P99_ENGINE/390/P1650-PERFORMANCE.json" "benchmark/parallel99-normal-journey/$P99_ENGINE/390/P1650-PARENT.json"
+          cp "$RUNNER_TEMP/p1650-candidate-app.js" dist/app.js
+          rm "benchmark/parallel99-normal-journey/$P99_ENGINE/390/P1650-PERFORMANCE.json"
+          P1650_VARIANT=candidate P99_WIDTH=390 node scripts/p1650-mobile-performance.cjs
+          node -e 'const fs=require("fs"),root="benchmark/parallel99-normal-journey/"+process.env.P99_ENGINE+"/390/",a=JSON.parse(fs.readFileSync(root+"P1650-PARENT.json")),b=JSON.parse(fs.readFileSync(root+"P1650-PERFORMANCE.json")); if(a.variant!=="parent"||b.variant!=="candidate"||a.source!=="07ec40dd26ede456907b89c6caf40bd15118ef6f"||b.source!==process.env.P1650_SOURCE_SHA||!a.ownerIsolation||!b.ownerIsolation||!a.sourceReceiptsPreserved||!b.sourceReceiptsPreserved)throw Error("invalid comparison receipt"); for(const x of a.summaries.filter(s=>s.key.endsWith(":expand-page"))){const y=b.summaries.find(s=>s.key===x.key);if(!y||x.n!==y.n)throw Error("unmatched workload"); console.log("P1650_COMPARISON "+JSON.stringify({engine:a.engine,key:x.key,n:x.n,parentMs:x.medianMs,candidateMs:y.medianMs,reductionPct:100*(1-y.medianMs/x.medianMs)}));}'
+      - if: always() && (matrix.check == 'chromium' || matrix.check == 'webkit')
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1650-performance-${{ matrix.check }}
+          path: |
+            benchmark/parallel99-normal-journey/${{ matrix.check }}/390/P1650-PERFORMANCE.json
+            benchmark/parallel99-normal-journey/${{ matrix.check }}/390/P1650-PARENT.json
+          if-no-files-found: warn
+      - if: matrix.check == 'chromium' || matrix.check == 'webkit'
+        name: Inherited ordinary app journeys
+        env:
+          P99_ENGINE: ${{ matrix.check }}
+          M58_ENGINE: ${{ matrix.check }}
+        run: |
+          set -euo pipefail
+          cp public/app.js "$RUNNER_TEMP/delete-candidate.js"
+          cp dist/closet-stylist-engine.js "$RUNNER_TEMP/context-candidate.js"
+          trap 'cp "$RUNNER_TEMP/delete-candidate.js" public/app.js; cp "$RUNNER_TEMP/context-candidate.js" dist/closet-stylist-engine.js' EXIT
+          cp "$RUNNER_TEMP/delete-parent.js" public/app.js
+          P1600_ENGINE="$P99_ENGINE" P1659_EXPECT_RED=1 node scripts/p1659-native-delete-reload.cjs
+          cp "$RUNNER_TEMP/delete-candidate.js" public/app.js
+          P1600_ENGINE="$P99_ENGINE" node scripts/p1659-native-delete-reload.cjs
+          cp "$RUNNER_TEMP/p1640-parent-engine.js" dist/closet-stylist-engine.js
+          P1640_EXPECT_RED=1 P99_WIDTH=390 node scripts/p1640-native-context.cjs
+          cp "$RUNNER_TEMP/context-candidate.js" dist/closet-stylist-engine.js
+          P1607_AUDIT=1 P99_WIDTH=390 node scripts/test-main1054-reviewed-wardrobe-details-browser.cjs
+          for width in 320 390 430; do
+            P99_WIDTH="$width" node scripts/p1640-native-context.cjs
+            P99_WIDTH="$width" node scripts/p1647-native-retrieval.cjs
+            P99_WIDTH="$width" node scripts/p1653-native-stylist-defaults.cjs
+            P1607_AUDIT=1 P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
+            P99_WIDTH="$width" node scripts/p1656-native-wear.cjs
+          done
+          P99_WIDTH=390 P1653_RESTORE=1 node scripts/p1653-native-stylist-defaults.cjs
+          node scripts/test-parallel94-native-p88-browser.mjs
+          node scripts/check-1452-journey-receipts.mjs "$P99_ENGINE"
+      - if: matrix.check == 'chromium' || matrix.check == 'webkit'
+        name: Accepted first-use baseline and integrated onboarding-to-wear journeys
+        env:
+          P99_ENGINE: ${{ matrix.check }}
+        run: |
+          set -euo pipefail
+          git worktree add --detach "$RUNNER_TEMP/p1662-baseline" 2c3196f9c4d6fc8b516a0aae798e14cfb347896d
+          ln -s "$PWD/node_modules" "$RUNNER_TEMP/p1662-baseline/node_modules"
+          cp scripts/p1662-native-starter.cjs "$RUNNER_TEMP/p1662-baseline/scripts/"
+          (cd "$RUNNER_TEMP/p1662-baseline" && node scripts/build.mjs)
+          for width in 320 390 430; do
+            export P99_WIDTH="$width"
+            (cd "$RUNNER_TEMP/p1662-baseline" && P1662_BASELINE=1 node scripts/p1662-native-starter.cjs)
+            node scripts/p1662-native-starter.cjs
+            node scripts/main1054-stylist-wear-journey.cjs
+          done
+          P99_WIDTH=390 P1607_AUDIT=1 node scripts/test-parallel99-normal-app-browser.mjs
+  acceptance:
+    if: always()
+    needs: [verify]
+    runs-on: ubuntu-24.04
+    env:
+      RESULT: ${{ needs.verify.result }}
+    steps:
+      - run: test "$RESULT" = success
