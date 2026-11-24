@@ -39,7 +39,10 @@ test('P848 guarantees source binding hash must be generated from current origina
  assert.match(capture,/sourceProof===p\.reconciliation70\?\.sourceSha256&&sourceProof===color\.sourceSha256/);
  assert.match(capture,/color\.maskSha256===p\.reconciliation70\?\.maskSha256/);
  assert.match(capture,/color\.ownerId===job\.ownerId&&color\.requestId===job\.id/);
- assert.match(capture,/const safeColorEstimate76=verifiedColor76\?p\.colorEstimate:null/);
+ assert.match(capture,/const safeColorEstimate76\s*=\s*verifiedColor76\s*&&\s*validEstimate\s*\?\s*\{/);
+ assert.match(capture,/estimate\.source==='photo-estimate'&&Number\.isFinite\(estimate\.support\)/);
+ assert.match(capture,/estimate\.support>=\.6&&estimate\.support<=1/);
+ assert.match(capture,/colorEstimate:safeColorEstimate76[,}]/);
 });
 test('P848 does not mutate original image pixels, mask, private wardrobe or colorSource on suggestion',()=>{
  const s=sample(235,225,208),unchanged=structuredClone(s);

@@ -1,0 +1,64 @@
+name: P1605 recognition verification (NO DEPLOY)
+on:
+  push:
+    branches: [research/p1605-recognition-verification-HOLD]
+  pull_request:
+    branches: [research/mission1-parallel88-instance-conservation-HOLD]
+    paths: [.github/workflows/p1605-recognition-verification-no-deploy.yml]
+permissions:
+  contents: read
+env:
+  BASELINE: 3905e3b78a14daaa518a0c26caa6737f96616c22
+jobs:
+  verification:
+    if: github.event_name == 'push' || (github.head_ref == 'research/p1605-recognition-verification-HOLD' && github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [regression, browser]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify immutable baseline and test-only scope
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$BASELINE" HEAD
+          git diff --exit-code "$BASELINE" HEAD -- . \
+            ':(exclude)tests/mission1-color-owner-learning-integration-848.test.mjs' \
+            ':(exclude)scripts/test-p1605-recognition-recovery-browser.mjs' \
+            ':(exclude)scripts/run-parallel70-browser.mjs' \
+            ':(exclude)scripts/test-parallel76-color-browser.mjs' \
+            ':(exclude).github/workflows/p1605-recognition-verification-no-deploy.yml'
+          git log -1 --format='commit %H tree %T'
+          sha256sum public/*worker* public/dual-model-lock-82.mjs
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - run: node scripts/build.mjs
+      - if: matrix.check == 'regression'
+        name: Verify release policy and full application regression
+        run: |
+          set -euo pipefail
+          node scripts/build-m1-no-account-trial-831.mjs
+          node scripts/m1-release-evidence-851.mjs | tee "${RUNNER_TEMP}/release-gate"
+          grep -Fq '"status":"BLOCKED"' "${RUNNER_TEMP}/release-gate"
+          grep -Fq '"shouldLiftFamilyAlphaHold":false' "${RUNNER_TEMP}/release-gate"
+          P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - if: matrix.check == 'browser'
+        run: npx playwright install --with-deps chromium webkit
+      - if: matrix.check == 'browser'
+        name: Run native app and recognition recovery in Chromium and WebKit
+        run: |
+          node scripts/test-m1-original-photo-browser-865.mjs "${RUNNER_TEMP}/p865"
+          node scripts/test-p82-review-browser.mjs
+          node scripts/test-m1-owner-pair-admission-846.mjs
+          node scripts/test-m1-review-first-default-843.mjs
+          node scripts/run-parallel70-browser.mjs "${RUNNER_TEMP}/p70"
+          node scripts/test-parallel76-color-browser.mjs "${RUNNER_TEMP}/p76"
+          node scripts/test-p1605-recognition-recovery-browser.mjs
