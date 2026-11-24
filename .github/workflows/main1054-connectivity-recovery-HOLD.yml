@@ -1,0 +1,47 @@
+name: MAIN1054 mid-session connectivity recovery HOLD
+on:
+  pull_request:
+    branches: [research/main1054-ordinary-camera-source-HOLD]
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'research/main1054-connectivity-recovery-HOLD'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [regression, chromium, webkit, auth]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: node scripts/build.mjs
+      - if: matrix.check == 'regression'
+        run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
+      - if: matrix.check == 'auth'
+        run: |
+          npx playwright install --with-deps chromium webkit
+          node scripts/test-mission3-offline-auth-recovery-browser.mjs "$RUNNER_TEMP/p1669-auth"
+      - if: matrix.check == 'chromium' || matrix.check == 'webkit'
+        env:
+          P99_ENGINE: ${{ matrix.check }}
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps "$P99_ENGINE"
+          git worktree add --detach "$RUNNER_TEMP/p1669-baseline" eebfd74f5e99cf2d7a5430b4a16d0687f4971a0e
+          ln -s "$PWD/node_modules" "$RUNNER_TEMP/p1669-baseline/node_modules"
+          cp scripts/p1669-native-connectivity.cjs "$RUNNER_TEMP/p1669-baseline/scripts/"
+          (cd "$RUNNER_TEMP/p1669-baseline" && node scripts/build.mjs)
+          for width in 320 390 430; do
+            export P99_WIDTH="$width"
+            (cd "$RUNNER_TEMP/p1669-baseline" && P1669_EXPECT_RED=1 node scripts/p1669-native-connectivity.cjs)
+            node scripts/p1669-native-connectivity.cjs
+          done
