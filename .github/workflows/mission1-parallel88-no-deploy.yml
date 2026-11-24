@@ -879,3 +879,128 @@ jobs:
           path: benchmark/output-footwear-hard-negative/hard-negative-diagnostic.json
           if-no-files-found: warn
           retention-days: 14
+
+  footwear-negative-contrast-NO-DEPLOY:
+    if: "${{ startsWith(github.event.head_commit.message, 'research(m1 #88): negative-contrast') }}"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare all 59 locked historical inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object benchmark/locked-photo-sources.json)" = 5af9b4412e861d6cb6c638e4a414aedcb813f16e
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node scripts/build.mjs
+          mkdir -p benchmark/output-footwear-negative-contrast
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile,writeFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          const read=async p=>JSON.parse(await readFile(p,'utf8'));
+          const ids=['commons-0087','commons-0088','commons-0089','commons-0092','commons-0093','commons-0094','commons-0095','commons-0078','validation-0023','commons-0021'];
+          const rows=(await Promise.all(['reviewed-32','holdout-16','fresh-11'].map(x=>read('benchmark/manifest-'+x+'.json')))).flat();
+          const locked=await read('benchmark/locked-photo-sources.json');
+          const selected=rows;assert.equal(rows.length,59);assert.equal(new Set(rows.map(x=>x.id)).size,59);
+          for(const row of selected){
+           assert.ok(row?.verified);
+           const s=locked.find(x=>x.id===row.id);
+           assert.ok(s?.verified&&s.attribution?.license);
+           assert.equal(s.image,row.image);
+           assert.equal(createHash('sha256').update(await readFile('benchmark/photos/'+s.image)).digest('hex'),s.sha256);
+          }
+          await writeFile('benchmark/output-footwear-negative-contrast/manifest.json',JSON.stringify(selected));
+          JS
+          git diff --exit-code -- public
+      - name: Run unchanged FashionCLIP browser classification on all 59 exposed inputs
+        run: node scripts/run-browser-photo-benchmark.mjs benchmark/output-footwear-negative-contrast/manifest.json benchmark/output-footwear-negative-contrast
+      - name: Encode two descriptive nonwearable contrast ensembles using pinned original text model
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install -r scripts/recognition-requirements.txt
+          mkdir -p benchmark/output-footwear-negative-contrast/trial
+          cat > benchmark/output-footwear-negative-contrast/trial/prompts.json <<'JSON'
+          {
+            "a blank wall": ["a blank wall","a flat illustration or drawing depicting an article of footwear","a printed picture of a shoe rather than a wearable shoe","an artistic sketch of a boot on paper"],
+            "an empty floor": ["an empty floor","a decorative sculpture shaped like a shoe","a miniature ornamental footwear shaped object made of glass or ceramic","a toy replica of a boot not designed to be worn"]
+          }
+          JSON
+          python scripts/rebuild-recognition-vectors.py --prompt-overrides benchmark/output-footwear-negative-contrast/trial/prompts.json --blend 1 --output-dir benchmark/output-footwear-negative-contrast/trial
+          git diff --exit-code -- public
+      - name: Compare frozen top-rank abstention with all original labels preserved
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile,writeFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import {localCandidates} from './public/local-catalog.mjs';
+          import {makeVectorScorer} from './public/vector-scorer.mjs';
+          const root='benchmark/output-footwear-negative-contrast';
+          const read=async p=>JSON.parse(await readFile(p,'utf8'));
+          const hash=b=>createHash('sha256').update(b).digest('hex');
+          const base=await read('public/recognition-vectors.json'),candidate=await read(root+'/trial/recognition-vectors.json');
+          const original=await readFile('public/recognition-vectors.bin'),trial=await readFile(root+'/trial/recognition-vectors.bin');
+          assert.equal(base.revision,'0f99955d944c39bfd9d035a02ac273c7a44a406b');
+          assert.equal(base.sha256,'e1e0415f2272e81c0f3ce2f08fd5fd5c2a9eb6481437d696936c723e8e1abb2f');
+          assert.equal(hash(original),base.sha256);assert.equal(hash(trial),candidate.sha256);
+          assert.equal(candidate.revision,base.revision);assert.equal(candidate.scale,base.scale);assert.deepEqual(candidate.labels,base.labels);
+          const groups=[['a blank wall','research: nonwearable illustration'],['an empty floor','research: nonwearable replica']];
+          const changed=base.labels.filter((label,i)=>!original.subarray(i*2048,(i+1)*2048).equals(trial.subarray(i*2048,(i+1)*2048)));
+          assert.deepEqual(changed.sort(),groups.map(x=>x[0]).sort());
+          // Keep every original row exactly; only append the two newly encoded
+          // ensembles. No change to original model scores or catalog authority.
+          const newRows=groups.map(([label])=>{const i=base.labels.indexOf(label);assert.ok(i>=0);return trial.subarray(i*2048,(i+1)*2048);});
+          const bundle=Buffer.concat([original,...newRows]);
+          const labels=[...base.labels,...groups.map(x=>x[1])];
+          const asFloats=b=>new Float32Array(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength));
+          const score=makeVectorScorer(async x=>x.features,{...base,labels},asFloats(bundle));
+          const catalog=new Map(localCandidates.map(x=>[x.label,{category:x.category,type:x.itemType}]));
+          const all=[...catalog.keys(),...groups.map(x=>x[1])];
+          const added=new Set(groups.map(x=>x[1]));
+          const reject=(app,top)=>app?.category==='Shoes'&&added.has(top);
+          assert.equal(reject({category:'Shoes'},groups[0][1]),true);
+          assert.equal(reject({category:'Shoes'},'sneakers'),false);
+          assert.equal(reject({category:'Tops'},groups[1][1]),false);
+          assert.equal(reject(null,groups[0][1]),false);
+          const actual=await read(root+'/results.json'),manifest=await read(root+'/manifest.json'),sources=await read('benchmark/locked-photo-sources.json');
+          assert.equal(actual.length,59);assert.equal(new Set(actual.map(x=>x.id)).size,59);assert.equal(manifest.length,59);
+          const excluded=new Set(['commons-0087','commons-0088','commons-0089']);
+          const rows=[];
+          for(const m of manifest){
+           const r=actual.find(x=>x.id===m.id),source=sources.find(x=>x.id===m.id);
+           assert.ok(r&&!r.error&&source?.verified);
+           assert.equal(r.recognitionMemory?.modelKey,'fashion-clip/whole-v1/'+base.revision);
+           assert.equal(r.recognitionMemory.features.length,512);
+           const rank=await score({features:r.recognitionMemory.features},all);
+           const originalTop=rank.find(x=>!added.has(x.label)),negativeTop=rank.find(x=>added.has(x.label));
+           const abstain=reject(r.prediction,rank[0].label);
+           rows.push({id:m.id,sourceSha256:source.sha256,cohort:excluded.has(m.id)?'nonwearable':m.expectedCategory==='Shoes'?'wearable-candidate':'other-control',before:r.prediction,after:abstain?{category:null,type:null}:r.prediction,abstain,originalTop,negativeTop,combinedTop:rank[0]});
+          }
+          const count=(xs,p)=>xs.filter(p).length;
+          const by=cohort=>rows.filter(x=>x.cohort===cohort);
+          const summary={photos:rows.length,nonwearable:{n:by('nonwearable').length,beforeShoe:count(by('nonwearable'),x=>x.before.category==='Shoes'),afterShoe:count(by('nonwearable'),x=>x.after.category==='Shoes')},wearable:{n:by('wearable-candidate').length,withheld:by('wearable-candidate').filter(x=>x.abstain).map(x=>x.id)},controls:{n:by('other-control').length,withheld:by('other-control').filter(x=>x.abstain).map(x=>x.id)},independentBlind:false,saveTested:false,productionPromotion:false};
+          assert.equal(summary.nonwearable.n,3);assert.equal(summary.wearable.n,17);assert.equal(summary.controls.n,39);
+          await writeFile(root+'/contrast-diagnostic.json',JSON.stringify({schema:'p88-nonwearable-contrast-v1',baseVectorSha256:base.sha256,ensembleVectorSha256:candidate.sha256,summary,rows},null,2));
+          console.log('P88_NONWEARABLE_CONTRAST '+JSON.stringify(summary));
+          // A research execution PASS is not an accuracy PASS; report all losses.
+          JS
+          git diff --exit-code -- public
+      - name: Upload numeric diagnostic only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p88-nonwearable-contrast
+          path: benchmark/output-footwear-negative-contrast/contrast-diagnostic.json
+          if-no-files-found: warn
+          retention-days: 14
