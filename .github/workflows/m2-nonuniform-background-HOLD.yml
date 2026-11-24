@@ -1,0 +1,40 @@
+name: M2 nonuniform background source proposals HOLD
+on:
+  push:
+    branches: [research/m2-nonuniform-background-20261123-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  original-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact parent and scoped paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor dae5088bc7e2880b28839b2b0516afe671fb413d HEAD
+          while IFS= read -r p; do
+            case "$p" in
+              research/parallel89/multicategory-border-mask89.mjs|tests/parallel89-nonuniform-background.test.mjs|.github/workflows/m2-nonuniform-background-HOLD.yml) ;;
+              *) echo "Unexpected scope: $p"; exit 1 ;;
+            esac
+          done < <(git diff --name-only dae5088bc7e2880b28839b2b0516afe671fb413d HEAD)
+      - name: Existing pinned dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Actual six source JPEGs to source-bound mesh and adversarial controls
+        run: node --test tests/parallel89-nonuniform-background.test.mjs tests/parallel89-source-photo-to-mesh.test.mjs tests/parallel89-multicategory-border-mask.test.mjs
+      - name: Inherited mesh and texture regressions
+        run: node --test tests/parallel89-multicategory-silhouette-topology.test.mjs tests/parallel89-multicategory-texture-detail.test.mjs tests/parallel89-multicategory-original-aspect.test.mjs tests/parallel89-source-original-texture-transfer.test.mjs
+      - name: Unchanged application build
+        run: node scripts/build.mjs
+      - name: Full inherited Node regression
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
