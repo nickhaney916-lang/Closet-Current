@@ -1427,7 +1427,18 @@ async function drainAutomatic(){
   // A queued request is bound at enqueue time, not when a previous
   // asynchronous scan happens to finish. Do not adopt a revoked request.
   const ownerLive=()=>lease.owner===window.closetAuth?.user&&lease.db===db;
-  if(ownerLive()&&batch.some(x=>x===item))await recognizeItem(item);
+  try{
+   if(ownerLive()&&batch.some(x=>x===item))await recognizeItem(item);
+  }catch{
+   // A rejected item must not strand the remaining queue. Only the live
+   // pending draft can receive a retry status; never touch a newer lease,
+   // an already finalized result, or an owner's manual correction.
+   if(ownerLive()&&pendingScanLease859.get(item.id)===lease&&
+    batch.some(x=>x===item)&&!item.userAdjusted){
+    item.localAnalyzed=false;item.scanFailed=true;item.requiresOwnershipConfirmation=true;
+    item.localStatus='Recognition was interrupted. Original photo kept. Retry recognition or use Adjust.';
+   }
+  }
   // A queued stale object and an early owner/DB mismatch still release their
   // OWN pending lease, never any newer same-ID draft's scan.
   if(pendingScanLease859.get(item.id)===lease){
