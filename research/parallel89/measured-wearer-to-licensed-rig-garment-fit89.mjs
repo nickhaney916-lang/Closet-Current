@@ -225,20 +225,27 @@ export function auditSampledOriginalFrontProportions({rest,poses,indices,
  const samples=[];
  for(const v of poses){
   let minEdge=Infinity,maxEdge=0,minArea=Infinity,maxArea=0,edgeOutside=0,areaOutside=0,collapsedFaces=0;
+  let worstEdge=null,worstFace=null,faceOrdinal=0;
   for(const [a,b,base] of edges.values()){
    const r=length(v,a,b)/base;if(!finite(r))return invalid();
+   if(!worstEdge||Math.abs(r-1)>Math.abs(worstEdge.ratio-1))
+    worstEdge={vertexIndices:[a,b],ratio:r,restLength:base};
    minEdge=Math.min(minEdge,r);maxEdge=Math.max(maxEdge,r);
    if(r<.9||r>1.1)edgeOutside++;
   }
   for(const [a,b,c,base] of triangles){
    const r=area(v,a,b,c)/base;if(!finite(r))return invalid();
+   if(!worstFace||Math.abs(r-1)>Math.abs(worstFace.ratio-1))
+    worstFace={faceOrdinal,vertexIndices:[a,b,c],ratio:r};
+   faceOrdinal++;
    minArea=Math.min(minArea,r);maxArea=Math.max(maxArea,r);
    if(r<.9||r>1.1)areaOutside++;
    if(r===0)collapsedFaces++;
   }
   samples.push({minimumEdgeLengthRatio:minEdge,maximumEdgeLengthRatio:maxEdge,
    minimumTriangleAreaRatio:minArea,maximumTriangleAreaRatio:maxArea,
-   edgesOutsideResearchBand:edgeOutside,facesOutsideResearchBand:areaOutside,collapsedFaces});
+   edgesOutsideResearchBand:edgeOutside,facesOutsideResearchBand:areaOutside,collapsedFaces,
+   worstOriginalEdge:worstEdge,worstOriginalFace:worstFace});
  }
  return fail("RESEARCH_ONLY_SAMPLED_ORIGINAL_FRONT_PROPORTION_AUDIT",{
   sampledPoseCount:samples.length,originalFrontFaces:triangles.length,
@@ -246,5 +253,46 @@ export function auditSampledOriginalFrontProportions({rest,poses,indices,
   arbitraryResearchBandNotPhysicalFabricLimit:true,
   continuousMotionOrMaterialStrainCertified:false,
   sampledPoseDistortion:samples
+ });
+}
+
+/** One bounded, midpoint-preserving research correction on a COPY of a pose.
+ * No collision or material validation. Never apply to a live source mesh.
+ * Reject if the full sampled front's aggregate distortion gets worse.
+ */
+export function trialBoundedOriginalFrontCorrection({rest,pose,indices,expectedFaces,expectedVertices}={}){
+ const input={rest,indices,expectedFaces,expectedVertices};
+ const baseline=auditSampledOriginalFrontProportions({...input,poses:[pose]});
+ const reject=(decision,extra={})=>fail(decision,{...extra,
+  correctionAppliedToLiveMesh:false,correctedPose:null,
+  materialOrCollisionCertified:false});
+ if(!baseline.sampledPoseDistortion)return reject(baseline.decision);
+ const before=baseline.sampledPoseDistortion[0],witness=before.worstOriginalEdge;
+ if(!before.edgesOutsideResearchBand||before.collapsedFaces||witness.ratio===0)
+  return reject("RESEARCH_ONLY_NO_SAFE_EDGE_CORRECTION_ATTEMPT",{before});
+ const [a,b]=witness.vertexIndices,L=witness.restLength;
+ const d=[0,1,2].map(k=>pose[b*3+k]-pose[a*3+k]),length=Math.hypot(...d);
+ const shift=Math.max(-.02*L,Math.min(.02*L,(length-L)/2));
+ const candidate=Float64Array.from(pose);
+ for(let k=0;k<3;k++){
+  const move=shift*d[k]/length;
+  candidate[a*3+k]+=move;candidate[b*3+k]-=move;
+ }
+ const check=auditSampledOriginalFrontProportions({...input,poses:[candidate]});
+ if(!check.sampledPoseDistortion)return reject("BLOCKED_CORRECTION_GEOMETRY_INVALID",{before});
+ const after=check.sampledPoseDistortion[0];
+ const err=(lo,hi)=>Math.max(Math.abs(lo-1),Math.abs(hi-1));
+ const edgeErr=p=>err(p.minimumEdgeLengthRatio,p.maximumEdgeLengthRatio);
+ const areaErr=p=>err(p.minimumTriangleAreaRatio,p.maximumTriangleAreaRatio);
+ if(!(edgeErr(after)<edgeErr(before)-1e-12)||
+  areaErr(after)>areaErr(before)+1e-12||
+  after.edgesOutsideResearchBand>before.edgesOutsideResearchBand||
+  after.facesOutsideResearchBand>before.facesOutsideResearchBand||
+  after.collapsedFaces>before.collapsedFaces)
+  return reject("RESEARCH_ONLY_CORRECTION_REJECTED_NO_GLOBAL_IMPROVEMENT",{before,attempted:after});
+ return fail("RESEARCH_ONLY_BOUNDED_EDGE_CORRECTION_CANDIDATE",{
+  before,after,correctedPose:candidate,maximumEndpointDisplacementRigUnits:Math.abs(shift),
+  maximumEndpointDisplacementFractionOfRestEdge:.02,
+  correctionAppliedToLiveMesh:false,materialOrCollisionCertified:false
  });
 }
