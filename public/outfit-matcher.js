@@ -1,6 +1,6 @@
 'use strict';
 const outfitTerms=[
- ['ankle boots','Shoes','Ankle boots'],['tall boots','Shoes','Tall boots'],['button-down','Tops','Button-down shirt'],['button down','Tops','Button-down shirt'],['t-shirt','Tops','T-shirt'],['t shirt','Tops','T-shirt'],['tee','Tops','T-shirt'],['blouse','Tops','Blouse'],['polo','Tops','Polo'],['tank','Tops','Tank top'],['sweater dress','Dresses','Sweater dress'],['shirt dress','Dresses','Shirt dress'],['sweater','Tops','Sweater'],['sweatshirt','Tops','Sweatshirt'],['hoodie','Tops','Hoodie'],['tunic','Tops','Tunic'],['jeans','Bottoms','Jeans'],['trousers','Bottoms','Trousers'],['pants','Bottoms','Trousers'],['leggings','Bottoms','Leggings'],['shorts','Bottoms','Shorts'],['skirt','Bottoms','Skirt'],['joggers','Bottoms','Joggers'],['jumpsuit','Dresses','Jumpsuit'],['romper','Dresses','Romper'],['dress','Dresses','Casual dress'],['blazer','Outerwear','Blazer'],['cardigan','Outerwear','Cardigan'],['raincoat','Outerwear','Raincoat'],['jacket','Outerwear','Jacket'],['coat','Outerwear','Coat'],['vest','Outerwear','Vest'],['sneakers','Shoes','Sneakers'],['trainers','Shoes','Sneakers'],['flats','Shoes','Flats'],['heels','Shoes','Heels'],['sandals','Shoes','Sandals'],['loafers','Shoes','Loafers'],['boots','Shoes','Ankle boots'],['handbag','Accessories','Bag'],['bag','Accessories','Bag'],['belt','Accessories','Belt'],['scarf','Accessories','Scarf'],['hat','Accessories','Hat'],['jewelry','Accessories','Jewelry'],['sunglasses','Accessories','Sunglasses']
+ ['ankle boots','Shoes','Ankle boots'],['tall boots','Shoes','Tall boots'],['button-down','Tops','Button-down shirt'],['button down','Tops','Button-down shirt'],['t-shirt','Tops','T-shirt'],['t shirt','Tops','T-shirt'],['tee','Tops','T-shirt'],['blouse','Tops','Blouse'],['polo','Tops','Polo'],['tank','Tops','Tank top'],['sweater dress','Dresses','Sweater dress'],['shirt dress','Dresses','Shirt dress'],['sweater','Tops','Sweater'],['sweatshirt','Tops','Sweatshirt'],['hoodie','Tops','Hoodie'],['tunic','Tops','Tunic'],['jeans','Bottoms','Jeans'],['trousers','Bottoms','Trousers'],['pants','Bottoms','Trousers'],['leggings','Bottoms','Leggings'],['shorts','Bottoms','Shorts'],['skirt','Bottoms','Skirt'],['joggers','Bottoms','Joggers'],['jumpsuit','Dresses','Jumpsuit'],['romper','Dresses','Romper'],['dress','Dresses','Casual dress'],['blazer','Outerwear','Blazer'],['cardigan','Outerwear','Cardigan'],['raincoat','Outerwear','Raincoat'],['jacket','Outerwear','Jacket'],['coat','Outerwear','Coat'],['vest','Outerwear','Vest'],['sneakers','Shoes','Sneakers'],['trainers','Shoes','Sneakers'],['flats','Shoes','Flats'],['heels','Shoes','Heels'],['sandals','Shoes','Sandals'],['loafers','Shoes','Loafers'],['boots','Shoes','Ankle boots'],['handbag','Accessories','Bag'],['bag','Accessories','Bag'],['belt','Accessories','Belt'],['scarf','Accessories','Scarf'],['hat','Accessories','Hat'],['jewelry','Accessories','Jewelry'],['sunglasses','Accessories','Sunglasses'],['shirt','Tops','Button-down shirt'],['sneaker','Shoes','Sneakers'],['loafer','Shoes','Loafers'],['ankle boot','Shoes','Ankle boots'],['tall boot','Shoes','Tall boots'],['boot','Shoes','Ankle boots'],['sandal','Shoes','Sandals']
 ];
 const outfitColors=['black','white','cream','ivory','beige','tan','brown','navy','blue','green','olive','red','pink','purple','yellow','orange','gray','grey','silver','gold','multicolor'];
 function parseOutfit(description){
@@ -32,14 +32,36 @@ function rankClosetPiece(component,item,season){
  return {item,score,close,reasons,missing};
 }
 function matchOutfit(components,closet,season=''){
- const used=new Set();
- // Satisfy the most specific requests first; a single garment cannot fill two slots.
- const ordered=components.map((component,index)=>({component,index,specificity:[component.color,component.sleeveLength!=='Unknown'?component.sleeveLength:'',component.pattern!=='Unknown'?component.pattern:'',component.fit&&component.fit!=='Unknown'?component.fit:''].filter(Boolean).length})).sort((a,b)=>b.specificity-a.specificity);
- const result=[];
- for(const {component,index}of ordered){
-  const ranked=closet.filter(item=>!used.has(item.id)).map(item=>rankClosetPiece(component,item,season)).filter(Boolean).sort((a,b)=>Number(b.close)-Number(a.close)||b.score-a.score);
-  const exact=ranked.find(x=>x.close),best=exact||ranked[0];if(best)used.add(best.item.id);
-  result[index]={component,best,alternatives:ranked.slice(1,3),status:exact?'match':best?'substitute':'gap'};
+ const unique=[...new Map(closet.filter(item=>item&&typeof item.id==='string'&&item.id).map(item=>[item.id,item])).values()];
+ const ordered=components.map((component,index)=>({component,index,specificity:[component.color,component.sleeveLength&&component.sleeveLength!=='Unknown'?component.sleeveLength:'',component.pattern&&component.pattern!=='Unknown'?component.pattern:'',component.fit&&component.fit!=='Unknown'?component.fit:''].filter(Boolean).length})).sort((a,b)=>b.specificity-a.specificity);
+ const ranked=components.map(component=>unique.map(item=>rankClosetPiece(component,item,season)).filter(Boolean).sort((a,b)=>Number(b.close)-Number(a.close)||b.score-a.score));
+ // Reserve close matches before assigning substitutes. A flexible earlier piece
+ // must not consume the only exact match for a more constrained later piece.
+ const owners=new Map(),assigned=new Map();
+ function allocate(index,seen){
+  const options=ranked[index].filter(x=>x.close);
+  for(const option of options){
+   const id=option.item.id;
+   if(seen.has(id)||owners.has(id))continue;
+   seen.add(id);owners.set(id,index);assigned.set(index,option);return true;
+  }
+  for(const option of options){
+   const id=option.item.id;if(seen.has(id))continue;seen.add(id);
+   const prior=owners.get(id);
+   if(prior!==undefined&&allocate(prior,seen)){owners.set(id,index);assigned.set(index,option);return true;}
+  }
+  return false;
+ }
+ for(const {index} of ordered)allocate(index,new Set());
+ const used=new Set(owners.keys()),result=[];
+ for(const {index} of ordered){
+  if(assigned.has(index))continue;
+  const best=ranked[index].find(x=>!used.has(x.item.id));
+  if(best){assigned.set(index,best);used.add(best.item.id);}
+ }
+ for(const [index,component] of components.entries()){
+  const best=assigned.get(index);
+  result[index]={component,best,alternatives:ranked[index].filter(x=>x.item.id!==best?.item.id&&!used.has(x.item.id)).slice(0,2),status:best?.close?'match':best?'substitute':'gap'};
  }
  return result;
 }
