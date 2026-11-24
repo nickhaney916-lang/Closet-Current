@@ -14,7 +14,7 @@ import {institutionalPartAAnchor}
  from './met70759-physical-garment-dimension-anchor89.mjs';
 import {evaluateFivePointPlanarReference}
  from './physical-five-point-photo-plane89.mjs';
-import {assessMetricGarmentToWearerFit,auditSampledOriginalFrontProportions,trialBoundedOriginalFrontCorrection}
+import {assessMetricGarmentToWearerFit,auditSampledOriginalFrontProportions,trialBoundedOriginalFrontCorrection,trialCoordinatedOriginalFrontCorrection}
  from './measured-wearer-to-licensed-rig-garment-fit89.mjs';
 
 window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=()=>{
@@ -138,6 +138,15 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    correctionReceipt.consumer3DAdmitted===false&&
    correctionReceipt.materialOrCollisionCertified===false,
    'research-edge-correction-must-never-be-applied-or-certified');
+  const coordinated=trialCoordinatedOriginalFrontCorrection({
+   rest:grid[4].front,pose:poseBuffers[worstPoseIndex],indices:frontIndices,
+   expectedFaces:35262,expectedVertices:x.sourceFrontN
+  });
+  const {correctedPose:discardedCoordinatedCopy,...coordinatedReceipt}=coordinated;
+  invariant(coordinatedReceipt.correctionAppliedToLiveMesh===false&&
+   coordinatedReceipt.consumer3DAdmitted===false&&
+   coordinatedReceipt.materialOrCollisionCertified===false,
+   'coordinated-correction-must-never-be-applied-or-certified');
   const evaluator=evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase({
    frontGridPoses:grid.map(x=>x.front),
    bodyGridPoses:grid.map(x=>x.body),
@@ -304,6 +313,7 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    other161BoneLocalPoseTransformsImmutable:true,
    sampledOriginalFrontProportionAudit:sampledProportions,
    sampledWorstPoseBoundedCorrection:{worstPoseIndex,...correctionReceipt},
+   sampledWorstPoseCoordinatedCorrection:{worstPoseIndex,...coordinatedReceipt},
    originalGarmentToBodyMeasuredWearerFitGate:originalMeasuredWearerFit,
    unmeasuredOriginalMuseumFivePointPhotoPlane:museumFivePointPhotoPlane,
    museumOriginalPartARealPhysicalDimensionEvidence:museumRealPhysicalPartA,
