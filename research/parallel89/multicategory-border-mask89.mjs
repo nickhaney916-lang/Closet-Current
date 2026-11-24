@@ -15,9 +15,44 @@ export function proposeBorderMask89({rgb,width:w,height:h}={}){
  const median=c=>border.map(i=>rgb[3*i+c]).sort((a,b)=>a-b)[Math.floor(border.length/2)];
  const bg=[median(0),median(1),median(2)];
  const dist=new Uint16Array(n);
- for(let i=0;i<n;i++)dist[i]=Math.max(...bg.map((v,c)=>Math.abs(v-rgb[3*i+c])));
- const consensus=border.filter(i=>dist[i]<=18).length/border.length;
- if(consensus<0.8)return refuse('border-color-not-consistent');
+ const color=i=>[rgb[3*i],rgb[3*i+1],rgb[3*i+2]];
+ const gap=(a,b)=>Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1]),Math.abs(a[2]-b[2]));
+ let model='uniform-border-median';
+ for(let i=0;i<n;i++)dist[i]=gap(bg,color(i));
+ let consensus=border.filter(i=>dist[i]<=18).length/border.length;
+ if(consensus<0.8){
+  // A smooth lighting/backdrop gradient is a distinct model, not a looser
+  // foreground threshold. Validate the field on all four observed borders.
+  const corners=[color(0),color(w-1),color((h-1)*w),color(n-1)];
+  for(let i=0;i<n;i++){
+   const x=(i%w)/(w-1),y=Math.floor(i/w)/(h-1);
+   const expected=corners[0].map((v,c)=>(1-y)*((1-x)*v+x*corners[1][c])+y*((1-x)*corners[2][c]+x*corners[3][c]));
+   dist[i]=Math.round(gap(expected,color(i)));
+  }
+  consensus=border.filter(i=>dist[i]<=18).length/border.length;
+  const sides=[border.filter(i=>i<w),border.filter(i=>i>=n-w),border.filter(i=>i%w===0),border.filter(i=>i%w===w-1)];
+  if(consensus>=0.8&&sides.every(side=>side.filter(i=>dist[i]<=18).length/side.length>=0.65))model='bilinear-corner-field';
+  else{
+   // A bounded palette must have evidence on multiple border sides.
+   // Colors supported only by an isolated edge object cannot seed a model.
+   const candidates=border.filter((_,j)=>j%2===0).map(color);
+   const entries=candidates.map(c=>({c,cover:border.filter(i=>gap(c,color(i))<=18),sides:sides.filter(side=>side.filter(i=>gap(c,color(i))<=18).length>=Math.max(3,side.length*.05)).length}))
+    .filter(e=>e.sides>=2&&e.cover.length>=border.length*.05);
+   const covered=new Set(),palette=[];
+   while(palette.length<8){
+    let best=null,gain=0;
+    for(const e of entries){const g=e.cover.filter(i=>!covered.has(i)).length;if(g>gain){best=e;gain=g}}
+    if(!best||gain<border.length*.02)break;
+    palette.push(best.c);for(const i of best.cover)covered.add(i);
+    if(covered.size/border.length>=0.9)break;
+   }
+   if(!palette.length)return refuse('border-color-not-consistent');
+   for(let i=0;i<n;i++)dist[i]=Math.min(...palette.map(c=>gap(c,color(i))));
+   consensus=border.filter(i=>dist[i]<=18).length/border.length;
+   if(consensus<0.8||!sides.every(side=>side.filter(i=>dist[i]<=18).length/side.length>=0.65))return refuse('border-color-not-consistent');
+   model='cross-side-color-palette';
+  }
+ }
  function flood(max){
   const seen=new Uint8Array(n),q=new Int32Array(n);let end=0,start=0;
   function add(i){if(!seen[i]&&dist[i]<=max){seen[i]=1;q[end++]=i;}}
@@ -34,7 +69,7 @@ export function proposeBorderMask89({rgb,width:w,height:h}={}){
   else{alpha[i]=255;foregroundPixels++;}
  }
  if(foregroundPixels<Math.max(4,n*.01)||backgroundPixels<n*.05)return refuse('insufficient-foreground-or-background');
- return {status:'UNREVIEWED_BORDER_MASK_PROPOSAL',width:w,height:h,alpha,uncertain,background,foregroundPixels,uncertainPixels,backgroundPixels,borderConsensus:consensus,backgroundMedianRGB:bg,maskSHA256:sha(alpha),uncertaintySHA256:sha(uncertain),backgroundSHA256:sha(background),...hold};
+ return {status:'UNREVIEWED_BORDER_MASK_PROPOSAL',width:w,height:h,alpha,uncertain,background,foregroundPixels,uncertainPixels,backgroundPixels,borderConsensus:consensus,backgroundModel:model,backgroundMedianRGB:bg,maskSHA256:sha(alpha),uncertaintySHA256:sha(uncertain),backgroundSHA256:sha(background),...hold};
 }
 export async function proposeOriginalPhotoMask89({sourceId,originalBytes,lockedRecord}={}){
  const source=attestOriginalSource89({sourceId,originalBytes,lockedRecord});
