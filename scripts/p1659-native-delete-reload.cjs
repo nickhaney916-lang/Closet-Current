@@ -41,7 +41,17 @@ source=source.replace(anchor,anchor+`
     await page.locator('nav.main-nav button.tab[data-view="closet"]').click();
     assert.equal(await page.locator('#export').isEnabled(),true);
     assert.equal(await page.evaluate(()=>items.length),1);
-    assert.deepEqual(await storage(page,owner),deleted);
+    const afterReload=await storage(page,owner);
+    assert.deepEqual(afterReload.items,deleted.items);
+    assert.deepEqual(afterReload.state.find(x=>x.id==='outfit-board'),persisted);
+    assert.deepEqual(afterReload.state.find(x=>x.id===wear.id),wear);
+    await page.locator('.closet-backup summary').click();
+    const nextDownload=page.waitForEvent('download',{timeout:5000});
+    await page.locator('#export').click();
+    const nextBackup=JSON.parse(await readFile(await (await nextDownload).path(),'utf8'));
+    assert.equal(nextBackup.items.length,1);
+    assert.equal(hash(Buffer.from(nextBackup.items[0].originalPhoto.image.split(',')[1],'base64')),hash(damagedBytes));
+    assert.deepEqual(nextBackup.outfitBoard.saved.map(x=>x.slots),[{bottom:'jeans'},{bottom:'jeans'}]);
     console.log('P1659_DELETE_RELOAD_GREEN',engine,'cancel, atomic unlink, original hash, wear row, reload and backup access');
    }
 `);
