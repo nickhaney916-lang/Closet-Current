@@ -78,6 +78,15 @@ const workload=String.raw`
     await page.locator(cardSelector).first().waitFor({state:'visible'});
    });
    assert.equal(await page.locator(cardSelector).count(),size<=100?size:48);
+   if(process.env.P1650_VARIANT==='candidate'){
+    const retained=await page.evaluate(()=>{
+     const cards=[...document.querySelectorAll('#closetGrid .card')];
+     refreshRecognitionMemorySurfaces();
+     const now=[...document.querySelectorAll('#closetGrid .card')];
+     return cards.length===now.length&&cards.every((card,i)=>card===now[i]&&card.isConnected);
+    });
+    assert.equal(retained,true,'native recognition-memory UI refresh must retain the visible cards');
+   }
    await measure('scroll-initial-cards',size,repeat,()=>page.locator(cardSelector).last().scrollIntoViewIfNeeded());
    for(let nav=0;nav<3;nav++){
     await measure('home-return',size,repeat*3+nav,async()=>{await homeTab().click();await page.locator('#home').waitFor({state:'visible'});});
@@ -89,7 +98,12 @@ const workload=String.raw`
     await page.evaluate(()=>{
      // Observe real click dispatch and any independent app render. Do not
      // suppress the scheduled recognition-memory review or other UI refresh.
-     const original=render,trace={renders:[],click:null,bubble:null};
+     const original=render,scoped=typeof refreshRecognitionMemorySurfaces==='function'?refreshRecognitionMemorySurfaces:null,
+      trace={renders:[],scopedRefreshes:[],click:null,bubble:null};
+     if(scoped)refreshRecognitionMemorySurfaces=function(...args){
+      trace.scopedRefreshes.push({time:performance.now(),stack:new Error().stack});
+      return scoped.apply(this,args);
+     };
      render=function(...args){
       trace.renders.push({time:performance.now(),stack:new Error().stack});
       return original.apply(this,args);
@@ -111,7 +125,7 @@ const workload=String.raw`
       const now=cards();trace.settled={count:now.length,
        retained:prior?.filter((card,i)=>card===now[i]&&card.isConnected).length??null};
       document.removeEventListener('click',capture,true);document.removeEventListener('click',bubble);
-      render=original;delete window.__p1650FinishTrace;return trace;
+      render=original;if(scoped)refreshRecognitionMemorySurfaces=scoped;delete window.__p1650FinishTrace;return trace;
      };
     });
     await measure('expand-page',size,repeat,()=>page.getByRole('button',{name:'Show more clothing'}).click());
@@ -133,10 +147,9 @@ const workload=String.raw`
     if(process.env.P1650_VARIANT==='candidate'){
      assert.equal(trace.bubble.retained,old,'paging click itself must retain existing card nodes');
      assert.equal(trace.bubble.renders,trace.click.renders,'paging click must not call full render');
-     if(trace.settled.retained!==old){
-      assert.ok(trace.renders.length>trace.bubble.renders,'unexplained post-click card replacement');
-      console.log('P1650_BACKGROUND_REBUILD '+JSON.stringify(trace.renders.slice(trace.bubble.renders)));
-     }
+     if(trace.settled.retained!==old)console.log('P1650_BACKGROUND_REBUILD '+JSON.stringify(trace.renders.slice(trace.bubble.renders)));
+     assert.equal(trace.settled.retained,old,'existing cards must survive paging and background refresh through settled frames');
+     if(trace.scopedRefreshes.length)console.log('P1650_SCOPED_BACKGROUND '+JSON.stringify(trace.scopedRefreshes));
     }
    }
    assert.equal(await page.locator(cardSelector).count(),size);

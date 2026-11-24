@@ -5,6 +5,8 @@ on:
     paths:
       - public/app.js
       - scripts/p1650-mobile-performance.cjs
+      - tests/mission3-recognition-session-epoch.test.cjs
+      - tests/p1650-background-recognition-ui.test.cjs
       - .github/workflows/main1054-personal-wardrobe-paging-HOLD.yml
 permissions:
   contents: read
@@ -31,12 +33,15 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           git merge-base --is-ancestor 07ec40dd26ede456907b89c6caf40bd15118ef6f HEAD
-          git diff --exit-code 07ec40dd26ede456907b89c6caf40bd15118ef6f HEAD -- . ':(exclude)public/app.js' ':(exclude)scripts/p1650-mobile-performance.cjs' ':(exclude).github/workflows/main1054-personal-wardrobe-paging-HOLD.yml'
-          test "$(git rev-parse HEAD:public/app.js)" = "3ef9355c0a2b117fcdcdbb8ee3ec70d671457096"
+          git diff --exit-code 07ec40dd26ede456907b89c6caf40bd15118ef6f HEAD -- . ':(exclude)public/app.js' ':(exclude)scripts/p1650-mobile-performance.cjs' ':(exclude)tests/mission3-recognition-session-epoch.test.cjs' ':(exclude)tests/p1650-background-recognition-ui.test.cjs' ':(exclude).github/workflows/main1054-personal-wardrobe-paging-HOLD.yml'
+          test "$(git rev-parse HEAD:public/app.js)" = "65d3b07773cd92b4bbdba345443a4ffb311f8f9c"
           git show 07ec40dd26ede456907b89c6caf40bd15118ef6f:public/app.js > "$RUNNER_TEMP/p1650-parent-app.js"
           test "$(git rev-parse HEAD:public/closet-browser.js)" = "cd7cfd1459368e2131388f291ed6d171c7406f2a"
           test "$(git rev-parse HEAD:public/native-reviewed-private-save-167.mjs)" = "3227633c67528e615779065b1dae6f12dbc1e482"
           node --check scripts/p1650-mobile-performance.cjs
+          test "$(git rev-parse HEAD:scripts/p1650-mobile-performance.cjs)" = "2225b04e2b1aa6b1d24bf44597fb43e80dac2bcc"
+          test "$(git rev-parse HEAD:tests/mission3-recognition-session-epoch.test.cjs)" = "551248229b37d78c26bca2748307e13dd1a1d31b"
+          test "$(git rev-parse HEAD:tests/p1650-background-recognition-ui.test.cjs)" = "ea3d91914ac1e7847cb367638254fa6fe421a170"
           node --check public/app.js
           git log -1 --format='commit %H tree %T'
       - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
