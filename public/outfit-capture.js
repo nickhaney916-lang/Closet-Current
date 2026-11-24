@@ -450,6 +450,20 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:hint88,recognitionPhoto:p.recognitionPhoto,originalPhoto:{image},cropBounds:p.cropBounds,colorEstimate:safeColorEstimate76,
       ...(outfitUnits70?{reconciliation70:{...p.reconciliation70,ownerId:job.ownerId,colorEstimate:safeColorEstimate76||null},reconciliation70Status:'unresolved'}:{})})){
       job.added++;if(colorNote76)job.colorNotes.push(colorNote76);
+    }else{
+     // candidate() coalesces identical pending JPEGs, even across sources.
+     // Only an exact pending region from this original can satisfy a retry.
+     const sameBounds=(a,b)=>a==null||b==null?a==null&&b==null:
+      ['x','y','width','height'].every(key=>a[key]===b[key]);
+     const pendingRegion=batch.some(item=>item.image===p.image&&
+      item.outfitSourceId===sourceId&&item.originalPhoto?.image===image&&
+      item.recognitionPhoto?.image===p.recognitionPhoto?.image&&sameBounds(item.cropBounds,p.cropBounds)&&
+      (!outfitUnits70||(item.reconciliation70?.sourceSha256===p.reconciliation70.sourceSha256&&
+       item.reconciliation70?.maskSha256===p.reconciliation70.maskSha256)));
+     if(!pendingRegion){
+      finishOutfitSplit(job,'An identical clothing crop belongs to another photo or region, or could not be added. Your original and earlier drafts are kept; photograph this garment individually or retry.',true);
+      return;
+     }
     }
     renderOutfitCapture();return;
    }
