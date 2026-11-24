@@ -1,6 +1,9 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),{randomUUID}=require('node:crypto');
 const source=fs.readFileSync('public/app.js','utf8');
-const choice={label:'a T-shirt',category:'Tops',itemType:'T-shirt',sleeveLength:'Unknown'};
+// A valid non-risky subtype exercises the legacy automatic transaction. Risky
+// T-shirt/sweatshirt/blouse/tunic etc. must stay pending under #1641 policy.
+const choice={label:'a polo shirt',category:'Tops',itemType:'Polo',sleeveLength:'Unknown'};
+const riskyChoice={label:'a T-shirt',category:'Tops',itemType:'T-shirt',sleeveLength:'Unknown'};
 function setup({result={strong:true,choices:[choice],details:{color:'Blue',pattern:'Solid'}},quality,request}={}){
  const stored=[],elements=new Map();const el=id=>{if(!elements.has(id))elements.set(id,{});return elements.get(id);};
  let draftRows=[],tail=Promise.resolve();
@@ -91,6 +94,7 @@ function setup({result={strong:true,choices:[choice],details:{color:'Blue',patte
   }}
  };
  vm.createContext(c);vm.runInContext(fs.readFileSync('public/taxonomy.js','utf8'),c);
+ vm.runInContext("const categories=['Uncategorized',...Object.keys(clothingSchema.types)];",c);
  vm.runInContext(fs.readFileSync('public/clothing-details.js','utf8'),c);
  // Browser mode exposes the real API on window; the VM context also needs
  // that same API as a global binding for extracted app.js functions.
@@ -102,7 +106,7 @@ function setup({result={strong:true,choices:[choice],details:{color:'Blue',patte
 async function done(c){for(let i=0;i<30&&(c.automaticRunning||c.localPending.size);i++)await new Promise(setImmediate);assert.equal(c.automaticRunning,false);}
 test('a new photo is indexed and saved without a recognition button',async()=>{
  const {c,stored}=setup();c.candidate('one');await done(c);
- assert.equal(c.batch.length,0);assert.equal(c.items.length,1);assert.equal(stored[0].category,'Tops');assert.equal(stored[0].color,'Blue');assert.equal(stored[0].pattern,'Solid');assert.equal(stored[0].name,'Blue T-shirt');assert.deepEqual(Array.from(stored[0].seasons),[]);assert.equal(stored[0].brand,'');
+ assert.equal(c.batch.length,0);assert.equal(c.items.length,1);assert.equal(stored[0].category,'Tops');assert.equal(stored[0].color,'Blue');assert.equal(stored[0].pattern,'Solid');assert.equal(stored[0].name,'Blue Polo');assert.deepEqual(Array.from(stored[0].seasons),[]);assert.equal(stored[0].brand,'');
 });
 test('uncertain labels stay uncategorized and are not autosaved',async()=>{
  const {c,stored}=setup({result:{strong:false,choices:[choice]}});c.candidate('one');await done(c);
@@ -155,23 +159,56 @@ test('a failed closet write remains retryable after refreshing the preserved dev
  assert.equal(c.items.length,1);assert.equal(c.batch.length,0);
 });
 
-test('100 simulated captures index every supported garment family and stay searchable',async()=>{
- const {localCandidates}=await import('../public/local-catalog.mjs');
- const garments=localCandidates.filter(x=>x.category!=='Uncategorized');
+// Independent explicit policy list, not derived from production condition.
+const reviewTypes=new Set(['T-shirt','Sweatshirt','Blouse','Tunic','Sneakers','Ankle boots','Casual dress','Shirt dress','Sweater dress','Formal dress']);
+async function bulk(garments,expectAllIndexed){
  const {c,stored}=setup({quality:async image=>({blank:false,signature:[Number(image.slice(6)),20,30],aspect:1}),request:async(type,image)=>({strong:true,choices:[garments[Number(image.slice(6))%garments.length]],details:{color:Number(image.slice(6))%2?'Blue':'Black',pattern:'Solid'}})});
+ let expectedSaved=0,expectedPending=0;
  for(let group=0;group<5;group++){
-  for(let i=group*20;i<group*20+20;i++)c.candidate('photo-'+i);
+  for(let i=group*20;i<group*20+20;i++){
+   c.candidate('photo-'+i);
+   if(reviewTypes.has(garments[i%garments.length].itemType))expectedPending++;else expectedSaved++;
+  }
   for(let spin=0;spin<300&&(c.automaticRunning||c.localPending.size);spin++)await new Promise(setImmediate);
-  assert.equal(c.automaticRunning,false);assert.equal(c.batch.length,0);assert.equal(c.items.length,(group+1)*20);
+  assert.equal(c.automaticRunning,false);assert.equal(c.batch.length,expectedPending);assert.equal(c.items.length,expectedSaved);
  }
- assert.equal(stored.length,100);assert.equal(new Set(c.items.map(x=>x.id)).size,100);
+ assert.equal(stored.length,expectedSaved);
+ assert.equal(new Set([...c.items,...c.batch].map(x=>x.id)).size,100);
  for(let i=0;i<100;i++){
-  const item=c.items[i],expected=garments[i%garments.length];
-  assert.equal(item.category,expected.category);assert.equal(item.itemType,expected.itemType);
-  assert.equal(c.clothingMatches(item,expected.itemType,expected.category,'',''),true);
-  assert.equal(c.clothingMatches(item,'',item.category==='Tops'?'Shoes':'Tops','',''),false);
-  assert.equal(item.brand,'');assert.equal(item.size,'');assert.equal(item.material,'');assert.deepEqual(Array.from(item.seasons),[]);
+  const expected=garments[i%garments.length],image='photo-'+i;
+  const saved=c.items.find(x=>x.image===image),pending=c.batch.find(x=>x.image===image);
+  if(reviewTypes.has(expected.itemType)){
+   assert.equal(saved,undefined);assert.ok(pending);assert.equal(pending.category,'Uncategorized');
+   assert.equal(pending.itemType,'Unknown');assert.equal(pending.requiresOwnershipConfirmation,true);
+   assert.equal(pending.localAnalyzed,true);assert.equal(pending.scanFailed,false);
+   assert.match(pending.localStatus,/needs confirmation/);
+  }else{
+   assert.equal(pending,undefined);assert.ok(saved);
+   assert.equal(saved.category,expected.category);assert.equal(saved.itemType,expected.itemType);
+   assert.equal(c.clothingMatches(saved,expected.itemType,expected.category,'',''),true);
+   assert.equal(c.clothingMatches(saved,'',saved.category==='Tops'?'Shoes':'Tops','',''),false);
+   assert.equal(saved.brand,'');assert.equal(saved.size,'');assert.equal(saved.material,'');assert.deepEqual(Array.from(saved.seasons),[]);
+  }
  }
+ if(expectAllIndexed){assert.equal(expectedSaved,100);assert.equal(expectedPending,0);}
+ else{assert.ok(expectedPending>0&&expectedSaved>0);}
+}
+test('100 simulated non-risky captures index every supported garment family and stay searchable',async()=>{
+ const {localCandidates}=await import('../public/local-catalog.mjs');
+ const garments=localCandidates.filter(x=>x.category!=='Uncategorized'&&!reviewTypes.has(x.itemType));
+ assert.deepEqual([...new Set(garments.map(x=>x.category))].sort(),['Accessories','Bottoms','Dresses','Outerwear','Shoes','Tops']);
+ await bulk(garments,true);
+});
+test('100 mixed simulated captures preserve risky originals in review and index only eligible garments',async()=>{
+ const {localCandidates}=await import('../public/local-catalog.mjs');
+ await bulk(localCandidates.filter(x=>x.category!=='Uncategorized'),false);
+});
+test('strong risky T-shirt never automatically writes owner facts',async()=>{
+ const {c,stored}=setup({result:{strong:true,choices:[riskyChoice],details:{color:'Blue'}}});
+ c.candidate('one');await done(c);assert.equal(stored.length,0);assert.equal(c.items.length,0);
+ assert.equal(c.batch.length,1);assert.equal(c.batch[0].image,'one');assert.equal(c.batch[0].category,'Uncategorized');
+ assert.equal(c.batch[0].itemType,'Unknown');assert.equal(c.batch[0].requiresOwnershipConfirmation,true);
+ assert.match(c.batch[0].localStatus,/Photo suggests Tops · T-shirt.*needs confirmation/);
 });
 
 test('a removed photo cannot be saved by a late recognition response',async()=>{
@@ -190,10 +227,10 @@ test('unreadable photo does not block the next garment or fabricate labels',asyn
 
 test('recognized outfit cutouts automatically save as individual closet items',async()=>{
  const {c,stored}=setup();c.candidate('outfit-top',{outfitSourceId:'capture',segmentHint:{categories:['Tops','Outerwear'],types:[],clipped:false}});await done(c);
- assert.equal(stored.length,1);assert.equal(c.items.length,1);assert.equal(c.batch.length,0);assert.equal(c.items[0].itemType,'T-shirt');assert.equal(c.items[0].requiresOwnershipConfirmation,false);assert.equal(c.items[0].outfitSourceId,'capture');
+ assert.equal(stored.length,1);assert.equal(c.items.length,1);assert.equal(c.batch.length,0);assert.equal(c.items[0].itemType,'Polo');assert.equal(c.items[0].requiresOwnershipConfirmation,false);assert.equal(c.items[0].outfitSourceId,'capture');
 });
 test('clipped cutouts and segmentation/category disagreements do not get guessed labels',async()=>{
- for(const hint of [{categories:['Bottoms'],types:[],clipped:false},{categories:['Tops'],types:[],clipped:true},{categories:['Tops'],types:['Polo'],clipped:false}]){
+ for(const hint of [{categories:['Bottoms'],types:[],clipped:false},{categories:['Tops'],types:[],clipped:true},{categories:['Tops'],types:['T-shirt'],clipped:false}]){
   const {c,stored}=setup();c.candidate('outfit-top',{outfitSourceId:'capture',segmentHint:hint});await done(c);assert.equal(stored.length,0);assert.equal(c.batch[0].category,'Uncategorized');assert.equal(c.batch[0].itemType,'Unknown');
  }
 });
@@ -201,7 +238,7 @@ test('clipped cutouts and segmentation/category disagreements do not get guessed
 test('confirmed dress category fills review without subtype, attributes or autosave',async()=>{
  const result={strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{label:'Dresses',category:'Dresses',itemType:'Unknown',sleeveLength:'Unknown'}],details:{color:'Red'}};
  const {c,stored}=setup({result});c.candidate('dress');await done(c);
- assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.batch[0].category,'Dresses');assert.equal(c.batch[0].itemType,'Unknown');assert.equal(c.batch[0].color,'');assert.match(c.batch[0].localStatus,/Confirm the specific type/);
+ assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.batch[0].category,'Uncategorized');assert.equal(c.batch[0].itemType,'Unknown');assert.equal(c.batch[0].color,'');assert.equal(c.batch[0].requiresOwnershipConfirmation,true);assert.equal(c.batch[0].image,'dress');assert.match(c.batch[0].localStatus,/Photo suggests Dresses.*needs confirmation/);
 });
 test('category-only review preserves user corrections and clipped mask restrictions',async()=>{
  const result={strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{category:'Dresses',itemType:'Unknown',sleeveLength:'Unknown'}]};
@@ -209,11 +246,27 @@ test('category-only review preserves user corrections and clipped mask restricti
  let finish;const {c,stored}=setup({request:()=>new Promise(resolve=>finish=resolve)});c.candidate('dress');await new Promise(setImmediate);c.batch[0].userAdjusted=true;c.batch[0].category='Tops';c.batch[0].itemType='Tunic';finish(result);await done(c);assert.equal(c.batch[0].category,'Tops');assert.equal(c.batch[0].itemType,'Tunic');assert.equal(stored.length,0);
 });
 test('type recognition failure retains a color estimate and keeps the photo for category confirmation',async()=>{const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,100],aspect:1,colorEstimate:{color:'Blue'}}),result:{strong:false,choices:[],details:{}}});c.candidate('one');await done(c);assert.equal(stored.length,0);assert.equal(c.batch[0].color,'Blue');assert.equal(c.batch[0].colorSource,'photo-estimate');assert.match(c.batch[0].localStatus,/Color kept/);});
-test('confirmed broad shirt category and color are saved without inventing a subtype',async()=>{const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,100],aspect:1,colorEstimate:{color:'Blue'}}),result:{strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{category:'Tops',itemType:'Unknown',label:'Tops',sleeveLength:'Unknown'}],details:{}}});c.candidate('one');await done(c);assert.equal(stored.length,1);assert.equal(c.items[0].category,'Tops');assert.equal(c.items[0].color,'Blue');assert.equal(c.items[0].itemType,'Unknown');assert.equal(c.items[0].indexingLevel,'category-color');assert.equal(c.batch.length,0);});
-test('confirmed category and color automatically save separated outfit pieces',async()=>{const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,100],aspect:1,colorEstimate:{color:'Blue'}}),result:{strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{category:'Tops',itemType:'Unknown',label:'Tops',sleeveLength:'Unknown'}],details:{}}});c.candidate('one',{outfitSourceId:'outfit',segmentHint:{categories:['Tops'],types:[],clipped:false}});await done(c);assert.equal(stored.length,1);assert.equal(c.batch.length,0);assert.equal(c.items[0].color,'Blue');assert.equal(c.items[0].indexingLevel,'category-color');});
+test('confirmed broad shirt category and color remain pending without inventing a subtype',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,100],aspect:1,colorEstimate:{color:'Blue'}}),result:{strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{category:'Tops',itemType:'Unknown',label:'Tops',sleeveLength:'Unknown'}],details:{}}});
+ c.candidate('one');await done(c);
+ assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.batch.length,1);
+ const row=c.batch[0];assert.equal(row.image,'one');assert.equal(row.category,'Uncategorized');assert.equal(row.color,'Blue');assert.equal(row.colorSource,'photo-estimate');assert.equal(row.itemType,'Unknown');assert.equal(row.requiresOwnershipConfirmation,true);assert.match(row.localStatus,/Photo suggests Tops.*needs confirmation/);
+});
+test('confirmed category and color of separated outfit pieces require explicit review',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,100],aspect:1,colorEstimate:{color:'Blue'}}),result:{strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{category:'Tops',itemType:'Unknown',label:'Tops',sleeveLength:'Unknown'}],details:{}}});
+ c.candidate('one',{outfitSourceId:'outfit',segmentHint:{categories:['Tops'],types:[],clipped:false},originalPhoto:{image:'whole-outfit'}});await done(c);
+ assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.batch.length,1);
+ const row=c.batch[0];assert.equal(row.image,'one');assert.equal(row.originalPhoto.image,'whole-outfit');assert.equal(row.outfitSourceId,'outfit');assert.equal(row.color,'Blue');assert.equal(row.itemType,'Unknown');assert.equal(row.category,'Uncategorized');assert.equal(row.requiresOwnershipConfirmation,true);assert.equal(row.localChoices.length,0);
+});
 
 test('outfit recognition uses original crop texture while masked garment color wins over scene color',async()=>{
  let modelImage,qualityImage;const {c,stored}=setup({quality:async image=>{qualityImage=image;return {blank:false,signature:[1,2,3],aspect:1,colorEstimate:{color:'White'}};},request:async(type,image)=>{modelImage=image;return {strong:true,choices:[choice],details:{color:'Red',pattern:'Solid'}};}});
  c.candidate('isolated-display',{outfitSourceId:'capture',recognitionPhoto:{image:'raw-textured-crop'},originalPhoto:{image:'whole-outfit'},cropBounds:{x:.1,y:.2,width:.3,height:.4},colorEstimate:{color:'Blue'},segmentHint:{categories:['Tops'],types:[],clipped:false}});await done(c);
- assert.equal(modelImage,'raw-textured-crop');assert.equal(qualityImage,'raw-textured-crop');assert.equal(stored.length,1);assert.equal(stored[0].image,'isolated-display');assert.equal(stored[0].color,'Blue');assert.equal(stored[0].name,'Blue T-shirt');assert.equal(stored[0].colorMethod,'garment-mask');assert.equal(stored[0].originalPhoto.image,'whole-outfit');assert.equal(stored[0].recognitionPhoto.image,'raw-textured-crop');
+ assert.equal(modelImage,'raw-textured-crop');assert.equal(qualityImage,'raw-textured-crop');assert.equal(stored.length,1);assert.equal(stored[0].image,'isolated-display');assert.equal(stored[0].color,'Blue');assert.equal(stored[0].name,'Blue Polo');assert.equal(stored[0].colorMethod,'garment-mask');assert.equal(stored[0].originalPhoto.image,'whole-outfit');assert.equal(stored[0].recognitionPhoto.image,'raw-textured-crop');
+});
+
+test('invalid strong Shirt subtype fails closed and retains the original draft',async()=>{
+ const {c,stored}=setup({result:{strong:true,choices:[{category:'Tops',itemType:'Shirt',label:'shirt'}],details:{color:'Blue'}}});
+ c.candidate('invalid');await done(c);assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.batch.length,1);
+ const row=c.batch[0];assert.equal(row.image,'invalid');assert.equal(row.category,'Uncategorized');assert.equal(row.itemType,'Unknown');assert.equal(row.scanFailed,true);assert.equal(row.requiresOwnershipConfirmation,true);assert.match(row.localStatus,/invalid garment information/);
 });
