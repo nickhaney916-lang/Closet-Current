@@ -515,7 +515,7 @@ function persistDraft({required=false,mode=null,record=null,expected=null,retry=
  })).catch(errorWarning);
 }
 function readDraft(){return readDraftFrom(db);}
-function readDraftFrom(ownerDB){return new Promise((resolve,reject)=>{const r=ownerDB.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
+function readDraftFrom(ownerDB){return new Promise((resolve,reject)=>{const r=ownerDB.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>{const rows=r.result===undefined?[]:r.result?.batch;if(!Array.isArray(rows))return reject(Error('CLOSET_CAPTURE_INVALID_PERSISTED_DRAFT'));resolve(rows);};r.onerror=()=>reject(r.error);});}
 
 // Read only the owner-private draft store, not every saved full-size JPEG.
 // This is a read-only reconciliation of review cards; it never writes remote
