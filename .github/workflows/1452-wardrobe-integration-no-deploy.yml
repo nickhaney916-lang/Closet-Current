@@ -68,6 +68,7 @@ jobs:
       - run: bash scripts/check-1452-integration-source.sh "$CANDIDATE_HEAD"
       - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
       - run: npx playwright install --with-deps "${M58_ENGINE}"
+      - run: node scripts/build.mjs
       - run: node scripts/test-parallel99-normal-app-browser.mjs
       - run: node scripts/test-parallel94-native-p88-browser.mjs
       - run: node scripts/check-1452-journey-receipts.mjs "$M58_ENGINE"
