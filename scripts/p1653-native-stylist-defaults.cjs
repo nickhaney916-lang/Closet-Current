@@ -2,8 +2,9 @@
 
 const fs = require('node:fs');
 const {spawnSync} = require('node:child_process');
+const {randomUUID} = require('node:crypto');
 const sourcePath = 'scripts/test-parallel99-normal-app-browser.mjs';
-const runnerPath = 'scripts/.p1653-stylist-runner-'+process.pid+'.mjs';
+const runnerPath = 'scripts/.p1653-stylist-runner-'+randomUUID()+'.mjs';
 const boundary = " advance('normal-chooser-cancel-duplicate-and-oversize-no-write');";
 const source = fs.readFileSync(sourcePath, 'utf8');
 const start = source.indexOf(boundary);
@@ -117,8 +118,29 @@ const journey = `
  }
 `;
 
+const signedIn = " assert.equal(await page.locator('#home').isVisible(),true);";
+const imported = "  advance('offline-warm-session-original-preview');";
+if (!source.includes(signedIn) || !source.includes(imported)) throw Error('Native restore journey boundary changed');
+
+const restoreJourney = source.replace(signedIn, signedIn + `
+ await page.locator('button.tab[data-view="stylist"]').first().click();
+ await page.getByLabel('What’s the plan?').selectOption('Work');
+ await page.getByLabel('Style preference').selectOption('Men');
+ await page.getByRole('button',{name:'Remember these defaults'}).click();
+ await page.locator('#stylistDefaultsStatus').getByText('Stylist defaults remembered on this device.').waitFor();
+ await page.locator('nav.main-nav button.tab[data-view="home"]').click();
+`).replace(imported, `
+ assert.equal(backup.includes(Buffer.from('stylist-defaults-v1')),false);
+ await page.locator('button.tab[data-view="stylist"]').first().click();
+ assert.equal(await page.getByLabel('What’s the plan?').inputValue(),'Work');
+ assert.equal(await page.getByLabel('Style preference').inputValue(),'Men');
+ await page.locator('#moreMenu summary').click();
+ await page.locator('#moreMenu button.tab[data-view="builder"]').click();
+` + imported);
+
 try {
-  fs.writeFileSync(runnerPath, source.slice(0, start) + journey + source.slice(end), {flag:'wx'});
+  const runner = process.env.P1653_RESTORE==='1' ? restoreJourney : source.slice(0, start) + journey + source.slice(end);
+  fs.writeFileSync(runnerPath, runner, {flag:'wx'});
   const run = spawnSync(process.execPath, [runnerPath], {
     stdio:'inherit',
     env:{...process.env,P1607_AUDIT:'1',P1607_CACHE_ONLY:'0'},

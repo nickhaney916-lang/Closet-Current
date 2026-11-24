@@ -277,16 +277,11 @@ for(const id of ['stylistOccasion','stylistAudience','stylistSeason'])$(id).onch
  // A preference edit explicitly replaces the earlier request, even if the
  // user returns to the previous value before its trend fetch resolves.
  styledCollectionRequestSerial++;
- syncStylistOccasionChips();
  $('createCollectionOutfits').disabled=false;
  styledCollectionResults=[];
  renderStyledCollection();
  $('stylistStatus').textContent='Create outfits for your new preferences.';
 };
-function syncStylistOccasionChips(){
- for(const chip of document.querySelectorAll('#stylist .occasion-chip'))
-  chip.setAttribute('aria-pressed',String(chip.dataset.occasion===$('stylistOccasion').value));
-}
 // This owner-private local row is outside the wardrobe backup state allowlist.
 const stylistDefaultsKey='stylist-defaults-v1';
 const defaultStylistSeason=()=>['Winter','Winter','Spring','Spring','Spring','Summer','Summer','Summer','Fall','Fall','Fall','Winter'][new Date().getMonth()];
@@ -295,7 +290,7 @@ function applyStylistDefaults(record){
  occasion.value=Array.from(occasion.options).some(option=>option.value===record?.occasion)?record.occasion:'Casual';
  audience.value=Array.from(audience.options).some(option=>option.value===record?.audience)?record.audience:'All';
  $('stylistSeason').value=defaultStylistSeason();
- syncStylistOccasionChips();
+ window.syncOccasionChips?.();
 }
 function setStylistDefaultsBusy(busy){
  $('rememberStylistDefaults').disabled=busy;
@@ -318,7 +313,11 @@ applyStylistDefaults();
 const initialStylistSerial=styledCollectionRequestSerial;
 closetReady.then(async()=>{
  const session=ownerStylistSession();
- if(!session)return;
+ if(!session){
+  if($('appShell').hidden===false)
+   $('stylistDefaultsStatus').textContent='Remembered defaults are unavailable on this device.';
+  return;
+ }
  try{
   const record=await accessStylistDefaults(session,'read');
   if(session.ownsSession()&&styledCollectionRequestSerial===initialStylistSerial&&record?.owner===session.owner)

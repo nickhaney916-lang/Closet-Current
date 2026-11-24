@@ -41,4 +41,4 @@ jobs:
             (cd "$RUNNER_TEMP/p1653-baseline" && P1653_EXPECT_RED=1 node scripts/p1653-native-stylist-defaults.cjs)
             node scripts/p1653-native-stylist-defaults.cjs
           done
-          P99_WIDTH=390 P1607_AUDIT=1 node scripts/test-parallel99-normal-app-browser.mjs
+          P99_WIDTH=390 P1653_RESTORE=1 node scripts/p1653-native-stylist-defaults.cjs
