@@ -780,3 +780,102 @@ jobs:
           name: p88-footwear-source-audit
           path: benchmark/output-footwear-source-audit/audit.json
           retention-days: 14
+
+  footwear-hard-negative-NO-DEPLOY:
+    if: "${{ startsWith(github.event.head_commit.message, 'research(m1 #88): hard-negative') }}"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare locked exposed nonwearable and matched wearable controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object benchmark/locked-photo-sources.json)" = 5af9b4412e861d6cb6c638e4a414aedcb813f16e
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node scripts/build.mjs
+          mkdir -p benchmark/output-footwear-hard-negative
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile,writeFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          const read=async p=>JSON.parse(await readFile(p,'utf8'));
+          const ids=['commons-0087','commons-0088','commons-0089','commons-0092','commons-0093','commons-0094','commons-0095','commons-0078','validation-0023','commons-0021'];
+          const rows=(await Promise.all(['reviewed-32','holdout-16','fresh-11'].map(x=>read('benchmark/manifest-'+x+'.json')))).flat();
+          const locked=await read('benchmark/locked-photo-sources.json');
+          const selected=ids.map(id=>rows.find(x=>x.id===id));
+          for(const row of selected){
+           assert.ok(row?.verified);
+           const s=locked.find(x=>x.id===row.id);
+           assert.ok(s?.verified&&s.attribution?.license);
+           assert.equal(s.image,row.image);
+           assert.equal(createHash('sha256').update(await readFile('benchmark/photos/'+s.image)).digest('hex'),s.sha256);
+          }
+          await writeFile('benchmark/output-footwear-hard-negative/manifest.json',JSON.stringify(selected));
+          JS
+          git diff --exit-code -- public
+      - name: Run unchanged FashionCLIP browser classification on ten exposed inputs
+        run: node scripts/run-browser-photo-benchmark.mjs benchmark/output-footwear-hard-negative/manifest.json benchmark/output-footwear-hard-negative
+      - name: Report shoe-shaped nonwearable false positives and distinguish raw score from application suggestion
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile,writeFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import {localCandidates} from './public/local-catalog.mjs';
+          import {makeVectorScorer} from './public/vector-scorer.mjs';
+          const root='benchmark/output-footwear-hard-negative';
+          const read=async p=>JSON.parse(await readFile(p,'utf8'));
+          const meta=await read('public/recognition-vectors.json');
+          const bytes=await readFile('public/recognition-vectors.bin');
+          assert.equal(meta.revision,'0f99955d944c39bfd9d035a02ac273c7a44a406b');
+          assert.equal(meta.sha256,'e1e0415f2272e81c0f3ce2f08fd5fd5c2a9eb6481437d696936c723e8e1abb2f');
+          assert.equal(createHash('sha256').update(bytes).digest('hex'),meta.sha256);
+          const catalog=new Map(localCandidates.map(x=>[x.label,{category:x.category,type:x.itemType}]));
+          const labels=[...catalog.keys()];
+          const scorer=makeVectorScorer(async x=>x.features,meta,new Float32Array(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)));
+          const results=await read(root+'/results.json');
+          const manifest=await read(root+'/manifest.json');
+          const sources=await read('benchmark/locked-photo-sources.json');
+          const excluded=new Set(['commons-0087','commons-0088','commons-0089']);
+          assert.equal(results.length,10);
+          assert.equal(new Set(results.map(x=>x.id)).size,10);
+          assert.equal(manifest.length,10);
+          const rows=[];
+          for(const m of manifest){
+           const row=results.find(x=>x.id===m.id),source=sources.find(x=>x.id===m.id);
+           assert.ok(row&&!row.error&&source?.verified);
+           assert.equal(row.recognitionMemory?.modelKey,'fashion-clip/whole-v1/'+meta.revision);
+           assert.equal(row.recognitionMemory.features.length,512);
+           const rank=(await scorer({features:row.recognitionMemory.features},labels)).slice(0,3);
+           const top=rank.map(x=>({...catalog.get(x.label),label:x.label,score:x.score}));
+           assert.ok(top.every(x=>x.category&&Number.isFinite(x.score)));
+           rows.push({id:m.id,sourceSha256:source.sha256,cohort:excluded.has(m.id)?'nonwearable-source-audit':m.expectedCategory==='Shoes'?'wearable-candidate':'other-garment-control',application:row.prediction,strong:row.strong,categoryConfirmed:row.categoryConfirmed,reason:row.reason,top});
+          }
+          const negatives=rows.filter(x=>x.cohort==='nonwearable-source-audit');
+          const wearables=rows.filter(x=>x.cohort==='wearable-candidate');
+          assert.equal(negatives.length,3);assert.equal(wearables.length,6);
+          const count=(rows,p)=>rows.filter(p).length;
+          const summarize=rows=>({n:rows.length,rawShoeTop:count(rows,x=>x.top[0].category==='Shoes'),applicationShoeSuggestion:count(rows,x=>x.application.category==='Shoes'),strongShoeSuggestion:count(rows,x=>x.application.category==='Shoes'&&x.strong),confirmedShoeCategory:count(rows,x=>x.application.category==='Shoes'&&x.categoryConfirmed)});
+          const summary={nonwearable:summarize(negatives),wearableCandidates:summarize(wearables),other:summarize(rows.filter(x=>x.cohort==='other-garment-control')),independentBlind:false,saveTested:false,productionPromotion:false};
+          await writeFile(root+'/hard-negative-diagnostic.json',JSON.stringify({schema:'p88-exposed-hard-negative-diagnostic-v1',modelRevision:meta.revision,vectorSha256:meta.sha256,summary,rows},null,2));
+          console.log('P88_FOOTWEAR_HARD_NEGATIVE '+JSON.stringify({summary,rows}));
+          JS
+          git diff --exit-code -- public
+      - name: Upload only numeric and label diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p88-footwear-hard-negative
+          path: benchmark/output-footwear-hard-negative/hard-negative-diagnostic.json
+          if-no-files-found: warn
+          retention-days: 14
