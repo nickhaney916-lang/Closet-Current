@@ -3555,3 +3555,39 @@ test('P88 worker metadata must agree with the pinned semantic hint and normalize
   }
  }
 });
+
+test('P88 malformed mask color estimates are withheld without losing the garment',()=>{
+ const piece={image:'data:image/jpeg;base64,PIECE',hint:{categories:['Shoes'],types:[]},
+  instanceMethod:'connected_footwear_component',requiresReview:true};
+ const estimate={color:'Blue',source:'photo-estimate',support:.7,secondaryColor:'White'};
+ const invalid=[
+  {...estimate,support:undefined},{...estimate,support:.59},{...estimate,support:NaN},
+  {...estimate,support:1.1},{...estimate,support:'.7'},{...estimate,source:'owner'},
+  {...estimate,needsConfirmation:true},{...estimate,secondaryColor:'Blue'},
+  {...estimate,secondaryColor:'Invalid'},{...estimate,color:'Multicolor'},{...estimate,color:'Invalid'}
+ ];
+ const valid=[estimate,{...estimate,support:.6,secondaryColor:null},{...estimate,support:1,secondaryColor:null}];
+ for(const href of ['https://example.test/closet','https://example.test/closet?outfitInstances840=1']){
+  for(const colorEstimate of invalid){
+   const h=captureHarness({ownerId:'owner-A',href});
+   h.emit({type:'piece',piece:{...piece,colorEstimate}});
+   h.emit({type:'done',count:1});
+   assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);
+   assert.equal(h.c.batch[0].colorEstimate,null);
+   assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,ORIGINAL');
+   assert.equal(h.c.worker.closed,true);assert.equal(h.c.busy,false);
+   assert.equal(h.node('outfitRetry').hidden,true);
+  }
+  for(const colorEstimate of valid){
+   const h=captureHarness({ownerId:'owner-A',href});
+   h.emit({type:'piece',piece:{...piece,colorEstimate}});
+   h.emit({type:'done',count:1});
+   assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);
+   assert.equal(h.c.batch[0].colorEstimate.color,colorEstimate.color);
+   assert.equal(h.c.batch[0].colorEstimate.source,'photo-estimate');
+   assert.equal(h.c.batch[0].colorEstimate.support,colorEstimate.support);
+   assert.equal(h.c.batch[0].colorEstimate.secondaryColor,colorEstimate.secondaryColor);
+   assert.equal(h.node('outfitRetry').hidden,true);
+  }
+ }
+});
