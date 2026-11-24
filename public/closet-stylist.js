@@ -102,6 +102,7 @@ function beginStyledCollectionCardOwnerLease(result,card){
  return {ownsSession,current};
 }
 function renderStyledCollection(){
+ window.renderStarterWardrobe?.('stylist');
  const grid=$('styledCollectionResults');
  ++originalPhotoMountSerial167;
  originalPhotoPreview167?.dispose();originalPhotoPreview167=null;
@@ -261,7 +262,7 @@ $('styleCollectionForm').onsubmit=async event=>{
   if(!lease.current())return;
   $('stylistStatus').textContent=styledCollectionResults.length?
    'Here are '+styledCollectionResults.length+' outfit option'+(styledCollectionResults.length===1?'':'s')+' from your collection.':
-   items.length?'No suitable combination for this occasion yet. Add or adjust the clothing categories in My closet.':
+   items.length?'No saved pieces match this request. Try changing the plan, season, style preference, or selected piece.':
    'Add clothing photos to My closet first, then create an outfit.';
  }catch{
   if(lease.current())
@@ -320,8 +321,11 @@ closetReady.then(async()=>{
  }
  try{
   const record=await accessStylistDefaults(session,'read');
-  if(session.ownsSession()&&styledCollectionRequestSerial===initialStylistSerial&&record?.owner===session.owner)
+  if(session.ownsSession()&&styledCollectionRequestSerial===initialStylistSerial&&record?.owner===session.owner){
    applyStylistDefaults(record);
+   window.renderStarterWardrobe?.('home');
+   window.renderStarterWardrobe?.('stylist');
+  }
  }catch{
   if(session.ownsSession())$('stylistDefaultsStatus').textContent='Could not load remembered defaults on this device.';
  }finally{
