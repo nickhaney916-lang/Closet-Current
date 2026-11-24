@@ -47,7 +47,9 @@ export function createPhotoContainmentAudit(firstOwnerPhotos,secondOwnerPhoto){
    }else{
     ++counts.publicReads;
     if(request.method()!=='GET'&&request.method()!=='HEAD')findings.add('unexpected off-origin method');
-    const allowed=publicReads[url.origin]?.includes(url.pathname);
+    const fontAsset=url.origin==='https://fonts.gstatic.com'&&
+     /^\/s\/[a-z0-9/_-]+\.(woff2?|ttf)$/i.test(url.pathname);
+    const allowed=fontAsset||publicReads[url.origin]?.includes(url.pathname);
     if(!allowed){
      // Publish only known public host classes, never addresses learned from data.
      const known=['fonts.googleapis.com','fonts.gstatic.com','raw.githubusercontent.com','cdn.jsdelivr.net','huggingface.co'];
