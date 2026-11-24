@@ -322,9 +322,19 @@ function saveEditedGarment(updated,expected){
   tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('Changes were not saved'));
  })).then(async value=>{assertOwner();await nativeIndex07Refresh();assertOwner();return value;});
 }
+// A deliberate deletion can remove this exact ID from named outfits and the
+// current draft, but must never "repair" an unrelated damaged wardrobe.
+function unlinkDeletedGarmentFromOutfits(board,id){
+ if(board===undefined)return undefined;
+ const unlink=outfit=>{
+  if(!Object.values(outfit.slots).includes(id))return outfit;
+  return {...outfit,slots:Object.fromEntries(Object.entries(outfit.slots).filter(([,value])=>value!==id))};
+ };
+ return {...board,current:unlink(board.current),saved:board.saved.map(unlink)};
+}
 function removeItem(id,expected){
  const {ownerDB,assertLease}=ownerWardrobeMutationLease();
- // A delete is destructive: the owner must have reviewed the *exact* saved
+ // A delete is destructive: the owner must have reviewed the exact saved
  // row. Never delete merely by ID if another tab changed the garment.
  const reviewed=expected?structuredClone(expected):null;
  if(!reviewed||reviewed.id!==id)
@@ -332,24 +342,43 @@ function removeItem(id,expected){
  return queued(()=>new Promise((resolve,reject)=>{
   try{
    assertLease();
-   const tx=ownerDB.transaction('items','readwrite'),store=tx.objectStore('items');
-   let failure;
-   const request=store.get(id);
-   request.onsuccess=()=>{
+   const tx=ownerDB.transaction(['items','state'],'readwrite'),store=tx.objectStore('items'),state=tx.objectStore('state');
+   let failure,remaining=2;
+   const rows=store.getAll(),states=state.getAll();
+   const commit=()=>{
     try{
      assertLease();
-     if(!request.result||
-        JSON.stringify(normalizeClothing(request.result))!==
-        JSON.stringify(normalizeClothing(reviewed)))
+     if(--remaining!==0)return;
+     const stored=rows.result.find(row=>row.id===id);
+     if(!stored||JSON.stringify(normalizeClothing(stored))!==JSON.stringify(normalizeClothing(reviewed)))
       throw Error('CLOSET_STALE_DELETE_REOPEN_EDITOR');
+     // Validate the complete pre-delete durable state; unrelated corruption
+     // remains fail-closed. Hold both stores until unlink and delete commit.
+     assertCompleteWardrobe(rows.result,states.result,window.closetAuth.user.id);
+     const board=states.result.find(row=>row.id==='outfit-board');
+     const next=unlinkDeletedGarmentFromOutfits(board,id);
+     const nextState=states.result.map(row=>row===board?next:row);
+     assertCompleteWardrobe(rows.result.filter(row=>row.id!==id),nextState,window.closetAuth.user.id);
+     if(board&&JSON.stringify(board)!==JSON.stringify(next))state.put(next);
      store.delete(id);
     }catch(error){failure=error;try{tx.abort();}catch{}}
    };
+   rows.onsuccess=commit;states.onsuccess=commit;
    tx.oncomplete=()=>{try{assertLease();resolve();}catch(error){reject(error);}};
    tx.onerror=tx.onabort=()=>reject(failure||tx.error||
     Error('Private garment removal interrupted'));
   }catch(error){reject(error);}
  })).then(async value=>{assertLease();await nativeIndex07Refresh();assertLease();return value;});
+}
+async function refreshOutfitsAfterGarmentDeletion(assertLease){
+ assertLease();
+ // Do not overwrite a newer unsaved draft: the ordinary reload helper
+ // already handles durable draft conflicts and protects owner/session.
+ if(typeof reloadCloudBoard==='function'&&typeof nativeLossless04Active!=='undefined'&&!nativeLossless04Active){
+  try{await reloadCloudBoard({ownerDB:db,assertLease});}
+  catch{assertLease();message('Clothing deleted. Reload to refresh saved outfits.');}
+ }
+ assertLease();
 }
 // Mutate only owner-reviewed pending photo rows against their actual durable
 // versions. Never replace the whole persisted batch with a stale tab snapshot.
@@ -1051,13 +1080,17 @@ function adjustPhoto(item){
  if(!correction10)item.userAdjusted=true;
  remove.onclick=async()=>{try{
    editorSession.assertCurrent();
-   if(expectedSavedRow)await removeItem(item.id,expectedSavedRow);
+   if(expectedSavedRow){
+    if(!confirm('Delete this closet piece? It will also be removed from saved outfits and the current outfit draft. Other pieces and outfit names will be kept.'))return;
+    editorSession.assertCurrent();await removeItem(item.id,expectedSavedRow);
+   }
    else if(expectedDraftRow)await persistDraft({required:true,mode:'remove',expected:expectedDraftRow});
    else throw Error('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS');
    editorSession.assertCurrent();
    items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);
    sessionCapturedIds.delete(item.id);failedDraftCaptures.delete(item.id);
-   dialog.close();render();
+   if(expectedSavedRow)await refreshOutfitsAfterGarmentDeletion(editorSession.assertCurrent);
+   editorSession.assertCurrent();dialog.close();render();
   }catch(error){if(!editorSession.current())return;
    message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?
    'This clothing piece changed in another tab. Reload My Closet before removing it.':
@@ -1436,6 +1469,7 @@ function render(){
  const visible=(query||filter!=='All categories'||$('seasonFilter').value||$('sleeveFilter').value||window.closetBrowseAll||window.closetSlotFilter||window.closetItemType||window.closetSleeves?.length)?items.filter(x=>(!window.closetSlotFilter||outfitSlots.some(slot=>slot.id===window.closetSlotFilter&&slotAllows(slot,x)))&&(!window.closetItemType||x.itemType===window.closetItemType)&&(!window.closetSleeves||window.closetSleeves.includes(x.sleeveLength))&&clothingMatches(x,'',filter,$('seasonFilter').value,$('sleeveFilter').value)&&(!query||query.split(' ').every(term=>clothingMatches(x,term,filter,'','')))&&(!window.closetIndex02||window.closetIndex02.includes(x.id))):[];
  if(!visible.length)empty(cg,items.length?'No matching pieces.':'Your closet is ready to grow.',items.length?'Try a different search, clear filters, or choose Browse all.':'Save your first piece from the review tab.');
  const page=visible.length<=100?visible:visible.slice(0,closetRendered136);
+ function appendClosetCards136(page){
  for(const item of page){const card=node('article',null,'card'),im=node('img');card.dataset.itemId=item.id;im.loading='lazy';if(visible.length>100)im.decoding='async';im.src=item.image;im.alt=item.name;const body=node('div',null,'card-body');body.append(node('h3',item.name),node('p',[item.color,item.pattern].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')),node('p',item.seasons.length?item.seasons.join(' · '):'Season unknown'),node('p',[item.brand,item.size,item.material,item.occasion].filter(Boolean).join(' · ')),node('p',item.notes));if(item.itemType==='Unknown'&&item.color)body.append(node('p','Category and color saved · refine the type when convenient.','fine'));const actions=node('div',null,'actions'),edit=node('button','Adjust details','secondary'),del=node('button','Delete','secondary'),styleFocus=node('button','Get three outfit ideas','secondary');edit.dataset.action='edit-clothing';styleFocus.type='button';styleFocus.onclick=()=>focusSavedClosetCardOwnerSafe(item,styleFocus);edit.onclick=()=>{const editorLease=ownerWardrobeMutationLease();
  const assertEditor=()=>{editorLease.assertLease();if(!items.includes(item))throw Error('This saved garment is no longer in the signed-owner wardrobe');};
  const dialog=document.createElement('dialog');dialog.className='clothing-editor';dialog.style.cssText='border:1px solid #d9ddd2;border-radius:8px;max-width:440px;width:90%;padding:24px';
@@ -1540,14 +1574,15 @@ function render(){
   assertCard();
   // Confirm only the exact saved row originally displayed to this owner.
   const expected=structuredClone(item);
-  if(!confirm('Delete this closet piece?'))return;
+  if(!confirm('Delete this closet piece? It will also be removed from saved outfits and the current outfit draft. Other pieces and outfit names will be kept.'))return;
   assertCard();
   await removeItem(item.id,expected);
   assertCard();
   // Preserve the original same-owner ID semantics: discard any redundant
   // visible copies of the one durable row whose ID was CAS-deleted.
   items=items.filter(x=>x.id!==item.id);
-  render();
+  await refreshOutfitsAfterGarmentDeletion(lease.assertLease);
+  lease.assertLease();render();
  }catch(error){
   // A revoked (including same-ID re-login) operation has no authority to
   // update the replacement account's message, image grid or deletion state.
@@ -1612,12 +1647,33 @@ function render(){
   assertOwner();
  });
  actions.append(styleNew);
-}actions.append(styleFocus,edit,cropButton(item),del);body.append(actions);card.append(im,body);if(typeof enableClosetDrag==='function')enableClosetDrag(im,item);cg.append(card);}
+}actions.append(styleFocus,edit,cropButton(item),del);body.append(actions);card.append(im,body);if(typeof enableClosetDrag==='function')enableClosetDrag(im,item);cg.append(card);}}
+ appendClosetCards136(page);
  if(visible.length>page.length){
   const more=node('button','Show more clothing','secondary closet-page-more136');more.type='button';
   more.setAttribute('aria-label','Show more clothing');
-  more.onclick=()=>{closetRendered136=Math.min(visible.length,closetRendered136+closetPageSize136);render();};
   const status=node('p',`Showing ${page.length} of ${visible.length} pieces.`,'fine closet-page-status136');status.setAttribute('role','status');
+  // Paging changes presentation only. Keep existing cards/images and their
+  // handlers, but revoke the captured roster on account or normal render changes.
+  let count=page.length;
+  const pageAuth=window.closetAuth,pageOwner=pageAuth?.user?.id,pageDB=db,pageEpoch=captureOperationEpoch;
+  more.onclick=()=>{
+   if(!more.isConnected||more.previousElementSibling!==status||status.previousElementSibling!==cg||
+      window.closetAuth!==pageAuth||pageAuth?.user?.id!==pageOwner||db!==pageDB||
+      captureOperationEpoch!==pageEpoch||$('appShell').hidden||$('closet').hidden)return;
+   try{pageAuth?.assertCurrent?.();}catch{return;}
+   const next=Math.min(visible.length,count+closetPageSize136);
+   const newPage=visible.slice(count,next);
+   if(newPage.some(item=>!items.includes(item))){render();return;}
+   const firstNewIndex=count,hadFocus=document.activeElement===more;
+   appendClosetCards136(newPage);
+   count=closetRendered136=next;
+   status.textContent=`Showing ${count} of ${visible.length} pieces.`;
+   if(count===visible.length){
+    more.remove();
+    if(hadFocus)cg.children[firstNewIndex]?.querySelector('[data-action=edit-clothing]')?.focus({preventScroll:true});
+   }
+  };
   cg.after(status,more);
  }
  if(typeof renderClosetBrowser==='function')renderClosetBrowser();

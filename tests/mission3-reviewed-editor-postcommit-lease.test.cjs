@@ -90,6 +90,7 @@ function fixture({reviewed=true}={}){
    return result;
   }}),
   savePiece:()=>committed.promise,
+  confirm:()=>true,
   removeItem:()=>deleted.promise,
   normalizeClothing:x=>x,
   render(){events.push('render:'+ctx.window.closetAuth.user?.id);},
