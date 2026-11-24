@@ -544,3 +544,129 @@ jobs:
           path: benchmark/output-footwear-p0/high-top-shape-comparison.json
           if-no-files-found: warn
           retention-days: 14
+
+  footwear-framing-NO-DEPLOY:
+    if: "${{ startsWith(github.event.head_commit.message, 'research(m1 #88): framing') }}"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Authenticate historical source bytes and enable existing benchmark frame diagnostics for EVERY photograph
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node scripts/build.mjs
+          mkdir -p benchmark/output-footwear-framing
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile,writeFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          const read=async p=>JSON.parse(await readFile(p,'utf8'));
+          const rows=(await Promise.all(['reviewed-32','holdout-16','fresh-11'].map(x=>read('benchmark/manifest-'+x+'.json')))).flat();
+          const locked=await read('benchmark/locked-photo-sources.json');
+          assert.equal(rows.length,59);
+          assert.equal(new Set(rows.map(x=>x.id)).size,59);
+          assert.equal(locked.length,59);
+          assert.equal(new Set(locked.map(x=>x.sha256)).size,59);
+          for(const x of rows){
+            const s=locked.find(l=>l.id===x.id);
+            assert.ok(s?.verified&&s.attribution?.license);
+            assert.equal(s.image,x.image);
+            assert.equal(createHash('sha256').update(await readFile('benchmark/photos/'+s.image)).digest('hex'),s.sha256);
+          }
+          assert.equal(rows.filter(x=>x.expectedCategory==='Shoes').length,20);
+          await writeFile('benchmark/output-footwear-framing/manifest.json',JSON.stringify(rows));
+          const file='dist/benchmark-runner.mjs';
+          const source=await readFile(file,'utf8');
+          const needle="const framingComparison=['commons-0035','commons-0041','commons-0045','commons-0053','commons-0065','commons-0067','commons-0068','commons-0069','commons-0070','commons-0083'].includes(item.id)?";
+          assert.equal(source.split(needle).length,2);
+          await writeFile(file,source.replace(needle,'const framingComparison=true?'));
+          // Only a temporary benchmark-page selection switch: no consumer/model/worker edits.
+          JS
+          node --check dist/benchmark-runner.mjs
+          git diff --exit-code -- public
+      - name: Execute genuine model inference and original-center framing on all 59 locked photos
+        run: node scripts/run-browser-photo-benchmark.mjs benchmark/output-footwear-framing/manifest.json benchmark/output-footwear-framing
+      - name: Compare fixed frame views and predeclared agreement rule against whole-image rank without fitting
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile,writeFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import {localCandidates} from './public/local-catalog.mjs';
+          import {makeVectorScorer} from './public/vector-scorer.mjs';
+          const root='benchmark/output-footwear-framing';
+          const read=async p=>JSON.parse(await readFile(p,'utf8'));
+          const meta=await read('public/recognition-vectors.json');
+          const bytes=await readFile('public/recognition-vectors.bin');
+          assert.equal(meta.revision,'0f99955d944c39bfd9d035a02ac273c7a44a406b');
+          assert.equal(meta.sha256,'e1e0415f2272e81c0f3ce2f08fd5fd5c2a9eb6481437d696936c723e8e1abb2f');
+          assert.equal(createHash('sha256').update(bytes).digest('hex'),meta.sha256);
+          const catalog=new Map(localCandidates.map(x=>[x.label,{category:x.category,type:x.itemType}]));
+          const labels=[...catalog.keys()];
+          const scorer=makeVectorScorer(async x=>x.features,meta,new Float32Array(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)));
+          const rows=await read(root+'/results.json');
+          const manifest=await read(root+'/manifest.json');
+          const locked=await read('benchmark/locked-photo-sources.json');
+          assert.equal(rows.length,59);assert.equal(new Set(rows.map(x=>x.id)).size,59);
+          const family=t=>['Boots','Ankle boots','Tall boots'].includes(t)?'Boots':t;
+          const choice=x=>{assert.ok(catalog.has(x.label)&&Number.isFinite(x.score));return {...catalog.get(x.label),score:x.score};};
+          const same=(a,b)=>a.category===b.category&&family(a.type)===family(b.type);
+          // Frozen rule: retain global whole top unless ALL three views are shoes
+          // in sneaker/boot families and both fixed frames agree on the alternative.
+          // This is a diagnostic rank only, never a classification or save authority.
+          const decide=(whole,a,b)=>{
+            const eligible=x=>x.category==='Shoes'&&['Sneakers','Boots'].includes(family(x.type));
+            return [whole,a,b].every(eligible)&&same(a,b)&&!same(whole,a)?{category:a.category,type:family(a.type)}:{category:whole.category,type:family(whole.type)};
+          };
+          const sneaker={category:'Shoes',type:'Sneakers'},boot={category:'Shoes',type:'Ankle boots'},tall={category:'Shoes',type:'Tall boots'},top={category:'Tops',type:'T-shirt'},flat={category:'Shoes',type:'Flats'};
+          assert.deepEqual(decide(sneaker,boot,tall),{category:'Shoes',type:'Boots'});
+          assert.deepEqual(decide(boot,sneaker,sneaker),sneaker);
+          assert.deepEqual(decide(sneaker,boot,sneaker),sneaker);
+          assert.deepEqual(decide(top,boot,tall),top);
+          assert.deepEqual(decide(flat,boot,tall),flat);
+          assert.deepEqual(decide(sneaker,flat,flat),sneaker);
+          const cases=[];
+          for(const truth of manifest){
+            const row=rows.find(x=>x.id===truth.id),source=locked.find(x=>x.id===truth.id);
+            assert.ok(row&&!row.error&&source?.verified);
+            assert.equal(row.recognitionMemory?.modelKey,'fashion-clip/whole-v1/'+meta.revision);
+            assert.equal(row.recognitionMemory.features.length,512);
+            const whole=choice((await scorer({features:row.recognitionMemory.features},labels))[0]);
+            const views=[320,336].map(size=>{
+              const matched=row.framingComparison.filter(x=>x.contentSize===size);
+              assert.equal(matched.length,1);
+              return {size,...choice(matched[0].top[0])};
+            });
+            const agreement=decide(whole,...views);
+            cases.push({id:truth.id,sourceSha256:source.sha256,expectedCategory:truth.expectedCategory,expectedType:truth.expectedType,application:row.prediction,whole,frame320:views[0],frame336:views[1],agreement});
+          }
+          const footwear=cases.filter(x=>x.expectedCategory==='Shoes'),controls=cases.filter(x=>x.expectedCategory!=='Shoes');
+          assert.equal(footwear.length,20);assert.equal(controls.length,39);
+          const arms=['whole','frame320','frame336','agreement'];
+          const correct=(x,arm)=>x[arm]?.category==='Shoes'&&family(x[arm].type)===family(x.expectedType);
+          const summary={photos:59,footwear:20,controls:39,arms:Object.fromEntries(arms.map(arm=>[arm,{correctFamily:footwear.filter(x=>correct(x,arm)).length,correctCategory:footwear.filter(x=>x[arm].category==='Shoes').length,controlShoeTop:controls.filter(x=>x[arm].category==='Shoes').length,improved:footwear.filter(x=>!correct(x,'whole')&&correct(x,arm)).map(x=>x.id),regressed:footwear.filter(x=>correct(x,'whole')&&!correct(x,arm)).map(x=>x.id)}])),knownHighTop:cases.find(x=>x.id==='commons-0078'),otherHighTop:cases.find(x=>x.id==='validation-0023'),independentBlind:false,productPromotion:false};
+          assert.equal(summary.knownHighTop.sourceSha256,'ba080a9a5d4aa68c193738e728e83c45b6a833a9bf80c45de4d2b35ece38154e');
+          assert.equal(summary.arms.agreement.controlShoeTop,summary.arms.whole.controlShoeTop);
+          await writeFile(root+'/frame-diagnostic.json',JSON.stringify({schema:'p88-footwear-frame-diagnostic-v1',modelRevision:meta.revision,vectorSha256:meta.sha256,summary,cases},null,2));
+          console.log('P88_FOOTWEAR_FRAME_DIAGNOSTIC '+JSON.stringify(summary));
+          JS
+          git diff --exit-code -- public
+      - name: Upload numeric frame diagnostic only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p88-footwear-frame-diagnostic
+          path: benchmark/output-footwear-framing/frame-diagnostic.json
+          if-no-files-found: warn
+          retention-days: 14
