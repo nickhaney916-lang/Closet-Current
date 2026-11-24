@@ -3356,3 +3356,26 @@ test('P88 ordinary fresh-ID reviewed save inserts rather than overwrites a close
  assert.deepEqual(operations,['items.add:new-id','state.put:draft'],
   'new item ID must be insert-only; the captured draft is cleared atomically');
 });
+
+test('P88 incomplete opt-in instance receipts never downgrade physical owner review',()=>{
+ const base={image:'data:image/jpeg;base64,PIECE',hint:{categories:['Shoes'],types:[]},requiresReview:true};
+ for(const piece of [base,{...base,instanceMethod:'unknown_future_method'},
+  {...base,instanceMethod:'native_semantic_group',requiresReview:false},
+  {...base,instanceMethod:'connected_footwear_component',requiresReview:undefined}]){
+  const h=captureHarness({ownerId:'owner-A'}),worker=h.c.worker;
+  h.emit({type:'piece',piece});
+  assert.equal(h.c.batch.length,0);assert.equal(h.c.items.length,0);
+  assert.equal(worker.closed,true);
+  assert.match(h.node('outfitSplitStatus').textContent,/Garment review evidence is incomplete/);
+  assert.equal(vm.runInContext('lastOutfitPhoto',h.c),'data:image/jpeg;base64,ORIGINAL');
+ }
+ const h=captureHarness({ownerId:'owner-A'});
+ h.emit({type:'piece',piece:{...base,instanceMethod:'connected_footwear_component'}});
+ assert.equal(h.c.batch.length,1);assert.equal(allowSaving(h.c.batch[0]),false);
+ h.emit({type:'piece',piece:{...base,image:'data:image/jpeg;base64,NEXT',instanceMethod:'unknown_future_method'}});
+ assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);
+ assert.equal(vm.runInContext('lastOutfitPhoto',h.c),'data:image/jpeg;base64,ORIGINAL');
+ const legacy=captureHarness({ownerId:'owner-A',href:'https://example.test/closet'});
+ legacy.emit({type:'piece',piece:{...base,requiresReview:undefined}});
+ assert.equal(legacy.c.batch.length,1);assert.equal(legacy.c.items.length,0);
+});
