@@ -2714,6 +2714,40 @@ async function recognizeItem(item){
   try{if(!localReady)await enableLocal();if(!sameRecognitionLease()||reviewInterrupted())return false;result=await localRequest('classify',item.recognitionPhoto?.image||item.image,item.id,item.segmentHint);}
   catch(error){if(!sameRecognitionLease()||reviewInterrupted())return false;recognitionUnavailable=true;throw error;}
   if(!sameRecognitionLease()||reviewInterrupted())return false;
+  // Reject malformed identity claims before memory, metadata or INDEX-04.
+  const topChoice=result?.choices?.[0];
+  // The recipient's isolated-garment worker can report strong category-only
+  // evidence with no confirmed subtype. Admit this shape only to review.
+  const legacyBroad=result?.strong===true&&result?.categoryOnly===true&&
+   (result.categoryConfirmed===undefined||result.categoryConfirmed===false)&&topChoice?.itemType==='Unknown';
+  const categoryOnly=legacyBroad||(result?.categoryConfirmed===true&&result?.categoryOnly===true);
+  const claimsIdentity=result?.strong===true||categoryOnly;
+  const validFlags=result&&typeof result==='object'&&!Array.isArray(result)&&
+   typeof result.strong==='boolean'&&Array.isArray(result.choices)&&
+   (result.categoryConfirmed===undefined||typeof result.categoryConfirmed==='boolean')&&
+   (result.categoryOnly===undefined||typeof result.categoryOnly==='boolean')&&
+   (legacyBroad||(!(result.strong&&(result.categoryConfirmed||result.categoryOnly))&&
+   Boolean(result.categoryConfirmed)===Boolean(result.categoryOnly)));
+  const validChoice=topChoice&&typeof topChoice==='object'&&!Array.isArray(topChoice)&&
+   typeof topChoice.category==='string'&&topChoice.category!=='Uncategorized'&&
+   categories.includes(topChoice.category)&&
+   typeof topChoice.itemType==='string'&&
+   (categoryOnly?topChoice.itemType==='Unknown':topChoice.itemType!=='Unknown'&&
+    Object.hasOwn(clothingSchema.types,topChoice.category)&&
+    clothingSchema.types[topChoice.category].includes(topChoice.itemType))&&
+   (topChoice.score===undefined||(Number.isFinite(topChoice.score)&&topChoice.score>=0&&topChoice.score<=1));
+  if(!validFlags||(claimsIdentity&&!validChoice)){
+   item.localAnalyzed=false;item.scanFailed=true;item.localChoices=[];item.requiresOwnershipConfirmation=true;
+   item.localStatus=item.userAdjusted?'Your adjustments are preserved. Save this piece when ready.':
+    'Recognition returned invalid garment information. Original photo kept. Confirm details in Adjust or retry.';
+   return true;
+  }
+  if(legacyBroad){
+   // A legacy strong category-only response is not a confirmed specific garment.
+   item.requiresOwnershipConfirmation=true;item.localAnalyzed=true;item.localChoices=[];
+   item.localStatus='Garment category needs confirmation. Original photo kept. Confirm category, type and color in Adjust.';
+   return true;
+  }
   if(typeof ClothingMemory!=='undefined'&&ClothingMemory.valid(result.recognitionMemory))item.recognitionMemory=result.recognitionMemory;
   item.localAnalyzed=true;item.localChoices=[];
   // Diagnostic evidence contains category/type scores only, never wardrobe images.
