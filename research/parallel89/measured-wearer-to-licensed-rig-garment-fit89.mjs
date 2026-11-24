@@ -540,10 +540,43 @@ export function trialObstacleGuardedOriginalFrontStabilization({
   }
  }
  const tree=build(rows),receipts=[],selfReceipts=[];
- // A shared topological vertex is intentionally excluded: common seam/edge
- // contact is expected, and this guard cannot certify adjacent fold-over.
- // All nonincident pairs involving a moving face are candidates, including
- // two moving faces. Convex endpoint hull separation is sufficient only.
+ // Incident triangles legitimately touch at their common topology. Test
+ // separation beyond that topology, not ordinary AABB overlap.
+ const dot=(a,b)=>a.reduce((sum,v,k)=>sum+v*b[k],0);
+ const plus=(a,b)=>a.map((v,k)=>v+b[k]);
+ const unit=a=>{const l=Math.hypot(...a);return l>1e-14?a.map(v=>v/l):null;};
+ const relative=(v,a,b)=>sub(points(v,[a])[0],points(v,[b])[0]);
+ const incidentSeparation=(from,to,a,b,shared)=>{
+  if(shared.length===2){
+   const [u,v]=shared,ia=a.find(i=>!shared.includes(i)),ib=b.find(i=>!shared.includes(i));
+   const e0=relative(from,v,u),e1=relative(to,v,u);
+   // For linear edge/third-point motion, cross products are quadratic
+   // Bernstein curves. All nine cross-control dot products strictly
+   // negative implies the two oriented wedge vectors stay opposed.
+   const controls=i=>{
+    const p=relative(from,i,u),q=relative(to,i,u);
+    return [cross(e0,p),plus(cross(e0,q),cross(e1,p)).map(x=>x/2),cross(e1,q)].map(unit);
+   };
+   const x=controls(ia),y=controls(ib);
+   return x.every(n=>n&&y.every(m=>m&&dot(n,m)<-1e-8));
+  }
+  if(shared.length!==1)return false; // duplicate faces never cleared
+  const u=shared[0],vectors=ids=>[from,to].flatMap(v=>ids.filter(i=>i!==u).map(i=>unit(relative(v,i,u))));
+  const x=vectors(a),y=vectors(b);
+  if([...x,...y].some(v=>!v))return false;
+  const axes=[sub(x.reduce(plus),y.reduce(plus))];
+  for(const p of x)for(const q of y)axes.push(sub(p,q));
+  // A fixed axis strictly separates all relative endpoint rays; linear
+  // interpolation and convexity then exclude contact beyond the vertex.
+  for(const axis of axes){
+   const n=unit(axis);if(!n)continue;
+   if(x.every(p=>dot(p,n)>1e-8)&&y.every(q=>dot(q,n)<-1e-8))return true;
+  }
+  return false;
+ };
+ // All pairs involving a moving face are candidates, including two moving
+ // faces. Unresolved incident geometry is refused separately.
+
  const selfGuard=(from,to)=>{
   const faces=[];
   for(let k=0;k<indices.length;k+=3){
@@ -552,24 +585,30 @@ export function trialObstacleGuardedOriginalFrontStabilization({
     moving:ids.some(i=>[0,1,2].some(j=>from[3*i+j]!==to[3*i+j]))});
   }
   const selfTree=build(faces.slice()),moving=faces.filter(f=>f.moving);
-  let broadphasePairsExamined=0,separatedSweptPairs=0,incidentPairsExcluded=0,budgetExceeded=false;
+  let broadphasePairsExamined=0,separatedSweptPairs=0,incidentPairsExcluded=0,incidentPairsSeparated=0,budgetExceeded=false,incidentUnresolved=false;
   for(const f of moving){
    const start=points(from,f.ids),end=points(to,f.ids);
    const hit=query(selfTree,f.b,g=>{
     if(g.faceOrdinal===f.faceOrdinal||(g.moving&&g.faceOrdinal<f.faceOrdinal))return false;
-    if(f.ids.some(i=>g.ids.includes(i))){incidentPairsExcluded++;return false;}
+    const shared=f.ids.filter(i=>g.ids.includes(i));
+    if(shared.length){
+     if(incidentPairsExcluded>=250000){budgetExceeded=true;incidentUnresolved=true;return true;}
+     incidentPairsExcluded++;
+     if(incidentSeparation(from,to,f.ids,g.ids,shared)){incidentPairsSeparated++;return false;}
+     incidentUnresolved=true;return true;
+    }
     if(broadphasePairsExamined>=250000){budgetExceeded=true;return true;}
     broadphasePairsExamined++;
     if(separation(start,end,points(from,g.ids),points(to,g.ids))){separatedSweptPairs++;return false;}
     return true;
    });
-   if(hit){const receipt={clear:false,reason:'SWEPT_NONINCIDENT_SELF_OVERLAP_UNRESOLVED',
+   if(hit){const receipt={clear:false,reason:incidentUnresolved?'SWEPT_INCIDENT_FOLDOVER_UNRESOLVED':'SWEPT_NONINCIDENT_SELF_OVERLAP_UNRESOLVED',
     movingFacesIndexed:moving.length,broadphasePairsExamined,separatedSweptPairs,
-    incidentPairsExcluded,budgetExceeded,frontFaceOrdinal:f.faceOrdinal,
+    incidentPairsExcluded,incidentPairsSeparated,budgetExceeded,frontFaceOrdinal:f.faceOrdinal,
     otherFrontFaceOrdinal:hit.faceOrdinal};selfReceipts.push(receipt);return receipt;}
   }
   const receipt={clear:true,movingFacesIndexed:moving.length,broadphasePairsExamined,
-   separatedSweptPairs,incidentPairsExcluded,budgetExceeded:false};selfReceipts.push(receipt);return receipt;
+   separatedSweptPairs,incidentPairsExcluded,incidentPairsSeparated,budgetExceeded:false};selfReceipts.push(receipt);return receipt;
  };
  const guard=(from,to)=>{
   const self=selfGuard(from,to);if(!self.clear)return self;
@@ -597,6 +636,7 @@ export function trialObstacleGuardedOriginalFrontStabilization({
  return {...result,correctionSegmentObstacleReceipts:receipts,
   correctionSegmentNonincidentSelfReceipts:selfReceipts,
   nonincidentMovingFaceSelfBroadphaseEnabled:true,
+  incidentMovingFaceFoldoverGuardEnabled:true,
   incidentFaceFoldoverOrStationarySelfContactCertified:false,
   fixedObstacleFacesIndexed:rows.length,suppliedLayerCount:obstacles.filter(o=>o.kind==='layer').length,
   sweptMovingFaceBoundsOnly:false,conservativeSweptProjectionSeparation:true,
