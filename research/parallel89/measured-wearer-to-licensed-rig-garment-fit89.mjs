@@ -382,3 +382,71 @@ export function trialCoordinatedOriginalFrontCorrection({rest,pose,indices,expec
  }
  return reject("RESEARCH_ONLY_COORDINATED_CORRECTION_REJECTED",{before,selectedDistortedEdges:selected,trials});
 }
+
+/** Progressive research-only stabilization of a detached pose.
+ * Each pass is separately admitted by the coordinated correction guard.
+ * Total traveled distance (not merely net displacement) is capped at 5%
+ * of the shortest incident rest edge per vertex. Never rebase that budget.
+ * Retain the last accepted copy if a subsequent pass fails.
+ */
+export function trialProgressiveOriginalFrontStabilization({rest,pose,indices,expectedFaces,expectedVertices}={}){
+ const input={rest,indices,expectedFaces,expectedVertices};
+ const audit=auditSampledOriginalFrontProportions({...input,poses:[pose]});
+ const finish=(decision,extra={})=>fail(decision,{...extra,
+  correctionAppliedToLiveMesh:false,materialOrCollisionCertified:false});
+ if(!audit.sampledPoseDistortion)return finish(audit.decision,{correctedPose:null});
+ const before=audit.sampledPoseDistortion[0],caps=new Float64Array(expectedVertices).fill(Infinity),
+  traveled=new Float64Array(expectedVertices);
+ const distance=(v,a,b)=>Math.hypot(v[3*a]-v[3*b],v[3*a+1]-v[3*b+1],v[3*a+2]-v[3*b+2]);
+ const normal=(v,a,b,c)=>{
+  const x=v[3*b]-v[3*a],y=v[3*b+1]-v[3*a+1],z=v[3*b+2]-v[3*a+2],
+   u=v[3*c]-v[3*a],w=v[3*c+1]-v[3*a+1],q=v[3*c+2]-v[3*a+2];
+  return [y*q-z*w,z*u-x*q,x*w-y*u];
+ };
+ for(let k=0;k<indices.length;k+=3){
+  const a=indices[k],b=indices[k+1],c=indices[k+2];
+  for(const [i,j] of [[a,b],[b,c],[c,a]]){
+   const L=distance(rest,i,j);
+   caps[i]=Math.min(caps[i],L);caps[j]=Math.min(caps[j],L);
+  }
+ }
+ let current=Float64Array.from(pose),last=before,stopReason="PASS_LIMIT",maxTravel=0;
+ const passes=[];
+ for(let i=0;i<6;i++){
+  const result=trialCoordinatedOriginalFrontCorrection({...input,pose:current});
+  if(result.decision!=="RESEARCH_ONLY_COORDINATED_CORRECTION_CANDIDATE"){
+   stopReason=result.decision;break;
+  }
+  const candidate=result.correctedPose,travel=traveled.slice();
+  let nextMax=0,within=true;
+  for(let j=0;j<expectedVertices;j++){
+   const p=3*j,d=Math.hypot(candidate[p]-current[p],candidate[p+1]-current[p+1],candidate[p+2]-current[p+2]);
+   travel[j]+=d;
+   const ratio=travel[j]/caps[j];
+   if(ratio>.05||(!Number.isFinite(caps[j])&&d!==0)){within=false;break;}
+   nextMax=Math.max(nextMax,ratio);
+  }
+  if(!within){stopReason="CUMULATIVE_TRAVEL_LIMIT";break;}
+  // Local normals may rotate gradually: also compare against the original
+  // uncorrected posed surface, not solely the preceding accepted pass.
+  let originalNormalConflict=false;
+  for(let k=0;k<indices.length;k+=3){
+   const a=indices[k],b=indices[k+1],c=indices[k+2],
+    n=normal(pose,a,b,c),q=normal(candidate,a,b,c);
+   if(n[0]*q[0]+n[1]*q[1]+n[2]*q[2]<=0){originalNormalConflict=true;break;}
+  }
+  if(originalNormalConflict){stopReason="ORIGINAL_POSE_NORMAL_CONFLICT";break;}
+  traveled.set(travel);maxTravel=nextMax;current=candidate;last=result.after;
+  passes.push({pass:i+1,maximumCumulativeTravelFraction:maxTravel,
+   minimumEdgeLengthRatio:last.minimumEdgeLengthRatio,maximumEdgeLengthRatio:last.maximumEdgeLengthRatio,
+   minimumTriangleAreaRatio:last.minimumTriangleAreaRatio,maximumTriangleAreaRatio:last.maximumTriangleAreaRatio,
+   edgesOutsideResearchBand:last.edgesOutsideResearchBand,facesOutsideResearchBand:last.facesOutsideResearchBand,
+   collapsedFaces:last.collapsedFaces});
+ }
+ return finish(passes.length?"RESEARCH_ONLY_PROGRESSIVE_STABILIZATION_CANDIDATE":
+  "RESEARCH_ONLY_PROGRESSIVE_STABILIZATION_REFUSED",{
+  before,after:last,passes,stopReason,maximumCumulativeTravelFraction:maxTravel,
+  maximumAllowedCumulativeTravelFraction:.05,
+  correctedPose:passes.length?current:null
+ });
+}
