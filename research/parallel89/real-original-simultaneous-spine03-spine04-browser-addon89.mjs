@@ -14,7 +14,7 @@ import {institutionalPartAAnchor}
  from './met70759-physical-garment-dimension-anchor89.mjs';
 import {evaluateFivePointPlanarReference}
  from './physical-five-point-photo-plane89.mjs';
-import {assessMetricGarmentToWearerFit,auditSampledOriginalFrontProportions}
+import {assessMetricGarmentToWearerFit,auditSampledOriginalFrontProportions,trialBoundedOriginalFrontCorrection}
  from './measured-wearer-to-licensed-rig-garment-fit89.mjs';
 
 window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=()=>{
@@ -125,6 +125,19 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
   invariant(sampledProportions.decision==='RESEARCH_ONLY_SAMPLED_ORIGINAL_FRONT_PROPORTION_AUDIT'&&
    sampledProportions.sampledPoseCount===16&&sampledProportions.consumer3DAdmitted===false,
    'source-front-proportion-audit-incomplete');
+  const poseBuffers=[...grid,...path,...offDiagonal].map(p=>p.front);
+  const worstPoseIndex=sampledProportions.sampledPoseDistortion.reduce((best,p,i,all)=>
+   Math.abs(p.worstOriginalEdge.ratio-1)>Math.abs(all[best].worstOriginalEdge.ratio-1)?i:best,0);
+  const correction=trialBoundedOriginalFrontCorrection({
+   rest:grid[4].front,pose:poseBuffers[worstPoseIndex],indices:frontIndices,
+   expectedFaces:35262,expectedVertices:x.sourceFrontN
+  });
+  // Do not transport candidate geometry or apply it to the live mesh.
+  const {correctedPose:discardedCopy,...correctionReceipt}=correction;
+  invariant(correctionReceipt.correctionAppliedToLiveMesh===false&&
+   correctionReceipt.consumer3DAdmitted===false&&
+   correctionReceipt.materialOrCollisionCertified===false,
+   'research-edge-correction-must-never-be-applied-or-certified');
   const evaluator=evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase({
    frontGridPoses:grid.map(x=>x.front),
    bodyGridPoses:grid.map(x=>x.body),
@@ -290,6 +303,7 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
     realOriginalVsIncorrectZeroSeedDistance,
    other161BoneLocalPoseTransformsImmutable:true,
    sampledOriginalFrontProportionAudit:sampledProportions,
+   sampledWorstPoseBoundedCorrection:{worstPoseIndex,...correctionReceipt},
    originalGarmentToBodyMeasuredWearerFitGate:originalMeasuredWearerFit,
    unmeasuredOriginalMuseumFivePointPhotoPlane:museumFivePointPhotoPlane,
    museumOriginalPartARealPhysicalDimensionEvidence:museumRealPhysicalPartA,
