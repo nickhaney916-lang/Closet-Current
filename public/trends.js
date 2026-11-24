@@ -47,7 +47,7 @@ function storeLooks(looks,lease=inspirationLease()){
  }));
 }
 async function importLooks(values){if(!Array.isArray(values)||values.length>100)throw Error('Invalid inspiration backup.');const lease=inspirationLease();if(!lease.current())throw Error('Private inspiration session unavailable.');const merged=new Map(inspirationLooks.map(x=>[x.id,x]));for(const value of values){const look=validLook(value);merged.set(look.id,look);}const looks=[...merged.values()];await storeLooks(looks,lease);if(!lease.current())throw Error('Private inspiration session changed.');inspirationLooks=looks;renderSavedLooks();}
-function loadLook(look){++lookRevision;clearReference();activeLookId=look.id;$('lookTitle').value=look.title;$('lookUrl').value=look.sourceUrl;$('lookDescription').value=look.description;$('lookSeason').value=look.season;$('shopSize').value=look.size;$('shopBudget').value=look.budget||'';lookPieces=structuredClone(look.pieces);lookImage=look.image;$('inspirationPreview').src=lookImage;$('inspirationPreview').hidden=!lookImage;$('referenceToCloset').hidden=true;renderLookPieces();renderTrendMatches();}
+function loadLook(look){++lookRevision;clearReference();activeLookId=look.id;$('lookTitle').value=look.title;$('lookUrl').value=look.sourceUrl;$('lookDescription').value=look.description;$('lookSeason').value=look.season;$('shopSize').value=look.size;$('shopBudget').value=look.budget||'';lookPieces=structuredClone(look.pieces);lookImage=look.image;if(lookImage)$('inspirationPreview').src=lookImage;$('inspirationPreview').hidden=!lookImage;$('referenceToCloset').hidden=true;renderLookPieces();renderTrendMatches();}
 function renderSavedLooks(){
  const grid=$('savedLooks');grid.replaceChildren();
  if(!inspirationLooks.length){grid.append(node('p','Save a look to build your inspiration collection.'));return;}
@@ -58,13 +58,15 @@ function renderTrendMatches(){
  const grid=$('trendResults');if(!grid)return;grid.replaceChildren();
  if(!lookPieces.length){$('matchSummary').textContent='Add the pieces in your inspiration look to match them with your closet.';return;}
  const result=matchOutfit(lookPieces,items,$('lookSeason').value==='All seasons'?'':$('lookSeason').value),close=result.filter(x=>x.status==='match').length,substitutes=result.filter(x=>x.status==='substitute').length;
- $('matchSummary').textContent=`${close} of ${result.length} close matches · ${substitutes} possible substitutes · ${result.filter(x=>x.status==='gap').length} gaps`;
- for(const match of result){const card=node('article',null,'match-card'),{component,best,status}=match;card.append(node('span',status==='match'?'FROM YOUR CLOSET':status==='substitute'?'POSSIBLE SUBSTITUTE':'FILL A GAP','match-tag '+status),node('h3',component.label||component.itemType));
+ const unresolved=x=>x.component.category==='Uncategorized'||!x.component.itemType||x.component.itemType==='Unknown';
+ const uncertain=result.filter(unresolved).length;
+ $('matchSummary').textContent=`${close} of ${result.length} close matches · ${substitutes} possible substitutes · ${result.filter(x=>x.status==='gap'&&!unresolved(x)).length} unmatched · ${uncertain} need details. Individual matches, not a verified complete outfit.`;
+ for(const match of result){const card=node('article',null,'match-card'),{component,best,status}=match;card.append(node('span',status==='match'?'FROM YOUR CLOSET':status==='substitute'?'POSSIBLE SUBSTITUTE':unresolved(match)?'REVIEW DETAILS':'NO UNUSED MATCH','match-tag '+status),node('h3',component.label||component.itemType));
  if(best){const image=node('img');image.src=best.item.image;image.alt=best.item.name;card.append(image,node('h4',best.item.name),node('p',best.reasons.join(' · ')),node('p',best.missing.join(' · '),'match-differences'));}
- else card.append(node('p',component.category==='Uncategorized'||component.itemType==='Unknown'?'Choose a category and item type above to match this piece.':'No saved item in this category.'));
- if(status!=='match'&&component.category!=='Uncategorized'&&component.itemType!=='Unknown'){
+ else card.append(node('p',component.category==='Uncategorized'||component.itemType==='Unknown'?'Choose a category and item type above to match this piece.':'No unused saved item was matched to this piece. Review clothing details before assuming it is missing.'));
+ if(status==='gap'&&!unresolved(match)&&!items.some(item=>item.category===component.category&&(!item.itemType||['Unknown','Other'].includes(item.itemType)))){
   const reuse=inspirationLooks.filter(look=>look.pieces.some(p=>p.category===component.category&&p.itemType===component.itemType)).length;
-  if(reuse>1)card.append(node('p',`This item type appears in ${reuse} saved looks. A matching purchase may serve several outfits.`));
+  if(reuse>1)card.append(node('p',`This item type appears in ${reuse} saved looks. Review your existing wardrobe before considering another piece.`));
   const link=node('a','Search online for this piece','shop-link');link.href=shopSearch(component,$('shopSize').value,Number($('shopBudget').value));link.target='_blank';link.rel='noopener noreferrer';card.append(link,node('p','Search results need checking for size, price, and availability.','fine'));
  }
  if(match.alternatives.length){const details=node('details');details.append(node('summary','Other closet options'));for(const alternative of match.alternatives)details.append(node('p',alternative.item.name+' · '+[...alternative.reasons,...alternative.missing].join(' · ')));card.append(details);}
