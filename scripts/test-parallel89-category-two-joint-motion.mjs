@@ -46,11 +46,27 @@ try{
    scene.updateMatrixWorld(true);
    const meshes=[];scene.traverse(m=>{if(m.isSkinnedMesh)meshes.push(m)});
    if(!meshes.length||meshes.some(m=>m.skeleton.bones.length!==163))throw Error('original rig bone count invalid');
+   // Original world matrices may inherit nonuniform scale. A rigid
+   // attachment uses the origin and an explicitly orthonormalized frame,
+   // not a raw affine delta that could stretch the source garment.
+   function rigidFrame(m){
+    const e=m.elements,x=new THREE.Vector3(e[0],e[1],e[2]),y=new THREE.Vector3(e[4],e[5],e[6]),z0=new THREE.Vector3(e[8],e[9],e[10]);
+    if(x.length()<1e-9||y.length()<1e-9||z0.length()<1e-9)throw Error('degenerate original joint frame');
+    x.normalize();y.addScaledVector(x,-y.dot(x));
+    if(y.length()<1e-9)throw Error('collinear original joint frame');
+    y.normalize();const z=new THREE.Vector3().crossVectors(x,y);
+    if(z.dot(z0)<=0)throw Error('reflected original joint frame');
+    return new THREE.Matrix4().makeBasis(x,y,z).setPosition(new THREE.Vector3(e[12],e[13],e[14]));
+   }
+   function rigidityResidual(m){
+    const e=m.elements,v=[new THREE.Vector3(e[0],e[1],e[2]),new THREE.Vector3(e[4],e[5],e[6]),new THREE.Vector3(e[8],e[9],e[10])];
+    return Math.max(...v.flatMap((a,i)=>v.map((b,j)=>Math.abs(a.dot(b)-(i===j?1:0)))));
+   }
    const anchors=[...new Set(meshes.flatMap(m=>m.skeleton.bones.filter(x=>x.name.replaceAll('.','')==='spine04')))];
    if(anchors.length!==1)throw Error('unique real spine04 anchor required');
    const anchor=anchors[0],lowerBones=[...new Set(meshes.flatMap(m=>m.skeleton.bones.filter(x=>x.name.replaceAll('.','')==='spine03')))];
    if(lowerBones.length!==1)throw Error('unique real spine03 required');
-   const lower=lowerBones[0],restQ=anchor.quaternion.clone(),lowerQ=lower.quaternion.clone(),inverse=anchor.matrixWorld.clone().invert(),lowerInverse=lower.matrixWorld.clone().invert();
+   const lower=lowerBones[0],restQ=anchor.quaternion.clone(),lowerQ=lower.quaternion.clone(),inverse=rigidFrame(anchor.matrixWorld).invert(),lowerInverse=rigidFrame(lower.matrixWorld).invert(),rawInverse=anchor.matrixWorld.clone().invert(),rawLowerInverse=lower.matrixWorld.clone().invert();
    const originalBones=[...new Set(meshes.flatMap(m=>m.skeleton.bones))].map(b=>({b,p:b.position.clone(),q:b.quaternion.clone(),s:b.scale.clone()}));
    function extract(){
     const positions=[],indices=[];
@@ -70,8 +86,8 @@ try{
     const posed=extract();
     if(posed.indices.length!==rest.indices.length||posed.indices.some((x,i)=>x!==rest.indices[i]))throw Error('rig topology changed');
     if(originalBones.some(({b,p,q,s})=>!b.position.equals(p)||!b.scale.equals(s)||(b!==anchor&&b!==lower&&!b.quaternion.equals(q))))throw Error('unexpected rig transform');
-    const delta=anchor.matrixWorld.clone().multiply(inverse).toArray();
-    poses.push({angle,positions:posed.positions,upperDelta:delta,lowerDelta:lower.matrixWorld.clone().multiply(lowerInverse).toArray()});
+    const raw=anchor.matrixWorld.clone().multiply(rawInverse),rawLower=lower.matrixWorld.clone().multiply(rawLowerInverse),delta=rigidFrame(anchor.matrixWorld).multiply(inverse).toArray();
+    poses.push({angle,positions:posed.positions,upperDelta:delta,lowerDelta:rigidFrame(lower.matrixWorld).multiply(lowerInverse).toArray(),rawRigidityResidual:Math.max(rigidityResidual(raw),rigidityResidual(rawLower))});
    }
    anchor.quaternion.copy(restQ);lower.quaternion.copy(lowerQ);scene.updateMatrixWorld(true);
    const restored=extract();
@@ -104,7 +120,7 @@ try{
     for(let i=0;i<rest.length;i+=3)maxDisplacement=Math.max(maxDisplacement,Math.hypot(...[0,1,2].map(k=>x.posed[i+k]-rest[i+k])));
     if(pose.angle===0){assert.ok(maxDisplacement<1e-9);assert.ok(x.maxEdgeStrain<1e-8);}
     else assert.ok(maxDisplacement>1e-4);
-    checks.push({angle:pose.angle,maxDisplacement,mixedVertices:x.mixedVertices,maxEdgeStrain:x.maxEdgeStrain,minAreaRatio:x.minAreaRatio,strainVeto:x.strainVeto,decision:x.decision,contact:x.contact.status,bodyFaces:x.contact.bodyFacesSubmitted,garmentFaces:x.contact.garmentFacesSubmitted});
+    checks.push({angle:pose.angle,rawRigidityResidual:pose.rawRigidityResidual,maxDisplacement,mixedVertices:x.mixedVertices,maxEdgeStrain:x.maxEdgeStrain,minAreaRatio:x.minAreaRatio,strainVeto:x.strainVeto,decision:x.decision,contact:x.contact.status,bodyFaces:x.contact.bodyFacesSubmitted,garmentFaces:x.contact.garmentFacesSubmitted});
    }
    assert.deepEqual(sourcePositions,originalPositions);assert.deepEqual(sourceIndices,originalIndices);
    assert.equal(sha(originalBytes),originalSHA);assert.equal(sha(rigBytes),hashes[kind]);
