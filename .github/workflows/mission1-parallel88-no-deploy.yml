@@ -670,3 +670,87 @@ jobs:
           path: benchmark/output-footwear-framing/frame-diagnostic.json
           if-no-files-found: warn
           retention-days: 14
+
+  footwear-source-audit-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check historical footwear annotation and source-group eligibility before any promotion
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFile,writeFile,mkdir} from 'node:fs/promises';
+          const read=async p=>JSON.parse(await readFile(p,'utf8'));
+          const manifest=(await Promise.all(['reviewed-32','holdout-16','fresh-11'].map(x=>read('benchmark/manifest-'+x+'.json')))).flat();
+          const sources=await read('benchmark/locked-photo-sources.json');
+          // Frozen audit overlay: legacy expectedType and source bytes are untouched.
+          // The drawing and glass objects are hard negatives, not wearable positives.
+          // Source evidence: https://commons.wikimedia.org/wiki/File:Boots_(drawing).jpg
+          // https://commons.wikimedia.org/wiki/Category:19th-century_glass_in_the_Metropolitan_Museum_of_Art_(American_Decorative_Arts)
+          // https://www.metmuseum.org/art/collection/search/564
+          // Same accession and supplier cohorts are grouped conservatively.
+          const ledger=[
+            ["commons-0077","bata","Sneakers","b968758a00cd458040b90ca31a48c5aafe6f3cab4fe708f021bc3a341a58cf70","File:Garrison high-top sneakers, 1940, US Army, manufacturer unknown - Bata Shoe Museum - DSC00771.JPG"],
+            ["commons-0078","bata","Sneakers","ba080a9a5d4aa68c193738e728e83c45b6a833a9bf80c45de4d2b35ece38154e","File:Perfection high-top sneakers, 1900-1929 - Bata Shoe Museum - DSC00727.JPG"],
+            ["commons-0079","nike-photo","Sneakers","b577483e5244dfb53e60cc8a0b54a4130e695cf388e5534e38a2b04580727ec6","File:Nike SB Dunk High MF Doom.jpg"],
+            ["commons-0080","unsplash","Sneakers","4675887ee36dbaeb894faf1e0879b05473f39fb555024424d52fcdce37d35bb9","File:Houston sneakers (Unsplash).jpg"],
+            ["commons-0081","unsplash","Sneakers","72b53abd07e9438fd5a11631f6595c10d2abc98fda432d22611a58ba3b289952","File:Black white sneakers logo (Unsplash).jpg"],
+            ["commons-0082","auckland-museum","Sneakers","d312800f42d207212ef45d7d0bd6a41fbd4d61193ed3b0e5df6193f1cedddbd2","File:Shoes, leather tennis (pair) (AM 2017.30.1-15).jpg"],
+            ["commons-0083","auckland-museum","Sneakers","e001f7249573020a200b9edfd211a44fef97d57380d8ced46b0916f60d596077","File:Shoes, leather tennis (pair) (AM 2017.30.1-20).jpg"],
+            ["commons-0084","north-star","Sneakers","4cf56d6ce959e70a8e67bb723d295feaaaa3fad01ba739a44c4cef83c39ee1e0","File:North Star sneakers (1).jpg"],
+            ["commons-0085","north-star","Sneakers","b790c875d85395e5c30f43c180e10a9e144829d4d9c3c8f67b65348cc621cf43","File:North Star sneakers (2).jpg"],
+            ["commons-0087","momu-drawing","EXCLUDE","9b0f36a07a07491009b3ea5c01a5100464022150091bab13ce6d15e598c9e7c9","File:Boots (drawing).jpg"],
+            ["commons-0088","met-glass","EXCLUDE","8e5e9cd86c22a0c03b120cd57af33144cc2e61a29b0beed50b5db3c5c222cbba","File:Boot with Spur MET 182113.jpg"],
+            ["commons-0089","met-glass","EXCLUDE","44f3c2a087fe5cde4006dadb41903964b8cd906e933c4fae4bf54db7758f9b8b","File:Boot with Spur MET DP238269.jpg"],
+            ["commons-0092","auckland-museum","Boots","e098a78500ada7159c9cbea6559ef3c64c87b8e2417fc96487cb34570ca8754d","File:Boots (AM 762134-6).jpg"],
+            ["commons-0093","auckland-museum","Boots","83a011c50253fe6f4fd9ae9a7f677a6fb17e598af48647ce64479081223b1769","File:Boots (AM 762134-7).jpg"],
+            ["commons-0094","auckland-museum","Boots","ff3d49e30be2d1141179b7ad2d08d9edff2384926cd5a6f5a8f6818c97fa57ae","File:Boots, pair woman's (AM 1992.157-4).jpg"],
+            ["commons-0095","auckland-museum","Boots","4905ac445855b950a116ac4074e87f6c3c5b7159d1e923089e17a2bdd26d8f3d","File:Boots, pair woman's (AM 1992.157-15).jpg"],
+            ["validation-0019","spera-retailer","Sneakers","16c806adf3d3e39d0cfa260901da9de6c87f2eab7eafa6e0e56593d7782a5140","File:DKNY Marie Sneaker 23142034 schwarz - orange (1) (15798649564).jpg"],
+            ["validation-0021","spera-retailer","Sneakers","a80a0c707c7aa99e4ee4df7a766109121f8b6baafe51ba9dd764e382f9094f61","File:DKNY Marie Sneaker 23142034 rot-orange - weiß (1) (16235746307).jpg"],
+            ["validation-0023","spera-retailer","Sneakers","4fa7836d0275c1d393b6e71db0044674d04e4fc2c09e6c8946ca8ad8eed5276b","File:DKNY Brave Logo Varsity High-Top Sneaker 23340363 schwarz - tigerlook (1) (16415389490).jpg"],
+            ["validation-0024","spera-retailer","Sneakers","2183cbbb8af17dee3bab0ea0b9657b61ccbb6be953ae047f7119be0f0e7067a0","File:DKNY Barbara Hardware Sneaker 23340609 silber (1) (16417111589).jpg"]
+          ];
+          const validate=(entries,manifest,sources)=>{
+           if(entries.length!==20||new Set(entries.map(x=>x[0])).size!==20)throw Error('ledger coverage');
+           const positive=manifest.filter(x=>x.expectedCategory==='Shoes');
+           if(positive.length!==20||new Set(positive.map(x=>x.id)).size!==20)throw Error('manifest coverage');
+           for(const [id,group,kind,sha,title] of entries){
+           const s=sources.find(x=>x.id===id),m=positive.find(x=>x.id===id);
+           if(!s?.verified||!s.attribution?.license||s.sha256!==sha||s.attribution.title!==title||!m||!group||!['Sneakers','Boots','EXCLUDE'].includes(kind)||m.expectedType!==(kind==='EXCLUDE'?'Boots':kind))throw Error('source ledger drift: '+id);
+           }
+           const retained=entries.filter(x=>x[2]!=='EXCLUDE');
+           const classes=['Sneakers','Boots'];
+           const counts=Object.fromEntries(classes.map(k=>[k,retained.filter(x=>x[2]===k).length]));
+           const sourceGroups=Object.fromEntries(classes.map(k=>[k,[...new Set(retained.filter(x=>x[2]===k).map(x=>x[1]))].sort()]));
+           const holdouts=[...new Set(retained.map(x=>x[1]))].sort().map(group=>({group,remainingClasses:classes.filter(k=>retained.some(x=>x[1]!==group&&x[2]===k))}));
+           return {counts,sourceGroups,holdouts,excluded:entries.filter(x=>x[2]==='EXCLUDE').map(x=>x[0]),sourceDisjointFeasible:holdouts.every(x=>x.remainingClasses.length===2),independentBlind:false,productionPromotion:false};
+          };
+          const result=validate(ledger,manifest,sources);
+          assert.deepEqual(result.counts,{Sneakers:13,Boots:4});
+          assert.deepEqual(result.sourceGroups.Boots,['auckland-museum']);
+          assert.equal(result.sourceDisjointFeasible,false);
+          assert.deepEqual(result.holdouts.find(x=>x.group==='auckland-museum').remainingClasses,['Sneakers']);
+          assert.equal(result.excluded.length,3);
+          assert.throws(()=>validate(ledger.slice(1),manifest,sources));
+          assert.throws(()=>validate([...ledger.slice(0,-1),ledger[0]],manifest,sources));
+          assert.throws(()=>validate(ledger.map((x,i)=>i===0?[...x.slice(0,3),'0'.repeat(64),x[4]]:x),manifest,sources));
+          assert.throws(()=>validate(ledger.map((x,i)=>i===0?[...x.slice(0,4),'different title']:x),manifest,sources));
+          await mkdir('benchmark/output-footwear-source-audit',{recursive:true});
+          await writeFile('benchmark/output-footwear-source-audit/audit.json',JSON.stringify({schema:'p88-footwear-source-audit-v1',status:'BLOCKED_BOOT_SOURCE_DIVERSITY',result,ledger},null,2));
+          console.log('P88_FOOTWEAR_SOURCE_AUDIT '+JSON.stringify({status:'BLOCKED_BOOT_SOURCE_DIVERSITY',...result}));
+          JS
+      - name: Upload source eligibility ledger only
+        uses: actions/upload-artifact@v4
+        with:
+          name: p88-footwear-source-audit
+          path: benchmark/output-footwear-source-audit/audit.json
+          retention-days: 14
