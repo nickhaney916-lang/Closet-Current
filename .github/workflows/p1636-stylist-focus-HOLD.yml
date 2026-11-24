@@ -33,7 +33,7 @@ jobs:
           git merge-base --is-ancestor "$PARENT" HEAD
           git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
             case "$path" in
-              public/closet-stylist.js|scripts/test-parallel99-normal-app-browser.mjs|tests/p1636-stylist-focus.test.cjs|.github/workflows/p1636-stylist-focus-HOLD.yml) ;;
+              public/closet-stylist.js|public/closet-stylist-engine.js|tests/p1636-stylist-diversity.test.cjs|scripts/test-parallel99-normal-app-browser.mjs|tests/p1636-stylist-focus.test.cjs|.github/workflows/p1636-stylist-focus-HOLD.yml) ;;
               *) echo "Unexpected path $path"; exit 1 ;;
             esac
           done
@@ -51,6 +51,13 @@ jobs:
           cat "$RUNNER_TEMP/p1636-red.log"
           grep -F 'not ok 1 - manual pinned garment' "$RUNNER_TEMP/p1636-red.log"
           grep -F 'not ok 2 - programmatic pinned garment' "$RUNNER_TEMP/p1636-red.log"
+          git show 1b949a8ecbcad670259ef46897131e3abda6cf72:public/closet-stylist-engine.js > "$RUNNER_TEMP/p1636-parent-engine.js"
+          if P1636_ENGINE_SOURCE="$RUNNER_TEMP/p1636-parent-engine.js" node --test tests/p1636-stylist-diversity.test.cjs > "$RUNNER_TEMP/p1636-diversity-red.log" 2>&1; then
+            cat "$RUNNER_TEMP/p1636-diversity-red.log"
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/p1636-diversity-red.log"
+          grep -F 'not ok 1 - rich pinned wardrobe' "$RUNNER_TEMP/p1636-diversity-red.log"
           node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
       - if: matrix.check != 'regression'
         run: npx playwright install --with-deps "${{ matrix.check }}"
@@ -62,10 +69,13 @@ jobs:
         run: |
           set -euo pipefail
           cp dist/closet-stylist.js "$RUNNER_TEMP/p1636-candidate.js"
-          trap 'cp "$RUNNER_TEMP/p1636-candidate.js" dist/closet-stylist.js' EXIT
+          cp dist/closet-stylist-engine.js "$RUNNER_TEMP/p1636-candidate-engine.js"
+          trap 'cp "$RUNNER_TEMP/p1636-candidate.js" dist/closet-stylist.js; cp "$RUNNER_TEMP/p1636-candidate-engine.js" dist/closet-stylist-engine.js' EXIT
+          git show 1b949a8ecbcad670259ef46897131e3abda6cf72:public/closet-stylist-engine.js > dist/closet-stylist-engine.js
           git show 1b949a8ecbcad670259ef46897131e3abda6cf72:public/closet-stylist.js > dist/closet-stylist.js
           P1607_AUDIT=1 P1636_FOCUS=1 P1636_EXPECT_STALE=1 P99_WIDTH=390 node scripts/test-parallel99-normal-app-browser.mjs
           cp "$RUNNER_TEMP/p1636-candidate.js" dist/closet-stylist.js
+          cp "$RUNNER_TEMP/p1636-candidate-engine.js" dist/closet-stylist-engine.js
           for width in 320 390 430; do
             P1607_AUDIT=1 P1636_FOCUS=1 P99_WIDTH="$width" node scripts/test-parallel99-normal-app-browser.mjs
             if [ "$P99_ENGINE" = webkit ]; then
