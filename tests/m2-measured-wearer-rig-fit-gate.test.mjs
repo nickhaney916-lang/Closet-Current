@@ -190,3 +190,33 @@ test('inputs are never modified, and no actual body measurements appear in defau
  assess(x);
  assert.equal(JSON.stringify(x),serialized);
 });
+
+test('different labels and reversed endpoints cannot reuse the same metric span',()=>{
+ for(const variant of ['holdout','reversed-holdout','anchors']){
+  const x=fixture(),m=x.measurements;
+  if(variant==='anchors')m.rigMetricAnchors[1]={...m.rigMetricAnchors[0],landmark:'shoulder'};
+  else{
+   const a=m.rigMetricAnchors[1];
+   m.rigMetricIndependentHoldout={...a,landmark:'torso'};
+   if(variant==='reversed-holdout'){
+    m.rigMetricIndependentHoldout.rigA=a.rigB;
+    m.rigMetricIndependentHoldout.rigB=a.rigA;
+   }
+  }
+  const r=assess(x);safe(r);
+  assert.equal(r.decision,'BLOCKED_REUSED_RIG_LANDMARK_SPAN');
+  assert.equal(r.metricRigScaleIntervalMmPerRigUnit,undefined);
+ }
+});
+test('sparse measurement arrays fail closed without emitting a partial metric report',()=>{
+ for(const [change,expected] of [
+  [x=>{delete x.measurements.rigMetricAnchors[0];},'BLOCKED_MISSING_DISTINCT_REAL_BODY_RIG_LANDMARKS'],
+  [x=>{delete x.measurements.rigMetricAnchors[0].rigA[0];},'BLOCKED_MISSING_DISTINCT_REAL_BODY_RIG_LANDMARKS'],
+  [x=>{delete x.measurements.physicalCircumferenceSections[0];},'BLOCKED_MISSING_DIRECT_MEASURED_MATCHED_BODY_GARMENT_SECTIONS']
+ ]){
+  const x=fixture();change(x);const r=assess(x);safe(r);
+  assert.equal(r.decision,expected);
+  assert.equal(r.metricRigScaleIntervalMmPerRigUnit,undefined);
+  assert.equal(r.conditionalMeasuredGarmentBodyEase,undefined);
+ }
+});
