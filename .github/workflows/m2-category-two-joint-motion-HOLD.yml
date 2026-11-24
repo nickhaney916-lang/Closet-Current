@@ -35,7 +35,7 @@ jobs:
           git merge-base --is-ancestor 51faa7c9654dc51cac817eccea4f5a023252c37f HEAD
           while IFS= read -r p; do
             case "$p" in
-              research/parallel89/category-two-joint-motion89.mjs|scripts/test-parallel89-category-two-joint-motion.mjs|.github/workflows/m2-category-two-joint-motion-HOLD.yml) ;;
+              research/parallel89/category-two-joint-motion89.mjs|scripts/test-parallel89-category-two-joint-motion.mjs|scripts/test-parallel89-category-rigid-joint-motion.mjs|.github/workflows/m2-category-two-joint-motion-HOLD.yml) ;;
               *) echo "Unexpected scope: $p"; exit 1 ;;
             esac
           done < <(git diff --name-only 51faa7c9654dc51cac817eccea4f5a023252c37f HEAD)
@@ -51,6 +51,8 @@ jobs:
           ln -s ../node_modules .m2-immutable-licensed-body/node_modules
           cd .m2-immutable-licensed-body
           node research/three-d-20/restore-approved-models.mjs
+      - name: Corrected original single-joint native RED to GREEN witness
+        run: node scripts/test-parallel89-category-rigid-joint-motion.mjs .m2-immutable-licensed-body
       - name: Native original two-joint deformation, strain and discrete contact
         run: node scripts/test-parallel89-category-two-joint-motion.mjs .m2-immutable-licensed-body
       - name: Unchanged application build
