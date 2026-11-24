@@ -1833,6 +1833,31 @@ async function recognizeItem(item){
    result=await localRequest('classify',source73,item.id,item.segmentHint);
   }catch(error){if(!live854())return false;recognitionUnavailable=true;throw error;}
   if(!live854())return false;
+  // Validate the classifier envelope before it can change draft identity
+  // or feed automatic indexing. An uncertain result is not a strong match.
+  const topChoice=result?.choices?.[0];
+  const categoryOnly=result?.categoryConfirmed===true&&result?.categoryOnly===true;
+  const claimsIdentity=result?.strong===true||categoryOnly;
+  const validFlags=result&&typeof result==='object'&&!Array.isArray(result)&&
+   typeof result.strong==='boolean'&&Array.isArray(result.choices)&&
+   (result.categoryConfirmed===undefined||typeof result.categoryConfirmed==='boolean')&&
+   (result.categoryOnly===undefined||typeof result.categoryOnly==='boolean')&&
+   !(result.strong&&(result.categoryConfirmed||result.categoryOnly))&&
+   Boolean(result.categoryConfirmed)===Boolean(result.categoryOnly);
+  const validChoice=topChoice&&typeof topChoice==='object'&&!Array.isArray(topChoice)&&
+   typeof topChoice.category==='string'&&topChoice.category!=='Uncategorized'&&
+   (typeof categories==='undefined'||categories.includes(topChoice.category))&&
+   typeof topChoice.itemType==='string'&&
+   (categoryOnly?topChoice.itemType==='Unknown':topChoice.itemType!=='Unknown'&&
+    (typeof clothingSchema==='undefined'||(Object.hasOwn(clothingSchema.types,topChoice.category)&&
+     clothingSchema.types[topChoice.category].includes(topChoice.itemType))))&&
+   (topChoice.score===undefined||(Number.isFinite(topChoice.score)&&topChoice.score>=0&&topChoice.score<=1));
+  if(!validFlags||(claimsIdentity&&!validChoice)){
+   item.localAnalyzed=true;item.localChoices=[];item.requiresOwnershipConfirmation=true;
+   item.localStatus=item.userAdjusted?'Your adjustments are preserved. Save this piece when ready.':
+    'Recognition returned invalid garment information. Original photo kept. Confirm details in Adjust or retry.';
+   return true;
+  }
   if(typeof ClothingMemory!=='undefined'&&ClothingMemory.valid(result.recognitionMemory))item.recognitionMemory=result.recognitionMemory;
   item.localAnalyzed=true;item.localChoices=[];
   // Diagnostic evidence contains category/type scores only, never wardrobe images.
