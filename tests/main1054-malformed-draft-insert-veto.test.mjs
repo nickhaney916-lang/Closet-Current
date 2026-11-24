@@ -120,3 +120,81 @@ if(process.env.NATIVE_DRAFT_BROWSER==='1'){
   }finally{await browser.close();}
  });
 }
+
+const taxonomy=await readFile(new URL('../public/taxonomy.js',import.meta.url),'utf8');
+const bootStart=app.indexOf('const closetReady=(async()=>{'),bootEnd=app.indexOf('\n})();',bootStart)+6;
+const recoveryStart=app.indexOf('function partitionStartupWardrobe(');
+assert.ok(bootStart>=0&&bootEnd>bootStart);
+const bootSource=(recoveryStart>=0?app.slice(recoveryStart,bootStart):'')+app.slice(bootStart,bootEnd);
+const photo='data:image/jpeg;base64,AA==';
+const good=(id,extra={})=>({id,name:id,ownerId:'synthetic-owner',image:photo,category:'Tops',itemType:'T-shirt',...extra});
+const validSaved=good('saved-valid'),validDraft=good('draft-valid');
+const startupCases=[
+ {name:'healthy roster',saved:[validSaved],drafts:[validDraft],expectedSaved:['saved-valid'],expectedDraft:['draft-valid'],invalid:0},
+ {name:'legacy name and owner absent',saved:[{id:'legacy',image:photo}],drafts:[],expectedSaved:['legacy'],expectedDraft:[],invalid:0},
+ {name:'null draft',saved:[validSaved],drafts:[null,validDraft],invalid:1},
+ {name:'primitive draft',saved:[validSaved],drafts:[17,validDraft],invalid:1},
+ {name:'blank ID draft',saved:[validSaved],drafts:[good(' '),validDraft],invalid:1},
+ {name:'invalid image saved',saved:[validSaved,good('damaged',{image:5})],drafts:[validDraft],invalid:1},
+ {name:'invalid name saved',saved:[validSaved,good('damaged',{name:{}})],drafts:[validDraft],invalid:1},
+ {name:'different owner saved',saved:[validSaved,good('foreign',{ownerId:'other-owner'})],drafts:[validDraft],invalid:1},
+ {name:'conflicting ID within drafts',saved:[validSaved],drafts:[validDraft,good('duplicate'),good('duplicate')],invalid:2},
+ {name:'conflicting ID across stores',saved:[validSaved,good('duplicate')],drafts:[validDraft,good('duplicate')],invalid:2},
+ {name:'all invalid',saved:[good('foreign',{ownerId:'other-owner'})],drafts:[null],expectedSaved:[],expectedDraft:[],invalid:2},
+];
+const verifyStartup=(c,r)=>{
+ assert.deepEqual(r.items.map(x=>x.id),c.expectedSaved??['saved-valid']);
+ assert.deepEqual(r.batch.map(x=>x.id),c.expectedDraft??['draft-valid']);
+ assert.equal(r.recovery,c.invalid);
+ assert.equal(r.open,c.invalid===0);
+ assert.equal(r.renders,1);
+ assert.equal(r.queued.length,c.invalid?0:r.batch.length);
+};
+const startupFactory=taxonomy+'\n'+bootSource+'\nreturn closetReady.then(()=>({items,batch,recovery:startupWardrobeRecoveryCount,open:db===connection,renders,queued}));';
+async function runStartup(c,connection,readAllFrom,readDraftFrom){
+ const code='let db,items=[],batch=[],startupWardrobeRecoveryCount=0,renders=0,queued=[];const render=()=>renders++;const queueAutomatic=item=>queued.push(item.id);'+startupFactory;
+ const auth={user:{id:'synthetic-owner'},ready:Promise.resolve(),assertCurrent(){}};
+ const fn=new Function('window','captureOperationEpoch','connection','openDB','readAllFrom','readDraftFrom','message',code);
+ return fn({closetAuth:auth},0,connection,async()=>connection,readAllFrom,readDraftFrom,()=>{});
+}
+for(const c of startupCases)test('startup roster: '+c.name,async()=>{
+ let closes=0;const connection={close(){closes++;}};
+ const result=await runStartup(c,connection,async()=>structuredClone(c.saved),async()=>structuredClone(c.drafts));
+ verifyStartup(c,result);assert.equal(closes,c.invalid?1:0);
+});
+if(process.env.NATIVE_DRAFT_BROWSER==='1'){
+ const {chromium,webkit}=await import('playwright');
+ for(const [name,engine] of Object.entries({chromium,webkit}))test('actual '+name+' startup mixed-roster recovery',async()=>{
+  const browser=await engine.launch({headless:true});
+  try{
+   const page=await browser.newPage();
+   await page.route('https://startup-recovery.invalid/**',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><title>Startup recovery fixture</title>'}));
+   await page.goto('https://startup-recovery.invalid/');
+   for(const c of startupCases){
+    const result=await page.evaluate(async ({c,taxonomy,bootSource})=>{
+     const req=indexedDB.open('closet-current-user-synthetic-owner',1);
+     req.onupgradeneeded=()=>{req.result.createObjectStore('items',{keyPath:'id'});req.result.createObjectStore('state',{keyPath:'id'});};
+     const connection=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+     const setup=connection.transaction(['items','state'],'readwrite');
+     const done=new Promise((resolve,reject)=>{setup.oncomplete=resolve;setup.onabort=setup.onerror=()=>reject(setup.error);});
+     setup.objectStore('items').clear();setup.objectStore('state').clear();
+     for(const row of c.saved)setup.objectStore('items').put(row);
+     setup.objectStore('state').put({id:'draft',batch:c.drafts});await done;
+     const read=(db,store,key)=>new Promise((resolve,reject)=>{const s=db.transaction(store).objectStore(store),r=key?s.get(key):s.getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+     const all=db=>read(db,'items'),draft=async db=>(await read(db,'state','draft')).batch;
+     const before={items:await all(connection),batch:await draft(connection)};
+     const auth={user:{id:'synthetic-owner'},ready:Promise.resolve(),assertCurrent(){}};
+     const code='let db,items=[],batch=[],startupWardrobeRecoveryCount=0,renders=0,queued=[];const render=()=>renders++;const queueAutomatic=item=>queued.push(item.id);'+taxonomy+'\n'+bootSource+'\nreturn closetReady.then(()=>({items,batch,recovery:startupWardrobeRecoveryCount,open:db===connection,renders,queued}));';
+     const result=await new Function('window','captureOperationEpoch','connection','openDB','readAllFrom','readDraftFrom','message',code)({closetAuth:auth},0,connection,async()=>connection,all,draft,()=>{});
+     connection.close();
+     const again=indexedDB.open('closet-current-user-synthetic-owner',1);
+     const inspect=await new Promise((resolve,reject)=>{again.onsuccess=()=>resolve(again.result);again.onerror=()=>reject(again.error);});
+     const after={items:await all(inspect),batch:await draft(inspect)};inspect.close();
+     return {result,before,after};
+    },{c,taxonomy,bootSource});
+    verifyStartup(c,result.result);assert.deepEqual(result.after,result.before);
+   }
+   console.log('NATIVE_STARTUP_WARDROBE_RECOVERY '+name+' '+startupCases.length+'/'+startupCases.length+' PASS');
+  }finally{await browser.close();}
+ });
+}
