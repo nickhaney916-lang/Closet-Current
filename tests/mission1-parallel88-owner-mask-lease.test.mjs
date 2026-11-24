@@ -3591,3 +3591,32 @@ test('P88 malformed mask color estimates are withheld without losing the garment
   }
  }
 });
+
+test('P88 coalesced outfit crops must match the pending original and region',()=>{
+ const piece={image:'data:image/jpeg;base64,PIECE',recognitionPhoto:{image:'data:image/jpeg;base64,CROP'},
+  cropBounds:{x:0,y:0,width:.5,height:1},hint:{categories:['Shoes'],types:[]},
+  instanceMethod:'connected_footwear_component',requiresReview:true};
+ const conflicts=[{outfitSourceId:'OTHER'},{originalPhoto:{image:'data:image/jpeg;base64,OTHER'}},
+  {cropBounds:{x:.5,y:0,width:.5,height:1}},
+  {recognitionPhoto:{image:'data:image/jpeg;base64,OTHER'}},null];
+ for(const href of ['https://example.test/closet','https://example.test/closet?outfitInstances840=1']){
+  for(const patch of [...conflicts,{}]){
+   const h=captureHarness({ownerId:'owner-A',href});
+   h.emit({type:'piece',piece});
+   if(patch===null)h.c.batch.splice(0);
+   else Object.assign(h.c.batch[0],patch);
+   const snapshot=JSON.stringify(h.c.batch);
+   h.c.candidate=()=>false;
+   h.emit({type:'piece',piece});
+   h.emit({type:'done',count:2});
+   const valid=patch!==null&&Object.keys(patch).length===0;
+   assert.equal(h.node('outfitRetry').hidden,valid);
+   assert.equal(h.c.worker.closed,true);
+   assert.equal(h.c.busy,false);
+   assert.equal(JSON.stringify(h.c.batch),snapshot);
+   assert.equal(h.c.items.length,0);
+   assert.equal(vm.runInContext('lastOutfitPhoto',h.c),'data:image/jpeg;base64,ORIGINAL');
+   if(!valid)assert.match(h.node('outfitSplitStatus').textContent,/identical clothing crop belongs to another photo or region/);
+  }
+ }
+});
