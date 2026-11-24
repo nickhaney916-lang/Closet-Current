@@ -20,6 +20,44 @@ const refused=reason=>Object.freeze({
 const safeSize=(w,h)=>Number.isSafeInteger(w)&&Number.isSafeInteger(h)&&
  w>=4&&h>=4&&w<=256&&h<=256;
 
+// Separate edge-disconnected triangle fans at a shared grid corner.
+// This removes nonmanifold point welds without smoothing, deleting or
+// adding any mask cells. Coordinates and UVs of duplicates stay identical.
+function splitPointWelds(positions,uv,indices){
+ const count=positions.length/3,incident=Array.from({length:count},()=>[]);
+ for(let i=0;i<indices.length;i++)incident[indices[i]].push(i);
+ const outIndices=new Uint32Array(indices),extraP=[],extraUV=[];
+ let splits=0;
+ for(let vertex=0;vertex<count;vertex++){
+  const slots=incident[vertex],groups=[];
+  for(const slot of slots){
+   const start=slot-slot%3;
+   const neighbors=new Set([indices[start],indices[start+1],indices[start+2]]);
+   neighbors.delete(vertex);
+   const hits=[];
+   for(let g=0;g<groups.length;g++)if([...neighbors].some(n=>groups[g].neighbors.has(n)))hits.push(g);
+   if(!hits.length){groups.push({neighbors,slots:[slot]});continue;}
+   const first=groups[hits[0]];
+   first.slots.push(slot);for(const n of neighbors)first.neighbors.add(n);
+   for(let h=hits.length-1;h>=1;h--){
+    const other=groups[hits[h]];
+    first.slots.push(...other.slots);for(const n of other.neighbors)first.neighbors.add(n);
+    groups.splice(hits[h],1);
+   }
+  }
+  for(let g=1;g<groups.length;g++){
+   const next=count+splits++;
+   extraP.push(...positions.slice(vertex*3,vertex*3+3));
+   extraUV.push(...uv.slice(vertex*2,vertex*2+2));
+   for(const slot of groups[g].slots)outIndices[slot]=next;
+  }
+ }
+ if(!splits)return {positions,uv,indices,pointWeldSplits:0};
+ const p=new Float32Array(positions.length+extraP.length),u=new Float32Array(uv.length+extraUV.length);
+ p.set(positions);p.set(extraP,positions.length);u.set(uv);u.set(extraUV,uv.length);
+ return {positions:p,uv:u,indices:outIndices,pointWeldSplits:splits};
+}
+
 /**
  * Receives an original public JPEG, its checked license registry record and
  * a separate research alpha proposal. JPEG is independently SHA-attested,
@@ -65,6 +103,7 @@ export async function buildOriginalJPEGTexturedFront89({
   for(let i=0;i<positions.length/3;i++){
    positions[3*i]=(panel.uv[2*i]-.5)*sourceAspect;
   }
+  const topology=splitPointWelds(positions,panel.uv,panel.indices);
   const rgba=new Uint8Array(tw*th*4);
   let copied=0;
   for(let y=0;y<th;y++)for(let x=0;x<tw;x++){
@@ -89,7 +128,7 @@ export async function buildOriginalJPEGTexturedFront89({
    originalSourcePixelSampling:'nearest original decoded RGB, no generated colors',
    researchMaskSHA256:sourceMaskSHA256,
    textureSHA256:sha256(rgba),textureDimensions:[tw,th],textureScale,textureForegroundPixels:copied,
-   textureRGBA:rgba,positions,uv:panel.uv,indices:panel.indices,
+   textureRGBA:rgba,...topology,
    geometryAspectBasis:'native decoded original RGB width/height; nonmetric',
    decodedOriginalAspect:sourceAspect,
    originalRGBForegroundPixels:panel.foregroundPixels,sourceFullImageWasReencoded:false,
