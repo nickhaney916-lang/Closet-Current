@@ -47,8 +47,45 @@ const journey = `
   const rowsBefore = await page.evaluate(() => readAll());
   await page.locator('#styleCollectionForm details summary').click();
   await season.selectOption(calendar==='Spring'?'Winter':'Spring');
-  await remember.click();
-  await defaultsStatus.getByText('Stylist defaults remembered on this device.').waitFor();
+  // Center after the details layout changes; do not force-click or retry.
+  advance('p1653-first-defaults-save');
+  await page.waitForFunction(() => !!ownerStylistSession() &&
+   !document.querySelector('#rememberStylistDefaults').disabled);
+  assert.deepEqual(await values(), ['Work','Men']);
+  await remember.evaluate(button=>button.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'}));
+  await page.waitForFunction(() => {
+   const b=document.querySelector('#rememberStylistDefaults'),r=b.getBoundingClientRect();
+   const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+   return !b.disabled&&!!hit&&b.contains(hit);
+  },null,{timeout:10000});
+  await page.evaluate(() => {
+   window.p1653SaveClickObserved=false;
+   document.querySelector('#rememberStylistDefaults').addEventListener('click',event=>{
+    window.p1653SaveClickObserved=event.isTrusted;
+   },{once:true});
+  });
+  try {
+   await remember.click();
+   await defaultsStatus.getByText('Stylist defaults remembered on this device.').waitFor();
+   const evidence=await page.evaluate(async()=>{
+    const session=ownerStylistSession();
+    const row=session?await accessStylistDefaults(session,'read'):null;
+    return {clicked:window.p1653SaveClickObserved,ownerMatches:!!session&&row?.owner===session.owner,
+     occasion:row?.occasion,audience:row?.audience};
+   });
+   assert.deepEqual(evidence,{clicked:true,ownerMatches:true,occasion:'Work',audience:'Men'});
+  } catch(error) {
+   console.log('P1653_SAVE_DIAGNOSTIC',JSON.stringify(await page.evaluate(()=>{
+    const b=document.querySelector('#rememberStylistDefaults'),r=b.getBoundingClientRect();
+    const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+    return {clicked:window.p1653SaveClickObserved===true,buttonDisabled:b.disabled,
+     hit:hit?.id||hit?.tagName||null,sessionCurrent:!!ownerStylistSession(),
+     status:document.querySelector('#stylistDefaultsStatus').textContent,
+     width:innerWidth,height:innerHeight};
+   })));
+   throw error;
+  }
+  advance('p1653-stylist-return-login-and-reset');
   await reload();
   await remember.waitFor();
   await page.waitForFunction(() => document.querySelector('#rememberStylistDefaults').disabled===false);
