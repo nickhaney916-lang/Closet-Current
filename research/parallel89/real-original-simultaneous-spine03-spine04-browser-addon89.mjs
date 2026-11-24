@@ -14,7 +14,7 @@ import {institutionalPartAAnchor}
  from './met70759-physical-garment-dimension-anchor89.mjs';
 import {evaluateFivePointPlanarReference}
  from './physical-five-point-photo-plane89.mjs';
-import {assessMetricGarmentToWearerFit}
+import {assessMetricGarmentToWearerFit,auditSampledOriginalFrontProportions}
  from './measured-wearer-to-licensed-rig-garment-fit89.mjs';
 
 window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=()=>{
@@ -117,6 +117,14 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
   }
   for(const [a,b] of [[-3,6],[3,-6]])
    offDiagonal.push({anglesDeg:[a,b],...generate(a,b)});
+  // Exact original rest grid center and all sampled actual skinned fronts.
+  const sampledProportions=auditSampledOriginalFrontProportions({
+   rest:grid[4].front,poses:[...grid,...path,...offDiagonal].map(p=>p.front),
+   indices:frontIndices,expectedFaces:35262,expectedVertices:x.sourceFrontN
+  });
+  invariant(sampledProportions.decision==='RESEARCH_ONLY_SAMPLED_ORIGINAL_FRONT_PROPORTION_AUDIT'&&
+   sampledProportions.sampledPoseCount===16&&sampledProportions.consumer3DAdmitted===false,
+   'source-front-proportion-audit-incomplete');
   const evaluator=evaluateOriginalSimultaneousSpine03Spine04AngularBroadphase({
    frontGridPoses:grid.map(x=>x.front),
    bodyGridPoses:grid.map(x=>x.body),
@@ -281,6 +289,7 @@ window.__M2RealRigPhotoTrial.verifyTrueConcurrentSpine03Spine04OriginalSurface=(
    originalCorrectedVsHistoricalZeroSeedDistanceRigUnits:
     realOriginalVsIncorrectZeroSeedDistance,
    other161BoneLocalPoseTransformsImmutable:true,
+   sampledOriginalFrontProportionAudit:sampledProportions,
    originalGarmentToBodyMeasuredWearerFitGate:originalMeasuredWearerFit,
    unmeasuredOriginalMuseumFivePointPhotoPlane:museumFivePointPhotoPlane,
    museumOriginalPartARealPhysicalDimensionEvidence:museumRealPhysicalPartA,
