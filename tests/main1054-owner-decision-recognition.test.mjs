@@ -19,20 +19,20 @@ for(const kind of cases)test('review revision '+kind,async()=>{
   if(kind==='worker-rejection')item.color='Green';
  };
  const c={item,structuredClone,Date,batch:[item],items:[],captureOperationEpoch:0,
- categories:['Tops','Bottoms'],clothingSchema:{types:{Tops:['T-shirt','Sweatshirt','Blouse'],Bottoms:['Jeans']}},
+ categories:['Tops','Bottoms'],clothingSchema:{types:{Tops:['T-shirt','Sweatshirt','Blouse','Tank top'],Bottoms:['Jeans']}},
  recognitionState:{activeId:null,phase:'ready'},localPending:new Set([item.id]),
  recognitionUnavailable:false,localReady:kind!=='loading-category',render(){},message(){},$:()=>({}),
  checkPhoto:async()=>{if(kind==='quality-color')change();return {blank:false,colorEstimate:'Yellow',signature:'sig',aspect:1}},
  ClothingDetails:{fillColor:()=>({color:'Yellow'}),fill:()=>({color:'Yellow'})},
  similarPhotos:()=>false,enableLocal:async()=>{change();c.localReady=true},
- localRequest:async()=>{workerCalls++;if(kind.startsWith('inference')||kind==='worker-rejection')change();if(kind==='worker-rejection')throw Error('controlled old failure');return {strong:true,choices:[{category:'Tops',itemType:'Sweatshirt'}],details:{}}},
+ localRequest:async()=>{workerCalls++;if(kind.startsWith('inference')||kind==='worker-rejection')change();if(kind==='worker-rejection')throw Error('controlled old failure');return {strong:true,choices:[{category:'Tops',itemType:kind==='valid'?'Tank top':'Sweatshirt'}],details:{}}},
  segmentationAllows:()=>true,applyLocalChoice:(x,y)=>{applies++;Object.assign(x,y)},
  saveIndexed:async()=>{saves++;return true},persistDraft:async()=>{persists++;return true}};
  vm.createContext(c);vm.runInContext(app.slice(a,b),c);
  await c.recognizeItem(item);
  assert.equal(item.originalPhoto.image,'original');
  assert.equal(c.localPending.size,0);assert.equal(c.recognitionState.activeId,null);
- if(kind==='valid'){assert.equal(saves,1);assert.equal(applies,1);assert.equal(item.itemType,'Sweatshirt');return}
+ if(kind==='valid'){assert.equal(saves,1);assert.equal(applies,1);assert.equal(item.itemType,'Tank top');return}
  if(red){assert.ok(saves+persists+applies>0,'baseline must publish stale work');return}
  assert.equal(saves+persists+applies,0);assert.equal(c.recognitionUnavailable,false);
  if(kind==='quality-color')assert.equal(item.color,'Red');

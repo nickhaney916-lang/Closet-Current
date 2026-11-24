@@ -2742,10 +2742,17 @@ async function recognizeItem(item){
     'Recognition returned invalid garment information. Original photo kept. Confirm details in Adjust or retry.';
    return true;
   }
-  if(legacyBroad){
-   // A legacy strong category-only response is not a confirmed specific garment.
+  // Known subtype confusions are not owner confirmation, even at high confidence.
+  const subtypeReviewRequired=result.diagnostics?.mission1SubtypeSafety?.ownerSubtypeReviewRequired===true;
+  const riskySubtypeReview=result.strong===true&&(
+   (topChoice?.category==='Tops'&&['T-shirt','Sweatshirt','Blouse','Tunic'].includes(topChoice.itemType))||
+   (topChoice?.category==='Shoes'&&['Sneakers','Ankle boots'].includes(topChoice.itemType))||
+   (topChoice?.category==='Dresses'&&['Casual dress','Shirt dress','Sweater dress','Formal dress'].includes(topChoice.itemType)));
+  if(subtypeReviewRequired||categoryOnly||riskySubtypeReview){
+   // Keep existing fields and original source; do not apply predictions or index.
    item.requiresOwnershipConfirmation=true;item.localAnalyzed=true;item.localChoices=[];
-   item.localStatus='Garment category needs confirmation. Original photo kept. Confirm category, type and color in Adjust.';
+   const suggestion=claimsIdentity?'Photo suggests '+topChoice.category+(categoryOnly?'':' · '+topChoice.itemType)+'. ':'';
+   item.localStatus=suggestion+'Garment category or subtype needs confirmation. Original photo kept. Confirm category, type and color in Adjust.';
    return true;
   }
   if(typeof ClothingMemory!=='undefined'&&ClothingMemory.valid(result.recognitionMemory))item.recognitionMemory=result.recognitionMemory;
