@@ -390,6 +390,9 @@ export function trialCoordinatedOriginalFrontCorrection({rest,pose,indices,expec
  * Retain the last accepted copy if a subsequent pass fails.
  */
 export function trialProgressiveOriginalFrontStabilization({rest,pose,indices,expectedFaces,expectedVertices}={}){
+ return progressiveWithGuard({rest,pose,indices,expectedFaces,expectedVertices},null);
+}
+function progressiveWithGuard({rest,pose,indices,expectedFaces,expectedVertices},guard){
  const input={rest,indices,expectedFaces,expectedVertices};
  const audit=auditSampledOriginalFrontProportions({...input,poses:[pose]});
  const finish=(decision,extra={})=>fail(decision,{...extra,
@@ -436,6 +439,7 @@ export function trialProgressiveOriginalFrontStabilization({rest,pose,indices,ex
    if(n[0]*q[0]+n[1]*q[1]+n[2]*q[2]<=0){originalNormalConflict=true;break;}
   }
   if(originalNormalConflict){stopReason="ORIGINAL_POSE_NORMAL_CONFLICT";break;}
+  if(guard){const receipt=guard(current,candidate);if(!receipt.clear){stopReason='SWEPT_OBSTACLE_OVERLAP_UNRESOLVED';break;}}
   traveled.set(travel);maxTravel=nextMax;current=candidate;last=result.after;
   passes.push({pass:i+1,maximumCumulativeTravelFraction:maxTravel,
    minimumEdgeLengthRatio:last.minimumEdgeLengthRatio,maximumEdgeLengthRatio:last.maximumEdgeLengthRatio,
@@ -449,4 +453,82 @@ export function trialProgressiveOriginalFrontStabilization({rest,pose,indices,ex
   maximumAllowedCumulativeTravelFraction:.05,
   correctedPose:passes.length?current:null
  });
+}
+
+/** Fixed-pose conservative broadphase of each correction segment, not an
+ * exact contact solver. Any swept moving-face AABB overlapping an obstacle
+ * triangle AABB is unresolved. No claim about unchanged faces, self-contact,
+ * cloth thickness, unsupplied layers, or moving obstacles. */
+export function trialObstacleGuardedOriginalFrontStabilization({
+ rest,pose,indices,expectedFaces,expectedVertices,obstacles
+}={}){
+ const input={rest,pose,indices,expectedFaces,expectedVertices};
+ const denied=(decision)=>fail(decision,{correctedPose:null,
+  correctionAppliedToLiveMesh:false,materialOrCollisionCertified:false});
+ const base=auditSampledOriginalFrontProportions({rest,poses:[pose],indices,expectedFaces,expectedVertices});
+ if(!base.sampledPoseDistortion)return denied(base.decision);
+ const goodBuffer=v=>Array.isArray(v)||v instanceof Float32Array||v instanceof Float64Array;
+ if(!Array.isArray(obstacles)||obstacles.length<1||obstacles.length>8||
+  !Array.from(obstacles).every(o=>o&&['body','layer'].includes(o.kind))||
+  obstacles.filter(o=>o.kind==='body').length!==1)return denied('BLOCKED_MISSING_FIXED_BODY_OBSTACLE');
+ const bounds=(v,ids,other=null)=>{
+  const b=[Infinity,Infinity,Infinity,-Infinity,-Infinity,-Infinity];
+  for(const i of ids)for(let k=0;k<3;k++){
+   const p=v[i*3+k],q=other?other[i*3+k]:p;
+   b[k]=Math.min(b[k],p,q);b[k+3]=Math.max(b[k+3],p,q);
+  }
+  return b;
+ };
+ const union=(a,b)=>[Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.min(a[2],b[2]),
+  Math.max(a[3],b[3]),Math.max(a[4],b[4]),Math.max(a[5],b[5])];
+ const intersects=(a,b)=>[0,1,2].every(k=>a[k]<=b[k+3]+1e-9&&b[k]<=a[k+3]+1e-9);
+ const build=rows=>{
+  const b=rows.reduce((a,r)=>a?union(a,r.b):r.b,null);
+  if(rows.length<=8)return {b,rows};
+  let axis=0;for(let k=1;k<3;k++)if(b[k+3]-b[k]>b[axis+3]-b[axis])axis=k;
+  rows.sort((a,b)=>a.b[axis]+a.b[axis+3]-b.b[axis]-b.b[axis+3]);
+  const mid=rows.length>>1;
+  return {b,left:build(rows.slice(0,mid)),right:build(rows.slice(mid))};
+ };
+ const query=(node,b)=>{
+  if(!intersects(node.b,b))return null;
+  if(node.rows)return node.rows.find(r=>intersects(r.b,b))||null;
+  return query(node.left,b)||query(node.right,b);
+ };
+ const rows=[];
+ for(let oi=0;oi<obstacles.length;oi++){
+  const o=obstacles[oi],v=o.vertices,ix=o.indices;
+  if(!goodBuffer(v)||v.length<9||v.length%3||v.length>3000000||
+   !Array.from(v).every(n=>finite(n)&&Math.abs(n)<=10000)||
+   !(Array.isArray(ix)||ix instanceof Uint16Array||ix instanceof Uint32Array)||
+   ix.length<3||ix.length%3||ix.length>6000000||
+   rows.length+ix.length/3>2000000)return denied('BLOCKED_INVALID_FIXED_OBSTACLE_GEOMETRY');
+  for(let k=0;k<ix.length;k+=3){
+   const ids=[ix[k],ix[k+1],ix[k+2]];
+   if(!ids.every(i=>Number.isSafeInteger(i)&&i>=0&&i<v.length/3)||
+    new Set(ids).size!==3)return denied('BLOCKED_INVALID_FIXED_OBSTACLE_GEOMETRY');
+   rows.push({b:bounds(v,ids),obstacleIndex:oi,kind:o.kind,faceOrdinal:k/3});
+  }
+ }
+ const tree=build(rows),receipts=[];
+ const guard=(from,to)=>{
+  let movingFacesExamined=0;
+  for(let k=0;k<indices.length;k+=3){
+   const ids=[indices[k],indices[k+1],indices[k+2]];
+   if(!ids.some(i=>[0,1,2].some(j=>from[3*i+j]!==to[3*i+j])))continue;
+   movingFacesExamined++;
+   const hit=query(tree,bounds(from,ids,to));
+   if(hit){
+    const receipt={clear:false,movingFacesExamined,frontFaceOrdinal:k/3,
+     obstacleIndex:hit.obstacleIndex,obstacleKind:hit.kind,obstacleFaceOrdinal:hit.faceOrdinal};
+    receipts.push(receipt);return receipt;
+   }
+  }
+  const receipt={clear:true,movingFacesExamined};receipts.push(receipt);return receipt;
+ };
+ const result=progressiveWithGuard(input,guard);
+ return {...result,correctionSegmentObstacleReceipts:receipts,
+  fixedObstacleFacesIndexed:rows.length,suppliedLayerCount:obstacles.filter(o=>o.kind==='layer').length,
+  sweptMovingFaceBoundsOnly:true,unchangedFaceOrSelfContactCertified:false,
+  fullLayeredOutfitCollisionCertified:false};
 }
