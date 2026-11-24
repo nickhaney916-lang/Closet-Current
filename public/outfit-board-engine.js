@@ -68,3 +68,73 @@ function wardrobeGapIdeas(slotId,board,closet){
  });
 }
 function closetGapOptions(slotId,board,closet){const slot=outfitSlots.find(s=>s.id===slotId);if(!slot)return [];const used=new Set(Object.values(board.slots));return closet.filter(item=>slotAllows(slot,item)&&!used.has(item.id));}
+
+
+/* Pure local missing-piece advice; hypothetical items never enter owned state. */
+function assessBoardGap(slotId,board,closet){
+ const slot=outfitSlots.find(s=>s.id===slotId);
+ if(!slot)return {owned:[],ideas:[],status:'Choose a space to explore.'};
+ const unique=[...new Map(closet.filter(x=>x&&typeof x.id==='string'&&x.id).map(x=>[x.id,x])).values()];
+ const selected=unique.find(x=>x.id===board.slots[slotId]&&slotAllows(slot,x));
+ const optional=slot.optional?'Optional finishing or layering idea. ':'';
+ const knownType=x=>Boolean(x?.itemType&&!['unknown','other'].includes(x.itemType.toLowerCase()));
+ const knownColor=x=>Boolean(String(x?.color||'').trim()&&colorFamily(x.color)!=='unknown'&&x.colorSource!=='photo-estimate');
+ const canonicalType=t=>({'kitten heel pumps':'heels','pumps':'heels','trainers':'sneakers'}[String(t||'').toLowerCase()]||String(t||'').toLowerCase());
+ const context={request:({Work:'Work',Dinner:'Casual date night',Active:'Activewear'})[board.occasion]||'Casual',occasion:board.occasion,season:board.season,audience:board.audience};
+ const ready=typeof stylistItemScore==='function'&&typeof stylistHarmony==='function'&&typeof colorFamily==='function';
+ const score=(item,key)=>ready&&knownType(item)?stylistItemScore(item,key,context,null):null;
+ const compatible=(item,key)=>score(item,key)!==null;
+ const used=new Set(Object.values(board.slots));
+ const available=unique.filter(x=>slotAllows(slot,x)&&(!used.has(x.id)||x.id===selected?.id));
+ const owned=available.filter(x=>x.id!==selected?.id).sort((a,b)=>(score(b,slotId)??-1)-(score(a,slotId)??-1)).slice(0,3);
+ const result=(status,ideas=[])=>({owned,ideas,status:optional+status});
+ if(!ready)return result('Use the saved pieces above while styling information loads.');
+ const top=unique.find(x=>x.id===board.slots.top);
+ if(top?.category==='Dresses'&&(slotId==='bottom'||slot.level))return {owned:[],ideas:[],status:'Your dress already covers this space.'};
+ if(available.some(x=>compatible(x,slotId)))return result(selected&&compatible(selected,slotId)?
+  'Your selected piece already works for this styling context. No purchase is needed.':
+  'Try a compatible piece you already own first. No purchase is needed.');
+ if(available.some(x=>!knownType(x)))return result('Check the types of your saved pieces first; there is not enough information to identify a missing piece.');
+ if(!unique.length)return result('Add and review your own clothing first. There is not enough wardrobe evidence for a purchase suggestion.');
+ const ranked=key=>{
+  const s=outfitSlots.find(x=>x.id===key);
+  return unique.filter(x=>slotAllows(s,x)&&knownColor(x)&&compatible(x,key))
+   .sort((a,b)=>Number(b.id===board.slots[key])-Number(a.id===board.slots[key])||score(b,key)-score(a,key)).slice(0,8);
+ };
+ const tops=ranked('top'),bottoms=ranked('bottom'),shoes=ranked('shoes');
+ const examplesFor=idea=>{
+  const type=canonicalType(idea.type);
+  const candidate={id:Symbol('hypothetical'),category:slot.category,itemType:type==='heels'?'Heels':idea.type,color:idea.color,pattern:'Solid'};
+  // The shared scorer requires only a truthy ID, never inserts this candidate.
+  if(!compatible(candidate,slotId))return [];
+  const examples=[],seen=new Set();
+  for(const t of slotId==='top'?[candidate]:tops){
+   if(t.category==='Dresses'&&(slotId==='bottom'||slot.level))continue;
+   for(const b of t.category==='Dresses'?[null]:slotId==='bottom'?[candidate]:bottoms){
+    for(const s of slotId==='shoes'?[candidate]:shoes){
+     const pieces=[t,b,s].filter(Boolean);
+     if(!['top','bottom','shoes'].includes(slotId))pieces.push(candidate);
+     if(new Set(pieces.map(x=>x.id)).size!==pieces.length||stylistHarmony(pieces)<0)continue;
+     const actual=pieces.filter(x=>x!==candidate);
+     const key=JSON.stringify(actual.map(x=>x.id).sort());
+     if(!actual.length||seen.has(key))continue;
+     seen.add(key);
+     examples.push(actual.map(x=>String(x.name||x.itemType)+' ('+x.color+')').join(' + '));
+     if(examples.length===2)return examples;
+    }
+   }
+  }
+  return examples;
+ };
+ const seen=new Set(),ideas=[];
+ for(const idea of wardrobeGapIdeas(slotId,board,unique)){
+  const type=canonicalType(idea.type),color=colorFamily(idea.color),key=type+'|'+color;
+  if(seen.has(key))continue;
+  seen.add(key);
+  if(unique.some(x=>slotAllows(slot,x)&&canonicalType(x.itemType)===type&&(!knownColor(x)||colorFamily(x.color)===color)))continue;
+  const combinationExamples=examplesFor(idea);
+  if(combinationExamples.length)ideas.push({...idea,combinationExamples});
+ }
+ return ideas.length?result('No compatible saved option was identified for this context. These are optional, not-owned ideas based on your existing clothes.',ideas):
+  result('No useful missing-piece recommendation can be demonstrated from your documented clothes in this context. Try another saved combination or review clothing details.');
+}
