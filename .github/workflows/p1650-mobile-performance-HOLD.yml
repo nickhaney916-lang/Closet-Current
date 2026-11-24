@@ -66,8 +66,9 @@ jobs:
           P1650_VARIANT=parent P1650_SOURCE_SHA=ea8ff9d4121168e9aea0d6def588a1340d7283dc P99_WIDTH=390 node scripts/p1650-mobile-performance.cjs
           cp "benchmark/parallel99-normal-journey/$P99_ENGINE/390/P1650-PERFORMANCE.json" "benchmark/parallel99-normal-journey/$P99_ENGINE/390/P1650-PARENT.json"
           cp "$RUNNER_TEMP/p1650-candidate-app.js" dist/app.js
+          rm "benchmark/parallel99-normal-journey/$P99_ENGINE/390/P1650-PERFORMANCE.json"
           P1650_VARIANT=candidate P99_WIDTH=390 node scripts/p1650-mobile-performance.cjs
-          node -e 'const fs=require("fs"),root="benchmark/parallel99-normal-journey/"+process.env.P99_ENGINE+"/390/",a=JSON.parse(fs.readFileSync(root+"P1650-PARENT.json")),b=JSON.parse(fs.readFileSync(root+"P1650-PERFORMANCE.json")); for(const x of a.summaries.filter(s=>s.key.endsWith(":expand-page"))){const y=b.summaries.find(s=>s.key===x.key);if(!y||x.n!==y.n)throw Error("unmatched workload"); console.log("P1650_COMPARISON "+JSON.stringify({engine:a.engine,key:x.key,n:x.n,parentMs:x.medianMs,candidateMs:y.medianMs,reductionPct:100*(1-y.medianMs/x.medianMs)}));}'
+          node -e 'const fs=require("fs"),root="benchmark/parallel99-normal-journey/"+process.env.P99_ENGINE+"/390/",a=JSON.parse(fs.readFileSync(root+"P1650-PARENT.json")),b=JSON.parse(fs.readFileSync(root+"P1650-PERFORMANCE.json")); if(a.variant!=="parent"||b.variant!=="candidate"||a.source!=="ea8ff9d4121168e9aea0d6def588a1340d7283dc"||b.source!==process.env.P1650_SOURCE_SHA||!a.ownerIsolation||!b.ownerIsolation||!a.sourceReceiptsPreserved||!b.sourceReceiptsPreserved)throw Error("invalid comparison receipt"); for(const x of a.summaries.filter(s=>s.key.endsWith(":expand-page"))){const y=b.summaries.find(s=>s.key===x.key);if(!y||x.n!==y.n)throw Error("unmatched workload"); console.log("P1650_COMPARISON "+JSON.stringify({engine:a.engine,key:x.key,n:x.n,parentMs:x.medianMs,candidateMs:y.medianMs,reductionPct:100*(1-y.medianMs/x.medianMs)}));}'
       - if: always() && (matrix.check == 'chromium' || matrix.check == 'webkit')
         uses: actions/upload-artifact@v4
         with:
