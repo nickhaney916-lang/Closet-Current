@@ -93,6 +93,7 @@ function queued(work){
  result.then(()=>{if(current())window.closetIndex02?.refresh();}).catch(()=>{});
  return result;
 }
+let startupWardrobeRecoveryCount=0;
 let db,items=[],batch=[],stream,timer,busy=false,lastPixels=null,lastSaved=null,stable=0,lastCapture=0,session=0,audio,cadence;
 // STORAGE136: all saved records remain available to search, outfits and
 // backup; only the visible closet-card window is bounded. This changes DOM
@@ -141,7 +142,7 @@ window.addEventListener('closet:session-locked',()=>{
  if(memoryReviewTimer!==null){clearTimeout(memoryReviewTimer);memoryReviewTimer=null;}
  memoryReviewRunning=false;
  try{db?.close();}catch{}
- db=null;items=[];batch=[];failedDraftCaptures.clear();
+ db=null;items=[];batch=[];startupWardrobeRecoveryCount=0;failedDraftCaptures.clear();
  for(const image of document.querySelectorAll('#appShell img, dialog img')){
   const source=image.getAttribute('src');
   if(source?.startsWith('blob:'))URL.revokeObjectURL(source);
@@ -482,7 +483,9 @@ function persistDraft({required=false,mode=null,record=null,expected=null,retry=
     try{
      checkOwner();
      if(savedRequest.result)throw Error('CLOSET_CAPTURE_SAVED_ID_COLLISION');
-     const rows=draftRequest.result?.batch||[];
+     // Only a genuinely absent IndexedDB record is an empty draft.
+     // A present malformed record must survive untouched for recovery.
+     const rows=draftRequest.result===undefined?[]:draftRequest.result?.batch;
      if(!Array.isArray(rows))throw Error('CLOSET_CAPTURE_INVALID_PERSISTED_DRAFT');
      const matching=rows.filter(row=>row?.id===frozen.id);
      if(matching.length){
@@ -513,7 +516,7 @@ function persistDraft({required=false,mode=null,record=null,expected=null,retry=
  })).catch(errorWarning);
 }
 function readDraft(){return readDraftFrom(db);}
-function readDraftFrom(ownerDB){return new Promise((resolve,reject)=>{const r=ownerDB.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
+function readDraftFrom(ownerDB){return new Promise((resolve,reject)=>{const r=ownerDB.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>{const rows=r.result===undefined?[]:r.result?.batch;if(!Array.isArray(rows))return reject(Error('CLOSET_CAPTURE_INVALID_PERSISTED_DRAFT'));resolve(rows);};r.onerror=()=>reject(r.error);});}
 
 // Read only the owner-private draft store, not every saved full-size JPEG.
 // This is a read-only reconciliation of review cards; it never writes remote
@@ -1349,6 +1352,7 @@ function renderPhotoResults(grid,results){
  }
 }
 function render(){
+ if(startupWardrobeRecoveryCount){renderStartupWardrobeRecovery();return;}
  const previousFocus=document.activeElement,focusedCard=previousFocus?.closest?.('#closetGrid .card'),
   focusedItemId=focusedCard?.dataset.itemId,focusedAction=previousFocus?.dataset?.action;
  $('reviewCount').textContent=batch.length;$('closetCount').textContent=items.length;$('sessionCount').textContent=session;
@@ -1642,6 +1646,7 @@ function candidate(image,options={}){
  });
 }
 function queueAutomatic(item){
+ if(startupWardrobeRecoveryCount)return;
  if(localPending.has(item.id)||!batch.some(x=>x.id===item.id))return;
  localPending.add(item.id);automaticQueue.push(item);drainAutomatic();
 }
@@ -2260,6 +2265,76 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
    :reason||'Import failed.');
  }};
 window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});
+// Startup recovery is a display-only projection; never rewrite or delete
+// the private stored rows to repair their shape. Conflicting IDs are all
+// withheld, not resolved by choosing whichever record arrived first.
+// Read saved and unfinished garments in one native snapshot. Separate
+// transactions can straddle another tab's atomic draft-to-saved commit.
+function readStartupWardrobeSnapshot(ownerDB){
+ return new Promise((resolve,reject)=>{
+  let tx;
+  try{
+   tx=ownerDB.transaction(['items','state'],'readonly');
+   const saved=tx.objectStore('items').getAll();
+   const draft=tx.objectStore('state').get('draft');
+   tx.oncomplete=()=>{
+    const record=draft.result;
+    const batch=record===undefined?[]:record?.batch;
+    const draftContainerDamaged=!Array.isArray(batch);
+    resolve({loadedItems:saved.result,loadedDraft:draftContainerDamaged?[]:batch,draftContainerDamaged});
+   };
+   tx.onabort=tx.onerror=()=>reject(tx.error||Error('CLOSET_STARTUP_SNAPSHOT_READ_FAILED'));
+  }catch(error){reject(error);}
+ });
+}
+function partitionStartupWardrobe(saved,drafts,owner){
+ if(!Array.isArray(saved)||!Array.isArray(drafts)||typeof owner!=='string'||!owner)
+  throw Error('CLOSET_STARTUP_INVALID_ROSTER');
+ const counts=new Map();
+ for(const row of [...saved,...drafts]){
+  if(row&&typeof row==='object'&&typeof row.id==='string'&&row.id.trim())
+   counts.set(row.id,(counts.get(row.id)||0)+1);
+ }
+ let invalid=0;
+ const select=rows=>rows.flatMap(row=>{
+  try{
+   if(!row||Object.getPrototypeOf(row)!==Object.prototype||
+      typeof row.id!=='string'||!row.id.trim()||counts.get(row.id)!==1||
+      (row.ownerId!=null&&row.ownerId!==owner)||
+      typeof row.image!=='string'||!row.image.trim()||
+      ['name','color','notes'].some(k=>row[k]!=null&&typeof row[k]!=='string'))
+    throw Error('CLOSET_STARTUP_INVALID_GARMENT');
+   // Accept older photo records lacking a name; never modify stored bytes.
+   const normalized=normalizeClothing({...row,name:row.name??''});
+   return [normalized];
+  }catch{invalid++;return [];}
+ });
+ return {items:select(saved),batch:select(drafts),get invalid(){return invalid;}};
+}
+function renderStartupWardrobeRecovery(){
+ // No regular edit, crop, index, styling or automatic-recognition controls
+ // are constructed from an incomplete roster. Keep the native DB closed.
+ $('reviewCount').textContent=batch.length;
+ $('closetCount').textContent=items.length;
+ $('sessionCount').textContent=session;
+ const warning='Some stored clothing records need recovery. '+startupWardrobeRecoveryCount+
+  ' record(s) could not be displayed. Your remaining photos are view-only; no stored records were deleted. Keep your original backup and reload after recovery.';
+ message(warning);
+ controls(true);
+ for(const [id,rows] of [['closetGrid',items],['reviewGrid',batch],['scanResults',batch]]){
+  const grid=$(id);grid.replaceChildren();
+  grid.append(node('p',warning,'fine'));
+  for(const item of rows){
+   const card=node('article',null,'card'),body=node('div',null,'card-body');
+   // Local embedded images only in this diagnostic view; no external fetch.
+   if(/^data:image\/(?:jpeg|png|webp|gif);base64,/i.test(item.image)){
+    const im=node('img');im.src=item.image;im.alt=item.name||'Clothing photo';im.loading='lazy';card.append(im);
+   }
+   body.append(node('h3',item.name||'Clothing photo'),node('p',item.category+' · '+item.itemType));
+   card.append(body);grid.append(card);
+  }
+ }
+}
 const closetReady=(async()=>{
  await window.closetAuth.ready;
  const auth=window.closetAuth,owner=auth?.user?.id,epoch=captureOperationEpoch;
@@ -2274,15 +2349,20 @@ const closetReady=(async()=>{
   auth.assertCurrent?.();
   // Keep both asynchronous reads on the initiating account's DB. Do not
   // publish either owner's photos until the entire local roster loads.
-  const loadedItems=await readAllFrom(connection);
-  if(!current()){connection.close();return;}
-  const loadedDraft=await readDraftFrom(connection);
+  const {loadedItems,loadedDraft,draftContainerDamaged}=await readStartupWardrobeSnapshot(connection);
   if(!current()){connection.close();return;}
   auth.assertCurrent?.();
   if(db&&db!==connection){connection.close();return;}
-  const nextItems=loadedItems.map(normalizeClothing);
-  const nextBatch=loadedDraft.map(normalizeClothing);
-  db=connection;items=nextItems;batch=nextBatch;
+  const roster=partitionStartupWardrobe(loadedItems,loadedDraft,owner);
+  if(roster.invalid||draftContainerDamaged){
+   // Never authorize writes, background recognition or backup from a
+   // filtered roster. Keep original durable records exactly as read.
+   connection.close();connection=null;
+   startupWardrobeRecoveryCount=roster.invalid+(draftContainerDamaged?1:0);
+   items=roster.items;batch=roster.batch;
+   render();return;
+  }
+  db=connection;items=roster.items;batch=roster.batch;
   for(const item of batch)if(item.outfitSourceId&&item.requiresOwnershipConfirmation){
    item.requiresOwnershipConfirmation=false;item.localAnalyzed=false;
   }

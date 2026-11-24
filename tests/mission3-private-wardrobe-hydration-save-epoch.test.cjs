@@ -15,6 +15,9 @@ function extract(start,end){
 const saveSource=extract('function savePiece(value,nextBatch','function node(tag');
 const readAllSource=extract('function readAll(', '// NATIVE-INDEX-07 opt-in only:');
 const readDraftSource=extract('function readDraft(', 'async function captureProofVerifyBeforeSave(');
+const snapshotSource=source.includes('function readStartupWardrobeSnapshot(')
+ ?extract('function readStartupWardrobeSnapshot(','const closetReady=')
+ :'';
 const readySource=extract('const closetReady=(async()=>','/**');
 function deferred(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});promise.catch(()=>{});return {promise,resolve,reject};}
 function bind(ctx,script){vm.createContext(ctx);vm.runInContext(script,ctx);return ctx;}
@@ -26,10 +29,14 @@ function fakeDB(owner,{items=[owner===a?oldRow:newRow],draft=[{...items[0],id:'d
  let closes=0,transactionCount=0;
  const writes=[],data={items:structuredClone(items),draft:structuredClone(draft)};
  const db={name:'closet-current-user-'+owner,close(){closes++;},
-  transaction(type){
+  transaction(type,mode){
    transactionCount++;
    const storeName=Array.isArray(type)?null:type,pending=[];
-   let aborted=false,commitScheduled=false;
+   let aborted=false,commitScheduled=false,readCount=0;
+   const completeRead=()=>{
+    if(Array.isArray(type)&&mode==='readonly'&&++readCount===2&&!aborted)
+     queueMicrotask(()=>transaction.oncomplete?.());
+   };
    const transaction={oncomplete:null,onerror:null,onabort:null,error:null,
     abort(){aborted=true;queueMicrotask(()=>transaction.onabort?.());},
     objectStore(store){
@@ -40,7 +47,7 @@ function fakeDB(owner,{items=[owner===a?oldRow:newRow],draft=[{...items[0],id:'d
        queueMicrotask(async()=>{
         itemsGate.resolve();
         if(holdItems)await itemsGate.release;
-        req.result=structuredClone(data.items);req.onsuccess?.();
+        req.result=structuredClone(data.items);req.onsuccess?.();completeRead();
        });
        return req;
       },
@@ -55,6 +62,7 @@ function fakeDB(owner,{items=[owner===a?oldRow:newRow],draft=[{...items[0],id:'d
          req.result=structuredClone(data.items.find(x=>x.id===key));
         else throw Error('Unexpected private store '+id);
         if(!aborted)req.onsuccess?.();
+        completeRead();
        });
        return req;
       },
@@ -168,7 +176,7 @@ function readyFixture({itemsHold=false,draftHold=false}={}){
   if(auth.user?.id!==a)throw Error('Account session ended');
  }};
  const ctx={
-  captureOperationEpoch:0,db:null,items:[],batch:[],
+  captureOperationEpoch:0,db:null,items:[],batch:[],startupWardrobeRecoveryCount:0,Object,
   window:{closetAuth:auth},
   openDB:async()=>initial.db,
   normalizeClothing:item=>item,
@@ -176,7 +184,7 @@ function readyFixture({itemsHold=false,draftHold=false}={}){
   render:()=>calls.push('render:'+ctx.items.map(x=>x.ownerId)),
   queueAutomatic:item=>calls.push('scan:'+item.ownerId)
  };
- bind(ctx,readAllSource+'\n'+readDraftSource+'\n'+readySource);
+ bind(ctx,readAllSource+'\n'+readDraftSource+'\n'+snapshotSource+'\n'+readySource);
  ctx.closetReady=vm.runInContext('closetReady',ctx);
  return {ctx,initial,next,calls,switchOwner({sameOwner=false}={}){
   ctx.captureOperationEpoch++;
@@ -184,7 +192,7 @@ function readyFixture({itemsHold=false,draftHold=false}={}){
   ctx.db=next.db;ctx.items=[structuredClone(newRow)];ctx.batch=[{...newRow,id:'new-owner-draft'}];
  }};
 }
-test('old startup items.getAll completion after account switch cannot expose former owner garment',async()=>{
+test('old startup items.getAll completion after account switch cannot expose former owner garment',{timeout:5000},async()=>{
  const f=readyFixture({itemsHold:true});
  await f.initial.itemsGate.promise;f.switchOwner();f.initial.releaseItems();
  await f.ctx.closetReady;
@@ -193,7 +201,7 @@ test('old startup items.getAll completion after account switch cannot expose for
  assert.equal(f.calls.filter(x=>x.startsWith('render:')).length,baseline?1:0);
  assert.equal(f.initial.closes,baseline?0:1);
 });
-test('old startup after draft read begins cannot reassign shared items or draft to new owner',async()=>{
+test('old startup after draft read begins cannot reassign shared items or draft to new owner',{timeout:5000},async()=>{
  const f=readyFixture({draftHold:true});
  await f.initial.draftGate.promise;f.switchOwner();f.initial.releaseDraft();
  await f.ctx.closetReady;
@@ -203,14 +211,14 @@ test('old startup after draft read begins cannot reassign shared items or draft 
  assert.equal(f.ctx.batch[0].ownerId,baseline?a:b);
  assert.equal(f.initial.closes,baseline?0:1);
 });
-test('old startup read is revoked even after sign-in to same account ID',async()=>{
+test('old startup read is revoked even after sign-in to same account ID',{timeout:5000},async()=>{
  const f=readyFixture({itemsHold:true});await f.initial.itemsGate.promise;
  f.switchOwner({sameOwner:true});f.initial.releaseItems();
  await f.ctx.closetReady;
  assert.equal(f.ctx.items[0].ownerId,baseline?a:b);
  assert.equal(f.initial.closes,baseline?0:1);
 });
-test('uninterrupted startup loads only signed owner private roster + review draft',async()=>{
+test('uninterrupted startup loads only signed owner private roster + review draft',{timeout:5000},async()=>{
  const f=readyFixture();
  await f.ctx.closetReady;
  assert.equal(f.ctx.db,f.initial.db);

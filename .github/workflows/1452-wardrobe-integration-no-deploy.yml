@@ -1,0 +1,87 @@
+name: P0 1452 wardrobe integration acceptance HOLD
+on:
+  push:
+    branches: [research/1452-wardrobe-integration-HOLD]
+  pull_request:
+    branches: [research/main1054-m256-negative-attempt-quarantine-HOLD]
+    paths: [.github/workflows/1452-wardrobe-integration-no-deploy.yml]
+permissions:
+  contents: read
+env:
+  CANDIDATE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+jobs:
+  source-and-regression:
+    if: github.event_name == 'push' || (github.head_ref == 'research/1452-wardrobe-integration-HOLD' && github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: bash scripts/check-1452-integration-source.sh "$CANDIDATE_HEAD"
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: node scripts/build.mjs
+      - run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
+  native-startup-and-backup:
+    if: github.event_name == 'push' || (github.head_ref == 'research/1452-wardrobe-integration-HOLD' && github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: bash scripts/check-1452-integration-source.sh "$CANDIDATE_HEAD"
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+      - run: npx playwright install --with-deps chromium webkit
+      - run: NATIVE_DRAFT_BROWSER=1 node --test tests/main1054-malformed-draft-insert-veto.test.mjs
+      - run: node scripts/test-mission3-lossless-v4-owner-acceptance-browser.mjs "${RUNNER_TEMP}/lossless-v4"
+  browser-journey:
+    if: github.event_name == 'push' || (github.head_ref == 'research/1452-wardrobe-integration-HOLD' && github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    env:
+      M58_ENGINE: ${{ matrix.engine }}
+      P99_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: bash scripts/check-1452-integration-source.sh "$CANDIDATE_HEAD"
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - run: npx playwright install --with-deps "${M58_ENGINE}"
+      - run: node scripts/build.mjs
+      - run: node scripts/test-parallel99-normal-app-browser.mjs
+      - run: node scripts/test-parallel94-native-p88-browser.mjs
+      - run: node scripts/check-1452-journey-receipts.mjs "$M58_ENGINE"
+  acceptance:
+    if: always()
+    needs: [source-and-regression, native-startup-and-backup, browser-journey]
+    runs-on: ubuntu-24.04
+    env:
+      SOURCE_RESULT: ${{ needs.source-and-regression.result }}
+      STORAGE_RESULT: ${{ needs.native-startup-and-backup.result }}
+      BROWSER_RESULT: ${{ needs.browser-journey.result }}
+    steps:
+      - run: |
+          test "$SOURCE_RESULT" = success
+          test "$STORAGE_RESULT" = success
+          test "$BROWSER_RESULT" = success
