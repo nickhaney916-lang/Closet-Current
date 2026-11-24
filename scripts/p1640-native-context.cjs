@@ -22,13 +22,21 @@ const finalCatch=source.lastIndexOf("}catch(error){");
 if(finalCatch<start)throw Error('P99 final boundary absent');
 source=source.slice(0,start)+`
  advance('p1640-occasion-season-real-ui');
- const savedSeasons=await page.evaluate(()=>items.map(x=>({name:x.name,seasons:x.seasons})));
+ const savedSeasons=await page.evaluate(()=>items.map(x=>({id:x.id,name:x.name,seasons:x.seasons})));
  assert.equal(savedSeasons.find(x=>x.name===shirtName)?.seasons.join(','),'Winter');
  assert.equal(savedSeasons.find(x=>x.name===jeansName)?.seasons.join(','),'All seasons');
  await page.locator('nav.main-nav button.tab[data-view="stylist"]').click();
  const focus=page.locator('#stylistFocusItem'),occasion=page.locator('#stylistOccasion'),season=page.locator('#stylistSeason');
+ // Exact native selector options must reflect the two reviewed owner rows,
+ // without a test-side refresh or research URL flag.
+ const optionIds=await focus.locator('option').evaluateAll(options=>options.map(x=>x.value));
+ assert.deepEqual(optionIds.slice().sort(),['',...savedSeasons.map(x=>x.id)].sort(),'native Stylist options match committed owner garments');
  const shirtId=await focus.locator('option').filter({hasText:shirtName}).getAttribute('value');
- assert.ok(shirtId);
+ assert.equal(shirtId,savedSeasons.find(x=>x.name===shirtName)?.id);
+ await focus.selectOption(shirtId);
+ await page.locator('nav.main-nav button.tab[data-view="closet"]').click();
+ await page.locator('nav.main-nav button.tab[data-view="stylist"]').click();
+ assert.equal(await focus.inputValue(),shirtId,'selected owned garment survives normal navigation');
  await page.locator('#styleCollectionForm details summary').click();
  const cards=page.locator('#styledCollectionResults .styled-outfit');
  const red=process.env.P1640_EXPECT_RED==='1';
