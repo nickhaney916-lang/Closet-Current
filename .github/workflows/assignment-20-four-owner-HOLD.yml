@@ -1,0 +1,118 @@
+name: Assignment 20 four signed owners HOLD
+on:
+  pull_request:
+    branches: [research/assignment-20-accepted-baseline-HOLD]
+permissions:
+  contents: read
+jobs:
+  local-backend:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'research/assignment-20-four-owner-HOLD'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      SUPABASE_TELEMETRY_DISABLED: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Pin application and policy source
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD)" = "$HEAD_SHA"
+          test "$BASE_SHA" = fefe69cd04c57515433985e6141f7f9f0951f6ab
+          git merge-base --is-ancestor "$BASE_SHA" HEAD
+          git diff --exit-code "$BASE_SHA" HEAD -- public
+          test "$(git diff --name-only "$BASE_SHA" HEAD -- supabase)" = supabase/cloud-backup.sql
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.48.3
+      - name: Install pinned browser test dependencies
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+          npx playwright install --with-deps chromium webkit
+          node scripts/build.mjs
+      - name: Start isolated Supabase Auth, PostgREST, Storage and Postgres
+        run: |
+          set -eu
+          umask 077
+          mkdir "$RUNNER_TEMP/closet-a20"
+          cd "$RUNNER_TEMP/closet-a20"
+          supabase init
+          sed -i 's/^project_id = .*/project_id = "closet-a20"/; s/^jwt_expiry = .*/jwt_expiry = 120/' supabase/config.toml
+          grep -q '^jwt_expiry = 120$' supabase/config.toml
+          supabase --version
+          supabase start > "$RUNNER_TEMP/closet-a20-start.log" 2>&1 || { echo 'Disposable Supabase startup failed'; exit 1; }
+          supabase status -o env > "$RUNNER_TEMP/closet-a20.env"
+          {
+            printf 'BEGIN;\n'
+            git -C "$GITHUB_WORKSPACE" show fefe69cd04c57515433985e6141f7f9f0951f6ab:supabase/cloud-backup.sql
+            printf "SELECT 'accepted base: authenticated DELETE=' || has_table_privilege('authenticated','public.closet_backups','DELETE') || ', TRUNCATE=' || has_table_privilege('authenticated','public.closet_backups','TRUNCATE');\nROLLBACK;\n"
+          } | docker exec -i supabase_db_closet-a20 psql -U postgres -v ON_ERROR_STOP=1
+          docker exec -i supabase_db_closet-a20 psql -U postgres -v ON_ERROR_STOP=1 < "$GITHUB_WORKSPACE/supabase/cloud-backup.sql"
+          docker exec supabase_db_closet-a20 psql -U postgres -Atc 'show server_version'
+          docker inspect --format '{{.Config.Image}}' supabase_auth_closet-a20 supabase_rest_closet-a20 supabase_storage_closet-a20
+      - name: Verify database policy and function grants
+        run: |
+          docker exec -i supabase_db_closet-a20 psql -U postgres -v ON_ERROR_STOP=1 <<'SQL'
+          do $$
+          begin
+            if not (select relrowsecurity from pg_class where oid='public.closet_backups'::regclass)
+               or not (select relrowsecurity from pg_class where oid='storage.objects'::regclass)
+               or (select public from storage.buckets where id='closet-private')
+               or has_table_privilege('anon','public.closet_backups','SELECT, INSERT, UPDATE, DELETE')
+               or has_table_privilege('authenticated','public.closet_backups','DELETE, TRUNCATE, REFERENCES, TRIGGER')
+               or has_function_privilege('anon','public.save_closet_backup(bigint,jsonb)','EXECUTE')
+               or not has_function_privilege('authenticated','public.save_closet_backup(bigint,jsonb)','EXECUTE')
+               or (select prosecdef from pg_proc where oid='public.save_closet_backup(bigint,jsonb)'::regprocedure)
+            then raise exception 'Unexpected grant, RLS, private bucket, or RPC scope';
+            end if;
+          end $$;
+          SQL
+      - name: Verify four signed owners and all ordered identity pairs over local HTTP
+        if: always() && !cancelled()
+        env:
+          CLOSET_FOUR_OWNER: '1'
+        run: |
+          test -f "$RUNNER_TEMP/closet-a20.env"
+          SUPABASE_TEST_ENV="$RUNNER_TEMP/closet-a20.env" node research/auth-review-session-36/signed-local.mjs
+      - name: Verify ordinary app backup, clean-context restore and account switching in both browsers
+        if: always() && !cancelled()
+        run: |
+          test -f "$RUNNER_TEMP/closet-a20.env"
+          SUPABASE_TEST_ENV="$RUNNER_TEMP/closet-a20.env" node scripts/test-assignment-20-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: assignment-20-sanitized-http-receipt
+          path: benchmark/auth-review-session-36/signed.json
+          if-no-files-found: ignore
+      - name: Destroy local backend and remove credentials
+        if: always()
+        run: |
+          if test -f "$RUNNER_TEMP/closet-a20/supabase/config.toml"; then
+            (cd "$RUNNER_TEMP/closet-a20" && supabase stop --no-backup >/dev/null 2>&1)
+          fi
+          rm -f "$RUNNER_TEMP/closet-a20.env" "$RUNNER_TEMP/closet-a20-start.log"
+  regression:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'research/assignment-20-four-owner-HOLD'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: node scripts/build.mjs
+      - run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
