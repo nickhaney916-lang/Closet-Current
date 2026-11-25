@@ -15,11 +15,16 @@ insert("const engine=process.env.P99_ENGINE||'chromium';", `
 import { activeTrends, openStore, rollback, tick } from './maintenance/store.mjs';
 import { documentFor, feeds } from './maintenance/test-data.mjs';
 import { week } from './maintenance/trends.mjs';
+import { adaptPublisherFeed } from './maintenance/publisher-feed.mjs';
+import { publisherExport } from './maintenance/publisher-fixtures.mjs';
 
 const trendDb = openStore(':memory:');
 const firstDate = Date.now() - week;
 const publish = (now, label) => tick(trendDb, feeds, {
-  clock: () => now, load: feed => documentFor(feed, now, label)
+  clock: () => now,
+  load: feed => process.env.ASSIGNMENT_18_PUBLISHER === '1'
+    ? adaptPublisherFeed(feed, JSON.stringify(publisherExport(feed, now, label)))
+    : documentFor(feed, now, label)
 });
 const initialVersion = (await publish(firstDate, 'Assignment 16 baseline')).version;
 let releaseFailed = false;
@@ -59,16 +64,30 @@ insert(" const firstStorage=await audit?.storage(page);", `
  assert.equal(second.result, 'activated');
  await verifyTrend('Assignment 16 update');
  releaseFailed = true;
- await page.evaluate(() => refreshTrendLibrary(true));
- assert.match(await page.locator('#stylistFreshness').innerText(), /keeping the last verified/);
- assert.match(await page.locator('#styledCollectionResults').innerText(), /Assignment 16 update/);
+ const publisherOffline = process.env.ASSIGNMENT_18_PUBLISHER === '1';
+ if (publisherOffline) {
+   await page.context().setOffline(true);
+   await page.waitForFunction(() => navigator.onLine === false);
+ }
+ try {
+   await page.evaluate(() => refreshTrendLibrary(true));
+   assert.match(await page.locator('#stylistFreshness').innerText(),
+     publisherOffline ? /Offline.*last verified/ : /keeping the last verified/);
+   assert.match(await page.locator('#styledCollectionResults').innerText(), /Assignment 16 update/);
+ } finally {
+   if (publisherOffline) await page.context().setOffline(false);
+ }
+ if (publisherOffline) {
+   await page.waitForFunction(() => navigator.onLine && !trendLoading && trendCheckFailed);
+ }
  releaseFailed = false;
  assert.equal((await rollback(trendDb)).version, initialVersion);
  await verifyTrend('Assignment 16 baseline');
  assert.deepEqual(await wardrobeSnapshot(), wardrobeBefore, 'trend activation must leave owner rows and saved outfit alone');
- console.log('ASSIGNMENT_16_TRENDS', JSON.stringify({engine,width,update:second.version,rollback:initialVersion,ownerRowsAndSavedOutfitUnchanged:true}));
+ console.log('ASSIGNMENT_16_TRENDS', JSON.stringify({engine,width,update:second.version,rollback:initialVersion,ownerRowsAndSavedOutfitUnchanged:true,publisherOffline}));
 `);
-source = source.replace("benchmark/parallel99-normal-journey", "benchmark/assignment-16-maintenance");
+source = source.replace("benchmark/parallel99-normal-journey",
+  process.env.ASSIGNMENT_18_PUBLISHER === '1' ? 'benchmark/assignment-18-publisher' : 'benchmark/assignment-16-maintenance');
 try {
   await writeFile(runner, source, { flag: 'wx' });
   const child = spawn(process.execPath, [runner.pathname], {
