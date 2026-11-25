@@ -79,9 +79,12 @@ jobs:
             ln -s "$PWD/node_modules" "$RUNNER_TEMP/$lane-baseline/node_modules"
           done
           cp scripts/p1669-native-connectivity.cjs "$RUNNER_TEMP/p1669-baseline/scripts/"
-          # Same instrumented review harness on the immutable comparison baseline and candidate.
-          test "$(git -C "$RUNNER_TEMP/p1671-baseline" rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 261f2ebb6f0d94033f4cbaffdf6f9534411dba3a
-          cp scripts/test-parallel99-normal-app-browser.mjs "$RUNNER_TEMP/p1671-baseline/scripts/"
+          # Same instrumented review harness on both immutable comparison baselines and candidate.
+          for lane in p1669 p1671; do
+            test "$(git -C "$RUNNER_TEMP/$lane-baseline" rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 261f2ebb6f0d94033f4cbaffdf6f9534411dba3a
+            cp scripts/test-parallel99-normal-app-browser.mjs "$RUNNER_TEMP/$lane-baseline/scripts/"
+            test "$(git hash-object "$RUNNER_TEMP/$lane-baseline/scripts/test-parallel99-normal-app-browser.mjs")" = 3a4c15101e3450db626478852c4b722fa3e9905b
+          done
           cp scripts/p1671-native-outfit-search.cjs "$RUNNER_TEMP/p1671-baseline/scripts/"
           (cd "$RUNNER_TEMP/p1669-baseline" && node scripts/build.mjs)
           (cd "$RUNNER_TEMP/p1671-baseline" && node scripts/build.mjs)
