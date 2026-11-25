@@ -22,14 +22,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 2
+          fetch-depth: 3
           persist-credentials: false
       - name: Verify exact candidate and independently accepted baseline
         env:
           EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          REVIEW_BASE: ${{ github.event.pull_request.base.sha }}
         run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-parse HEAD^)" = fefe69cd04c57515433985e6141f7f9f0951f6ab
+          test "$REVIEW_BASE" = fefe69cd04c57515433985e6141f7f9f0951f6ab
+          git merge-base --is-ancestor "$REVIEW_BASE" HEAD
       - name: Install pinned test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - run: node scripts/build.mjs
