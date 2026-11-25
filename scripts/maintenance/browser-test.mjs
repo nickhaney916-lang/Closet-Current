@@ -86,6 +86,12 @@ insert(" const firstStorage=await audit?.storage(page);", `
  assert.deepEqual(await wardrobeSnapshot(), wardrobeBefore, 'trend activation must leave owner rows and saved outfit alone');
  console.log('ASSIGNMENT_16_TRENDS', JSON.stringify({engine,width,update:second.version,rollback:initialVersion,ownerRowsAndSavedOutfitUnchanged:true,publisherOffline}));
 `);
+if (process.env.ASSIGNMENT_18_PUBLISHER === '1') {
+  // Authentication can reappear before the reloaded app declares its database.
+  const ready = "  db?.name==='closet-current-user-'+id&&";
+  if (source.split(ready).length !== 2) throw Error('Ordinary journey sign-in anchor changed');
+  source = source.replace(ready, "  typeof db !== 'undefined' && db?.name==='closet-current-user-'+id&&");
+}
 source = source.replace("benchmark/parallel99-normal-journey",
   process.env.ASSIGNMENT_18_PUBLISHER === '1' ? 'benchmark/assignment-18-publisher' : 'benchmark/assignment-16-maintenance');
 try {
