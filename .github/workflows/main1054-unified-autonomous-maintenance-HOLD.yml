@@ -84,6 +84,8 @@ jobs:
           test "$(git rev-parse HEAD:.github/workflows/native-restore-3d-06-no-deploy.yml)" = 6798b62d4de129ce661cc9a7fcca4194746a024e
           test "$(git rev-parse HEAD:scripts/install-parallel90-viewer.mjs)" = 6768a6cb58224f403254aeda6aa80d2e720d6375
           test "$(git rev-parse HEAD:scripts/check-parallel90-interactions.mjs)" = b54c34e4c5743ba6fc2e9161ce3acf7c60886bee
+          git merge-base --is-ancestor ae0d89e8f23d14eddc3e492c9dcff009e393612a HEAD
+          git diff --exit-code ae0d89e8f23d14eddc3e492c9dcff009e393612a HEAD -- . ':(exclude)scripts/test-style-owned-live-03-browser.mjs' ':(exclude).github/workflows/main1054-unified-autonomous-maintenance-HOLD.yml'
           git merge-base --is-ancestor 84568b11e31228c3d1adb934eee8363cca169e48 HEAD
           git diff --exit-code 84568b11e31228c3d1adb934eee8363cca169e48 HEAD -- . ':(exclude)scripts/test-style-owned-live-03-browser.mjs' ':(exclude).github/workflows/main1054-unified-autonomous-maintenance-HOLD.yml' ':(exclude)scripts/test-capture-proof-01-browser.mjs'
           git merge-base --is-ancestor fefe69cd04c57515433985e6141f7f9f0951f6ab HEAD
@@ -98,7 +100,8 @@ jobs:
           test "$(git rev-parse HEAD:scripts/test-native-consumer-board-04-browser.mjs)" = f55d303acd7cc7218aa84796b402cf239c0fd53e
           test "$(git rev-parse HEAD:scripts/audit-native-consumer-board-04.mjs)" = cfbcb88c5dc748d74bcffcb86142324b18ed5ddb
           test "$(git rev-parse 84568b11e31228c3d1adb934eee8363cca169e48:scripts/test-style-owned-live-03-browser.mjs)" = 6d4a5390e0c6627c90a707607db03e489ffa621c
-          test "$(git rev-parse HEAD:scripts/test-style-owned-live-03-browser.mjs)" = 0ec6aa86a6007de89c4551b00b2d817f9282bb72
+          test "$(git rev-parse ae0d89e8f23d14eddc3e492c9dcff009e393612a:scripts/test-style-owned-live-03-browser.mjs)" = 0ec6aa86a6007de89c4551b00b2d817f9282bb72
+          test "$(git rev-parse HEAD:scripts/test-style-owned-live-03-browser.mjs)" = 18f6b763cc43f53ecaa7c0053c9f7f69bab481a3
           test "$(git rev-parse HEAD:scripts/audit-style-owned-live-03.mjs)" = b5ed2ee353b469a945de656cab41c77282f0a4f0
           git log -1 --format='commit %H tree %T'
       - name: Install pinned dependencies

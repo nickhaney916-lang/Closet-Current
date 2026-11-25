@@ -31,9 +31,17 @@ const mime={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html'
  '.css':'text/css','.json':'application/json','.jpg':'image/jpeg',
  '.png':'image/png','.glb':'model/gltf-binary','.svg':'image/svg+xml',
  '.woff2':'font/woff2','.bin':'application/octet-stream'};
+let unmanagedTrendProbes=0;
 const server=createServer(async(req,res)=>{
  try{
   const path=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+  // This isolated static fixture has no active managed catalog. An empty
+  // non-JSON success models static hosting fallback without noisy 404s.
+  // The real application must continue to its existing bundled/public path.
+  if(req.method==='GET'&&path==='/public/maintenance/trends'){
+   unmanagedTrendProbes++;
+   res.writeHead(204,{'cache-control':'no-store'});res.end();return;
+  }
   if(path.includes('\\')||path.includes('\0')||path.split('/').includes('..')||
    !/^\/(public\/|research\/|donor\/|benchmark\/|node_modules\/)/.test(path))
    throw Error('unapproved research path');
@@ -363,7 +371,7 @@ try{
     const value=message.text().slice(0,350);
     if(/^Failed to load resource: net::ERR_(FAILED|ABORTED)$/.test(value))
      results.expectedOfflineConsole.push({engine,width,text:value});
-    else results.consoleErrors.push({engine,width,text:value});
+    else results.consoleErrors.push({engine,width,text:value,resourcePath:message.location().url.startsWith(origin+'/')?new URL(message.location().url).pathname:'nonlocal-or-unknown'});
    });
    await page.goto(origin+'/public/index.html?'+flags,{waitUntil:'domcontentloaded'});
    await prepare(page,ownerA);
@@ -415,6 +423,8 @@ try{
  assert.ok(results.expectedOfflineConsole.every(row=>
   results.blockedPublicAssets.some(x=>x.engine===row.engine&&x.width===row.width)),
   'Offline ERR_FAILED must have a matching blocked public GET attempt');
+ assert.ok(unmanagedTrendProbes>=6,'Each real viewport journey must probe the absent managed catalog');
+ results.unmanagedTrendProbes=unmanagedTrendProbes;
  assert.deepEqual(results.consoleErrors,[]);
  assert.equal(results.cases.every(x=>x.threeRealOriginalOwnedLooks&&
   x.actualInputAndHumanCorrection&&x.ownerBPrivate&&x.photosUnchanged),true);
