@@ -340,7 +340,22 @@ try{
   await editor10.locator('input[aria-label="Color"]').fill('Brown');
   await take(page,width,'11-unsaved-original-clothing-correction');
   // Merely opening the editor and then canceling changes no stored record.
-  await editor10.locator('button').filter({hasText:'Cancel'}).click();
+  const discardChanges=async accept=>{
+   const prompt=page.waitForEvent('dialog').then(async dialog=>{
+    const details={type:dialog.type(),message:dialog.message()};
+    if(accept)await dialog.accept();else await dialog.dismiss();
+    return details;
+   });
+   const [details]=await Promise.all([prompt,editor10.getByRole('button',{name:'Cancel',exact:true}).click()]);
+   assert.equal(details.type,'confirm');
+   assert.equal(details.message,'Discard your unsaved clothing changes?');
+  };
+  await discardChanges(false);
+  assert.equal(await editor10.isVisible(),true,'Declining discard preserves the unsaved editor');
+  assert.equal(await editor10.locator('input[aria-label="Color"]').inputValue(),'Brown');
+  assert.deepEqual((await readItems(page)).find(x=>x.id===newId),originalGarment);
+  await discardChanges(true);
+  await editor10.waitFor({state:'hidden'});
   assert.deepEqual((await readItems(page)).find(x=>x.id===newId),originalGarment);
   assert.equal(await page.evaluate(id=>items.find(x=>x.id===id).category,newId),'Tops');
   assert.deepEqual(await readBoard(page),stableBoard);
@@ -510,7 +525,10 @@ try{
   assert.ok(modalBounds.buttons.length===2&&modalBounds.buttons.every(x=>x.height>=48),
    'Both saved clothing actions must remain real 48px touch targets after CAS refusal');
   await take(page,width,'14-safe-stale-tab-refusal-with-original-protected');
-  await editor10.locator('button').filter({hasText:'Cancel'}).click();
+  await discardChanges(true);
+  await editor10.waitFor({state:'hidden'});
+  assert.deepEqual((await readItems(page)).find(x=>x.id===newId),parallelWrite);
+  assert.deepEqual(await readBoard(page),expectedBoard);
   await page.evaluate(()=>switchView('builder'));
   await page.locator('details.account-menu > summary').click();
   await page.locator('#logout').click();

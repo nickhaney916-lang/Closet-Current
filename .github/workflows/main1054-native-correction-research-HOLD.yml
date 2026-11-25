@@ -31,11 +31,13 @@ jobs:
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           test "${{ github.event.pull_request.base.sha }}" = 5f9eb92dc45185889c5bf8f7f7ad770a15f78656
           git merge-base --is-ancestor 5f9eb92dc45185889c5bf8f7f7ad770a15f78656 HEAD
-          test "$(git rev-parse HEAD^)" = e01e43c51612bb0dc9b6bdb837c09aef7b4bba45
+          test "$(git rev-parse HEAD^)" = fd921db5366b0448c52fd113a8fb96c174ce5aad
+          git diff --exit-code fd921db5366b0448c52fd113a8fb96c174ce5aad HEAD -- . ':(exclude)scripts/test-native-correction-10-browser.mjs' ':(exclude).github/workflows/main1054-native-correction-research-HOLD.yml'
           printf '%s\n' 'scripts/test-native-correction-10-browser.mjs' 'scripts/test-native-style-correction-11-browser.mjs' '.github/workflows/main1054-native-correction-research-HOLD.yml' | LC_ALL=C sort > /tmp/expected
           git diff --name-only 5f9eb92dc45185889c5bf8f7f7ad770a15f78656 HEAD | LC_ALL=C sort > /tmp/actual
           diff -u /tmp/expected /tmp/actual
-          test "$(git rev-parse HEAD:scripts/test-native-correction-10-browser.mjs)" = fdd13edc46c7f1fbb381242cfed51d2a4b47a785
+          test "$(git rev-parse fd921db5366b0448c52fd113a8fb96c174ce5aad:scripts/test-native-correction-10-browser.mjs)" = fdd13edc46c7f1fbb381242cfed51d2a4b47a785
+          test "$(git rev-parse HEAD:scripts/test-native-correction-10-browser.mjs)" = fcdbd5402a5299c340e68c52d9707fa7f362d542
           test "$(git rev-parse HEAD:scripts/test-native-style-correction-11-browser.mjs)" = c253539a6916e3acc58f6ce343f180d2acb0d3f8
           test "$(git rev-parse HEAD:scripts/audit-native-correction-10.mjs)" = 51ab9e8f074ab0ed24706927ba39b7ff4738ca9a
           test "$(git rev-parse HEAD:scripts/audit-native-style-correction-11.mjs)" = 6658e7b127ba1200bbc53e81bf4c604294addfa0
