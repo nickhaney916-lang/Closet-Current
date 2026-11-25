@@ -137,9 +137,44 @@ async function addFromNormalChooser(source,name,category,subtype,color,secondOwn
  const before=await rowCount();
  assert.equal(before,category==='Tops'?0:1,'unreviewed model output silently saved');
  advance('explicit-owner-review-'+category);
- await page.locator('#reviewGrid .photo-result button:has-text("Adjust")').first().click();
- const editor=page.locator('dialog.photo-adjust');
- await editor.waitFor({state:'visible'});
+  // Verify the selected current photo and capture actual trusted click evidence.
+  const adjust=page.locator('#reviewGrid .photo-result button:has-text("Adjust")').first();
+  await page.waitForFunction(sha=>{
+   const item=batch[0],card=document.querySelector('#reviewGrid .photo-result');
+   return item?.sourceSHA256===sha&&card?.querySelector('img')?.getAttribute('src')===item.image;
+  },source.sha);
+  await adjust.evaluate(el=>el.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'}));
+  await page.evaluate(sha=>{
+   window.__p99AdjustReceipt={trusted:false,matched:false,sourceMatched:false,pending:null};
+   document.addEventListener('click',event=>{
+    const target=event.target?.closest?.('#reviewGrid .photo-result button');
+    const card=target?.closest('.photo-result'),item=batch[0];
+    window.__p99AdjustReceipt={
+     trusted:event.isTrusted,matched:target?.textContent==='Adjust',
+     sourceMatched:item?.sourceSHA256===sha&&card?.querySelector('img')?.getAttribute('src')===item.image,
+     pending:item?localPending.has(item.id):null
+    };
+   },{capture:true,once:true});
+  },source.sha);
+  const editor=page.locator('dialog.photo-adjust');
+  try{
+   await adjust.click();
+   await editor.waitFor({state:'visible'});
+   const click=await page.evaluate(()=>window.__p99AdjustReceipt);
+   assert.equal(click.trusted,true,'owner review requires a trusted click');
+   assert.equal(click.matched,true,'owner review must target Adjust');
+   assert.equal(click.sourceMatched,true,'owner review must target the exact original');
+  }catch(error){
+   const receipt=await page.evaluate(sha=>({
+    click:window.__p99AdjustReceipt,ownerReady:!!window.closetAuth?.user?.id,
+    firstSourceMatches:batch[0]?.sourceSHA256===sha,
+    pending:batch[0]?localPending.has(batch[0].id):null,
+    reviewCards:document.querySelectorAll('#reviewGrid .photo-result').length,
+    openDialogs:document.querySelectorAll('dialog[open]').length
+   }),source.sha).catch(()=>({unavailable:true}));
+   console.log('MAIN1054_REVIEW_DIAGNOSTIC',JSON.stringify({engine,width,category,...receipt}));
+   throw error;
+  }
  await editor.getByLabel('Item name').fill(name);
  if(audit){
   await editor.locator('details.optional-details summary').click();
