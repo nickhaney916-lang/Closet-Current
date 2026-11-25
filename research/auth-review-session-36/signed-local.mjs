@@ -34,6 +34,14 @@ async function account(marker){
  check(marker+' owner creates private JPEG',photo.ok,photo.status);
  const backup=await request(rpc,token,'POST',{p_expected_revision:0,p_document:document});
  check(marker+' owner creates backup',backup.ok&&json(backup)===1,backup.status);
+ if(four){
+  const next=await request(rpc,token,'POST',{p_expected_revision:1,p_document:document});
+  check(marker+' owner advances backup revision',next.ok&&json(next)===2,next.status);
+  const stale=await request(rpc,token,'POST',{p_expected_revision:1,p_document:{...document,items:[]}});
+  check(marker+' stale revision cannot replace backup',stale.ok&&json(stale)===null,stale.status);
+  const malformed=await request(rpc,token,'POST',{p_expected_revision:2,p_document:{...document,state:[]}});
+  check(marker+' malformed backup rejected atomically',!malformed.ok,malformed.status);
+ }
  return {id,token,refresh:session.refresh_token,email,password,document,path,jpeg,sha,marker};
 }
 const owners=await Promise.all((four?['A','B','C','D']:['A','B']).map(account));
@@ -44,7 +52,7 @@ async function own(x){
  const row=await request(table+'?owner_id=eq.'+x.id,x.token);
  const entry=json(row)[0];
  if(four) assert.ok(isDeepStrictEqual(entry?.document,x.document),'Signed owner document changed');
- check(x.marker+' owns unchanged original, outfit and backup',row.ok&&entry?.revision===1&&
+ check(x.marker+' owns unchanged original, outfit and backup',row.ok&&entry?.revision===(four?2:1)&&
   entry.document.state.outfits[0].id===x.document.state.outfits[0].id&&
   digest(Buffer.from(entry.document.items[0].original,'base64'))===x.sha,row.status);
  const image=await request(bucket+x.path,x.token);

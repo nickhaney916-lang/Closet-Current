@@ -26,7 +26,8 @@ jobs:
           test "$(git rev-parse HEAD)" = "$HEAD_SHA"
           test "$BASE_SHA" = fefe69cd04c57515433985e6141f7f9f0951f6ab
           git merge-base --is-ancestor "$BASE_SHA" HEAD
-          git diff --exit-code "$BASE_SHA" HEAD -- public supabase
+          git diff --exit-code "$BASE_SHA" HEAD -- public
+          test "$(git diff --name-only "$BASE_SHA" HEAD -- supabase)" = supabase/cloud-backup.sql
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -50,6 +51,11 @@ jobs:
           supabase --version
           supabase start > "$RUNNER_TEMP/closet-a20-start.log" 2>&1 || { echo 'Disposable Supabase startup failed'; exit 1; }
           supabase status -o env > "$RUNNER_TEMP/closet-a20.env"
+          {
+            printf 'BEGIN;\n'
+            git -C "$GITHUB_WORKSPACE" show fefe69cd04c57515433985e6141f7f9f0951f6ab:supabase/cloud-backup.sql
+            printf "SELECT 'accepted base: authenticated DELETE=' || has_table_privilege('authenticated','public.closet_backups','DELETE') || ', TRUNCATE=' || has_table_privilege('authenticated','public.closet_backups','TRUNCATE');\nROLLBACK;\n"
+          } | docker exec -i supabase_db_closet-a20 psql -U postgres -v ON_ERROR_STOP=1
           docker exec -i supabase_db_closet-a20 psql -U postgres -v ON_ERROR_STOP=1 < "$GITHUB_WORKSPACE/supabase/cloud-backup.sql"
           docker exec supabase_db_closet-a20 psql -U postgres -Atc 'show server_version'
           docker inspect --format '{{.Config.Image}}' supabase_auth_closet-a20 supabase_rest_closet-a20 supabase_storage_closet-a20
@@ -62,7 +68,7 @@ jobs:
                or not (select relrowsecurity from pg_class where oid='storage.objects'::regclass)
                or (select public from storage.buckets where id='closet-private')
                or has_table_privilege('anon','public.closet_backups','SELECT, INSERT, UPDATE, DELETE')
-               or has_table_privilege('authenticated','public.closet_backups','DELETE')
+               or has_table_privilege('authenticated','public.closet_backups','DELETE, TRUNCATE, REFERENCES, TRIGGER')
                or has_function_privilege('anon','public.save_closet_backup(bigint,jsonb)','EXECUTE')
                or not has_function_privilege('authenticated','public.save_closet_backup(bigint,jsonb)','EXECUTE')
                or (select prosecdef from pg_proc where oid='public.save_closet_backup(bigint,jsonb)'::regprocedure)
