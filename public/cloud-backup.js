@@ -302,7 +302,7 @@
   if(await hash(stored)!==path.split('/')[1].slice(0,-4))throw photoIntegrityError();
   assertActive();
  }
- const acknowledgedPhotoPaths=new Set();
+ const photoProgressLimit=4096,acknowledgedPhotoPaths=new Set();
  async function upload(photos,assertActive=()=>{},knownPaths=new Set()){for(const [path,image]of photos){
    assertActive();
    // An acknowledged object can be verified with a read instead of
@@ -329,7 +329,7 @@
    await verifyStoredPhoto(path,assertActive);
   }
   assertActive();
-  if(acknowledgedPhotoPaths.size>=4096)acknowledgedPhotoPaths.delete(acknowledgedPhotoPaths.values().next().value);
+  if(acknowledgedPhotoPaths.size>=photoProgressLimit)acknowledgedPhotoPaths.delete(acknowledgedPhotoPaths.values().next().value);
   acknowledgedPhotoPaths.add(path);
  }}
  async function getRemote(assertActive=()=>{},revisionOnly=false){
@@ -446,7 +446,10 @@
     assertActive();const prior=request.result||markerDefault();
     if(code===413&&expectedRevision!==null&&
        prior.localRevision!==expectedRevision)return;
-    store.put({...prior,capacityPause:isCapacityError(code)?code:null});
+    store.put({...prior,capacityPause:isCapacityError(code)?code:null,
+     // Keep only immutable object addresses in this owner's local marker.
+     // A restarted retry still downloads and hashes each matching object.
+     capacityPhotoPaths:isCapacityError(code)?[...acknowledgedPhotoPaths]:prior.capacityPhotoPaths});
     outcome='saved';
    }catch{try{tx.abort();}catch{}}};
   });
@@ -535,6 +538,13 @@
    // and the remote revision. Reading getAll() here clones every original
    // full-resolution JPEG merely because the tab received focus/online.
    let m=await callbacks.capture(()=>{assertActive();return marker();});assertActive();
+   if(Array.isArray(m.capacityPhotoPaths)){
+    for(const path of m.capacityPhotoPaths.slice(0,photoProgressLimit)){
+     if(typeof path==='string'&&path.startsWith(user+'/')&&/^[a-f0-9]{64}\.jpg$/.test(path.slice(user.length+1)))
+      acknowledgedPhotoPaths.add(path);
+     if(acknowledgedPhotoPaths.size>=photoProgressLimit)break;
+    }
+   }
    if(!retryPaused&&isRemotePhotoError(m.remotePhotoPause?.reason)){
     pausedRemotePhoto=m.remotePhotoPause;clearTimeout(timer);timer=null;
     status(remotePhotoText(pausedRemotePhoto.reason));return;
@@ -654,7 +664,7 @@
    // the local dirty revision under the durable owner-only integrity pause.
    if(!Number.isSafeInteger(revision)||revision<1)throw photoIntegrityError();
    // If another local save happened during upload, keep its durable pending flag.
-   assertActive();await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{try{assertActive();}catch{tx.abort();return;}const current=r.result||markerDefault();store.put({...current,baseVersion:revision,baseDocument:E.equal(document,encoded.document)?document:encoded.document,needsRestore:!E.equal(document,encoded.document),remotePhotoPause:null,dirty:current.localRevision!==m.localRevision});};});
+   assertActive();await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{try{assertActive();}catch{tx.abort();return;}const current=r.result||markerDefault();store.put({...current,baseVersion:revision,baseDocument:E.equal(document,encoded.document)?document:encoded.document,needsRestore:!E.equal(document,encoded.document),remotePhotoPause:null,capacityPhotoPaths:undefined,dirty:current.localRevision!==m.localRevision});};});
    assertActive();const current=await marker();assertActive();if(current.dirty){status('Saved on this device · cloud backup pending');schedule();}
    else if(!E.equal(document,encoded.document)){if(!await apply(document,revision,current.localRevision,assertActive))schedule();else status('Cloud backup up to date');}
    else status('Cloud backup up to date');retryDelay=2000;

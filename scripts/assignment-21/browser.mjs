@@ -258,7 +258,7 @@ async function exercise(browser,engine,width,total){
   const completed=await remote(account);
   assert.equal(completed.document.items.length,total);
   assert.ok(completed.revision>=2&&completed.revision<=3,'Unexpected publish count');
-  assert.ok(tallies.posts<=objects.size*2+2,'Unbounded original POST retries');
+  assert.ok(tallies.posts<=objects.size+2,'Acknowledged originals were retransmitted');
   const fullPosts=tallies.posts;
   const fullGets=tallies.gets;
   stage='incremental metadata-only edit';
