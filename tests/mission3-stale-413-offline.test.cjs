@@ -8,6 +8,7 @@ const {readFileSync}=require('node:fs');
 const vm=require('node:vm');
 const root=process.env.CLOUD_SOURCE_ROOT||'.';
 const old=process.env.EXPECT_BASELINE==='1';
+const acknowledgedPath='synthetic-owner/'+'a'.repeat(64)+'.jpg';
 const source=readFileSync(root+'/public/cloud-backup.js','utf8');
 const begin=source.indexOf('async function writeCapacityPause(');
 const end=source.indexOf('\n // Reject a stale in-flight cloud integrity fault',begin);
@@ -39,7 +40,7 @@ async function evaluate({code,localRevision=2,expectedRevision=1,existingPause=n
   await new Promise(resolve=>setImmediate(resolve));
  }
  const f=vm.runInNewContext(functionText+'\nwriteCapacityPause',{
-  transact,markerDefault:()=>({id:'cloud-sync',localRevision:0,dirty:false}),
+  transact,acknowledgedPhotoPaths:new Set([acknowledgedPath]),markerDefault:()=>({id:'cloud-sync',localRevision:0,dirty:false}),
   isCapacityError:value=>value===413||value===507
  });
  const outcome=await f(code,()=>{},expectedRevision);
@@ -64,6 +65,7 @@ test('old 413 from deleted photo must not pause newer owner revision',async()=>{
   assert.equal(x.marker.capacityPause,null);
   assert.equal(x.writes,0);
   assert.equal(x.outcome,'stale');
+  assert.equal(x.marker.capacityPhotoPaths,undefined);
  }
  assert.equal(x.marker.localRevision,2);
  assert.equal(x.marker.privateUnrelatedMarker,'keep');
@@ -72,13 +74,21 @@ test('current-revision owner 413 remains safely paused until deliberate retry',a
  const x=await evaluate({code:413,localRevision:2,expectedRevision:2});
  assert.equal(x.marker.capacityPause,413);
  assert.equal(x.writes,1);
- if(!old)assert.equal(x.outcome,'saved');
+ if(!old){
+  assert.equal(x.outcome,'saved');
+  if(functionText.includes('capacityPhotoPaths'))
+   assert.deepEqual(Array.from(x.marker.capacityPhotoPaths),[acknowledgedPath]);
+ }
 });
 test('HTTP 507 global cloud-full remains paused even across garment edits',async()=>{
  const x=await evaluate({code:507,localRevision:2,expectedRevision:1});
  assert.equal(x.marker.capacityPause,507);
  assert.equal(x.writes,1);
- if(!old)assert.equal(x.outcome,'saved');
+ if(!old){
+  assert.equal(x.outcome,'saved');
+  if(functionText.includes('capacityPhotoPaths'))
+   assert.deepEqual(Array.from(x.marker.capacityPhotoPaths),[acknowledgedPath]);
+ }
 });
 test('manual owner recovery clears capacity pause without changing other state',async()=>{
  const x=await evaluate({code:null,localRevision:2,

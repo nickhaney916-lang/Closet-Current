@@ -207,7 +207,7 @@
  // nested photograph reference targeting another owner's private bucket.
  // Also verify historical inline reviewed cutouts before they can be merged
  // into a newer owner backup without going through the restore decoder.
- async function assertCloudPhotoReferences(value,assertActive=()=>{}){
+ async function assertCloudPhotoReferences(value,assertActive=()=>{},paths){
   async function walk(x){
    assertActive();
    if(Array.isArray(x)){for(const entry of x)await walk(entry);return;}
@@ -220,6 +220,7 @@
        throw photoIntegrityError();
       if(key==='cutoutImage'&&x.cutoutSHA256!==digest)
        throw photoIntegrityError();
+      paths?.add(path);
      }else if(key==='cutoutImage'&&entry.startsWith('data:image/jpeg;base64,')){
       const bytes=imageBytes(entry),digest=await hash(bytes);
       assertActive();
@@ -294,7 +295,22 @@
    });
 
   });}
- async function upload(photos,assertActive=()=>{}){for(const [path,image]of photos){
+ async function verifyStoredPhoto(path,assertActive){
+  const existing=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive);
+  const stored=await readBoundedPrivateJPEG(existing,assertActive);
+  assertActive();
+  if(await hash(stored)!==path.split('/')[1].slice(0,-4))throw photoIntegrityError();
+  assertActive();
+ }
+ const photoProgressLimit=4096,acknowledgedPhotoPaths=new Set();
+ async function upload(photos,assertActive=()=>{},knownPaths=new Set()){for(const [path,image]of photos){
+   assertActive();
+   // An acknowledged object can be verified with a read instead of
+   // retransmitting the full original just to receive a duplicate response.
+   if(knownPaths.has(path)||acknowledgedPhotoPaths.has(path)){
+    try{await verifyStoredPhoto(path,assertActive);continue;}
+    catch(error){if(error?.status!==400&&error?.status!==404)throw error;}
+   }
    assertActive();
    // Re-decode one JPEG at a time. The upload manifest contains only
    // references to immutable data-URL strings already in the local snapshot.
@@ -310,8 +326,12 @@
    assertActive();
    try{await api('/storage/v1/object/'+BUCKET+'/'+path,{method:'POST',contentType:'image/jpeg',body:bytes},false,assertActive);}catch(e){if(e.status!==400&&e.status!==409)throw e;
    // An existing immutable object is safe only after verifying its contents.
-   const existing=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive),stored=await readBoundedPrivateJPEG(existing,assertActive);assertActive();if(await hash(stored)!==path.split('/')[1].slice(0,-4))throw photoIntegrityError();
-  }}}
+   await verifyStoredPhoto(path,assertActive);
+  }
+  assertActive();
+  if(acknowledgedPhotoPaths.size>=photoProgressLimit)acknowledgedPhotoPaths.delete(acknowledgedPhotoPaths.values().next().value);
+  acknowledgedPhotoPaths.add(path);
+ }}
  async function getRemote(assertActive=()=>{},revisionOnly=false){
   assertActive();
   // A normal cloud check needs only the revision, never the owner's entire
@@ -426,7 +446,10 @@
     assertActive();const prior=request.result||markerDefault();
     if(code===413&&expectedRevision!==null&&
        prior.localRevision!==expectedRevision)return;
-    store.put({...prior,capacityPause:isCapacityError(code)?code:null});
+    store.put({...prior,capacityPause:isCapacityError(code)?code:null,
+     // Keep only immutable object addresses in this owner's local marker.
+     // A restarted retry still downloads and hashes each matching object.
+     capacityPhotoPaths:isCapacityError(code)?[...acknowledgedPhotoPaths]:prior.capacityPhotoPaths});
     outcome='saved';
    }catch{try{tx.abort();}catch{}}};
   });
@@ -515,6 +538,13 @@
    // and the remote revision. Reading getAll() here clones every original
    // full-resolution JPEG merely because the tab received focus/online.
    let m=await callbacks.capture(()=>{assertActive();return marker();});assertActive();
+   if(Array.isArray(m.capacityPhotoPaths)){
+    for(const path of m.capacityPhotoPaths.slice(0,photoProgressLimit)){
+     if(typeof path==='string'&&path.startsWith(user+'/')&&/^[a-f0-9]{64}\.jpg$/.test(path.slice(user.length+1)))
+      acknowledgedPhotoPaths.add(path);
+     if(acknowledgedPhotoPaths.size>=photoProgressLimit)break;
+    }
+   }
    if(!retryPaused&&isRemotePhotoError(m.remotePhotoPause?.reason)){
     pausedRemotePhoto=m.remotePhotoPause;clearTimeout(timer);timer=null;
     status(remotePhotoText(pausedRemotePhoto.reason));return;
@@ -618,7 +648,12 @@
    callbacks.assertCompleteWardrobe?.(document.items,Object.values(document.state),user);
    await assertCloudPhotoReferences(document,assertActive);
    if(!await isCurrentDirtySnapshot(m,assertActive)){staleSnapshotPending();return;}
-   await upload(encoded.photos,assertActive);assertActive();
+   const knownPaths=new Set();
+   if(m.baseDocument&&remote?.revision===m.baseVersion){
+    try{await assertCloudPhotoReferences(m.baseDocument,assertActive,knownPaths);}
+    catch{assertActive();knownPaths.clear();}
+   }
+   await upload(encoded.photos,assertActive,knownPaths);assertActive();
    // In-flight immutable JPEG POST might leave unreferenced owner-only bytes,
    // but never publish an outdated cloud document after a local delete/edit.
    if(!await isCurrentDirtySnapshot(m,assertActive)){staleSnapshotPending();return;}
@@ -629,7 +664,7 @@
    // the local dirty revision under the durable owner-only integrity pause.
    if(!Number.isSafeInteger(revision)||revision<1)throw photoIntegrityError();
    // If another local save happened during upload, keep its durable pending flag.
-   assertActive();await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{try{assertActive();}catch{tx.abort();return;}const current=r.result||markerDefault();store.put({...current,baseVersion:revision,baseDocument:E.equal(document,encoded.document)?document:encoded.document,needsRestore:!E.equal(document,encoded.document),remotePhotoPause:null,dirty:current.localRevision!==m.localRevision});};});
+   assertActive();await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{try{assertActive();}catch{tx.abort();return;}const current=r.result||markerDefault();store.put({...current,baseVersion:revision,baseDocument:E.equal(document,encoded.document)?document:encoded.document,needsRestore:!E.equal(document,encoded.document),remotePhotoPause:null,capacityPhotoPaths:undefined,dirty:current.localRevision!==m.localRevision});};});
    assertActive();const current=await marker();assertActive();if(current.dirty){status('Saved on this device · cloud backup pending');schedule();}
    else if(!E.equal(document,encoded.document)){if(!await apply(document,revision,current.localRevision,assertActive))schedule();else status('Cloud backup up to date');}
    else status('Cloud backup up to date');retryDelay=2000;
@@ -703,7 +738,7 @@
  }
  window.closetCloud={
   ownerReviewHold145:reviewHold145,
-  async start(database,settings){generation++;enabled=false;pausedCapacity=null;pausedDeviceStorage=false;pausedIntegrity=false;pausedLocalPhoto=null;pausedRemotePhoto=null;clearTimeout(timer);timer=null;if(stopForReview145())return {paused:true,reason:'owner-review-required'};db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&db.name==='closet-current-user-'+user&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
+  async start(database,settings){generation++;enabled=false;acknowledgedPhotoPaths.clear();pausedCapacity=null;pausedDeviceStorage=false;pausedIntegrity=false;pausedLocalPhoto=null;pausedRemotePhoto=null;clearTimeout(timer);timer=null;if(stopForReview145())return {paused:true,reason:'owner-review-required'};db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&db.name==='closet-current-user-'+user&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
    pausedDeviceStorage=readDevicePause(user);
    navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync({retryPaused:true});}const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.onclick=()=>sync({keepBoth:true,retryPaused:true});if(pausedDeviceStorage){status(deviceStorageText);return;}await sync();
   },
@@ -713,5 +748,5 @@
  window.addEventListener('pageshow',event=>{if(stopForReview145())return;if(event.persisted&&db&&window.closetAuth?.user?.id===user){enabled=true;sync();}});
  window.addEventListener('online',()=>sync());window.addEventListener('focus',()=>sync());setInterval(()=>sync(),60000);
  window.addEventListener('pagehide',()=>{generation++;clearTimeout(timer);enabled=false;});
- window.addEventListener('closet:session-locked',()=>{generation++;clearTimeout(timer);timer=null;enabled=false;});
+ window.addEventListener('closet:session-locked',()=>{acknowledgedPhotoPaths.clear();generation++;clearTimeout(timer);timer=null;enabled=false;});
 })();
