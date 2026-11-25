@@ -71,9 +71,12 @@ jobs:
           end $$;
           SQL
       - name: Verify four signed owners and all ordered identity pairs over local HTTP
+        if: always() && !cancelled()
         env:
           CLOSET_FOUR_OWNER: '1'
-        run: SUPABASE_TEST_ENV="$RUNNER_TEMP/closet-a20.env" node research/auth-review-session-36/signed-local.mjs
+        run: |
+          test -f "$RUNNER_TEMP/closet-a20.env"
+          SUPABASE_TEST_ENV="$RUNNER_TEMP/closet-a20.env" node research/auth-review-session-36/signed-local.mjs
       - name: Verify ordinary app backup, clean-context restore and account switching in both browsers
         if: always() && !cancelled()
         run: |

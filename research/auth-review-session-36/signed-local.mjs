@@ -4,6 +4,7 @@ import {randomUUID,randomBytes,createHash} from 'node:crypto';
 import {mkdir,writeFile} from 'node:fs/promises';
 import sharp from 'sharp';
 import {setTimeout as delay} from 'node:timers/promises';
+import {isDeepStrictEqual} from 'node:util';
 
 import {request,json} from './local-http.mjs';
 
@@ -22,7 +23,7 @@ async function account(marker){
  const login=await request('/auth/v1/token?grant_type=password',null,'POST',{email,password});
  check(marker+' password login',login.ok,login.status);
  const session=json(login),id=session.user.id,token=session.access_token;
- assert.match(token,/^[\w-]+\.[\w-]+\.[\w-]+$/);
+ assert.ok(typeof token==='string'&&/^[\w-]+\.[\w-]+\.[\w-]+$/.test(token),'Expected a signed credential');
  const user=await request('/auth/v1/user',token);
  check(marker+' server-authenticated identity',user.ok&&json(user).id===id,user.status);
  const jpeg=await fixture(marker),sha=digest(jpeg);
@@ -42,7 +43,7 @@ assert.equal(new Set(owners.map(x=>x.sha)).size,owners.length);
 async function own(x){
  const row=await request(table+'?owner_id=eq.'+x.id,x.token);
  const entry=json(row)[0];
- if(four) assert.deepEqual(entry?.document,x.document,'Signed owner document changed');
+ if(four) assert.ok(isDeepStrictEqual(entry?.document,x.document),'Signed owner document changed');
  check(x.marker+' owns unchanged original, outfit and backup',row.ok&&entry?.revision===1&&
   entry.document.state.outfits[0].id===x.document.state.outfits[0].id&&
   digest(Buffer.from(entry.document.items[0].original,'base64'))===x.sha,row.status);
