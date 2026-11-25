@@ -6,7 +6,9 @@ create table public.closet_backups (
  updated_at timestamptz not null default now()
 );
 alter table public.closet_backups enable row level security;
-revoke all on public.closet_backups from public, anon;
+-- Supabase can grant authenticated broad default privileges when creating
+-- public tables. Reset them before granting the invoker RPC's requirements.
+revoke all on public.closet_backups from public, anon, authenticated;
 grant select, insert, update on public.closet_backups to authenticated;
 create policy closet_backup_owner on public.closet_backups for all to authenticated
  using ((select auth.uid()) = owner_id) with check ((select auth.uid()) = owner_id);
