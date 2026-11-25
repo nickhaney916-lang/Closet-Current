@@ -28,7 +28,7 @@ jobs:
         run: |
           set -eu
           test "$(git rev-parse HEAD)" = "$HEAD_SHA"
-          test "$BASE_SHA" = 5f9eb92dc45185889c5bf8f7f7ad770a15f78656
+          test "$BASE_SHA" = 27d9049abf56ca27dfb1e2edc77974eadccbd500
           git merge-base --is-ancestor "$BASE_SHA" HEAD
           git diff --exit-code "$BASE_SHA" HEAD -- supabase
           test "$(git diff --name-only "$BASE_SHA" HEAD -- public)" = public/cloud-backup.js

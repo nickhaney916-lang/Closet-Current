@@ -65,6 +65,10 @@ async function fixture({hold='storage'}={}){
   if(u.pathname.startsWith('/storage/v1/object/closet-private/')){
    assert.equal(u.pathname.slice('/storage/v1/object/closet-private/'.length),
     owner+'/'+sha+'.jpg');
+   if(method==='GET'){
+    assert.ok(uploads.length,'Cannot recheck an object before its first upload');
+    return {ok:true,status:200,arrayBuffer:async()=>Uint8Array.from(uploads[0]).buffer};
+   }
    assert.equal(method,'POST');
    const body=Buffer.from(opts.body);
    assert.equal(createHash('sha256').update(body).digest('hex'),sha);
@@ -145,6 +149,11 @@ async function runRace(hold,change){
    assert.deepEqual(await f.rows,[]);
   }else{
    assert.equal(last.items[0].color,'Teal');
+   if(!baseline&&hold==='storage'){
+    assert.equal(f.uploads.length,1,'Retry must not retransmit the acknowledged original');
+    assert.ok(f.requests.some(x=>x.method==='GET'&&x.path.startsWith('/storage/')),
+     'Retry checks the stored original before publishing');
+   }
    assert.equal((await f.rows)[0].color,'Teal');
   }
   assert.equal((await f.marker()).dirty,false);

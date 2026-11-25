@@ -309,7 +309,7 @@
    // retransmitting the full original just to receive a duplicate response.
    if(knownPaths.has(path)||acknowledgedPhotoPaths.has(path)){
     try{await verifyStoredPhoto(path,assertActive);continue;}
-    catch(error){if(error?.status!==404)throw error;}
+    catch(error){if(error?.status!==400&&error?.status!==404)throw error;}
    }
    assertActive();
    // Re-decode one JPEG at a time. The upload manifest contains only
@@ -639,8 +639,10 @@
    await assertCloudPhotoReferences(document,assertActive);
    if(!await isCurrentDirtySnapshot(m,assertActive)){staleSnapshotPending();return;}
    const knownPaths=new Set();
-   if(m.baseDocument&&remote?.revision===m.baseVersion)
-    await assertCloudPhotoReferences(m.baseDocument,assertActive,knownPaths);
+   if(m.baseDocument&&remote?.revision===m.baseVersion){
+    try{await assertCloudPhotoReferences(m.baseDocument,assertActive,knownPaths);}
+    catch{assertActive();knownPaths.clear();}
+   }
    await upload(encoded.photos,assertActive,knownPaths);assertActive();
    // In-flight immutable JPEG POST might leave unreferenced owner-only bytes,
    // but never publish an outdated cloud document after a local delete/edit.

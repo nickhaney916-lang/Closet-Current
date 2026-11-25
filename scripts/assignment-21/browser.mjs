@@ -212,6 +212,10 @@ async function exercise(browser,engine,width,total){
      assert.ok(upstream.ok(),'RPC failed before the controlled acknowledgment loss');
      return route.abort('connectionreset');
     }
+    if(fault.kind==='browser-offline'){
+     await context.setOffline(true);
+     return route.abort('internetdisconnected');
+    }
     if(fault.kind==='pre-commit')return route.abort('connectionreset');
     return route.fulfill({status:fault.kind,contentType:'application/json',body:'{}',
      headers:{'access-control-allow-origin':origin}});
@@ -229,7 +233,7 @@ async function exercise(browser,engine,width,total){
   assert.ok(seed.revision===1&&seed.document.items.length===1,'Last-good seed not published');
   stage='full backup with interruption';
   await writeWardrobe(page,account,records,outfits);
-  fault=total===25?{kind:503,afterPosts:tallies.posts+2}:total===100?{kind:413,afterPosts:tallies.posts+50}:
+  fault=total===25?{kind:width===390?'browser-offline':503,afterPosts:tallies.posts+2}:total===100?{kind:413,afterPosts:tallies.posts+50}:
    total===250?{kind:507,afterPosts:tallies.posts+240}:{kind:width===390?'lost-reply':'pre-commit'};
   const starting=performance.now();
   await page.reload();
@@ -246,6 +250,7 @@ async function exercise(browser,engine,width,total){
   if(fault.kind==='lost-reply')assert.ok(fromFault.revision===2&&fromFault.document.items.length===total);
   else assert.ok(fromFault.revision===1&&fromFault.document.items.length===1,'Incomplete transfer replaced last-good backup');
   stage='retry and committed verification';
+  if(fault.kind==='browser-offline')await context.setOffline(false);
   await page.locator('.account-menu summary').tap();
   await page.locator('#syncCloset').tap();
   await waitBackup(page);
@@ -264,8 +269,11 @@ async function exercise(browser,engine,width,total){
   assert.equal(edited.revision,completed.revision+1);
   assert.equal(tallies.posts,fullPosts,'Metadata edit retransmitted original JPEGs');
   stage='clean repeat sync';
+  const checked=page.waitForResponse(response=>response.url().startsWith(endpoint.origin+table+'?')&&
+   new URL(response.url()).searchParams.get('select')==='revision'&&response.ok());
   await page.locator('.account-menu summary').tap();
   await page.locator('#syncCloset').tap();
+  await checked;
   await waitBackup(page);
   assert.equal((await remote(account)).revision,edited.revision);
   assert.equal(tallies.posts,fullPosts);
