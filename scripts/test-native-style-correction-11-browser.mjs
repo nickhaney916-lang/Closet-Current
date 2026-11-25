@@ -31,9 +31,14 @@ const mime={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html'
  '.css':'text/css','.json':'application/json','.jpg':'image/jpeg',
  '.png':'image/png','.glb':'model/gltf-binary','.svg':'image/svg+xml',
  '.woff2':'font/woff2','.bin':'application/octet-stream'};
+let unmanagedTrendProbes=0;
 const server=createServer(async(req,res)=>{
  try{
   const path=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+  if(req.method==='GET'&&path==='/public/maintenance/trends'){
+   unmanagedTrendProbes++;
+   res.writeHead(204,{'cache-control':'no-store'});res.end();return;
+  }
   if(path.includes('\\')||path.includes('\0')||path.split('/').includes('..')||
    !/^\/(public\/|research\/|donor\/|benchmark\/|node_modules\/)/.test(path))
    throw Error('unapproved research path');
@@ -73,7 +78,7 @@ function fixture(owner){
  });
  return {
   items:[
-   item('donor-shirt','Tops','T-shirt','commons-0003','Black'),
+   {...item('donor-shirt','Tops','T-shirt','commons-0003','Black'),singleGarmentVerified:false},
    item('dress','Dresses','Casual dress','commons-0053','Black'),
    item('pants-blue','Bottoms','Jeans','commons-0021','Blue'),
    item('pants-dark','Bottoms','Jeans','commons-0023','Blue'),
@@ -177,7 +182,14 @@ async function importAndConfirmNewRed(page,owner,width,engine){
  await editor.locator('select[aria-label="Main category"]').selectOption('Tops');
  await editor.locator('select[aria-label="Item type"]').selectOption('T-shirt');
  await editor.locator('input[aria-label="Color"]').fill('Red');
- await editor.locator('button.primary').filter({hasText:'Save changes'}).click();
+ await editor.getByLabel('I verified the category, clothing type and color').check();
+ await editor.getByLabel('I confirmed this photo shows one garment').check();
+ const prepare=editor.getByRole('button',{name:'Prepare smaller display photo'});
+ if(await prepare.count()){
+  await prepare.click();
+  await editor.locator('input[type=checkbox]').last().check();
+ }
+ await editor.getByRole('button',{name:'Save changes',exact:true}).click();
  await page.waitForFunction(id=>items.some(row=>row.id===id)&&
   !batch.some(row=>row.id===id),id,{timeout:30000});
  const ownerStored=(await readItems(page)).find(x=>x.id===id);
@@ -188,24 +200,31 @@ async function importAndConfirmNewRed(page,owner,width,engine){
  assert.equal(ownerStored.category,'Tops');
  assert.equal(ownerStored.itemType,'T-shirt');
  assert.equal(ownerStored.color,'Red');
- // The real camera/import pipeline deliberately records this image as
- // singleGarmentVerified=false. A corrected clothing category does not
- // magically prove this was a one-garment photograph.
- assert.equal(ownerStored.singleGarmentVerified,false);
+ // Current canonical save requires explicit source confirmation. The owner
+ // confirmed this single photograph; that is not inferred segmentation or fitted 3D.
+ assert.equal(ownerStored.singleGarmentVerified,true);
+ assert.equal(ownerStored.ownerReviewed,true);
+ // Preserve the older independent session-only acknowledgment test using
+ // a distinct, existing legacy fixture with a verified JPEG but no one-item receipt.
+ const legacyId=owner+'-donor-shirt';
+ const legacyBefore=(await readItems(page)).find(x=>x.id===legacyId);
+ assert.equal(legacyBefore.singleGarmentVerified,false);
  await page.evaluate(()=>switchView('stylist'));
  await page.waitForFunction(id=>[...document.querySelectorAll(
   '#styleOwned03Pending button[data-photo-item-id]')]
-  .some(b=>b.dataset.photoItemId===id),id,{timeout:30000});
- assert.equal(await page.locator('#styleOwned03Item option[value="'+id+'"]').count(),0,
+  .some(b=>b.dataset.photoItemId===id),legacyId,{timeout:30000});
+ assert.equal(await page.locator('#styleOwned03Item option[value="'+legacyId+'"]').count(),0,
   'Unreviewed original must not be silently admitted');
  await capture(page,width,engine,'00-confirm-one-original-garment');
- const button=page.locator('#styleOwned03Pending button[data-photo-item-id]')
-  .filter({hasText:'Yes, this photo shows one clothing item'}).first();
+ const button=page.locator('#styleOwned03Pending button[data-photo-item-id="'+legacyId+'"]')
+  .filter({hasText:'Yes, this photo shows one clothing item'});
  await button.click();
  await page.waitForFunction(id=>[...document.querySelectorAll('#styleOwned03Item option')]
-  .some(x=>x.value===id),id,{timeout:30000});
- assert.equal((await readItems(page)).find(x=>x.id===id).singleGarmentVerified,false,
+  .some(x=>x.value===id),legacyId,{timeout:30000});
+ assert.deepEqual((await readItems(page)).find(x=>x.id===legacyId),legacyBefore,
   'One-item photo acknowledgment must be session-only, not a fabricated source/3D approval');
+ await page.waitForFunction(id=>[...document.querySelectorAll('#styleOwned03Item option')]
+  .some(x=>x.value===id),id,{timeout:30000});
  return id;
 }
 
@@ -417,7 +436,7 @@ try{
     const value=message.text().slice(0,350);
     if(/^Failed to load resource: net::ERR_(FAILED|ABORTED)$/.test(value))
      results.expectedOfflineConsole.push({engine,width,text:value});
-    else results.consoleErrors.push({engine,width,text:value});
+    else results.consoleErrors.push({engine,width,text:value,resourcePath:message.location().url.startsWith(origin+'/')?new URL(message.location().url).pathname:'nonlocal-or-unknown'});
    });
    await page.goto(origin+'/public/index.html?'+flags,{waitUntil:'domcontentloaded'});
    await prepare(page,ownerA);
@@ -469,6 +488,8 @@ try{
  assert.ok(results.expectedOfflineConsole.every(row=>
   results.blockedPublicAssets.some(x=>x.engine===row.engine&&x.width===row.width)),
   'Offline ERR_FAILED must have a matching blocked public GET attempt');
+ assert.ok(unmanagedTrendProbes>=6,'Each viewport must probe the absent managed catalog');
+ results.unmanagedTrendProbes=unmanagedTrendProbes;
  assert.deepEqual(results.consoleErrors,[]);
  assert.equal(results.cases.every(x=>x.threeRealOriginalOwnedLooks&&
   x.actualInputAndHumanCorrection&&x.ownerBPrivate&&x.photosUnchanged),true);
