@@ -15,6 +15,15 @@ function refreshStylistFocusItems(){
 }
 closetReady.then(refreshStylistFocusItems).catch(()=>{});
 window.addEventListener('closet:style-owned-inventory-committed',refreshStylistFocusItems);
+function invalidateStylistAfterWardrobeEdit(){
+ const button=$('createCollectionOutfits');
+ const hadRequest=button.disabled||styledCollectionResults.length>0;
+ styledCollectionRequestSerial++;
+ styledCollectionResults=[];
+ refreshStylistFocusItems();
+ button.disabled=false;
+ if(hadRequest)$('stylistStatus').textContent='Your closet changed. Create outfits again to use your updated clothing.';
+}
 window.addEventListener('closet:session-locked',()=>{
  // A previous owner's trend fetch may resolve after sign-out. Revoke its UI lease.
  styledCollectionRequestSerial++;

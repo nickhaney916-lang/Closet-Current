@@ -1099,7 +1099,10 @@ function adjustPhoto(item){
    editorSession.assertCurrent();
    items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);
    sessionCapturedIds.delete(item.id);failedDraftCaptures.delete(item.id);
-   if(expectedSavedRow)await refreshOutfitsAfterGarmentDeletion(editorSession.assertCurrent);
+   if(expectedSavedRow){
+    if(typeof invalidateStylistAfterWardrobeEdit==='function')invalidateStylistAfterWardrobeEdit();
+    await refreshOutfitsAfterGarmentDeletion(editorSession.assertCurrent);
+   }
    editorSession.assertCurrent();dialog.close();render();
   }catch(error){if(!editorSession.current())return;
    message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?
@@ -1557,7 +1560,17 @@ function render(){
   await queued(()=>{assertEditor();return commitOwnerCorrection10(updated,before,null);});
   assertEditor();await nativeIndex07Refresh();assertEditor();
  }else{assertEditor();await saveEditedGarment(updated,expectedSavedRow);assertEditor();}
- assertEditor();Object.assign(item,updated);dialog.close();render();scheduleMemoryReview();
+ assertEditor();
+ const outfitNeedsReview=typeof currentBoard!=='undefined'&&typeof savedOutfitBoards!=='undefined'&&
+  [currentBoard,...savedOutfitBoards].some(board=>outfitSlots.some(slot=>
+   board?.slots?.[slot.id]===item.id&&(!slotAllows(slot,updated)||
+    (slot.id==='top'&&item.category!=='Dresses'&&updated.category==='Dresses'&&
+     outfitSlots.some(other=>(other.id==='bottom'||other.level)&&board.slots[other.id])))));
+ Object.assign(item,updated);
+ if(typeof invalidateStylistAfterWardrobeEdit==='function')invalidateStylistAfterWardrobeEdit();
+ dialog.close();render();
+ if(outfitNeedsReview)message('Changes saved. Review outfits using this piece because its placement may have changed.');
+ scheduleMemoryReview();
  }catch(error){
   // A revoked modal may be closed by logout: never show its old error on a new owner's screen.
   try{assertEditor();}catch{return;}
@@ -1585,6 +1598,7 @@ function render(){
  // This card belongs to one signed owner/session. The native delete CAS
  // protects the durable row; ALSO fence its asynchronous success/error UI
  // finalizers so a previous account cannot remove or warn in the next UI.
+ if(del.disabled)return;
  let lease;
  try{
   lease=ownerWardrobeMutationLease();
@@ -1596,12 +1610,14 @@ function render(){
   // Confirm only the exact saved row originally displayed to this owner.
   const expected=structuredClone(item);
   if(!confirm('Delete this closet piece? It will also be removed from saved outfits and the current outfit draft. Other pieces and outfit names will be kept.'))return;
+  del.disabled=true;
   assertCard();
   await removeItem(item.id,expected);
   assertCard();
   // Preserve the original same-owner ID semantics: discard any redundant
   // visible copies of the one durable row whose ID was CAS-deleted.
   items=items.filter(x=>x.id!==item.id);
+  if(typeof invalidateStylistAfterWardrobeEdit==='function')invalidateStylistAfterWardrobeEdit();
   await refreshOutfitsAfterGarmentDeletion(lease.assertLease);
   lease.assertLease();render();
  }catch(error){
@@ -1611,7 +1627,9 @@ function render(){
   if(!lease)return;
   message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?
    'This clothing piece changed in another tab. Reload My Closet before deleting it.':
-   'Could not delete the piece.');
+   'Could not delete the piece. Try Delete again.');
+ }finally{
+  if(del.isConnected)del.disabled=false;
  }
 };if(typeof closetWearButton==='function')actions.append(closetWearButton(item));if(new URLSearchParams(location.search).get('styleOwned03')==='research'){
  const reviewedStored123=typeof reviewedCloset123Active!=='undefined'&&
