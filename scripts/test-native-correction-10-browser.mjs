@@ -26,9 +26,14 @@ const types={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html
  '.json':'application/json','.css':'text/css','.glb':'model/gltf-binary',
  '.jpg':'image/jpeg','.png':'image/png','.bin':'application/octet-stream',
  '.svg':'image/svg+xml','.woff2':'font/woff2'};
+let unmanagedTrendProbes=0;
 const server=createServer(async(req,res)=>{
  try{
   const path=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+  if(req.method==='GET'&&path==='/public/maintenance/trends'){
+   unmanagedTrendProbes++;
+   res.writeHead(204,{'cache-control':'no-store'});res.end();return;
+  }
   if(path.includes('\\')||path.includes('\0')||path.split('/').includes('..')||
     !/^\/(public\/|research\/|donor\/|benchmark\/|node_modules\/)/.test(path))
    throw Error('Unsafe test path');
@@ -250,12 +255,21 @@ try{
   await editor.locator('select[aria-label="Main category"]').selectOption('Tops');
   await editor.locator('select[aria-label="Item type"]').selectOption('T-shirt');
   await editor.locator('input[aria-label="Color"]').fill('Red');
-  await editor.locator('button.primary').filter({hasText:'Save changes'}).click();
+  await editor.getByLabel('I verified the category, clothing type and color').check();
+  await editor.getByLabel('I confirmed this photo shows one garment').check();
+  const prepare=editor.getByRole('button',{name:'Prepare smaller display photo'});
+  if(await prepare.count()){
+   await prepare.click();
+   await editor.locator('input[type=checkbox]').last().check();
+  }
+  await editor.getByRole('button',{name:'Save changes',exact:true}).click();
   await page.waitForFunction(id=>items.some(x=>x.id===id)&&
    !batch.some(x=>x.id===id)&&
    window.closetIndex02?.state().total===6,newId,{timeout:30000});
   const newStored=(await readItems(page)).find(x=>x.id===newId);
   assert.ok(newStored&&newStored.ownerId==='native05-A');
+  assert.equal(newStored.ownerReviewed,true);
+  assert.equal(newStored.singleGarmentVerified,true);
   assert.equal(newStored.category,'Tops');
   assert.equal(newStored.itemType,'T-shirt');
   assert.equal(newStored.color,'Red');
@@ -579,6 +593,7 @@ try{
   await browser.close();browser=null;
  }
  assert.equal(crashes.length,0,'No real WebGL viewport may crash');
+ assert.ok(unmanagedTrendProbes>=3,'Each viewport must probe the absent managed catalog');
  assert.equal(cases.length,3);assert.equal(screens.length,42);
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
