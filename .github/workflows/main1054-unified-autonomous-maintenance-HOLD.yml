@@ -85,14 +85,15 @@ jobs:
           test "$(git rev-parse HEAD:scripts/install-parallel90-viewer.mjs)" = 6768a6cb58224f403254aeda6aa80d2e720d6375
           test "$(git rev-parse HEAD:scripts/check-parallel90-interactions.mjs)" = b54c34e4c5743ba6fc2e9161ce3acf7c60886bee
           git merge-base --is-ancestor 84568b11e31228c3d1adb934eee8363cca169e48 HEAD
-          git diff --exit-code 84568b11e31228c3d1adb934eee8363cca169e48 HEAD -- . ':(exclude)scripts/test-style-owned-live-03-browser.mjs' ':(exclude).github/workflows/main1054-unified-autonomous-maintenance-HOLD.yml'
+          git diff --exit-code 84568b11e31228c3d1adb934eee8363cca169e48 HEAD -- . ':(exclude)scripts/test-style-owned-live-03-browser.mjs' ':(exclude).github/workflows/main1054-unified-autonomous-maintenance-HOLD.yml' ':(exclude)scripts/test-capture-proof-01-browser.mjs'
           git merge-base --is-ancestor fefe69cd04c57515433985e6141f7f9f0951f6ab HEAD
           git diff --exit-code fefe69cd04c57515433985e6141f7f9f0951f6ab HEAD -- . ':(exclude).github/workflows/main1054-unified-autonomous-maintenance-HOLD.yml' ':(exclude)scripts/test-capture-proof-01-browser.mjs' ':(exclude)scripts/test-native-consumer-board-04-browser.mjs' ':(exclude)scripts/p1671-native-outfit-search.cjs' ':(exclude)scripts/test-style-owned-live-03-browser.mjs'
           test "$(git rev-parse HEAD:.github/workflows/capture-proof-01-no-deploy.yml)" = 1aa47f424b137bf697268bf49525152bcb15fce1
           test "$(git rev-parse HEAD:.github/workflows/native-consumer-board-04-no-deploy.yml)" = 0a889151a82ebb41f8ff7e9d4f9e68a1cfa807c0
           test "$(git rev-parse HEAD:.github/workflows/style-owned-live-03-no-deploy.yml)" = 467f918a960a034dcae72f0209397b43e2bad8c2
           test "$(git rev-parse 7f30a37112b4828d8b63dd737a7748eb895b417d:scripts/test-capture-proof-01-browser.mjs)" = 00b57e5a65fe2073e409b1423b52724597eddaff
-          test "$(git rev-parse HEAD:scripts/test-capture-proof-01-browser.mjs)" = 4d65b5c2fc33cfca8d148f0356ef6ab53c59a393
+          test "$(git rev-parse 25958c207f0772137e21f77f70f919996063c235:scripts/test-capture-proof-01-browser.mjs)" = 4d65b5c2fc33cfca8d148f0356ef6ab53c59a393
+          test "$(git rev-parse HEAD:scripts/test-capture-proof-01-browser.mjs)" = 08058ab1f19d4d3e8aaeedb724440d0f9595c9c2
           test "$(git rev-parse 7f30a37112b4828d8b63dd737a7748eb895b417d:scripts/test-native-consumer-board-04-browser.mjs)" = 5ebbe33e8fe79121511a6c911826a7a67925b953
           test "$(git rev-parse HEAD:scripts/test-native-consumer-board-04-browser.mjs)" = f55d303acd7cc7218aa84796b402cf239c0fd53e
           test "$(git rev-parse HEAD:scripts/audit-native-consumer-board-04.mjs)" = cfbcb88c5dc748d74bcffcb86142324b18ed5ddb
@@ -102,6 +103,14 @@ jobs:
           git log -1 --format='commit %H tree %T'
       - name: Install pinned dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Preflight syntax of all changed acceptance harnesses
+        run: |
+          node --check scripts/test-capture-proof-01-browser.mjs
+          node --check scripts/test-native-consumer-board-04-browser.mjs
+          node --check scripts/p1671-native-outfit-search.cjs
+          node --check scripts/test-style-owned-live-03-browser.mjs
+          node --check scripts/p1669-native-connectivity.cjs
+          node --check scripts/test-mission3-offline-auth-recovery-browser.mjs
       - run: node scripts/build.mjs
       - if: matrix.lane == 'stylist-chromium' || matrix.lane == 'stylist-webkit'
         name: Ordinary Stylist-to-wear journey with trusted click diagnostics
