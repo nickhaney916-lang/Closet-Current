@@ -1,0 +1,336 @@
+name: MAIN1054 unified wardrobe mutation and source-to-3D HOLD
+on:
+  pull_request:
+    branches: [research/main1054-unified-retrieval-connectivity-3d-HOLD]
+permissions:
+  contents: read
+jobs:
+  native:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'research/main1054-unified-wardrobe-mutation-HOLD'
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [regression, restore-both-engines, chromium-source-mobile, webkit-native, stylist-chromium, stylist-webkit, ordinary-chromium, ordinary-webkit, auth, mutation-chromium, mutation-webkit]
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Immutable accepted unified parent plus exact accepted wardrobe mutation donor
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          git merge-base --is-ancestor 80262e5a900cae4302db84881e2929ffac6c681e HEAD
+          test "$(git diff --name-only 80262e5a900cae4302db84881e2929ffac6c681e HEAD | wc -l)" -eq 4
+          git diff --exit-code 80262e5a900cae4302db84881e2929ffac6c681e HEAD -- . ':(exclude).github/workflows/main1054-unified-wardrobe-mutation-HOLD.yml' ':(exclude)public/app.js' ':(exclude)public/closet-stylist.js' ':(exclude)scripts/test-assignment-14-browser.mjs'
+          test "$(git rev-parse 80262e5a900cae4302db84881e2929ffac6c681e:public/app.js)" = c37bcd9373b1789a1e5470a5729c31c189211784
+          test "$(git rev-parse 80262e5a900cae4302db84881e2929ffac6c681e:public/closet-stylist.js)" = 054debba61353a49242c652ca9092dbad49000d3
+          test "$(git rev-parse b82eca10d9dbb66b89fad47ecc83491efb35880e:public/app.js)" = 273b773f8342878019b39d23f710f17d8d9512ed
+          test "$(git rev-parse b82eca10d9dbb66b89fad47ecc83491efb35880e:public/closet-stylist.js)" = 5a61f11f5e58cc48f8d4e8e52dcf0a5cb0e2cc51
+          test "$(git rev-parse HEAD:scripts/test-assignment-14-browser.mjs)" = 3698083d5790ab58a7de217f085d7a59b18b928a
+          test "$(git rev-parse HEAD:.github/workflows/main1054-unified-native-3d-acceptance-HOLD.yml)" = 45e381d3b6b9c59b6d0969c803da47cf0d0d665a
+          test "$(git rev-parse HEAD:scripts/test-native-mobile-09-browser.mjs)" = 7ffd664455df72ec8ee1384690540fac1d2b9597
+          test "$(git rev-parse HEAD:scripts/test-native-index-live-07-browser.mjs)" = 807377c7cb1bd46b579a91447ad5d56a08dff8c5
+          test "$(git rev-parse HEAD:scripts/test-native-photo-readiness-08-browser.mjs)" = 6a0552067224522fbea9452a15c8401d69e08c5a
+          test "$(git rev-parse HEAD:scripts/main1054-stylist-wear-journey.cjs)" = 3c8327a3f7470c2b02265d622ccf62411d17b398
+          test "$(git rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 3a4c15101e3450db626478852c4b722fa3e9905b
+          test "$(git rev-parse HEAD:public/app.js)" = 273b773f8342878019b39d23f710f17d8d9512ed
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = c29c3133fe6a20c2f57011726db0855fd4b1be6e
+          test "$(git rev-parse HEAD:public/closet-stylist.js)" = 5a61f11f5e58cc48f8d4e8e52dcf0a5cb0e2cc51
+          test "$(git rev-parse HEAD:public/saved-outfit-search.js)" = adb866e6d02aa9ce7c50cd3d12c903ecd87ee260
+          test "$(git rev-parse HEAD:scripts/p1669-native-connectivity.cjs)" = d634ed32dd420dd426de33c5e139560475a05d66
+          test "$(git rev-parse HEAD:scripts/p1671-native-outfit-search.cjs)" = e1015fdf39105e7cf1821e69dbccbac1231bc015
+          test "$(git rev-parse HEAD:.github/workflows/native-mobile-09-no-deploy.yml)" = 858b13a311ed1e4fd8e72241a434cf32b57a3b34
+          test "$(git rev-parse HEAD:.github/workflows/native-photo-readiness-08-no-deploy.yml)" = 85a0cc669de00c152c9e17fd2324e59ab6ae383a
+          test "$(git rev-parse HEAD:.github/workflows/native-restore-3d-06-no-deploy.yml)" = 6798b62d4de129ce661cc9a7fcca4194746a024e
+          test "$(git rev-parse HEAD:scripts/install-parallel90-viewer.mjs)" = 6768a6cb58224f403254aeda6aa80d2e720d6375
+          test "$(git rev-parse HEAD:scripts/check-parallel90-interactions.mjs)" = b54c34e4c5743ba6fc2e9161ce3acf7c60886bee
+          git log -1 --format='commit %H tree %T'
+      - name: Install pinned dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: node scripts/build.mjs
+      - if: matrix.lane == 'stylist-chromium' || matrix.lane == 'stylist-webkit'
+        name: Ordinary Stylist-to-wear journey with trusted click diagnostics
+        run: |
+          set -eu
+          case "${{ matrix.lane }}" in
+            stylist-chromium) export P99_ENGINE=chromium ;;
+            stylist-webkit) export P99_ENGINE=webkit ;;
+            *) exit 1 ;;
+          esac
+          for width in 320 390 430; do
+            P99_WIDTH="$width" node scripts/main1054-stylist-wear-journey.cjs
+          done
+      - if: matrix.lane == 'ordinary-chromium' || matrix.lane == 'ordinary-webkit'
+        name: Preserve native connectivity and saved outfit search at all mobile widths
+        run: |
+          set -eu
+          case "${{ matrix.lane }}" in
+            ordinary-chromium) export P99_ENGINE=chromium ;;
+            ordinary-webkit) export P99_ENGINE=webkit ;;
+            *) exit 1 ;;
+          esac
+          git worktree add --detach "$RUNNER_TEMP/p1669-baseline" eebfd74f5e99cf2d7a5430b4a16d0687f4971a0e
+          git worktree add --detach "$RUNNER_TEMP/p1671-baseline" 9d39062d90a593f8cc5e236bdd783a3051df8896
+          for lane in p1669 p1671; do
+            git config --global --add safe.directory "$RUNNER_TEMP/$lane-baseline"
+            ln -s "$PWD/node_modules" "$RUNNER_TEMP/$lane-baseline/node_modules"
+          done
+          cp scripts/p1669-native-connectivity.cjs "$RUNNER_TEMP/p1669-baseline/scripts/"
+          # Same instrumented review harness on both immutable comparison baselines and candidate.
+          for lane in p1669 p1671; do
+            test "$(git -C "$RUNNER_TEMP/$lane-baseline" rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 261f2ebb6f0d94033f4cbaffdf6f9534411dba3a
+            cp scripts/test-parallel99-normal-app-browser.mjs "$RUNNER_TEMP/$lane-baseline/scripts/"
+            test "$(git hash-object "$RUNNER_TEMP/$lane-baseline/scripts/test-parallel99-normal-app-browser.mjs")" = 3a4c15101e3450db626478852c4b722fa3e9905b
+          done
+          cp scripts/p1671-native-outfit-search.cjs "$RUNNER_TEMP/p1671-baseline/scripts/"
+          (cd "$RUNNER_TEMP/p1669-baseline" && node scripts/build.mjs)
+          (cd "$RUNNER_TEMP/p1671-baseline" && node scripts/build.mjs)
+          for width in 320 390 430; do
+            export P99_WIDTH="$width"
+            (cd "$RUNNER_TEMP/p1669-baseline" && P1669_EXPECT_RED=1 node scripts/p1669-native-connectivity.cjs)
+            node scripts/p1669-native-connectivity.cjs
+            (cd "$RUNNER_TEMP/p1671-baseline" && P1671_BASELINE=1 node scripts/p1671-native-outfit-search.cjs)
+            node scripts/p1671-native-outfit-search.cjs
+          done
+          P99_WIDTH=390 P1607_AUDIT=1 node scripts/test-parallel99-normal-app-browser.mjs
+          P99_WIDTH=390 node scripts/p1656-native-wear.cjs
+      - if: matrix.lane == 'mutation-chromium' || matrix.lane == 'mutation-webkit'
+        name: Exact accepted garment mutation journey on integrated application
+        run: |
+          set -eu
+          case "${{ matrix.lane }}" in
+            mutation-chromium) export A14_ENGINE=chromium ;;
+            mutation-webkit) export A14_ENGINE=webkit ;;
+            *) exit 1 ;;
+          esac
+          node scripts/test-assignment-14-browser.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/assignment-14/results.json','utf8'));
+          assert.equal(r.syntheticAuth,true);
+          assert.deepEqual(r.cases.map(x=>x.width),[320,390,430]);
+          assert.ok(r.cases.every(x=>x.engine===process.env.A14_ENGINE&&x.sourceSHA256.length===6&&new Set(x.sourceSHA256).size===6));
+          NODE
+      - if: matrix.lane == 'auth'
+        name: Verified owner offline and revocation boundary
+        run: node scripts/test-mission3-offline-auth-recovery-browser.mjs "$RUNNER_TEMP/p1669-auth"
+      - if: matrix.lane == 'regression'
+        name: Full unified regression
+        run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
+      - if: matrix.lane == 'restore-both-engines'
+        name: Original atomic recovery in both native engines
+        run: |
+          set -eu
+          node scripts/test-restore-atomic-01-browser.mjs
+          node scripts/audit-restore-atomic-01.mjs
+      - if: matrix.lane == 'chromium-source-mobile' || matrix.lane == 'webkit-native'
+        id: donor
+        name: Pin exact untouched 163-bone human + original photo donor PR541
+        run: |
+          set -eu
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          git worktree add --detach .native05-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.native05-donor-541"
+          test "$(git -C .native05-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          ln -s ../node_modules .native05-donor-541/node_modules
+          cd .native05-donor-541
+          # Acquire only the two pinned public originals; respect transient HTTP backoff.
+          # Never replace with a thumbnail or accept a changed publisher response.
+          fetch_original() {
+            url="$1"; output="$2"; expected="$3"
+            mkdir -p "$(dirname "$output")"
+            if [ ! -f "$output" ]; then
+              curl --fail --silent --show-error --location --retry 3 --retry-max-time 180 --max-time 40 \
+                --user-agent 'ClosetCurrent-SourceTrue-IndependentGarmentQA/1.0' \
+                --header 'Accept: image/jpeg' --output "$output.tmp" "$url"
+              printf '%s  %s\n' "$expected" "$output.tmp" | sha256sum -c -
+              mv "$output.tmp" "$output"
+            fi
+            printf '%s  %s\n' "$expected" "$output" | sha256sum -c -
+          }
+          fetch_original 'https://upload.wikimedia.org/wikipedia/commons/5/5a/Jeans.jpg' benchmark/three-d-31/original-jeans.jpg b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c
+          fetch_original 'https://upload.wikimedia.org/wikipedia/commons/9/92/Denimjeans2.JPG' benchmark/three-d-37/original-denimjeans2.jpg aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          test -f benchmark/work47/manifest.json
+          node --test tests/outfit-3d-01.test.mjs
+      - if: ${{ !cancelled() && steps.donor.outcome == 'success' && matrix.lane == 'chromium-source-mobile' }}
+        name: Actual 320/390/430 owner-native touch, safe area, source panel, and WebGL camera controls
+        run: |
+          node scripts/test-native-mobile-09-browser.mjs
+          node scripts/audit-native-mobile-09.mjs
+      - if: ${{ !cancelled() && steps.donor.outcome == 'success' && matrix.lane == 'chromium-source-mobile' }}
+        name: Actual native source readiness + no fake 3D + original source photos + owner logout
+        run: |
+          node scripts/test-native-photo-readiness-08-browser.mjs
+          node scripts/audit-native-photo-readiness-08.mjs
+      - if: ${{ !cancelled() && steps.donor.outcome == 'success' && matrix.lane == 'chromium-source-mobile' }}
+        name: Regression actual native consumer original 3D (no restore switch)
+        run: |
+          node scripts/test-native-3d-05-browser.mjs
+          node scripts/audit-native-3d-05.mjs
+      - if: ${{ !cancelled() && steps.donor.outcome == 'success' && matrix.lane == 'chromium-source-mobile' }}
+        name: Real atomic-loss-recovery-then-WebGL with owner A to B and active 3D fail-closed tests
+        run: |
+          node scripts/test-native-restore-3d-06-browser.mjs
+          node scripts/audit-native-restore-3d-06.mjs
+      - if: ${{ !cancelled() && steps.donor.outcome == 'success' && matrix.lane == 'chromium-source-mobile' }}
+        name: Real licensed original JPEG import, manual category, owner index, saved draft, CAS, V4 recovery and authentic 3D
+        run: |
+          node scripts/test-native-index-live-07-browser.mjs
+          node scripts/audit-native-index-live-07.mjs
+      - if: ${{ !cancelled() && steps.donor.outcome == 'success' && matrix.lane == 'chromium-source-mobile' }}
+        name: Original fifteen source photos, real owner IndexedDB and conservative readiness benchmark
+        run: |
+          node scripts/test-user-photo-3d-01-browser.mjs
+          node scripts/audit-user-photo-3d-01.mjs
+      - if: ${{ !cancelled() && steps.donor.outcome == 'success' && matrix.lane == 'chromium-source-mobile' }}
+        name: Enforce factual recovery-plus-3D acceptance and immutable Family Alpha hold
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/native-restore-3d-06/results.json','utf8'));
+          const a=JSON.parse(readFileSync('benchmark/native-restore-3d-06-audit/acceptance.json','utf8'));
+          assert.equal(r.priority,'NATIVE-RESTORE-3D-06');
+          assert.equal(r.cases,3);assert.equal(r.screenshots,15);
+          assert.equal(r.restoredBeforeSourceTrue3D,true);
+          assert.equal(r.closedActive3DTransactionGate,true);
+          assert.equal(r.realWebGL,true);assert.deepEqual(r.crashes,[]);
+          assert.ok(r.evidence.every(e=>e.atomicLosslessV4RestoredBefore3D&&
+            e.exactRestoredOriginalPhotos&&e.activeAnatomical3DRestoreBlocked&&
+            e.ownerACrossOwnerBRestoreBlocked&&e.bones===163&&
+            e.authenticPhotoSourcedDress3D&&e.nonVettedCoatJacketShoesPhotoFallback&&
+            e.readOnlyDonorActions&&e.originalUserSavedStateUnmodified!==false&&
+            e.releaseAuthorized===false));
+          assert.equal(a.verifiedGenuine3DFrames,9);
+          assert.equal(a.verifiedBrowserScreenshots,15);
+          assert.equal(a.realSignedUsersVerified,false);
+          assert.equal(a.realPhysicalPhonesVerified,false);
+          assert.equal(a.productionDeployed,false);
+          assert.equal(a.familyAlpha,'HOLD');
+          assert.equal(a.releaseAuthorized,false);
+          const i=JSON.parse(readFileSync('benchmark/native-index-live-07/results.json','utf8'));
+          const ia=JSON.parse(readFileSync('benchmark/native-index-live-07-audit/acceptance.json','utf8'));
+          assert.equal(i.priority,'NATIVE-INDEX-LIVE-07');
+          assert.equal(i.cases,3);assert.equal(i.screenshots,18);
+          assert.equal(i.restoredBeforeSourceTrue3D,true);
+          assert.equal(i.realWebGL,true);assert.deepEqual(i.crashes,[]);
+          assert.ok(i.evidence.every(row=>row.realOriginalJPEGImportedManuallyCorrectedAndIndexed&&
+            row.previouslyStaleNewGarmentSavedToUnsavedOutfitWithoutReload&&
+            row.savedOriginalPhotoIncludedInV4Restore&&row.ownerACrossOwnerBRestoreBlocked&&
+            row.bones===163&&row.authenticPhotoSourcedDress3D&&
+            row.nonVettedCoatJacketShoesPhotoFallback&&row.releaseAuthorized===false));
+          assert.equal(ia.verifiedBrowserScreenshots,18);
+          assert.equal(ia.verifiedGenuine3DFrames,9);
+          assert.equal(ia.newCapturedOriginalPreservedThroughIndexAndBackup,true);
+          assert.equal(ia.unsavedDraftPreservedAcrossLiveWardrobeRefresh,true);
+          assert.equal(ia.realSignedUsersVerified,false);
+          assert.equal(ia.realPhysicalPhonesVerified,false);
+          assert.equal(ia.releaseAuthorized,false);assert.equal(ia.familyAlpha,'HOLD');
+          const p=JSON.parse(readFileSync('benchmark/user-photo-3d-01-audit/acceptance.json','utf8'));
+          const v=JSON.parse(readFileSync('benchmark/native-photo-readiness-08/results.json','utf8'));
+          const va=JSON.parse(readFileSync('benchmark/native-photo-readiness-08-audit/acceptance.json','utf8'));
+          assert.equal(p.originalJPEGShaVerified,15);
+          assert.equal(p.realChromiumScreenshots,9);
+          assert.equal(p.readiness['3D Ready'],0);
+          assert.equal(p.readiness['Needs Review'],12);
+          assert.equal(p.readiness['Photo-Only'],3);
+          assert.equal(v.priority,'NATIVE-PHOTO-READINESS-08');
+          assert.equal(v.cases,3);assert.equal(v.screenshots,24);
+          assert.deepEqual(v.errors,[]);assert.deepEqual(v.crashes,[]);
+          assert.ok(v.evidence.every(e=>e.ownerOriginalSourceReadinessShownBeforeWebGL&&
+           e.unsupportedShoesOuterwearRemainPhotoOnly&&
+           e.sourceReadinessBlockedOnLogoutAndForeignOwner&&
+           e.missingOriginalIDRetainedWithoutFabrication&&
+           e.realOriginalJPEGImportedManuallyCorrectedAndIndexed&&
+           e.realNativeBuilder&&e.bones===163&&e.releaseAuthorized===false));
+          assert.equal(va.verifiedBrowserScreenshots,24);
+          assert.equal(va.verifiedGenuine3DFrames,9);
+          assert.equal(va.trueSourceHashVerifiedBeforePhotoDisplay,true);
+          assert.equal(va.unknownUserSourceNeverAutoFitted,true);
+          assert.equal(va.releaseAuthorized,false);assert.equal(va.familyAlpha,'HOLD');
+          const mo=JSON.parse(readFileSync('benchmark/native-mobile-09/results.json','utf8'));
+          const ma=JSON.parse(readFileSync('benchmark/native-mobile-09-audit/acceptance.json','utf8'));
+          assert.equal(mo.priority,'NATIVE-MOBILE-COMFORT-09');
+          assert.equal(mo.cases,3);assert.equal(mo.screenshots,30);
+          assert.deepEqual(mo.widths,[320,390,430]);assert.deepEqual(mo.errors,[]);
+          assert.equal(mo.realWebGL,true);assert.deepEqual(mo.crashes,[]);
+          assert.ok(mo.evidence.every(x=>x.nativeMobileTouchTargetsAtLeast48px&&
+           x.actual3DCameraAngleTargetsAtLeast48px&&
+           x.originalPhoneViewportNoHorizontalOverflow&&
+           x.safeAreaHeaderSticky&&x.noPrivateUIStyleAfterLogout&&
+           x.bones===163&&x.ownerACrossOwnerBRestoreBlocked&&
+           x.originalUserSavedStateUnmodified!==false&&x.releaseAuthorized===false));
+          assert.equal(ma.verifiedBrowserScreenshots,30);
+          assert.equal(ma.actual320pxTwoColumnSaveControls,true);
+          assert.equal(ma.actualFour48pxWebGLViewButtons,true);
+          assert.equal(ma.browserMeasuredNoHorizontalScroll,true);
+          assert.equal(ma.noOwnerPrivateStyleAfterLogout,true);
+          assert.equal(ma.releaseAuthorized,false);
+          assert.equal(ma.familyAlpha,'HOLD');
+          console.log('MOBILE09 real measured 48px owner-private touch and WebGL responsive + all prior source-true regressions PASS; real phones/live RLS/release STILL HOLD');
+          NODE
+      - if: matrix.lane == 'webkit-native'
+        name: Actual WebKit original source-qualified viewer at all three widths
+        run: |
+          set -eu
+          # Match the existing P90 workflow: install the pinned camera controls only into
+          # the disposable PR541 checkout, not the accepted application or donor branch.
+          node scripts/install-parallel90-viewer.mjs
+          P90_ENGINE=webkit P90=1 node scripts/test-native-3d-05-browser.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/native-3d-05-webkit/results.json','utf8'));
+          assert.equal(r.browser,'webkit');assert.deepEqual(r.widths,[320,390,430]);
+          assert.equal(r.cases,3);assert.equal(r.screenshots,15);
+          assert.equal(r.realWebGL,true);assert.deepEqual(r.errors,[]);assert.deepEqual(r.crashes,[]);
+          assert.ok(r.evidence.every(e=>e.bones===163&&e.authenticPhotoSourcedDress3D&&e.separateAccountBPrivate&&e.noOutfitMutation&&e.releaseAuthorized===false));
+          assert.equal(r.familyAlpha,'HOLD');assert.equal(r.realSignedRLS,false);assert.equal(r.releaseAuthorized,false);
+          console.log('UNIFIED_NATIVE_WEBKIT_PASS',JSON.stringify({widths:r.widths,cases:r.cases,screenshots:r.screenshots}));
+          NODE
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unified-native-${{ matrix.lane }}-HOLD
+          path: |
+            benchmark/restore-atomic-01/
+            benchmark/restore-atomic-01-audit/
+            benchmark/native-3d-05/
+            benchmark/native-3d-05-audit/
+            benchmark/native-3d-05-webkit/
+            benchmark/parallel90/webkit/
+            benchmark/native-restore-3d-06/
+            benchmark/native-restore-3d-06-audit/
+            benchmark/native-index-live-07/
+            benchmark/native-index-live-07-audit/
+            benchmark/native-photo-readiness-08/
+            benchmark/native-photo-readiness-08-audit/
+            benchmark/native-mobile-09/
+            benchmark/native-mobile-09-audit/
+            benchmark/user-photo-3d-01/
+            benchmark/user-photo-3d-01-audit/
+            benchmark/assignment-14/
+          if-no-files-found: warn
+          retention-days: 14
+  acceptance:
+    if: always()
+    needs: native
+    runs-on: ubuntu-24.04
+    env:
+      RESULT: ${{ needs.native.result }}
+    steps:
+      - run: test "$RESULT" = success
