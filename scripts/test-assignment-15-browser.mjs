@@ -166,6 +166,12 @@ try{
      await page.getByText('This exact outfit is already saved.',{exact:false}).waitFor();
      assert.equal((await state()).saved.length,1);
      await reopen('Twin');
+     const longName='W'.repeat(80);
+     await setName(longName);
+     await update.click();
+     await library.getByRole('button',{name:longName,exact:true}).waitFor();
+     assert.equal(await page.locator('#savedOutfitSelected').evaluate(node=>node.scrollWidth<=node.clientWidth),true,
+      'a valid 80-character saved outfit title must fit the mobile viewport');
      await setName('Renamed');
      await update.click();
      await library.getByRole('button',{name:'Renamed',exact:true}).waitFor();

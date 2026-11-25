@@ -22,7 +22,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-          fetch-depth: 2
+          fetch-depth: 3
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -33,8 +33,9 @@ jobs:
       - run: npx playwright install --with-deps "${{ matrix.engine }}"
       - name: Verify the accepted parent capacity and management gap
         run: |
-          test "$(git rev-parse HEAD^)" = 80262e5a900cae4302db84881e2929ffac6c681e
-          git worktree add --detach "$RUNNER_TEMP/assignment-15-parent" HEAD^
+          BASE=80262e5a900cae4302db84881e2929ffac6c681e
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+          git worktree add --detach "$RUNNER_TEMP/assignment-15-parent" "$BASE"
           node scripts/test-assignment-15-browser.mjs
         env:
           A15_ENGINE: ${{ matrix.engine }}
