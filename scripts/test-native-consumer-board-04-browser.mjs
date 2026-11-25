@@ -240,24 +240,51 @@ try{
     [...document.querySelectorAll('[role=status]')].some(el=>el.textContent.includes('Import blocked')),
     null,{timeout:10000}).catch(()=>{});
    assert.deepEqual(await read(page),beforeImport,'Rejected backup cannot modify saved outfit');
-   // Original B account: actual logout, then genuine new browser session.
-   await page.locator('details.account-menu > summary').click();
-   await page.locator('#logout').click();
+   // Hold only the synthetic logout response so the old document's revoked
+   // callback is tested before reload can discard that JS context.
+   let releaseLogout;
+   const logoutBarrier=new Promise(resolve=>{releaseLogout=resolve;});
+   await page.route(authHost+'/auth/v1/logout',async route=>{
+    await logoutBarrier;
+    return authRoute(route);
+   },{times:1});
+   try{
+    await page.locator('details.account-menu > summary').click();
+    const requested=page.waitForRequest(req=>req.method()==='POST'&&
+     req.url()===authHost+'/auth/v1/logout');
+    await Promise.all([requested,page.locator('#logout').click()]);
+    await page.waitForFunction(()=>window.closetAuth?.user===null&&
+     document.getElementById('appShell')?.hidden===true&&
+     window.nativeLossless04Bridge?.status()?.active!==true);
+    assert.equal(await page.locator('#boardSlots img').count(),0,'Logout must clear old private images');
+    const revoked=await page.evaluate(()=>({
+     directGate:nativeLossless04RestoreSafe(),
+     installed:typeof window.__native04CloudSettings?.canRestore==='function',
+     cloudRestore:window.__native04CloudSettings?.canRestore?.(),
+     privateSessionActive:window.nativeLossless04Bridge?.status()?.active===true
+    }));
+    assert.equal(revoked.privateSessionActive,false);
+    assert.equal(revoked.directGate,false,'The original native restore guard must remain closed after logout');
+    assert.equal(revoked.installed,true,'The original owner callback must actually be tested');
+    assert.equal(revoked.cloudRestore,false,'The revoked owner callback cannot authorize cloud restore');
+   }finally{releaseLogout();}
+   // Await the signed-out reload and script evaluation, not just the login
+   // form appearing while parser-loaded scripts are still pending.
    await page.waitForFunction(()=>window.closetAuth?.user===null&&
-     document.getElementById('authGate')?.hidden===false);
-   assert.equal(await page.locator('#boardSlots img').count(),0,'Logout must clear old private images');
+    document.getElementById('authGate')?.hidden===false&&
+    typeof nativeLossless04RestoreSafe==='function'&&
+    document.readyState!=='loading');
    const revokedRestore=await page.evaluate(()=>({
-    directGate:typeof nativeLossless04RestoreSafe==='function'?nativeLossless04RestoreSafe():null,
+    directGate:nativeLossless04RestoreSafe(),
     nativeCloudBridgeInstalled:typeof window.__native04CloudSettings?.canRestore==='function',
     cloudRestore:window.__native04CloudSettings?.canRestore?.(),
     privateSessionActive:window.nativeLossless04Bridge?.status()?.active===true
    }));
    assert.equal(revokedRestore.privateSessionActive,false);
-   assert.equal(revokedRestore.directGate,false,
-    'The real native cloud restore guard must remain closed after logout');
+   assert.equal(revokedRestore.directGate,false,'The reloaded native cloud restore guard must remain closed after logout');
    if(revokedRestore.nativeCloudBridgeInstalled)
-    assert.equal(revokedRestore.cloudRestore,false,
-     'An installed cloud restore callback cannot authorize the logged-out owner');
+    assert.equal(revokedRestore.cloudRestore,false,'An installed cloud restore callback cannot authorize the logged-out owner');
+   assert.equal(await page.locator('#boardSlots img').count(),0,'Reload must not re-expose private images');
    await signIn(page,'native04-B');
    await seed(page,fixture('native04-B'));
    await page.reload({waitUntil:'domcontentloaded'});

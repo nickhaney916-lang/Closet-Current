@@ -30,8 +30,12 @@ jobs:
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           test "${{ github.event.pull_request.base.sha }}" = 27d9049abf56ca27dfb1e2edc77974eadccbd500
           git merge-base --is-ancestor 27d9049abf56ca27dfb1e2edc77974eadccbd500 HEAD
-          test "$(git rev-parse HEAD^)" = 27d9049abf56ca27dfb1e2edc77974eadccbd500
-          printf '%s\n' '.github/workflows/assignment-20-four-owner-HOLD.yml' 'research/auth-review-session-36/local-http.mjs' 'research/auth-review-session-36/signed-local.mjs' 'scripts/test-assignment-20-browser.mjs' 'supabase/cloud-backup.sql' 'tests/auth-review-session-36.test.mjs' '.github/workflows/main1054-unified-signed-owner-HOLD.yml' | LC_ALL=C sort > /tmp/cc-expected-paths
+          test "$(git rev-parse HEAD^)" = f05507a8972f044c8cea9133c09271042e883906
+          git merge-base --is-ancestor 27d9049abf56ca27dfb1e2edc77974eadccbd500 f05507a8972f044c8cea9133c09271042e883906
+          git diff --exit-code f05507a8972f044c8cea9133c09271042e883906 HEAD -- . ':(exclude)scripts/test-native-consumer-board-04-browser.mjs' ':(exclude).github/workflows/main1054-unified-signed-owner-HOLD.yml'
+          test "$(git rev-parse f05507a8972f044c8cea9133c09271042e883906:scripts/test-native-consumer-board-04-browser.mjs)" = f55d303acd7cc7218aa84796b402cf239c0fd53e
+          test "$(git rev-parse HEAD:scripts/test-native-consumer-board-04-browser.mjs)" = dd9748a1f045b7e78bea2db3404b3c018b52c263
+          printf '%s\n' '.github/workflows/assignment-20-four-owner-HOLD.yml' 'research/auth-review-session-36/local-http.mjs' 'research/auth-review-session-36/signed-local.mjs' 'scripts/test-assignment-20-browser.mjs' 'supabase/cloud-backup.sql' 'tests/auth-review-session-36.test.mjs' 'scripts/test-native-consumer-board-04-browser.mjs' '.github/workflows/main1054-unified-signed-owner-HOLD.yml' | LC_ALL=C sort > /tmp/cc-expected-paths
           git diff --name-only 27d9049abf56ca27dfb1e2edc77974eadccbd500 HEAD | LC_ALL=C sort > /tmp/cc-actual-paths
           diff -u /tmp/cc-expected-paths /tmp/cc-actual-paths
           test "$(git rev-parse HEAD:.github/workflows/main1054-unified-troubleshooting-HOLD.yml)" = 6e51bf52e92d69e92b884f857b3ab525ea0b532f
