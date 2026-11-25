@@ -98,6 +98,19 @@ const preload=()=>{
  }
  Object.defineProperty(window,'Worker',{configurable:true,value:ResearchWorker});
 };
+// Single helper prevents duplicate lexical declarations in the two review
+// journeys. Explicit owner choices remain mandatory; no direct submit bypass.
+async function confirmAndSaveReviewedPhoto(page){
+ const editor=page.locator('dialog.photo-adjust');
+ await editor.getByLabel('I verified the category, clothing type and color').check();
+ await editor.getByLabel('I confirmed this photo shows one garment').check();
+ const prepare=editor.getByRole('button',{name:'Prepare smaller display photo'});
+ if(await prepare.count()){
+  await prepare.click();
+  await editor.locator('input[type=checkbox]').last().check();
+ }
+ await editor.getByRole('button',{name:'Save changes',exact:true}).click();
+}
 let results=[],errors=[],outbound=[];
 try{
  for(const [name,engine]of [['chromium',chromium],['webkit',webkit]]){
@@ -211,7 +224,7 @@ try{
      await page.locator('dialog.photo-adjust select[aria-label="Main category"]').selectOption('Tops');
      await page.locator('dialog.photo-adjust select[aria-label="Item type"]').selectOption('T-shirt');
      await page.locator('dialog.photo-adjust input[aria-label="Color"]').fill('Blue');
-     await page.locator('dialog.photo-adjust form').evaluate(node=>node.requestSubmit());
+     await confirmAndSaveReviewedPhoto(page);
      await page.waitForFunction(()=>items.some(x=>x.itemType==='T-shirt')&&!document.querySelector('dialog.photo-adjust[open]'),null,{timeout:20000});
      const saved=await page.evaluate(async()=>{
       const v=(await readAll()).find(x=>x.itemType==='T-shirt');
@@ -236,8 +249,8 @@ try{
      await page.locator('dialog.photo-adjust select[aria-label="Main category"]').selectOption('Bottoms');
      await page.locator('dialog.photo-adjust select[aria-label="Item type"]').selectOption('Jeans');
      await page.locator('dialog.photo-adjust input[aria-label="Color"]').fill('Purple');
-     await page.locator('dialog.photo-adjust form').evaluate(node=>node.requestSubmit());
-     await page.waitForFunction(()=>document.getElementById('message').textContent.includes('Could not save changes.'),null,{timeout:15000});
+     await confirmAndSaveReviewedPhoto(page);
+     await page.waitForFunction(()=>/Reviewed garment was not saved\./.test(document.getElementById('message').textContent),null,{timeout:15000});
      assert.equal(await page.evaluate(async()=>(await readAll()).length),1,
       'tampering the original must never create or overwrite saved item');
      assert.equal(await page.locator('dialog.photo-adjust[open]').count(),1,

@@ -218,11 +218,17 @@ try{
     r.onsuccess=()=>s.put({...r.result,localRevision:r.result.localRevision+1});
     tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
    }));
+   const changedCloud=await read(page,'cloud-sync');
    await page.locator('#boardName').fill('Should conflict, not overwrite');
    await page.locator('#boardName').dispatchEvent('change');
    await page.locator('#native04SaveChanges').click();
-   await page.waitForFunction(()=>/CONFLICT/.test(document.getElementById('boardSaveStatus')?.textContent||''));
+   await page.waitForFunction(()=>document.getElementById('boardSaveStatus')?.textContent.includes('The private outfit action could not finish.'));
    assert.deepEqual(await read(page),copied,'Cloud conflict must preserve previous valid saved outfit');
+   // Independently prove the exact stale cloud CAS cause while the UI keeps raw errors private.
+   await assert.rejects(page.evaluate(()=>window.nativeLossless04Bridge.persist({asNew:false})),
+    /BOARD02 CONFLICT: cloud\/backup revision changed/);
+   assert.deepEqual(await read(page),copied,'Direct stale CAS rejection also leaves the exact board unchanged');
+   assert.deepEqual(await read(page,'cloud-sync'),changedCloud,'Failed CAS must not change the external revision');
    // Gated native JSON backup import refuses before any item/board write.
    const beforeImport=await read(page);
    await page.locator('#import').setInputFiles({

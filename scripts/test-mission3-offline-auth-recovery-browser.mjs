@@ -88,6 +88,11 @@ try{
       return;
      errors.push({engine,width,error});
     });
+    // Complete the optional public catalog probe before deliberate document
+    // teardown. Keep the pageerror assertion strict for every auth and owner error.
+    const settlePublicCatalog = () => page.waitForFunction(
+     () => typeof trendLoading!=='undefined' && Boolean(activeTrendLibrary) && !trendLoading,
+     null,{timeout:20000});
     await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
     // Direct native IndexedDB seed uses a synthetic owner and original JPEG.
     // No auth bypass: the private app shell is never opened until the signed
@@ -125,6 +130,7 @@ try{
      base.close();
      localStorage.setItem(STORE,originalSession);
     },{owner,photo,sha,draftPhoto,draftSHA,STORE,originalSession});
+    await settlePublicCatalog();
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>document.querySelector('#authStatus')?.textContent.includes('Cannot verify'),
      null,{timeout:15000});
@@ -164,6 +170,7 @@ try{
     authMode='offline';
     await page.evaluate(({STORE,originalSession})=>localStorage.setItem(STORE,originalSession),
      {STORE,originalSession});
+    await settlePublicCatalog();
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>document.querySelector('#authStatus')?.textContent.includes('Cannot verify'),
      null,{timeout:15000});
@@ -184,6 +191,7 @@ try{
     authMode='badtoken';
     await page.evaluate(({STORE,originalSession})=>localStorage.setItem(STORE,originalSession),
      {STORE,originalSession});
+    await settlePublicCatalog();
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>document.querySelector('#authStatus')?.textContent.includes('session has expired'),
      null,{timeout:15000});
@@ -197,6 +205,7 @@ try{
     assert.equal(rejected.user,null);assert.equal(rejected.gate,true);assert.equal(rejected.shell,true);
     assert.equal(external.filter(x=>x.method!=='GET').length,0,'No hosted writes');
     assert.equal(external.filter(x=>x.path.includes('/auth/v1/')).length,0,'Auth traffic must be intercepted locally');
+    await settlePublicCatalog();
     const image=await page.screenshot({path:resolve(out,engine+'-'+width+'-auth-offline.png')});
     assert.equal((await sharp(image).metadata()).width,width);
     cases.push({engine,width,sessionPreservedWhileOffline:true,privateWardrobeRemainsLocked:true,

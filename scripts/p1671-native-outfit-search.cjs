@@ -142,9 +142,24 @@ source=source.slice(0,start)+`
    assert.match(await page.locator('#mission4Preview1054Status').innerText(),/2D only/);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
    if(size===25){
-    await page.locator('#boardName').fill('P1671 Customized');
+    const name=page.locator('#boardName');
+    await name.fill('P1671 Customized');
+    await name.press('Tab');
+    await page.waitForFunction(()=>currentBoard?.name==='P1671 Customized'&&
+     boardPendingWrites===0&&boardDraftTimer===null&&!boardConflictDraft&&
+     boardCommittedDraft===JSON.stringify(currentBoard));
     await page.locator('#saveBoard').click();
-    await page.waitForFunction(()=>savedOutfitBoards.filter(board=>board.name==='P1671 Customized').length===1);
+    try{
+     await page.waitForFunction(()=>savedOutfitBoards.filter(board=>board.name==='P1671 Customized').length===1);
+    }catch(error){
+     console.log('P1671_SAVE_FAILURE',JSON.stringify(await page.evaluate(()=>({
+      status:document.getElementById('boardSaveStatus')?.textContent,
+      intendedName:currentBoard?.name==='P1671 Customized',
+      savedCount:savedOutfitBoards.length, pending:boardPendingWrites,
+      conflict:Boolean(boardConflictDraft),disabled:document.getElementById('saveBoard')?.disabled
+     }))));
+     throw error;
+    }
     await input.fill('customized');
     await grid.getByRole('button',{name:'P1671 Customized',exact:true}).click();
     assert.equal(await page.locator('#boardName').inputValue(),'P1671 Customized');
