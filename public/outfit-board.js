@@ -972,7 +972,7 @@ const outfitBoardReady=(async()=>{
 
 const TREND_DATA_URL='https://raw.githubusercontent.com/nickhaney916-lang/Closet-Current/main/public/trend-data.json';
 const TREND_CACHE='closet-current-trend-library-v1';let trendLoading=false,trendLastCheck=0;
-let trendController=null,trendCheckFailed=false,trendRetryOnReconnect=false;
+let trendController=null,trendCheckFailed=false,trendRetryOnReconnect=false,managedTrends=false;
 function trendLibraryDate(value){const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'date unavailable';}
 function trendFreshnessText(failed=trendCheckFailed){
  const offline=navigator.onLine===false;
@@ -989,9 +989,27 @@ async function refreshTrendLibrary(force=false){
  trendLoading=true;trendLastCheck=Date.now();const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
  trendController=controller;
  try{
-  const response=await fetch(TREND_DATA_URL+'?checked='+Math.floor(Date.now()/300000),{cache:'no-store',signal:controller.signal});if(!response.ok)throw Error('Recommendation data unavailable');
-  const data=await response.json(),library=normalizeTrendLibrary(data);
-  if(!activeTrendLibrary||Date.parse(library.updatedAt)>=Date.parse(activeTrendLibrary.updatedAt)){applyLoadedTrendLibrary(data);try{localStorage.setItem(TREND_CACHE,JSON.stringify(data));}catch{}}
+  const options={cache:'no-store',signal:controller.signal};
+  const managed=await fetch('./maintenance/trends',options);
+  let data;
+  if(managed.ok&&/^application\/json(?:\s*;|$)/i.test(managed.headers.get('content-type')||'')){
+   const release=await managed.json();
+   if(!/^[a-f0-9]{64}$/.test(release?.version))throw Error('Invalid managed trend release');
+   data=release.data;
+   normalizeTrendLibrary(data);
+   managedTrends=true;
+  }else{
+   if(managedTrends||(managed.status!==404&&!managed.ok))throw Error('Managed trends unavailable');
+   const response=await fetch(TREND_DATA_URL+'?checked='+Math.floor(Date.now()/300000),options);
+   if(!response.ok)throw Error('Recommendation data unavailable');
+   data=await response.json();
+  }
+  const library=normalizeTrendLibrary(data);
+  // A managed release can intentionally roll back to an older library.
+  if(managedTrends||!activeTrendLibrary||Date.parse(library.updatedAt)>=Date.parse(activeTrendLibrary.updatedAt)){
+   applyLoadedTrendLibrary(data);
+   try{localStorage.setItem(TREND_CACHE,JSON.stringify(managedTrends?{managed:true,data}:data));}catch{}
+  }
   trendCheckFailed=false;updateTrendFreshness();renderTrendReferences();if(boardInitialized)renderBoardSuggestions();if(typeof renderStyledCollection==='function')renderStyledCollection();
  }catch{trendCheckFailed=true;updateTrendFreshness();}
  finally{
@@ -1001,7 +1019,7 @@ async function refreshTrendLibrary(force=false){
  }
 }
 (async()=>{
- try{const cached=JSON.parse(localStorage.getItem(TREND_CACHE)||'null');if(cached)applyLoadedTrendLibrary(cached);}catch{}
+ try{const cached=JSON.parse(localStorage.getItem(TREND_CACHE)||'null');if(cached){applyLoadedTrendLibrary(cached.managed===true?cached.data:cached);managedTrends=cached.managed===true;}}catch{}
  if(!activeTrendLibrary){try{const response=await fetch('./trend-data.json');if(response.ok)applyLoadedTrendLibrary(await response.json());}catch{}}
  renderTrendReferences();$('trendFreshness').textContent=trendFreshnessText();if(boardInitialized)renderBoardSuggestions();refreshTrendLibrary(true);
 })();
