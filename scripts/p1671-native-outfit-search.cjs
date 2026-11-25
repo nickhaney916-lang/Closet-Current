@@ -109,8 +109,34 @@ source=source.slice(0,start)+`
    assert.equal(await page.locator('#boardSlots .board-slot-top').getAttribute('aria-label').then(t=>t.includes(shirtName)),true);
    await input.fill(target);
    await grid.getByRole('button',{name:target,exact:true}).click();
-   await page.locator('#mission4Preview1054Section button').click();
-   await page.waitForFunction(()=>document.querySelectorAll('#mission4Preview1054Photos img').length===2);
+   // Select the exact intended saved look before a single normal trusted preview click.
+   await page.waitForFunction(name=>boardInitialized&&currentBoard?.name===name&&
+    Object.keys(currentBoard.slots||{}).length===2&&db?.name==='closet-current-user-p99-A',target);
+   const previewButton=page.locator('#mission4Preview1054Section button');
+   await previewButton.scrollIntoViewIfNeeded();
+   await page.waitForFunction(()=>{const b=document.querySelector('#mission4Preview1054Section button');
+    return b&&!b.disabled&&b.isConnected;});
+   await previewButton.evaluate(b=>{
+    window.__p1671PreviewClick=null;
+    b.addEventListener('click',e=>{window.__p1671PreviewClick={trusted:e.isTrusted,
+     intended:e.currentTarget===b,enabled:!b.disabled};},{once:true,capture:true});
+   });
+   try{
+    await previewButton.click();
+    assert.deepEqual(await page.evaluate(()=>window.__p1671PreviewClick),
+     {trusted:true,intended:true,enabled:true});
+    await page.waitForFunction(()=>document.querySelectorAll('#mission4Preview1054Photos img').length===2);
+   }catch(error){
+    console.log('P1671_PREVIEW_FAILURE',JSON.stringify(await page.evaluate(()=>{
+     const b=document.querySelector('#mission4Preview1054Section button');
+     return {click:window.__p1671PreviewClick,disabled:b?.disabled,
+      count:document.querySelectorAll('#mission4Preview1054Photos img').length,
+      slotCount:Object.keys(currentBoard?.slots||{}).length,
+      initialized:boardInitialized,ownerCurrent:db?.name==='closet-current-user-p99-A',
+      status:(document.getElementById('mission4Preview1054Status')?.textContent||'').slice(0,250)};
+    })));
+    throw error;
+   }
    const src=await page.locator('#mission4Preview1054Photos img').evaluateAll(images=>images.map(image=>image.getAttribute('src')));
    for(const original of originals)assert.ok(src.includes(original.url));
    assert.match(await page.locator('#mission4Preview1054Status').innerText(),/2D only/);

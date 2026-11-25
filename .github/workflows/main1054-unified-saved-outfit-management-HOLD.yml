@@ -29,8 +29,10 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           git merge-base --is-ancestor fffe8ea6c715083f680a4453536198b9b9d2540f HEAD
-          test "$(git diff --name-only fffe8ea6c715083f680a4453536198b9b9d2540f HEAD | wc -l)" -eq 4
-          git diff --exit-code fffe8ea6c715083f680a4453536198b9b9d2540f HEAD -- . ':(exclude).github/workflows/main1054-unified-saved-outfit-management-HOLD.yml' ':(exclude)public/index.html' ':(exclude)public/outfit-board.js' ':(exclude)scripts/test-assignment-15-browser.mjs'
+          test "$(git diff --name-only fffe8ea6c715083f680a4453536198b9b9d2540f HEAD | wc -l)" -eq 6
+          git merge-base --is-ancestor f6ec61b6197c437675b9b16a4f55bf7e84341376 HEAD
+          git diff --exit-code f6ec61b6197c437675b9b16a4f55bf7e84341376 HEAD -- . ':(exclude)scripts/test-native-restore-3d-06-browser.mjs' ':(exclude)scripts/p1671-native-outfit-search.cjs' ':(exclude).github/workflows/main1054-unified-saved-outfit-management-HOLD.yml'
+          git diff --exit-code fffe8ea6c715083f680a4453536198b9b9d2540f HEAD -- . ':(exclude).github/workflows/main1054-unified-saved-outfit-management-HOLD.yml' ':(exclude)public/index.html' ':(exclude)public/outfit-board.js' ':(exclude)scripts/test-assignment-15-browser.mjs' ':(exclude)scripts/test-native-restore-3d-06-browser.mjs' ':(exclude)scripts/p1671-native-outfit-search.cjs'
           test "$(git rev-parse HEAD:.github/workflows/main1054-unified-wardrobe-mutation-HOLD.yml)" = 20f5b7be480bef4b6ea5f4fc8e7c556ed4625890
           test "$(git rev-parse fffe8ea6c715083f680a4453536198b9b9d2540f:public/index.html)" = a03b8d716eab472a47277719fe3e445cac2f3d6c
           test "$(git rev-parse fffe8ea6c715083f680a4453536198b9b9d2540f:public/outfit-board.js)" = c29c3133fe6a20c2f57011726db0855fd4b1be6e
@@ -55,7 +57,10 @@ jobs:
           test "$(git rev-parse HEAD:public/closet-stylist.js)" = 5a61f11f5e58cc48f8d4e8e52dcf0a5cb0e2cc51
           test "$(git rev-parse HEAD:public/saved-outfit-search.js)" = adb866e6d02aa9ce7c50cd3d12c903ecd87ee260
           test "$(git rev-parse HEAD:scripts/p1669-native-connectivity.cjs)" = d634ed32dd420dd426de33c5e139560475a05d66
-          test "$(git rev-parse HEAD:scripts/p1671-native-outfit-search.cjs)" = e1015fdf39105e7cf1821e69dbccbac1231bc015
+          test "$(git rev-parse f6ec61b6197c437675b9b16a4f55bf7e84341376:scripts/p1671-native-outfit-search.cjs)" = e1015fdf39105e7cf1821e69dbccbac1231bc015
+          test "$(git rev-parse HEAD:scripts/p1671-native-outfit-search.cjs)" = e078191623ca4c2fd9becd98cfd4e1135f05ca58
+          test "$(git rev-parse f6ec61b6197c437675b9b16a4f55bf7e84341376:scripts/test-native-restore-3d-06-browser.mjs)" = 068adc1108d2796475a0a180bef3e91355242920
+          test "$(git rev-parse HEAD:scripts/test-native-restore-3d-06-browser.mjs)" = 377a9155911f8bd5347ac14baab1f214a4fcf411
           test "$(git rev-parse HEAD:.github/workflows/native-mobile-09-no-deploy.yml)" = 858b13a311ed1e4fd8e72241a434cf32b57a3b34
           test "$(git rev-parse HEAD:.github/workflows/native-photo-readiness-08-no-deploy.yml)" = 85a0cc669de00c152c9e17fd2324e59ab6ae383a
           test "$(git rev-parse HEAD:.github/workflows/native-restore-3d-06-no-deploy.yml)" = 6798b62d4de129ce661cc9a7fcca4194746a024e

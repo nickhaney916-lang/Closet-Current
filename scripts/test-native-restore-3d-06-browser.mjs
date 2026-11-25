@@ -260,8 +260,14 @@ try{
   await login(page,'native05-B');
   await seed(page,'native05-B');
   await page.reload({waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>window.nativeLossless04Bridge?.status()?.active&&
-   !!window.native3D05Bridge,{timeout:30000});
+  // Owner B's atomic restore bridge initializes independently of the viewer.
+  // Never accept a missing bridge TypeError as a cross-owner rejection.
+  await page.waitForFunction(()=>window.closetAuth?.user?.id==='native05-B'&&
+   db?.name==='closet-current-user-native05-B'&&
+   window.nativeLossless04Bridge?.status()?.active&&
+   window.restoreAtomic01Bridge?.status()?.active&&
+   typeof window.restoreAtomic01Bridge.importBackup==='function'&&
+   !!window.native3D05Bridge,null,{timeout:30000});
   await page.evaluate(()=>switchView('builder'));
   const bStored=await readBoard(page),bItems=await readItems(page);
   await assert.rejects(page.evaluate(doc=>
