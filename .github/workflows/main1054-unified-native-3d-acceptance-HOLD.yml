@@ -23,18 +23,19 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - name: Immutable accepted saved-outfit and connectivity source plus five-file acceptance harness
+      - name: Immutable accepted saved-outfit and connectivity source plus six-file acceptance harness
         run: |
           set -eu
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           git merge-base --is-ancestor 815c9f50770b9d6f6285f5402d00192716822b5a HEAD
-          test "$(git diff --name-only 815c9f50770b9d6f6285f5402d00192716822b5a HEAD | wc -l)" -eq 5
-          git diff --exit-code 815c9f50770b9d6f6285f5402d00192716822b5a HEAD -- . ':(exclude).github/workflows/main1054-unified-native-3d-acceptance-HOLD.yml' ':(exclude)scripts/main1054-stylist-wear-journey.cjs' ':(exclude)scripts/test-native-mobile-09-browser.mjs' ':(exclude)scripts/test-native-index-live-07-browser.mjs' ':(exclude)scripts/test-native-photo-readiness-08-browser.mjs'
+          test "$(git diff --name-only 815c9f50770b9d6f6285f5402d00192716822b5a HEAD | wc -l)" -eq 6
+          git diff --exit-code 815c9f50770b9d6f6285f5402d00192716822b5a HEAD -- . ':(exclude).github/workflows/main1054-unified-native-3d-acceptance-HOLD.yml' ':(exclude)scripts/main1054-stylist-wear-journey.cjs' ':(exclude)scripts/test-native-mobile-09-browser.mjs' ':(exclude)scripts/test-native-index-live-07-browser.mjs' ':(exclude)scripts/test-native-photo-readiness-08-browser.mjs' ':(exclude)scripts/test-parallel99-normal-app-browser.mjs'
           test "$(git rev-parse HEAD:scripts/test-native-mobile-09-browser.mjs)" = 7ffd664455df72ec8ee1384690540fac1d2b9597
           test "$(git rev-parse HEAD:scripts/test-native-index-live-07-browser.mjs)" = 807377c7cb1bd46b579a91447ad5d56a08dff8c5
           test "$(git rev-parse HEAD:scripts/test-native-photo-readiness-08-browser.mjs)" = 6a0552067224522fbea9452a15c8401d69e08c5a
           test "$(git rev-parse HEAD:scripts/main1054-stylist-wear-journey.cjs)" = 3c8327a3f7470c2b02265d622ccf62411d17b398
+          test "$(git rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 3a4c15101e3450db626478852c4b722fa3e9905b
           test "$(git rev-parse HEAD:public/app.js)" = c37bcd9373b1789a1e5470a5729c31c189211784
           test "$(git rev-parse HEAD:public/outfit-board.js)" = c29c3133fe6a20c2f57011726db0855fd4b1be6e
           test "$(git rev-parse HEAD:public/closet-stylist.js)" = 054debba61353a49242c652ca9092dbad49000d3
@@ -78,6 +79,9 @@ jobs:
             ln -s "$PWD/node_modules" "$RUNNER_TEMP/$lane-baseline/node_modules"
           done
           cp scripts/p1669-native-connectivity.cjs "$RUNNER_TEMP/p1669-baseline/scripts/"
+          # Same instrumented review harness on the immutable comparison baseline and candidate.
+          test "$(git -C "$RUNNER_TEMP/p1671-baseline" rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 261f2ebb6f0d94033f4cbaffdf6f9534411dba3a
+          cp scripts/test-parallel99-normal-app-browser.mjs "$RUNNER_TEMP/p1671-baseline/scripts/"
           cp scripts/p1671-native-outfit-search.cjs "$RUNNER_TEMP/p1671-baseline/scripts/"
           (cd "$RUNNER_TEMP/p1669-baseline" && node scripts/build.mjs)
           (cd "$RUNNER_TEMP/p1671-baseline" && node scripts/build.mjs)
