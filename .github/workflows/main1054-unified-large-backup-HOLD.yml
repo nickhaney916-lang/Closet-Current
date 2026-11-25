@@ -30,7 +30,8 @@ jobs:
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           test "${{ github.event.pull_request.base.sha }}" = 7160a5964ff3d49a8e5e7cc1eb62fb32d933bc8f
           git merge-base --is-ancestor 7160a5964ff3d49a8e5e7cc1eb62fb32d933bc8f HEAD
-          test "$(git rev-parse HEAD^)" = 7160a5964ff3d49a8e5e7cc1eb62fb32d933bc8f
+          test "$(git rev-parse HEAD^)" = 9bb0f4701a328b80c6b458fbf193dfccaabf6230
+          git diff --exit-code 9bb0f4701a328b80c6b458fbf193dfccaabf6230 HEAD -- . ':(exclude).github/workflows/main1054-unified-large-backup-HOLD.yml'
           printf '%s\n' '.github/workflows/assignment-21-large-backup-HOLD.yml' 'public/cloud-backup.js' 'scripts/assignment-21/browser.mjs' 'scripts/assignment-21/disposable-policy.sql' 'scripts/assignment-21/local-http.mjs' 'tests/mission3-dirty-revision-upload-fence.test.cjs' 'tests/mission3-stale-413-offline.test.cjs' '.github/workflows/main1054-unified-large-backup-HOLD.yml' | LC_ALL=C sort > /tmp/cc-expected-paths
           git diff --name-only 7160a5964ff3d49a8e5e7cc1eb62fb32d933bc8f HEAD | LC_ALL=C sort > /tmp/cc-actual-paths
           diff -u /tmp/cc-expected-paths /tmp/cc-actual-paths
@@ -639,7 +640,33 @@ jobs:
           sed -i 's/^project_id = .*/project_id = "closet-a21"/; s/^jwt_expiry = .*/jwt_expiry = 3600/' supabase/config.toml
           grep -q '^jwt_expiry = 3600$' supabase/config.toml
           supabase --version
-          supabase start > "$RUNNER_TEMP/closet-a21-start.log" 2>&1 || { echo 'Disposable Supabase startup failed'; exit 1; }
+          # Retry infrastructure startup only, before applying SQL or creating owners.
+          # Emit classified counters, never raw CLI output (may include credentials).
+          started=0
+          for attempt in 1 2 3; do
+            log="$RUNNER_TEMP/closet-a21-start.log"
+            if supabase start > "$log" 2>&1; then
+              echo "Disposable scale backend started on attempt $attempt"
+              started=1
+              break
+            else
+              code=$?
+              echo "Disposable scale backend startup attempt $attempt failed (exit $code)"
+            fi
+            for category in 'timeout|timed out|deadline exceeded' 'rate limit|too many requests|429' 'no space left|disk full' 'unhealthy|health check' 'connection refused|connection reset|network|TLS' 'address already in use|port is already allocated' 'pull access denied|manifest unknown|unauthorized'; do
+              count=$(grep -Eic "$category" "$log" || true)
+              printf 'Startup diagnostic category [%s]: %s\n' "$category" "$count"
+            done
+            # These commands target only this ephemeral runner's test project.
+            docker ps -a --filter 'name=closet-a21' --format '{{.Names}} {{.Status}}'
+            df -h "$RUNNER_TEMP"
+            if ! supabase stop --no-backup > "$RUNNER_TEMP/closet-a21-stop.log" 2>&1; then
+              echo 'Disposable project cleanup failed; refusing unsafe retry'
+              exit 1
+            fi
+            if test "$attempt" -lt 3; then sleep "$((attempt * 15))"; fi
+          done
+          test "$started" = 1 || { echo 'Disposable backend startup exhausted three attempts'; exit 1; }
           supabase status -o env > "$RUNNER_TEMP/closet-a21.env"
           docker exec -i supabase_db_closet-a21 psql -U postgres -v ON_ERROR_STOP=1 < "$GITHUB_WORKSPACE/scripts/assignment-21/disposable-policy.sql"
           docker exec supabase_db_closet-a21 psql -U postgres -Atc 'show server_version'
@@ -677,7 +704,7 @@ jobs:
           if test -f "$RUNNER_TEMP/closet-a21/supabase/config.toml"; then
             (cd "$RUNNER_TEMP/closet-a21" && supabase stop --no-backup >/dev/null 2>&1)
           fi
-          rm -f "$RUNNER_TEMP/closet-a21.env" "$RUNNER_TEMP/closet-a21-start.log"
+          rm -f "$RUNNER_TEMP/closet-a21.env" "$RUNNER_TEMP/closet-a21-start.log" "$RUNNER_TEMP/closet-a21-stop.log"
   acceptance:
     if: always()
     needs: [native, local-backend, large-backup]
