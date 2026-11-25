@@ -73,7 +73,7 @@ function fixture(owner){
  });
  return {
   items:[
-   item('donor-shirt','Tops','T-shirt','commons-0003','Black'),
+   {...item('donor-shirt','Tops','T-shirt','commons-0003','Black'),singleGarmentVerified:false},
    item('dress','Dresses','Casual dress','commons-0053','Black'),
    item('pants-blue','Bottoms','Jeans','commons-0021','Blue'),
    item('pants-dark','Bottoms','Jeans','commons-0023','Blue'),
@@ -177,7 +177,14 @@ async function importAndConfirmNewRed(page,owner,width,engine){
  await editor.locator('select[aria-label="Main category"]').selectOption('Tops');
  await editor.locator('select[aria-label="Item type"]').selectOption('T-shirt');
  await editor.locator('input[aria-label="Color"]').fill('Red');
- await editor.locator('button.primary').filter({hasText:'Save changes'}).click();
+ await editor.getByLabel('I verified the category, clothing type and color').check();
+ await editor.getByLabel('I confirmed this photo shows one garment').check();
+ const prepare=editor.getByRole('button',{name:'Prepare smaller display photo'});
+ if(await prepare.count()){
+  await prepare.click();
+  await editor.locator('input[type=checkbox]').last().check();
+ }
+ await editor.getByRole('button',{name:'Save changes',exact:true}).click();
  await page.waitForFunction(id=>items.some(row=>row.id===id)&&
   !batch.some(row=>row.id===id),id,{timeout:30000});
  const ownerStored=(await readItems(page)).find(x=>x.id===id);
@@ -188,24 +195,31 @@ async function importAndConfirmNewRed(page,owner,width,engine){
  assert.equal(ownerStored.category,'Tops');
  assert.equal(ownerStored.itemType,'T-shirt');
  assert.equal(ownerStored.color,'Red');
- // The real camera/import pipeline deliberately records this image as
- // singleGarmentVerified=false. A corrected clothing category does not
- // magically prove this was a one-garment photograph.
- assert.equal(ownerStored.singleGarmentVerified,false);
+ // Current canonical save requires explicit source confirmation. The owner
+ // confirmed this single photograph; that is not inferred segmentation or fitted 3D.
+ assert.equal(ownerStored.singleGarmentVerified,true);
+ assert.equal(ownerStored.ownerReviewed,true);
+ // Preserve the older independent session-only acknowledgment test using
+ // a distinct, existing legacy fixture with a verified JPEG but no one-item receipt.
+ const legacyId=owner+'-donor-shirt';
+ const legacyBefore=(await readItems(page)).find(x=>x.id===legacyId);
+ assert.equal(legacyBefore.singleGarmentVerified,false);
  await page.evaluate(()=>switchView('stylist'));
  await page.waitForFunction(id=>[...document.querySelectorAll(
   '#styleOwned03Pending button[data-photo-item-id]')]
-  .some(b=>b.dataset.photoItemId===id),id,{timeout:30000});
- assert.equal(await page.locator('#styleOwned03Item option[value="'+id+'"]').count(),0,
+  .some(b=>b.dataset.photoItemId===id),legacyId,{timeout:30000});
+ assert.equal(await page.locator('#styleOwned03Item option[value="'+legacyId+'"]').count(),0,
   'Unreviewed original must not be silently admitted');
  await capture(page,width,engine,'00-confirm-one-original-garment');
- const button=page.locator('#styleOwned03Pending button[data-photo-item-id]')
-  .filter({hasText:'Yes, this photo shows one clothing item'}).first();
+ const button=page.locator('#styleOwned03Pending button[data-photo-item-id="'+legacyId+'"]')
+  .filter({hasText:'Yes, this photo shows one clothing item'});
  await button.click();
  await page.waitForFunction(id=>[...document.querySelectorAll('#styleOwned03Item option')]
-  .some(x=>x.value===id),id,{timeout:30000});
- assert.equal((await readItems(page)).find(x=>x.id===id).singleGarmentVerified,false,
+  .some(x=>x.value===id),legacyId,{timeout:30000});
+ assert.deepEqual((await readItems(page)).find(x=>x.id===legacyId),legacyBefore,
   'One-item photo acknowledgment must be session-only, not a fabricated source/3D approval');
+ await page.waitForFunction(id=>[...document.querySelectorAll('#styleOwned03Item option')]
+  .some(x=>x.value===id),id,{timeout:30000});
  return id;
 }
 async function createAndVerifyLooks(page,id,owner,width,engine,rich){

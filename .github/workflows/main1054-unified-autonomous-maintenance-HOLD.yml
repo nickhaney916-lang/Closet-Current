@@ -31,7 +31,7 @@ jobs:
           git merge-base --is-ancestor fffe8ea6c715083f680a4453536198b9b9d2540f HEAD
           git merge-base --is-ancestor fee6a472e196f89b51fe810a832f9abf1bfb27ce HEAD
           test "$(git rev-parse fee6a472e196f89b51fe810a832f9abf1bfb27ce:.github/workflows/main1054-unified-saved-outfit-management-HOLD.yml)" = "$(git rev-parse HEAD:.github/workflows/main1054-unified-saved-outfit-management-HOLD.yml)"
-          printf '%s\n' '.github/workflows/assignment-16-maintenance-no-deploy.yml' '.github/workflows/main1054-unified-autonomous-maintenance-HOLD.yml' 'docs/assignment-16-maintenance.md' 'public/outfit-board.js' 'scripts/maintenance/browser-test.mjs' 'scripts/maintenance/job.mjs' 'scripts/maintenance/recognition-contract.mjs' 'scripts/maintenance/store.mjs' 'scripts/maintenance/test-data.mjs' 'scripts/maintenance/trends.mjs' 'tests/maintenance-1684.test.mjs' 'scripts/test-mission3-offline-auth-recovery-browser.mjs' 'scripts/p1669-native-connectivity.cjs' 'scripts/test-capture-proof-01-browser.mjs' 'scripts/test-native-consumer-board-04-browser.mjs' 'scripts/p1671-native-outfit-search.cjs' | LC_ALL=C sort > /tmp/cc-expected-paths
+          printf '%s\n' '.github/workflows/assignment-16-maintenance-no-deploy.yml' '.github/workflows/main1054-unified-autonomous-maintenance-HOLD.yml' 'docs/assignment-16-maintenance.md' 'public/outfit-board.js' 'scripts/maintenance/browser-test.mjs' 'scripts/maintenance/job.mjs' 'scripts/maintenance/recognition-contract.mjs' 'scripts/maintenance/store.mjs' 'scripts/maintenance/test-data.mjs' 'scripts/maintenance/trends.mjs' 'tests/maintenance-1684.test.mjs' 'scripts/test-mission3-offline-auth-recovery-browser.mjs' 'scripts/p1669-native-connectivity.cjs' 'scripts/test-capture-proof-01-browser.mjs' 'scripts/test-native-consumer-board-04-browser.mjs' 'scripts/p1671-native-outfit-search.cjs' 'scripts/test-style-owned-live-03-browser.mjs' | LC_ALL=C sort > /tmp/cc-expected-paths
           git diff --name-only fee6a472e196f89b51fe810a832f9abf1bfb27ce HEAD | LC_ALL=C sort > /tmp/cc-actual-paths
           diff -u /tmp/cc-expected-paths /tmp/cc-actual-paths
           test "$(git rev-parse HEAD:.github/workflows/assignment-16-maintenance-no-deploy.yml)" = de71b0be43fb09699e071f8b9aa4fdbecb91ca3e
@@ -73,7 +73,7 @@ jobs:
           test "$(git rev-parse HEAD:scripts/p1669-native-connectivity.cjs)" = bdc5480aa014d8a53cd6a468bd73aef1e3c8b082
           test "$(git rev-parse 961956470e21ab5edc231060d48e076f1de4d323:scripts/test-mission3-offline-auth-recovery-browser.mjs)" = 5e499aefa49e66cf8a4f52bcdebb0ce8920368e2
           test "$(git rev-parse HEAD:scripts/test-mission3-offline-auth-recovery-browser.mjs)" = a1a0a3adfa75eb5f30ca8274b5bc5f93e81fba56
-          git diff --exit-code 961956470e21ab5edc231060d48e076f1de4d323 HEAD -- . ':(exclude)scripts/p1669-native-connectivity.cjs' ':(exclude)scripts/test-mission3-offline-auth-recovery-browser.mjs' ':(exclude).github/workflows/main1054-unified-autonomous-maintenance-HOLD.yml' ':(exclude)scripts/test-capture-proof-01-browser.mjs' ':(exclude)scripts/test-native-consumer-board-04-browser.mjs' ':(exclude)scripts/p1671-native-outfit-search.cjs'
+          git diff --exit-code 961956470e21ab5edc231060d48e076f1de4d323 HEAD -- . ':(exclude)scripts/p1669-native-connectivity.cjs' ':(exclude)scripts/test-mission3-offline-auth-recovery-browser.mjs' ':(exclude).github/workflows/main1054-unified-autonomous-maintenance-HOLD.yml' ':(exclude)scripts/test-capture-proof-01-browser.mjs' ':(exclude)scripts/test-native-consumer-board-04-browser.mjs' ':(exclude)scripts/p1671-native-outfit-search.cjs' ':(exclude)scripts/test-style-owned-live-03-browser.mjs'
           test "$(git rev-parse f6ec61b6197c437675b9b16a4f55bf7e84341376:scripts/p1671-native-outfit-search.cjs)" = e1015fdf39105e7cf1821e69dbccbac1231bc015
           test "$(git rev-parse 7f30a37112b4828d8b63dd737a7748eb895b417d:scripts/p1671-native-outfit-search.cjs)" = e078191623ca4c2fd9becd98cfd4e1135f05ca58
           test "$(git rev-parse HEAD:scripts/p1671-native-outfit-search.cjs)" = 7efc1353e821f9531c9e08b8e7c4b27497434ec2
@@ -84,8 +84,10 @@ jobs:
           test "$(git rev-parse HEAD:.github/workflows/native-restore-3d-06-no-deploy.yml)" = 6798b62d4de129ce661cc9a7fcca4194746a024e
           test "$(git rev-parse HEAD:scripts/install-parallel90-viewer.mjs)" = 6768a6cb58224f403254aeda6aa80d2e720d6375
           test "$(git rev-parse HEAD:scripts/check-parallel90-interactions.mjs)" = b54c34e4c5743ba6fc2e9161ce3acf7c60886bee
+          git merge-base --is-ancestor 84568b11e31228c3d1adb934eee8363cca169e48 HEAD
+          git diff --exit-code 84568b11e31228c3d1adb934eee8363cca169e48 HEAD -- . ':(exclude)scripts/test-style-owned-live-03-browser.mjs' ':(exclude).github/workflows/main1054-unified-autonomous-maintenance-HOLD.yml'
           git merge-base --is-ancestor fefe69cd04c57515433985e6141f7f9f0951f6ab HEAD
-          git diff --exit-code fefe69cd04c57515433985e6141f7f9f0951f6ab HEAD -- . ':(exclude).github/workflows/main1054-unified-autonomous-maintenance-HOLD.yml' ':(exclude)scripts/test-capture-proof-01-browser.mjs' ':(exclude)scripts/test-native-consumer-board-04-browser.mjs' ':(exclude)scripts/p1671-native-outfit-search.cjs'
+          git diff --exit-code fefe69cd04c57515433985e6141f7f9f0951f6ab HEAD -- . ':(exclude).github/workflows/main1054-unified-autonomous-maintenance-HOLD.yml' ':(exclude)scripts/test-capture-proof-01-browser.mjs' ':(exclude)scripts/test-native-consumer-board-04-browser.mjs' ':(exclude)scripts/p1671-native-outfit-search.cjs' ':(exclude)scripts/test-style-owned-live-03-browser.mjs'
           test "$(git rev-parse HEAD:.github/workflows/capture-proof-01-no-deploy.yml)" = 1aa47f424b137bf697268bf49525152bcb15fce1
           test "$(git rev-parse HEAD:.github/workflows/native-consumer-board-04-no-deploy.yml)" = 0a889151a82ebb41f8ff7e9d4f9e68a1cfa807c0
           test "$(git rev-parse HEAD:.github/workflows/style-owned-live-03-no-deploy.yml)" = 467f918a960a034dcae72f0209397b43e2bad8c2
@@ -94,7 +96,8 @@ jobs:
           test "$(git rev-parse 7f30a37112b4828d8b63dd737a7748eb895b417d:scripts/test-native-consumer-board-04-browser.mjs)" = 5ebbe33e8fe79121511a6c911826a7a67925b953
           test "$(git rev-parse HEAD:scripts/test-native-consumer-board-04-browser.mjs)" = f55d303acd7cc7218aa84796b402cf239c0fd53e
           test "$(git rev-parse HEAD:scripts/audit-native-consumer-board-04.mjs)" = cfbcb88c5dc748d74bcffcb86142324b18ed5ddb
-          test "$(git rev-parse HEAD:scripts/test-style-owned-live-03-browser.mjs)" = 6d4a5390e0c6627c90a707607db03e489ffa621c
+          test "$(git rev-parse 84568b11e31228c3d1adb934eee8363cca169e48:scripts/test-style-owned-live-03-browser.mjs)" = 6d4a5390e0c6627c90a707607db03e489ffa621c
+          test "$(git rev-parse HEAD:scripts/test-style-owned-live-03-browser.mjs)" = 0ec6aa86a6007de89c4551b00b2d817f9282bb72
           test "$(git rev-parse HEAD:scripts/audit-style-owned-live-03.mjs)" = b5ed2ee353b469a945de656cab41c77282f0a4f0
           git log -1 --format='commit %H tree %T'
       - name: Install pinned dependencies
