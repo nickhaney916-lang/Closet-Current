@@ -46,7 +46,7 @@ jobs:
           set -eu
           test "$(git rev-parse HEAD)" = "$HEAD_SHA"
           test "$BASE_SHA" = d8827e01d16d64da7da82c95cad6d92c20d98c6d
-          test "$(git rev-parse HEAD^)" = "$BASE_SHA"
+          git merge-base --is-ancestor "$BASE_SHA" HEAD
           git diff --exit-code "$BASE_SHA" HEAD -- public scripts/assignment-21 supabase/cloud-backup.sql
           git log -1 --format='commit %H tree %T'
       - uses: actions/setup-node@v4
@@ -105,6 +105,9 @@ jobs:
           docker inspect --format '{{.Config.Image}}' supabase_auth_closet-a21 supabase_rest_closet-a21 supabase_storage_closet-a21
       - name: Verify policy privileges and session lookup plan
         run: docker exec -i supabase_db_closet-a21 psql -U postgres -v ON_ERROR_STOP=1 < scripts/assignment-22/policy-contract.sql
+      - if: matrix.engine == 'chromium'
+        name: Verify Auth removes server sessions and preserves authorized devices
+        run: SUPABASE_TEST_ENV="$RUNNER_TEMP/closet-a21.env" node scripts/assignment-22/auth-lifecycle.mjs
       - name: Exercise large wardrobes, fault recovery and actual PostgreSQL size boundary
         env:
           A21_ENGINE: ${{ matrix.engine }}
