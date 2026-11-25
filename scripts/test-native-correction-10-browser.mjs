@@ -26,9 +26,14 @@ const types={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html
  '.json':'application/json','.css':'text/css','.glb':'model/gltf-binary',
  '.jpg':'image/jpeg','.png':'image/png','.bin':'application/octet-stream',
  '.svg':'image/svg+xml','.woff2':'font/woff2'};
+let unmanagedTrendProbes=0;
 const server=createServer(async(req,res)=>{
  try{
   const path=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+  if(req.method==='GET'&&path==='/public/maintenance/trends'){
+   unmanagedTrendProbes++;
+   res.writeHead(204,{'cache-control':'no-store'});res.end();return;
+  }
   if(path.includes('\\')||path.includes('\0')||path.split('/').includes('..')||
     !/^\/(public\/|research\/|donor\/|benchmark\/|node_modules\/)/.test(path))
    throw Error('Unsafe test path');
@@ -250,12 +255,21 @@ try{
   await editor.locator('select[aria-label="Main category"]').selectOption('Tops');
   await editor.locator('select[aria-label="Item type"]').selectOption('T-shirt');
   await editor.locator('input[aria-label="Color"]').fill('Red');
-  await editor.locator('button.primary').filter({hasText:'Save changes'}).click();
+  await editor.getByLabel('I verified the category, clothing type and color').check();
+  await editor.getByLabel('I confirmed this photo shows one garment').check();
+  const prepare=editor.getByRole('button',{name:'Prepare smaller display photo'});
+  if(await prepare.count()){
+   await prepare.click();
+   await editor.locator('input[type=checkbox]').last().check();
+  }
+  await editor.getByRole('button',{name:'Save changes',exact:true}).click();
   await page.waitForFunction(id=>items.some(x=>x.id===id)&&
    !batch.some(x=>x.id===id)&&
    window.closetIndex02?.state().total===6,newId,{timeout:30000});
   const newStored=(await readItems(page)).find(x=>x.id===newId);
   assert.ok(newStored&&newStored.ownerId==='native05-A');
+  assert.equal(newStored.ownerReviewed,true);
+  assert.equal(newStored.singleGarmentVerified,true);
   assert.equal(newStored.category,'Tops');
   assert.equal(newStored.itemType,'T-shirt');
   assert.equal(newStored.color,'Red');
@@ -326,7 +340,22 @@ try{
   await editor10.locator('input[aria-label="Color"]').fill('Brown');
   await take(page,width,'11-unsaved-original-clothing-correction');
   // Merely opening the editor and then canceling changes no stored record.
-  await editor10.locator('button').filter({hasText:'Cancel'}).click();
+  const discardChanges=async accept=>{
+   const prompt=page.waitForEvent('dialog').then(async dialog=>{
+    const details={type:dialog.type(),message:dialog.message()};
+    if(accept)await dialog.accept();else await dialog.dismiss();
+    return details;
+   });
+   const [details]=await Promise.all([prompt,editor10.getByRole('button',{name:'Cancel',exact:true}).click()]);
+   assert.equal(details.type,'confirm');
+   assert.equal(details.message,'Discard your unsaved clothing changes?');
+  };
+  await discardChanges(false);
+  assert.equal(await editor10.isVisible(),true,'Declining discard preserves the unsaved editor');
+  assert.equal(await editor10.locator('input[aria-label="Color"]').inputValue(),'Brown');
+  assert.deepEqual((await readItems(page)).find(x=>x.id===newId),originalGarment);
+  await discardChanges(true);
+  await editor10.waitFor({state:'hidden'});
   assert.deepEqual((await readItems(page)).find(x=>x.id===newId),originalGarment);
   assert.equal(await page.evaluate(id=>items.find(x=>x.id===id).category,newId),'Tops');
   assert.deepEqual(await readBoard(page),stableBoard);
@@ -496,7 +525,10 @@ try{
   assert.ok(modalBounds.buttons.length===2&&modalBounds.buttons.every(x=>x.height>=48),
    'Both saved clothing actions must remain real 48px touch targets after CAS refusal');
   await take(page,width,'14-safe-stale-tab-refusal-with-original-protected');
-  await editor10.locator('button').filter({hasText:'Cancel'}).click();
+  await discardChanges(true);
+  await editor10.waitFor({state:'hidden'});
+  assert.deepEqual((await readItems(page)).find(x=>x.id===newId),parallelWrite);
+  assert.deepEqual(await readBoard(page),expectedBoard);
   await page.evaluate(()=>switchView('builder'));
   await page.locator('details.account-menu > summary').click();
   await page.locator('#logout').click();
@@ -579,6 +611,7 @@ try{
   await browser.close();browser=null;
  }
  assert.equal(crashes.length,0,'No real WebGL viewport may crash');
+ assert.ok(unmanagedTrendProbes>=3,'Each viewport must probe the absent managed catalog');
  assert.equal(cases.length,3);assert.equal(screens.length,42);
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
