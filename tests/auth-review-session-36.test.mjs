@@ -61,8 +61,12 @@ test('AUTH36 browser distinguishes synthetic Auth from signed disposable backend
 });
 
 test('AUTH36 signed backend only allows disposable loopback and real signed two-user denial',()=>{
- assert.match(signed,/127\.0\.0\.1/);
- assert.match(signed,/Disposable loopback only/);
+ const transport=read('research/auth-review-session-36/local-http.mjs');
+ assert.match(signed,/from '.\/local-http\.mjs'/);
+ assert.match(transport,/127\.0\.0\.1/);
+ assert.match(transport,/Disposable IPv4 loopback only/);
+ assert.match(transport,/target\.origin,endpoint\.origin/);
+ assert.match(transport,/redirect:'error'/);
  assert.match(signed,/distinctAuthenticatedOwners:true/);
  assert.match(signed,/against/);
  assert.match(signed,/Anonymous/);
