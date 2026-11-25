@@ -127,8 +127,11 @@ source=source.slice(0,start)+`
   await page.waitForFunction(()=>/Could not check for newer data/.test(document.querySelector('#stylistFreshness')?.textContent));
   await create.click();
   await card.waitFor();
-  assert.equal(requests,3);
-  await page.waitForFunction(()=>!/Could not check/.test(document.querySelector('#stylistFreshness')?.textContent));
+  // Local outfit cards render immediately; the managed endpoint probe now
+  // precedes the legacy feed request. Assert the exact count after the
+  // actual refresh settles, not merely when the cached outfit card is visible.
+  await page.waitForFunction(()=>!trendLoading&& !/Could not check/.test(document.querySelector('#stylistFreshness')?.textContent));
+  assert.equal(requests,3,'one manual retry after the failed reconnect refresh');
   const acked=backupProbeCount;
   await context.setOffline(true);
   await page.waitForFunction(()=>!navigator.onLine);

@@ -31,7 +31,7 @@ jobs:
           git merge-base --is-ancestor fffe8ea6c715083f680a4453536198b9b9d2540f HEAD
           git merge-base --is-ancestor fee6a472e196f89b51fe810a832f9abf1bfb27ce HEAD
           test "$(git rev-parse fee6a472e196f89b51fe810a832f9abf1bfb27ce:.github/workflows/main1054-unified-saved-outfit-management-HOLD.yml)" = "$(git rev-parse HEAD:.github/workflows/main1054-unified-saved-outfit-management-HOLD.yml)"
-          printf '%s\n' '.github/workflows/assignment-16-maintenance-no-deploy.yml' '.github/workflows/main1054-unified-autonomous-maintenance-HOLD.yml' 'docs/assignment-16-maintenance.md' 'public/outfit-board.js' 'scripts/maintenance/browser-test.mjs' 'scripts/maintenance/job.mjs' 'scripts/maintenance/recognition-contract.mjs' 'scripts/maintenance/store.mjs' 'scripts/maintenance/test-data.mjs' 'scripts/maintenance/trends.mjs' 'tests/maintenance-1684.test.mjs' | LC_ALL=C sort > /tmp/cc-expected-paths
+          printf '%s\n' '.github/workflows/assignment-16-maintenance-no-deploy.yml' '.github/workflows/main1054-unified-autonomous-maintenance-HOLD.yml' 'docs/assignment-16-maintenance.md' 'public/outfit-board.js' 'scripts/maintenance/browser-test.mjs' 'scripts/maintenance/job.mjs' 'scripts/maintenance/recognition-contract.mjs' 'scripts/maintenance/store.mjs' 'scripts/maintenance/test-data.mjs' 'scripts/maintenance/trends.mjs' 'tests/maintenance-1684.test.mjs' 'scripts/test-mission3-offline-auth-recovery-browser.mjs' 'scripts/p1669-native-connectivity.cjs' | LC_ALL=C sort > /tmp/cc-expected-paths
           git diff --name-only fee6a472e196f89b51fe810a832f9abf1bfb27ce HEAD | LC_ALL=C sort > /tmp/cc-actual-paths
           diff -u /tmp/cc-expected-paths /tmp/cc-actual-paths
           test "$(git rev-parse HEAD:.github/workflows/assignment-16-maintenance-no-deploy.yml)" = de71b0be43fb09699e071f8b9aa4fdbecb91ca3e
@@ -69,7 +69,11 @@ jobs:
           test "$(git rev-parse HEAD:public/outfit-board.js)" = 0682db3f717fa3b2e1d74c1c4146d382e7f3d6b9
           test "$(git rev-parse HEAD:public/closet-stylist.js)" = 5a61f11f5e58cc48f8d4e8e52dcf0a5cb0e2cc51
           test "$(git rev-parse HEAD:public/saved-outfit-search.js)" = adb866e6d02aa9ce7c50cd3d12c903ecd87ee260
-          test "$(git rev-parse HEAD:scripts/p1669-native-connectivity.cjs)" = d634ed32dd420dd426de33c5e139560475a05d66
+          test "$(git rev-parse 961956470e21ab5edc231060d48e076f1de4d323:scripts/p1669-native-connectivity.cjs)" = d634ed32dd420dd426de33c5e139560475a05d66
+          test "$(git rev-parse HEAD:scripts/p1669-native-connectivity.cjs)" = bdc5480aa014d8a53cd6a468bd73aef1e3c8b082
+          test "$(git rev-parse 961956470e21ab5edc231060d48e076f1de4d323:scripts/test-mission3-offline-auth-recovery-browser.mjs)" = 5e499aefa49e66cf8a4f52bcdebb0ce8920368e2
+          test "$(git rev-parse HEAD:scripts/test-mission3-offline-auth-recovery-browser.mjs)" = a1a0a3adfa75eb5f30ca8274b5bc5f93e81fba56
+          git diff --exit-code 961956470e21ab5edc231060d48e076f1de4d323 HEAD -- . ':(exclude)scripts/p1669-native-connectivity.cjs' ':(exclude)scripts/test-mission3-offline-auth-recovery-browser.mjs' ':(exclude).github/workflows/main1054-unified-autonomous-maintenance-HOLD.yml'
           test "$(git rev-parse f6ec61b6197c437675b9b16a4f55bf7e84341376:scripts/p1671-native-outfit-search.cjs)" = e1015fdf39105e7cf1821e69dbccbac1231bc015
           test "$(git rev-parse HEAD:scripts/p1671-native-outfit-search.cjs)" = e078191623ca4c2fd9becd98cfd4e1135f05ca58
           test "$(git rev-parse f6ec61b6197c437675b9b16a4f55bf7e84341376:scripts/test-native-restore-3d-06-browser.mjs)" = 068adc1108d2796475a0a180bef3e91355242920
@@ -179,7 +183,7 @@ jobs:
           done
       - if: matrix.lane == 'auth'
         name: Verified owner offline and revocation boundary
-        run: node scripts/test-mission3-offline-auth-recovery-browser.mjs "$RUNNER_TEMP/p1669-auth"
+        run: node scripts/test-mission3-offline-auth-recovery-browser.mjs benchmark/p1669-auth
       - if: matrix.lane == 'regression'
         name: Full unified regression
         run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
@@ -382,6 +386,7 @@ jobs:
             benchmark/assignment-14/
             benchmark/assignment-15/
             benchmark/assignment-16-maintenance/
+            benchmark/p1669-auth/
           if-no-files-found: warn
           retention-days: 14
   acceptance:
