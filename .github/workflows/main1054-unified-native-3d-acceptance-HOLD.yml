@@ -34,7 +34,7 @@ jobs:
           test "$(git rev-parse HEAD:scripts/test-native-mobile-09-browser.mjs)" = 7ffd664455df72ec8ee1384690540fac1d2b9597
           test "$(git rev-parse HEAD:scripts/test-native-index-live-07-browser.mjs)" = 807377c7cb1bd46b579a91447ad5d56a08dff8c5
           test "$(git rev-parse HEAD:scripts/test-native-photo-readiness-08-browser.mjs)" = 6a0552067224522fbea9452a15c8401d69e08c5a
-          test "$(git rev-parse HEAD:scripts/main1054-stylist-wear-journey.cjs)" = 7c9f8cf9b0fb8121fe898d893e0bc087f637f843
+          test "$(git rev-parse HEAD:scripts/main1054-stylist-wear-journey.cjs)" = 3c8327a3f7470c2b02265d622ccf62411d17b398
           test "$(git rev-parse HEAD:public/app.js)" = c37bcd9373b1789a1e5470a5729c31c189211784
           test "$(git rev-parse HEAD:public/outfit-board.js)" = c29c3133fe6a20c2f57011726db0855fd4b1be6e
           test "$(git rev-parse HEAD:public/closet-stylist.js)" = 054debba61353a49242c652ca9092dbad49000d3
@@ -51,7 +51,7 @@ jobs:
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - run: node scripts/build.mjs
       - if: matrix.lane == 'stylist-chromium' || matrix.lane == 'stylist-webkit'
-        name: Independently accepted ordinary Stylist-to-wear journey
+        name: Ordinary Stylist-to-wear journey with trusted click diagnostics
         run: |
           set -eu
           case "${{ matrix.lane }}" in

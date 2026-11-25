@@ -41,6 +41,42 @@ const journey = source.slice(0, source.indexOf(start)) + `
  }));
  const history = page.locator('#outfitWearHistory');
  const wearStatus = page.locator('#outfitWearStatus');
+ // Use a normal trusted pointer click. Do not force, retry, dispatch or mutate
+ // application state. Center after history rendering changes the layout.
+ const clickWear = async (button, expected) => {
+  await page.waitForFunction(() => outfitWearLoaded && !outfitWearBusy &&
+   window.closetAuth.user?.id === 'p99-A');
+  await button.evaluate(el => el.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'}));
+  await button.evaluate(el => {
+   window.__main1054WearClick = { trusted:0, matched:0, busyAtClick:null, hit:null };
+   document.addEventListener('click', event => {
+    const receipt=window.__main1054WearClick;
+    receipt.trusted=Number(event.isTrusted);
+    receipt.matched=Number(event.composedPath().includes(el));
+    receipt.busyAtClick=outfitWearBusy;
+    receipt.hit=event.target?.tagName || null;
+   }, {capture:true,once:true});
+  });
+  try {
+   await button.click();
+   await wearStatus.getByText(expected,{exact:true}).waitFor();
+   const click=await page.evaluate(()=>window.__main1054WearClick);
+   assert.equal(click.trusted,1,'wear click must be trusted');
+   assert.equal(click.matched,1,'wear click must target the intended control');
+   assert.equal(click.busyAtClick,false,'wear transaction was busy at click');
+  } catch(error) {
+   const diagnostic=await page.evaluate(()=>({
+    click:window.__main1054WearClick,
+    ownerReady:window.closetAuth.user?.id==='p99-A',
+    busy:outfitWearBusy,loaded:outfitWearLoaded,
+    events:outfitWearEvents.length,
+    status:document.querySelector('#outfitWearStatus')?.textContent,
+    historyOpen:document.querySelector('#outfitWearPanel')?.open
+   })).catch(()=>({unavailable:true}));
+   console.log('MAIN1054_WEAR_DIAGNOSTIC',JSON.stringify({engine,width,expected,...diagnostic}));
+   throw error;
+  }
+ };
 
  advance('stylist-owned-outfit-save');
  await nav('stylist');
@@ -63,11 +99,11 @@ const journey = source.slice(0, source.indexOf(start)) + `
  const saved = page.locator('#savedBoards');
  const openSaved = saved.getByRole('button', { name, exact: true });
  const wear = saved.getByRole('button', { name: 'I wore this · ' + name, exact: true });
+ await history.getByText('No outfits recorded yet.', { exact: true }).waitFor();
  await openSaved.click();
  assert.equal(await page.locator('#boardName').inputValue(), name);
  assert.equal(await wearRow(), undefined, 'opening a saved Stylist look recorded wear');
- await wear.click();
- await wearStatus.getByText('Outfit recorded for today.').waitFor();
+ await clickWear(wear, 'Outfit recorded for today.');
  const persisted = await wearRow();
  assert.equal(persisted.owner, 'p99-A');
  assert.equal(persisted.events.length, 1);
@@ -75,8 +111,8 @@ const journey = source.slice(0, source.indexOf(start)) + `
   top: items.find(item => item.id === slots.top)?.name,
   bottom: items.find(item => item.id === slots.bottom)?.name
  }), persisted.events[0].slots), { top: shirtName, bottom: jeansName });
- await wear.click();
- await wearStatus.getByText('This combination is already recorded for today.').waitFor();
+ await history.getByText(name, { exact: true }).waitFor();
+ await clickWear(wear, 'This combination is already recorded for today.');
  assert.deepEqual(await wearRow(), persisted);
 
  advance('wear-history-owner-isolation');
