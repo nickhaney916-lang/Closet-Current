@@ -123,8 +123,12 @@ async function exercise(browser,engine,width,total) {
   await tab.locator('#authSubmit').tap();
   await ready(tab,owner);
  };
+ const accountMenu=page.locator('.account-menu');
+ const openAccountMenu=async()=>{
+  if (await accountMenu.getAttribute('open')===null) await accountMenu.locator('summary').tap();
+ };
  const logout=async()=>{
-  await page.locator('.account-menu summary').tap();
+  await openAccountMenu();
   const reloaded=page.waitForEvent('load');
   await page.locator('#logout').tap();
   await reloaded;
@@ -141,8 +145,7 @@ async function exercise(browser,engine,width,total) {
  const backedUp=tab=>tab.waitForFunction(()=>document.querySelector('#cloudStatus').textContent==='Cloud backup up to date',
   null,{timeout:90000});
  const sync=async()=>{
-  const menu=page.locator('.account-menu');
-  if (await menu.getAttribute('open')===null) await menu.locator('summary').tap();
+  await openAccountMenu();
   await page.locator('#syncCloset').tap();
   await backedUp(page);
  };
@@ -206,7 +209,9 @@ async function exercise(browser,engine,width,total) {
   for (let cycle=0;cycle<(total===500?1:10);cycle++) {
    const began=performance.now(), before={...counts};
    stage='cycle '+(cycle+1)+' browse';
+   if (cycle===0) await openAccountMenu();
    await page.locator('.main-nav button[data-view=closet]').tap();
+   if (cycle===0) assert.equal(await accountMenu.getAttribute('open'),null,'Account menu covered the destination view');
    await page.locator('#search').fill(rows[cycle+2].name);
    await page.locator('#closetGrid').getByText(rows[cycle+2].name,{exact:true}).waitFor();
    if (cycle===0 && total!==500) {

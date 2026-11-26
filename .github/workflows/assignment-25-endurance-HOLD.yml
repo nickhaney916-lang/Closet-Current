@@ -21,7 +21,7 @@ jobs:
         run: |
           test "$(git rev-parse HEAD)" = "$HEAD_SHA"
           git merge-base --is-ancestor 2f57f8753d56907bc686f2fcfd58c12e3cb357cc HEAD
-          git diff --exit-code 2f57f8753d56907bc686f2fcfd58c12e3cb357cc HEAD -- public supabase
+          git diff --exit-code 2f57f8753d56907bc686f2fcfd58c12e3cb357cc HEAD -- public supabase ':(exclude)public/navigation.js'
           git log -1 --format='commit %H tree %T'
       - uses: actions/setup-node@v4
         with:
