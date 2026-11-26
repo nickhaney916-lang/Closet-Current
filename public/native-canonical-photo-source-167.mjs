@@ -81,7 +81,10 @@ export function jpegOrientation(bytes){
  if(!validJPEG(bytes))return null;
  let i=2;
  while(i+4<=bytes.length){
-  if(bytes[i]!==255)break;const marker=bytes[i+1];i+=2;
+  if(bytes[i++]!==255)break;
+  while(i<bytes.length&&bytes[i]===255)i++;
+  if(i>=bytes.length)break;
+  const marker=bytes[i++];
   if(marker===0xda||marker===0xd9)break;
   if(marker===0x01||marker>=0xd0&&marker<=0xd7)continue;
   const size=(bytes[i]<<8)|bytes[i+1];if(size<2||i+size>bytes.length)break;
