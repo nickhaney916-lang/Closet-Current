@@ -305,3 +305,78 @@ test('a response behind the last accepted revision cannot roll back a clean devi
   assert.equal((await f.readMarker()).baseVersion,6);
  }finally{f.close();}
 });
+
+test('Keep both consent is invalidated by a newer local edit and cannot be replayed',async()=>{
+ const item=name=>({id:'shared-piece',name});
+ const doc=name=>({...empty(),items:[item(name)]});
+ const f=await fixture({dirty:true,baseDocument:doc('Before edits'),
+  local:[item('Local edit')],cloudRevision:6,cloudDocument:doc('Cloud edit')});
+ try{
+  await f.start();
+  assert.equal(f.conflictButton().hidden,false);
+  const oldApproval=f.conflictButton().onclick;
+  const priorMarker=await f.readMarker();
+  await f.window.closetCloud.beforeWrite(f.db);
+  await new Promise((resolve,reject)=>{
+   const tx=f.db.transaction('items','readwrite');
+   tx.objectStore('items').put(item('Newer local edit'));
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+  });
+  f.window.closetCloud.changed();
+  assert.ok((await f.readMarker()).localRevision>priorMarker.localRevision);
+  await oldApproval();
+  assert.equal(f.revision,6);
+  assert.equal(f.saved,null);
+  assert.equal((await f.readItems())[0].name,'Newer local edit');
+  assert.equal((await f.readMarker()).dirty,true);
+  assert.equal(f.conflictButton().hidden,false);
+  const freshApproval=f.conflictButton().onclick;
+  assert.notEqual(freshApproval,oldApproval);
+  const beforeReplay=f.requests.length;
+  await oldApproval();
+  assert.equal(f.requests.length,beforeReplay,'consumed stale handler must not make a network request');
+  assert.equal(f.saved,null);
+  await freshApproval();
+  assert.equal(f.revision,7);
+  assert.equal(f.saved.p_expected_revision,6);
+  assert.deepEqual(f.remoteDocument.items.map(row=>row.name).sort(),
+   ['Cloud edit','Newer local edit (saved copy)']);
+  assert.equal(new Set(f.remoteDocument.items.map(row=>row.id)).size,2);
+  const afterSave=f.requests.length;
+  await freshApproval();
+  assert.equal(f.requests.length,afterSave,'consumed successful handler must not replay');
+  assert.equal(f.revision,7);
+ }finally{f.close();}
+});
+
+test('captured conflict approval cannot publish across session lock and a fresh session generation',async()=>{
+ const item=name=>({id:'shared-piece',name});
+ const doc=name=>({...empty(),items:[item(name)]});
+ const f=await fixture({dirty:true,baseDocument:doc('Before edits'),
+  local:[item('Local edit')],cloudRevision:6,cloudDocument:doc('Cloud edit')});
+ try{
+  await f.start();
+  assert.equal(f.conflictButton().hidden,false);
+  const oldApproval=f.conflictButton().onclick;
+  assert.equal(typeof f.events.get('closet:session-locked'),'function');
+  f.events.get('closet:session-locked')();
+  const lockedRequests=f.requests.length;
+  await oldApproval();
+  assert.equal(f.requests.length,lockedRequests);
+  assert.equal(f.saved,null);
+  assert.equal(f.revision,6);
+  await f.start();
+  assert.equal(f.conflictButton().hidden,false);
+  const freshApproval=f.conflictButton().onclick;
+  assert.notEqual(freshApproval,oldApproval);
+  const resumedRequests=f.requests.length;
+  await oldApproval();
+  assert.equal(f.requests.length,resumedRequests);
+  assert.equal(f.saved,null);
+  assert.equal((await f.readItems())[0].name,'Local edit');
+  await freshApproval();
+  assert.equal(f.revision,7);
+  assert.deepEqual(f.remoteDocument.items.map(row=>row.name).sort(),
+   ['Cloud edit','Local edit (saved copy)']);
+ }finally{f.close();}
+});
