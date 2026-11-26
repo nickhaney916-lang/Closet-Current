@@ -1,11 +1,12 @@
 'use strict';
 let styledCollectionResults=[];
+let styledCollectionResultLease=null;
 const styledCollectionSaveStates=new WeakMap();
 let styledCollectionRequestSerial=0;
 function refreshStylistFocusItems(){
  const select=$('stylistFocusItem');if(!select)return;
  const selected=select.value;select.replaceChildren(new Option('Use my whole closet',''));
- const eligible=items.filter(item=>item&&typeof item.id==='string'&&
+ const eligible=items.filter(item=>stylistPieceReady(item)&&typeof item.id==='string'&&
   ['Tops','Dresses','Bottoms','Shoes','Outerwear'].includes(item.category));
  for(const item of eligible){
   const details=[item.name||item.itemType||item.category,item.color].filter(Boolean).join(' · ');
@@ -14,12 +15,17 @@ function refreshStylistFocusItems(){
  select.value=eligible.some(item=>item.id===selected)?selected:'';
 }
 closetReady.then(refreshStylistFocusItems).catch(()=>{});
-window.addEventListener('closet:style-owned-inventory-committed',refreshStylistFocusItems);
+window.addEventListener('closet:style-owned-inventory-committed',()=>{
+ refreshStylistFocusItems();
+ if(styledCollectionResults.length&&!styledCollectionResultLease?.current())invalidateStylistAfterWardrobeEdit();
+});
 function invalidateStylistAfterWardrobeEdit(){
  const button=$('createCollectionOutfits');
  const hadRequest=button.disabled||styledCollectionResults.length>0;
  styledCollectionRequestSerial++;
  styledCollectionResults=[];
+ styledCollectionResultLease=null;
+ renderStyledCollection();
  refreshStylistFocusItems();
  button.disabled=false;
  if(hadRequest)$('stylistStatus').textContent='Your closet changed. Create outfits again to use your updated clothing.';
@@ -29,7 +35,7 @@ window.addEventListener('closet:session-locked',()=>{
  styledCollectionRequestSerial++;
  $('createCollectionOutfits').disabled=false;
  $('stylistFocusItem').replaceChildren(new Option('Use my whole closet',''));
- styledCollectionResults=[];renderStyledCollection();
+ styledCollectionResults=[];styledCollectionResultLease=null;renderStyledCollection();
  applyStylistDefaults();
  for(const [id,value] of Object.entries({stylistWeatherLow:'',stylistWeatherHigh:'',stylistWeatherUnit:'F',stylistWeatherRain:'unknown',stylistWeatherWind:'unknown'})){if($(id))$(id).value=value;}
  $('stylistStatus').textContent='Pick your plan, then tap Create my outfits.';
@@ -111,7 +117,9 @@ function beginStyledCollectionCardOwnerLease(result,card){
  if(!current()||!card.isConnected)return null;
  return {ownsSession,current};
 }
-function renderStyledCollection(){
+function renderStyledCollection(lease){
+ if(!styledCollectionResults.length)styledCollectionResultLease=null;
+ else if(lease)styledCollectionResultLease=lease;
  window.renderStarterWardrobe?.('stylist');
  const grid=$('styledCollectionResults');
  ++originalPhotoMountSerial167;
@@ -210,6 +218,7 @@ function renderStyledCollection(){
   };
   actions.append(edit,save,refresh);card.append(actions,status);applySaveState();grid.append(card);
  }
+ renderStylistComparison();
  void mountOriginalPhotoPreview167();
 }
 // The Stylist form waits for trend research and closet readiness. Do not
@@ -275,10 +284,10 @@ $('styleCollectionForm').onsubmit=async event=>{
  request.weather=weather;
  }
  }
- const created=styleOwnedCollection(items,request,activeTrendLibrary);
+ const created=styleOwnedCollection(items.filter(item=>!item.ownerId||item.ownerId===window.closetAuth.user.id),request,activeTrendLibrary);
   if(!lease.current())return;
   styledCollectionResults=created;
-  renderStyledCollection();
+  renderStyledCollection(lease);
   if(!lease.current())return;
   $('stylistStatus').textContent=styledCollectionResults.length?
    'Here are '+styledCollectionResults.length+' outfit option'+(styledCollectionResults.length===1?'':'s')+' from your collection.':
@@ -303,6 +312,7 @@ for(const id of ['stylistOccasion','stylistAudience','stylistSeason'])$(id).onch
  renderStyledCollection();
  $('stylistStatus').textContent='Create outfits for your new preferences.';
 };
+$('stylistFocusItem').addEventListener('change',()=>$('stylistOccasion').onchange());
 for(const id of ['stylistWeatherLow','stylistWeatherHigh','stylistWeatherUnit','stylistWeatherRain','stylistWeatherWind'])if($(id))$(id).addEventListener('input',()=>$('stylistOccasion').onchange());
 // This owner-private local row is outside the wardrobe backup state allowlist.
 const stylistDefaultsKey='stylist-defaults-v1';
