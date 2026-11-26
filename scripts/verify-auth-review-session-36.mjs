@@ -147,6 +147,11 @@ try{
      return route.abort();
     });
     const page=await ctx.newPage();
+     // This fixture intentionally returns the same nonrotating token for both
+     // tabs. Pin wall-clock Date only (not timers) so recomputing expires_at
+     // cannot accidentally publish a different lease during fixture refresh.
+     // Real rotating-token behavior remains covered by the separate auth lanes.
+     await page.clock.setFixedTime(new Date());
     page.on('pageerror',e=>failures.push({engine,width,error:e.message.slice(0,160)}));
     await page.goto(url,{waitUntil:'domcontentloaded'});
     await login(page,'a');
@@ -162,6 +167,11 @@ try{
       db?.name==='closet-current-user-owner-a'&&window.multi24Research?.active===true,null,{timeout:30000});
     await source(stale,'b'); // a different unconfirmed photo in A's stale tab
     assert.equal((await readRows(stale)).length,1);
+     await page.bringToFront();
+     for(const [role,tab] of [['initiator',page],['peer',stale]]){
+      const live=await tab.evaluate(()=>({owner:window.closetAuth?.user?.id,dbOwner:db?.name,visible:!document.getElementById('appShell').hidden,hasLease:!!localStorage.getItem('closet-current-auth-v1')}));
+      assert.deepEqual(live,{owner:'owner-a',dbOwner:'closet-current-user-owner-a',visible:true,hasLease:true},role+' must be live before testing logout');
+     }
 
     // Hold A's reply until both tabs are verified locked; preserve the first assertion error.
     const confirmedLogout=Promise.all([
@@ -170,12 +180,14 @@ try{
     ]);
      confirmedLogout.catch(()=>{});
      try{
-    await page.evaluate(()=>document.getElementById('logout').click());
-    await page.waitForFunction(()=>window.closetAuth?.user===null&&db===null&&
-     document.getElementById('appShell').hidden,null,{timeout:2500});
+    const initiatorLock=await page.evaluate(()=>{
+      document.getElementById('logout').click();
+      return {userCleared:window.closetAuth?.user===null,dbAbsent:db===null,appHidden:document.getElementById('appShell').hidden,leaseCleared:localStorage.getItem('closet-current-auth-v1')===null};
+     });
+     assert.deepEqual(initiatorLock,{userCleared:true,dbAbsent:true,appHidden:true,leaseCleared:true},'Initiating tab must lock synchronously, before server reply');
     await stale.waitForFunction(()=>window.closetAuth?.user===null&&db===null&&
       document.getElementById('appShell').hidden&&
-      document.getElementById('multi24Grid')?.querySelectorAll('article').length===0,null,{timeout:2500});
+      document.getElementById('multi24Grid')?.querySelectorAll('article').length===0,null,{timeout:2500,polling:50});
     const locked=await stale.evaluate(()=>({
      user:window.closetAuth.user,appHidden:document.getElementById('appShell').hidden,
      sourceCleared:document.querySelector('#multi24Research .multi24-source')?.getAttribute('src')===null,
@@ -183,7 +195,7 @@ try{
     }));
     assert.deepEqual(locked,{user:null,appHidden:true,sourceCleared:true,dbAbsent:true});
     screenshots.push(await hashEvidence(stale,engine,width,'02-a-session-locked'));
-     }catch(error){console.error('AUTH36 pre-response lock failure',engine,width,error);throw error;}
+     }catch(error){console.error('AUTH36 pre-response lock failure',engine,width,error,'sanitized page errors',failures);throw error;}
      finally{releaseConfirmed();}
     await confirmedLogout;
     await page.waitForFunction(()=>window.closetAuth?.user===null&&document.getElementById('authStatus')?.textContent.trim(),null,{timeout:15000});
