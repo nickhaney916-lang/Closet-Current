@@ -94,7 +94,8 @@ export function jpegOrientation(bytes){
    const u16=(p)=>le?bytes[p]|bytes[p+1]<<8:bytes[p]<<8|bytes[p+1];
    const u32=(p)=>le?((bytes[p]|bytes[p+1]<<8|bytes[p+2]<<16|bytes[p+3]<<24)>>>0):
     (((bytes[p]<<24)|(bytes[p+1]<<16)|(bytes[p+2]<<8)|bytes[p+3])>>>0);
-   const ifd=t+u32(t+4);if(ifd+2>i+size){i+=size;continue;}
+   if(u16(t+2)!==42)return null;
+   const offset=u32(t+4),ifd=t+offset;if(offset<8||ifd+2>i+size)return null;
    for(let j=0,n=u16(ifd);j<n&&j<128;j++){
     const p=ifd+2+j*12;if(p+12>i+size)break;
     if(u16(p)===0x112&&u16(p+2)===3&&u32(p+4)===1){
