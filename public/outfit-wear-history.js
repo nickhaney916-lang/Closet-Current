@@ -3,7 +3,7 @@
 const outfitWearKey='outfit-wear-history-v1';
 const outfitWearLimit=100;
 const outfitWearStyleCategories=['Tops','Dresses','Bottoms','Shoes','Outerwear'];
-const wearDateFormat=new Intl.DateTimeFormat(undefined,{year:'numeric',month:'short',day:'numeric'});
+const wearDateFormat=new Intl.DateTimeFormat(undefined,{year:'numeric',month:'short',day:'numeric',timeZone:'UTC'});
 let outfitWearEvents=[],outfitWearLoaded=false,outfitWearBusy=false;
 
 function wearLocalDay(date){
@@ -44,15 +44,18 @@ function wearEligibleBoard(board,roster,owner){
   : !!top&&!!board.slots.bottom;
 }
 function wearRediscover(roster,events,today){
- const cutoff=new Date(today);
- cutoff.setDate(cutoff.getDate()-29);
+ // Use UTC as a calendar coordinate for the owner's local day.
+ const todayDay=wearLocalDay(today);
+ const cutoff=new Date(todayDay);
+ cutoff.setUTCDate(cutoff.getUTCDate()-29);
+ const cutoffDay=cutoff.toISOString().slice(0,10);
  const last=new Map();
  for(const event of events)for(const id of Object.values(event.slots)){
-  if(event.day<=wearLocalDay(today)&&event.day>(last.get(id)||''))last.set(id,event.day);
+  if(event.day<=todayDay&&event.day>(last.get(id)||''))last.set(id,event.day);
  }
  return roster.filter(item=>outfitWearStyleCategories.includes(item.category))
   .map(item=>({item,day:last.get(item.id)}))
-  .filter(({day})=>!day||day<wearLocalDay(cutoff))
+  .filter(({day})=>!day||day<cutoffDay)
   .sort((a,b)=>(a.day||'').localeCompare(b.day||'')||a.item.id.localeCompare(b.item.id))
   .slice(0,8);
 }
@@ -104,8 +107,7 @@ function transactOutfitWear({owner,ownerDB,current},action,value){
  });
 }
 function displayWearDay(day){
- const [year,month,date]=day.split('-').map(Number);
- return wearDateFormat.format(new Date(year,month-1,date));
+ return wearDateFormat.format(new Date(day));
 }
 function renderOutfitWearHistory(){
  const history=$('outfitWearHistory'),rediscovery=$('outfitWearRediscovery');
