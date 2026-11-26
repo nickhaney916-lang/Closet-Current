@@ -31,9 +31,12 @@ const server=createServer(async(req,res)=>{
   if(req.method!=='GET'||!/^\/(public|research)\//.test(path)||path.includes('..')||path.includes('\\'))throw Error('Blocked');
   const target=resolve(root,'.'+path);
   if(!target.startsWith(root+'/'))throw Error('Not in repo');
+  // Unmanaged local fixture: only the optional managed trend endpoint returns 204.
+  if(path==='/public/maintenance/trends')return res.writeHead(204,{'cache-control':'no-store'}).end();
+  const bytes=await readFile(target); // Never commit success headers before the read succeeds.
   res.writeHead(200,{'content-type':types[extname(target)]||'application/octet-stream','cache-control':'no-store'});
-  res.end(await readFile(target));
- }catch{res.writeHead(404).end();}
+  res.end(bytes);
+ }catch{if(!res.headersSent)res.writeHead(404).end();else res.destroy();}
 });
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const origin='http://127.0.0.1:'+server.address().port;
@@ -49,14 +52,13 @@ const hashEvidence=async(page,engine,width,stage)=>{
  assert.ok(stats.channels.some(c=>c.stdev>6),'Screenshot cannot be blank');
  return {file,sha256:digest(buf),width,height:meta.height,bytes:buf.length};
 };
-function fixtureAuth(route){
+async function fixtureAuth(route){
  const req=route.request(),address=new URL(req.url());
- if(address.pathname==='/auth/v1/logout')return new Promise(resolve=>{
-  setTimeout(async()=>{
-   const isB=req.headers().authorization==='Bearer fixture-access-owner-b';
-   await route.fulfill(isB?{status:503,json:{message:'fixture unavailable'}}:{status:204});resolve();
-  },650);
- });
+ if(address.pathname==='/auth/v1/logout'){
+  await new Promise(resolve=>setTimeout(resolve,650));
+  const isB=req.headers().authorization==='Bearer fixture-access-owner-b';
+  return route.fulfill(isB?{status:503,json:{message:'fixture unavailable'}}:{status:204});
+ }
  if(address.pathname==='/auth/v1/token'){
   const data=req.postDataJSON(),type=address.searchParams.get('grant_type');
   const match=type==='password'?/^owner-([ab])@example\.test$/.exec(data?.email||''):
@@ -123,6 +125,12 @@ async function confirmedHumanSave(page,owner){
  return rows;
 }
 try{
+ // Exercise the previously crashing missing-file path before any browser case.
+ assert.equal((await fetch(origin+'/public/__auth36_nonexistent_fixture__')).status,404);
+ assert.equal((await fetch(origin+'/public/maintenance/trends')).status,204);
+ assert.equal((await fetch(origin+'/public/maintenance/trends',{method:'POST'})).status,404);
+ assert.equal((await fetch(origin+'/not-allowed')).status,404);
+ assert.equal((await fetch(origin+'/public/index.html')).status,200);
  for(const [engine,launcher] of Object.entries({chromium,webkit})){
   const browser=await launcher.launch();
   try{
@@ -155,6 +163,10 @@ try{
 
     // The logout HTTP response deliberately takes 650 ms. Both tabs must
     // lock and empty their photos *before* that network request finishes.
+    const confirmedLogout=Promise.all([
+     page.waitForResponse(r=>r.url()===auth+'/auth/v1/logout'&&r.request().method()==='POST'&&r.status()===204,{timeout:15000}),
+     page.waitForEvent('framenavigated',{predicate:f=>f===page.mainFrame(),timeout:15000})
+    ]);
     await page.evaluate(()=>document.getElementById('logout').click());
     await page.waitForFunction(()=>window.closetAuth?.user===null&&db===null&&
      document.getElementById('appShell').hidden,null,{timeout:2500});
@@ -168,6 +180,8 @@ try{
     }));
     assert.deepEqual(locked,{user:null,appHidden:true,sourceCleared:true,dbAbsent:true});
     screenshots.push(await hashEvidence(stale,engine,width,'02-a-session-locked'));
+    await confirmedLogout;
+    await page.waitForFunction(()=>window.closetAuth?.user===null&&document.getElementById('authStatus')?.textContent.trim(),null,{timeout:15000});
     await page.locator('#authSubmit').waitFor({state:'visible',timeout:15000});
     assert.doesNotMatch(await page.locator('#authStatus').textContent(),/Server sign-out could not be confirmed/);
     await login(page,'b');
@@ -175,7 +189,12 @@ try{
     const savedB=await confirmedHumanSave(page,'b');
     assert.notEqual(savedA[0].sourceSHA256,savedB[0].sourceSHA256);
     screenshots.push(await hashEvidence(page,engine,width,'03-b-saved'));
+    const unconfirmedLogout=Promise.all([
+     page.waitForResponse(r=>r.url()===auth+'/auth/v1/logout'&&r.request().method()==='POST'&&r.status()===503,{timeout:15000}),
+     page.waitForEvent('framenavigated',{predicate:f=>f===page.mainFrame(),timeout:15000})
+    ]);
     await page.evaluate(()=>document.getElementById('logout').click());
+    await unconfirmedLogout;
     await page.locator('#authSubmit').waitFor({state:'visible',timeout:15000});
     await page.waitForFunction(()=>document.getElementById('authStatus').textContent.includes('Server sign-out could not be confirmed'),null,{timeout:15000});
     assert.equal(await page.evaluate(()=>localStorage.getItem('closet-current-auth-v1')),null);
