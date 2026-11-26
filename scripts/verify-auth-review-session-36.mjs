@@ -31,9 +31,12 @@ const server=createServer(async(req,res)=>{
   if(req.method!=='GET'||!/^\/(public|research)\//.test(path)||path.includes('..')||path.includes('\\'))throw Error('Blocked');
   const target=resolve(root,'.'+path);
   if(!target.startsWith(root+'/'))throw Error('Not in repo');
+  // Unmanaged local fixture: only the optional managed trend endpoint returns 204.
+  if(path==='/public/maintenance/trends')return res.writeHead(204,{'cache-control':'no-store'}).end();
+  const bytes=await readFile(target); // Never commit success headers before the read succeeds.
   res.writeHead(200,{'content-type':types[extname(target)]||'application/octet-stream','cache-control':'no-store'});
-  res.end(await readFile(target));
- }catch{res.writeHead(404).end();}
+  res.end(bytes);
+ }catch{if(!res.headersSent)res.writeHead(404).end();else res.destroy();}
 });
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const origin='http://127.0.0.1:'+server.address().port;
@@ -49,11 +52,13 @@ const hashEvidence=async(page,engine,width,stage)=>{
  assert.ok(stats.channels.some(c=>c.stdev>6),'Screenshot cannot be blank');
  return {file,sha256:digest(buf),width,height:meta.height,bytes:buf.length};
 };
-function fixtureAuth(route){
+async function fixtureAuth(route,confirmedGate){
  const req=route.request(),address=new URL(req.url());
- if(address.pathname==='/auth/v1/logout')return new Promise(resolve=>{
-  setTimeout(async()=>{await route.fulfill({status:200,json:{}});resolve();},650);
- });
+ if(address.pathname==='/auth/v1/logout'){
+  const isB=req.headers().authorization==='Bearer fixture-access-owner-b';
+   if(!isB)await confirmedGate;else await new Promise(resolve=>setTimeout(resolve,650));
+  return route.fulfill(isB?{status:503,json:{message:'fixture unavailable'}}:{status:204});
+ }
  if(address.pathname==='/auth/v1/token'){
   const data=req.postDataJSON(),type=address.searchParams.get('grant_type');
   const match=type==='password'?/^owner-([ab])@example\.test$/.exec(data?.email||''):
@@ -120,20 +125,33 @@ async function confirmedHumanSave(page,owner){
  return rows;
 }
 try{
+ // Exercise the previously crashing missing-file path before any browser case.
+ assert.equal((await fetch(origin+'/public/__auth36_nonexistent_fixture__')).status,404);
+ assert.equal((await fetch(origin+'/public/maintenance/trends')).status,204);
+ assert.equal((await fetch(origin+'/public/maintenance/trends',{method:'POST'})).status,404);
+ assert.equal((await fetch(origin+'/not-allowed')).status,404);
+ assert.equal((await fetch(origin+'/public/index.html')).status,200);
  for(const [engine,launcher] of Object.entries({chromium,webkit})){
   const browser=await launcher.launch();
   try{
    for(const width of [320,390,430]){
     const ctx=await browser.newContext({viewport:{width,height:940},isMobile:true,hasTouch:true,serviceWorkers:'block'});
-    await ctx.route('**/*',route=>{
+    let releaseConfirmed;
+     const confirmedGate=new Promise(resolve=>{releaseConfirmed=resolve;});
+     await ctx.route('**/*',route=>{
      const req=route.request(),url=req.url();
      if(url===origin+'/public/cloud-backup.js')return route.fulfill({status:200,contentType:'text/javascript',body:'window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};'});
      if(url.startsWith(origin+'/')||url.startsWith('blob:'+origin)||url.startsWith('data:'))return route.continue();
-     if(url.startsWith(auth+'/auth/v1/'))return fixtureAuth(route);
+     if(url.startsWith(auth+'/auth/v1/'))return fixtureAuth(route,confirmedGate);
      if(req.method()!=='GET')unauthorized.push({engine,width,method:req.method()});
      return route.abort();
     });
     const page=await ctx.newPage();
+     // This fixture intentionally returns the same nonrotating token for both
+     // tabs. Pin wall-clock Date only (not timers) so recomputing expires_at
+     // cannot accidentally publish a different lease during fixture refresh.
+     // Real rotating-token behavior remains covered by the separate auth lanes.
+     await page.clock.setFixedTime(new Date());
     page.on('pageerror',e=>failures.push({engine,width,error:e.message.slice(0,160)}));
     await page.goto(url,{waitUntil:'domcontentloaded'});
     await login(page,'a');
@@ -149,15 +167,27 @@ try{
       db?.name==='closet-current-user-owner-a'&&window.multi24Research?.active===true,null,{timeout:30000});
     await source(stale,'b'); // a different unconfirmed photo in A's stale tab
     assert.equal((await readRows(stale)).length,1);
+     await page.bringToFront();
+     for(const [role,tab] of [['initiator',page],['peer',stale]]){
+      const live=await tab.evaluate(()=>({owner:window.closetAuth?.user?.id,dbOwner:db?.name,visible:!document.getElementById('appShell').hidden,hasLease:!!localStorage.getItem('closet-current-auth-v1')}));
+      assert.deepEqual(live,{owner:'owner-a',dbOwner:'closet-current-user-owner-a',visible:true,hasLease:true},role+' must be live before testing logout');
+     }
 
-    // The logout HTTP response deliberately takes 650 ms. Both tabs must
-    // lock and empty their photos *before* that network request finishes.
-    await page.evaluate(()=>document.getElementById('logout').click());
-    await page.waitForFunction(()=>window.closetAuth?.user===null&&db===null&&
-     document.getElementById('appShell').hidden,null,{timeout:2500});
+    // Hold A's reply until both tabs are verified locked; preserve the first assertion error.
+    const confirmedLogout=Promise.all([
+     page.waitForResponse(r=>r.url()===auth+'/auth/v1/logout'&&r.request().method()==='POST'&&r.status()===204,{timeout:45000}),
+     page.waitForEvent('framenavigated',{predicate:f=>f===page.mainFrame(),timeout:45000})
+    ]);
+     confirmedLogout.catch(()=>{});
+     try{
+    const initiatorLock=await page.evaluate(()=>{
+      document.getElementById('logout').click();
+      return {userCleared:window.closetAuth?.user===null,dbAbsent:db===null,appHidden:document.getElementById('appShell').hidden,leaseCleared:localStorage.getItem('closet-current-auth-v1')===null};
+     });
+     assert.deepEqual(initiatorLock,{userCleared:true,dbAbsent:true,appHidden:true,leaseCleared:true},'Initiating tab must lock synchronously, before server reply');
     await stale.waitForFunction(()=>window.closetAuth?.user===null&&db===null&&
       document.getElementById('appShell').hidden&&
-      document.getElementById('multi24Grid')?.querySelectorAll('article').length===0,null,{timeout:2500});
+      document.getElementById('multi24Grid')?.querySelectorAll('article').length===0,null,{timeout:2500,polling:50});
     const locked=await stale.evaluate(()=>({
      user:window.closetAuth.user,appHidden:document.getElementById('appShell').hidden,
      sourceCleared:document.querySelector('#multi24Research .multi24-source')?.getAttribute('src')===null,
@@ -165,14 +195,28 @@ try{
     }));
     assert.deepEqual(locked,{user:null,appHidden:true,sourceCleared:true,dbAbsent:true});
     screenshots.push(await hashEvidence(stale,engine,width,'02-a-session-locked'));
+     }catch(error){console.error('AUTH36 pre-response lock failure',engine,width,error,'sanitized page errors',failures);throw error;}
+     finally{releaseConfirmed();}
+    await confirmedLogout;
+    await page.waitForFunction(()=>window.closetAuth?.user===null&&document.getElementById('authStatus')?.textContent.trim(),null,{timeout:15000});
     await page.locator('#authSubmit').waitFor({state:'visible',timeout:15000});
+    assert.doesNotMatch(await page.locator('#authStatus').textContent(),/Server sign-out could not be confirmed/);
     await login(page,'b');
     assert.deepEqual(await readRows(page),[],'Owner B cannot see A wardrobe through app');
     const savedB=await confirmedHumanSave(page,'b');
     assert.notEqual(savedA[0].sourceSHA256,savedB[0].sourceSHA256);
     screenshots.push(await hashEvidence(page,engine,width,'03-b-saved'));
+    const unconfirmedLogout=Promise.all([
+     page.waitForResponse(r=>r.url()===auth+'/auth/v1/logout'&&r.request().method()==='POST'&&r.status()===503,{timeout:15000}),
+     page.waitForEvent('framenavigated',{predicate:f=>f===page.mainFrame(),timeout:15000})
+    ]);
+     unconfirmedLogout.catch(()=>{});
     await page.evaluate(()=>document.getElementById('logout').click());
+    await unconfirmedLogout;
     await page.locator('#authSubmit').waitFor({state:'visible',timeout:15000});
+    await page.waitForFunction(()=>document.getElementById('authStatus').textContent.includes('Server sign-out could not be confirmed'),null,{timeout:15000});
+    assert.equal(await page.evaluate(()=>localStorage.getItem('closet-current-auth-v1')),null);
+    assert.equal(await page.evaluate(()=>sessionStorage.getItem('closet-current-logout-unconfirmed-v1')),null);
     await login(page,'a');
     const restoredA=await readRows(page);
     assert.equal(restoredA.length,1);
@@ -183,6 +227,7 @@ try{
     cases.push({engine,width,sourceA:photo.a.sha,sourceB:photo.b.sha,
       savedA:1,savedB:1,ownerBCannotAccessA:true,staleTabLocked:true,
       originalBytesVerified:true,humanConfirmed:true,previousAccountReopens:true,
+      confirmedLogout204:true,unconfirmedLogout503Notice:true,
       realNativeIndexedDB:true,authTransport:'synthetic HTTP fixture, NOT signed browser',
       screenshots});
     await ctx.close();
@@ -193,7 +238,7 @@ try{
  assert.deepEqual(failures,[],'browser page errors');
  assert.deepEqual(unauthorized,[],'unapproved external photo uploads');
  const report={priority:'AUTH-REVIEW-SESSION-36',engines:['chromium','webkit'],widths:[320,390,430],
-  browserCases:6,realNativeIndexedDB:true,photoSource:'locally generated synthetic JPEG',
+  browserCases:6,confirmedLogout204Cases:6,unconfirmedLogout503NoticeCases:6,realNativeIndexedDB:true,photoSource:'locally generated synthetic JPEG',
   realOriginalWebCrypto:true,realSignedBrowserToCloud:false,
   authTransport:'fixture',segFormerActuallyRun:false,productionTouched:false,FamilyAlpha:'HOLD',
   unexpectedUploads:unauthorized,pageErrors:failures,cases};

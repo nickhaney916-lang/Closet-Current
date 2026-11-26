@@ -35,14 +35,23 @@ jobs:
       - name: Verify exact parent ancestry and no production or staging modifications
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git merge-base --is-ancestor bdef04a59f4586044b2adc027a37c5dbe04ba4b8 HEAD
-          git diff --name-only bdef04a59f4586044b2adc027a37c5dbe04ba4b8 HEAD > /tmp/auth36-paths
-          while IFS= read -r file; do
-            case "$file" in
-              public/auth.js|public/app.js|public/outfit-capture.js|research/multi-garment-capture-01/review-ui.mjs|research/auth-review-session-36/*|scripts/verify-auth-review-session-36.mjs|tests/auth.test.cjs|tests/auth-review-session-36.test.mjs|.github/workflows/auth-review-session-36-no-deploy.yml) ;;
-              *) echo "BLOCKED non-allowlisted source / production / staging / model change: $file"; exit 1 ;;
-            esac
-          done < /tmp/auth36-paths
+          if test "${{ github.head_ref }}" = 'research/main1054-unified-logout-HOLD'; then
+            test "${{ github.event.pull_request.base.sha }}" = 2f57f8753d56907bc686f2fcfd58c12e3cb357cc
+            test "$(git rev-parse HEAD^)" = 0d3947eb2a4db950767607d997b6e24a07ea91fb
+            git merge-base --is-ancestor 2f57f8753d56907bc686f2fcfd58c12e3cb357cc HEAD
+            printf '%s\n' '.github/workflows/auth-review-session-36-no-deploy.yml' '.github/workflows/main1054-unified-logout-HOLD.yml' 'public/auth.js' 'scripts/verify-auth-review-session-36.mjs' 'tests/auth.test.cjs' | LC_ALL=C sort > /tmp/auth36-expected
+            git diff --name-only 2f57f8753d56907bc686f2fcfd58c12e3cb357cc HEAD | LC_ALL=C sort > /tmp/auth36-actual
+            diff -u /tmp/auth36-expected /tmp/auth36-actual
+          else
+            git merge-base --is-ancestor bdef04a59f4586044b2adc027a37c5dbe04ba4b8 HEAD
+            git diff --name-only bdef04a59f4586044b2adc027a37c5dbe04ba4b8 HEAD > /tmp/auth36-paths
+            while IFS= read -r file; do
+              case "$file" in
+                public/auth.js|public/app.js|public/outfit-capture.js|research/multi-garment-capture-01/review-ui.mjs|research/auth-review-session-36/*|scripts/verify-auth-review-session-36.mjs|tests/auth.test.cjs|tests/auth-review-session-36.test.mjs|.github/workflows/auth-review-session-36-no-deploy.yml) ;;
+                *) echo "BLOCKED non-allowlisted source / production / staging / model change: $file"; exit 1 ;;
+              esac
+            done < /tmp/auth36-paths
+          fi
       - name: Pinned local verification dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
       - name: Source syntax, real app build and ALL existing and new Node regression tests
@@ -67,6 +76,9 @@ jobs:
           const r=JSON.parse(await readFile(dir+'report.json','utf8'));
           assert.equal(r.priority,'AUTH-REVIEW-SESSION-36');
           assert.equal(r.browserCases,6);assert.equal(r.realNativeIndexedDB,true);
+          if(process.env.GITHUB_HEAD_REF==='research/main1054-unified-logout-HOLD'){
+            assert.equal(r.confirmedLogout204Cases,6);assert.equal(r.unconfirmedLogout503NoticeCases,6);
+          }
           assert.equal(r.realSignedBrowserToCloud,false);
           assert.equal(r.segFormerActuallyRun,false);
           assert.deepEqual(r.unexpectedUploads,[]);assert.deepEqual(r.pageErrors,[]);

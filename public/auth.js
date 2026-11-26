@@ -6,6 +6,13 @@
  const APP_URL='https://nickhaney916-lang.github.io/Closet-Current/';
  const EMAIL_REDIRECT='?redirect_to='+encodeURIComponent(APP_URL);
  const STORE='closet-current-auth-v1';
+ const LOGOUT_NOTICE='closet-current-logout-unconfirmed-v1';
+ function rememberUnconfirmedLogout(value){
+  try{if(value)sessionStorage.setItem(LOGOUT_NOTICE,'1');else sessionStorage.removeItem(LOGOUT_NOTICE);}catch{}
+ }
+ function consumeUnconfirmedLogout(){
+  try{const pending=sessionStorage.getItem(LOGOUT_NOTICE)==='1';sessionStorage.removeItem(LOGOUT_NOTICE);return pending;}catch{return false;}
+ }
  const $=id=>document.getElementById(id);
  let resolveReady,rejectReady;
  const ready=new Promise((resolve,reject)=>{resolveReady=resolve;rejectReady=reject;});
@@ -133,6 +140,9 @@
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
   try{
    const res=await fetch(URL+'/auth/v1/'+path,{method,signal:controller.signal,redirect:'error',cache:'no-store',headers:{'apikey':KEY,'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},...(method==='GET'?{}:{body:JSON.stringify(body)})});
+   // The Auth logout endpoint can legitimately return an empty 204.
+   // Do not relax the JSON requirement on login, refresh or identity endpoints.
+   if(path==='logout'&&res.ok&&res.status===204)return {};
    let data;
    try{data=await res.json();}catch{data=null;}
    if(!data||typeof data!=='object'||Array.isArray(data)){
@@ -201,12 +211,18 @@
   const token=session?.access_token;
   if(session&&stillCurrent())localStorage.removeItem(STORE);
   lockAccount(false);
-  try{if(token)await request('logout',{},token);}catch{}
+  // Keep only a generic, tab-local notice, never a credential. Local lock
+  // and credential removal must not depend on the server being reachable.
+  if(token){
+   rememberUnconfirmedLogout(true);
+   try{await request('logout',{},token);rememberUnconfirmedLogout(false);}catch{}
+  }
   // Reload closes the current account's IndexedDB connection and clears in-memory images.
   location.reload();
  };
  setMode(false);
  (async()=>{
+  const unconfirmedLogout=consumeUnconfirmedLogout();
   try{
    const callback=new URLSearchParams((location.hash||'').replace(/^#/,''));
    const query=new URLSearchParams(location.search||'');
@@ -251,7 +267,7 @@
     'This sign-in link could not be verified. Log in with your email and password, or request a fresh email link.');
    return;
   }finally{setBusy(false);}
-  status(modeHint());
+  status(unconfirmedLogout?'Signed out on this device. Server sign-out could not be confirmed. Reconnect, sign in again and sign out online if you need to end other sessions.':modeHint());
  })();
 })();
 

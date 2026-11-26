@@ -5,7 +5,7 @@ const vm=require('node:vm');
 const fs=require('node:fs');
 const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../public/auth.js'),'utf8');
-function app(fetchImpl=async()=>{throw new TypeError('network unavailable');},callback={},initialSession=null){
+function app(fetchImpl=async()=>{throw new TypeError('network unavailable');},callback={},initialSession=null,initialTabState=null){
  const elements=new Map(),listeners={},timers=new Map(),requests=[];
  for(const id of ['authStatus','authForm','authSubmit','authMode','authReset','authResend','authEmail','authPassword','authPasswordToggle','authUsername','usernameWrap','authGate','appShell','accountLabel','logout']){
   elements.set(id,{id,value:'',hidden:false,disabled:false,required:false,textContent:'',setAttribute(){},addEventListener(name,fn){listeners[name]=fn;},checkValidity(){return true;}});
@@ -13,9 +13,9 @@ function app(fetchImpl=async()=>{throw new TypeError('network unavailable');},ca
  elements.get('authEmail').value='test@example.invalid';
  elements.get('authPassword').value='test-password-only';
  elements.get('authUsername').value='test_user';
- const saved=new Map(),window={addEventListener(name,fn){listeners[name]=fn;},dispatchEvent(){}};if(initialSession)saved.set('closet-current-auth-v1',JSON.stringify(initialSession));let timerId=0,reloaded=false;
- vm.runInNewContext(source,{window,document:{getElementById:id=>elements.get(id)},localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value),removeItem:key=>saved.delete(key)},location:{reload(){reloaded=true;},pathname:'/Closet-Current/',...callback},history:{replaceState(){}},crypto:require('node:crypto').webcrypto,Event,URLSearchParams,AbortController,TypeError,setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),fetch:async(...args)=>{requests.push(args);return fetchImpl(...args);}});
- return {get:id=>elements.get(id),listeners,timers,requests,window,saved,reloaded:()=>reloaded,submit:()=>elements.get('authForm').onsubmit({preventDefault(){}})};
+ const saved=new Map(),tabState=initialTabState||new Map(),window={addEventListener(name,fn){listeners[name]=fn;},dispatchEvent(){}};if(initialSession)saved.set('closet-current-auth-v1',JSON.stringify(initialSession));let timerId=0,reloaded=false;
+ vm.runInNewContext(source,{window,document:{getElementById:id=>elements.get(id)},localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value),removeItem:key=>saved.delete(key)},sessionStorage:{getItem:key=>tabState.get(key)||null,setItem:(key,value)=>tabState.set(key,value),removeItem:key=>tabState.delete(key)},location:{reload(){reloaded=true;},pathname:'/Closet-Current/',...callback},history:{replaceState(){}},crypto:require('node:crypto').webcrypto,Event,URLSearchParams,AbortController,TypeError,setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),fetch:async(...args)=>{requests.push(args);return fetchImpl(...args);}});
+ return {get:id=>elements.get(id),listeners,timers,requests,window,saved,tabState,reloaded:()=>reloaded,submit:()=>elements.get('authForm').onsubmit({preventDefault(){}})};
 }
 const response=(data,ok=true)=>({ok,json:async()=>data});
 test('new visitors get signup guidance and hidden username cannot block login',()=>{
@@ -198,4 +198,22 @@ test('logout while a forced refresh is pending cannot resurrect the former owner
  await assert.rejects(refresh,/session ended/);
  assert.equal(a.window.closetAuth.user,null);
  assert.equal(a.saved.has('closet-current-auth-v1'),false);
+});
+
+const logoutNotice='closet-current-logout-unconfirmed-v1';
+const fakeLogin=()=>response({access_token:'fixture-access',refresh_token:'fixture-refresh',user:{id:'fixture-owner'}});
+test('confirmed empty 204 logout clears local credentials and generic notice',async()=>{
+ const a=app(async url=>url.endsWith('/logout')?{ok:true,status:204,json:async()=>{throw Error('empty');}}:fakeLogin());
+ await a.submit();await a.get('logout').onclick();
+ assert.equal(a.window.closetAuth.user,null);assert.equal(a.saved.size,0);assert.equal(a.tabState.has(logoutNotice),false);assert.equal(a.reloaded(),true);
+ const next=app(undefined,{},null,a.tabState);assert.doesNotMatch(next.get('authStatus').textContent,/could not be confirmed/);
+});
+for(const [name,fail] of [['offline',async()=>{throw new TypeError('offline');}],['server failure',async()=>({ok:false,status:503,json:async()=>({})})]])test('unconfirmed '+name+' logout keeps closet locked and displays a nonsecret one-shot notice',async()=>{
+ const a=app(async url=>url.endsWith('/logout')?fail():fakeLogin());
+ await a.submit();await a.get('logout').onclick();
+ assert.equal(a.window.closetAuth.user,null);assert.equal(a.saved.size,0);assert.equal(a.reloaded(),true);assert.deepEqual([...a.tabState],[[logoutNotice,'1']]);
+ const next=app(undefined,{},null,a.tabState);assert.match(next.get('authStatus').textContent,/Signed out on this device. Server sign-out could not be confirmed/);assert.equal(next.window.closetAuth.user,null);assert.equal(next.tabState.size,0);
+});
+test('empty 204 is still rejected for login',async()=>{
+ const a=app(async()=>({ok:true,status:204,json:async()=>{throw Error('empty');}}));await a.submit();assert.equal(a.window.closetAuth.user,null);assert.match(a.get('authStatus').textContent,/unreadable response/);
 });
