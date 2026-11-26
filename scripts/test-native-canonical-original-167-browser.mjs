@@ -1,7 +1,7 @@
 /**
  * STYLE-NEW-ITEM-01 — actual app UI + owner-private IndexedDB in Chromium and
  * WebKit. Auth is a synthetic fixture; no cloud writes, AI inference or device
- * camera is claimed. A JPEG data URL enters the actual camera candidate path.
+ * camera is claimed. A JPEG file enters the normal gallery import and review path.
  */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -11,7 +11,8 @@ import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
 import {createHash} from 'node:crypto';
 
-const root=resolve('.'),out='benchmark/native-canonical-closet-style-167';
+const importMatrix=process.env.ASSIGNMENT_29==='1';
+const root=resolve('.'),out=importMatrix?'benchmark/assignment-29':'benchmark/native-canonical-closet-style-167';
 await mkdir(out,{recursive:true});
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript',
  '.css':'text/css','.json':'application/json','.svg':'image/svg+xml'};
@@ -30,7 +31,8 @@ const host='http://127.0.0.1:'+server.address().port+'/public/index.html'; // P1
 const jpg=await sharp({create:{width:24,height:32,channels:3,background:'#426f54'}}).jpeg().toBuffer();
 const dataURL='data:image/jpeg;base64,'+jpg.toString('base64');
 const sha=()=>createHash('sha256').update(jpg).digest('hex');
-const capturePhoto=await sharp(Buffer.from('<svg width="240" height="320" xmlns="http://www.w3.org/2000/svg"><rect width="240" height="320" fill="#f1eee7"/><path d="M74 38 42 58 18 126l37 14 15-34v174h100V106l15 34 37-14-24-68-32-20-26 18H100z" fill="#287346"/><path d="M115 55h10v224h-10z" fill="#e7eadf"/></svg>')).jpeg({quality:90}).toBuffer();
+const captureSource=sharp(Buffer.from('<svg width="240" height="320" xmlns="http://www.w3.org/2000/svg"><rect width="240" height="320" fill="#f1eee7"/><path d="M74 38 42 58 18 126l37 14 15-34v174h100V106l15 34 37-14-24-68-32-20-26 18H100z" fill="#287346"/><path d="M115 55h10v224h-10z" fill="#e7eadf"/></svg>'));
+const capturePhoto=await (importMatrix?captureSource.withMetadata({orientation:6}):captureSource).jpeg({quality:90}).toBuffer();
 const cameraFrame='data:image/jpeg;base64,'+capturePhoto.toString('base64');
 const owner='synthetic-style-owner-a';
 const fixtures=[
@@ -41,6 +43,77 @@ const fixtures=[
  category,itemType,color,colorSource:'user',pattern:'Solid',sleeveLength:'Unknown',seasons:[],image:dataURL,
  sourceSHA256:sha(),sourceHashVerified:true,sourcePhotoOriginal:true,userAdjusted:true,
  confirmedDetails:{category,itemType},localAnalyzed:true,indexingLevel:'specific-type',savedAt:new Date().toISOString()}));
+const importCases=[];
+const heic=importMatrix?await readFile('tests/fixtures/assignment-29-synthetic.heic'):null;
+async function rejectThenRecover(page,engine,width){
+ const file=(name,mimeType,buffer)=>({name,mimeType,buffer});
+ const source=sharp({create:{width:24,height:32,channels:4,background:'#34825580'}});
+ const oversized=Buffer.from(capturePhoto);
+ const frame=oversized.indexOf(Buffer.from([255,192]));
+ assert.ok(frame>0);
+ oversized.writeUInt16BE(12000,frame+5);
+ oversized.writeUInt16BE(12000,frame+7);
+ const brokenDecode=Buffer.from(capturePhoto);
+ brokenDecode[frame+4]=16; // A baseline JPEG cannot use this sample precision.
+ const unsupported=[
+  file('alpha.png','image/png',await source.clone().png().toBuffer()),
+  file('photo.webp','image/webp',await source.clone().webp().toBuffer()),
+  file('synthetic.heic','image/heic',heic),
+  file('drawing.svg','image/svg+xml',Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>')),
+  file('empty.jpg','image/jpeg',Buffer.alloc(0)),
+  file('truncated.jpg','image/jpeg',capturePhoto.subarray(0,-2)),
+  file('corrupt-header.jpg','image/jpeg',Buffer.from('ffd8ffe000004a4649460000ffd9','hex')),
+  file('oversized.jpg','image/jpeg',oversized),
+  file('mismatched.png','image/png',capturePhoto),
+  file('wrong-extension.webp','image/jpeg',capturePhoto),
+  file('corrupt-scan.jpg','image/jpeg',brokenDecode)
+ ];
+ const input=page.locator('#clothingPhotos');
+ await input.dispatchEvent('cancel');
+ assert.equal(await page.evaluate(async()=> (await readDraft()).length),0);
+ await input.setInputFiles(unsupported[4]);
+ await page.waitForFunction(()=>window.__lastPhotoImportResult?.results[0]?.name==='empty.jpg');
+ assert.equal(await page.evaluate(async()=> (await readDraft()).length),0);
+ const browserDecoding={};
+ for(const fixture of unsupported.slice(0,3)){
+  browserDecoding[fixture.mimeType]=await page.evaluate(async url=>{
+   const image=new Image();image.src=url;
+   try{await image.decode();return true;}catch{return false;}
+  },'data:'+fixture.mimeType+';base64,'+fixture.buffer.toString('base64'));
+ }
+ assert.equal(browserDecoding['image/png'],true);
+ assert.equal(browserDecoding['image/webp'],true);
+ const start=performance.now();
+ await input.setInputFiles([...unsupported,file('new-reviewed-blouse.jpg','image/jpeg',capturePhoto)]);
+ await page.waitForFunction(count=>window.__lastPhotoImportResult?.results.length===count,unsupported.length+1);
+ const evidence=await page.evaluate(async()=>{
+  const row=batch[0];
+  const image=new Image();image.src=row.image;await image.decode();
+  return {results:window.__lastPhotoImportResult,drafts:(await readDraft()).map(x=>x.id),
+   saved:(await readAll()).length,review:!document.getElementById('review').hidden,
+   photoWidth:image.naturalWidth,photoHeight:image.naturalHeight,photo:row.originalPhoto.sha256,
+   orientation:row.originalPhoto.orientation,raw:row.originalPhoto.originalFileSha256};
+ });
+ assert.equal(evidence.results.added,1);
+ assert.equal(evidence.results.errors.length,unsupported.length);
+ assert.equal(evidence.saved,fixtures.length);
+ assert.equal(evidence.drafts.length,1);
+ assert.equal(evidence.review,true);
+ assert.deepEqual([evidence.photoWidth,evidence.photoHeight,evidence.orientation],[320,240,6]);
+ assert.equal(evidence.photo,createHash('sha256').update(capturePhoto).digest('hex'));
+ assert.equal(evidence.raw,evidence.photo);
+ assert.match(evidence.results.errors[7],/dimensions.*40 megapixel/);
+ assert.match(evidence.results.errors[0],/export a JPEG/);
+ assert.match(evidence.results.errors[9],/contradicts/);
+ assert.match(evidence.results.errors[10],/browser could not open|dimensions could not be verified/);
+ await input.setInputFiles(file('retry.jpg','application/octet-stream',capturePhoto));
+ await page.waitForFunction(()=>window.__lastPhotoImportResult?.results[0]?.name==='retry.jpg');
+ const retry=await page.evaluate(async()=>({result:window.__lastPhotoImportResult,drafts:(await readDraft()).length}));
+ assert.equal(retry.result.results[0].status,'duplicate');
+ assert.equal(retry.drafts,1);
+ importCases.push({engine,width,elapsedMs:Math.round(performance.now()-start),browserDecoding,...evidence,retry});
+ console.log('A29 import matrix',JSON.stringify(importCases.at(-1)));
+}
 const results=[],errors=[];
 const provenance167=[];
 try{
@@ -49,6 +122,7 @@ try{
   const browser=await type.launch({headless:true,args:engine==='chromium'?['--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']:[]});
   try{
    for(const width of [320,390,430]){
+    let sessionOwner=owner;
     const context=await browser.newContext({viewport:{width,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true});
     await context.route('**/*',async route=>{
      const url=new URL(route.request().url());
@@ -57,12 +131,14 @@ try{
      if(url.protocol==='blob:'||url.protocol==='data:')return route.continue();
      if(url.hostname==='127.0.0.1'||url.hostname==='localhost')return route.continue();
      if(url.hostname==='hlkgymugtfbirlpunsra.supabase.co'&&url.pathname==='/auth/v1/token')
-      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({access_token:'synthetic-access',refresh_token:'synthetic-refresh',expires_in:3600,user:{id:owner,email:'fixture@example.invalid',user_metadata:{username:'Fixture'}}})});
+      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({access_token:'synthetic-access',refresh_token:'synthetic-refresh',expires_in:3600,user:{id:sessionOwner,email:'fixture@example.invalid',user_metadata:{username:'Fixture'}}})});
      return route.abort();
     });
-    await context.addInitScript(()=>localStorage.setItem('closet-current-auth-v1',JSON.stringify({
+    await context.addInitScript(()=>{
+     if(!localStorage.getItem('closet-current-auth-v1'))localStorage.setItem('closet-current-auth-v1',JSON.stringify({
      epoch:'synthetic-epoch',access_token:'synthetic-access',refresh_token:'synthetic-refresh',expires_at:Math.floor(Date.now()/1000)+3600
-    })));
+     }));
+    });
     await context.addInitScript(()=>{
      class ReviewOnlyWorker{
       constructor(){this.onmessage=null;this.terminated=false;}
@@ -85,7 +161,8 @@ try{
      },fixtures);
      // Use the ACTUAL native Add clothing photos file input (not direct
      // candidate() injection) on a normal, flag-free app URL.
-     await page.locator('#clothingPhotos').setInputFiles({
+     if(importMatrix)await rejectThenRecover(page,engine,width);
+     else await page.locator('#clothingPhotos').setInputFiles({
        name:'new-reviewed-blouse.jpg',mimeType:'image/jpeg',buffer:capturePhoto
      });
      try{await page.waitForFunction(()=>batch.some(x=>x.importFilename==='new-reviewed-blouse.jpg'),null,{timeout:20000});}
@@ -221,9 +298,22 @@ try{
      assert.equal(reopened.owner,owner);assert.equal(reopened.items.length,fixtures.length+1);
      assert.equal(reopened.boards.length,2);assert.ok(Object.values(reopened.boards[0].slots).includes(focusedId));
      assert.equal(reopened.boards[1].slots.top,focusedId);assert.equal(reopened.boards[1].slots.shoes,swap.alternatives[0].id);
+     if(importMatrix){
+      sessionOwner='synthetic-style-owner-b';
+      await page.reload({waitUntil:'domcontentloaded'});
+      const other=await page.evaluate(async()=>{
+       await window.closetAuth.ready;await closetReady;await outfitBoardReady;
+       return {owner:window.closetAuth.user.id,items:(await readAll()).length,
+        drafts:(await readDraft()).length,boards:savedOutfitBoards.length};
+      });
+      assert.deepEqual(other,{owner:sessionOwner,items:0,drafts:0,boards:0});
+      Object.assign(importCases.at(-1),{
+       ownerIsolation:other,savedOnceAfterReload:true,verifiedOriginal2D:true
+      });
+     }
      results.push({engine,width,threeFocusedOwnedLooks:true,uniqueLookCount:3,saveAndReload:true,
       ownerScopedIndexedDB:true,offHostCallsBlocked:true,syntheticAuth:true,syntheticGarments:true,
-      cameraCapture:'synthetic still frame passed through the actual camera candidate and Review flow',fileImport:false,
+      fileImport:true,
       manualCorrection:true,oneOwnedPieceSwap:true,saveAndReloadAfterSwap:true,physicalPhone:false,overflow:generated.overflow,labels:generated.cards.map(x=>x.labels)});
     }finally{await context.close();}
    }
@@ -232,8 +322,9 @@ try{
  assert.equal(errors.length,0,errors.join('; '));
  const report={verdict:'PASS',feature:'Style around a newly reviewed and saved owned item',engines:engines.map(x=>x[0]),cases:results,
   screenshots:results.length,offHostCalls:0,syntheticAuth:true,syntheticGarments:true,
-  cameraCapture:'synthetic JPEG frame passed to the actual candidate() capture entry point; physical device and getUserMedia are not exercised',freshAIInference:false,
+  realFilePickerImport:true,freshAIInference:false,
   physicalAndroid:false,physicalIPhone:false,cloudWrites:false,familyAlpha:'HOLD'};
+ if(importMatrix)await writeFile(out+'/photo-import-matrix.json',JSON.stringify(importCases,null,2));
  await writeFile(out+'/results.json',JSON.stringify(report,null,2));
 if(provenance167.length!==6||provenance167.some(x=>x.mode!=='verified-original-photo-2d'||!x.realNativeUpload))
  throw Error('P167 source verified ordinary app owner-styling browser evidence incomplete');

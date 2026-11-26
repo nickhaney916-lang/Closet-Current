@@ -26,10 +26,10 @@ async function captureProofFromJPEG(image,dimensions,owner){
   throw Error('Original JPEG verification or account check failed');
  return proof;
 }
-async function captureProofFromFile(file,owner){
+async function captureProofFromFile(file,owner,shouldContinue){
  if(!owner||captureProofOwner()!==owner)throw Error('Import account changed');
  const mod=await captureProof01Module();
- const proof=await mod.importCanonicalPhoto(file);
+ const proof=await mod.importCanonicalPhoto(file,{shouldContinue});
  if(!await mod.verifyStoredCanonical(proof)||captureProofOwner()!==owner)
   throw Error('Imported original JPEG verification or account check failed');
  return proof;
@@ -3079,7 +3079,7 @@ async function importClothingPhotos(files){
    lifecycle===mediaLifecycleEpoch&&importToken===photoImportSerial&&!document.hidden&&
    (!proofMode||owner&&captureProofOwner()===owner&&db===ownerDB);
   if(proofMode&&!owner)throw Error('Please sign in before importing photos.');
-  const decode=proofMode?file=>captureProofFromFile(file,owner):photoToJPEG;
+  const decode=proofMode?file=>captureProofFromFile(file,owner,sameImportLease):photoToJPEG;
   const result=await readPhotoBatch(files,decode,async(decoded,file)=>{
    if(!sameImportLease())return false;
    const proof=proofMode?decoded:null;
