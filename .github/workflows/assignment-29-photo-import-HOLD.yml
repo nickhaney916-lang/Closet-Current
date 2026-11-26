@@ -26,7 +26,9 @@ jobs:
         with:
           node-version: '22'
       - name: Verify accepted parent
-        run: test "$(git merge-base HEAD ${{ github.event.pull_request.base.sha }})" = 1e1a0724350001a2ed3b89f48919a8447022d37f
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git merge-base HEAD ${{ github.event.pull_request.base.sha }})" = 1e1a0724350001a2ed3b89f48919a8447022d37f
       - name: Install test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Build and run full Node suite
