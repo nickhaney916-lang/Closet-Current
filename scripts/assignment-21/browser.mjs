@@ -319,27 +319,176 @@ async function exercise(browser,engine,width,total){
  }finally{await context.close();}
 }
 
+async function revisionConflict(browser,width){
+ const account=await owner(),outsider=await owner();
+ const {records}=await fixtures(account,4);
+ const original=records[0],removed=records[1],added=records[3];
+ const outfits=[{id:'kept-look',name:'Kept look',slots:{top:original.id}}];
+ const contexts=[];
+ let pending=null,interruptNextSave=false;
+ try{
+  async function newDevice(blockSave=false){
+   const context=await browser.newContext({viewport:{width,height:844},isMobile:true,
+    hasTouch:true,serviceWorkers:'block'});
+   contexts.push(context);
+   const page=await context.newPage();
+   await page.route('**/*',async route=>{
+    const target=new URL(route.request().url());
+    if(target.origin!==origin&&target.origin!==endpoint.origin)return route.abort();
+    if(blockSave&&target.origin===endpoint.origin&&target.pathname===rpc&&
+       route.request().method()==='POST'){
+     if(interruptNextSave){
+      interruptNextSave=false;
+      return route.abort('connectionreset');
+     }
+     if(pending){
+      const hold=pending;
+      pending=null;
+      hold.arrive(route.request().postDataJSON());
+      await hold.release;
+     }
+    }
+    return route.continue();
+   });
+   return page;
+  }
+  const left=await newDevice(),right=await newDevice(true);
+  await left.goto(origin+'/fixture-bootstrap');
+  await writeWardrobe(left,account,[original,removed],outfits);
+  await login(left,account);await waitBackup(left);
+  await login(right,account);await waitBackup(right);
+  assert.equal((await remote(account)).revision,1);
+  const wear={id:'outfit-wear-history-v1',owner:account.id,events:[{
+   id:'local-wear',name:outfits[0].name,slots:outfits[0].slots,day:'2026-11-24',
+   at:Date.UTC(2026,10,24,16)
+  }]};
+  await right.evaluate(record=>new Promise((resolve,reject)=>{
+   const tx=db.transaction('state','readwrite');
+   tx.objectStore('state').put(record);
+   tx.oncomplete=resolve;
+   tx.onerror=()=>reject(tx.error);
+  }),wear);
+  const readWear=page=>page.evaluate(()=>new Promise((resolve,reject)=>{
+   const result=db.transaction('state').objectStore('state').get('outfit-wear-history-v1');
+   result.onsuccess=()=>resolve(result.result);
+   result.onerror=()=>reject(result.error);
+  }));
+  const revise=(page,rows,outfitName)=>writeWardrobe(page,account,rows,
+   [{...outfits[0],name:outfitName}]);
+  const sync=page=>page.evaluate(()=>window.closetCloud.sync());
+  const leftEdit={...original,name:'Cloud edit one'};
+  const rightEdit={...original,name:'Device edit'};
+  await revise(right,[rightEdit,added],'Device outfit');
+  interruptNextSave=true;
+  await sync(right);
+  assert.equal(interruptNextSave,false,'The connection interruption must occur before the RPC reaches Supabase');
+  assert.equal((await remote(account)).revision,1);
+  assert.match(await right.locator('#cloudStatus').textContent(),/Retrying when connected/);
+  let release;
+  const reached=new Promise(arrive=>{
+   pending={arrive,release:new Promise(done=>{release=done;})};
+  });
+  const delayed=sync(right);
+  try{
+   const delayedDocument=await Promise.race([reached,delayed.then(()=>{
+    throw Error('Delayed device never issued the backup RPC');
+   })]);
+   assert.equal(delayedDocument.p_expected_revision,1);
+   await revise(left,[leftEdit],'Cloud outfit');
+   await sync(left);
+   assert.equal((await remote(account)).revision,2);
+  }finally{release();}
+  await delayed;
+  await right.waitForFunction(()=>!document.getElementById('resolveCloudConflict').hidden);
+  await right.locator('.account-menu summary').tap();
+  const cloudEdit={...original,name:'Latest cloud edit'};
+  await revise(left,[cloudEdit],'Cloud outfit');
+  await left.evaluate(async id=>{
+   await window.closetCloud.beforeWrite(db);
+   await new Promise((resolve,reject)=>{
+    const tx=db.transaction('items','readwrite');
+    tx.objectStore('items').delete(id);
+    tx.oncomplete=resolve;
+    tx.onerror=()=>reject(tx.error);
+   });
+  },removed.id);
+  await sync(left);
+  assert.equal((await remote(account)).revision,3);
+  await right.locator('#resolveCloudConflict').tap();
+  await right.waitForFunction(()=>document.getElementById('cloudStatus').textContent.startsWith('The backup or this device changed.'));
+  const beforeApproval=await remote(account);
+  assert.equal(beforeApproval.revision,3);
+  assert.deepEqual(beforeApproval.document.items.map(row=>row.id),[original.id]);
+  await right.locator('#resolveCloudConflict').tap();
+  await waitBackup(right);
+  const committed=await remote(account);
+  assert.equal(committed.revision,4);
+  const copy=committed.document.items.find(row=>row.name==='Device edit (saved copy)');
+  assert.ok(copy&&copy.id!==original.id);
+  assert.deepEqual(new Set(committed.document.items.map(row=>row.id)),new Set([original.id,added.id,copy.id]));
+  assert.equal(committed.document.items.length,3);
+  assert.deepEqual(await readWear(right),wear);
+  assert.equal(committed.document.state[wear.id],undefined);
+  const fresh=await newDevice();
+  await login(fresh,account);await waitBackup(fresh);
+  assert.equal(await readWear(fresh),undefined);
+  // Keep both retains the original outfit and gives the local version its own garment reference.
+  const restoredOutfits=committed.document.state['outfit-board'].saved;
+  assert.ok(restoredOutfits.some(row=>row.slots.top===original.id));
+  assert.ok(restoredOutfits.some(row=>row.slots.top===copy.id));
+  await verifyRestored(fresh,account,[cloudEdit,added,{...rightEdit,id:copy.id,name:copy.name}],restoredOutfits,4);
+  const outsiderToken=await token(outsider);
+  assert.deepEqual(json(await request(table+'?owner_id=eq.'+account.id,outsiderToken)),[]);
+  const foreignUpdate=await request(table+'?owner_id=eq.'+account.id,outsiderToken,'PATCH',{document:beforeApproval.document});
+  assert.ok(!foreignUpdate.ok||json(foreignUpdate).length===0);
+  assert.equal((await remote(account)).revision,4);
+  const photo=await request(storage+account.id+'/'+original.sourceSHA256+'.jpg',outsiderToken);
+  assert.ok([400,401,403,404].includes(photo.status));
+  const sessions=await Promise.all([token(account),token(account)]);
+  assert.notEqual(sessions[0],sessions[1]);
+  const competing=await Promise.all(sessions.map(bearer=>request(rpc,bearer,'POST',{
+   p_expected_revision:4,p_document:committed.document
+  })));
+  assert.ok(competing.every(response=>response.ok));
+  assert.deepEqual(competing.map(json).sort((a,b)=>Number(a)-Number(b)),[null,5]);
+  const winner=await remote(account);
+  assert.equal(winner.revision,5);
+  assert.deepEqual(winner.document,committed.document);
+  return {width,revisions:[1,2,3,4,5],garments:3,outfits:restoredOutfits.length,
+   originalDigestsVerified:3,interruptedBeforeCommit:true,simultaneousWinners:1,wearHistoryStayedLocal:true,isolatedOwner:true};
+ }finally{await Promise.all(contexts.map(context=>context.close()));}
+}
+
 try{
  const engine=process.env.A21_ENGINE;
  assert.ok(['chromium','webkit'].includes(engine));
  const browser=await ({chromium,webkit})[engine].launch();
  let capacity;
  try{
-  capacity=await boundary();
-  for(const width of [320,390,430])for(const total of [25,100,250,500]){
-   try{
-    const result=await exercise(browser,engine,width,total);
-    report.push(result);
-    console.log('ASSIGNMENT_21_PASS',JSON.stringify(result));
-   }catch(error){
-    failures.push({width,total,message:error.message});
-    console.error('ASSIGNMENT_21_FAIL',JSON.stringify(failures.at(-1)));
+  if(process.env.A27_REVISION_CONFLICT==='1'){
+   for(const width of [320,390,430]){
+    const result=await revisionConflict(browser,width);
+    console.log('ASSIGNMENT_27_PASS',JSON.stringify({engine,...result}));
+   }
+  }else{
+   capacity=await boundary();
+   for(const width of [320,390,430])for(const total of [25,100,250,500]){
+    try{
+     const result=await exercise(browser,engine,width,total);
+     report.push(result);
+     console.log('ASSIGNMENT_21_PASS',JSON.stringify(result));
+    }catch(error){
+     failures.push({width,total,message:error.message});
+     console.error('ASSIGNMENT_21_FAIL',JSON.stringify(failures.at(-1)));
+    }
    }
   }
   assert.deepEqual(errors,[]);
  }finally{await browser.close();}
- await mkdir('benchmark/assignment-21',{recursive:true});
- await writeFile('benchmark/assignment-21/'+engine+'.json',JSON.stringify({capacity,report,failures},null,2));
- console.log('ASSIGNMENT_21_DATABASE_LIMIT',JSON.stringify(capacity));
- assert.equal(failures.length,0,'One or more browser cases failed');
+ if(process.env.A27_REVISION_CONFLICT!=='1'){
+  await mkdir('benchmark/assignment-21',{recursive:true});
+  await writeFile('benchmark/assignment-21/'+engine+'.json',JSON.stringify({capacity,report,failures},null,2));
+  console.log('ASSIGNMENT_21_DATABASE_LIMIT',JSON.stringify(capacity));
+  assert.equal(failures.length,0,'One or more browser cases failed');
+ }
 }finally{await new Promise(done=>server.close(done));}
