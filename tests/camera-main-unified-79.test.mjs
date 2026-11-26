@@ -8,7 +8,7 @@ test('camera picker remains research gated and hands off to verified original-ph
  const app=read('public/app.js'),html=read('public/index.html'),proof=read('research/capture-proof-01/source-proof.mjs');
  assert.match(app,/cameraCloset75/);
  assert.match(app,/singleCameraCapture/);
- assert.match(app,/captureProofFromFile\(file,owner\)/);
+ assert.match(app,/captureProofFromFile\(file,owner,sameImportLease\)/);
  assert.match(app,/importClothingPhotos\(files\)/);
  assert.match(html,/id="singleCameraCapture"[^>]*capture="environment"/);
  assert.match(proof,/sniffPhotoMime/);

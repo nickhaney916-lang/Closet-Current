@@ -126,7 +126,7 @@ test('actual opt-in app connects original before model and preserves original ha
  const html=readFileSync('public/index.html','utf8');
  assert.ok(app.includes("get('captureProof01')==='after'"));
  assert.ok(app.includes('captureProofFromJPEG(image,{width,height,origin:'));
- assert.ok(app.includes('captureProofFromFile(file,owner)'));
+ assert.ok(app.includes('captureProofFromFile(file,owner,sameImportLease)'));
  assert.ok(app.includes('if(epoch!==captureOperationEpoch||request!==cameraRequest||!stream||captureProofOwner()!==owner||document.hidden)'));
  assert.ok(app.includes('item.singleGarmentVerified=false'));
  assert.ok(app.includes('queueAutomatic(item);return true;'));

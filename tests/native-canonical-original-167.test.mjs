@@ -86,7 +86,7 @@ test('P167 original camera, review and private index modules are self-contained 
 });
 test('P167 genuine mobile browser audit does not accept camera injection, unverified source, fake 3D or release',()=>{
  const s=readFileSync('scripts/test-native-canonical-original-167-browser.mjs','utf8');
- for(const m of ['#clothingPhotos',".setInputFiles({","mimeType:'image/jpeg'",
+ for(const m of ['#clothingPhotos',".setInputFiles([badImports[1],{","mimeType:'image/jpeg'",
   'I verified the category, clothing type and color',
   'I confirmed this photo shows one garment',
   "source167.savedSourceSHA,createHash('sha256').update(capturePhoto).digest('hex')",

@@ -30,7 +30,23 @@ const host='http://127.0.0.1:'+server.address().port+'/public/index.html'; // P1
 const jpg=await sharp({create:{width:24,height:32,channels:3,background:'#426f54'}}).jpeg().toBuffer();
 const dataURL='data:image/jpeg;base64,'+jpg.toString('base64');
 const sha=()=>createHash('sha256').update(jpg).digest('hex');
-const capturePhoto=await sharp(Buffer.from('<svg width="240" height="320" xmlns="http://www.w3.org/2000/svg"><rect width="240" height="320" fill="#f1eee7"/><path d="M74 38 42 58 18 126l37 14 15-34v174h100V106l15 34 37-14-24-68-32-20-26 18H100z" fill="#287346"/><path d="M115 55h10v224h-10z" fill="#e7eadf"/></svg>')).jpeg({quality:90}).toBuffer();
+const capturePhoto=await sharp(Buffer.from('<svg width="240" height="320" xmlns="http://www.w3.org/2000/svg"><rect width="240" height="320" fill="#f1eee7"/><path d="M74 38 42 58 18 126l37 14 15-34v174h100V106l15 34 37-14-24-68-32-20-26 18H100z" fill="#287346"/><path d="M115 55h10v224h-10z" fill="#e7eadf"/></svg>')).withMetadata({orientation:6}).jpeg({quality:90}).toBuffer();
+const png=await sharp({create:{width:32,height:24,channels:4,background:'#33663380'}}).png().toBuffer();
+const webp=await sharp({create:{width:35,height:29,channels:3,background:'#912734'}}).webp().toBuffer();
+const oversizedPNG=Buffer.from(png);
+oversizedPNG.writeUInt32BE(10_000,16);
+oversizedPNG.writeUInt32BE(10_000,20);
+const avif=await sharp(png).avif().toBuffer();
+const heicSignature=Buffer.from('000000186674797068656963000000006d69663168656963','hex');
+const badImports=[
+ {name:'empty.jpg',mimeType:'image/jpeg',buffer:Buffer.alloc(0)},
+ {name:'truncated.jpg',mimeType:'image/jpeg',buffer:capturePhoto.subarray(0,64)},
+ {name:'mismatch.jpg',mimeType:'image/jpeg',buffer:png},
+ {name:'oversized.png',mimeType:'image/png',buffer:oversizedPNG},
+ {name:'unsupported.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg/>')},
+ {name:'unsupported.avif',mimeType:'image/avif',buffer:avif},
+ {name:'heic-header.heic',mimeType:'image/heic',buffer:heicSignature},
+];
 const cameraFrame='data:image/jpeg;base64,'+capturePhoto.toString('base64');
 const owner='synthetic-style-owner-a';
 const fixtures=[
@@ -85,9 +101,19 @@ try{
      },fixtures);
      // Use the ACTUAL native Add clothing photos file input (not direct
      // candidate() injection) on a normal, flag-free app URL.
-     await page.locator('#clothingPhotos').setInputFiles({
+     await page.locator('#clothingPhotos').setInputFiles(badImports);
+     await page.waitForFunction(()=>window.__lastPhotoImportResult?.results.length===7&&!busy);
+     const rejected=await page.evaluate(()=>({result:window.__lastPhotoImportResult,batch:batch.length}));
+     assert.equal(rejected.batch,0);
+     assert.equal(rejected.result.added,0);
+     assert.match(rejected.result.results.find(x=>x.name==='oversized.png').reason,/invalid image dimensions/);
+     assert.match(rejected.result.results.find(x=>x.name==='unsupported.avif').reason,/cannot be dimension checked/);
+     assert.match(rejected.result.results.find(x=>x.name==='heic-header.heic').reason,/cannot be dimension checked/);
+     await page.locator('#clothingPhotos').dispatchEvent('cancel');
+     assert.equal(await page.evaluate(()=>batch.length),0);
+     await page.locator('#clothingPhotos').setInputFiles([badImports[1],{
        name:'new-reviewed-blouse.jpg',mimeType:'image/jpeg',buffer:capturePhoto
-     });
+     }]);
      try{await page.waitForFunction(()=>batch.some(x=>x.importFilename==='new-reviewed-blouse.jpg'),null,{timeout:20000});}
      catch(error){
        const sourceDiagnostic=await page.evaluate(async original=>{
@@ -106,6 +132,12 @@ try{
       message:document.getElementById('message')?.textContent,authOwner:window.closetAuth?.user?.id,
       dbName:db?.name,batch:batch.map(x=>({id:x.id,name:x.name,status:x.localStatus,scanFailed:x.scanFailed})),
       recognitionPhase:recognitionState.phase}));throw Error(String(error)+'; independent original JPEG diagnostic='+JSON.stringify(sourceDiagnostic)+'; import diagnostics='+JSON.stringify(state));}
+     await page.waitForFunction(()=>window.__lastPhotoImportResult?.results.some(
+      result=>result.name==='new-reviewed-blouse.jpg')&&!busy);
+     const importedJPEG=await page.evaluate(()=>batch.find(x=>x.importFilename==='new-reviewed-blouse.jpg').originalPhoto);
+     assert.deepEqual([importedJPEG.width,importedJPEG.height,importedJPEG.orientation],[320,240,6]);
+     assert.equal(importedJPEG.transformed,false);
+     assert.equal((await page.evaluate(()=>window.__lastPhotoImportResult)).added,1);
      await page.evaluate(()=>switchView('review'));
      await page.locator('#reviewGrid article.photo-result').getByRole('button',{name:'Adjust',exact:true}).click();
      await page.waitForFunction(()=>document.querySelector('dialog.photo-adjust[open]')!==null);
@@ -221,9 +253,63 @@ try{
      assert.equal(reopened.owner,owner);assert.equal(reopened.items.length,fixtures.length+1);
      assert.equal(reopened.boards.length,2);assert.ok(Object.values(reopened.boards[0].slots).includes(focusedId));
      assert.equal(reopened.boards[1].slots.top,focusedId);assert.equal(reopened.boards[1].slots.shoes,swap.alternatives[0].id);
+     await page.locator('#clothingPhotos').setInputFiles([
+      {name:'already-saved.jpg',mimeType:'image/jpeg',buffer:capturePhoto},
+      {name:'alpha.png',mimeType:'image/png',buffer:png},
+      {name:'gallery.webp',mimeType:'image/webp',buffer:webp}
+     ]);
+     await page.waitForFunction(()=>window.__lastPhotoImportResult?.results.length===3&&!busy);
+     const converted=await page.evaluate(async()=>{
+      const snapshot=await new Promise((resolve,reject)=>{
+       const req=db.transaction('state').objectStore('state').get('draft');
+       req.onsuccess=()=>resolve(req.result);
+       req.onerror=()=>reject(req.error);
+      });
+      return {result:window.__lastPhotoImportResult,saved:(await readAll()).length,draft:snapshot.batch};
+     });
+     assert.equal(converted.saved,fixtures.length+1);
+     assert.deepEqual(converted.result.results.map(x=>x.status),['duplicate','added','added']);
+     assert.equal(converted.draft.length,2);
+     for(const [name,input,dimensions] of [['alpha.png',png,[32,24]],['gallery.webp',webp,[35,29]]]){
+      const row=converted.draft.find(x=>x.importFilename===name);
+      const original=row.originalPhoto;
+      const fileHash=createHash('sha256').update(input).digest('hex');
+      assert.equal(original.originalFileSha256,fileHash);
+      assert.equal(original.transformed,true);
+      assert.deepEqual([original.width,original.height],dimensions);
+      assert.equal(row.sourceSHA256,createHash('sha256').update(Buffer.from(original.image.split(',')[1],'base64')).digest('hex'));
+      assert.notEqual(row.sourceSHA256,fileHash);
+      assert.equal(row.ownerId,owner);
+     }
+     const pngDraft=converted.draft.find(x=>x.importFilename==='alpha.png');
+     await page.locator('#reviewGrid article.photo-result').first().getByRole('button',{name:'Adjust',exact:true}).click();
+     const adjust=page.locator('dialog.photo-adjust');
+     await adjust.getByLabel('Item name',{exact:true}).fill('Converted gallery blouse');
+     await adjust.getByLabel('Main category',{exact:true}).selectOption('Tops');
+     await adjust.getByLabel('Item type',{exact:true}).selectOption('Blouse');
+     await adjust.locator('input[aria-label="Color"]').fill('Green');
+     await adjust.getByLabel('I verified the category, clothing type and color',{exact:true}).check();
+     await adjust.getByLabel('I confirmed this photo shows one garment',{exact:true}).check();
+     await adjust.locator('form').evaluate(form=>form.requestSubmit());
+     await page.waitForFunction(()=>items.some(x=>x.name==='Converted gallery blouse')&&!document.querySelector('dialog.photo-adjust[open]'));
+     await page.reload({waitUntil:'domcontentloaded'});
+     await page.evaluate(async()=>{await window.closetAuth.ready;await closetReady;});
+     const convertedPreview=await page.evaluate(async id=>{
+      const row=(await readAll()).find(x=>x.id===id);
+      const {verifyOwnerSavedPhoto165}=await import('/public/style-photo-preview-gate-165.mjs');
+      const result=await verifyOwnerSavedPhoto165({item:row,readOwnerItems:readAll,getSession:()=>({
+       authenticated:true,ownerId:window.closetAuth.user.id,epoch:'fixture-owner-epoch',privateDbName:db.name
+      })});
+      return {mode:result.presentationMode,sourceSHA256:result.sourceSHA256,rawHash:row.originalPhoto.originalFileSha256};
+     },pngDraft.id);
+     assert.equal(convertedPreview.mode,'verified-converted-photo-2d');
+     assert.equal(convertedPreview.sourceSHA256,pngDraft.sourceSHA256);
+     assert.equal(convertedPreview.rawHash,pngDraft.originalPhoto.originalFileSha256);
+     console.log('Assignment 29 PASS',engine,width,'EXIF JPEG, PNG, WebP, invalid inputs, cancel, retry and duplicate');
      results.push({engine,width,threeFocusedOwnedLooks:true,uniqueLookCount:3,saveAndReload:true,
       ownerScopedIndexedDB:true,offHostCallsBlocked:true,syntheticAuth:true,syntheticGarments:true,
-      cameraCapture:'synthetic still frame passed through the actual camera candidate and Review flow',fileImport:false,
+      cameraCapture:false,fileImport:true,convertedPreview:convertedPreview.mode,
+      rejectedInputs:rejected.result.results,exifOrientation:importedJPEG.orientation,
       manualCorrection:true,oneOwnedPieceSwap:true,saveAndReloadAfterSwap:true,physicalPhone:false,overflow:generated.overflow,labels:generated.cards.map(x=>x.labels)});
     }finally{await context.close();}
    }
@@ -232,7 +318,7 @@ try{
  assert.equal(errors.length,0,errors.join('; '));
  const report={verdict:'PASS',feature:'Style around a newly reviewed and saved owned item',engines:engines.map(x=>x[0]),cases:results,
   screenshots:results.length,offHostCalls:0,syntheticAuth:true,syntheticGarments:true,
-  cameraCapture:'synthetic JPEG frame passed to the actual candidate() capture entry point; physical device and getUserMedia are not exercised',freshAIInference:false,
+  cameraCapture:false,freshAIInference:false,
   physicalAndroid:false,physicalIPhone:false,cloudWrites:false,familyAlpha:'HOLD'};
  await writeFile(out+'/results.json',JSON.stringify(report,null,2));
 if(provenance167.length!==6||provenance167.some(x=>x.mode!=='verified-original-photo-2d'||!x.realNativeUpload))
