@@ -71,10 +71,42 @@ jobs:
           sed -i 's/^project_id = .*/project_id = "closet-a25"/; s/^jwt_expiry = .*/jwt_expiry = 3600/' supabase/config.toml
           grep -q '^jwt_expiry = 3600$' supabase/config.toml
           supabase --version
+          # Each attempt receives a fresh group of loopback ports. Keep the
+          # probes open together so two config entries never get the same port.
+          pick_ports() {
+            python3 - <<'PYTHON'
+          import re
+          import socket
+          from pathlib import Path
+
+          config = Path("supabase/config.toml")
+          probes = []
+
+          def replace(match):
+              probe = socket.socket()
+              probes.append(probe)
+              probe.bind(("127.0.0.1", 0))
+              return match[1] + str(probe.getsockname()[1])
+
+          try:
+              text, count = re.subn(
+                  r"(?m)^(\s*(?:[a-z_]+_)?port\s*=\s*)[0-9]+",
+                  replace, config.read_text(),
+              )
+              if count < 3:
+                  raise SystemExit("Expected API, database and shadow port declarations")
+              config.write_text(text)
+              print(f"Assigned {count} distinct local ports")
+          finally:
+              for probe in probes:
+                  probe.close()
+          PYTHON
+          }
           # Retry infrastructure startup only, before applying SQL or creating owners.
           # Emit classified counters, never raw CLI output (may include credentials).
           started=0
           for attempt in 1 2 3; do
+            pick_ports
             log="$RUNNER_TEMP/closet-a25-start.log"
             if supabase start > "$log" 2>&1; then
               echo "Disposable scale backend started on attempt $attempt"
@@ -112,7 +144,7 @@ jobs:
         run: |
           set -o pipefail
           export SUPABASE_TEST_ENV="$RUNNER_TEMP/closet-a25.env"
-          node scripts/assignment-25/browser.mjs | tee "$RUNNER_TEMP/assignment-25.log"
+          node scripts/assignment-25/browser.mjs 2>&1 | tee "$RUNNER_TEMP/assignment-25.log"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
