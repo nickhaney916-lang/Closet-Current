@@ -114,11 +114,94 @@ check('Tampered signed credential denied',invalid.status===401,invalid.status);
 const refresh=await request('/auth/v1/token?grant_type=refresh_token',null,'POST',{refresh_token:a.refresh});
 check('Refresh preserves signed owner',refresh.ok&&json(refresh).user.id===a.id,refresh.status);
 const current=json(refresh);
+const strictSession=process.env.CLOSET_REQUIRE_ACTIVE_SESSION==='1';
+const sessionRevocationReceipts=[];
+const probePath=a.id+'/revoked-probe.jpg';
+async function activeStorageControls(label,session){
+ const token=session.access_token;
+ const sign=await request('/storage/v1/object/sign/closet-private/'+a.path,token,'POST',{expiresIn:60});
+ check(label+' active session can sign existing original',sign.ok&&typeof json(sign).signedURL==='string'&&json(sign).signedURL.length>0,sign.status);
+ const upload=await request(bucket+probePath,token,'POST',a.jpeg);
+ check(label+' active session can upload disposable probe',upload.ok,upload.status);
+ const read=await request(bucket+probePath,token);
+ check(label+' active session can read disposable probe',read.ok&&digest(read.bytes)===a.sha,read.status);
+ const remove=await request(bucket+probePath,token,'DELETE');
+ check(label+' active session can delete disposable probe',remove.ok,remove.status);
+ const gone=await request(bucket+probePath,token);
+ check(label+' disposable probe actually removed',[400,404].includes(gone.status),gone.status);
+}
+if(strictSession) await activeStorageControls('initial local logout',current);
 const logout=await request('/auth/v1/logout?scope=local',current.access_token,'POST',{});
 check('Signed logout succeeds',logout.ok,logout.status);
+const localLogoutAt=performance.now();
 const revoked=await request('/auth/v1/token?grant_type=refresh_token',null,'POST',{refresh_token:current.refresh_token});
 check('Signed logout revokes refresh credential',[400,401,403].includes(revoked.status),revoked.status);
 const residual=await request(table,current.access_token);
+const residualObservedAt=performance.now();
+if(strictSession){
+ const denied=r=>[400,401,403,404].includes(r.status);
+ const empty=r=>r.ok&&Array.isArray(json(r))&&json(r).length===0;
+ const login=async()=>{const r=await request('/auth/v1/token?grant_type=password',null,'POST',{email:a.email,password:a.password});
+  check('Active-session control sign-in',r.ok,r.status);return json(r);};
+ const claims=token=>JSON.parse(Buffer.from(token.split('.')[1],'base64url'));
+ const stillValid=token=>Number.isSafeInteger(claims(token).exp)&&claims(token).exp*1000>Date.now();
+ let revision=four?2:1;
+ async function preserved(session){
+  const row=await request(table+'?owner_id=eq.'+a.id,session.access_token);
+  check('Active-session control preserves exact document and revision',row.ok&&json(row).length===1&&json(row)[0].revision===revision&&isDeepStrictEqual(json(row)[0].document,a.document),row.status);
+  const image=await request(bucket+a.path,session.access_token);
+  check('Active-session control preserves original JPEG',image.ok&&digest(image.bytes)===a.sha,image.status);
+  const list=await request('/storage/v1/object/list/closet-private',session.access_token,'POST',{prefix:a.id});
+  check('Active-session control preserves exact object inventory',list.ok&&isDeepStrictEqual(json(list).map(p=>p.name),['fixture.jpg']),list.status);
+ }
+ async function verifyRevoked(label,session,logoutAt,priorReadAt=null){
+  const token=session.access_token;
+  assert.ok(stillValid(token),'Must exercise a still-unexpired, server-issued access token');
+  const read=await request(table+'?owner_id=eq.'+a.id,token);
+  check(label+' cannot read own backup document',denied(read)||empty(read),read.status);
+  const firstDeniedAt=priorReadAt??performance.now();
+  const image=await request(bucket+a.path,token);
+  check(label+' cannot newly download own original',denied(image),image.status);
+  const list=await request('/storage/v1/object/list/closet-private',token,'POST',{prefix:a.id});
+  check(label+' cannot list own originals',denied(list)||empty(list),list.status);
+  const sign=await request('/storage/v1/object/sign/closet-private/'+a.path,token,'POST',{expiresIn:60});
+  check(label+' cannot issue a new signed photo URL',denied(sign),sign.status);
+  const patch=await request(table+'?owner_id=eq.'+a.id,token,'PATCH',{document:{...a.document,items:[]}});
+  check(label+' cannot patch own backup',[401,403].includes(patch.status)||empty(patch),patch.status);
+  const write=await request(rpc,token,'POST',{p_expected_revision:revision,p_document:{...a.document,items:[]}});
+  check(label+' cannot advance own backup revision',[401,403].includes(write.status)||write.ok&&json(write)===null,write.status);
+  const upload=await request(bucket+probePath,token,'POST',a.jpeg);
+  check(label+' cannot upload own private photo',denied(upload),upload.status);
+  const remove=await request(bucket+a.path,token,'DELETE');
+  check(label+' cannot delete own original',denied(remove)||empty(remove),remove.status);
+  assert.ok(stillValid(token),'All denial observations must precede token expiration');
+  sessionRevocationReceipts.push({scope:label,confirmedLogoutToFirstDeniedResponseMs:firstDeniedAt-logoutAt,confirmedLogoutToLastDeniedResponseMs:performance.now()-logoutAt,unexpiredThroughout:true,activeStorageControlsPassed:true});
+ }
+ check('Local logout blocks previously accepted residual access',denied(residual)||empty(residual),residual.status);
+ await verifyRevoked('local logout',current,localLogoutAt,residualObservedAt);
+ // Fresh login supplies a separate active device for a controlled local logout.
+ const first=await login(),second=await login();
+ assert.notEqual(claims(first.access_token).session_id,claims(second.access_token).session_id);
+ await preserved(first);await preserved(second);
+ await activeStorageControls('controlled local logout',first);
+ const local=await request('/auth/v1/logout?scope=local',first.access_token,'POST',{});
+ const controlledLocalAt=performance.now();
+ check('Controlled local logout succeeds',local.ok,local.status);
+ await verifyRevoked('local logout with second device',first,controlledLocalAt);
+ await preserved(second);
+ const validWrite=await request(rpc,second.access_token,'POST',{p_expected_revision:revision,p_document:a.document});
+ check('Unaffected second device can advance backup revision',validWrite.ok&&json(validWrite)===revision+1,validWrite.status);
+ revision++;
+ const third=await login();await preserved(third);
+ await activeStorageControls('global logout device one',second);
+ await activeStorageControls('global logout device two',third);
+ const global=await request('/auth/v1/logout?scope=global',second.access_token,'POST',{});
+ const globalAt=performance.now();
+ check('Global logout succeeds',global.ok,global.status);
+ await verifyRevoked('global logout device one',second,globalAt);
+ await verifyRevoked('global logout device two',third,globalAt);
+ const fresh=await login();await preserved(fresh);
+}
 const expiry=JSON.parse(Buffer.from(b.token.split('.')[1],'base64url')).exp;
 assert.ok(Number.isSafeInteger(expiry));
 const remaining=expiry*1000-Date.now();
@@ -130,6 +213,7 @@ const recovered=await request('/auth/v1/token?grant_type=refresh_token',null,'PO
 check('Refresh after access expiry retains owner',recovered.ok&&json(recovered).user.id===b.id,recovered.status);
 const report={owners:owners.length,orderedPairs:owners.length*(owners.length-1),head:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),signedLocalSupabase:true,distinctAuthenticatedOwners:true,checks,
  logoutAccessTokenRemainsUsable:residual.ok&&json(residual).length===1,
+ activeSessionPolicyRequired:strictSession,sessionRevocationReceipts,
  scope:'Disposable loopback; synthetic JPEGs; no hosted access'};
 await mkdir('benchmark/auth-review-session-36',{recursive:true});
 await writeFile('benchmark/auth-review-session-36/signed.json',JSON.stringify(report,null,2));
