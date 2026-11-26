@@ -52,7 +52,10 @@ const hashEvidence=async(page,engine,width,stage)=>{
 function fixtureAuth(route){
  const req=route.request(),address=new URL(req.url());
  if(address.pathname==='/auth/v1/logout')return new Promise(resolve=>{
-  setTimeout(async()=>{await route.fulfill({status:200,json:{}});resolve();},650);
+  setTimeout(async()=>{
+   const isB=req.headers().authorization==='Bearer fixture-access-owner-b';
+   await route.fulfill(isB?{status:503,json:{message:'fixture unavailable'}}:{status:204});resolve();
+  },650);
  });
  if(address.pathname==='/auth/v1/token'){
   const data=req.postDataJSON(),type=address.searchParams.get('grant_type');
@@ -166,6 +169,7 @@ try{
     assert.deepEqual(locked,{user:null,appHidden:true,sourceCleared:true,dbAbsent:true});
     screenshots.push(await hashEvidence(stale,engine,width,'02-a-session-locked'));
     await page.locator('#authSubmit').waitFor({state:'visible',timeout:15000});
+    assert.doesNotMatch(await page.locator('#authStatus').textContent(),/Server sign-out could not be confirmed/);
     await login(page,'b');
     assert.deepEqual(await readRows(page),[],'Owner B cannot see A wardrobe through app');
     const savedB=await confirmedHumanSave(page,'b');
@@ -173,6 +177,9 @@ try{
     screenshots.push(await hashEvidence(page,engine,width,'03-b-saved'));
     await page.evaluate(()=>document.getElementById('logout').click());
     await page.locator('#authSubmit').waitFor({state:'visible',timeout:15000});
+    await page.waitForFunction(()=>document.getElementById('authStatus').textContent.includes('Server sign-out could not be confirmed'),null,{timeout:15000});
+    assert.equal(await page.evaluate(()=>localStorage.getItem('closet-current-auth-v1')),null);
+    assert.equal(await page.evaluate(()=>sessionStorage.getItem('closet-current-logout-unconfirmed-v1')),null);
     await login(page,'a');
     const restoredA=await readRows(page);
     assert.equal(restoredA.length,1);
@@ -183,6 +190,7 @@ try{
     cases.push({engine,width,sourceA:photo.a.sha,sourceB:photo.b.sha,
       savedA:1,savedB:1,ownerBCannotAccessA:true,staleTabLocked:true,
       originalBytesVerified:true,humanConfirmed:true,previousAccountReopens:true,
+      confirmedLogout204:true,unconfirmedLogout503Notice:true,
       realNativeIndexedDB:true,authTransport:'synthetic HTTP fixture, NOT signed browser',
       screenshots});
     await ctx.close();
@@ -193,7 +201,7 @@ try{
  assert.deepEqual(failures,[],'browser page errors');
  assert.deepEqual(unauthorized,[],'unapproved external photo uploads');
  const report={priority:'AUTH-REVIEW-SESSION-36',engines:['chromium','webkit'],widths:[320,390,430],
-  browserCases:6,realNativeIndexedDB:true,photoSource:'locally generated synthetic JPEG',
+  browserCases:6,confirmedLogout204Cases:6,unconfirmedLogout503NoticeCases:6,realNativeIndexedDB:true,photoSource:'locally generated synthetic JPEG',
   realOriginalWebCrypto:true,realSignedBrowserToCloud:false,
   authTransport:'fixture',segFormerActuallyRun:false,productionTouched:false,FamilyAlpha:'HOLD',
   unexpectedUploads:unauthorized,pageErrors:failures,cases};
