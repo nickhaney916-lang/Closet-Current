@@ -29,15 +29,15 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           test "${{ github.event.pull_request.base.sha }}" = 2f57f8753d56907bc686f2fcfd58c12e3cb357cc
-          test "$(git rev-parse HEAD^)" = 233daebecd9edb06311faae77de6cc2691bb5177
+          test "$(git rev-parse HEAD^)" = f3799d2f5771e7501cf06ff651ff6bdca0f41964
           git merge-base --is-ancestor 2f57f8753d56907bc686f2fcfd58c12e3cb357cc HEAD
           printf '%s\n' '.github/workflows/auth-review-session-36-no-deploy.yml' '.github/workflows/main1054-unified-logout-HOLD.yml' 'public/auth.js' 'scripts/verify-auth-review-session-36.mjs' 'tests/auth.test.cjs' | LC_ALL=C sort > /tmp/auth36-expected
           git diff --name-only 2f57f8753d56907bc686f2fcfd58c12e3cb357cc HEAD | LC_ALL=C sort > /tmp/auth36-actual
           diff -u /tmp/auth36-expected /tmp/auth36-actual
           test "$(git rev-parse HEAD:public/auth.js)" = fdcbff907b3b6bce2bf12bdfbaee9358f17c656d
           test "$(git rev-parse HEAD:tests/auth.test.cjs)" = f5fdab5a69e0dc4f12534f75c850ef3499eba535
-          test "$(git rev-parse HEAD:scripts/verify-auth-review-session-36.mjs)" = 273bed9fb54a6b07659c2e9d801c6aff033b6dd3
-          test "$(git rev-parse HEAD:.github/workflows/auth-review-session-36-no-deploy.yml)" = 9c69c33b83d43a280a350e791bb4c0cac4be94f1
+          test "$(git rev-parse HEAD:scripts/verify-auth-review-session-36.mjs)" = 0924344d94638cf46fc40fa49d19e68ba94048bf
+          test "$(git rev-parse HEAD:.github/workflows/auth-review-session-36-no-deploy.yml)" = ce12819907e2f3b41d2f854d5e05ae34e4ce5a25
           test "$(git rev-parse HEAD:.github/workflows/assignment-22-active-session-HOLD.yml)" = 02b9372ea5da0c1f77d14c3646a723b39a4ecfe9
           test "$(git rev-parse HEAD:scripts/assignment-22/auth-lifecycle.mjs)" = 74049b994465a54c45ff542fa857a308a3912e7f
           test "$(git rev-parse HEAD:scripts/assignment-22/policy-contract.sql)" = d59cb5496b1422f426a6ec2ace1e8fec559ce6fa

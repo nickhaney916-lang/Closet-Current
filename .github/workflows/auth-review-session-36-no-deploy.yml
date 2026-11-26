@@ -37,7 +37,7 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           if test "${{ github.head_ref }}" = 'research/main1054-unified-logout-HOLD'; then
             test "${{ github.event.pull_request.base.sha }}" = 2f57f8753d56907bc686f2fcfd58c12e3cb357cc
-            test "$(git rev-parse HEAD^)" = 233daebecd9edb06311faae77de6cc2691bb5177
+            test "$(git rev-parse HEAD^)" = f3799d2f5771e7501cf06ff651ff6bdca0f41964
             git merge-base --is-ancestor 2f57f8753d56907bc686f2fcfd58c12e3cb357cc HEAD
             printf '%s\n' '.github/workflows/auth-review-session-36-no-deploy.yml' '.github/workflows/main1054-unified-logout-HOLD.yml' 'public/auth.js' 'scripts/verify-auth-review-session-36.mjs' 'tests/auth.test.cjs' | LC_ALL=C sort > /tmp/auth36-expected
             git diff --name-only 2f57f8753d56907bc686f2fcfd58c12e3cb357cc HEAD | LC_ALL=C sort > /tmp/auth36-actual

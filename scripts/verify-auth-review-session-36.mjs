@@ -52,11 +52,11 @@ const hashEvidence=async(page,engine,width,stage)=>{
  assert.ok(stats.channels.some(c=>c.stdev>6),'Screenshot cannot be blank');
  return {file,sha256:digest(buf),width,height:meta.height,bytes:buf.length};
 };
-async function fixtureAuth(route){
+async function fixtureAuth(route,confirmedGate){
  const req=route.request(),address=new URL(req.url());
  if(address.pathname==='/auth/v1/logout'){
-  await new Promise(resolve=>setTimeout(resolve,650));
   const isB=req.headers().authorization==='Bearer fixture-access-owner-b';
+   if(!isB)await confirmedGate;else await new Promise(resolve=>setTimeout(resolve,650));
   return route.fulfill(isB?{status:503,json:{message:'fixture unavailable'}}:{status:204});
  }
  if(address.pathname==='/auth/v1/token'){
@@ -136,11 +136,13 @@ try{
   try{
    for(const width of [320,390,430]){
     const ctx=await browser.newContext({viewport:{width,height:940},isMobile:true,hasTouch:true,serviceWorkers:'block'});
-    await ctx.route('**/*',route=>{
+    let releaseConfirmed;
+     const confirmedGate=new Promise(resolve=>{releaseConfirmed=resolve;});
+     await ctx.route('**/*',route=>{
      const req=route.request(),url=req.url();
      if(url===origin+'/public/cloud-backup.js')return route.fulfill({status:200,contentType:'text/javascript',body:'window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};'});
      if(url.startsWith(origin+'/')||url.startsWith('blob:'+origin)||url.startsWith('data:'))return route.continue();
-     if(url.startsWith(auth+'/auth/v1/'))return fixtureAuth(route);
+     if(url.startsWith(auth+'/auth/v1/'))return fixtureAuth(route,confirmedGate);
      if(req.method()!=='GET')unauthorized.push({engine,width,method:req.method()});
      return route.abort();
     });
@@ -161,12 +163,13 @@ try{
     await source(stale,'b'); // a different unconfirmed photo in A's stale tab
     assert.equal((await readRows(stale)).length,1);
 
-    // The logout HTTP response deliberately takes 650 ms. Both tabs must
-    // lock and empty their photos *before* that network request finishes.
+    // Hold A's reply until both tabs are verified locked; preserve the first assertion error.
     const confirmedLogout=Promise.all([
-     page.waitForResponse(r=>r.url()===auth+'/auth/v1/logout'&&r.request().method()==='POST'&&r.status()===204,{timeout:15000}),
-     page.waitForEvent('framenavigated',{predicate:f=>f===page.mainFrame(),timeout:15000})
+     page.waitForResponse(r=>r.url()===auth+'/auth/v1/logout'&&r.request().method()==='POST'&&r.status()===204,{timeout:45000}),
+     page.waitForEvent('framenavigated',{predicate:f=>f===page.mainFrame(),timeout:45000})
     ]);
+     confirmedLogout.catch(()=>{});
+     try{
     await page.evaluate(()=>document.getElementById('logout').click());
     await page.waitForFunction(()=>window.closetAuth?.user===null&&db===null&&
      document.getElementById('appShell').hidden,null,{timeout:2500});
@@ -180,6 +183,8 @@ try{
     }));
     assert.deepEqual(locked,{user:null,appHidden:true,sourceCleared:true,dbAbsent:true});
     screenshots.push(await hashEvidence(stale,engine,width,'02-a-session-locked'));
+     }catch(error){console.error('AUTH36 pre-response lock failure',engine,width,error);throw error;}
+     finally{releaseConfirmed();}
     await confirmedLogout;
     await page.waitForFunction(()=>window.closetAuth?.user===null&&document.getElementById('authStatus')?.textContent.trim(),null,{timeout:15000});
     await page.locator('#authSubmit').waitFor({state:'visible',timeout:15000});
@@ -193,6 +198,7 @@ try{
      page.waitForResponse(r=>r.url()===auth+'/auth/v1/logout'&&r.request().method()==='POST'&&r.status()===503,{timeout:15000}),
      page.waitForEvent('framenavigated',{predicate:f=>f===page.mainFrame(),timeout:15000})
     ]);
+     unconfirmedLogout.catch(()=>{});
     await page.evaluate(()=>document.getElementById('logout').click());
     await unconfirmedLogout;
     await page.locator('#authSubmit').waitFor({state:'visible',timeout:15000});
