@@ -42,3 +42,6 @@ jobs:
         env:
           A28_ENGINE: ${{ matrix.engine }}
           APP_SOURCE_ROOT: dist
+      - run: node scripts/test-assignment-15-browser.mjs
+        env:
+          A15_ENGINE: ${{ matrix.engine }}

@@ -178,3 +178,8 @@ header{padding-top:22px;padding-bottom:18px}.brand-mark{background:#7043ba;color
   overflow-wrap:anywhere;
  }
 }
+
+@media (max-width:480px){
+ #closet .filters{grid-template-columns:minmax(0,1fr)}
+ .closet-category-caption{overflow-wrap:anywhere}
+}

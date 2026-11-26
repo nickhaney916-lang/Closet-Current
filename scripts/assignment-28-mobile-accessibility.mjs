@@ -100,6 +100,7 @@ async function exercise(browser, engine, width) {
    const result = await target.evaluate(el => ({
     available:el.clientWidth, content:el.scrollWidth,
     scrollX: window.scrollX, innerWidth:window.innerWidth,
+    overflowing:Array.from(el.querySelectorAll('*')).filter(node => node.clientWidth && node.scrollWidth-node.clientWidth>2 && node.checkVisibility()).slice(0,20).map(node => [node.id||node.className||node.tagName,node.clientWidth,node.scrollWidth]),
     outside: Array.from(el.querySelectorAll('*')).filter(node => {
      const box=node.getBoundingClientRect();
      return box.width && box.right > el.getBoundingClientRect().right+1;
@@ -117,8 +118,27 @@ async function exercise(browser, engine, width) {
     el.style.fontSize = parseFloat(size)*2+'px';
    }
   });
-  await activate(locator('.tab[data-view=closet]'));
+  const closetTab = locator('.tab[data-view=closet]');
+  await locator('.tab[data-view=home]').focus();
+  await page.keyboard.press('Tab');
+  await expectFocus(closetTab);
+  assert.equal(await closetTab.evaluate(el => getComputedStyle(el).outlineStyle),'solid');
+  await page.keyboard.press('Enter');
   await expectFocus(locator('#closet h2'));
+  assert.equal(await closetTab.getAttribute('aria-current'),'page');
+  const contrast = await closetTab.evaluate(el => {
+   const luminance = color => {
+    const [red,green,blue] = color.match(/[\d.]+/g).slice(0,3).map(value => {
+     const channel = Number(value)/255;
+     return channel <= .04045 ? channel/12.92 : ((channel+.055)/1.055)**2.4;
+    });
+    return .2126*red+.7152*green+.0722*blue;
+   };
+   const style = getComputedStyle(el);
+   const values = [luminance(style.color),luminance(style.backgroundColor)];
+   return (Math.max(...values)+.05)/(Math.min(...values)+.05);
+  });
+  assert.ok(contrast >= 4.5, 'Active Closet navigation contrast: '+contrast);
   const category = locator('.closet-category-base');
   await activate(category);
   await expectFocus(locator('#closetBack'));
@@ -189,7 +209,10 @@ async function exercise(browser, engine, width) {
   await expectFocus(top);
   await activate(locator('.tab[data-view=closet]'));
   await checkReflow(locator('html'));
-  assert.ok((await locator('.tab[data-view=closet]').boundingBox()).height >= 44);
+  for (const target of [closetTab, locator('#closetAllPieces'), locator('#closetBack')]) {
+   const bounds = await target.boundingBox();
+   assert.ok(bounds.width >= 44 && bounds.height >= 44, 'Touch target: '+target);
+  }
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({engine,width,result:'PASS'}));
  } finally {
