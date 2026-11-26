@@ -31,6 +31,7 @@ window.addEventListener('closet:session-locked',()=>{
  $('stylistFocusItem').replaceChildren(new Option('Use my whole closet',''));
  styledCollectionResults=[];renderStyledCollection();
  applyStylistDefaults();
+ for(const [id,value] of Object.entries({stylistWeatherLow:'',stylistWeatherHigh:'',stylistWeatherUnit:'F',stylistWeatherRain:'unknown',stylistWeatherWind:'unknown'})){if($(id))$(id).value=value;}
  $('stylistStatus').textContent='Pick your plan, then tap Create my outfits.';
  $('stylistDefaultsStatus').textContent='';
  setStylistDefaultsBusy(true);
@@ -236,7 +237,9 @@ function beginOwnerStyledCollectionRequest(){
   stylistOccasion:$('stylistOccasion')?.value,
   stylistAudience:$('stylistAudience')?.value,
   stylistSeason:$('stylistSeason')?.value,
-  stylistFocusItem:$('stylistFocusItem')?.value
+  stylistFocusItem:$('stylistFocusItem')?.value,
+ stylistWeatherLow:$('stylistWeatherLow')?.value,stylistWeatherHigh:$('stylistWeatherHigh')?.value,
+ stylistWeatherUnit:$('stylistWeatherUnit')?.value,stylistWeatherRain:$('stylistWeatherRain')?.value,stylistWeatherWind:$('stylistWeatherWind')?.value
  };
  const serial=++styledCollectionRequestSerial;
  const current=()=>serial===styledCollectionRequestSerial&&ownsSession()&&
@@ -265,7 +268,14 @@ $('styleCollectionForm').onsubmit=async event=>{
    season:lease.values.stylistSeason,
    focusItemId:lease.values.stylistFocusItem||undefined
   };
-  const created=styleOwnedCollection(items,request,activeTrendLibrary);
+  if(lease.values.stylistWeatherUnit){
+ const weather={source:'manual',unit:lease.values.stylistWeatherUnit,low:lease.values.stylistWeatherLow,high:lease.values.stylistWeatherHigh,rain:lease.values.stylistWeatherRain,wind:lease.values.stylistWeatherWind};
+ if(weather.low!==''||weather.high!==''||weather.rain!=='unknown'||weather.wind!=='unknown'){
+ if(!dailyWeatherContext(weather)){styledCollectionResults=[];renderStyledCollection();$('stylistStatus').textContent='Enter a valid temperature range and weather conditions, or clear them.';return;}
+ request.weather=weather;
+ }
+ }
+ const created=styleOwnedCollection(items,request,activeTrendLibrary);
   if(!lease.current())return;
   styledCollectionResults=created;
   renderStyledCollection();
@@ -293,6 +303,7 @@ for(const id of ['stylistOccasion','stylistAudience','stylistSeason'])$(id).onch
  renderStyledCollection();
  $('stylistStatus').textContent='Create outfits for your new preferences.';
 };
+for(const id of ['stylistWeatherLow','stylistWeatherHigh','stylistWeatherUnit','stylistWeatherRain','stylistWeatherWind'])if($(id))$(id).addEventListener('input',()=>$('stylistOccasion').onchange());
 // This owner-private local row is outside the wardrobe backup state allowlist.
 const stylistDefaultsKey='stylist-defaults-v1';
 const defaultStylistSeason=()=>['Winter','Winter','Spring','Spring','Spring','Summer','Summer','Summer','Fall','Fall','Fall','Winter'][new Date().getMonth()];
