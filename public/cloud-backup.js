@@ -21,7 +21,7 @@
   return true;
  }
  const empty=()=>({schemaVersion:1,items:[],state:{}}),markerDefault=()=>({id:'cloud-sync',baseVersion:0,baseDocument:null,localRevision:0,dirty:false});
- function status(text){if(['Cloud backup up to date','Your closet will back up automatically'].includes(text)){const button=document.getElementById('resolveCloudConflict');if(button)button.hidden=true;}const p=document.getElementById('cloudStatus');if(p){p.hidden=false;p.textContent=text;}const banner=document.getElementById('cloudBanner');if(banner){banner.textContent=text;banner.hidden=['Cloud backup up to date','Your closet will back up automatically'].includes(text);}}
+ function status(text){if(['Cloud backup up to date','Your closet will back up automatically'].includes(text))showConflict(null);const p=document.getElementById('cloudStatus');if(p){p.hidden=false;p.textContent=text;}const banner=document.getElementById('cloudBanner');if(banner){banner.textContent=text;banner.hidden=['Cloud backup up to date','Your closet will back up automatically'].includes(text);}}
  function transact(stores,mode,fn){return new Promise((resolve,reject)=>{const tx=db.transaction(stores,mode);let value;try{value=fn(tx);}catch(e){tx.abort();reject(e);return;}tx.oncomplete=()=>resolve(typeof value==='function'?value():value);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Storage transaction stopped'));});}
  async function marker(){let value;await transact(['state'],'readonly',tx=>{const r=tx.objectStore('state').get('cloud-sync');r.onsuccess=()=>value=r.result;});return value||markerDefault();}
  async function markDirty(assertActive=()=>{}){assertActive();await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{try{assertActive();}catch{tx.abort();return;}const m=r.result||markerDefault();store.put({...m,dirty:true,localRevision:m.localRevision+1});};});assertActive();}
@@ -355,8 +355,11 @@
   callbacks.assertCompleteWardrobe?.(local.items,Object.values(local.state),user);
   const restoreResearch=new URLSearchParams(location.search).get('restoreAtomic01')==='research';
   const guard=restoreResearch?window.restoreAtomic01Bridge:null;
-  if(restoreResearch&&(!guard||
-     !await guard.allowCloud({document:local,revision,expectedRevision})))return false;
+  if(restoreResearch){
+   if(!guard||!await guard.allowCloud({document:local,revision,expectedRevision}))return false;
+   // Owner approval belongs to the revision that was presented for restore.
+   if((await getRemote(assertActive,true))?.revision!==revision)return false;
+  }
   assertActive();if(callbacks.canRestore&&!callbacks.canRestore())return false;
   let applied=false,restoreError=null;
   try{
@@ -376,7 +379,7 @@
       if(callbacks.canRestore&&!callbacks.canRestore())return;
       const m=r.result||markerDefault();
       if(restoreResearch)guard.assertLease();
-      if(m.localRevision!==expectedRevision||m.dirty)return;
+      if(m.localRevision!==expectedRevision||m.dirty||m.baseVersion>revision)return;
       // All item and outfit changes share a single transaction. Explicit
       // abort on synchronous quota errors prevents partial local restore.
       inspect?.(itemRows.result,stateRows.result,user);
@@ -514,10 +517,20 @@
   status('Saved on this device · cloud backup pending');schedule();
  }
  function schedule(delay=1500){clearTimeout(timer);timer=setTimeout(()=>sync(),delay);}
- async function sync({keepBoth=false,retryPaused=false}={}){
+ let approveConflict=null;
+ function showConflict(approval){
+  const button=document.getElementById('resolveCloudConflict');
+  approveConflict=approval;
+  if(button){
+   button.hidden=!approval;
+   button.onclick=approval?()=>sync({approval,retryPaused:true}):null;
+  }
+ }
+ async function sync({approval=null,retryPaused=false}={}){
   if(stopForReview145())return;
   if((pausedCapacity||pausedDeviceStorage||pausedIntegrity)&&!retryPaused)return;
-  if(!enabled||syncingEpoch===generation)return;
+  if(!enabled||syncingEpoch===generation||approval&&approval!==approveConflict)return;
+  if(approval)showConflict(null);
   if(retryPaused){
    // Stale buttons cannot clear a previous signed owner's durable stops.
    if(window.closetAuth?.user?.id!==user)return;
@@ -533,6 +546,7 @@
    window.closetAuth?.assertCurrent?.();
   };
   syncingEpoch=mine;let dirtyAtStart=false,photoRevisionAtStart=null,remoteRevisionAtStart=null;
+  let conflict=null;
   try{
    // A clean, already-synced wardrobe needs only its small revision marker
    // and the remote revision. Reading getAll() here clones every original
@@ -605,7 +619,7 @@
    assertActive();
    // A stale replicated response must never move the owner backward after
    // a newer head was just observed; retry rather than restoring old data.
-   if(remoteRevision&&(!remote||remote.revision<remoteRevision.revision))
+   if((remote?.revision||0)<Math.max(m.baseVersion,remoteRevision?.revision||0))
     throw Error('Cloud revision changed while reading private wardrobe');
    if(!m.dirty){
     // A save may have marked the closet dirty while the remote request was
@@ -631,12 +645,23 @@
     status(remote?'Cloud backup up to date':'Your closet will back up automatically');retryDelay=2000;return;
    }
    if(!await isCurrentDirtySnapshot(m,assertActive)){staleSnapshotPending();return;}
+   if(remote&&(remote.revision!==m.baseVersion||m.needsRestore)){
+    conflict={localRevision:m.localRevision,baseVersion:m.baseVersion,remoteRevision:remote.revision};
+   }
+   if(approval&&(!conflict||approval.localRevision!==conflict.localRevision||
+      approval.baseVersion!==conflict.baseVersion||approval.remoteRevision!==conflict.remoteRevision)){
+    if(conflict){
+     showConflict(conflict);
+     status('The backup or this device changed. Both copies are kept. Choose Keep both versions again to continue.');
+    }else staleSnapshotPending();
+    return;
+   }
    status('Backing up your closet…');
    const encoded=await encode(local,assertActive);assertActive();
    if(!await isCurrentDirtySnapshot(m,assertActive)){staleSnapshotPending();return;}
    let document=encoded.document;
    if(remote&&(remote.revision!==m.baseVersion||m.needsRestore)){
-    if(keepBoth){
+    if(approval){
      const ids=new Map(m.resolutionIds||[]);document=E.keepBothDocuments(m.baseDocument,document,remote.document,row=>{const key=E.canonical(row);if(!ids.has(key))ids.set(key,crypto.randomUUID());return ids.get(key);});
      // Persist copy identities before the request so retries cannot create duplicate copies.
      assertActive();await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{try{assertActive();}catch{tx.abort();return;}store.put({...r.result,resolutionIds:[...ids]});};});assertActive();
@@ -670,8 +695,7 @@
    else status('Cloud backup up to date');retryDelay=2000;
   }catch(e){
    if(mine===generation){
-    const resolveButton=document.getElementById('resolveCloudConflict');
-    if(resolveButton)resolveButton.hidden=e.code!=='conflict';
+    showConflict(e.code==='conflict'?conflict:null);
     // Cloud quota/file limit failures do not recover from connectivity.
     // Keep local originals untouched, stop background retries, and require
     // an explicit owner-initiated Sync after the capacity issue is fixed.
@@ -738,9 +762,9 @@
  }
  window.closetCloud={
   ownerReviewHold145:reviewHold145,
-  async start(database,settings){generation++;enabled=false;acknowledgedPhotoPaths.clear();pausedCapacity=null;pausedDeviceStorage=false;pausedIntegrity=false;pausedLocalPhoto=null;pausedRemotePhoto=null;clearTimeout(timer);timer=null;if(stopForReview145())return {paused:true,reason:'owner-review-required'};db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&db.name==='closet-current-user-'+user&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
+  async start(database,settings){generation++;enabled=false;showConflict(null);acknowledgedPhotoPaths.clear();pausedCapacity=null;pausedDeviceStorage=false;pausedIntegrity=false;pausedLocalPhoto=null;pausedRemotePhoto=null;clearTimeout(timer);timer=null;if(stopForReview145())return {paused:true,reason:'owner-review-required'};db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&db.name==='closet-current-user-'+user&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
    pausedDeviceStorage=readDevicePause(user);
-   navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync({retryPaused:true});}const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.onclick=()=>sync({keepBoth:true,retryPaused:true});if(pausedDeviceStorage){status(deviceStorageText);return;}await sync();
+   navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync({retryPaused:true});}if(pausedDeviceStorage){status(deviceStorageText);return;}await sync();
   },
   async beforeWrite(database){if(stopForReview145())return;if(enabled&&database===db){if(window.closetAuth?.user?.id!==user)throw Error('Cloud owner session changed');window.closetAuth?.assertCurrent?.();const ownerAtWrite=user,dbAtWrite=db;await markDirty(()=>{if(!enabled||ownerAtWrite!==user||dbAtWrite!==db||window.closetAuth?.user?.id!==ownerAtWrite)throw Error('Cloud owner session changed');window.closetAuth?.assertCurrent?.();});}},
   changed(){if(stopForReview145())return;if(enabled){if(pausedDeviceStorage){status(deviceStorageText);return;}if(pausedIntegrity){status(integrityText);return;}if(pausedRemotePhoto){status(remotePhotoText(pausedRemotePhoto.reason));return;}if(pausedCapacity){status(capacityText(pausedCapacity));return;}status('Saved on this device · cloud backup pending');schedule();}},sync
