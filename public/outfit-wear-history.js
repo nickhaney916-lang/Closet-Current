@@ -97,7 +97,7 @@ function transactOutfitWear({owner,ownerDB,current},action,value){
     if(events.some(event=>event.day===value.day&&wearCombination(event.slots)===combo)){
      result={events,duplicate:true};return;
     }
-    const next=[value,...events].slice(0,outfitWearLimit);
+    const next=[value,...events].sort((a,b)=>b.at-a.at).slice(0,outfitWearLimit);
     state.put({id:outfitWearKey,owner,events:next});
     result={events:next};
    }catch(error){failure=error;tx.abort();}
