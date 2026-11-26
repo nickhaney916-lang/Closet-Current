@@ -1486,7 +1486,7 @@ function render(){
  renderPhotoResults($('scanResults'),results);
  const cg=$('closetGrid');cg.replaceChildren();
  while(cg.nextElementSibling?.matches('.closet-page-status136,.closet-page-more136'))cg.nextElementSibling.remove();
- const query=$('search').value.trim().toLowerCase().replace(/\s+/g,' '),filter=$('filter').value;
+ const query=$('search').value.trim().normalize('NFC').toLowerCase().replace(/\s+/g,' '),filter=$('filter').value;
  const closetKey136=JSON.stringify([query,filter,$('seasonFilter').value,$('sleeveFilter').value,
   !!window.closetBrowseAll,window.closetSlotFilter||'',window.closetItemType||'',window.closetSleeves||null]);
  if(closetKey136!==closetQueryKey136){closetQueryKey136=closetKey136;closetRendered136=closetPageSize136;}
