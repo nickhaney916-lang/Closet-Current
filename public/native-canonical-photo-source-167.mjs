@@ -7,7 +7,7 @@
  */
 const SHA=/^[0-9a-f]{64}$/;
 const JPEG=/^data:image\/jpeg;base64,([A-Za-z0-9+/]+={0,2})$/;
-const MAX=12*1024*1024,MAX_PIXELS=80_000_000;
+const MAX=12*1024*1024,MAX_PIXELS=80_000_000,MAX_SAVED_JPEG=8_000_000;
 function assert(condition,message){if(!condition)throw Error('CAPTURE-PROOF-01 '+message);}
 function asHex(bytes){return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');}
 export async function digestBytes(bytes,cryptoProvider=globalThis.crypto){
@@ -54,6 +54,63 @@ function b64(bytes){
 function pixelDimensions(w,h){
  assert(Number.isInteger(w)&&Number.isInteger(h)&&w>0&&h>0&&
   w*h<=MAX_PIXELS,'invalid image dimensions');
+}
+// Read encoded dimensions before allocating a browser image or canvas.
+function checkImportDimensions(bytes,type){
+ const header=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+ const tag=(offset,length)=>String.fromCharCode(...bytes.subarray(offset,offset+length));
+ const valid=(condition)=>assert(condition,'invalid image header');
+ switch(type){
+  case 'image/jpeg': {
+   let offset=2;
+   while(offset+3<bytes.length&&bytes[offset++]===255){
+    while(bytes[offset]===255)offset++;
+    const marker=bytes[offset++];
+    if(marker===0xda||marker===0xd9||offset+2>bytes.length)break;
+    const size=header.getUint16(offset);
+    valid(size>=2&&offset+size<=bytes.length);
+    if(marker>=0xc0&&marker<=0xcf&&![0xc4,0xc8,0xcc].includes(marker)){
+     valid(size>=8);
+     pixelDimensions(header.getUint16(offset+5),header.getUint16(offset+3));
+     return;
+    }
+    offset+=size;
+   }
+   valid(false);
+   return;
+  }
+  case 'image/png':
+   valid(bytes.length>=33&&header.getUint32(8)===13&&tag(12,4)==='IHDR');
+   pixelDimensions(header.getUint32(16),header.getUint32(20));
+   return;
+  case 'image/gif':
+   valid(bytes.length>=13);
+   pixelDimensions(header.getUint16(6,true),header.getUint16(8,true));
+   return;
+  case 'image/webp': {
+   valid(bytes.length>=20&&header.getUint32(4,true)+8===bytes.length);
+   const chunkSize=header.getUint32(16,true);
+   valid(chunkSize<=bytes.length-20);
+   const chunk=tag(12,4);
+   if(chunk==='VP8X'){
+    valid(chunkSize===10);
+    const u24=offset=>bytes[offset]+256*bytes[offset+1]+65536*bytes[offset+2];
+    pixelDimensions(u24(24)+1,u24(27)+1);
+    return;
+   }
+   if(chunk==='VP8L'){
+    valid(chunkSize>=5&&bytes[20]===0x2f);
+    const size=header.getUint32(21,true);
+    pixelDimensions((size&0x3fff)+1,((size>>>14)&0x3fff)+1);
+    return;
+   }
+   valid(chunk==='VP8 '&&chunkSize>=10&&bytes[23]===0x9d&&bytes[24]===1&&bytes[25]===0x2a);
+   pixelDimensions(header.getUint16(26,true)&0x3fff,header.getUint16(28,true)&0x3fff);
+   return;
+  }
+  default:
+   assert(false,'image format cannot be dimension checked');
+ }
 }
 function makeProof({image,sha256,width,height,origin,originalFileSha256,
   originalFileType,originalFileBytes,transformed,orientation,orientationConversion,fileTypeMismatch}){
@@ -121,21 +178,27 @@ function decodedImage(blob,{urlAPI=URL,ImageCtor=Image}={}){
  */
 export async function importCanonicalPhoto(file,{
  cryptoProvider=globalThis.crypto,decode=decodedImage,
- makeCanvas=()=>document.createElement('canvas')
+ makeCanvas=()=>document.createElement('canvas'),shouldContinue=()=>true
 }={}){
  assert(file&&typeof file.arrayBuffer==='function'&&file.size>0&&file.size<=10*1024*1024,
   'unsupported input size');
+ assert(shouldContinue(),'import cancelled');
  const bytes=new Uint8Array(await file.arrayBuffer());
+ assert(shouldContinue(),'import cancelled');
  assert(bytes.length===file.size,'imported file changed during read');
- const originalFileSha256=await digestBytes(bytes,cryptoProvider);
  const declaredType=(file.type||'').toLowerCase().trim();
  const sniffedType=sniffPhotoMime(bytes),recognizedJPEG=sniffedType==='image/jpeg';
  if(declaredType==='image/jpeg'&&!recognizedJPEG)throw Error('CAPTURE-PROOF-01 false JPEG MIME');
  assert(sniffedType,'unsupported or unrecognized image signature');
  const normalizedDeclared=declaredType==='image/jpg'?'image/jpeg':declaredType;
  if(normalizedDeclared&&normalizedDeclared!==sniffedType)throw Error('CAPTURE-PROOF-01 file type contradicts image bytes');
+ checkImportDimensions(bytes,sniffedType);
+ if(recognizedJPEG)assert(bytes.length<=MAX_SAVED_JPEG,'JPEG too large for wardrobe storage');
+ const originalFileSha256=await digestBytes(bytes,cryptoProvider);
+ assert(shouldContinue(),'import cancelled');
  const blob=new Blob([bytes],{type:sniffedType});
  const image=await decode(blob);
+ assert(shouldContinue(),'import cancelled');
  const width=image.naturalWidth||image.width,height=image.naturalHeight||image.height;
  pixelDimensions(width,height);
  if(recognizedJPEG){
@@ -153,7 +216,9 @@ export async function importCanonicalPhoto(file,{
  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,width,height);
  ctx.drawImage(image,0,0,width,height);
  const converted=canvas.toDataURL('image/jpeg',.94);
- const jpeg=jpegBytes(converted),sha256=await digestBytes(jpeg,cryptoProvider);
+ const jpeg=jpegBytes(converted);
+ assert(jpeg.length<=MAX_SAVED_JPEG,'converted JPEG too large for wardrobe storage');
+ const sha256=await digestBytes(jpeg,cryptoProvider);
  return makeProof({image:converted,sha256,width,height,origin:'import',
   originalFileSha256,originalFileType:sniffedType,
   fileTypeMismatch:!!declaredType&&normalizedDeclared!==sniffedType,originalFileBytes:bytes.length,

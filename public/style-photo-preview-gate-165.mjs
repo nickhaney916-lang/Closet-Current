@@ -38,6 +38,7 @@ export async function verifyOwnerSavedPhoto165({item,originalOwnerSession,getSes
    (item.originalPhoto?.image||item.image).length>18_000_000)
   throw Error('Saved original photograph needs owner review before preview');
  const original=item.originalPhoto?.image||item.image;
+ const converted=item.originalPhoto?.transformed===true;
  if(item.originalPhoto&&item.originalPhoto.sha256!==item.sourceSHA256)
   throw Error('Original source identity metadata changed');
  const match=original.match(ALLOWED);
@@ -57,6 +58,7 @@ export async function verifyOwnerSavedPhoto165({item,originalOwnerSession,getSes
  const saved=latest.find(x=>x?.id===item.id);
  if(!saved||saved.ownerId!==previous.ownerId||saved.sourceSHA256!==actual||
   (saved.originalPhoto?.image||saved.image)!==original||
+  (saved.originalPhoto?.transformed===true)!==converted||
   saved.sourcePhotoOriginal!==true||saved.sourceHashVerified!==true||
   saved.userAdjusted!==true||saved.ownerReviewed!==true)
   throw Error('Saved garment changed during original photograph validation');
@@ -64,7 +66,7 @@ export async function verifyOwnerSavedPhoto165({item,originalOwnerSession,getSes
   throw Error('Original owner session changed');
  return Object.freeze({itemId:item.id,ownerId:previous.ownerId,epoch:previous.epoch,
   sourceSHA256:actual,photo:original,name:String(item.name||item.itemType||'Saved garment').slice(0,140),
-  presentationMode:'verified-original-photo-2d',
+  presentationMode:converted?'verified-converted-photo-2d':'verified-original-photo-2d',
   garmentActuallyFittedIn3D:false,
   originalPhotoStillPrivate:true,unseenBackPhotographed:false,
   familyAlpha:'HOLD',releaseAuthorized:false});
@@ -142,12 +144,14 @@ export function createStyledOwnerPhotoPreview165({
       !grid.contains(card)||readResults()[index]!==result)throw Error('Style results or signed-in account changed');
    const container=el('section',null,'style-original-photo-preview-165');
    container.dataset.garmentPreviewMode=preview.presentationMode;
-   container.setAttribute('aria-label',canonical?'Your SHA-verified original saved clothing photo — 2D':'Your saved clothing photo, original source unverified — 2D');
+   const converted=preview.presentationMode==='verified-converted-photo-2d';
+   container.setAttribute('aria-label',converted?'Your saved JPEG conversion — 2D':canonical?'Your SHA-verified original saved clothing photo — 2D':'Your saved clothing photo, original source unverified — 2D');
    container.style.cssText='border:1px solid #c2c8c0;border-radius:12px;padding:12px;margin-top:12px;max-width:100%;box-sizing:border-box;overflow:hidden';
-   const heading=el('strong',canonical?'SHA-verified original clothing photo · 2D':'Saved clothing photo · 2D (original source unverified)');
+   const heading=el('strong',converted?'Verified JPEG conversion · 2D':canonical?'SHA-verified original clothing photo · 2D':'Saved clothing photo · 2D (original source unverified)');
    const img=el('img');img.src=preview.photo;img.alt=preview.name+' — your saved clothing photo';
    img.style.cssText='display:block;width:min(100%,250px);height:auto;max-height:240px;object-fit:contain;margin:8px auto';
-   const explanation=el('p',canonical?
+   const explanation=el('p',converted?
+    'This wardrobe photo was converted to JPEG. The uploaded file bytes were not kept. 3D fitting is not yet verified.':canonical?
     '3D fitting is not yet verified for this garment. No generic garment has been substituted.':
     'Saved photo only: original-camera image provenance is not independently verified. 3D fitting is not yet verified. No generic garment has been substituted.','fine');
    explanation.dataset.threeDFitted='false';

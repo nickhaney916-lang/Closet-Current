@@ -18,7 +18,8 @@ async function readPhotoBatch(files,decode,onPhoto,{shouldContinue=()=>true}={})
  for(const file of files){
   if(!shouldContinue()){cancelled=true;break;}
   let reason=null;
-  if(file.size>10*1024*1024)reason='larger than 10 MB';
+  if(file.size===0)reason='empty file';
+  else if(file.size>10*1024*1024)reason='larger than 10 MB';
   else if(!file.type.startsWith('image/')&&!/\.(jpe?g|png|webp|avif|heic|heif)$/i.test(file.name))reason='not an image';
   if(reason){errors.push(file.name+': '+reason);results.push({name:file.name,status:'rejected',reason});continue;}
   try{
@@ -31,7 +32,10 @@ async function readPhotoBatch(files,decode,onPhoto,{shouldContinue=()=>true}={})
   }catch(error){
    if(!shouldContinue()){cancelled=true;break;}
    reason=error instanceof Error?error.message:'unknown error';
-   errors.push(file.name+(error?.code==='CAPTURE_STORAGE_FAILED'?': photo not saved to device; free storage and retry before leaving this page':': could not open; try JPEG or PNG'));
+   const recovery=reason.includes('image format cannot be dimension checked')
+    ?': export this photo as JPEG or PNG, then import it again'
+    :': could not open; try a smaller JPEG or PNG';
+   errors.push(file.name+(error?.code==='CAPTURE_STORAGE_FAILED'?': photo not saved to device; free storage and retry before leaving this page':recovery));
    results.push({name:file.name,status:'error',reason});
   }
  }
