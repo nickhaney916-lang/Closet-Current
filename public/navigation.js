@@ -4,8 +4,13 @@ const occasionChips=[...document.querySelectorAll('[data-occasion]')];
 function syncOccasionChips(){for(const chip of occasionChips)chip.setAttribute('aria-pressed',String(chip.dataset.occasion===$('stylistOccasion').value));}
 for(const chip of occasionChips)chip.onclick=()=>{const select=$('stylistOccasion');select.value=chip.dataset.occasion;select.onchange?.();syncOccasionChips();};
 $('stylistOccasion').addEventListener('change',syncOccasionChips);
-$('moreMenu').addEventListener('keydown',event=>{if(event.key==='Escape'){$('moreMenu').open=false;$('moreMenu').querySelector('summary').focus();}});
-document.addEventListener('click',event=>{const more=$('moreMenu');if(more.open&&!more.contains(event.target))more.open=false;});
+const navigationMenus=[$('moreMenu'),document.querySelector('.account-menu')].filter(Boolean);
+for(const menu of navigationMenus)menu.addEventListener('keydown',event=>{
+ if(event.key==='Escape'&&menu.open){menu.open=false;menu.querySelector('summary').focus();}
+});
+document.addEventListener('click',event=>{
+ for(const menu of navigationMenus)if(menu.open&&!menu.contains(event.target))menu.open=false;
+});
 function renderHomePieces(){
  renderStarterWardrobe('home');
  const grid=$('homePieces');if(!grid)return;grid.replaceChildren();
