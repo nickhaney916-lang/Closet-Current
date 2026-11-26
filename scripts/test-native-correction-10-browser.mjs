@@ -549,8 +549,15 @@ try{
   await login(page,'native05-B');
   await seed(page,'native05-B');
   await page.reload({waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>window.nativeLossless04Bridge?.status()?.active&&
-   !!window.native3D05Bridge,{timeout:30000});
+  // Account B must finish initializing its own private restore bridge before
+  // exercising the foreign-backup rejection; an absent bridge is not a pass.
+  await page.waitForFunction(()=>window.closetAuth?.user?.id==='native05-B'&&
+   db?.name==='closet-current-user-native05-B'&&
+   window.nativeLossless04Bridge?.status()?.active===true&&
+   window.restoreAtomic01Bridge?.status()?.active===true&&
+   typeof window.restoreAtomic01Bridge.importBackup==='function'&&
+   !!window.native3D05Bridge&&!!window.nativePhotoReadiness08Bridge,
+   null,{timeout:30000});
   await page.evaluate(()=>switchView('builder'));
   const bStored=await readBoard(page),bItems=await readItems(page);
   await assert.rejects(page.evaluate(doc=>

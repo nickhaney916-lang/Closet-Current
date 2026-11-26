@@ -30,13 +30,14 @@ jobs:
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           test "${{ github.event.pull_request.base.sha }}" = 8a466ba4a7ff0e1754c71ad498a1ee15634d8224
           git merge-base --is-ancestor 8a466ba4a7ff0e1754c71ad498a1ee15634d8224 HEAD
-          test "$(git rev-parse HEAD^)" = 8a466ba4a7ff0e1754c71ad498a1ee15634d8224
+          test "$(git rev-parse HEAD^)" = 01cdf0d6f1742bbdab85a6dffd2fbdee1f52f06b
+          git diff --exit-code 01cdf0d6f1742bbdab85a6dffd2fbdee1f52f06b HEAD -- . ':(exclude)scripts/test-native-correction-10-browser.mjs' ':(exclude).github/workflows/main1054-unified-correction-HOLD.yml'
           printf '%s\n' '.github/workflows/main1054-native-correction-research-HOLD.yml' 'scripts/test-native-correction-10-browser.mjs' 'scripts/test-native-style-correction-11-browser.mjs' '.github/workflows/main1054-unified-correction-HOLD.yml' | LC_ALL=C sort > /tmp/cc-expected-paths
           git diff --name-only 8a466ba4a7ff0e1754c71ad498a1ee15634d8224 HEAD | LC_ALL=C sort > /tmp/cc-actual-paths
           diff -u /tmp/cc-expected-paths /tmp/cc-actual-paths
           test "$(git rev-parse HEAD:.github/workflows/main1054-unified-publisher-HOLD.yml)" = 0b330200c450cee395bb6bc537cc6f3a306e42a3
           test "$(git rev-parse HEAD:.github/workflows/main1054-native-correction-research-HOLD.yml)" = 3baac48a50bb9546f71441c137005c237b3b5c5b
-          test "$(git rev-parse HEAD:scripts/test-native-correction-10-browser.mjs)" = fcdbd5402a5299c340e68c52d9707fa7f362d542
+          test "$(git rev-parse HEAD:scripts/test-native-correction-10-browser.mjs)" = 47ab1220b645df869ac113921f6a9e478777d950
           test "$(git rev-parse HEAD:scripts/test-native-style-correction-11-browser.mjs)" = c253539a6916e3acc58f6ce343f180d2acb0d3f8
           test "$(git rev-parse HEAD:scripts/audit-native-correction-10.mjs)" = 51ab9e8f074ab0ed24706927ba39b7ff4738ca9a
           test "$(git rev-parse HEAD:scripts/audit-native-style-correction-11.mjs)" = 6658e7b127ba1200bbc53e81bf4c604294addfa0
