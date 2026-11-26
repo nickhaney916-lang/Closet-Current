@@ -132,6 +132,8 @@ try{
       message:document.getElementById('message')?.textContent,authOwner:window.closetAuth?.user?.id,
       dbName:db?.name,batch:batch.map(x=>({id:x.id,name:x.name,status:x.localStatus,scanFailed:x.scanFailed})),
       recognitionPhase:recognitionState.phase}));throw Error(String(error)+'; independent original JPEG diagnostic='+JSON.stringify(sourceDiagnostic)+'; import diagnostics='+JSON.stringify(state));}
+     await page.waitForFunction(()=>window.__lastPhotoImportResult?.results.some(
+      result=>result.name==='new-reviewed-blouse.jpg')&&!busy);
      const importedJPEG=await page.evaluate(()=>batch.find(x=>x.importFilename==='new-reviewed-blouse.jpg').originalPhoto);
      assert.deepEqual([importedJPEG.width,importedJPEG.height,importedJPEG.orientation],[320,240,6]);
      assert.equal(importedJPEG.transformed,false);
