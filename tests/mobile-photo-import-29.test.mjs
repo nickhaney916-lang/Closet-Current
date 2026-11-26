@@ -59,3 +59,12 @@ test('revocation during read never starts decoding and revocation during decode 
  await assert.rejects(importCanonicalPhoto(new File([jpeg],'photo.jpg'),options),/cancelled/);
  assert.equal(calls,1);
 });
+
+test('refuse JPEGs larger than the verified 2D preview limit before reading', async () => {
+ let reads=0;
+ const beyondPreviewLimit={name:'large.jpg',type:'image/jpeg',size:8_000_001,
+  arrayBuffer:async()=>{reads++;return new ArrayBuffer(0);}
+ };
+ await assert.rejects(importCanonicalPhoto(beyondPreviewLimit),/8 MB or less/);
+ assert.equal(reads,0);
+});

@@ -103,7 +103,7 @@ export function jpegOrientation(bytes){
  }
  return 1;
 }
-const MAX_IMPORT_BYTES=10*1024*1024;
+const MAX_IMPORT_BYTES=8_000_000; // Match the owner-verified 2D preview limit.
 const MAX_IMPORT_PIXELS=40_000_000;
 const MAX_IMPORT_SIDE=8192;
 const JPEG_FRAMES=new Set([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf]);
@@ -162,7 +162,7 @@ export async function importCanonicalPhoto(file,{
  cryptoProvider=globalThis.crypto,decode=decodedImage,shouldContinue=()=>true
 }={}){
  if(!file||typeof file.arrayBuffer!=='function'||!file.size||file.size>MAX_IMPORT_BYTES)
-  throw importError('Choose a nonempty JPEG of 10 MB or less.');
+  throw importError('Choose a nonempty JPEG of 8 MB or less.');
  const bytes=new Uint8Array(await file.arrayBuffer());
  if(bytes.length!==file.size)throw importError('The file changed during import. Select it again.');
  if(!shouldContinue())throw Error('Photo import cancelled');
