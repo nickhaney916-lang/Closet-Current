@@ -1,7 +1,7 @@
 'use strict';
 
 function normalizeSavedOutfitSearch(value){
- return typeof value==='string'?value.toLowerCase().trim().replace(/\s+/g,' '):'';
+ return typeof value==='string'?value.normalize('NFC').toLowerCase().trim().replace(/\s+/g,' '):'';
 }
 function savedOutfitSearchText(board,wardrobe,owner){
  const fields=[board.name,board.occasion];
