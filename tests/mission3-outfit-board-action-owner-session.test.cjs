@@ -15,7 +15,7 @@ function extract(start,end){
 const leaseSource=extract('function beginOwnerBoardUiLease(){','function boardDraftStatus(');
 const storeSource=extract('async function storeBoard({replaceDraft=null}={}){','async function loadLatestBoardDraft(){');
 const loadSource=extract('async function loadLatestBoardDraft(){','function syncBoardInputs(){');
-const actionSource=extract("$('refreshOutfitWardrobe').onclick=async()=>{","$('closeBoardPicker').onclick=");
+const actionSource=extract("$('refreshOutfitWardrobe').onclick=async()=>{","function restoreBoardPickerFocus(){");
 const saveSource=extract("$('saveBoard').onclick=async()=>{",'function renderTrendReferences()');
 function deferred(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});promise.catch(()=>{});return {promise,resolve,reject};}
 function fixture(){

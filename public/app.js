@@ -1718,10 +1718,11 @@ function render(){
  if(typeof renderClosetBrowser==='function')renderClosetBrowser();
  if(typeof renderTrendMatches==='function')renderTrendMatches();if(typeof renderOutfitBoard==='function')renderOutfitBoard();if(typeof renderStyledCollection==='function')renderStyledCollection();if(typeof renderHomePieces==='function')renderHomePieces();if(typeof renderOutfitCapture==='function')renderOutfitCapture();
  // Rebuilding a garment card must not drop keyboard focus onto the page body.
- if(focusedItemId&&focusedAction==='edit-clothing'&&previousFocus.isConnected===false&&document.activeElement===document.body&&
+ if(focusedItemId&&['edit-clothing','wear-clothing'].includes(focusedAction)&&previousFocus.isConnected===false&&document.activeElement===document.body&&
     !$('closet').hidden&&$('appShell').hidden===false&&!document.querySelector('dialog[open]')){
   const replacement=[...cg.querySelectorAll('.card')].find(card=>card.dataset.itemId===focusedItemId);
-  replacement?.querySelector('[data-action=edit-clothing]')?.focus({preventScroll:true});
+  const control=replacement?.querySelector('[data-action='+focusedAction+']:enabled');
+  (control||$('closetBack')).focus({preventScroll:true});
  }
 }
 for(const c of categories){const o=node('option',c);$('filter').append(o);}$('search').oninput=render;$('filter').onchange=render;

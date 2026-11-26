@@ -86,6 +86,7 @@ const mission4PhotoOnly59Active=mission4Preview1054Active&&
  typeof URLSearchParams==='function'&&typeof location!=='undefined'&&
  new URLSearchParams(location.search).get('reviewedPhotoGallery59')==='research';
 let mission4PhotoOnly59Viewer=null;
+let boardPickerFocus=null;
 let currentBoard=cleanOutfitBoard({},[]),savedOutfitBoards=[],boardInitialized=false,choosingSlot='shoes';
 let savedOutfitSourceStamp='[]', selectedSavedOutfit=null;
 let boardCommittedDraft=null,boardPendingWrites=0,boardDraftTimer=null,boardStatusSerial=0;
@@ -157,7 +158,7 @@ let boardExpectedStoredDraft='null',boardConflictDraft=null;
     $('boardSaveStatus').textContent='Outfit not saved. This garment or private source changed; reopen the picker.';
     return false;
    }
-   if(closePicker&&$('boardPicker').open)$('boardPicker').close();
+   if(closePicker&&$('boardPicker').open)closeBoardPicker();
    return true;
   }catch{
    if(lease.current())$('boardSaveStatus').textContent='Owner/source verification unavailable. Outfit unchanged; reopen the picker.';
@@ -596,7 +597,8 @@ function openBoardPicker(slotId){
  // A picker can remain queued or be retained by an old card after sign-out.
  // Its clothing thumbnails belong to the exact session that opened it.
  const pickerLease=beginOwnerBoardUiLease();
- if(!pickerLease)return;
+ if(!pickerLease||$('boardPicker').open)return;
+ boardPickerFocus={slotId,lease:pickerLease};
  choosingSlot=slotId;const slot=outfitSlots.find(s=>s.id===slotId);$('boardPickerTitle').textContent='Choose '+slot.label.toLowerCase();
  const grid=$('boardPickerItems');grid.replaceChildren();const options=items.filter(item=>slotAllows(slot,item));
  if(!options.length){grid.append(node('p','No saved pieces for this space yet. Add clothes or adjust their category in My closet.'));const add=node('button','Add clothing photos','secondary');add.onclick=()=>{if(!pickerLease.current()||add.isConnected===false)return;
@@ -612,7 +614,7 @@ function openBoardPicker(slotId){
   b.onclick=()=>{
    if(!pickerLease.current()||b.isConnected===false||!items.includes(item))return;
    if(typeof ownerPicker33Active!=='undefined'&&ownerPicker33Active){void ownerPicker33Choose(slotId,item.id,b,pickerLease,{closePicker:true});return;}
-   selectBoardPiece(slotId,item.id);$('boardPicker').close();
+   selectBoardPiece(slotId,item.id);closeBoardPicker();
   };grid.append(b);}
  $('boardPicker').showModal();
 }
@@ -629,7 +631,7 @@ function renderOutfitBoard(){
  }else currentBoard=cleanOutfitBoard(currentBoard,items);
  mission4Preview1054ReconcileRedraw();
  const top=items.find(x=>x.id===currentBoard.slots.top),dress=top?.category==='Dresses';
- $('outfitFigure').classList.toggle('has-outer-coat',currentBoard.layerCount>=3);const slots=$('boardSlots');slots.replaceChildren();
+ $('outfitFigure').classList.toggle('has-outer-coat',currentBoard.layerCount>=3);const slots=$('boardSlots'),focusedSlot=slots.contains(document.activeElement)?document.activeElement.dataset.boardSlot:null;slots.replaceChildren();
  for(const slot of outfitSlots){
   if((!nativeLossless04Active&&dress&&slot.level)||slot.extra&&currentBoard.layerCount<slot.level)continue;
   const item=items.find(x=>x.id===currentBoard.slots[slot.id]),idea=currentBoard.ideas[slot.id],covered=dress&&slot.id==='bottom';
@@ -648,7 +650,8 @@ function renderOutfitBoard(){
   else if(covered)b.append(node('span','Covered by dress','slot-name'));
   else if(idea)b.append(node('span',idea.color+' '+idea.type,'slot-idea'),node('small','Shopping idea · not owned'));
   else b.append(node('span','+','slot-plus'),node('small',slot.optional?'Optional space':'Choose or find a piece'));
-  b.onclick=()=>openBoardPicker(slot.id);slots.append(b);
+  b.dataset.boardSlot=slot.id;b.onclick=()=>openBoardPicker(slot.id);slots.append(b);
+  if(focusedSlot===slot.id&&!b.disabled)b.focus({preventScroll:true});
  }
  const count=Object.keys(currentBoard.slots).length,gaps=boardGaps(currentBoard,items);$('boardSummary').textContent=count+' of your own pieces selected · '+gaps.length+' open spaces'+(dress?' · dress covers top and bottoms':'');
  renderBoardSuggestions();renderSavedOutfitBoards();if(typeof renderClosetBrowser==='function')renderClosetBrowser();
@@ -789,9 +792,23 @@ $('keepLocalBoardDraft').onclick=async()=>{
  const saved=await storeBoard({replaceDraft:conflict});
  if(saved&&lease.current())$('boardName').focus({preventScroll:true});
 };
-$('closeBoardPicker').onclick=()=>$('boardPicker').close();
-$('emptyBoardSlot').onclick=()=>{selectBoardPiece(choosingSlot,'');$('boardPicker').close();};
-$('shopBoardSlot').onclick=()=>{$('boardTarget').value=choosingSlot;$('boardPicker').close();renderBoardSuggestions();$('boardGapStatus').scrollIntoView({behavior:'smooth',block:'start'});};
+function restoreBoardPickerFocus(){
+ if($('boardPicker').open)return;
+ const previous=boardPickerFocus;
+ boardPickerFocus=null;
+ if(!previous?.lease.current()||$('builder').hidden||$('appShell').hidden)return;
+ if(document.activeElement!==document.body&&!$('boardPicker').contains(document.activeElement))return;
+ const slot=$('boardSlots').querySelector('.board-slot-'+previous.slotId+':enabled');
+ (slot||$('boardName')).focus({preventScroll:true});
+}
+function closeBoardPicker(){
+ $('boardPicker').close();
+ restoreBoardPickerFocus();
+}
+$('boardPicker').addEventListener('close',restoreBoardPickerFocus);
+$('closeBoardPicker').onclick=closeBoardPicker;
+$('emptyBoardSlot').onclick=()=>{selectBoardPiece(choosingSlot,'');closeBoardPicker();};
+$('shopBoardSlot').onclick=()=>{$('boardTarget').value=choosingSlot;closeBoardPicker();renderBoardSuggestions();$('boardTarget').focus();};
 $('clearBoard').onclick=()=>{
  if(nativeLossless04Active)return nativeLossless04Edit(()=>nativeLossless04.startNew());
  if(typeof clearSavedOutfitSelection==='function')clearSavedOutfitSelection();
