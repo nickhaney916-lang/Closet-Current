@@ -1,0 +1,130 @@
+name: Assignment 22 active session policy HOLD
+on:
+  pull_request:
+    branches: [research/main1054-unified-large-backup-HOLD]
+permissions:
+  contents: read
+jobs:
+  regression:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'research/assignment-22-active-session-HOLD'
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: node scripts/build.mjs
+      - run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
+  large-backup:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'research/assignment-22-active-session-HOLD'
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      SUPABASE_TELEMETRY_DISABLED: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Pin application and policy source
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD)" = "$HEAD_SHA"
+          test "$BASE_SHA" = d8827e01d16d64da7da82c95cad6d92c20d98c6d
+          git merge-base --is-ancestor "$BASE_SHA" HEAD
+          git diff --exit-code "$BASE_SHA" HEAD -- public scripts/assignment-21 supabase/cloud-backup.sql
+          git log -1 --format='commit %H tree %T'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.48.3
+      - name: Install pinned browser test dependencies
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+          npx playwright install --with-deps ${{ matrix.engine }}
+          if test "${{ matrix.engine }}" = chromium; then npx playwright install --with-deps webkit; fi
+          node scripts/build.mjs
+      - name: Start isolated Supabase Auth, PostgREST, Storage and Postgres
+        run: |
+          set -eu
+          umask 077
+          mkdir "$RUNNER_TEMP/closet-a21"
+          cd "$RUNNER_TEMP/closet-a21"
+          supabase init
+          sed -i 's/^project_id = .*/project_id = "closet-a21"/; s/^jwt_expiry = .*/jwt_expiry = 3600/' supabase/config.toml
+          grep -q '^jwt_expiry = 3600$' supabase/config.toml
+          supabase --version
+          # Retry infrastructure startup only, before applying SQL or creating owners.
+          # Emit classified counters, never raw CLI output (may include credentials).
+          started=0
+          for attempt in 1 2 3; do
+            log="$RUNNER_TEMP/closet-a21-start.log"
+            if supabase start > "$log" 2>&1; then
+              echo "Disposable scale backend started on attempt $attempt"
+              started=1
+              break
+            else
+              code=$?
+              echo "Disposable scale backend startup attempt $attempt failed (exit $code)"
+            fi
+            for category in 'timeout|timed out|deadline exceeded' 'rate limit|too many requests|429' 'no space left|disk full' 'unhealthy|health check' 'connection refused|connection reset|network|TLS' 'address already in use|port is already allocated' 'pull access denied|manifest unknown|unauthorized'; do
+              count=$(grep -Eic "$category" "$log" || true)
+              printf 'Startup diagnostic category [%s]: %s\n' "$category" "$count"
+            done
+            # These commands target only this ephemeral runner's test project.
+            docker ps -a --filter 'name=closet-a21' --format '{{.Names}} {{.Status}}'
+            df -h "$RUNNER_TEMP"
+            if ! supabase stop --no-backup > "$RUNNER_TEMP/closet-a21-stop.log" 2>&1; then
+              echo 'Disposable project cleanup failed; refusing unsafe retry'
+              exit 1
+            fi
+            if test "$attempt" -lt 3; then sleep "$((attempt * 15))"; fi
+          done
+          test "$started" = 1 || { echo 'Disposable backend startup exhausted three attempts'; exit 1; }
+          supabase status -o env > "$RUNNER_TEMP/closet-a21.env"
+          docker exec -i supabase_db_closet-a21 psql -U postgres -v ON_ERROR_STOP=1 < "$GITHUB_WORKSPACE/scripts/assignment-21/disposable-policy.sql"
+          docker exec -i supabase_db_closet-a21 psql -U postgres -v ON_ERROR_STOP=1 < "$GITHUB_WORKSPACE/supabase/cloud-backup-active-session.sql"
+          docker exec supabase_db_closet-a21 psql -U postgres -Atc 'show server_version'
+          docker inspect --format '{{.Config.Image}}' supabase_auth_closet-a21 supabase_rest_closet-a21 supabase_storage_closet-a21
+      - name: Verify policy privileges and session lookup plan
+        run: docker exec -i supabase_db_closet-a21 psql -U postgres -v ON_ERROR_STOP=1 < scripts/assignment-22/policy-contract.sql
+      - if: matrix.engine == 'chromium'
+        name: Verify Auth removes server sessions and preserves authorized devices
+        run: SUPABASE_TEST_ENV="$RUNNER_TEMP/closet-a21.env" node scripts/assignment-22/auth-lifecycle.mjs
+      - name: Exercise large wardrobes, fault recovery and actual PostgreSQL size boundary
+        env:
+          A21_ENGINE: ${{ matrix.engine }}
+        run: SUPABASE_TEST_ENV="$RUNNER_TEMP/closet-a21.env" node scripts/assignment-21/browser.mjs
+      - if: matrix.engine == 'chromium'
+        name: Check ordinary signed-in UI, renewal, logout and subsequent sign-in at all three widths
+        run: SUPABASE_TEST_ENV="$RUNNER_TEMP/closet-a21.env" node scripts/test-assignment-20-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: assignment-21-${{ matrix.engine }}-receipt
+          path: benchmark/assignment-21/${{ matrix.engine }}.json
+          if-no-files-found: ignore
+      - name: Destroy local backend and remove credentials
+        if: always()
+        run: |
+          if test -f "$RUNNER_TEMP/closet-a21/supabase/config.toml"; then
+            (cd "$RUNNER_TEMP/closet-a21" && supabase stop --no-backup >/dev/null 2>&1)
+          fi
+          rm -f "$RUNNER_TEMP/closet-a21.env" "$RUNNER_TEMP/closet-a21-start.log" "$RUNNER_TEMP/closet-a21-stop.log"
