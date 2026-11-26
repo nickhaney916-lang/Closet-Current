@@ -30,15 +30,17 @@ jobs:
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           test "${{ github.event.pull_request.base.sha }}" = e7fcab1aa143fb4a985d0332298abe60ab22cc2a
           git merge-base --is-ancestor e7fcab1aa143fb4a985d0332298abe60ab22cc2a HEAD
-          test "$(git rev-parse HEAD^^)" = e7fcab1aa143fb4a985d0332298abe60ab22cc2a
-          test "$(git rev-parse HEAD^)" = 08898472ed1f34b46590e2867d807f7c450f97dd
+          test "$(git rev-parse HEAD^^^)" = e7fcab1aa143fb4a985d0332298abe60ab22cc2a
+          test "$(git rev-parse HEAD^^)" = 08898472ed1f34b46590e2867d807f7c450f97dd
+          test "$(git rev-parse HEAD^)" = 6569f4f776e24a3ff6b869ca608c56e9c64ce52e
+          git diff --exit-code 6569f4f776e24a3ff6b869ca608c56e9c64ce52e HEAD -- . ':(exclude).github/workflows/main1054-unified-active-session-HOLD.yml'
           printf '%s\n' '.github/workflows/assignment-22-active-session-HOLD.yml' 'scripts/assignment-22/auth-lifecycle.mjs' 'scripts/assignment-22/policy-contract.sql' 'supabase/cloud-backup-active-session.sql' 'research/auth-review-session-36/signed-local.mjs' '.github/workflows/main1054-unified-active-session-HOLD.yml' | LC_ALL=C sort > /tmp/cc-expected-paths
           git diff --name-only e7fcab1aa143fb4a985d0332298abe60ab22cc2a HEAD | LC_ALL=C sort > /tmp/cc-actual-paths
           diff -u /tmp/cc-expected-paths /tmp/cc-actual-paths
           test "$(git rev-parse HEAD:.github/workflows/assignment-22-active-session-HOLD.yml)" = 02b9372ea5da0c1f77d14c3646a723b39a4ecfe9
           test "$(git rev-parse HEAD:scripts/assignment-22/auth-lifecycle.mjs)" = 74049b994465a54c45ff542fa857a308a3912e7f
           test "$(git rev-parse HEAD:scripts/assignment-22/policy-contract.sql)" = d59cb5496b1422f426a6ec2ace1e8fec559ce6fa
-          test "$(git rev-parse HEAD:supabase/cloud-backup-active-session.sql)" = 56eedc11006bc2e670f8e1da8d8b7e50a3342eb3
+          test "$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD:supabase/cloud-backup-active-session.sql)" = 56eedc11006bc2e670f8e1da8d8b7e50a3342eb3
           test "$(git rev-parse HEAD:research/auth-review-session-36/signed-local.mjs)" = 903bbe7a5cb85e64794ac1c855384206db1d8be4
           test "$(git rev-parse HEAD:.github/workflows/main1054-unified-correction-HOLD.yml)" = 4f128c88f1a1b7984c56c6f1c99f583d4927dbdf
           git diff --exit-code e7fcab1aa143fb4a985d0332298abe60ab22cc2a HEAD -- public scripts/assignment-21 supabase/cloud-backup.sql scripts/maintenance
@@ -598,7 +600,7 @@ jobs:
             printf "SELECT 'accepted base: authenticated DELETE=' || has_table_privilege('authenticated','public.closet_backups','DELETE') || ', TRUNCATE=' || has_table_privilege('authenticated','public.closet_backups','TRUNCATE');\nROLLBACK;\n"
           } | docker exec -i supabase_db_closet-a20 psql -U postgres -v ON_ERROR_STOP=1
           docker exec -i supabase_db_closet-a20 psql -U postgres -v ON_ERROR_STOP=1 < "$GITHUB_WORKSPACE/supabase/cloud-backup.sql"
-          test "$(git rev-parse HEAD:supabase/cloud-backup-active-session.sql)" = 56eedc11006bc2e670f8e1da8d8b7e50a3342eb3
+          test "$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD:supabase/cloud-backup-active-session.sql)" = 56eedc11006bc2e670f8e1da8d8b7e50a3342eb3
           docker exec -i supabase_db_closet-a20 psql -U postgres -v ON_ERROR_STOP=1 < "$GITHUB_WORKSPACE/supabase/cloud-backup-active-session.sql"
           docker exec -i supabase_db_closet-a20 psql -U postgres -v ON_ERROR_STOP=1 < "$GITHUB_WORKSPACE/scripts/assignment-22/policy-contract.sql"
           docker exec supabase_db_closet-a20 psql -U postgres -Atc 'show server_version'
@@ -621,7 +623,7 @@ jobs:
           end $$;
           SQL
       - name: Verify four signed owners and all ordered identity pairs over local HTTP
-        if: always() && !cancelled()
+        if: success()
         env:
           CLOSET_FOUR_OWNER: '1'
           CLOSET_REQUIRE_ACTIVE_SESSION: '1'
@@ -638,7 +640,7 @@ jobs:
           assert.ok(r.sessionRevocationReceipts.every(x=>x.unexpiredThroughout===true&&x.activeStorageControlsPassed===true&&Number.isFinite(x.confirmedLogoutToFirstDeniedResponseMs)&&Number.isFinite(x.confirmedLogoutToLastDeniedResponseMs)&&x.confirmedLogoutToFirstDeniedResponseMs>=0&&x.confirmedLogoutToLastDeniedResponseMs>=x.confirmedLogoutToFirstDeniedResponseMs));
           NODE
       - name: Verify ordinary app backup, clean-context restore and account switching in both browsers
-        if: always() && !cancelled()
+        if: success()
         run: |
           test -f "$RUNNER_TEMP/closet-a20.env"
           SUPABASE_TEST_ENV="$RUNNER_TEMP/closet-a20.env" node scripts/test-assignment-20-browser.mjs
@@ -741,7 +743,7 @@ jobs:
           test "$started" = 1 || { echo 'Disposable backend startup exhausted three attempts'; exit 1; }
           supabase status -o env > "$RUNNER_TEMP/closet-a21.env"
           docker exec -i supabase_db_closet-a21 psql -U postgres -v ON_ERROR_STOP=1 < "$GITHUB_WORKSPACE/scripts/assignment-21/disposable-policy.sql"
-          test "$(git rev-parse HEAD:supabase/cloud-backup-active-session.sql)" = 56eedc11006bc2e670f8e1da8d8b7e50a3342eb3
+          test "$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD:supabase/cloud-backup-active-session.sql)" = 56eedc11006bc2e670f8e1da8d8b7e50a3342eb3
           docker exec -i supabase_db_closet-a21 psql -U postgres -v ON_ERROR_STOP=1 < "$GITHUB_WORKSPACE/supabase/cloud-backup-active-session.sql"
           docker exec -i supabase_db_closet-a21 psql -U postgres -v ON_ERROR_STOP=1 < "$GITHUB_WORKSPACE/scripts/assignment-22/policy-contract.sql"
           docker exec supabase_db_closet-a21 psql -U postgres -Atc 'show server_version'
