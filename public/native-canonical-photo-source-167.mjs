@@ -107,62 +107,97 @@ export function jpegOrientation(bytes){
  }
  return 1;
 }
-function decodedImage(blob,{urlAPI=URL,ImageCtor=Image}={}){
- return (async()=>{
-  const url=urlAPI.createObjectURL(blob);
-  try{
-   const image=new ImageCtor();image.src=url;await image.decode();
-   pixelDimensions(image.naturalWidth||image.width,image.naturalHeight||image.height);
-   return image;
-  }finally{urlAPI.revokeObjectURL(url);}
- })();
+const MAX_IMPORT_BYTES=8_000_000; // Match the owner-verified 2D preview limit.
+const MAX_IMPORT_PIXELS=40_000_000;
+const MAX_IMPORT_SIDE=8192;
+const JPEG_FRAMES=new Set([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf]);
+const FILE_TYPES={
+ jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',
+ heic:'image/heic',heif:'image/heif',avif:'image/avif',gif:'image/gif',
+ svg:'image/svg+xml',bmp:'image/bmp',tif:'image/tiff',tiff:'image/tiff'
+};
+function importError(message){
+ return Object.assign(new Error(message),{code:'PHOTO_IMPORT_INPUT'});
 }
-/**
- * Imports: do not transcode true JPEG bytes (preserves EXIF and exact source).
- * Other formats: full decoded dimensions → JPEG; keep separate raw-file SHA.
- * Raw non-JPEG bytes are not retained; original input can be reverified if
- * user supplies the source file again. Canonical derived JPEG IS retained.
- */
+function checkImportDimensions(width,height){
+ if(!width||!height||width>MAX_IMPORT_SIDE||height>MAX_IMPORT_SIDE||width*height>MAX_IMPORT_PIXELS)
+  throw importError('Photo dimensions exceed the 40 megapixel or 8192 pixel limit. Choose a smaller JPEG.');
+}
+// Inspect the frame header before allocating a browser decoder. The browser
+// still checks the encoded image data, and its display dimensions are checked again.
+function jpegFrame(bytes){
+ let offset=2,frame;
+ while(offset<bytes.length-2&&bytes[offset++]===255){
+  while(bytes[offset]===255)offset++;
+  const marker=bytes[offset++];
+  const length=(bytes[offset]<<8)|bytes[offset+1];
+  if(length<2||offset+length>bytes.length-2)break;
+  if(JPEG_FRAMES.has(marker)){
+   if(frame||length<11||length!==8+3*bytes[offset+7])break;
+   const height=(bytes[offset+3]<<8)|bytes[offset+4];
+   const width=(bytes[offset+5]<<8)|bytes[offset+6];
+   checkImportDimensions(width,height);
+   frame={width,height};
+  }
+  if(marker===0xda&&frame)return frame;
+  offset+=length;
+ }
+ throw importError('The JPEG header is incomplete or damaged. Choose a fresh copy of the photo.');
+}
+async function decodedImage(blob){
+ const image=new Image(),url=URL.createObjectURL(blob);
+ let timer;
+ try{
+  image.src=url;
+  await Promise.race([image.decode(),new Promise((_,reject)=>{
+   timer=setTimeout(()=>reject(new Error('Image decode timed out')),15000);
+  })]);
+  return {width:image.naturalWidth,height:image.naturalHeight};
+ }catch{
+  throw importError('The browser could not open this JPEG. Choose a fresh copy of the photo.');
+ }finally{
+  clearTimeout(timer);
+  image.removeAttribute('src');
+  URL.revokeObjectURL(url);
+ }
+}
+/** Only JPEG can be retained byte-for-byte by the current original-photo store. */
 export async function importCanonicalPhoto(file,{
- cryptoProvider=globalThis.crypto,decode=decodedImage,
- makeCanvas=()=>document.createElement('canvas')
+ cryptoProvider=globalThis.crypto,decode=decodedImage,shouldContinue=()=>true
 }={}){
- assert(file&&typeof file.arrayBuffer==='function'&&file.size>0&&file.size<=10*1024*1024,
-  'unsupported input size');
+ if(!file||typeof file.arrayBuffer!=='function'||!file.size||file.size>MAX_IMPORT_BYTES)
+  throw importError('Choose a nonempty JPEG of 8 MB or less.');
+ if(!shouldContinue())throw Error('Photo import cancelled');
  const bytes=new Uint8Array(await file.arrayBuffer());
- assert(bytes.length===file.size,'imported file changed during read');
- const originalFileSha256=await digestBytes(bytes,cryptoProvider);
+ if(bytes.length!==file.size)throw importError('The file changed during import. Select it again.');
+ if(!shouldContinue())throw Error('Photo import cancelled');
+ const sniffedType=sniffPhotoMime(bytes);
  const declaredType=(file.type||'').toLowerCase().trim();
- const sniffedType=sniffPhotoMime(bytes),recognizedJPEG=sniffedType==='image/jpeg';
- if(declaredType==='image/jpeg'&&!recognizedJPEG)throw Error('CAPTURE-PROOF-01 false JPEG MIME');
- assert(sniffedType,'unsupported or unrecognized image signature');
  const normalizedDeclared=declaredType==='image/jpg'?'image/jpeg':declaredType;
- if(normalizedDeclared&&normalizedDeclared!==sniffedType)throw Error('CAPTURE-PROOF-01 file type contradicts image bytes');
- const blob=new Blob([bytes],{type:sniffedType});
- const image=await decode(blob);
+ const extension=file.name?.match(/\.([a-z0-9]+)$/i)?.[1].toLowerCase();
+ const extensionType=Object.hasOwn(FILE_TYPES,extension)?FILE_TYPES[extension]:null;
+ if(sniffedType&&((normalizedDeclared&&normalizedDeclared!=='application/octet-stream'&&
+    normalizedDeclared!==sniffedType)||(extensionType&&extensionType!==sniffedType)))
+  throw importError('The file type or extension contradicts the image bytes. Choose the actual JPEG file.');
+ if(bytes[0]===255&&bytes[1]===216&&!validJPEG(bytes))
+  throw importError('The JPEG file is incomplete. Choose a fresh copy of the photo.');
+ if(sniffedType!=='image/jpeg')
+  throw importError('To keep the original photograph, import an original JPEG (JPG). For HEIC, PNG, or WebP, export a JPEG on your device and select that new file.');
+ const frame=jpegFrame(bytes);
+ const orientation=jpegOrientation(bytes);
+ const image=await decode(new Blob([bytes],{type:'image/jpeg'}));
+ if(!shouldContinue())throw Error('Photo import cancelled');
  const width=image.naturalWidth||image.width,height=image.naturalHeight||image.height;
  pixelDimensions(width,height);
- if(recognizedJPEG){
-  const dataUrl='data:image/jpeg;base64,'+b64(bytes);
-  const orientation=jpegOrientation(bytes);
-  return makeProof({image:dataUrl,sha256:originalFileSha256,width,height,origin:'import',
-   originalFileSha256,originalFileType:sniffedType,
-   originalFileBytes:bytes.length,transformed:false,orientation:orientation||'unknown',
-   orientationConversion:orientation&&orientation!==1?'browser-exif-display-only':'none'});
- }
- assert(sniffedType.startsWith('image/'),'unsupported image format');
- const canvas=makeCanvas();canvas.width=width;canvas.height=height;
- const ctx=canvas.getContext('2d');
- assert(ctx,'image conversion unavailable');
- ctx.fillStyle='#ffffff';ctx.fillRect(0,0,width,height);
- ctx.drawImage(image,0,0,width,height);
- const converted=canvas.toDataURL('image/jpeg',.94);
- const jpeg=jpegBytes(converted),sha256=await digestBytes(jpeg,cryptoProvider);
- return makeProof({image:converted,sha256,width,height,origin:'import',
-  originalFileSha256,originalFileType:sniffedType,
-  fileTypeMismatch:!!declaredType&&normalizedDeclared!==sniffedType,originalFileBytes:bytes.length,
-  transformed:true,orientation:'browser-decoded',
-  orientationConversion:'browser-decoded-to-jpeg'});
+ const rotated=orientation>=5&&orientation<=8;
+ if(width!==(rotated?frame.height:frame.width)||height!==(rotated?frame.width:frame.height))
+  throw importError('The JPEG dimensions could not be verified. Choose a fresh copy of the photo.');
+ const sha256=await digestBytes(bytes,cryptoProvider);
+ if(!shouldContinue())throw Error('Photo import cancelled');
+ return makeProof({image:'data:image/jpeg;base64,'+b64(bytes),sha256,width,height,origin:'import',
+  originalFileSha256:sha256,originalFileType:'image/jpeg',originalFileBytes:bytes.length,
+  transformed:false,orientation:orientation||'unknown',
+  orientationConversion:orientation&&orientation!==1?'browser-exif-display-only':'none'});
 }
 /** Verify an already persisted proof; reject tampered bytes or invented flags. */
 export async function verifyStoredCanonical(proof,{cryptoProvider=globalThis.crypto}={}){
