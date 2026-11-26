@@ -12,14 +12,14 @@ function before(anchor, code) {
 
 before(' context=await browser.newContext({', `
  const timezone = {320:'America/Los_Angeles',390:'Asia/Kolkata',430:'Pacific/Apia'}[width];
- async function newOwnerContext(timezoneId) {
+ async function newOwnerContext(timezoneId, storageState) {
 `);
 before(' page=await context.newPage();', `
   return context;
  }
  context = await newOwnerContext(timezone);
 `);
-source = source.replace('viewport:{width,height:920}', 'timezoneId,locale:"en-US",viewport:{width,height:920}');
+source = source.replace('viewport:{width,height:920}', 'timezoneId,storageState,locale:"en-US",viewport:{width,height:920}');
 source = source.replace("resolve('benchmark/parallel99-normal-journey'", "resolve('benchmark/assignment-26'");
 
 before(" advance('default-unreviewed-source-preview-refuses');", `
@@ -107,6 +107,18 @@ before(" advance('source-attested-default-outfit-preview');", `
  await clock(2024,3,1,0,1);
  await record('2024-03-01',true);
  const expectedHistory = await wearRow();
+ const rediscovery = page.locator('#outfitWearRediscovery').getByRole('button',{name:'Style around '+shirtName,exact:true});
+ const reopenHistory = async () => {
+  await page.locator('#outfitWearPanel summary').click();
+  await openHistory();
+ };
+ await clock(2024,12,2,12,0);
+ await reopenHistory();
+ assert.equal(await rediscovery.count(),0,'29 calendar days is still recent');
+ await clock(2024,12,3,12,0);
+ await reopenHistory();
+ await rediscovery.waitFor();
+ assert.deepEqual(await wearRow(),expectedHistory,'viewing rediscovery must never record wear');
  assert.equal(new Set(expectedHistory.events.map(e=>e.id)).size,6);
  await page.clock.setFixedTime(new Date());
 `);
@@ -141,7 +153,28 @@ before(' const secondStorage=await audit?.storage(page,{secondOwner:true});', `
  assert.deepEqual(await wearRow(),expectedHistory);
  const originalContext = context;
  const originalPage = page;
- const freshContext = await newOwnerContext(timezone==='Asia/Kolkata'?'America/Los_Angeles':'Asia/Kolkata');
+ const destination = timezone==='Asia/Kolkata'?'America/Los_Angeles':'Asia/Kolkata';
+ // Carry the existing browser storage into the new timezone, without exporting
+ // it to disk or changing the saved records.
+ const travelContext = await newOwnerContext(destination,await originalContext.storageState({indexedDB:true}));
+ try {
+  page = await travelContext.newPage();
+  await page.goto(origin+'/index.html',{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>db?.name==='closet-current-user-p99-A'&&window.closetAuth.user?.id==='p99-A');
+  await openBuilder();
+  await openHistory();
+  await page.locator('#outfitWearHistory strong').first().waitFor();
+  const labels = await page.locator('#outfitWearHistory li > p').allTextContents();
+  assert.equal(labels.length,6);
+  assert.ok(labels.some(label=>label.startsWith('Feb 29, 2024')));
+  assert.ok(labels.some(label=>label.startsWith('Dec 31, 2023')));
+  assert.deepEqual(await wearRow(),expectedHistory);
+ } finally {
+  await travelContext.close();
+  context = originalContext;
+  page = originalPage;
+ }
+ const freshContext = await newOwnerContext(destination);
  try {
   page = await freshContext.newPage();
   await page.goto(origin+'/index.html',{waitUntil:'domcontentloaded'});
