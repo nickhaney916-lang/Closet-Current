@@ -183,34 +183,38 @@ try{
      await page.waitForFunction(()=>!localPending.size,{timeout:30000});
      assert.equal(await page.locator('#reviewGrid article.photo-result').count(),1);
      await page.screenshot({path:out+'/'+name+'-'+width+'-04-review-original.png',fullPage:true});
-     // Real native file chooser: PNG is converted at original dimensions,
-     // with separate file and canonical SHA values recorded accurately.
+     // Keep the exact JPEG source and reject the PNG without a draft.
      await page.evaluate(()=>switchView('scan'));
-     const png=await page.evaluate(()=>{
+     const files=await page.evaluate(()=>{
       const c=document.createElement('canvas');c.width=768;c.height=1024;
       const g=c.getContext('2d');g.fillStyle='#6837a0';g.fillRect(0,0,768,1024);
       g.fillStyle='#ffbe38';g.fillRect(100,90,450,720);
-      return c.toDataURL('image/png').split(',')[1];
+      return ['image/png','image/jpeg'].map(type=>[type,c.toDataURL(type).split(',')[1]]);
      });
-     await page.locator('#clothingPhotos').setInputFiles([{
-      name:'licensed-fixture.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')}]);
-     await page.waitForFunction(()=>batch.length>=2,{timeout:25000});
+     await page.locator('#clothingPhotos').setInputFiles(files.map(([mimeType,bytes])=>({
+      name:mimeType==='image/jpeg'?'import-fixture.jpg':'import-fixture.png',mimeType,
+      buffer:Buffer.from(bytes,'base64')
+     })));
+     await page.waitForFunction(()=>window.__lastPhotoImportResult?.results[0]?.name==='import-fixture.png');
      const imported=await page.evaluate(async()=>{
-      const i=batch.find(x=>x.importFilename==='licensed-fixture.png');
+      const i=batch.find(x=>x.importFilename==='import-fixture.jpg');
       const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',
        Uint8Array.from(atob(i.image.split(',')[1]),x=>x.charCodeAt(0)))),x=>x.toString(16).padStart(2,'0')).join('');
-      return {found:!!i,converted:i.originalPhoto.transformed,
-       sourceDiffers:i.originalPhoto.originalFileSha256!==digest,
+      return {converted:i.originalPhoto.transformed,
+       sourceMatches:i.originalPhoto.originalFileSha256===digest,
        shaMatch:i.sourceSHA256===digest,
        resolution:[i.originalPhoto.width,i.originalPhoto.height],
        originalRetained:i.image===i.originalPhoto.image,
+       rejectedPNG:!batch.some(x=>x.importFilename==='import-fixture.png'),
+       errors:window.__lastPhotoImportResult.errors,
        saved:(await readAll()).length};
      });
-     assert.equal(imported.found,true);
-     assert.equal(imported.converted,true);
-     assert.equal(imported.sourceDiffers,true);
+     assert.equal(imported.converted,false);
+     assert.equal(imported.sourceMatches,true);
      assert.equal(imported.shaMatch,true);
      assert.equal(imported.originalRetained,true);
+     assert.equal(imported.rejectedPNG,true);
+     assert.match(imported.errors[0],/export a JPEG/);
      assert.deepEqual(imported.resolution,[768,1024]);
      assert.equal(imported.saved,0);
      await page.screenshot({path:out+'/'+name+'-'+width+'-05-import-review.png',fullPage:true});
@@ -242,7 +246,7 @@ try{
      // Tamper retained original AFTER capture; manual Adjust must not write a
      // photo whose canonical original bytes fail the pre-commit SHA check.
      await page.evaluate(()=>{
-      const imported=batch.find(x=>x.importFilename==='licensed-fixture.png');
+      const imported=batch.find(x=>x.importFilename==='import-fixture.jpg');
       imported.originalPhoto.image=items.find(x=>x.itemType==='T-shirt').image;
      });
      await page.locator('#reviewGrid article.photo-result').first().getByRole('button',{name:'Adjust',exact:true}).click();

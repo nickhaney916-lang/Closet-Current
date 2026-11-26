@@ -21,11 +21,18 @@ jobs:
       - run: npx playwright install --with-deps chromium webkit
       - run: node scripts/build.mjs
       - run: ASSIGNMENT_29=1 node scripts/test-native-canonical-original-167-browser.mjs
+      - run: node scripts/test-capture-proof-01-browser.mjs
+      - run: node scripts/test-camera-to-closet-79-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: assignment-29-mobile-photo-import
-          path: benchmark/assignment-29/
+          path: |
+            benchmark/assignment-29/
+            benchmark/capture-proof-01/results.json
+            benchmark/capture-proof-01/failure.json
+            benchmark/camera-to-closet-75/results.json
+            benchmark/camera-to-closet-75/failure.json
   regression:
     if: github.head_ref == 'research/assignment-29-photo-import-HOLD' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04

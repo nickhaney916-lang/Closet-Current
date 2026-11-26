@@ -106,6 +106,17 @@ const preload=()=>{
  }
  Object.defineProperty(window,'Worker',{configurable:true,value:ResearchWorker});
 };
+async function confirmAndSaveReviewedPhoto(page){
+ const editor=page.locator('dialog.photo-adjust');
+ await editor.getByLabel('I verified the category, clothing type and color').check();
+ await editor.getByLabel('I confirmed this photo shows one garment').check();
+ const prepare=editor.getByRole('button',{name:'Prepare smaller display photo'});
+ if(await prepare.count()){
+  await prepare.click();
+  await editor.locator('input[type=checkbox]').last().check();
+ }
+ await editor.getByRole('button',{name:'Save changes',exact:true}).click();
+}
 let results=[],errors=[],outbound=[];
 try{
  for(const [name,engine]of [['chromium',chromium],['webkit',webkit]]){
@@ -203,34 +214,38 @@ try{
      await page.evaluate(()=>switchView('review'));
      await page.waitForFunction(()=>!localPending.size,{timeout:30000});
      await page.screenshot({path:out+'/'+name+'-'+width+'-05-review-original.png',fullPage:true});
-     // Real native file chooser: PNG is converted at original dimensions,
-     // with separate file and canonical SHA values recorded accurately.
+     // Keep the exact JPEG source and reject the PNG without a draft.
      await page.evaluate(()=>switchView('scan'));
-     const png=await page.evaluate(()=>{
+     const files=await page.evaluate(()=>{
       const c=document.createElement('canvas');c.width=768;c.height=1024;
       const g=c.getContext('2d');g.fillStyle='#6837a0';g.fillRect(0,0,768,1024);
       g.fillStyle='#ffbe38';g.fillRect(100,90,450,720);
-      return c.toDataURL('image/png').split(',')[1];
+      return ['image/png','image/jpeg'].map(type=>[type,c.toDataURL(type).split(',')[1]]);
      });
-     await page.locator('#clothingPhotos').setInputFiles([{
-      name:'licensed-fixture.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')}]);
-     await page.waitForFunction(()=>batch.some(x=>x.importFilename==='licensed-fixture.png'),null,{timeout:25000});
+     await page.locator('#clothingPhotos').setInputFiles(files.map(([mimeType,bytes])=>({
+      name:mimeType==='image/jpeg'?'import-fixture.jpg':'import-fixture.png',mimeType,
+      buffer:Buffer.from(bytes,'base64')
+     })));
+     await page.waitForFunction(()=>window.__lastPhotoImportResult?.results[0]?.name==='import-fixture.png');
      const imported=await page.evaluate(async()=>{
-      const i=batch.find(x=>x.importFilename==='licensed-fixture.png');
+      const i=batch.find(x=>x.importFilename==='import-fixture.jpg');
       const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',
        Uint8Array.from(atob(i.image.split(',')[1]),x=>x.charCodeAt(0)))),x=>x.toString(16).padStart(2,'0')).join('');
-      return {found:!!i,converted:i.originalPhoto.transformed,
-       sourceDiffers:i.originalPhoto.originalFileSha256!==digest,
+      return {converted:i.originalPhoto.transformed,
+       sourceMatches:i.originalPhoto.originalFileSha256===digest,
        shaMatch:i.sourceSHA256===digest,
        resolution:[i.originalPhoto.width,i.originalPhoto.height],
        originalRetained:i.image===i.originalPhoto.image,
+       rejectedPNG:!batch.some(x=>x.importFilename==='import-fixture.png'),
+       errors:window.__lastPhotoImportResult.errors,
        saved:(await readAll()).length};
      });
-     assert.equal(imported.found,true);
-     assert.equal(imported.converted,true);
-     assert.equal(imported.sourceDiffers,true);
+     assert.equal(imported.converted,false);
+     assert.equal(imported.sourceMatches,true);
      assert.equal(imported.shaMatch,true);
      assert.equal(imported.originalRetained,true);
+     assert.equal(imported.rejectedPNG,true);
+     assert.match(imported.errors[0],/export a JPEG/);
      assert.deepEqual(imported.resolution,[768,1024]);
      assert.equal(imported.saved,0);
      await page.screenshot({path:out+'/'+name+'-'+width+'-06-import-review.png',fullPage:true});
@@ -244,7 +259,7 @@ try{
      await page.locator('dialog.photo-adjust select[aria-label="Main category"]').selectOption('Tops');
      await page.locator('dialog.photo-adjust select[aria-label="Item type"]').selectOption('T-shirt');
      await page.locator('dialog.photo-adjust input[aria-label="Color"]').fill('Blue');
-     await page.locator('dialog.photo-adjust form').evaluate(node=>node.requestSubmit());
+     await confirmAndSaveReviewedPhoto(page);
      await page.waitForFunction(()=>items.some(x=>x.itemType==='T-shirt')&&!document.querySelector('dialog.photo-adjust[open]'),null,{timeout:20000});
      const saved=await page.evaluate(async()=>{
       const v=(await readAll()).find(x=>x.itemType==='T-shirt');
@@ -262,15 +277,15 @@ try{
      // Tamper retained original AFTER capture; manual Adjust must not write a
      // photo whose canonical original bytes fail the pre-commit SHA check.
      await page.evaluate(()=>{
-      const imported=batch.find(x=>x.importFilename==='licensed-fixture.png');
+      const imported=batch.find(x=>x.importFilename==='import-fixture.jpg');
       imported.originalPhoto.image=items.find(x=>x.itemType==='T-shirt').image;
      });
      await page.locator('#reviewGrid article.photo-result').nth(1).getByRole('button',{name:'Adjust',exact:true}).click();
      await page.locator('dialog.photo-adjust select[aria-label="Main category"]').selectOption('Bottoms');
      await page.locator('dialog.photo-adjust select[aria-label="Item type"]').selectOption('Jeans');
      await page.locator('dialog.photo-adjust input[aria-label="Color"]').fill('Purple');
-     await page.locator('dialog.photo-adjust form').evaluate(node=>node.requestSubmit());
-     await page.waitForFunction(()=>document.getElementById('message').textContent.includes('Could not save changes.'),null,{timeout:15000});
+     await confirmAndSaveReviewedPhoto(page);
+     await page.waitForFunction(()=>document.getElementById('message').textContent.includes('Reviewed garment was not saved.'),null,{timeout:15000});
      assert.equal(await page.evaluate(async()=>(await readAll()).length),1,
       'tampering the original must never create or overwrite saved item');
      assert.equal(await page.locator('dialog.photo-adjust[open]').count(),1,
