@@ -15,6 +15,7 @@ const leaseSource=exact('function beginOwnerBoardUiLease(){','function beginNati
 const savedSource=exact('function renderSavedOutfitBoards(){','async function importBoardBackup(');
 const savedFactsSource=exact('function outfitSavedItemFacts(item){','function outfitWardrobeChanged(){');
 const pickerSource=exact('function boardPhotoRequiresUnitReview(item){','function renderOutfitBoard(){');
+const pickerFocusSource=exact('function restoreBoardPickerFocus(){',"$('boardPicker').addEventListener");
 const suggestionsSource=exact('function renderBoardSuggestions(){','function renderSavedOutfitBoards(){');
 const ownerModes=[
  ['different account',f=>f.swap()],
@@ -32,6 +33,7 @@ function fixture(){
    children:[],open:false,append(...xs){this.children.push(...xs)},
    replaceChildren(){this.children=[]},
    close(){this.open=false;calls.push('picker-close')},
+   contains(){return false},
    showModal(){this.open=true;calls.push('picker-open')}
   };
   return dom[id];
@@ -41,6 +43,7 @@ function fixture(){
  const item={id:'owner-a-garment',name:'OWNER-A-PRIVATE-JPEG',itemType:'T-Shirt',
   color:'Blue',image:'data:image/jpeg;base64,/9j/AA==',category:'Tops'};
  const ctx={
+  boardPickerFocus:null,document:{activeElement:null,body:{}},
   window:{closetAuth:auth},db:{name:'closet-current-user-owner-a'},
   captureOperationEpoch:17,nativeLossless04Active:false,nativeLossless04:null,
   currentBoard:{name:'DRAFT-A',slots:{}},savedOutfitBoards:[original],
@@ -70,7 +73,7 @@ function fixture(){
   nativeLossless04Edit(){throw Error('Should not use native research path')}
  };
  vm.createContext(ctx);
- vm.runInContext(leaseSource+savedFactsSource+pickerSource+suggestionsSource+savedSource,ctx,{timeout:1000});
+ vm.runInContext(leaseSource+savedFactsSource+pickerSource+pickerFocusSource+suggestionsSource+savedSource,ctx,{timeout:1000});
  return {ctx,calls,dom,original,item,auth,element,
   makeSaved(){ctx.renderSavedOutfitBoards();return dom.savedBoards.children[0]},
   makePicker(){ctx.openBoardPicker('top');return dom.boardPickerItems.children.find(x=>x.tag==='button')},

@@ -162,3 +162,26 @@ header{padding-top:22px;padding-bottom:18px}.brand-mark{background:#7043ba;color
 }
 #troubleshooting button, #troubleshooting select { min-height: 44px; }
 #troubleshootingPreview { margin-top: 1rem; }
+
+/* Allow enlarged labels to reflow within the mobile viewport. */
+@media (max-width:760px){
+ #appShell > header{flex-wrap:wrap;gap:12px}
+ #appShell > header .brand{min-width:0;overflow-wrap:anywhere}
+ .main-nav > .tab,.main-nav > .more-menu{min-width:0}
+ .main-nav .nav-label,.more-menu > summary{overflow-wrap:anywhere;text-align:center}
+ .more-menu-panel{max-width:calc(100vw - 32px)}
+ .closet-collection-heading{flex-wrap:wrap}
+ .closet-collection-heading > h3{min-width:0;overflow-wrap:anywhere}
+ .board-slot{overflow-wrap:anywhere}
+ .board-slot:focus-visible{z-index:2}
+ .board-picker .section-heading > div,.board-picker .actions > button,.board-pick{
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+ }
+}
+
+@media (max-width:480px){
+ #closet .filters{grid-template-columns:minmax(0,1fr)}
+ .closet-category-caption{overflow-wrap:anywhere}
+}
