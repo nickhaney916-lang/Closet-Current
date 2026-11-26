@@ -48,7 +48,7 @@ async function snapshot(page) {
   const wear = state.get('outfit-wear-history-v1');
   const marker = state.get('cloud-sync');
   tx.oncomplete = () => resolve({items:rows.result, drafts:draft.result?.batch ?? [],
-   saved:board.result?.saved ?? [], wear:wear.result?.events ?? [], revision:marker.result?.localRevision ?? 0});
+   saved:board.result?.saved ?? [], current:board.result?.current ?? null, wear:wear.result?.events ?? [], revision:marker.result?.localRevision ?? 0});
   tx.onabort = () => reject(tx.error);
  }));
 }
@@ -60,6 +60,10 @@ async function closeAndCheckSession(context, setOwner, ownerA, ownerB) {
   const ownerRow = fixture(ownerA);
   await page.evaluate(async row => {
    await writeAll([row]);
+   items = (await readAll()).map(normalizeClothing);
+   render();
+   if (!document.querySelector('#appShell img[src^="data:image/jpeg"]'))
+    throw Error('Synthetic owner preview did not render');
    let release;
    writes = new Promise(resolve => {release = resolve;});
    window.outcome = null;
@@ -74,6 +78,7 @@ async function closeAndCheckSession(context, setOwner, ownerA, ownerB) {
   }, ownerRow);
   assert.equal(await page.evaluate(() => window.outcome),'rejected');
   assert.equal(await page.evaluate(() => items.length + batch.length),0);
+  assert.equal(await page.locator('#appShell img[src^="data:image/"], #appShell img[src^="blob:"]').count(),0);
   await page.close();
   setOwner(ownerB);
   page = await open(context);
@@ -102,7 +107,7 @@ async function armAndStart(page, phase, action, row, board, suggestion) {
    if (action === 'wear') transactOutfitWear = () => new Promise(() => {});
    if (action !== 'restore') window.boundary = 'write held';
   }
-  if (['before-ack','abort-after-write-request','close-during-write'].includes(phase)) {
+  if (['before-ack','abort-after-write-request','close-during-write','reload-during-write'].includes(phase)) {
    const method = {save:'add', edit:'put', remove:'delete', outfit:'put',
     'outfit-update':'put', wear:'put', restore:'put'}[action];
    const store = {outfit:'outfit-board','outfit-update':'outfit-board',wear:'outfit-wear-history-v1'}[action];
@@ -132,7 +137,7 @@ async function armAndStart(page, phase, action, row, board, suggestion) {
       window.boundary = 'request succeeded; transaction aborted';
      }, {once:true});
     }
-    if (phase === 'close-during-write') {
+    if (phase === 'close-during-write' || phase === 'reload-during-write') {
      // Keep a native request pending until the test closes the page. Giving
      // the transaction nothing to do between checks would let it auto-commit.
      const keepPending = () => {
@@ -214,7 +219,7 @@ try {
       'document.getElementById("authGate").hidden=true;document.getElementById("appShell").hidden=false;'});
     });
     for (const action of ['save','edit','remove','outfit','outfit-update','wear','restore']) {
-     for (const phase of ['before-write','abort-after-write-request','close-during-write','before-ack','acknowledged']) {
+     for (const phase of ['before-write','abort-after-write-request','close-during-write','reload-during-write','before-ack','acknowledged']) {
       owner = [engine,width,action,phase].join('-');
       let page;
       try {
@@ -237,8 +242,14 @@ try {
        page = await open(context);
        const before = await snapshot(page);
        await armAndStart(page, phase, action, row, outfit, suggestion);
-       await page.close();
-       page = await open(context);
+       if (phase === 'reload-during-write') {
+        page.on('dialog', dialog => dialog.accept());
+        await page.reload({waitUntil:'domcontentloaded'});
+        await page.waitForFunction(() => typeof db !== 'undefined' && db && boardInitialized);
+       } else {
+        await page.close();
+        page = await open(context);
+       }
        const after = await snapshot(page);
        const committed = phase === 'before-ack' || phase === 'acknowledged';
        assert.ok(after.revision >= before.revision, 'Local revision decreased');
@@ -251,6 +262,7 @@ try {
        else if (action === 'remove') {
         assert.deepEqual(after.items, []);
         assert.deepEqual(after.saved.map(saved => saved.slots), [{}]);
+        assert.deepEqual(after.current.slots, {});
        } else if (action === 'wear') {
         assert.deepEqual(after.items, before.items);
         assert.deepEqual(after.saved, before.saved);
