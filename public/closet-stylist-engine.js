@@ -59,6 +59,7 @@ function stylistHarmony(selected){
 function styleOwnedCollection(closet,request={},library=null){
  const intent=Object.hasOwn(stylistProfiles,request.request)?request.request:'Casual';
  const context={request:intent,occasion:stylistProfiles[intent].occasion,audience:['Women','Men','All'].includes(request.audience)?request.audience:'All',season:['Spring','Summer','Fall','Winter'].includes(request.season)?request.season:'Fall'};
+ const weather=request.weather&&typeof dailyWeatherContext==='function'?dailyWeatherContext(request.weather):null;
  const unique=[...new Map(closet.filter(x=>x&&typeof x.id==='string').map(x=>[x.id,x])).values()];
  // A newly captured garment is first reviewed and saved into this owner's
  // wardrobe. `focusItemId` then anchors every suggestion to that real owned
@@ -69,7 +70,7 @@ function styleOwnedCollection(closet,request={},library=null){
  if(request.focusItemId&&!focusSlot)return [];
  const ranked=slot=>unique.filter(item=>slotAllows(outfitSlots.find(s=>s.id===slot),item)&&
   (slot===focusSlot?item.id===focus.id:!focus||item.id!==focus.id)).map(item=>({item,
-   score:stylistItemScore(item,slot,context,library)}))
+   score:(()=>{const base=stylistItemScore(item,slot,context,library);return base===null?null:base+(weather?dailyWeatherScore(item,slot,weather):0);})()}))
   .filter(x=>x.score!==null).sort((a,b)=>b.score-a.score||a.item.id.localeCompare(b.item.id)).slice(0,8);
  const tops=ranked('top'),bottoms=ranked('bottom'),shoes=ranked('shoes'),candidates=[];
  // Keep partial outfits useful and label their missing required slots explicitly.
@@ -86,7 +87,7 @@ function styleOwnedCollection(closet,request={},library=null){
   const required=boardGaps(board,unique).filter(s=>!s.optional).map(s=>s.id);
   score-=required.length*30;
   const references=selected.flatMap(x=>stylistTrendMatches(x.item,outfitSlots.find(s=>board.slots[s.id]===x.item.id)?.id,context,library).map(d=>({itemId:x.item.id,label:d.label,reason:d.reason,source:library.sources.find(s=>s?.id===d.sourceId)})));
-  const notices=[];
+  const notices=weather?dailyWeatherNotices(weather,board):[];
   if(selected.some(x=>!x.item.itemType||['Unknown','Other'].includes(x.item.itemType)))notices.push('Some garment types are unconfirmed; these are category and color matches.');
   if(selected.some(x=>x.item.colorSource==='photo-estimate'))notices.push('Some colors are estimated from photos; confirm the colors together.');
   if(selected.some(x=>!String(x.item.color||'').trim()||colorFamily(x.item.color)==='unknown'))notices.push('Some colors are unknown; check the photos together.');
