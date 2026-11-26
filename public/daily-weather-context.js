@@ -11,7 +11,7 @@ function dailyWeatherContext(input,now=Date.now()){
  if([lo,hi].some(v=>v!==null&&(v< -60||v>60))||(lo!==null&&hi!==null&&lo>hi))return null;
  if(source==='fixture'&&(!Number.isFinite(now)||!Number.isFinite(input.issuedAt)||input.issuedAt>now||now-input.issuedAt>21600000||!Number.isFinite(input.validUntil)||input.validUntil<=now))return null;
  if(lo===null&&hi===null&&rain==='unknown'&&wind==='unknown')return null;
- return Object.freeze({source,low:lo,high:hi,rain,wind});
+ return Object.freeze({source,unit:'C',low:lo,high:hi,rain,wind,...(source==='fixture'?{issuedAt:input.issuedAt,validUntil:input.validUntil}:{})});
 }
 async function readDailyWeatherFixture(provider,lease,now=()=>Date.now()){
  if(typeof provider!=='function'||typeof lease!=='function'||!lease())return null;

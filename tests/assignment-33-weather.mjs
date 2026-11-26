@@ -14,7 +14,10 @@ test('valid range, Fahrenheit, unknown and invalid context',()=>{
 });
 test('fixture freshness and lease invalidation',async()=>{
  const now=123456789;const f={...base,source:'fixture',issuedAt:now-1,validUntil:now+100};
- assert.equal((await c.readDailyWeatherFixture(()=>f,()=>true,()=>now)).source,'fixture');
+ const normalized=await c.readDailyWeatherFixture(()=>f,()=>true,()=>now);
+ assert.equal(normalized.source,'fixture');
+ assert.equal(c.dailyWeatherContext(normalized,now).low,2);
+ assert.equal(c.dailyWeatherContext(normalized,now+101),null);
  assert.equal(c.dailyWeatherContext({...f,issuedAt:now-7*3600000},now),null);
  assert.equal(c.dailyWeatherContext({...f,validUntil:now},now),null);
  let active=true;

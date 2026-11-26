@@ -92,6 +92,9 @@ async function textIs(page, selector, value) {
 
 async function run(browser,origin,width){
  const page=await open(browser,origin,width,owner);
+ await approve(page,{...expected[0],id:'tee',name:'tee',category:'Tops',itemType:'T-shirt',seasons:['All seasons']});
+ await approve(page,{...expected[1],id:'sweater',name:'sweater',category:'Tops',itemType:'Sweater',seasons:['All seasons']});
+ await page.reload({waitUntil:'domcontentloaded'});await ready(page);
  await view(page,'stylist');
  const before=await state(page);
  await page.getByText('Today’s weather (optional)',{exact:true}).click();
@@ -102,6 +105,17 @@ async function run(browser,origin,width){
  await page.locator('#createCollectionOutfits').click();
  await textIs(page,'#stylistStatus','valid temperature range');
  assert.equal(await page.evaluate(()=>styledCollectionResults.length),0);
+ await page.locator('#stylistWeatherLow').fill('2');
+ await page.locator('#stylistWeatherHigh').fill('8');
+ await page.locator('#createCollectionOutfits').click();
+ await textIs(page,'#stylistStatus','outfit option');
+ assert.equal(await page.evaluate(()=>styledCollectionResults[0].board.slots.top),'sweater');
+ await page.locator('#stylistWeatherLow').fill('28');
+ await page.locator('#stylistWeatherHigh').fill('34');
+ await page.locator('#stylistWeatherRain').selectOption('dry');
+ await page.locator('#createCollectionOutfits').click();
+ await textIs(page,'#stylistStatus','outfit option');
+ assert.equal(await page.evaluate(()=>styledCollectionResults[0].board.slots.top),'tee');
  const result=await page.evaluate(()=>{
  const rows=[['tee','Tops','T-shirt'],['sweater','Tops','Sweater'],['jeans','Bottoms','Jeans'],['boots','Shoes','Ankle boots'],['sandals','Shoes','Sandals'],['coat','Outerwear','Coat']].map(([id,category,itemType])=>({id,category,itemType,color:'Black',seasons:['All seasons']}));
  const run=(low,high,rain,wind)=>styleOwnedCollection(rows,{request:'Casual',season:'Fall',weather:{source:'manual',unit:'C',low,high,rain,wind}})[0];
