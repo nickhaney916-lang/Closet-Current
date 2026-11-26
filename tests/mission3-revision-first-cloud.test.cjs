@@ -22,12 +22,12 @@ async function open(owner){
   req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
  });
 }
-async function seed(db,{baseVersion=5,dirty=false,needsRestore=false,local=[]}={}){
+async function seed(db,{baseVersion=5,dirty=false,needsRestore=false,local=[],baseDocument=empty()}={}){
  await new Promise((resolve,reject)=>{
   const tx=db.transaction(['items','state'],'readwrite');
   for(const item of local)tx.objectStore('items').put(item);
   tx.objectStore('state').put({id:'cloud-sync',
-   baseVersion,baseDocument:empty(),localRevision:17,dirty,needsRestore});
+   baseVersion,baseDocument,localRevision:17,dirty,needsRestore});
   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
  });
 }
@@ -41,11 +41,11 @@ const readMarker=db=>new Promise((resolve,reject)=>{
 });
 
 async function fixture({baseVersion=5,dirty=false,needsRestore=false,
- local=[],cloudRevision=5,cloudDocument=largeRemote(),
+ local=[],baseDocument=empty(),cloudRevision=5,cloudDocument=largeRemote(),
  secondDocument=null,secondRevision=null,failFull=false,
- onRevision=null,holdRevision=false}={}){
+ onRevision=null,holdRevision=false,allowCloud=null}={}){
  const owner=randomUUID(),db=await open(owner);
- await seed(db,{baseVersion,dirty,needsRestore,local});
+ await seed(db,{baseVersion,dirty,needsRestore,local,baseDocument});
  const selectors=[],requests=[],events=new Map(),elements=new Map();
  let revision=cloudRevision,doc=cloudDocument,save=null,restores=0;
  let resolveHeld;const blocked=holdRevision?new Promise(r=>resolveHeld=r):null;
@@ -58,6 +58,7 @@ async function fixture({baseVersion=5,dirty=false,needsRestore=false,
   user:{id:owner},getAccessToken:async()=> 'synthetic-only-'+owner,
   assertCurrent(){}
  },addEventListener(name,fn){events.set(name,fn)}};
+ if(allowCloud)window.restoreAtomic01Bridge={allowCloud,assertLease(){}};
  const fetch=async(url,options={})=>{
   const u=new URL(url),verb=options.method||'GET';
   requests.push({path:u.pathname,verb});
@@ -88,7 +89,7 @@ async function fixture({baseVersion=5,dirty=false,needsRestore=false,
   throw Error('Unexpected remote request '+u.pathname);
  };
  vm.runInNewContext(source,{window,fetch,URL,URLSearchParams,
-  location:{hostname:'localhost',search:''},navigator:{storage:{persist:async()=>true}},
+  location:{hostname:'localhost',search:allowCloud?'?restoreAtomic01=research':''},navigator:{storage:{persist:async()=>true}},
   document:{getElementById:node},crypto:webcrypto,
   AbortController,Uint8Array,atob,btoa,console,
   setTimeout:()=>0,clearTimeout:()=>{},setInterval:()=>0});
@@ -97,6 +98,8 @@ async function fixture({baseVersion=5,dirty=false,needsRestore=false,
   get revision(){return revision;},
   get restores(){return restores;},
   get remoteDocument(){return doc;},
+  replaceRemote(nextRevision,nextDocument){revision=nextRevision;doc=nextDocument;},
+  conflictButton:()=>node('resolveCloudConflict'),
   status:()=>node('cloudStatus').textContent,
   readItems:()=>readItems(db),readMarker:()=>readMarker(db),
   start:()=>window.closetCloud.start(db,{
@@ -239,5 +242,66 @@ test('owner save during revision-only request remains pending and is never silen
   assert.equal(f.status(),'Saved on this device · cloud backup pending');
   assert.equal((await f.readMarker()).dirty,true);
   assert.deepEqual((await f.readItems()).map(x=>x.id),['preserved-first']);
+ }finally{f.close();}
+});
+
+test('keep-both approval expires when another device advances the cloud revision',async()=>{
+ const item=name=>({id:'shared-piece',name});
+ const doc=name=>({...empty(),items:[item(name)]});
+ const f=await fixture({dirty:true,baseDocument:doc('Before edits'),
+  local:[item('Local edit')],cloudRevision:6,cloudDocument:doc('First cloud edit')});
+ try{
+  await f.start();
+  assert.equal(f.conflictButton().hidden,false);
+  const approveOldConflict=f.conflictButton().onclick;
+  f.replaceRemote(7,doc('Later cloud edit'));
+  await approveOldConflict();
+  assert.equal(f.revision,7,'a stale decision must not publish to the newer revision');
+  assert.equal(f.saved,null);
+  assert.equal((await f.readItems())[0].name,'Local edit');
+  assert.equal((await f.readMarker()).dirty,true);
+  assert.equal(f.conflictButton().hidden,false);
+  await f.conflictButton().onclick();
+  assert.equal(f.revision,8);
+  assert.equal(f.saved.p_expected_revision,7);
+  assert.deepEqual(f.remoteDocument.items.map(row=>row.name).sort(),['Later cloud edit','Local edit (saved copy)']);
+  assert.equal(new Set(f.remoteDocument.items.map(row=>row.id)).size,2);
+  assert.equal((await f.readMarker()).dirty,false);
+ }finally{f.close();}
+});
+
+test('another device advancing during restore confirmation requires a fresh preview',async()=>{
+ const item=name=>({id:'shared-piece',name});
+ const doc=name=>({...empty(),items:[item(name)]});
+ const approvals=[];
+ const f=await fixture({baseDocument:doc('Before restore'),
+  local:[item('Before restore')],cloudRevision:6,cloudDocument:doc('First preview'),
+  allowCloud({revision}) {
+   approvals.push(revision);
+   if(revision===6)f.replaceRemote(7,doc('Latest preview'));
+   return true;
+  }});
+ try{
+  await f.start();
+  assert.deepEqual(approvals,[6]);
+  assert.equal(f.restores,0);
+  assert.equal((await f.readItems())[0].name,'Before restore');
+  assert.equal((await f.readMarker()).baseVersion,5);
+  await f.window.closetCloud.sync();
+  assert.deepEqual(approvals,[6,7]);
+  assert.equal(f.restores,1);
+  assert.equal((await f.readItems())[0].name,'Latest preview');
+  assert.equal((await f.readMarker()).baseVersion,7);
+ }finally{f.close();}
+});
+
+test('a response behind the last accepted revision cannot roll back a clean device',async()=>{
+ const f=await fixture({baseVersion:6,cloudRevision:5,cloudDocument:empty(),
+  local:[{id:'latest-piece'}]});
+ try{
+  await f.start();
+  assert.equal(f.restores,0);
+  assert.equal((await f.readItems())[0].id,'latest-piece');
+  assert.equal((await f.readMarker()).baseVersion,6);
  }finally{f.close();}
 });
