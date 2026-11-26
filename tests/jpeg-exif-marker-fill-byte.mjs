@@ -20,3 +20,21 @@ for (const [name, fill, orientation, include, expected] of [
 ]) {
   test('JPEG orientation: '+name, () => assert.equal(jpegOrientation(fixture(fill,orientation,include)),expected));
 }
+
+function tiffFixture(magic=42,offset=8,orientation=6,big=false){
+  return Uint8Array.from([255,216,255,225,0,34,69,120,105,102,0,0,
+    ...(big?[77,77,0,magic,0,0,0,offset,0,1,1,18,0,3,0,0,0,1,0,orientation,0,0]:
+    [73,73,magic,0,offset,0,0,0,1,0,18,1,3,0,1,0,0,0,orientation,0,0,0]),
+    0,0,0,0,255,192,0,11,8,0,2,0,3,1,1,17,0,255,217]);
+}
+for(const [name,bytes,expected] of [
+  ['valid little endian',tiffFixture(),6],
+  ['valid big endian',tiffFixture(42,8,8,true),8],
+  ['invalid little endian TIFF magic',tiffFixture(41),null],
+  ['invalid big endian TIFF magic',tiffFixture(41,8,8,true),null],
+  ['IFD overlaps TIFF header',tiffFixture(42,0),null],
+  ['IFD outside APP1 segment',tiffFixture(42,250),null],
+  ['invalid orientation',tiffFixture(42,8,9),null]
+]){
+  test('JPEG TIFF validation: '+name,()=>assert.equal(jpegOrientation(bytes),expected));
+}
