@@ -1,0 +1,43 @@
+name: Assignment 31 interruption recovery HOLD
+on:
+  pull_request:
+    branches: [research/main1054-unified-mobile-accessibility-HOLD]
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'research/assignment-31-interruption-HOLD'
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [chromium, webkit, regression]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Verify exact head and accepted baseline
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: a181dc9bd3c7e57d18a31a9fd2015839e7193863
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          git merge-base --is-ancestor "$BASE_SHA" HEAD
+          git diff --exit-code "$BASE_SHA" HEAD -- public supabase
+          git log -1 --format='commit %H tree %T'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: node scripts/build.mjs
+      - if: matrix.lane == 'regression'
+        run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
+      - if: matrix.lane != 'regression'
+        env:
+          CC31_ENGINE: ${{ matrix.lane }}
+        run: node scripts/assignment-31/browser.mjs
