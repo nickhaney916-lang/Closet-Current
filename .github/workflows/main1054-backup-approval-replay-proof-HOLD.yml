@@ -1,0 +1,34 @@
+name: MAIN1054 backup approval replay proof HOLD
+on:
+  pull_request:
+    branches: [research/main1054-unified-backup-revision-HOLD]
+permissions:
+  contents: read
+jobs:
+  approval-proof:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'research/main1054-backup-approval-replay-proof-HOLD'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Pin candidate and test-only delta
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          test "${{ github.event.pull_request.base.sha }}" = 1e1a0724350001a2ed3b89f48919a8447022d37f
+          test "$(git rev-parse HEAD^)" = 1e1a0724350001a2ed3b89f48919a8447022d37f
+          printf '%s\n' '.github/workflows/main1054-backup-approval-replay-proof-HOLD.yml' 'tests/mission3-revision-first-cloud.test.cjs' | LC_ALL=C sort > /tmp/expected
+          git diff --name-only 1e1a0724350001a2ed3b89f48919a8447022d37f HEAD | LC_ALL=C sort > /tmp/actual
+          diff -u /tmp/expected /tmp/actual
+          git diff --exit-code 1e1a0724350001a2ed3b89f48919a8447022d37f HEAD -- public supabase scripts
+          test "$(git rev-parse HEAD:public/cloud-backup.js)" = 608d337cacf41ecaf8e658f8d24f3eb2bad330d4
+          git log -1 --format='commit %H tree %T'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4
+      - run: node --test --test-concurrency=1 --test-timeout=60000 tests/mission3-revision-first-cloud.test.cjs
