@@ -172,6 +172,8 @@ header{padding-top:22px;padding-bottom:18px}.brand-mark{background:#7043ba;color
  .more-menu-panel{max-width:calc(100vw - 32px)}
  .closet-collection-heading{flex-wrap:wrap}
  .closet-collection-heading > h3{min-width:0;overflow-wrap:anywhere}
+ .board-slot{overflow-wrap:anywhere}
+ .board-slot:focus-visible{z-index:2}
  .board-picker .section-heading > div,.board-picker .actions > button,.board-pick{
   min-width:0;
   max-width:100%;

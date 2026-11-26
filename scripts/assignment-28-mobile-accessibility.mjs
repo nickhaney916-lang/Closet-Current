@@ -201,6 +201,7 @@ async function exercise(browser, engine, width) {
   await enlarge();
   await checkReflow(locator('html'));
   await checkReflow(locator('.main-nav'));
+  await checkReflow(top);
   await activate(top);
   await dialog.waitFor();
   await enlarge();
