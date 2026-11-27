@@ -1,0 +1,56 @@
+name: Main1054 controlled correction verification HOLD
+on:
+  pull_request:
+    branches: [research/main1054-jpeg-exif-fill-byte-HOLD]
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'main1054-test4-comparison-request-lease-HOLD'
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [chromium, webkit, regression]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact head and accepted baseline
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          BASE_SHA: bba97ce9b6535ed3fd5882501464806560585cdb
+          CANDIDATE_SHA: 4a42fc5b58312b91c571a1b46a40ad7117e5626b
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$PR_BASE" = "$BASE_SHA"
+          git merge-base --is-ancestor "$BASE_SHA" "$CANDIDATE_SHA"
+          git merge-base --is-ancestor "$CANDIDATE_SHA" HEAD
+          test "$(git diff --name-only "$CANDIDATE_SHA" HEAD)" = '.github/workflows/main1054-controlled-correction-verification-HOLD.yml'
+          git checkout --detach "$CANDIDATE_SHA"
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          git diff --name-only "$BASE_SHA" HEAD | while IFS= read -r file; do
+            case "$file" in
+              public/outfit-board.js|public/stylist-comparison.js|tests/assignment-34-comparison.cjs) ;;
+              *) echo "Outside controlled correction scope: $file"; exit 1 ;;
+            esac
+          done
+          git log -1 --format='tested commit %H tree %T'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: node scripts/build.mjs
+      - if: matrix.lane == 'regression'
+        run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
+      - if: matrix.lane != 'regression'
+        env:
+          CC34_ENGINE: ${{ matrix.lane }}
+        run: node scripts/assignment-34/browser.mjs
