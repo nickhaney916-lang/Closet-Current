@@ -16,6 +16,7 @@ const js=`
 let db,items,styledCollectionResults=[],styledCollectionRequestSerial=0,captureOperationEpoch=0;
 let closetReady=Promise.resolve(),activeTrendLibrary={updatedAt:'synthetic'},events=[];
 let refreshStylistFocusItems,refreshTrendLibrary,styleOwnedCollection,renderStyledCollection;
+const accessStylistFeedback=async()=>new Set();
 function $(id){return document.getElementById(id);}
 ${actual}
 window.__scenario=async mode=>{
@@ -24,7 +25,7 @@ window.__scenario=async mode=>{
  const productionSubmit=$('styleCollectionForm').onsubmit;
  document.body.innerHTML='<div id="authGate" hidden></div><div id="appShell">'+
   '<form id="styleCollectionForm"><button id="createCollectionOutfits" type="submit">Create outfits</button></form>'+
-  '<p id="stylistStatus">Idle</p>'+
+  '<p id="stylistStatus">Idle</p><button id="restoreStylistFeedback" hidden></button>'+
   '<select id="stylistOccasion"><option>Everyday</option><option>Work</option></select>'+
   '<select id="stylistAudience"><option>Women</option><option>Men</option></select>'+
   '<select id="stylistSeason"><option>Fall</option><option>Spring</option></select>'+
