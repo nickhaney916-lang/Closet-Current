@@ -61,3 +61,19 @@ test('leaving during permission prompt stops a late camera stream',async()=>{
 test('the eight-second option and all four camera buttons use their intended actions',async()=>{
  const {context:c,clock,element}=setup();element('interval').value='8';await element('startAuto').onclick();clock.now=7999;c.captureTick();assert.equal(c.session,0);clock.now=8000;c.captureTick();assert.equal(c.session,1);element('stop').onclick();assert.equal(c.view,'review');await element('start').onclick();assert.equal(c.cameraMode,'manual');element('takePhoto').onclick();assert.equal(c.session,1);element('stop').onclick();assert.equal(c.stream,null);
 });
+
+test('automatic camera recovers from a backwards wall-clock adjustment without an early photo',async()=>{
+ const {context:c,clock,element}=setup();
+ clock.now=100000;await c.startCamera('auto');
+ clock.now=105000;c.captureTick();assert.equal(c.session,1);
+ clock.now=10000;c.captureTick();assert.equal(c.session,1);
+ assert.match(element('captureState').textContent,/5 seconds/);
+ clock.now=14999;c.captureTick();assert.equal(c.session,1);
+ clock.now=15000;c.captureTick();assert.equal(c.session,2);
+ c.video.readyState=0;
+ clock.now=1000;c.captureTick();assert.equal(c.session,2);
+ c.video.readyState=2;
+ clock.now=5999;c.captureTick();assert.equal(c.session,2);
+ clock.now=6000;c.captureTick();assert.equal(c.session,3);
+ c.stopCamera();
+});
