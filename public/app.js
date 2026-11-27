@@ -143,7 +143,7 @@ window.addEventListener('closet:session-locked',()=>{
  memoryReviewRunning=false;
  try{db?.close();}catch{}
  db=null;items=[];batch=[];startupWardrobeRecoveryCount=0;failedDraftCaptures.clear();
- const discardControl=$('discard');if(discardControl)discardControl.disabled=false;
+ for(const control of document.querySelectorAll('#discard'))control.disabled=false;
  for(const image of document.querySelectorAll('#appShell img, dialog img')){
   const source=image.getAttribute('src');
   if(source?.startsWith('blob:'))URL.revokeObjectURL(source);
@@ -1398,6 +1398,7 @@ async function retryFailedPhotoFromCard(item,button){
  let lease;
  try{lease=ownerFailedPhotoRetryLease(item);}catch{return;}
  if(!button.isConnected)return;
+ if($('discard')?.disabled)return message('Finish discarding unfinished photographs before retrying a private photo save.');
  // The same unfinished original can be rendered in two grids or re-rendered
  // during a required storage retry. Scope one flight to its exact owner lease.
  const flights=retryFailedPhotoFromCard.pending??=new Map();
@@ -2161,6 +2162,8 @@ $('discard').onclick=async()=>{
  try{lease=ownerWardrobeMutationLease();}catch{return;}
  if(!batch.length)return;
  if(localPending.size||automaticRunning)return message('Finish the current photo checks before discarding unfinished photographs.');
+ if(typeof retryFailedPhotoFromCard==='function'&&[...(retryFailedPhotoFromCard.pending?.values()||[])].some(flight=>flight.lease.current()))
+  return message('Finish retrying the private photo save before discarding unfinished photographs.');
  const reviewed=batch.map(row=>({row,before:structuredClone(row)}));
  const ids=new Set(reviewed.map(x=>x.before.id));
  if(ids.size!==reviewed.length)
