@@ -64,10 +64,14 @@ const browser=await ({chromium,webkit}[engine]).launch();
 try{
  for(const width of [320,390,430]) for(const saved of [false,true]) for(const action of ['cancel','escape','suggestion']){
   const page=await browser.newPage({viewport:{width,height:844},isMobile:true,hasTouch:true});
-  let prompts=[],discard=false;
-  page.on('dialog',async d=>{
+  let prompts=[],settlements=[],discard=false;
+  page.on('dialog',d=>{
    prompts.push({type:d.type(),message:d.message()});
-   if(discard)await d.accept();else await d.dismiss();
+   const settlement=discard?d.accept():d.dismiss();
+   settlements.push(settlement);
+   // Surface rejection through the awaited close operation, not an
+   // unhandled async event listener during browser teardown.
+   void settlement.catch(()=>{});
   });
   await page.setContent('<main>Photo results</main>');
   await page.evaluate(fixture);
@@ -76,6 +80,13 @@ try{
   const open=()=>page.evaluate(saved=>adjustPhoto(saved?items[0]:batch[0]),saved);
   const dialog=page.locator('dialog'),field=dialog.locator('input');
   const close=()=>action==='escape'?page.keyboard.press('Escape'):dialog.getByRole('button',{name:'Cancel',exact:true}).click();
+  const closeDirty=async()=>{
+   const seen=page.waitForEvent('dialog',{timeout:10000});
+   await Promise.all([seen,close()]);
+   await Promise.all(settlements);
+   // Escape can return before WebKit completes the native cancel handler.
+   await page.evaluate(()=>true);
+  };
   await open();
   await close();
   await dialog.waitFor({state:'detached'});
@@ -84,7 +95,7 @@ try{
   if(action==='suggestion')await dialog.getByRole('button',{name:'Use suggested details'}).click();
   else await field.fill('Unsubmitted review');
   const name=action==='suggestion'?'Suggested review':'Unsubmitted review';
-  await close();
+  if(mode==='baseline')await close();else await closeDirty();
   if(mode==='baseline'){
    await dialog.waitFor({state:'detached'});
    assert.equal(prompts.length,0);
@@ -97,7 +108,7 @@ try{
   assert.equal(await field.inputValue(),name);
   assert.deepEqual(await page.evaluate(()=>[submissions.length,removed]),[0,0]);
   discard=true;
-  await close();
+  await closeDirty();
   await dialog.waitFor({state:'detached'});
   assert.equal(prompts.length,2);
   assert.deepEqual(await page.evaluate(saved=>({name:(saved?items[0]:batch[0]).name,submissions:submissions.length,removed}),saved),{name:'Original',submissions:0,removed:0});
