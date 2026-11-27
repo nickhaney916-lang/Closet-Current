@@ -28,6 +28,7 @@
  function lockAccount(showLogin=true){
   if(locked)return;
   locked=true;session=null;window.closetAuth.user=null;
+  $('authPassword').value='';setPasswordVisible(false);
   $('appShell').hidden=true;$('authGate').hidden=!showLogin;
   $('authStatus').textContent='This session ended. Reload to sign in again.';
   window.dispatchEvent(new Event('closet:session-locked'));
@@ -160,6 +161,8 @@
   epoch=previousEpoch||crypto.randomUUID();
   storedSession=JSON.stringify({epoch,access_token:data.access_token,refresh_token:data.refresh_token,expires_at:session.expires_at});
   localStorage.setItem(STORE,storedSession);
+  // Do not retain a submitted password in the hidden sign-in form.
+  $('authPassword').value='';setPasswordVisible(false);
   $('authGate').hidden=true;$('appShell').hidden=false;
   $('accountLabel').textContent=data.user.user_metadata?.username||data.user.email||'My account';
   resolveReady(data.user);
