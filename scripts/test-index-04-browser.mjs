@@ -63,7 +63,7 @@ try{
     const bytes=Uint8Array.from(binary,x=>x.charCodeAt(0));
     const digest=await crypto.subtle.digest('SHA-256',bytes);
     const sha=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
-    const model={strong:true,categoryConfirmed:true,choices:[{
+    const model={strong:true,categoryConfirmed:false,choices:[{
      category:'Bottoms',itemType:'Jeans',label:'a pair of jeans',score:.97,
      sleeveLength:'Not applicable'}],details:{color:'Blue'}};
     localReady=true;
@@ -77,7 +77,8 @@ try{
     ctx.fillStyle='#e5bf40';ctx.fillRect(0,0,55,160);
     const unsafePhoto=canvas.toDataURL('image/jpeg',.95);
     const unsafe=create('unverified-'+innerWidth,{image:unsafePhoto});
-    batch=[unsafe];await persistDraft();
+    batch=[unsafe];
+    await persistDraft({required:true,mode:'insert',record:unsafe});
     await recognizeItem(unsafe);
     const unsafeStatus=unsafe.localStatus;
     const unsafeSaved=(await readAll()).some(x=>x.id===unsafe.id);
@@ -87,12 +88,12 @@ try{
     const safe=create('verified-'+innerWidth,{sourceSHA256:sha,
      sourceHashVerified:true,singleGarmentVerified:true});
     // Never lose an unverified review draft when a separate piece saves.
-    batch=[unsafe,safe];await persistDraft();
+    batch=[unsafe,safe];
+    await persistDraft({required:true,mode:'insert',record:safe});
     await recognizeItem(safe);
     const saved=(await readAll()).filter(x=>x.id===safe.id);
-    // The scanner schedules an additional queued draft write and INDEX-02
-    // refresh after the save transaction. Allow the committed write queue to
-    // settle before measuring the final owner-index generation.
+    // Read the durable draft after queued work settles, then refresh INDEX-02
+    // from the committed wardrobe snapshot.
     await writes;
     const reviewDraft=await readDraft();
     await window.closetIndex02.refresh();
