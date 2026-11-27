@@ -2,7 +2,8 @@ const test=require('node:test'),assert=require('node:assert/strict'),vm=require(
 async function setup(saved=new Map(),available=true){
  const elements=new Map();function node(tag,text){return {tag,text,children:[],append(...x){this.children.push(...x);},replaceChildren(...x){this.children=x;},setAttribute(){},click(){}};}
  const get=id=>{if(!elements.has(id))elements.set(id,node('div'));return elements.get(id);};let timer=0;
- const c={$:get,node,closetReady:Promise.resolve(),recognitionAssetVersion:'abc123abc123',navigator:{userAgent:'Android'},confirm:()=>true,clearTimeout(){},setTimeout:()=>++timer,queued:work=>work(),Blob,URL:{createObjectURL(blob){c.exported=blob;return 'blob:local-test';},revokeObjectURL(){}},switchView(view){c.view=view;},db:{transaction(){const tx={objectStore:()=>({put(value){saved.set(value.id,JSON.parse(JSON.stringify(value)));},get(id){const r={result:saved.get(id)};setImmediate(()=>r.onsuccess());return r;}})};setImmediate(()=>tx.oncomplete?.());return tx;}}};
+ const listeners=new Map();
+ const c={window:{addEventListener(name,listener){listeners.set(name,listener);}},$:get,node,closetReady:Promise.resolve(),recognitionAssetVersion:'abc123abc123',navigator:{userAgent:'Android'},confirm:()=>true,clearTimeout(){},setTimeout:()=>++timer,queued:work=>work(),Blob,URL:{createObjectURL(blob){c.exported=blob;return 'blob:local-test';},revokeObjectURL(){}},switchView(view){c.view=view;},db:{transaction(){const tx={objectStore:()=>({put(value){saved.set(value.id,JSON.parse(JSON.stringify(value)));},get(id){const r={result:saved.get(id)};setImmediate(()=>r.onsuccess());return r;}})};setImmediate(()=>tx.oncomplete?.());return tx;}}};
  if(!available)c.db=undefined;
  vm.createContext(c);vm.runInContext(fs.readFileSync('public/device-check-engine.js','utf8'),c);vm.runInContext(fs.readFileSync('public/device-check.js','utf8'),c);await new Promise(setImmediate);await new Promise(setImmediate);return {c,get,saved};
 }
