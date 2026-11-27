@@ -35,10 +35,11 @@ jobs:
           base=8c1f2a4030e55279093717edd1486d9d620ecc8f
           test "$PR_BASE" = "$base"
           test "$(git rev-parse HEAD)" = "$PR_HEAD"
-          test "$(git rev-parse HEAD^)" = 145786719dbde73ecbddac0900e2d66d2afb5116
-          test "$(git rev-parse HEAD^^)" = cc55dae1eaccee21b66498624389a52466df33a5
-          test "$(git rev-parse HEAD^^^)" = "$base"
-          test "$(git rev-parse HEAD:public/app.js)" = d75643a6bde963b1dbdc67808e1aeadac805ea14
+          test "$(git rev-parse HEAD^)" = 280c66bce70d620d332ef7e4d752b721fe884c53
+          test "$(git rev-parse HEAD^^)" = 145786719dbde73ecbddac0900e2d66d2afb5116
+          test "$(git rev-parse HEAD^^^)" = cc55dae1eaccee21b66498624389a52466df33a5
+          test "$(git rev-parse HEAD^^^^)" = "$base"
+          test "$(git rev-parse HEAD:public/app.js)" = 63fe419e23ff52fc8138e0485a5af3d7a4d39665
           test "$(git rev-parse HEAD:public/photo-crop-editor.js)" = 16aed30dfa46552f6c4e721e46b0a90bcc0d5a65
           test "$(git rev-parse HEAD:scripts/build.mjs)" = d2349622d1ea3977ba1f0710d247bd047a21785c
           printf '%s\n' '.github/workflows/main1054-reviewed-style-viewer-handoff-HOLD.yml' 'public/app.js' 'scripts/main1054-reviewed-style-viewer-handoff-browser.mjs' > "$RUNNER_TEMP/expected-paths"

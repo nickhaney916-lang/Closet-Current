@@ -1363,7 +1363,8 @@ async function styleJustReviewedPhoto122(itemId,expectedSHA,{fromCloset123=false
  if(!panel?.selectGarment||!panel?.generate)
   throw Error('Style My New Clothes owner-private viewer is unavailable');
  await panel.selectGarment(itemId);
- if(!live()||window.styleOwnedLive03Bridge!==panel)throw Error('Owner or outfit viewer changed while selecting the photographed garment');
+ if(!live())throw Error('Owner changed while selecting the photographed garment');
+ if(window.styleOwnedLive03Bridge!==panel)throw Error('Outfit viewer changed while selecting the photographed garment');
  const suggestions=await panel.generate();
  if(!live()||window.styleOwnedLive03Bridge!==panel)throw Error('Owner or outfit viewer changed while creating outfit choices');
  // PHOTO124: the existing native Style panel must actually show the SECOND
