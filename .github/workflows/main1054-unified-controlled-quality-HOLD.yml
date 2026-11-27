@@ -1,0 +1,68 @@
+name: Main1054 unified controlled corrections and wardrobe review HOLD
+on:
+  pull_request:
+    branches: [research/main1054-jpeg-exif-fill-byte-HOLD]
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.head_ref == 'research/main1054-unified-controlled-quality-HOLD' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [chromium, webkit, regression]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact unified candidate, accepted ancestry and donor blobs
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        shell: bash
+        run: |
+          base=bba97ce9b6535ed3fd5882501464806560585cdb
+          donor=4a42fc5b58312b91c571a1b46a40ad7117e5626b
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$PR_BASE" = "$base"
+          test "$(git rev-parse "$base^{tree}")" = 95a36849ed10cde535096c7a300999d7dbe32f4c
+          git merge-base --is-ancestor "$base" "$donor"
+          git merge-base --is-ancestor "$donor" HEAD
+          printf '%s\n' '.github/workflows/assignment-35-wardrobe-quality-HOLD.yml' '.github/workflows/main1054-unified-controlled-quality-HOLD.yml' 'public/app-theme.css' 'public/app.js' 'public/index.html' 'public/outfit-board.js' 'public/stylist-comparison.js' 'public/wardrobe-quality-review.js' 'scripts/assignment-35/browser.mjs' 'tests/assignment-34-comparison.cjs' > "$RUNNER_TEMP/expected-paths"
+          git diff --name-only "$base" HEAD > "$RUNNER_TEMP/actual-paths"
+          diff -u "$RUNNER_TEMP/expected-paths" "$RUNNER_TEMP/actual-paths"
+          test "$(git rev-parse 'HEAD:.github/workflows/assignment-35-wardrobe-quality-HOLD.yml')" = 'cb3eabc1228f71a040e3dcd324e9c664021b500d'
+          test "$(git rev-parse 'HEAD:public/app-theme.css')" = '68a65b12e0414a610717980acd7ce1833a956de5'
+          test "$(git rev-parse 'HEAD:public/app.js')" = '9ba1408624598dc62d4686759315045134c4c426'
+          test "$(git rev-parse 'HEAD:public/index.html')" = '70d66be8762ae4f943935519b541f37191ab46f8'
+          test "$(git rev-parse 'HEAD:public/wardrobe-quality-review.js')" = 'cedbfe5b553505713133fe82a4c396744e048db9'
+          test "$(git rev-parse 'HEAD:scripts/assignment-35/browser.mjs')" = 'd0cee4e0978016cba66449a9087bcc3fcd87b3cf'
+          test "$(git rev-parse 'HEAD:public/outfit-board.js')" = 'c9020aee1d533103887ddd3bdf88995260261cc5'
+          test "$(git rev-parse 'HEAD:public/stylist-comparison.js')" = '072611961fb32567f77067743689b0408405e068'
+          test "$(git rev-parse 'HEAD:tests/assignment-34-comparison.cjs')" = '6e0d9c3ad94e43dcc8034ddd2c00d62949ee541d'
+          git log -1 --format='tested commit %H tree %T'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: node scripts/build.mjs
+      - if: matrix.lane == 'regression'
+        run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
+      - if: matrix.lane != 'regression'
+        env:
+          A35_ENGINE: ${{ matrix.lane }}
+          CC34_ENGINE: ${{ matrix.lane }}
+        run: |
+          npx playwright install --with-deps "$A35_ENGINE"
+          node scripts/assignment-34/browser.mjs
+          node scripts/assignment-35/browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane != 'regression'
+        with:
+          name: assignment-35-${{ matrix.lane }}-HOLD
+          path: benchmark/assignment-35/quality-*.json
+          if-no-files-found: warn
