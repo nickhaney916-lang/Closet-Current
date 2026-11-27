@@ -193,3 +193,12 @@ test('comparison rejects foreign original photo owners before choices or substit
  assert.equal(runComparison("items.push({...item,id:'b',originalPhoto:{...item.originalPhoto,ownerId:'other'}});startStylistComparison();return stylistComparisonDraft.closet.some(x=>x.id==='b');"),false);
  assert.equal(runComparison("items.push({...item,id:'b'});startStylistComparison();return stylistComparisonDraft.closet.some(x=>x.id==='b');"),true);
 });
+
+test('comparison lease expires on original source and garment piece identity changes',()=>{
+ const initial="item.outfitSourceId='source-a';item.sourcePieceKey='piece-a';startStylistComparison();";
+ for(const mutation of ["item.outfitSourceId='source-b';","delete item.outfitSourceId;","item.sourcePieceKey='piece-b';","delete item.sourcePieceKey;"]){
+  assert.equal(runComparison(initial+mutation+'return !!stylistComparisonDraft.current();'),false,mutation);
+ }
+ assert.equal(runComparison(initial+'return !!stylistComparisonDraft.current();'),true);
+ assert.equal(runComparison(initial+"item.outfitSourceId='source-a';item.sourcePieceKey='piece-a';return !!stylistComparisonDraft.current();"),true);
+});
