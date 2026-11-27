@@ -19,7 +19,12 @@ const types = {
   '.png': 'image/png',
 };
 const roots = { baseline: resolve(baseline), candidate: resolve(candidate) };
+let originAvailable = true;
 const server = createServer(async (request, response) => {
+  if (!originAvailable) {
+    response.destroy();
+    return;
+  }
   try {
     const { pathname } = new URL(request.url, 'http://localhost');
     const [, build, ...segments] = pathname.split('/');
@@ -98,8 +103,12 @@ try {
     const offlinePage = await offline.newPage();
     await offlinePage.goto(origin + '/candidate/');
     await offlinePage.waitForFunction(() => navigator.serviceWorker.controller, null, { timeout: 20000 });
-    await offline.setOffline(true);
-    await offlinePage.reload();
+    originAvailable = false;
+    try {
+      await offlinePage.reload();
+    } finally {
+      originAvailable = true;
+    }
     assert.equal(await offlinePage.evaluate(() => typeof switchView), 'function');
     await offline.close();
     console.log(`${engine} ${width}: baseline executes substituted script, candidate blocks it, restores startup, verifies entrypoint hashes and reloads offline`);
