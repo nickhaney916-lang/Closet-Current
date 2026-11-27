@@ -336,6 +336,8 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
    throw Error('Your account changed. Reopen your closet before saving this outfit.');
  };
  assertOwner();
+ // Pin the live comparison roster before waiting for the queued transaction.
+ const expectedComparisonRoster=comparison?new Map(items.map(row=>[row.id,outfitSavedItemFacts(row)])):null;
  const current=structuredClone(replaceCurrent===null?currentBoard:replaceCurrent),candidate=appendSaved?structuredClone(appendSaved):null,
   replacement=replaceSaved===null?null:structuredClone(replaceSaved);
  let proof33=null,picker33Gate=null;
@@ -361,11 +363,14 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
   const tx=ownerDB.transaction(candidate||proof33?['state','items']:draftStores,'readwrite'),store=tx.objectStore('state');
   let failure,saved,keepStoredDraft=Boolean(manageSaved||comparison);
   if(comparison){
-   const keys=tx.objectStore('items').getAllKeys();
-   keys.onsuccess=()=>{try{
+   const roster=tx.objectStore('items').getAll();
+   roster.onsuccess=()=>{try{
     assertOwner();
-    if(keys.result.length!==comparison.ids.size||keys.result.some(id=>!comparison.ids.has(id)))
-     throw outfitWardrobeChanged();
+    if(roster.result.length!==comparison.ids.size||expectedComparisonRoster.size!==comparison.ids.size||
+       roster.result.some(row=>{
+        const expected=expectedComparisonRoster.get(row.id),actual=outfitSavedItemFacts(row);
+        return !comparison.ids.has(row.id)||!expected||expected.length!==actual.length||!expected.every((v,i)=>v===actual[i]);
+       }))throw outfitWardrobeChanged();
    }catch(error){failure=error;tx.abort();}};
   }
   if(candidate||proof33)for(const [slotId,id]of Object.entries(candidate?.slots||current.slots)){
@@ -375,7 +380,7 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
     const row=selected.result,slot=outfitSlots.find(x=>x.id===slotId),
      expected=expectedClothing?.[id],actual=row?outfitSavedItemFacts(row):null;
     if(!row||!slot||!slotAllows(slot,normalizeClothing(row))||
-       (row.ownerId&&row.ownerId!==owner)||(comparison&&!stylistPieceReady(row))||proof33&&!proof33.matches(id,row)||
+       (row.ownerId&&row.ownerId!==owner)||(row.originalPhoto?.ownerId&&row.originalPhoto.ownerId!==owner)||(comparison&&!stylistPieceReady(row))||proof33&&!proof33.matches(id,row)||
        candidate&&(!expected||!actual||expected.length!==actual.length||
          !expected.every((v,i)=>v===actual[i])))
      throw outfitWardrobeChanged();
@@ -428,7 +433,7 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
     selected.onsuccess=()=>{try{
      assertOwner();proof33?.assertCurrent();
      const row=selected.result,slot=outfitSlots.find(x=>x.id===slotId);
-     if(!row||!slot||(row.ownerId&&row.ownerId!==owner)||!slotAllows(slot,normalizeClothing(row)))
+     if(!row||!slot||(row.ownerId&&row.ownerId!==owner)||(row.originalPhoto?.ownerId&&row.originalPhoto.ownerId!==owner)||!slotAllows(slot,normalizeClothing(row)))
       throw outfitWardrobeChanged();
      if(--remaining===0)put();
     }catch(error){failure=error;tx.abort();}};
@@ -449,7 +454,7 @@ function outfitSavedItemFacts(item){
  return [row.id,row.ownerId||null,row.category,row.itemType,row.color,row.colorSource,
   row.pattern,row.sleeveLength,row.fit,row.material,row.occasion,
   [...row.seasons].sort().join('|'),row.image,row.sourceSHA256,
-  row.sourcePieceKey,row.originalPhoto?.image,row.originalPhoto?.sha256,
+  row.sourcePieceKey,row.outfitSourceId,Boolean(row.sourceRevoked),Boolean(row.deleted),row.availability??'ready',row.originalPhoto?.image,row.originalPhoto?.sha256,row.originalPhoto?.ownerId,
   row.photoOnly===true,row.sourceHashVerified===true,
   row.sourceCropReviewed===true,row.ownerReviewed===true,
   row.sourcePhotoOriginal===true,row.singleGarmentVerified===true,
