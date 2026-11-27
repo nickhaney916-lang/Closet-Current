@@ -143,7 +143,7 @@ window.addEventListener('closet:session-locked',()=>{
  memoryReviewRunning=false;
  try{db?.close();}catch{}
  db=null;items=[];batch=[];startupWardrobeRecoveryCount=0;failedDraftCaptures.clear();
- for(const control of document.querySelectorAll('#discard, #refreshReview, #applyCategory'))control.disabled=false;
+ for(const control of document.querySelectorAll('#discard, #refreshReview, #applyCategory, #export'))control.disabled=false;
  for(const image of document.querySelectorAll('#appShell img, dialog img')){
   const source=image.getAttribute('src');
   if(source?.startsWith('blob:'))URL.revokeObjectURL(source);
@@ -2206,6 +2206,8 @@ $('export').onclick=async()=>{
  // startup, an async native backup, or a same-ID re-login finishes later.
  let exportLease;
  try{exportLease=ownerWardrobeMutationLease();}catch{return;}
+ const button=$('export');if(button?.disabled)return;
+ if(button)button.disabled=true;
  const assertExport=()=>{
   exportLease.assertLease();
   if($('authGate')?.hidden!==true||$('appShell')?.hidden!==false)
@@ -2326,6 +2328,9 @@ $('export').onclick=async()=>{
  }
   }
  }catch{exportMessage('Private backup failed; sign in and retry. No data changed.');}
+ finally{
+  try{exportLease.assertLease();if(button?.isConnected)button.disabled=false;}catch{}
+ }
 };
 $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(!db)return message('Browser storage is unavailable.');if(file.size>100*1024*1024)return message('Backup must be smaller than 100 MB.');
  // A file read and owner confirmation may each take arbitrarily long.
