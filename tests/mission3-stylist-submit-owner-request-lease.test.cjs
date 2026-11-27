@@ -18,7 +18,7 @@ function fixture(){
  const events=[];
  const dom={
   styleCollectionForm:{onsubmit:null},createCollectionOutfits:{disabled:false},
-  stylistStatus:{textContent:'Idle'},
+  stylistStatus:{textContent:'Idle'},restoreStylistFeedback:{hidden:true},
   stylistOccasion:{value:'Everyday'},
   stylistAudience:{value:'Women'},
   stylistSeason:{value:'Fall'},
@@ -31,6 +31,7 @@ function fixture(){
   styledCollectionRequestSerial:0,styledCollectionResults:[],
   activeTrendLibrary:{updatedAt:'synthetic'},
   closetReady:Promise.resolve(),$(id){return dom[id]},
+  async accessStylistFeedback(){return new Set();},
   refreshStylistFocusItems(){events.push('refresh');},
   refreshTrendLibrary:async()=>{events.push('trend');},
   styleOwnedCollection(rows,request){
