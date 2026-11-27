@@ -1,16 +1,16 @@
 'use strict';
-let deviceCheckState=cleanDeviceCheck(null),deviceCheckInitialized=false,deviceCheckTimer=null,lastProgressKey='';
+let deviceCheckState=cleanDeviceCheck(null),deviceCheckInitialized=false,deviceCheckTimer=null,lastProgressKey='',deviceCheckLocked=false;
 function saveDeviceCheck(){
- if(!db||!deviceCheckInitialized)return Promise.reject(Error('Local test storage is unavailable.'));
+ if(deviceCheckLocked||!db||!deviceCheckInitialized)return Promise.reject(Error('Local test storage is unavailable.'));
  const snapshot=cleanDeviceCheck(deviceCheckState);
  return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'device-check',...snapshot});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));
 }
 function recordDeviceEvent(type,value={}){
- if(!deviceCheckInitialized||!deviceCheckState.enabled)return;
+ if(deviceCheckLocked||!deviceCheckInitialized||!deviceCheckState.enabled)return;
  const event=cleanDeviceEvent(type,value);if(!event)return;
  if(type==='scanner_progress'){const key=(event.stage||'')+':'+Math.floor((event.percent||0)/10);if(key===lastProgressKey)return;lastProgressKey=key;}
  deviceCheckState.events.push(event);deviceCheckState.events=deviceCheckState.events.slice(-40);renderDeviceCheckSummary();
- clearTimeout(deviceCheckTimer);deviceCheckTimer=setTimeout(()=>saveDeviceCheck().catch(()=>{$('deviceCheckStatus').textContent='Test results could not be saved. Keep this page open and download the report.';}),1000);
+ clearTimeout(deviceCheckTimer);deviceCheckTimer=setTimeout(()=>saveDeviceCheck().catch(()=>{if(deviceCheckLocked)return;$('deviceCheckStatus').textContent='Test results could not be saved. Keep this page open and download the report.';}),1000);
 }
 function renderDeviceCheckSummary(){
  const checked=Object.keys(deviceCheckState.steps).length,failed=Object.values(deviceCheckState.steps).filter(x=>x==='fail').length;
@@ -21,19 +21,42 @@ function renderDeviceCheckSummary(){
 function renderDeviceCheck(){
  const grid=$('deviceCheckSteps');grid.replaceChildren();
  for(const [id,title,hint]of deviceCheckSteps){const row=node('div',null,'device-step');row.append(node('strong',title),node('p',hint));const actions=node('div',null,'actions');
-  for(const [value,label]of [['pass','Works'],['fail','Needs help']]){const button=node('button',label,'secondary');button.type='button';button.setAttribute('aria-label',title+': '+label);button.setAttribute('aria-pressed',String(deviceCheckState.steps[id]===value));button.onclick=async()=>{deviceCheckState.steps[id]=value;renderDeviceCheck();try{await saveDeviceCheck();}catch{$('deviceCheckStatus').textContent='Could not save that check. Download the report before closing.';}};actions.append(button);}row.append(actions);grid.append(row);
+  for(const [value,label]of [['pass','Works'],['fail','Needs help']]){const button=node('button',label,'secondary');button.type='button';button.setAttribute('aria-label',title+': '+label);button.setAttribute('aria-pressed',String(deviceCheckState.steps[id]===value));button.onclick=async()=>{if(deviceCheckLocked||!deviceCheckInitialized)return;deviceCheckState.steps[id]=value;renderDeviceCheck();try{await saveDeviceCheck();}catch{if(deviceCheckLocked)return;$('deviceCheckStatus').textContent='Could not save that check. Download the report before closing.';}};actions.append(button);}row.append(actions);grid.append(row);
  }
  $('startDeviceCheck').textContent=deviceCheckState.enabled?'Restart test':'Start device test';$('stopDeviceCheck').hidden=!deviceCheckState.enabled;renderDeviceCheckSummary();
 }
 $('startDeviceCheck').onclick=async()=>{
+ if(deviceCheckLocked||!deviceCheckInitialized)return;
  if(deviceCheckState.enabled&&!confirm('Restart this test? The current test results will be cleared; your clothing and outfits stay unchanged.'))return;
  clearTimeout(deviceCheckTimer);deviceCheckState=cleanDeviceCheck({enabled:true});lastProgressKey='';renderDeviceCheck();
- try{await saveDeviceCheck();$('deviceCheckStatus').textContent='Test started. Use Add clothes to take one clear garment photo, then return here.';}catch{$('deviceCheckStatus').textContent='Recording for this open session. Download the report before closing.';}
+ try{await saveDeviceCheck();if(deviceCheckLocked)return;$('deviceCheckStatus').textContent='Test started. Use Add clothes to take one clear garment photo, then return here.';}catch{if(deviceCheckLocked)return;$('deviceCheckStatus').textContent='Recording for this open session. Download the report before closing.';}
 };
-$('stopDeviceCheck').onclick=async()=>{deviceCheckState.enabled=false;clearTimeout(deviceCheckTimer);renderDeviceCheck();try{await saveDeviceCheck();$('deviceCheckStatus').textContent='Test stopped. Your results are kept.';}catch{$('deviceCheckStatus').textContent='Download the report to keep your results.';}};
+$('stopDeviceCheck').onclick=async()=>{if(deviceCheckLocked||!deviceCheckInitialized)return;deviceCheckState.enabled=false;clearTimeout(deviceCheckTimer);renderDeviceCheck();try{await saveDeviceCheck();if(deviceCheckLocked)return;$('deviceCheckStatus').textContent='Test stopped. Your results are kept.';}catch{if(deviceCheckLocked)return;$('deviceCheckStatus').textContent='Download the report to keep your results.';}};
 $('downloadDeviceCheck').onclick=()=>{
+ if(deviceCheckLocked||!deviceCheckInitialized)return;
  const platform=/Android/i.test(navigator.userAgent)?'Android':/iPhone|iPad|iPod/i.test(navigator.userAgent)?'iPhone/iPad':/Windows|Macintosh|Linux/i.test(navigator.userAgent)?'Desktop':'Other';
  const report=deviceCheckReport(deviceCheckState,recognitionAssetVersion,platform),blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=node('a');link.href=url;link.download='closet-current-device-check.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('deviceCheckStatus').textContent='Report downloaded. Share it only if you want help checking a problem.';
 };
-$('deviceCheckAddClothes').onclick=()=>switchView('scan');
-(async()=>{await closetReady;if(db){try{const saved=await new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('device-check');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});deviceCheckState=cleanDeviceCheck(saved);}catch{$('deviceCheckStatus').textContent='Previous test results could not be loaded.';}}deviceCheckInitialized=true;$('startDeviceCheck').disabled=false;renderDeviceCheck();})();
+$('deviceCheckAddClothes').onclick=()=>{if(!deviceCheckLocked&&deviceCheckInitialized)switchView('scan');};
+window.addEventListener('closet:session-locked',()=>{
+ deviceCheckLocked=true;deviceCheckInitialized=false;
+ clearTimeout(deviceCheckTimer);deviceCheckTimer=null;lastProgressKey='';
+ deviceCheckState=cleanDeviceCheck(null);
+ $('deviceCheckSteps').replaceChildren();
+ for(const id of ['deviceCheckSummary','deviceScanSummary','deviceCheckStatus'])$(id).textContent='';
+ for(const id of ['startDeviceCheck','stopDeviceCheck','downloadDeviceCheck','deviceCheckAddClothes'])$(id).disabled=true;
+ $('stopDeviceCheck').hidden=true;
+});
+(async()=>{
+ await closetReady;
+ if(deviceCheckLocked)return;
+ if(db){
+  try{
+   const saved=await new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('device-check');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+   if(deviceCheckLocked)return;
+   deviceCheckState=cleanDeviceCheck(saved);
+  }catch{if(deviceCheckLocked)return;$('deviceCheckStatus').textContent='Previous test results could not be loaded.';}
+ }
+ if(deviceCheckLocked)return;
+ deviceCheckInitialized=true;$('startDeviceCheck').disabled=false;renderDeviceCheck();
+})();
