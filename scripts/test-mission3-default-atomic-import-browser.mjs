@@ -34,7 +34,7 @@ assert(largeOriginal.length>3_000_000&&largeOriginal.length<=11_200_000);
 const largePreview='data:image/jpeg;base64,'+(await sharp({create:{
  width:120,height:90,channels:3,background:{r:192,g:84,b:131}
 }}).jpeg().toBuffer()).toString('base64');
-const root=resolve('.'),pub=resolve('public'),
+const root=resolve('.'),pub=resolve(process.env.CLOSET_IMPORT_BUILD_DIR||'public'),
  types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript',
  '.css':'text/css','.json':'application/json','.svg':'image/svg+xml'};
 const server=createServer(async(req,res)=>{
@@ -44,7 +44,12 @@ const server=createServer(async(req,res)=>{
    resolve(pub,'.'+(p==='/'?'/index.html':p));
   if(p.includes('\\')||(!full.startsWith(pub+'/')&&!full.startsWith(resolve(root,'research')+'/')))
    throw Error('Outside test root');
-  const data=await readFile(full);
+  let data=await readFile(full);
+  // The harness intercepts only these two scripts. Keep built-app SRI for
+  // the actual importer and all other application scripts.
+  if(full===resolve(pub,'index.html'))
+   data=data.toString('utf8').replace(
+    /(<script src="(?:auth|cloud-backup)\.js[^"]*") integrity="[^"]*"/g,'$1');
   res.writeHead(200,{'content-type':types[extname(full)]||'application/octet-stream',
    'cache-control':'no-store'});res.end(data);
  }catch{res.writeHead(404);res.end('not found');}
@@ -137,6 +142,11 @@ try{
       screenCount:document.getElementById('closetCount').textContent,
       cloudChanged:window.__cloudLocalChanged||0
      };
+     await select(makeBackup());
+     const repeated=await idbRead();
+     const repeatPreserved=JSON.stringify(repeated.items)===JSON.stringify(committed.items)&&
+      JSON.stringify(repeated.state.filter(row=>row.id!=='cloud-sync'))===
+       JSON.stringify(committed.state.filter(row=>row.id!=='cloud-sync'));
      // M98 P93 native camera-original contract: preserve SHA+full JPEG, not just thumbnail.
      let largeAccepted=true,largeTamperedNoWrite=true,largePreviewTooBigDenied=true,
       largeWithoutReceiptDenied=true,largeConflictingReceiptsDenied=true;
@@ -238,6 +248,23 @@ try{
      finally{IDBObjectStore.prototype.put=oldPut;}
      const stagedRollbackUnchanged=JSON.stringify(await idbRead())===fingerprint;
 
+     // Abort after the last staged store write succeeds but before completion.
+     let interrupted=false;
+     IDBObjectStore.prototype.put=function(value,...rest){
+      const request=oldPut.call(this,value,...rest);
+      if(value?.id==='cloud-sync'&&value.localRevision>6)
+       request.addEventListener('success',()=>{
+        interrupted=true;
+        this.transaction.abort();
+       },{once:true});
+      return request;
+     };
+     try{await select(rollback);}
+     finally{IDBObjectStore.prototype.put=oldPut;}
+     const interruptedUnchanged=interrupted&&JSON.stringify(await idbRead())===fingerprint;
+     await document.getElementById('import').onchange({target:{
+      files:[{size:1,text:async()=>'{'}],value:'selected'}});
+     const malformedUnchanged=JSON.stringify(await idbRead())===fingerprint;
      await select(makeBackup({badRef:true}));
      const badRefUnchanged=JSON.stringify(await idbRead())===fingerprint;
      window.confirm=()=>false;
@@ -265,6 +292,7 @@ try{
       unverifiedAliasUnchanged,unverifiedAliasExplained,
       originalAliasUnchanged,originalAliasExplained,collidedUnchanged,duplicateIdsUnchanged,
       foreignUnchanged,unsavedBlocked,stagedRollbackUnchanged,
+      repeatPreserved,interruptedUnchanged,malformedUnchanged,
       badRefUnchanged,cancelledUnchanged,
       afterAccountSwitch:second.items.map(x=>({id:x.id,ownerId:x.ownerId})),
       currentOwner:window.closetAuth.user.id,currentScreenCount:document.getElementById('closetCount').textContent};
@@ -298,6 +326,9 @@ try{
     assert.equal(result.foreignUnchanged,true);
     assert.equal(result.unsavedBlocked,true);
     assert.equal(result.stagedRollbackUnchanged,true);
+    assert.equal(result.repeatPreserved,true,'Repeated import added or changed wardrobe records');
+    assert.equal(result.interruptedUnchanged,true,'Native interruption left a partial import');
+    assert.equal(result.malformedUnchanged,true,'Malformed JSON changed the wardrobe');
     assert.equal(result.badRefUnchanged,true);
     assert.equal(result.cancelledUnchanged,true);
     assert.deepEqual(result.afterAccountSwitch,[{id:'only-B',ownerId:ownerB}]);
@@ -315,7 +346,8 @@ try{
      originalAliasSourceBlocked:true,
      ownerFacingDuplicateRecoveryVerified:true,foreignOwnerBlocked:true,
      duplicateIdsBlocked:true,unsavedCaptureBlocked:true,
-     syntheticStageRollback:true,mergePreservesItems:true,
+     syntheticStageRollback:true,interruptedTransactionRolledBack:true,
+     malformedJSONBlocked:true,repeatPreserved:true,mergePreservesItems:true,
      looksOutfitsOneCommit:true,cloudRevisionAtomic:true,badRefRollback:true,
      cancellationPreserves:true,oldOwnerReject:true,nativeIndexedDB:true,
      syntheticOwners:true,hostedSupabase:false,physicalPhone:false});
