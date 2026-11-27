@@ -1,23 +1,39 @@
 'use strict';
 
 let stylistComparisonDraft=null;
+let stylistComparisonRenderSerial=0;
+
+function comparisonStylingFacts(item){
+ return JSON.stringify([item.color,item.pattern,item.sleeveLength,item.seasons]);
+}
+
+function comparisonPieceOwned(item,owner){
+ return !!item&&(!item.ownerId||item.ownerId===owner)&&
+  (!item.originalPhoto?.ownerId||item.originalPhoto.ownerId===owner);
+}
 
 function startStylistComparison(){
  const session=ownerStylistSession();
  if(!session||!styledCollectionResults.length||!styledCollectionResultLease?.current())return;
  const results=styledCollectionResults,serial=styledCollectionRequestSerial;
  const wardrobe=new Map(items.map(item=>[item.id,item]));
- const provenance=new Map(items.map(item=>[item.id,{original:item.originalPhoto,ready:stylistPieceReady(item)}]));
- const current=()=>session.ownsSession()&&results===styledCollectionResults&&
+ const provenance=new Map(items.map(item=>[item.id,{original:item.originalPhoto,ownerId:item.ownerId,category:item.category,itemType:item.itemType,stylingFacts:comparisonStylingFacts(item),outfitSourceId:item.outfitSourceId,sourcePieceKey:item.sourcePieceKey,sourceSHA256:item.sourceSHA256,originalSHA256:item.originalPhoto?.sha256,originalOwnerId:item.originalPhoto?.ownerId,originalImage:item.originalPhoto?.image,ready:stylistPieceReady(item)}]));
+ const current=()=>stylistComparisonDraft===draft&&session.ownsSession()&&styledCollectionResultLease?.current()&&results===styledCollectionResults&&
   serial===styledCollectionRequestSerial&&items.length===wardrobe.size&&
   items.every(item=>wardrobe.get(item.id)===item&&provenance.get(item.id).original===item.originalPhoto&&
-   provenance.get(item.id).ready===stylistPieceReady(item));
- const closet=items.filter(item=>!item.ownerId||item.ownerId===session.owner);
+   provenance.get(item.id).ownerId===item.ownerId&&provenance.get(item.id).category===item.category&&
+   provenance.get(item.id).itemType===item.itemType&&provenance.get(item.id).stylingFacts===comparisonStylingFacts(item)&&
+   provenance.get(item.id).outfitSourceId===item.outfitSourceId&&provenance.get(item.id).sourcePieceKey===item.sourcePieceKey&&
+   provenance.get(item.id).sourceSHA256===item.sourceSHA256&&
+   provenance.get(item.id).originalSHA256===item.originalPhoto?.sha256&&provenance.get(item.id).originalOwnerId===item.originalPhoto?.ownerId&&
+   provenance.get(item.id).originalImage===item.originalPhoto?.image&&provenance.get(item.id).ready===stylistPieceReady(item));
+ const closet=items.filter(item=>comparisonPieceOwned(item,session.owner));
  const choices=results.slice(0,3).filter(result=>Object.values(result.board.slots).every(id=>
-  stylistPieceReady(wardrobe.get(id))&&(!wardrobe.get(id).ownerId||wardrobe.get(id).ownerId===session.owner)));
+  stylistPieceReady(wardrobe.get(id))&&comparisonPieceOwned(wardrobe.get(id),session.owner)));
  if(!choices.length)return;
- stylistComparisonDraft={current,wardrobe,closet,choices,owner:session.owner,
+ const draft={current,wardrobe,closet,choices,owner:session.owner,
   library:activeTrendLibrary,index:0,board:choices[0].board,locks:new Set(),history:[],status:'',saving:false,saved:false};
+ stylistComparisonDraft=draft;
  renderStylistComparison('comparisonChoice');
 }
 
@@ -35,6 +51,8 @@ function comparisonPhoto(item,owner){
 }
 
 function renderStylistComparison(focusId){
+ const renderSerial=++stylistComparisonRenderSerial;
+ const renderCurrent=()=>renderSerial===stylistComparisonRenderSerial;
  const panel=$('stylistComparison');
  const wasOpen=stylistComparisonDraft!==null;
  if(stylistComparisonDraft&&!stylistComparisonDraft.current())stylistComparisonDraft=null;
@@ -46,7 +64,7 @@ function renderStylistComparison(focusId){
  heading.id='comparisonHeading';panel.append(heading);
  const button=(text,action,id,disabled=false)=>{
   const control=node('button',text,'secondary');
-  control.id=id;control.type='button';control.disabled=disabled;control.onclick=action;
+  control.id=id;control.type='button';control.disabled=disabled;control.onclick=()=>{if(renderCurrent()&&!control.disabled)return action();};
   return control;
  };
  if(!draft){
@@ -70,6 +88,7 @@ function renderStylistComparison(focusId){
  for(let i=0;i<draft.choices.length;i++)select.add(new Option(result.context.request+' · option '+(i+1),String(i)));
  select.value=String(draft.index);
  select.onchange=()=>{
+  if(!renderCurrent()||select.disabled)return;
   if(!draft.current()||draft.saving)return renderStylistComparison();
   draft.index=Number(select.value);
   draft.board=draft.choices[draft.index].board;
@@ -131,6 +150,7 @@ function renderStylistComparison(focusId){
    renderStylistComparison(draft.history.length?'comparisonUndo':'comparisonSwap-'+changed?.id);
   },'comparisonUndo',busy||!draft.history.length),
   button('Cancel comparison',()=>{
+   if(stylistComparisonDraft!==draft||draft.saving)return;
    stylistComparisonDraft=null;renderStylistComparison('comparisonStart');
   },'comparisonCancel',busy),
   button(draft.saved?'Saved as new outfit':'Save as new outfit',async()=>{
