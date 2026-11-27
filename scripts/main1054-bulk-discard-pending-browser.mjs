@@ -59,4 +59,45 @@ try{
   console.log('BULK_DISCARD_PENDING_GREEN',engine,width);
   await page.close();
  }
+ for(const width of [320,390,430]) for(const first of ['retry','discard']){
+  const page=await browser.newPage({viewport:{width,height:844},isMobile:true,hasTouch:true});
+  await page.setContent('<button id="discard">Discard</button><button id="retry">Retry</button>');
+  await page.evaluate(()=>{
+   Object.assign(window,{batch:[{id:'original',ownerId:'A',name:'Original'}],localPending:new Set(),automaticRunning:false,sessionCapturedIds:new Set(['original']),failedDraftCaptures:new Set(['original']),session:1,calls:[],notices:[]});
+   window.$=id=>document.getElementById(id);
+   window.normalizeClothing=x=>x;
+   window.ownerWardrobeMutationLease=()=>({assertLease(){}});
+   window.ownerFailedPhotoRetryLease=()=>({current:()=>true,assert(){}});
+   window.confirm=()=>true;
+   window.message=t=>notices.push(t);
+   window.render=()=>{};
+   const defer=kind=>new Promise((resolve,reject)=>calls.push({kind,resolve,reject}));
+   window.retryUncommittedCapture=()=>defer('retry');
+   window.commitReviewedDraftCAS=()=>defer('discard');
+  });
+  const rStart=app.indexOf('async function retryFailedPhotoFromCard('),rEnd=app.indexOf('// Only a verified original',rStart);
+  assert.ok(rStart>=0&&rEnd>rStart);
+  await page.addScriptTag({content:app.slice(rStart,rEnd)+'\n'+app.slice(start,end)+"\n$('retry').onclick=()=>retryFailedPhotoFromCard(batch[0],$('retry'));"});
+  const second=first==='retry'?'discard':'retry';
+  await page.locator('#'+first).click();
+  await page.locator('#'+second).click();
+  if(mode==='baseline'){
+   assert.deepEqual(await page.evaluate(()=>calls.map(c=>c.kind)),[first,second]);
+   await page.evaluate(()=>calls.forEach(c=>c.reject(Error('fixture rejection'))));
+   console.log('PHOTO_OPERATION_CONFLICT_RED',engine,width,first);
+  }else{
+   assert.deepEqual(await page.evaluate(()=>calls.map(c=>c.kind)),[first]);
+   assert.equal(await page.evaluate(()=>notices.length),1);
+   assert.equal(await page.evaluate(()=>batch[0].name),'Original');
+   await page.evaluate(()=>calls[0].reject(Error('fixture rejection')));
+   await page.waitForFunction(first=>!$(first).disabled,first);
+   await page.locator('#'+second).click();
+   assert.deepEqual(await page.evaluate(()=>calls.map(c=>c.kind)),[first,second]);
+   await page.evaluate(()=>calls[1].reject(Error('fixture rejection')));
+   await page.waitForFunction(second=>!$(second).disabled,second);
+   assert.equal(await page.evaluate(()=>batch[0].name),'Original');
+   console.log('PHOTO_OPERATION_CONFLICT_GREEN',engine,width,first);
+  }
+  await page.close();
+ }
 }finally{await browser.close();}
