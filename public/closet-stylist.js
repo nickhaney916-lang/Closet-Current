@@ -219,13 +219,14 @@ function renderStyledCollection(lease){
       'Could not save this outfit. Your saved clothing is unchanged; try again.');
    }
   };
+  actions.append(edit,save,refresh);
   const hide=node('button','Hide this combination','secondary');
   hide.type='button';hide.disabled=changed;
   hide.onclick=()=>{
    const lease=beginStyledCollectionCardOwnerLease(result,card);
    if(lease?.current())void changeStylistFeedback(hide,result.signature,lease.current);
   };
-  actions.append(edit,save,refresh,hide);card.append(actions,status);applySaveState();grid.append(card);
+  actions.append(hide);card.append(actions,status);applySaveState();grid.append(card);
  }
  renderStylistComparison();
  void mountOriginalPhotoPreview167();
