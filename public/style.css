@@ -48,3 +48,17 @@ button,.secondary,.file-label{min-height:48px;border-radius:14px;padding:13px 18
 @media(prefers-reduced-motion:reduce){button,.secondary,.file-label{transition:none}button:active{transform:none}html{scroll-behavior:auto}}
 
 input[type="checkbox"]{min-height:20px;width:20px;height:20px;vertical-align:middle}.season-picker label{min-height:44px}.auto-settings input[type="checkbox"]{margin-right:8px}details:not(.more-menu):not(.account-menu)>summary::after{content:'⌄';margin-left:auto;padding-left:12px;color:var(--muted);font-size:18px}@media(max-width:760px){.main-nav .tab .nav-label,.more-menu>summary{font-size:11px}}
+
+
+#galleryIntake {
+  margin-block: 1rem;
+}
+.intake-list {
+  padding-inline-start: 1.5rem;
+}
+.intake-row {
+  padding-block: .3rem;
+}
+.intake-row button {
+  margin-inline-start: .5rem;
+}
