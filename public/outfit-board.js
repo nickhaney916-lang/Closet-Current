@@ -375,7 +375,7 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
     const row=selected.result,slot=outfitSlots.find(x=>x.id===slotId),
      expected=expectedClothing?.[id],actual=row?outfitSavedItemFacts(row):null;
     if(!row||!slot||!slotAllows(slot,normalizeClothing(row))||
-       (row.ownerId&&row.ownerId!==owner)||(comparison&&!stylistPieceReady(row))||proof33&&!proof33.matches(id,row)||
+       (row.ownerId&&row.ownerId!==owner)||(row.originalPhoto?.ownerId&&row.originalPhoto.ownerId!==owner)||(comparison&&!stylistPieceReady(row))||proof33&&!proof33.matches(id,row)||
        candidate&&(!expected||!actual||expected.length!==actual.length||
          !expected.every((v,i)=>v===actual[i])))
      throw outfitWardrobeChanged();
@@ -428,7 +428,7 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
     selected.onsuccess=()=>{try{
      assertOwner();proof33?.assertCurrent();
      const row=selected.result,slot=outfitSlots.find(x=>x.id===slotId);
-     if(!row||!slot||(row.ownerId&&row.ownerId!==owner)||!slotAllows(slot,normalizeClothing(row)))
+     if(!row||!slot||(row.ownerId&&row.ownerId!==owner)||(row.originalPhoto?.ownerId&&row.originalPhoto.ownerId!==owner)||!slotAllows(slot,normalizeClothing(row)))
       throw outfitWardrobeChanged();
      if(--remaining===0)put();
     }catch(error){failure=error;tx.abort();}};
