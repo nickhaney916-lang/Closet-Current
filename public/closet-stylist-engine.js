@@ -111,7 +111,7 @@ function styleOwnedCollection(closet,request={},library=null){
   for(const slot of extraSlots){
    if(slot==='layer'&&top?.item.category==='Dresses')continue;
    const extra=extras[slot].filter(x=>!Object.values(slots).includes(x.item.id)).map(x=>({...x,harmony:stylistHarmony([...selected.map(x=>x.item),x.item])-stylistHarmony(selected.map(x=>x.item))})).sort((a,b)=>(b.score+b.harmony)-(a.score+a.harmony))[0];
-   if(extra&&extra.score+extra.harmony>0){slots[slot]=extra.item.id;selected.push(extra);score+=extra.score+extra.harmony;}
+   if(extra&&(slot===focusSlot||extra.score+extra.harmony>0)){slots[slot]=extra.item.id;selected.push(extra);score+=extra.score+extra.harmony;}
   }
   const board=cleanOutfitBoard({name:intent,slots,occasion:context.occasion,audience:context.audience,season:context.season},unique);
   if(focus&&!Object.values(board.slots).includes(focus.id))continue;
@@ -119,6 +119,8 @@ function styleOwnedCollection(closet,request={},library=null){
   score-=required.length*30;
   const references=selected.flatMap(x=>stylistTrendMatches(x.item,outfitSlots.find(s=>board.slots[s.id]===x.item.id)?.id,context,library).map(d=>({itemId:x.item.id,label:d.label,reason:d.reason,source:library.sources.find(s=>s?.id===d.sourceId)})));
   const notices=weather?dailyWeatherNotices(weather,board):[];
+  if(focusSlot==='layer'&&weather&&dailyWeatherScore(focus,'layer',weather)<0)
+   notices.push('Your selected layer is included. Consider removing it if conditions are too warm.');
   if(selected.some(x=>!x.item.itemType||['Unknown','Other'].includes(x.item.itemType)))notices.push('Some garment types are unconfirmed; these are category and color matches.');
   if(selected.some(x=>x.item.colorSource==='photo-estimate'))notices.push('Some colors are estimated from photos; confirm the colors together.');
   if(selected.some(x=>!String(x.item.color||'').trim()||colorFamily(x.item.color)==='unknown'))notices.push('Some colors are unknown; check the photos together.');
@@ -131,7 +133,8 @@ function styleOwnedCollection(closet,request={},library=null){
  candidates.sort((a,b)=>a.missing.length-b.missing.length||b.score-a.score);
  const results=[];
  for(const candidate of candidates){
-  const signature=Object.entries(candidate.board.slots).sort().map(([k,v])=>k+':'+v).join('|');
+  const signature=JSON.stringify(Object.entries(candidate.board.slots).sort());
+  if(request.hiddenCombinations?.has(signature))continue;
   if(results.some(x=>x.signature===signature))continue;
   results.push({...candidate,signature});if(results.length===3)break;
  }
