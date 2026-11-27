@@ -1,0 +1,150 @@
+name: Assignment 36 cumulative owner recovery HOLD
+on:
+  pull_request:
+    branches: [research/main1054-jpeg-exif-fill-byte-HOLD]
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.head_ref == 'research/assignment-36-owner-recovery-HOLD' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [chromium, webkit, regression, auth, backup, capture, index, review, native, model, interrupt]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact cumulative head, ancestry and allowed additions
+        run: bash scripts/assignment-36/check-scope.sh "$EXPECTED_HEAD"
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Install native browser engines
+        if: matrix.lane != 'regression'
+        run: npx playwright install --with-deps chromium webkit
+      - run: node scripts/build.mjs
+      - name: Build the original source-pinned native 3D donor
+        if: matrix.lane == 'native'
+        run: |
+          set -eu
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          git worktree add --detach .native05-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.native05-donor-541"
+          test "$(git -C .native05-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          ln -s ../node_modules .native05-donor-541/node_modules
+          cd .native05-donor-541
+          # Acquire only the two pinned public originals; respect transient HTTP backoff.
+          # Never replace with a thumbnail or accept a changed publisher response.
+          fetch_original() {
+            url="$1"; output="$2"; expected="$3"
+            mkdir -p "$(dirname "$output")"
+            if [ ! -f "$output" ]; then
+              curl --fail --silent --show-error --location --retry 3 --retry-max-time 180 --max-time 40 \
+                --user-agent 'ClosetCurrent-SourceTrue-IndependentGarmentQA/1.0' \
+                --header 'Accept: image/jpeg' --output "$output.tmp" "$url"
+              printf '%s  %s\n' "$expected" "$output.tmp" | sha256sum -c -
+              mv "$output.tmp" "$output"
+            fi
+            printf '%s  %s\n' "$expected" "$output" | sha256sum -c -
+          }
+          fetch_original 'https://upload.wikimedia.org/wikipedia/commons/5/5a/Jeans.jpg' benchmark/three-d-31/original-jeans.jpg b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c
+          fetch_original 'https://upload.wikimedia.org/wikipedia/commons/9/92/Denimjeans2.JPG' benchmark/three-d-37/original-denimjeans2.jpg aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          test -f benchmark/work47/manifest.json
+          node --test tests/outfit-3d-01.test.mjs
+      - name: Reproduce partial import on the original pre-fix checkout
+        if: matrix.lane == 'backup'
+        run: |
+          old=56c9a814d6ecce5beae5d95043213faa2d8bb6f0
+          git fetch --no-tags origin "$old"
+          git worktree add --detach "$RUNNER_TEMP/restore01-original" "$old"
+          test "$(git -C "$RUNNER_TEMP/restore01-original" rev-parse HEAD)" = "$old"
+          (cd "$RUNNER_TEMP/restore01-original" && node "$GITHUB_WORKSPACE/scripts/repro-restore-atomic-01-baseline.mjs")
+          mkdir -p benchmark/restore-atomic-01
+          cp "$RUNNER_TEMP/restore01-original/benchmark/restore-atomic-01/"baseline-* benchmark/restore-atomic-01/
+      - name: Execute the assigned checks
+        env:
+          LANE: ${{ matrix.lane }}
+        shell: bash
+        run: |
+          case "$LANE" in
+            chromium|webkit) A36_ENGINE="$LANE" node scripts/assignment-36/browser.mjs ;;
+            regression) node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs ;;
+            *) node scripts/assignment-36/historical.mjs "$LANE" ;;
+          esac
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane != 'regression'
+        with:
+          name: assignment-36-${{ matrix.lane }}-HOLD
+          path: |
+            benchmark/assignment-36/
+            benchmark/auth-review-session-36/browser/
+            benchmark/**/results.json
+            benchmark/**/failure.json
+            benchmark/**/acceptance.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+  signed-postgres:
+    if: github.head_ref == 'research/assignment-36-owner-recovery-HOLD' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: assignment36-local-only
+          POSTGRES_DB: mission3_disposable
+        options: >-
+          --health-cmd "pg_isready -U postgres -d mission3_disposable"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      PGHOST: postgres
+      PGDATABASE: mission3_disposable
+      P147_POSTGRES_URL: postgresql://postgres:assignment36-local-only@postgres:5432/mission3_disposable
+      M3_EPHEMERAL_POSTGRES_URL: postgresql://postgres:assignment36-local-only@postgres:5432/mission3_disposable
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact cumulative head, ancestry and allowed additions
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          bash scripts/assignment-36/check-scope.sh "$EXPECTED_HEAD"
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 axe-core@4.10.3 pg@8.16.3
+      - run: node scripts/build.mjs
+      - run: node scripts/bootstrap-mission3-disposable-postgres.mjs
+      - run: node scripts/test-signed-jwt-postgres-147.mjs
+      - run: node scripts/test-mission3-native-signed-postgres-browser.mjs benchmark/assignment-36/signed-postgres
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: assignment-36-signed-postgres-HOLD
+          path: benchmark/assignment-36/signed-postgres/
+          if-no-files-found: warn
+          retention-days: 14
