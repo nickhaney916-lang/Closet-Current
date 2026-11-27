@@ -36,7 +36,7 @@ jobs:
           test "$PR_BASE" = "$base"
           test "$(git rev-parse HEAD)" = "$PR_HEAD"
           git merge-base --is-ancestor "$base" HEAD
-          printf '%s\n' '.github/workflows/main1054-assignment40-hidden-memory-timer-HOLD.yml' 'public/app.js' 'scripts/test-memory-review-visibility.mjs' > "$RUNNER_TEMP/expected-paths"
+          printf '%s\n' '.github/workflows/main1054-assignment40-hidden-memory-timer-HOLD.yml' 'public/app.js' 'scripts/test-memory-review-visibility.mjs' 'tests/mission3-weekly-memory-owner-lease.test.cjs' > "$RUNNER_TEMP/expected-paths"
           git diff --name-only "$base" HEAD > "$RUNNER_TEMP/actual-paths"
           diff -u "$RUNNER_TEMP/expected-paths" "$RUNNER_TEMP/actual-paths"
       - uses: actions/setup-node@v4
