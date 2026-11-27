@@ -94,3 +94,12 @@ test('obsolete rendered controls cannot change a live comparison after refresh',
   if(stylistComparisonDraft.index!==0)return false;
   $('comparisonCancel').onclick();return stylistComparisonDraft===null;`),true);
 });
+
+test('owner styling metadata changes invalidate comparison, including in-place season edits',()=>{
+ const initial="startStylistComparison();";
+ for(const mutation of ["item.color='Red'","item.pattern='Striped'","item.sleeveLength='Long sleeve'","item.seasons=['Winter']"]){
+  assert.equal(runComparison(initial+mutation+';return !!stylistComparisonDraft.current();'),false,mutation);
+ }
+ assert.equal(runComparison("item.seasons=['Summer'];"+initial+"item.seasons.push('Winter');return !!stylistComparisonDraft.current();"),false);
+ assert.equal(runComparison("item.seasons=['Summer'];"+initial+"item.seasons=['Summer'];return !!stylistComparisonDraft.current();"),true);
+});
