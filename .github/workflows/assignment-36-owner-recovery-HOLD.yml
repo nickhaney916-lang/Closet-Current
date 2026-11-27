@@ -92,6 +92,7 @@ jobs:
             benchmark/auth-review-session-36/browser/
             benchmark/**/results.json
             benchmark/**/failure.json
+            benchmark/**/acceptance.json
           if-no-files-found: ignore
           retention-days: 14
 

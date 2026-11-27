@@ -37,15 +37,16 @@ const backup = [
  ['audit-restore-atomic-01.mjs'],
  ['@restore-atomic-01-no-deploy.yml']
 ];
-const native = ['native-3d-05','native-consumer-board-04','native-restore-3d-06',
+const nativeScenarios = ['native-3d-05','native-consumer-board-04','native-restore-3d-06',
  'native-index-live-07','native-photo-readiness-08','native-mobile-09','user-photo-3d-01',
- 'style-owned-live-03','native-correction-10','native-style-correction-11']
- .flatMap(name => {
-  const scripts = [['test-'+name+'-browser.mjs'], ['audit-'+name+'.mjs']];
-  if (name !== 'native-3d-05' && name !== 'user-photo-3d-01')
-   scripts.push(['@'+name+'-no-deploy.yml']);
-  return scripts;
- });
+ 'style-owned-live-03','native-correction-10','native-style-correction-11'];
+const native = [
+ ...nativeScenarios.flatMap(name => [['test-'+name+'-browser.mjs'], ['audit-'+name+'.mjs']]),
+ // Several workflow audits consume reports from other scenarios. Run
+ // the original checks after all their independent reports exist.
+ ...nativeScenarios.filter(name => name !== 'native-3d-05' && name !== 'user-photo-3d-01')
+  .map(name => ['@'+name+'-no-deploy.yml'])
+];
 
 const groups = {capture, index, review, auth:signedOut, backup, native,
  interrupt:[['assignment-31/browser.mjs']],
