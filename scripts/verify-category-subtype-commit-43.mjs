@@ -14,14 +14,25 @@ const originalData='data:image/jpeg;base64,'+originalBytes.toString('base64');
 const originalSHA=createHash('sha256').update(originalBytes).digest('hex');
 const html='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font:15px system-ui;margin:12px;background:#fafafa}button{padding:8px}</style></head><body><main><h2>Local subtype and color safety verification</h2><section id="wholeOutfitCapture"></section><input id="outfitUpload" type="file" hidden><input id="outfitCamera" type="file" hidden></main></body></html>';
 const allowed=new Set([
- '/research/multi-garment-capture-01/commit-taxonomy-43.mjs',
- '/research/multi-garment-capture-01/review-ui.mjs',
+ '/research/cancel-reviewed-capture-74/cancel-review-guard.mjs',
+ '/research/capture-proof-01/source-proof.mjs',
+ '/research/crop-background-color-safety-85/color-safety.mjs',
+ '/research/master-consolidation-1054/p88-source-key-adapter-55.mjs',
  '/research/multi-garment-capture-01/atomic-group.mjs',
- '/research/multi-garment-capture-01/review-triage-28.mjs',
+ '/research/multi-garment-capture-01/commit-taxonomy-43.mjs',
+ '/research/multi-garment-capture-01/detection-intake-58.mjs',
  '/research/multi-garment-capture-01/flatlay-contrast-29.mjs',
- '/research/multi-garment-capture-01/scene-class-guard-32.mjs',
+ '/research/multi-garment-capture-01/previously-saved-review-80.mjs',
  '/research/multi-garment-capture-01/review-save-finality-34.mjs',
- '/research/capture-proof-01/source-proof.mjs'
+ '/research/multi-garment-capture-01/review-triage-28.mjs',
+ '/research/multi-garment-capture-01/review-ui.mjs',
+ '/research/multi-garment-capture-01/scene-class-guard-32.mjs',
+ '/research/multi-garment-capture-01/source-near-duplicate-67.mjs',
+ '/research/parallel96-highres/source-derivative-intake96.mjs',
+ '/research/photo-switch-guard-68/source-discard-guard.mjs',
+ '/research/remove-reviewed-garment-76/remove-review-guard.mjs',
+ '/research/same-original-photo-review-72/repeat-source-guard.mjs',
+ '/research/verified-photo-switch-70/source-preflight.mjs'
 ]);
 const server=createServer(async(req,res)=>{
  try{
