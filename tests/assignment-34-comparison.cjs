@@ -134,3 +134,18 @@ test('atomic outfit save fingerprint detects source identity and revocation chan
  assert.equal(same({...row,outfitSourceId:undefined}),false);
  assert.equal(same({...row,originalPhoto:{...row.originalPhoto,sha256:'different'}}),false);
 });
+
+test('atomic outfit save fingerprint detects concurrent garment lifecycle changes',()=>{
+ const source=readFileSync('public/outfit-board.js','utf8');
+ const facts=source.slice(source.indexOf('function outfitSavedItemFacts'),source.indexOf('function outfitWardrobeChanged'));
+ const fingerprint=new Function(readFileSync('public/taxonomy.js','utf8')+String.fromCharCode(10)+facts+String.fromCharCode(10)+'return outfitSavedItemFacts;')();
+ const row={id:'garment',ownerId:'owner-a',category:'Tops',itemType:'T-shirt',availability:'ready'};
+ const expected=fingerprint(row);
+ const same=other=>{const actual=fingerprint(other);return expected.length===actual.length&&expected.every((v,i)=>v===actual[i]);};
+ assert.equal(same({...row}),true);
+ assert.equal(same({...row,deleted:true}),false);
+ assert.equal(same({...row,availability:'laundry'}),false);
+ assert.equal(same({...row,availability:'unavailable'}),false);
+ assert.equal(same({...row,availability:undefined}),true);
+ assert.equal(same({...row,deleted:false,sourceRevoked:false}),true);
+});
