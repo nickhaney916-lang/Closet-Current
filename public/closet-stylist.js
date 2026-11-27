@@ -40,6 +40,8 @@ window.addEventListener('closet:session-locked',()=>{
  for(const [id,value] of Object.entries({stylistWeatherLow:'',stylistWeatherHigh:'',stylistWeatherUnit:'F',stylistWeatherRain:'unknown',stylistWeatherWind:'unknown'})){if($(id))$(id).value=value;}
  $('stylistStatus').textContent='Pick your plan, then tap Create my outfits.';
  $('stylistDefaultsStatus').textContent='';
+ $('restoreStylistFeedback').hidden=true;
+ $('restoreStylistFeedback').disabled=false;
  setStylistDefaultsBusy(true);
 });
 // P167 research integration: signed original photo preview is part of the
@@ -134,11 +136,12 @@ function renderStyledCollection(lease){
   for(const slot of outfitSlots){const item=items.find(x=>x.id===board.slots[slot.id]);if(!item)continue;const piece=node('figure'),img=node('img');img.src=item.image;img.alt=item.name||item.itemType;piece.append(img,node('figcaption',item.name||item.itemType));photos.append(piece);}card.append(photos);
   const missing=boardGaps(board,items).filter(s=>!s.optional);
   card.append(node('p',missing.length?'Still needed from your closet: '+missing.map(s=>s.label).join(', '):'A complete outfit using clothes you own.'));
-  card.append(node('p','Chosen for '+result.context.request.toLowerCase()+', with coordinating colors and fewer competing patterns. Unknown details are not assumed.','fine'));
+  card.append(node('p','Matched to '+result.context.request.toLowerCase()+' in '+
+   result.context.season.toLowerCase()+'. Ranking uses recorded colors and patterns where available.','fine'));
   for(const notice of result.notices)card.append(node('p',notice,'fine'));
   const current=(activeTrendLibrary?.updatedAt||null)===result.trendUpdatedAt;
   if(!current)card.append(node('p','The trend library has changed. Create outfits again to use the newest research.','fine'));
-  if(result.references.length){const details=node('details');details.append(node('summary','How current trends informed this outfit'));const seen=new Set();for(const reference of result.references){if(seen.has(reference.label)||!items.some(x=>x.id===reference.itemId))continue;seen.add(reference.label);details.append(node('p',reference.label+' — '+reference.reason));details.append(boardLink(reference.source.title,reference.source.url));}details.append(node('p','References match the recorded garment type. Exact cut and material may differ.','fine'));card.append(details);}
+  if(result.references.length){const details=node('details');details.append(node('summary','How current trends informed this outfit'));const seen=new Set();for(const reference of result.references){if(seen.has(reference.label)||!Object.values(board.slots).includes(reference.itemId))continue;seen.add(reference.label);details.append(node('p',reference.label+' — '+reference.reason));details.append(boardLink(reference.source.title,reference.source.url));}details.append(node('p','References match the recorded garment type. Exact cut and material may differ.','fine'));card.append(details);}
   else card.append(node('p','No matching trend direction in the current library for these pieces. This combination uses general styling rules.','fine'));
   const actions=node('div',null,'actions'),edit=node('button','Adjust on outfit board','secondary'),save=node('button','Save outfit','primary');edit.type=save.type='button';save.disabled=changed;
   if(changed)card.append(node('p','A selected garment was removed or recategorized. Create outfits again.','fine'));
@@ -216,7 +219,14 @@ function renderStyledCollection(lease){
       'Could not save this outfit. Your saved clothing is unchanged; try again.');
    }
   };
-  actions.append(edit,save,refresh);card.append(actions,status);applySaveState();grid.append(card);
+  actions.append(edit,save,refresh);
+  const hide=node('button','Hide this combination','secondary');
+  hide.type='button';hide.disabled=changed;
+  hide.onclick=()=>{
+   const lease=beginStyledCollectionCardOwnerLease(result,card);
+   if(lease?.current())void changeStylistFeedback(hide,result.signature,lease.current);
+  };
+  actions.append(hide);card.append(actions,status);applySaveState();grid.append(card);
  }
  renderStylistComparison();
  void mountOriginalPhotoPreview167();
@@ -254,7 +264,7 @@ function beginOwnerStyledCollectionRequest(){
  const current=()=>serial===styledCollectionRequestSerial&&ownsSession()&&
   items.length===wardrobe.length&&wardrobe.every((item,i)=>items[i]===item)&&
   Object.entries(values).every(([id,value])=>$(id)?.value===value);
- return {serial,current,ownsSession,values};
+ return {serial,current,ownsSession,values,session};
 }
 $('styleCollectionForm').onsubmit=async event=>{
  event.preventDefault();
@@ -284,6 +294,10 @@ $('styleCollectionForm').onsubmit=async event=>{
  request.weather=weather;
  }
  }
+ const hiddenCombinations=await accessStylistFeedback(lease.session,lease.current);
+ if(!lease.current())return;
+ $('restoreStylistFeedback').hidden=!hiddenCombinations.size;
+ request.hiddenCombinations=hiddenCombinations;
  const created=styleOwnedCollection(items.filter(item=>!item.ownerId||item.ownerId===window.closetAuth.user.id),request,activeTrendLibrary);
   if(!lease.current())return;
   styledCollectionResults=created;
@@ -291,6 +305,7 @@ $('styleCollectionForm').onsubmit=async event=>{
   if(!lease.current())return;
   $('stylistStatus').textContent=styledCollectionResults.length?
    'Here are '+styledCollectionResults.length+' outfit option'+(styledCollectionResults.length===1?'':'s')+' from your collection.':
+   hiddenCombinations.size?'No visible outfits match. Restore hidden combinations or change your request.':
    items.length?'No saved pieces match this request. Try changing the plan, season, style preference, or selected piece.':
    'Add clothing photos to My closet first, then create an outfit.';
  }catch{
@@ -388,3 +403,46 @@ $('rememberStylistDefaults').onclick=()=>changeStylistDefaults('save');
 $('resetStylistDefaults').onclick=()=>changeStylistDefaults('reset');
 
 $('stylistAddClothes').onclick=()=>switchView('scan');
+
+// Only explicit feedback is stored, in the same owner-private state store
+// as remembered defaults. Older closets have no row and start with no hides.
+function accessStylistFeedback(session,current,change){
+ const id='stylist-hidden-combinations-v1';
+ return new Promise((resolve,reject)=>{
+  if(!current()){reject(Error('Stylist session changed'));return;}
+  const tx=session.ownerDB.transaction('state',change===undefined?'readonly':'readwrite');
+  const store=tx.objectStore('state'),read=store.get(id);
+  let hidden;
+  read.onsuccess=()=>{
+   if(!current()){tx.abort();return;}
+   const record=read.result;
+   hidden=new Set(record?.owner===session.owner&&Array.isArray(record.hidden)?
+    record.hidden.filter(key=>typeof key==='string').slice(-100):[]);
+   if(change===null){hidden.clear();store.delete(id);}
+   else if(change!==undefined){
+    hidden.add(change);
+    // Bound retained feedback. When full, let the owner explicitly clear it.
+    if(hidden.size>100){tx.abort();return;}
+    store.put({id,owner:session.owner,hidden:[...hidden]});
+   }
+  };
+  tx.oncomplete=()=>resolve(hidden);
+  tx.onabort=()=>reject(tx.error||Error('Stylist feedback was not saved'));
+ });
+}
+async function changeStylistFeedback(button,change,cardCurrent=()=>true){
+ const session=ownerStylistSession();
+ const serial=styledCollectionRequestSerial;
+ const current=()=>session?.ownsSession()&&serial===styledCollectionRequestSerial&&cardCurrent();
+ if(!current()||button.disabled)return;
+ button.disabled=true;
+ try{
+  await accessStylistFeedback(session,current,change);
+  if(current())$('styleCollectionForm').requestSubmit();
+ }catch{
+  if(current())$('stylistStatus').textContent='Could not change hidden combinations. Restore them to clear your list, or try again.';
+ }finally{
+  if(session.ownsSession()&&button.isConnected)button.disabled=false;
+ }
+}
+$('restoreStylistFeedback').onclick=()=>changeStylistFeedback($('restoreStylistFeedback'),null);

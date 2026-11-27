@@ -1,0 +1,138 @@
+name: Main1054 cumulative stylist feedback and executable integrity HOLD
+on:
+  pull_request:
+    branches: [research/main1054-cumulative-style-executable-HOLD]
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.head_ref == 'research/main1054-cumulative-stylist-feedback-HOLD' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [chromium, webkit, regression]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact parent and isolated retry scope
+        shell: bash
+        env:
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          base=3b1a9df581dcd79ae6f3c9f53b1c38412cf677a1
+          test "$PR_BASE" = "$base"
+          test "$(git rev-parse HEAD)" = "$PR_HEAD"
+          git merge-base --is-ancestor "$base" HEAD
+          test "$(git rev-parse HEAD:public/app.js)" = 63fe419e23ff52fc8138e0485a5af3d7a4d39665
+          test "$(git rev-parse HEAD:scripts/main1054-reviewed-style-viewer-handoff-browser.mjs)" = dadff55d5d4b6cc18ff300048caac983a4c19bee
+          test "$(git rev-parse HEAD:public/sw.js)" = ea348b3a18eee649ffdff69d4df69131ae75b04c
+          test "$(git rev-parse HEAD:scripts/build.mjs)" = e03c7f9c034a9ca80e83c6577d8865fe9bb3e11c
+          test "$(git rev-parse HEAD:public/closet-stylist-engine.js)" = ac6f6f163d9bd0459af1fe50a87ba657aae7821c
+          test "$(git rev-parse HEAD:public/closet-stylist.js)" = 2a7a7ba644988dcd7c84f72fecfade8c7fcdc06d
+          test "$(git rev-parse HEAD:public/index.html)" = da20f3a91846cc8d647c29e3647fbc91541ec3b7
+          test "$(git rev-parse HEAD:scripts/test-assignment41-stylist-browser.mjs)" = d4bbeff2832f8d9eea90431b6265080009e60aae
+          test "$(git rev-parse HEAD:scripts/test-mission3-stylist-submit-owner-request-browser.mjs)" = 398e12f8afdf024317203f6b18b1550833de25cd
+          test "$(git rev-parse HEAD:tests/assignment41-stylist.test.cjs)" = 85a4a777efe0b10e2b3c259331315b9ad7083566
+          test "$(git rev-parse HEAD:tests/mission3-stylist-submit-owner-request-lease.test.cjs)" = f0f71562bc8801bcf6ceb2ef005e4c8910d1a064
+          printf '%s\n' '.github/workflows/main1054-cumulative-stylist-feedback-HOLD.yml' 'public/closet-stylist-engine.js' 'public/closet-stylist.js' 'public/index.html' 'scripts/test-assignment41-stylist-browser.mjs' 'scripts/test-mission3-stylist-submit-owner-request-browser.mjs' 'tests/assignment41-stylist.test.cjs' 'tests/mission3-stylist-submit-owner-request-lease.test.cjs' > "$RUNNER_TEMP/expected-paths"
+          git diff --name-only "$base" HEAD > "$RUNNER_TEMP/actual-paths"
+          diff -u "$RUNNER_TEMP/expected-paths" "$RUNNER_TEMP/actual-paths"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build twice and compare every output byte
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          cp -a dist "$RUNNER_TEMP/first-build"
+          node scripts/build.mjs
+          diff -qr "$RUNNER_TEMP/first-build" dist
+      - name: Reject unapproved remote and missing local script sources
+        if: matrix.lane == 'regression'
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$RUNNER_TEMP/unapproved-script"
+          mkdir -p "$fixture"
+          cp -a public "$fixture/public"
+          cp scripts/build.mjs "$fixture/build.mjs"
+          cd "$fixture"
+          for source in 'https://unapproved.invalid/script.js' 'missing.js'; do
+            cp "$GITHUB_WORKSPACE/public/index.html" public/index.html
+            printf '\n<script src="%s"></script>\n' "$source" >> public/index.html
+            if node build.mjs > build.log 2>&1; then
+              printf 'Unexpected build success for %s\n' "$source"
+              exit 1
+            fi
+            grep -F 'Unapproved script entry in index.html' build.log
+            test ! -e dist
+          done
+      - if: matrix.lane == 'regression'
+        run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
+      - name: Native retry reproduction and correction on built application
+        if: matrix.lane != 'regression'
+        shell: bash
+        env:
+          BROWSER_ENGINE: ${{ matrix.lane }}
+        run: |
+          set -euo pipefail
+          git show 517d73afe21ac93a27b63db43a5b26e5c8dc57c1:public/app.js > "$RUNNER_TEMP/base-app.js"
+          node scripts/main1054-private-import-pending-browser.mjs "$BROWSER_ENGINE" "$RUNNER_TEMP/base-app.js" baseline
+          git show 8c1f2a4030e55279093717edd1486d9d620ecc8f:public/app.js > "$RUNNER_TEMP/style-base-app.js"
+          node scripts/main1054-reviewed-style-viewer-handoff-browser.mjs "$BROWSER_ENGINE" "$RUNNER_TEMP/style-base-app.js" baseline
+          node scripts/main1054-reviewed-style-viewer-handoff-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-private-import-pending-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-crop-opening-browser.mjs "$BROWSER_ENGINE" dist/photo-crop-editor.js
+          node scripts/main1054-style-card-single-flight-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-private-export-pending-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-bulk-category-pending-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-refresh-session-control-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-bulk-discard-pending-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-private-photo-retry-single-flight-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-photo-review-discard-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-photo-review-operation-feedback-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          baseline="$RUNNER_TEMP/baseline"
+          mkdir -p "$baseline"
+          cp -a public "$baseline/public"
+          git show 25863e9c0b5189fa7eebc629cbe736b123c81b52:scripts/build.mjs > "$baseline/build.mjs"
+          git show 25863e9c0b5189fa7eebc629cbe736b123c81b52:public/sw.js > "$baseline/public/sw.js"
+          (cd "$baseline" && node build.mjs)
+          node scripts/test-built-script-integrity-browser.mjs "$BROWSER_ENGINE" "$baseline/dist" dist
+          git show 8c1f2a4030e55279093717edd1486d9d620ecc8f:scripts/build.mjs > "$baseline/build.mjs"
+          git show 8c1f2a4030e55279093717edd1486d9d620ecc8f:public/sw.js > "$baseline/public/sw.js"
+          (cd "$baseline" && node build.mjs)
+          node scripts/test-local-executable-integrity-browser.mjs "$BROWSER_ENGINE" "$baseline/dist" dist
+
+      - name: Verify stylist baseline RED and candidate GREEN
+        if: matrix.lane == 'regression'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 959d7009bce8b4651a877f3a50fb04d80d0e49a5:public/closet-stylist-engine.js > "$RUNNER_TEMP/stylist-baseline.js"
+          if STYLIST_BASELINE="$RUNNER_TEMP/stylist-baseline.js" node --test --test-reporter=tap tests/assignment41-stylist.test.cjs > "$RUNNER_TEMP/stylist-red.log" 2>&1; then
+            echo 'Expected baseline defects were not reproduced'
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/stylist-red.log"
+          grep -F '# fail 2' "$RUNNER_TEMP/stylist-red.log"
+          node --test tests/assignment41-stylist.test.cjs
+      - name: Verify browser stylist feedback and owner isolation
+        if: matrix.lane != 'regression'
+        env:
+          ENGINE: ${{ matrix.lane }}
+        run: node scripts/test-assignment41-stylist-browser.mjs "$ENGINE"
