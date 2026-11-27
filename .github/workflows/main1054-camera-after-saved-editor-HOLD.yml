@@ -21,6 +21,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Pin exact cumulative application and unchanged historical proof
+        shell: bash
         env:
           EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
           PR_BASE: ${{ github.event.pull_request.base.sha }}
@@ -31,7 +32,8 @@ jobs:
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
           test "$PR_BASE" = "$candidate"
           test "$(git rev-parse "$candidate^{tree}")" = 86e525feffb6ae98d1cb4f4fcfeb56c92d5cc8bb
-          test "$(git rev-parse HEAD^)" = "$candidate"
+          test "$(git rev-parse HEAD^)" = 64fc7ec56dd2a11963e3a2ceaf3178e183f5a896
+          test "$(git rev-parse HEAD^^)" = "$candidate"
           test "$(git diff --name-only "$candidate" HEAD)" = '.github/workflows/main1054-camera-after-saved-editor-HOLD.yml'
           test "$(git rev-parse HEAD:.github/workflows/capture-proof-01-no-deploy.yml)" = 1aa47f424b137bf697268bf49525152bcb15fce1
           test "$(git rev-parse HEAD:scripts/test-capture-proof-01-browser.mjs)" = 631c050d6ec3cadf356dcd1e1b989a853928e97e
