@@ -251,6 +251,14 @@
     storedSession=snapshot;restoringSession=true;setBusy(true);status('Restoring your login…');
     const data=await request('token?grant_type=refresh_token',{refresh_token:saved.refresh_token});
     if(localStorage.getItem(STORE)!==snapshot){lockAccount();return;}
+    // A successful HTTP response is not a complete rotated login session.
+    // Keep the old credential and the wardrobe locked on malformed replies.
+    if(typeof data.user?.id!=='string'||!data.user.id.trim()||
+       typeof data.access_token!=='string'||!data.access_token.trim()||
+       typeof data.refresh_token!=='string'||!data.refresh_token.trim()){
+     const error=Error('Incomplete restored authentication session');
+     error.code='invalid_response';throw error;
+    }
     showUser(data,saved.epoch);return;
    }
   }catch(error){
