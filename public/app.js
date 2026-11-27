@@ -246,6 +246,11 @@ async function withOwnerStyleCardAction(item,button,work){
  let lease;
  try{lease=ownerStyleCardActionLease(item);}catch{return;}
  if(!button.isConnected)return;
+ // Photo Results and My Closet can render separate controls for styling.
+ // A current owner already preparing an outfit must finish before another starts.
+ const previous=withOwnerStyleCardAction.pending;
+ if(previous?.lease.current())return message('Wait for the current outfit request to finish before styling another piece.');
+ const flight={lease};withOwnerStyleCardAction.pending=flight;
  button.disabled=true;
  try{
   lease.assert();
@@ -255,6 +260,7 @@ async function withOwnerStyleCardAction(item,button,work){
   if(lease.current()&&button.isConnected)
    message('Could not safely style this saved piece. Reopen My Closet and try again. Your saved clothing and outfits are unchanged.');
  }finally{
+  if(withOwnerStyleCardAction.pending===flight)withOwnerStyleCardAction.pending=null;
   if(lease.current()&&button.isConnected)button.disabled=false;
  }
 }
