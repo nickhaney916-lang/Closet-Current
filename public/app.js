@@ -1013,7 +1013,8 @@ function adjustPhoto(item){
   suggestion.append(use);form.prepend(suggestion);
  }
  const save=node('button','Save changes','primary'),cancel=node('button','Cancel','secondary'),remove=node('button','Remove photo','secondary');
- cancel.type=remove.type='button';cancel.onclick=()=>dialog.close();
+ cancel.type=remove.type='button';cancel.onclick=()=>{if(!save.disabled)dialog.close();};
+ dialog.oncancel=event=>{if(save.disabled)event.preventDefault();};
  // PHOTO120 only for actual *unsaved* camera captures, not a saved-piece edit.
  // Owner must explicitly confirm category/type/color and garment source before
  // the separately SHA-proven atomic research commit. Never auto-check them.
@@ -1091,7 +1092,7 @@ function adjustPhoto(item){
  const expectedDraftRow=!expectedSavedRow&&batch.some(x=>x.id===item.id)?structuredClone(item):null;
  const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);
  if(!correction10)item.userAdjusted=true;
- remove.onclick=async()=>{try{
+ remove.onclick=async()=>{if(save.disabled)return;try{
    editorSession.assertCurrent();
    if(expectedSavedRow){
     if(!confirm('Delete this closet piece? It will also be removed from saved outfits and the current outfit draft. Other pieces and outfit names will be kept.'))return;
@@ -1111,7 +1112,10 @@ function adjustPhoto(item){
    message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?
    'This clothing piece changed in another tab. Reload My Closet before removing it.':
    'This pending photo changed or could not be removed. Nothing else was deleted. Reload Photo results and try again.');}};
- form.onsubmit=async event=>{event.preventDefault();save.disabled=true;try{
+ form.onsubmit=async event=>{
+  event.preventDefault();if(save.disabled)return;
+  save.disabled=true;form.inert=true;
+  try{
   editorSession.assertCurrent();
   const value={...collect(),name:(typeof draft.name==='string'?draft.name.trim():'')||
    (draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
@@ -1211,7 +1215,7 @@ function adjustPhoto(item){
   // This editor cannot report a late old-owner failure to a newly signed
   // account, even if its native transaction committed before revocation.
   if(!editorSession.current())return;
-  save.disabled=false;
+  save.disabled=false;form.inert=false;
   message(typeof reviewedCapture120!=='undefined'&&reviewedCapture120?'Reviewed garment was not saved. '+String(error.message||error)+
    ' Your original photo remains available for review.':
    correction10?'Saved garment not overwritten. '+String(error.message||error)+
