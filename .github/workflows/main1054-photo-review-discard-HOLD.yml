@@ -28,9 +28,11 @@ jobs:
           base=5e75631b55aca18ad060ca7c074a5e99c3480cfb
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
           test "$PR_BASE" = "$base"
-          test "$(git rev-parse HEAD^)" = 68f9e0fc08682f15e358dd999d2bc414886a5932
-          test "$(git rev-parse HEAD^^)" = 2f8c48c438eb9ef1ea157d5884b6946aec858786
-          test "$(git rev-parse HEAD^^^)" = "$base"
+          test "$(git rev-parse HEAD^)" = e7310fc3b03a85958e2ba057cbc3cbaf5d37f97a
+          test "$(git rev-parse HEAD^^)" = bfc4e92ee1c003ea43bb6cc28a4942bfd58b5b57
+          test "$(git rev-parse HEAD^^^)" = 68f9e0fc08682f15e358dd999d2bc414886a5932
+          test "$(git rev-parse HEAD^^^^)" = 2f8c48c438eb9ef1ea157d5884b6946aec858786
+          test "$(git rev-parse HEAD^^^^^)" = "$base"
           printf '%s\n' '.github/workflows/main1054-photo-review-discard-HOLD.yml' 'public/app.js' 'scripts/main1054-photo-review-discard-browser.mjs' > "$RUNNER_TEMP/expected-paths"
           git diff --name-only "$base" HEAD > "$RUNNER_TEMP/actual-paths"
           diff -u "$RUNNER_TEMP/expected-paths" "$RUNNER_TEMP/actual-paths"
