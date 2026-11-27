@@ -1,0 +1,82 @@
+name: Main1054 saved editor pending acceptance HOLD
+on:
+  pull_request:
+    branches: [research/main1054-crop-recognition-lease-HOLD]
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.head_ref == 'research/main1054-saved-editor-pending-HOLD' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [chromium, webkit, regression]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact correction source, accepted base and isolated acceptance scope
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        shell: bash
+        run: |
+          base=cbdafbb28d19012de588d763eb0ff3feee77ab56
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$PR_BASE" = "$base"
+          test "$(git rev-parse "$base^{tree}")" = 6069716f3c3c95d71fc0fa5aaa19ec615dad7f27
+          test "$(git rev-parse HEAD^)" = "$base"
+          printf '%s\n' '.github/workflows/main1054-saved-editor-pending-HOLD.yml' 'public/app.js' 'scripts/main1054-saved-editor-pending-browser.mjs' > "$RUNNER_TEMP/expected-paths"
+          git diff --name-only "$base" HEAD > "$RUNNER_TEMP/actual-paths"
+          diff -u "$RUNNER_TEMP/expected-paths" "$RUNNER_TEMP/actual-paths"
+          git log -1 --format='tested commit %H tree %T'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: node scripts/build.mjs
+      - if: matrix.lane == 'regression'
+        run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
+      - if: matrix.lane != 'regression'
+        env:
+          A35_ENGINE: ${{ matrix.lane }}
+          CC34_ENGINE: ${{ matrix.lane }}
+          CC_AUTH_ENGINE: ${{ matrix.lane }}
+          CC_INSTALL_ENGINE: ${{ matrix.lane }}
+          CC_DEVICE_ENGINE: ${{ matrix.lane }}
+          CC_CAMERA_ENGINE: ${{ matrix.lane }}
+          CC_NAV_ENGINE: ${{ matrix.lane }}
+          CC_DEVICE_FOCUS_ENGINE: ${{ matrix.lane }}
+          CC_PASSWORD_ENGINE: ${{ matrix.lane }}
+          CC_CROP_ENGINE: ${{ matrix.lane }}
+        run: |
+          npx playwright install --with-deps "$A35_ENGINE"
+          git show cbdafbb28d19012de588d763eb0ff3feee77ab56:public/app.js > "$RUNNER_TEMP/base-app.js"
+          if node scripts/main1054-saved-editor-pending-browser.mjs "$A35_ENGINE" "$RUNNER_TEMP/base-app.js" > "$RUNNER_TEMP/saved-editor-red.log" 2>&1; then
+            echo "Expected the accepted base to permit stale pending input"
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/saved-editor-red.log"
+          grep -Fq 'A pending save must prevent new typing into the already-submitted form' "$RUNNER_TEMP/saved-editor-red.log"
+          node scripts/main1054-saved-editor-pending-browser.mjs "$A35_ENGINE"
+          node scripts/main1054-crop-recognition-browser.mjs
+          node scripts/main1054-crop-preview-browser.mjs
+          node scripts/main1054-auth-password-browser.mjs
+          node scripts/main1054-device-check-focus-browser.mjs
+          node scripts/main1054-navigation-menu-browser.mjs
+          node scripts/main1054-camera-clock-browser.mjs
+          node scripts/main1054-device-check-session-browser.mjs
+          node scripts/main1054-install-prompt-browser.mjs
+          node scripts/main1054-restored-session-browser.mjs
+          node scripts/assignment-34/browser.mjs
+          node scripts/assignment-35/browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.lane != 'regression'
+        with:
+          name: assignment-35-${{ matrix.lane }}-HOLD
+          path: benchmark/assignment-35/quality-*.json
+          if-no-files-found: warn
