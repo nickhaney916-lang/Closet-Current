@@ -7,7 +7,7 @@ const N=(()=>{const c={};vm.createContext(c);vm.runInContext(fs.readFileSync('pu
 const sample=()=>({id:'item-1',ownerId:'owner-A',name:'Jacket',image:'data:image/jpeg;base64,AAAA',category:'Outerwear',itemType:'Jacket',color:'Gray',colorSource:'photo-estimate',notes:'',sourceSHA256:'b'.repeat(64),originalPhoto:{sha256:'b'.repeat(64)},seasons:['Winter'],pattern:'Solid',sleeveLength:'Long sleeve',fit:'Regular'});
 const clone=x=>structuredClone(x);
 const adjustCode=(()=>{
- const start=app.indexOf('form.onsubmit=async event=>{event.preventDefault();save.disabled=true;');
+ const start=app.indexOf('form.onsubmit=async event=>{');
  const end=app.indexOf('dialog.onclose=',start);
  assert.ok(start>0&&end>start,'actual new photo save handler must be located');
  return app.slice(start,end);
