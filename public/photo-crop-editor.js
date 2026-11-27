@@ -1,6 +1,12 @@
 'use strict';
 window.openPhotoCrop=async function(item,{analyze,save,isCurrent=()=>true}){
+ if(!isCurrent())return;
+ const previous=window.openPhotoCrop.flight;
+ if(previous?.isCurrent()&&(previous.opening||previous.dialog.open))return;
  const E=window.PhotoCropEngine,dialog=document.createElement('dialog');dialog.className='photo-crop-editor';
+ const flight={isCurrent,dialog,opening:true};window.openPhotoCrop.flight=flight;
+ const release=()=>{if(window.openPhotoCrop.flight===flight)window.openPhotoCrop.flight=null;};
+ try{
  const el=(tag,text,className)=>{const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;};
  const button=(text,fn)=>{const b=el('button',text,'secondary');b.type='button';b.onclick=fn;return b;};
  const source=item.originalPhoto?.image||item.image;if(typeof source!=='string'||source.length>12000000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(source))throw Error('Invalid crop photo');const img=new Image();img.src=source;await img.decode();if(!isCurrent())return;
@@ -22,5 +28,6 @@ window.openPhotoCrop=async function(item,{analyze,save,isCurrent=()=>true}){
  frame.onpointermove=event=>{if(painting&&mask&&!busy){const r=stage.getBoundingClientRect(),point={x:((event.clientX-r.left)/r.width-crop.x)/crop.width*mask.width,y:((event.clientY-r.top)/r.height-crop.y)/crop.height*mask.height};window.GarmentMaskEngine.stroke(mask,lastBrush.x,lastBrush.y,point.x,point.y,brushSize,brushMode);lastBrush=point;update();return;}if(!gesture||event.pointerId!==gesture.id||busy)return;crop=E.drag(gesture.crop,gesture.handle,(event.clientX-gesture.x)/gesture.rect.width,(event.clientY-gesture.y)/gesture.rect.height);update();};
  frame.onlostpointercapture=frame.onpointerup=frame.onpointercancel=()=>{gesture=null;painting=false;lastBrush=null;};
  frame.onkeydown=event=>{if(busy||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;event.preventDefault();const step=event.shiftKey?.05:.01;crop=E.drag(crop,event.target.dataset.handle||'move',event.key==='ArrowLeft'?-step:event.key==='ArrowRight'?step:0,event.key==='ArrowUp'?-step:event.key==='ArrowDown'?step:0);update();};
- dialog.addEventListener('cancel',event=>{if(savingCrop)event.preventDefault();});dialog.onclose=()=>dialog.remove();const actions=el('div',null,'actions');actions.append(reset,check);const footer=el('div',null,'actions');footer.append(commit,cancel);dialog.append(heading,help,stage,maskHint,maskTools,actions,el('h3','Crop preview'),preview,dimensions,status,useLabel,footer);document.body.append(dialog);dialog.showModal();update();
+ dialog.addEventListener('cancel',event=>{if(savingCrop)event.preventDefault();});dialog.onclose=()=>{release();dialog.remove();};const actions=el('div',null,'actions');actions.append(reset,check);const footer=el('div',null,'actions');footer.append(commit,cancel);dialog.append(heading,help,stage,maskHint,maskTools,actions,el('h3','Crop preview'),preview,dimensions,status,useLabel,footer);document.body.append(dialog);dialog.showModal();update();
+ }finally{flight.opening=false;if(!dialog.open)release();}
 };
