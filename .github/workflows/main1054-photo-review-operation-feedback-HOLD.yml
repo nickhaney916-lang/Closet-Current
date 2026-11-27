@@ -28,10 +28,12 @@ jobs:
           base=35a811bacafc9d10bd509f3a8d56726217823c5f
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
           test "$PR_BASE" = "$base"
-          test "$(git rev-parse HEAD^)" = 632c46a75cf48ef27eb8fd56bc6184fc379dbc7d
-          test "$(git rev-parse HEAD^^)" = 6151478adb5bcb98aa3ab6004f227d8af8d4df3a
-          test "$(git rev-parse HEAD^^^)" = "$base"
-          printf '%s\n' '.github/workflows/main1054-photo-review-operation-feedback-HOLD.yml' 'public/app.js' 'scripts/main1054-photo-review-operation-feedback-browser.mjs' > "$RUNNER_TEMP/expected-paths"
+          test "$(git rev-parse HEAD^)" = 4fc6dd67276d6bd7979cd833b1949a2ebb217c55
+          test "$(git rev-parse HEAD^^)" = af0ca21c1493fc5a86bda42dfdd5901c7b5da76e
+          test "$(git rev-parse HEAD^^^)" = 632c46a75cf48ef27eb8fd56bc6184fc379dbc7d
+          test "$(git rev-parse HEAD^^^^)" = 6151478adb5bcb98aa3ab6004f227d8af8d4df3a
+          test "$(git rev-parse HEAD^^^^^)" = "$base"
+          printf '%s\n' '.github/workflows/main1054-photo-review-operation-feedback-HOLD.yml' 'public/app.js' 'scripts/main1054-photo-review-operation-feedback-browser.mjs' 'tests/review-color-provenance-23.test.cjs' > "$RUNNER_TEMP/expected-paths"
           git diff --name-only "$base" HEAD > "$RUNNER_TEMP/actual-paths"
           diff -u "$RUNNER_TEMP/expected-paths" "$RUNNER_TEMP/actual-paths"
           git log -1 --format='tested commit %H tree %T'
