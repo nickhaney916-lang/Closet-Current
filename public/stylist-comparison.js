@@ -8,7 +8,7 @@ function startStylistComparison(){
  const results=styledCollectionResults,serial=styledCollectionRequestSerial;
  const wardrobe=new Map(items.map(item=>[item.id,item]));
  const provenance=new Map(items.map(item=>[item.id,{original:item.originalPhoto,ownerId:item.ownerId,sourceSHA256:item.sourceSHA256,originalSHA256:item.originalPhoto?.sha256,originalOwnerId:item.originalPhoto?.ownerId,originalImage:item.originalPhoto?.image,ready:stylistPieceReady(item)}]));
- const current=()=>session.ownsSession()&&styledCollectionResultLease?.current()&&results===styledCollectionResults&&
+ const current=()=>stylistComparisonDraft===draft&&session.ownsSession()&&styledCollectionResultLease?.current()&&results===styledCollectionResults&&
   serial===styledCollectionRequestSerial&&items.length===wardrobe.size&&
   items.every(item=>wardrobe.get(item.id)===item&&provenance.get(item.id).original===item.originalPhoto&&
    provenance.get(item.id).ownerId===item.ownerId&&provenance.get(item.id).sourceSHA256===item.sourceSHA256&&
@@ -18,8 +18,9 @@ function startStylistComparison(){
  const choices=results.slice(0,3).filter(result=>Object.values(result.board.slots).every(id=>
   stylistPieceReady(wardrobe.get(id))&&(!wardrobe.get(id).ownerId||wardrobe.get(id).ownerId===session.owner)));
  if(!choices.length)return;
- stylistComparisonDraft={current,wardrobe,closet,choices,owner:session.owner,
+ const draft={current,wardrobe,closet,choices,owner:session.owner,
   library:activeTrendLibrary,index:0,board:choices[0].board,locks:new Set(),history:[],status:'',saving:false,saved:false};
+ stylistComparisonDraft=draft;
  renderStylistComparison('comparisonChoice');
 }
 
@@ -133,6 +134,7 @@ function renderStylistComparison(focusId){
    renderStylistComparison(draft.history.length?'comparisonUndo':'comparisonSwap-'+changed?.id);
   },'comparisonUndo',busy||!draft.history.length),
   button('Cancel comparison',()=>{
+   if(stylistComparisonDraft!==draft||draft.saving)return;
    stylistComparisonDraft=null;renderStylistComparison('comparisonStart');
   },'comparisonCancel',busy),
   button(draft.saved?'Saved as new outfit':'Save as new outfit',async()=>{
