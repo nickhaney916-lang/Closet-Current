@@ -1,0 +1,142 @@
+name: Main1054 signed owner recovery after photo review HOLD
+on:
+  pull_request:
+    branches: [research/main1054-photo-review-pending-HOLD]
+permissions:
+  contents: read
+jobs:
+  local-backend:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'research/main1054-photo-review-four-owner-recovery-HOLD'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      SUPABASE_TELEMETRY_DISABLED: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify and check out the exact application and policy
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          candidate=25863e9c0b5189fa7eebc629cbe736b123c81b52
+          test "$(git rev-parse HEAD)" = "$HEAD_SHA"
+          test "$BASE_SHA" = "$candidate"
+          test "$(git rev-parse HEAD^)" = "$candidate"
+          test "$(git diff --name-only "$candidate" HEAD)" = '.github/workflows/main1054-photo-review-four-owner-recovery-HOLD.yml'
+          test "$(git rev-parse HEAD:.github/workflows/assignment-20-four-owner-HOLD.yml)" = cf5428c2e65ad56e77b69fdd309e844081515da1
+          test "$(git rev-parse HEAD:.github/workflows/auth-review-session-36-no-deploy.yml)" = 0003bbf79a20fc379ea041975b0319e92d59360d
+          test "$(git rev-parse HEAD:public/app.js)" = 881bddaed4e7371c9e2ec8ecab007f6bf51e65cd
+          test "$(git rev-parse HEAD:public/auth.js)" = f3a5931cfc388e9b87451c91d93eaa1c7a42b519
+          test "$(git rev-parse HEAD:public/cloud-backup.js)" = 608d337cacf41ecaf8e658f8d24f3eb2bad330d4
+          test "$(git rev-parse HEAD:research/auth-review-session-36/local-http.mjs)" = f0842e203a1fa03920ec537761be3632f16a203c
+          test "$(git rev-parse HEAD:research/auth-review-session-36/signed-local.mjs)" = 903bbe7a5cb85e64794ac1c855384206db1d8be4
+          test "$(git rev-parse HEAD:scripts/test-assignment-20-browser.mjs)" = 46c97cfe2a8063986cef8251f1ddb7fa2e0a0df2
+          test "$(git rev-parse HEAD:supabase/cloud-backup.sql)" = af56d5079541689ba5452cc5d844258265d3ca32
+          git checkout --detach "$candidate"
+          test "$(git rev-parse HEAD)" = "$candidate"
+          git log -1 --format='tested exact application %H tree %T'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.48.3
+      - name: Install pinned browser test dependencies
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+          npx playwright install --with-deps chromium webkit
+          node scripts/build.mjs
+      - name: Start isolated Supabase Auth, PostgREST, Storage and Postgres
+        run: |
+          set -eu
+          umask 077
+          mkdir "$RUNNER_TEMP/closet-a20"
+          cd "$RUNNER_TEMP/closet-a20"
+          supabase init
+          sed -i 's/^project_id = .*/project_id = "closet-a20"/; s/^jwt_expiry = .*/jwt_expiry = 120/' supabase/config.toml
+          grep -q '^jwt_expiry = 120$' supabase/config.toml
+          supabase --version
+          supabase start > "$RUNNER_TEMP/closet-a20-start.log" 2>&1 || { echo 'Disposable Supabase startup failed'; exit 1; }
+          supabase status -o env > "$RUNNER_TEMP/closet-a20.env"
+          docker exec -i supabase_db_closet-a20 psql -U postgres -v ON_ERROR_STOP=1 < "$GITHUB_WORKSPACE/supabase/cloud-backup.sql"
+          docker exec supabase_db_closet-a20 psql -U postgres -Atc 'show server_version'
+          docker inspect --format '{{.Config.Image}}' supabase_auth_closet-a20 supabase_rest_closet-a20 supabase_storage_closet-a20
+      - name: Verify database policy and function grants
+        run: |
+          docker exec -i supabase_db_closet-a20 psql -U postgres -v ON_ERROR_STOP=1 <<'SQL'
+          do $$
+          begin
+            if not (select relrowsecurity from pg_class where oid='public.closet_backups'::regclass)
+               or not (select relrowsecurity from pg_class where oid='storage.objects'::regclass)
+               or (select public from storage.buckets where id='closet-private')
+               or has_table_privilege('anon','public.closet_backups','SELECT, INSERT, UPDATE, DELETE')
+               or has_table_privilege('authenticated','public.closet_backups','DELETE, TRUNCATE, REFERENCES, TRIGGER')
+               or has_function_privilege('anon','public.save_closet_backup(bigint,jsonb)','EXECUTE')
+               or not has_function_privilege('authenticated','public.save_closet_backup(bigint,jsonb)','EXECUTE')
+               or (select prosecdef from pg_proc where oid='public.save_closet_backup(bigint,jsonb)'::regprocedure)
+            then raise exception 'Unexpected grant, RLS, private bucket, or RPC scope';
+            end if;
+          end $$;
+          SQL
+      - name: Verify four signed owners and all ordered identity pairs over local HTTP
+        if: always() && !cancelled()
+        env:
+          CLOSET_FOUR_OWNER: '1'
+        run: |
+          test -f "$RUNNER_TEMP/closet-a20.env"
+          SUPABASE_TEST_ENV="$RUNNER_TEMP/closet-a20.env" node research/auth-review-session-36/signed-local.mjs
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          const receipt = JSON.parse(readFileSync('benchmark/auth-review-session-36/signed.json', 'utf8'));
+          assert.equal(receipt.head, execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim());
+          assert.equal(receipt.signedLocalSupabase, true);
+          assert.equal(receipt.distinctAuthenticatedOwners, true);
+          assert.equal(receipt.owners, 4);
+          assert.equal(receipt.orderedPairs, 12);
+          assert.ok(receipt.checks.length >= 266);
+          console.log('CUMULATIVE_SIGNED_RECOVERY_HTTP_PASS', receipt.owners, receipt.orderedPairs, receipt.checks.length);
+          JS
+
+      - name: Verify ordinary app backup, clean-context restore and account switching in both browsers
+        shell: bash
+        if: always() && !cancelled()
+        run: |
+          test -f "$RUNNER_TEMP/closet-a20.env"
+          SUPABASE_TEST_ENV="$RUNNER_TEMP/closet-a20.env" node scripts/test-assignment-20-browser.mjs | tee "$RUNNER_TEMP/closet-a20-browser.log"
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          const log = readFileSync(process.env.RUNNER_TEMP + '/closet-a20-browser.log', 'utf8');
+          const rows = [...log.matchAll(/^ASSIGNMENT_20_OWNER_PASS (chromium|webkit) (320|390|430) (\S+) (backup|clean-context restore)$/gm)];
+          assert.equal(rows.length, 24);
+          for (const engine of ['chromium','webkit']) {
+            for (const width of ['320','390','430']) {
+              const cases = rows.filter(row => row[1] === engine && row[2] === width);
+              assert.equal(cases.length, 4);
+              assert.equal(new Set(cases.map(row => row[3])).size, 4);
+              assert.ok(cases.every(row => row[4] === (width === '320' ? 'backup' : 'clean-context restore')));
+            }
+          }
+          console.log('CUMULATIVE_SIGNED_RECOVERY_BROWSER_PASS', rows.length);
+          JS
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: assignment-20-sanitized-http-receipt
+          path: benchmark/auth-review-session-36/signed.json
+          if-no-files-found: ignore
+      - name: Destroy local backend and remove credentials
+        if: always()
+        run: |
+          if test -f "$RUNNER_TEMP/closet-a20/supabase/config.toml"; then
+            (cd "$RUNNER_TEMP/closet-a20" && supabase stop --no-backup >/dev/null 2>&1)
+          fi
+          rm -f "$RUNNER_TEMP/closet-a20.env" "$RUNNER_TEMP/closet-a20-start.log" "$RUNNER_TEMP/closet-a20-browser.log"
