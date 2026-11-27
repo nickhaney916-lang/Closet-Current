@@ -107,6 +107,8 @@ let captureOperationEpoch=0;
 // A rapid background/foreground transition invalidates pending media work.
 let mediaLifecycleEpoch=0,videoImportSerial=0,videoImportActive=false,
  photoImportSerial=0,photoImportActive=false;
+const intakePhotoLimit=10;
+let galleryIntake=null;
 const video=$('video'),canvas=document.createElement('canvas'),tiny=document.createElement('canvas');tiny.width=32;tiny.height=32;
 window.addEventListener('closet:session-locked',()=>{
  ++captureOperationEpoch;
@@ -141,6 +143,10 @@ window.addEventListener('closet:session-locked',()=>{
  // its already-running async continuation uses an epoch/DB owner lease.
  if(memoryReviewTimer!==null){clearTimeout(memoryReviewTimer);memoryReviewTimer=null;}
  memoryReviewRunning=false;
+ if(typeof renderGalleryIntake==='function'){
+  if(galleryIntake)for(const row of galleryIntake.rows)row.file=null;
+  galleryIntake=null;delete window.__lastPhotoImportResult;renderGalleryIntake();
+ }
  try{db?.close();}catch{}
  db=null;items=[];batch=[];startupWardrobeRecoveryCount=0;failedDraftCaptures.clear();
  for(const control of document.querySelectorAll('#discard, #refreshReview, #applyCategory, #export, #import'))control.disabled=false;
@@ -1484,6 +1490,8 @@ function renderPhotoResults(grid,results){
   const state=pending?'checking':saved?'saved':needsDraftRetry||item.saveFailed||item.scanFailed?'error':item.possibleDuplicate?'review':known&&item.localAnalyzed&&item.requiresOwnershipConfirmation?'ready':'review';
   const label=pending?(recognitionState.activeId===item.id&&localReady?'Checking…':'Waiting…'):saved?(item.itemType==='Unknown'&&item.color?'Saved · refine type':'Saved'):needsDraftRetry?'Photo not saved on this device':item.saveFailed?'Not saved':item.scanFailed?'Scanner unavailable':item.possibleDuplicate?'Check duplicate':state==='ready'?'Ready to add':known?'Needs review':item.color?'Color found · confirm garment':'Needs a clearer photo';
   body.append(node('span',label,'photo-status '+state),node('h3',title));
+  const intakeIndex=typeof galleryIntake!=='undefined'?galleryIntake?.rows.findIndex(row=>row.itemId===item.id):-1;
+  if(intakeIndex>=0)body.append(node('p','Photo '+(intakeIndex+1),'fine'));
   if(known)body.append(node('p',[item.category,item.itemType,item.color].filter(x=>x&&x!=='Unknown').join(' · '),'photo-category'));
   else if(!pending)body.append(node('p',item.color?'Color: '+item.color+' · confirm the garment category.':item.scanFailed?'Try again, or add the details with Adjust.':'Retake this item, or add its details with Adjust.','fine'));
   const extra=[item.pattern,item.sleeveLength,item.fit,...(item.seasons||[])].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable');
@@ -1502,6 +1510,12 @@ function renderPhotoResults(grid,results){
    body.append(retry);
   }
   const adjust=node('button','Adjust','secondary');adjust.type='button';adjust.onclick=()=>adjustPhoto(item);body.append(adjust,cropButton(item));
+  if(!pending&&!saved&&typeof skipIntakeDraft==='function'&&
+     item.sourceHashVerified===true&&!needsDraftRetry){
+   const skip=node('button','Skip photo','secondary');skip.type='button';
+   skip.onclick=()=>skipIntakeDraft(item,skip);
+   body.append(skip);
+  }
   // Only a successfully saved, exact owner-reviewed camera original receives
   // the single-tap three-owned-outfits shortcut on the REAL Photo results card.
   if(typeof reviewedStyle122Active!=='undefined'&&reviewedStyle122Active&&
@@ -1672,6 +1686,7 @@ function render(){
  const results=[...batch,...items.filter(item=>sessionCapturedIds.has(item.id))];
  renderPhotoResults($('reviewGrid'),results);
  renderPhotoResults($('scanResults'),results);
+ renderGalleryIntake();
  const cg=$('closetGrid');cg.replaceChildren();
  while(cg.nextElementSibling?.matches('.closet-page-status136,.closet-page-more136'))cg.nextElementSibling.remove();
  const query=$('search').value.trim().normalize('NFC').toLowerCase().replace(/\s+/g,' '),filter=$('filter').value;
@@ -1845,6 +1860,7 @@ function candidate(image,options={}){
     if(!batch.includes(duplicate)||captureProofOwner()!==duplicate.ownerId)
      throw Object.assign(Error('Capture session changed during retry'),{code:'CAPTURE_STORAGE_FAILED'});
     failedDraftCaptures.delete(duplicate.id);
+    options.onIntakeDraft?.(duplicate);
     queueAutomatic(duplicate);
     message('Previously unsaved photograph is now saved on this device for review.');
     return true;
@@ -1874,8 +1890,10 @@ function candidate(image,options={}){
   }
  }
  if(options.outfitSourceId){item.outfitSourceId=options.outfitSourceId;item.requiresOwnershipConfirmation=false;item.segmentHint=options.segmentHint;item.recognitionPhoto=options.recognitionPhoto;item.originalPhoto=options.originalSourceProof?.originalPhoto||options.originalPhoto;item.cropBounds=options.cropBounds;if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}}
+ if(options.requireOwnerReview)item.intakeOwnerReviewRequired=true;
  if(options.importFilename)item.importFilename=String(options.importFilename).slice(0,120);
  batch.push(item);sessionCapturedIds.add(item.id);
+ options.onIntakeDraft?.(item);
  const requireCommit=options.requireDraftCommit===true;
  const committed=persistDraft({required:requireCommit,mode:'insert',record:item});
  session++;$('sessionCount').textContent=session;$('reviewCount').textContent=batch.length;$('lastCaptureImage').src=image;$('lastCaptureImage').hidden=false;
@@ -1941,8 +1959,15 @@ function captureTick(now=Date.now()){
  if(session>=60){finishScan();message('60 images collected. Review this batch before continuing.');}}
  catch(e){$('captureState').textContent='Waiting for a usable camera frame…';}
 }
+function cameraIntakeFull(){
+ if(batch.filter(item=>item.originalPhoto?.origin==='camera').length<intakePhotoLimit)return false;
+ finishScan();
+ message('Review or skip a camera photo before taking another. Your existing photos are kept.');
+ return true;
+}
 async function captureProofPhoto(){
  if(captureProofTaking||!stream||!cameraMode)return false;
+ if(typeof cameraIntakeFull==='function'&&cameraIntakeFull())return false;
  const owner=captureProofOwner(),request=cameraRequest,epoch=captureOperationEpoch;
  if(!owner){message('Sign in again before adding a photo.');return false;}
  captureProofTaking=true;
@@ -1950,7 +1975,7 @@ async function captureProofPhoto(){
   const width=video.videoWidth,height=video.videoHeight,image=snap();
   const proof=await captureProofFromJPEG(image,{width,height,origin:'camera'},owner);
   if(epoch!==captureOperationEpoch||request!==cameraRequest||!stream||captureProofOwner()!==owner||document.hidden)return false;
-  const durable=await candidate(proof.image,{sourceProof:proof,requireDraftCommit:true});
+  const durable=await candidate(proof.image,{sourceProof:proof,requireDraftCommit:true,requireOwnerReview:true});
   return durable&&epoch===captureOperationEpoch&&request===cameraRequest&&!!stream&&captureProofOwner()===owner&&!document.hidden;
  }finally{
   // An old in-flight frame must not reset a newer camera's busy flag after
@@ -3095,7 +3120,7 @@ async function recognizeItem(item){
   Object.assign(item,ClothingDetails.fill(item,result.choices[0],result.details));
   item.name=[item.color,item.itemType&&item.itemType!=='Unknown'?item.itemType:item.category].filter(Boolean).join(' ');item.indexingLevel=item.itemType==='Unknown'?'category-color':'specific-type';
   if(item.possibleDuplicate){if(typeof recordDeviceEvent==='function')recordDeviceEvent('duplicate_review');item.localStatus='Possible duplicate: compare this photo with your closet before saving.';return true;}
-  if(item.requiresOwnershipConfirmation){item.localStatus='Identified. Add this piece only if it belongs in your closet.';return true;}
+  if(item.requiresOwnershipConfirmation||item.intakeOwnerReviewRequired===true){item.localStatus='Identified. Add this piece only if it belongs in your closet.';return true;}
   item.localStatus='Recognized. Saving to your closet…';
   savingIndexed=true;
   const wasSaved=await saveIndexed(item,index04ApprovedOwner,expectedDraftForRecognition);
@@ -3175,6 +3200,146 @@ async function recognizeBatch(){
 $('recognizeBatch').onclick=recognizeBatch;
 $('retryRecognition').onclick=recognizeBatch;
 
+async function skipIntakeDraft(item,button){
+ let lease;
+ try{lease=ownerWardrobeMutationLease();}catch{return;}
+ if(!batch.includes(item)||localPending.has(item.id)||failedDraftCaptures.has(item.id)||
+    photoImportActive&&galleryIntake?.rows.some(row=>row.itemId===item.id&&row.status==='processing'))return;
+ if($('discard').disabled||!confirm('Skip this unfinished photo? Saved closet pieces will be kept.'))return;
+ const before=structuredClone(item);
+ const assertDraft=()=>{
+  lease.assertLease();
+  if(!batch.includes(item)||localPending.has(item.id)||
+     JSON.stringify(normalizeClothing(item))!==JSON.stringify(normalizeClothing(before)))
+   throw Error('Photo changed during skip');
+ };
+ button.disabled=true;
+ try{
+  assertDraft();
+  await commitReviewedDraftCAS([{before,after:null}],assertDraft);
+  assertDraft();
+  batch=batch.filter(row=>row!==item);
+  sessionCapturedIds.delete(item.id);
+  render();
+ }catch{
+  try{lease.assertLease();message('Could not confirm the skip. Refresh Photo results before trying again.');}catch{}
+ }finally{
+  try{lease.assertLease();if(button.isConnected)button.disabled=false;}catch{}
+ }
+}
+function renderGalleryIntake(){
+ const panel=$('galleryIntake');
+ if(!panel)return;
+ panel.hidden=!galleryIntake;
+ if(!galleryIntake){panel.replaceChildren();return;}
+ const active=document.activeElement;
+ const action=panel.contains(active)?active.dataset.intakeAction:null;
+ const list=node('ol',null,'intake-list');
+ for(const [index,row] of galleryIntake.rows.entries()){
+  const draft=row.itemId&&batch.find(item=>item.id===row.itemId);
+  const saved=row.itemId&&items.some(item=>item.id===row.itemId);
+  let status=row.status;
+  if(status==='review'||status==='storage'){
+   if(saved)status='saved';
+   else if(!draft)status='skipped';
+   else if(failedDraftCaptures.has(row.itemId))status='storage';
+   else if(localPending.has(row.itemId))status='checking';
+   else if(draft.scanFailed||draft.saveFailed)status='reviewError';
+   else status='review';
+  }
+  const labels={pending:'Pending',processing:'Opening photo…',checking:'Checking garment…',
+   review:'Ready for review',saved:'Saved to closet',skipped:'Skipped',
+   duplicate:'Skipped · exact duplicate',error:'Could not open photo',
+   interrupted:'Interrupted · check Photo results',
+   storage:'Device save failed · retry from the photo card',reviewError:'Check photo card · retry or adjust'};
+  const entry=node('li',null,'intake-row');
+  entry.dataset.intakeStatus=status;
+  entry.append(node('span',labels[status]));
+  if(status==='pending'||status==='error'&&row.file){
+   const retry=status==='error',id=(retry?'retry-':'skip-')+index;
+   const button=node('button',retry?'Retry':'Skip','secondary');
+   button.type='button';button.dataset.intakeAction=id;
+   button.setAttribute('aria-label',(retry?'Retry':'Skip')+' photo '+(index+1));
+   button.onclick=()=>{
+    if(!retry){row.status='skipped';row.file=null;renderGalleryIntake();return;}
+    row.status='pending';runGalleryIntake(galleryIntake);
+   };
+   entry.append(button);
+  }
+  list.append(entry);
+ }
+ const clear=node('button',galleryIntake.rows.some(row=>row.status==='pending')?
+  'Cancel remaining photos':'Clear queue summary','secondary');
+ clear.type='button';clear.dataset.intakeAction='clear';
+ clear.disabled=galleryIntake.rows.some(row=>row.status==='processing')&&
+  !galleryIntake.rows.some(row=>row.status==='pending');
+ clear.onclick=()=>{
+  if(galleryIntake.rows.some(row=>row.status==='pending')){
+   for(const row of galleryIntake.rows)if(row.status==='pending'){row.status='skipped';row.file=null;}
+  }else{galleryIntake=null;delete window.__lastPhotoImportResult;render();return;}
+  renderGalleryIntake();
+ };
+ panel.replaceChildren(node('h3','Photo intake'),list,clear);
+ if(action)panel.querySelector('[data-intake-action="'+action+'"]')?.focus({preventScroll:true});
+}
+function startGalleryIntake(files){
+ if(busy||!files.length)return;
+ if(files.length>intakePhotoLimit)return message('Choose up to '+intakePhotoLimit+' clothing photos.');
+ const auth=window.closetAuth,owner=captureProofOwner(),ownerDB=db,epoch=captureOperationEpoch;
+ if(!owner)return message('Please sign in before importing photos.');
+ stopCamera();
+ delete window.__lastPhotoImportResult;
+ session=0;
+ galleryIntake={rows:files.map(file=>({file,status:'pending',itemId:null})),current:()=>{
+  if(epoch!==captureOperationEpoch||db!==ownerDB||window.closetAuth!==auth||
+     captureProofOwner()!==owner)return false;
+  try{auth.assertCurrent?.();return true;}catch{return false;}
+ }};
+ switchView('review');
+ return runGalleryIntake(galleryIntake);
+}
+async function runGalleryIntake(intake){
+ if(busy||!intake?.current()||document.hidden)return;
+ const lifecycle=mediaLifecycleEpoch,token=++photoImportSerial;
+ const current=()=>galleryIntake===intake&&intake.current()&&token===photoImportSerial&&
+  lifecycle===mediaLifecycleEpoch&&!document.hidden;
+ photoImportActive=true;busy=true;controls(true);
+ try{
+  while(current()){
+   const row=intake.rows.find(row=>row.status==='pending');
+   if(!row)break;
+   row.status='processing';renderGalleryIntake();
+   const result=await readPhotoBatch([row.file],
+    file=>captureProofFromFile(file,captureProofOwner(),current),
+    (proof,file)=>candidate(proof.image,{sourceProof:proof,requireDraftCommit:true,
+     importFilename:file.name,requireOwnerReview:true,onIntakeDraft:item=>{row.itemId=item.id;}}),{shouldContinue:current});
+   if(!current())break;
+   row.result=result;
+   const outcome=result.results[0]?.status;
+   row.status=outcome==='added'?'review':outcome==='duplicate'?'duplicate':row.itemId?'storage':'error';
+   if(outcome!=='error'||row.itemId)row.file=null;
+   if(row.itemId){
+    // A storage error can occur before the worker starts. Make its existing
+    // private retry card visible without rebuilding the entire wardrobe.
+    const photoResults=[...batch,...items.filter(item=>sessionCapturedIds.has(item.id))];
+    renderPhotoResults($('reviewGrid'),photoResults);
+    renderPhotoResults($('scanResults'),photoResults);
+   }
+   renderGalleryIntake();
+  }
+ }finally{
+  if(current()){
+   const completed=intake.rows.flatMap(row=>row.result?[row.result]:[]);
+   window.__lastPhotoImportResult={
+    added:completed.reduce((count,result)=>count+result.added,0),
+    errors:completed.flatMap(result=>result.errors),
+    results:completed.flatMap(result=>result.results)
+   };
+   photoImportActive=false;busy=false;controls(false);
+  }
+ }
+}
+
 async function importClothingPhotos(files){
  if(busy||!files.length)return;
  if(files.length>20)return message('Choose up to 20 clothing photos per batch.');
@@ -3204,7 +3369,7 @@ async function importClothingPhotos(files){
  }finally{if(epoch===captureOperationEpoch&&lifecycle===mediaLifecycleEpoch&&
      importToken===photoImportSerial){photoImportActive=false;busy=false;controls(false);}}
 }
-$('clothingPhotos').onchange=event=>{const files=Array.from(event.target.files);event.target.value='';importClothingPhotos(files);};
+$('clothingPhotos').onchange=event=>{const files=Array.from(event.target.files);event.target.value='';startGalleryIntake(files);};
 $('singleCameraCapture').onchange=event=>{
  const files=Array.from(event.target.files||[]);event.target.value='';
  if(!files.length)return; // Picker cancellation leaves every existing review untouched.
@@ -3289,6 +3454,13 @@ function pauseCameraOnInterruption(){
   busy=false;controls(false);
  }
  if(photosWereActive){
+  if(typeof galleryIntake!=='undefined'&&galleryIntake){
+   for(const row of galleryIntake.rows){
+    row.file=null;
+    if(row.status==='pending'||row.status==='processing')row.status=row.itemId?'interrupted':'skipped';
+   }
+   renderGalleryIntake();
+  }
   ++photoImportSerial;photoImportActive=false;
   busy=false;controls(false);
  }
