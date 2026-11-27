@@ -7,6 +7,11 @@ function comparisonStylingFacts(item){
  return JSON.stringify([item.color,item.pattern,item.sleeveLength,item.seasons]);
 }
 
+function comparisonPieceOwned(item,owner){
+ return !!item&&(!item.ownerId||item.ownerId===owner)&&
+  (!item.originalPhoto?.ownerId||item.originalPhoto.ownerId===owner);
+}
+
 function startStylistComparison(){
  const session=ownerStylistSession();
  if(!session||!styledCollectionResults.length||!styledCollectionResultLease?.current())return;
@@ -21,9 +26,9 @@ function startStylistComparison(){
    provenance.get(item.id).sourceSHA256===item.sourceSHA256&&
    provenance.get(item.id).originalSHA256===item.originalPhoto?.sha256&&provenance.get(item.id).originalOwnerId===item.originalPhoto?.ownerId&&
    provenance.get(item.id).originalImage===item.originalPhoto?.image&&provenance.get(item.id).ready===stylistPieceReady(item));
- const closet=items.filter(item=>!item.ownerId||item.ownerId===session.owner);
+ const closet=items.filter(item=>comparisonPieceOwned(item,session.owner));
  const choices=results.slice(0,3).filter(result=>Object.values(result.board.slots).every(id=>
-  stylistPieceReady(wardrobe.get(id))&&(!wardrobe.get(id).ownerId||wardrobe.get(id).ownerId===session.owner)));
+  stylistPieceReady(wardrobe.get(id))&&comparisonPieceOwned(wardrobe.get(id),session.owner)));
  if(!choices.length)return;
  const draft={current,wardrobe,closet,choices,owner:session.owner,
   library:activeTrendLibrary,index:0,board:choices[0].board,locks:new Set(),history:[],status:'',saving:false,saved:false};
