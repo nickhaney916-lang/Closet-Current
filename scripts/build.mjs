@@ -11,11 +11,13 @@ async function files(directory,prefix=''){
  return result.sort();
 }
 const assets=await files('public');
-const hash=createHash('sha256').update('html-script-integrity-v1\0');
+const hash=createHash('sha256').update('html-script-integrity-v2\0');
 const scriptIntegrity=new Map();
+const executableIntegrity=new Map();
 for(const asset of assets){
  const bytes=await readFile('public/'+asset);
  hash.update(asset).update(bytes);
+ if(/\.(?:js|mjs|wasm)$/.test(asset))executableIntegrity.set(asset,'sha384-'+createHash('sha384').update(bytes).digest('base64'));
  if(/\.(?:js|mjs)$/.test(asset)){
   scriptIntegrity.set(asset,'sha384-'+createHash('sha384').update(bytes).digest('base64'));
  }
@@ -52,5 +54,5 @@ await rm('dist',{recursive:true,force:true});
 await mkdir('dist',{recursive:true});
 await cp('public','dist',{recursive:true});
 for(const [page,html] of pages)await writeFile('dist/'+page,html);
-await writeFile('dist/sw.js',template.replace('__VERSION__',version).replace('__ASSETS__',JSON.stringify([...assets,...versionedAssets])));
+await writeFile('dist/sw.js',template.replace('__VERSION__',version).replace('__ASSETS__',JSON.stringify([...assets,...versionedAssets])).replace('__EXECUTABLE_INTEGRITY__',JSON.stringify([...executableIntegrity])));
 console.log('Built closet inventory without paid AI services.');
