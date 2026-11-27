@@ -143,7 +143,7 @@ window.addEventListener('closet:session-locked',()=>{
  memoryReviewRunning=false;
  try{db?.close();}catch{}
  db=null;items=[];batch=[];startupWardrobeRecoveryCount=0;failedDraftCaptures.clear();
- for(const control of document.querySelectorAll('#discard, #refreshReview, #applyCategory, #export'))control.disabled=false;
+ for(const control of document.querySelectorAll('#discard, #refreshReview, #applyCategory, #export, #import'))control.disabled=false;
  for(const image of document.querySelectorAll('#appShell img, dialog img')){
   const source=image.getAttribute('src');
   if(source?.startsWith('blob:'))URL.revokeObjectURL(source);
@@ -2343,6 +2343,8 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
  // A backup selected by one account can never be restored into the next.
  let importLease;
  try{importLease=ownerWardrobeMutationLease();}catch{return message('Sign in to import a private backup.');}
+ const input=$('import');if(input?.disabled)return;
+ if(input)input.disabled=true;
  const assertImport=()=>{
   importLease.assertLease();
   // An authenticated principal alone is not enough: a private restore must
@@ -2541,6 +2543,8 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
    :reason==='LEGACY_ATOMIC_ORIGINAL_SHA_CLAIM_CONFLICT'
    ?'This backup has conflicting verification checksums for one original photo. Nothing was imported. Re-export from the original signed-in closet without changing the photo or its receipts.'
    :reason||'Import failed.');
+ }finally{
+  try{importLease.assertLease();if(input?.isConnected)input.disabled=false;}catch{}
  }};
 window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});
 // Startup recovery is a display-only projection; never rewrite or delete
