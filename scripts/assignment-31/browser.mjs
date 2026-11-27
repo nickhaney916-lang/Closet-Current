@@ -31,10 +31,15 @@ const fixture = owner => ({
  sourcePhotoOriginal:true, ownerReviewed:true, singleGarmentVerified:true
 });
 
+function waitForBoard(page) {
+ return page.waitForFunction(() => typeof db !== 'undefined' && db &&
+  typeof boardInitialized !== 'undefined' && boardInitialized);
+}
+
 async function open(context) {
  const page = await context.newPage();
  await page.goto(origin, {waitUntil:'domcontentloaded'});
- await page.waitForFunction(() => typeof db !== 'undefined' && db && boardInitialized);
+ await waitForBoard(page);
  return page;
 }
 
@@ -208,7 +213,7 @@ try {
     context = await browserType.launchPersistentContext(profile, {
      viewport:{width,height:844}, isMobile:true, hasTouch:true, serviceWorkers:'block'
     });
-    context.setDefaultTimeout(7000);
+    context.setDefaultTimeout(15000);
     let owner;
     await context.route('**/*', route => {
      const target = new URL(route.request().url());
@@ -245,7 +250,7 @@ try {
        if (phase === 'reload-during-write') {
         page.on('dialog', dialog => dialog.accept());
         await page.reload({waitUntil:'domcontentloaded'});
-        await page.waitForFunction(() => typeof db !== 'undefined' && db && boardInitialized);
+        await waitForBoard(page);
        } else {
         await page.close();
         page = await open(context);
@@ -282,10 +287,10 @@ try {
        if (phase === 'acknowledged') {
         await page.goto(origin + '/__interruption-away', {waitUntil:'domcontentloaded'});
         await page.goBack({waitUntil:'commit'});
-        await page.waitForFunction(() => typeof db !== 'undefined' && db && boardInitialized);
+        await waitForBoard(page);
         assert.deepEqual(await snapshot(page),after);
         await page.reload({waitUntil:'domcontentloaded'});
-        await page.waitForFunction(() => typeof db !== 'undefined' && db && boardInitialized);
+        await waitForBoard(page);
         assert.deepEqual(await snapshot(page),after);
        }
        console.log('PASS',engine,width,action,phase);

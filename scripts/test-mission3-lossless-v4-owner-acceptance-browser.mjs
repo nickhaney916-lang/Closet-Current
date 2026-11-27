@@ -1,5 +1,5 @@
 // Mission 3 lossless v4 owner-acceptance, actual unmodified app handlers.
-// Native Chromium + WebKit 320/390/430, signed synthetic owners, JPEG/SHA.
+// Native Chromium + WebKit 320/390/430, fixture Auth owners, JPEG/SHA.
 // NO physical device, hosted cloud, private wardrobes or deploy.
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -29,8 +29,9 @@ const server=createServer(async(req,res)=>{
     (!file.startsWith(publicRoot+'/')&&
      !file.startsWith(resolve(root,'research')+'/')))
    throw Error('Invalid path');
+  const bytes=await readFile(file);
   res.writeHead(200,{'content-type':types[extname(file)]||'application/octet-stream',
-   'cache-control':'no-store'});res.end(await readFile(file));
+   'cache-control':'no-store'});res.end(bytes);
  }catch{res.writeHead(404);res.end('not found');}
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));

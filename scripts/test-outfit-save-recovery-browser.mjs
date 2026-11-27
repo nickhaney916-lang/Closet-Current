@@ -98,7 +98,7 @@ try{
      await page.waitForFunction(()=>Boolean(window.releaseFailedSave));
      await cards.nth(1).getByRole('button',{name:'Save outfit',exact:true}).click();
      await page.evaluate(()=>window.releaseFailedSave());
-     await cards.nth(0).getByText(/Injected first outfit save failure/).waitFor();
+     await cards.nth(0).getByText('Could not save this outfit. Your saved clothing is unchanged; try again.',{exact:true}).waitFor();
      await cards.nth(1).getByRole('button',{name:'Saved',exact:true}).waitFor();
      const outcome=await page.evaluate(async()=>({memory:savedOutfitBoards.map(x=>x.name),stored:await new Promise(resolve=>{const r=db.transaction('state').objectStore('state').get('outfit-board');r.onsuccess=()=>resolve(r.result.saved.map(x=>x.name));})}));
      const baseline=process.env.EXPECT_BASELINE==='1';
@@ -113,8 +113,11 @@ try{
       // Retry the failed first option; each successful save is retained once.
       await cards.nth(0).getByRole('button',{name:'Save outfit',exact:true}).click();await cards.nth(0).getByRole('button',{name:'Saved',exact:true}).waitFor();
       await page.reload();await page.evaluate(async()=>{await closetReady;await outfitBoardReady;switchView('builder');});
-      assert.equal(await page.locator('#savedBoards button').count(),2);
-      const names=await page.evaluate(()=>savedOutfitBoards.map(x=>x.name));assert.match(names[0],/option 2/);assert.match(names[1],/option 1/);
+      const names=await page.evaluate(()=>savedOutfitBoards.map(x=>x.name));
+      assert.equal(names.length,2);
+      assert.match(names[0],/option 2/);assert.match(names[1],/option 1/);
+      for(const name of names)
+       assert.equal(await page.locator('#savedBoards').getByRole('button',{name,exact:true}).count(),1);
       await audit(page,engine+'-'+width+'-reopened');await page.screenshot({path:out+'/'+engine+'-'+width+'-reopened.png',fullPage:true});
       // Separate pages have independent JavaScript write queues but share the
       // same real IndexedDB owner store. Both Save buttons must survive.
