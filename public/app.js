@@ -1310,9 +1310,9 @@ async function styleJustReviewedPhoto122(itemId,expectedSHA,{fromCloset123=false
   throw Error('PHOTO123 saved closet styling requires explicit research opt-in');
  if(cutout124&&(!fromCloset123||!reviewedCutout124Active))
   throw Error('PHOTO124 source-bound cutout needs independent research opt-in');
- const auth=window.closetAuth,owner=auth?.user?.id,originalDb=db;
+ const auth=window.closetAuth,owner=auth?.user?.id,originalDb=db,epoch=captureOperationEpoch;
  const live=()=>owner&&window.closetAuth===auth&&auth.user?.id===owner&&
-  db===originalDb&&db?.name==='closet-current-user-'+owner&&
+  db===originalDb&&db?.name==='closet-current-user-'+owner&&captureOperationEpoch===epoch&&
   $('authGate')?.hidden===true&&$('appShell')?.hidden===false;
  if(!live())throw Error('Private signed-in wardrobe unavailable');
  const tracked=items.find(row=>row.id===itemId&&row.ownerId===owner&&
@@ -1364,7 +1364,9 @@ async function styleJustReviewedPhoto122(itemId,expectedSHA,{fromCloset123=false
   throw Error('Style My New Clothes owner-private viewer is unavailable');
  await panel.selectGarment(itemId);
  if(!live())throw Error('Owner changed while selecting the photographed garment');
+ if(window.styleOwnedLive03Bridge!==panel)throw Error('Outfit viewer changed while selecting the photographed garment');
  const suggestions=await panel.generate();
+ if(!live()||window.styleOwnedLive03Bridge!==panel)throw Error('Owner or outfit viewer changed while creating outfit choices');
  // PHOTO124: the existing native Style panel must actually show the SECOND
  // SHA-256-verified instance cutout, never silently show the full original
  // or fabricate 3D surfaces for an unverified garment.
