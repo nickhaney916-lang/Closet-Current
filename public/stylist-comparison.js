@@ -7,11 +7,11 @@ function startStylistComparison(){
  if(!session||!styledCollectionResults.length||!styledCollectionResultLease?.current())return;
  const results=styledCollectionResults,serial=styledCollectionRequestSerial;
  const wardrobe=new Map(items.map(item=>[item.id,item]));
- const provenance=new Map(items.map(item=>[item.id,{original:item.originalPhoto,ready:stylistPieceReady(item)}]));
+ const provenance=new Map(items.map(item=>[item.id,{original:item.originalPhoto,ownerId:item.ownerId,ready:stylistPieceReady(item)}]));
  const current=()=>session.ownsSession()&&styledCollectionResultLease?.current()&&results===styledCollectionResults&&
   serial===styledCollectionRequestSerial&&items.length===wardrobe.size&&
   items.every(item=>wardrobe.get(item.id)===item&&provenance.get(item.id).original===item.originalPhoto&&
-   provenance.get(item.id).ready===stylistPieceReady(item));
+   provenance.get(item.id).ownerId===item.ownerId&&provenance.get(item.id).ready===stylistPieceReady(item));
  const closet=items.filter(item=>!item.ownerId||item.ownerId===session.owner);
  const choices=results.slice(0,3).filter(result=>Object.values(result.board.slots).every(id=>
   stylistPieceReady(wardrobe.get(id))&&(!wardrobe.get(id).ownerId||wardrobe.get(id).ownerId===session.owner)));
