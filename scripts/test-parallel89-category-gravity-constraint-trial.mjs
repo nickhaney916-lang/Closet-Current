@@ -34,6 +34,7 @@ const tetra=new Float64Array([0,0,0,1,0,0,0,1,0,0,0,1]),tetraIdx=new Uint32Array
 assert.equal(edgeAudit({positions:tetra,indices:tetraIdx}).status,'NO_SHARED_EDGE_FOLDOVER_DETECTED');
 const nearFold=folded.slice();nearFold[11]=1e-7;
 assert.equal(edgeAudit({positions:nearFold,indices:hingeIndices}).nearFoldovers,1);
+import {trialGravityRelaxation89 as legacyGravity} from '../research/parallel89/.baseline-gravity-trial89.mjs';
 import {trialGravityRelaxation89 as gravity} from '../research/parallel89/category-gravity-constraint-trial89.mjs';
 const sha=b=>createHash('sha256').update(b).digest('hex');
 const donor=resolve(process.argv[2]??'.'),here=resolve('.');
@@ -55,6 +56,7 @@ const server=createServer((req,res)=>{
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const origin='http://127.0.0.1:'+server.address().port;
+let combinedControlVerified=false;
 let browser;const rows=[],external=[],errors=[];
 try{
  browser=await ({chromium,webkit})[engine].launch({headless:true});
@@ -188,14 +190,25 @@ try{
      assert.ok(Number.isFinite(edge.maxHingeAngleRadians));
      assert.ok(edge.completeClosedEdgeScope||edge.status!=='NO_SHARED_EDGE_FOLDOVER_DETECTED');
     }
-    let gravityReceipt=null;
-    if(pose.angle===0&&fixed.status==='STRAIN_LIMITED_DISCRETE_RESEARCH_ONLY'){
+    let gravityReceipt={status:'BLOCKED_POSE_PREREQUISITES'};
+    if(fixed.status==='STRAIN_LIMITED_DISCRETE_RESEARCH_ONLY'){
      const originalPosed=fixed.posed.slice();
-     const g=gravity({...fixedBase,posed:fixed.posed,bodyPositions:new Float64Array(pose.positions),sourceIndices:repair.indices});
+     const gravityInput={...fixedBase,posed:fixed.posed,restPositions:fixedRest,bodyPositions:new Float64Array(pose.positions),sourceIndices:repair.indices};
+     const g=gravity(gravityInput);
      assert.deepEqual(fixed.posed,originalPosed);assert.equal(g.consumer3DAdmitted,false);assert.equal(g.clothDrapeProved,false);
      assert.ok(g.pinnedVertices>0&&g.freeVertices>0);
      if(g.status==='PINNED_GRAVITY_RELAXATION_RESEARCH_ONLY'){
       assert.ok(g.selected.freeDrop>0&&g.selected.strain<=.05&&g.selected.minAreaRatio>=.5);
+      assert.ok(g.selected.combinedStrain<=.05&&g.selected.combinedMinAreaRatio>=.5);
+      if(pose.angle===0&&!combinedControlVerified){
+       // A deliberately mismatched rest reference isolates the cumulative gate.
+       const controlInput={...gravityInput,restPositions:Float64Array.from(fixedRest,x=>x*.8)};
+       assert.equal(legacyGravity(controlInput).status,'PINNED_GRAVITY_RELAXATION_RESEARCH_ONLY');
+       const blocked=gravity(controlInput);
+       assert.equal(blocked.status,'GRAVITY_RELAXATION_BLOCKED');
+       assert.ok(blocked.attempts.some(a=>a.decision==='BLOCKED_COMBINED_STRAIN'&&a.combinedStrain>.05));
+       combinedControlVerified=true;
+      }
       assert.equal(g.selected.bodyStatus,'NO_DISCRETE_SURFACE_CONTACT_DETECTED');
       assert.equal(g.selected.selfStatus,'NO_NONLOCAL_SELF_CONTACT_DETECTED');
       assert.equal(g.selected.hingeStatus,'NO_SHARED_EDGE_FOLDOVER_DETECTED');
@@ -213,7 +226,12 @@ try{
    console.log('GRAVITY_RELAXATION_ROW '+JSON.stringify(rows.at(-1)));
   }
  }
- assert.equal(rows.length,12);assert.equal(rows.flatMap(r=>r.checks).length,36);assert.equal(rows.flatMap(r=>r.checks).filter(c=>c.gravity).length,12);assert.ok(rows.some(r=>r.checks.some(c=>c.gravity?.status==='PINNED_GRAVITY_RELAXATION_RESEARCH_ONLY')),'at least one genuine neutral shell must pass the gravity trial');assert.ok(rows.some(r=>r.checks.some(c=>c.repair.self?.completeNonlocalAudit&&c.repair.self.classifications.TOUCHING<c.self.classifications.TOUCHING)),'at least one actual contact count must reduce');assert.ok(rows.some(r=>r.checks.some(c=>c.strainVeto&&c.limited.status==='STRAIN_LIMITED_DISCRETE_RESEARCH_ONLY')),'at least one actual strain veto must recover');assert.deepEqual(external,[]);assert.deepEqual(errors,[]);
- const report={engine,rows,actualRigBytesVerified:true,originalPhoto2DFallbackRequired:true,physicalFitProved:false,consumer3DAdmitted:false,familyAlpha:'HOLD'};
+ assert.equal(rows.length,12);assert.equal(rows.flatMap(r=>r.checks).length,36);assert.equal(rows.flatMap(r=>r.checks).filter(c=>c.gravity).length,36);
+ assert.equal(combinedControlVerified,true,'combined strain RED/GREEN control');
+ const bent=rows.flatMap(r=>r.checks).filter(c=>c.angle!==0);
+ const accepted=bent.filter(c=>c.gravity.status==='PINNED_GRAVITY_RELAXATION_RESEARCH_ONLY');
+ console.log('ARTICULATED_GRAVITY_MATRIX '+JSON.stringify({engine,poses:bent.length,accepted:accepted.length,blocked:bent.length-accepted.length,combinedControlVerified}));
+ assert.ok(rows.some(r=>r.checks.some(c=>c.angle===0&&c.gravity?.status==='PINNED_GRAVITY_RELAXATION_RESEARCH_ONLY')),'at least one genuine neutral shell must pass the gravity trial');assert.ok(rows.some(r=>r.checks.some(c=>c.repair.self?.completeNonlocalAudit&&c.repair.self.classifications.TOUCHING<c.self.classifications.TOUCHING)),'at least one actual contact count must reduce');assert.ok(rows.some(r=>r.checks.some(c=>c.strainVeto&&c.limited.status==='STRAIN_LIMITED_DISCRETE_RESEARCH_ONLY')),'at least one actual strain veto must recover');assert.deepEqual(external,[]);assert.deepEqual(errors,[]);
+ const report={engine,rows,combinedControlVerified,actualRigBytesVerified:true,originalPhoto2DFallbackRequired:true,physicalFitProved:false,consumer3DAdmitted:false,familyAlpha:'HOLD'};
  mkdirSync('benchmark/m2-category-gravity-constraint-trial-HOLD',{recursive:true});writeFileSync('benchmark/m2-category-gravity-constraint-trial-HOLD/'+engine+'.json',JSON.stringify(report,null,2));
 }finally{await browser?.close();await new Promise(ok=>server.close(ok))}
