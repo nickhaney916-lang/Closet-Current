@@ -1,0 +1,79 @@
+name: Main1054 composed local source to outfit after photo review fix HOLD
+on:
+  pull_request:
+    branches: [research/main1054-photo-review-pending-HOLD]
+permissions:
+  contents: read
+jobs:
+  composed:
+    if: github.head_ref == 'research/main1054-composed-photo-review-HOLD' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+        width: [320, 390, 430]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
+      P94_WIDTH: ${{ matrix.width }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Pin exact accepted application and unchanged composed test
+        shell: bash
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          base=25863e9c0b5189fa7eebc629cbe736b123c81b52
+          test "$PR_BASE" = "$base"
+          test "$(git rev-parse HEAD)" = "$PR_HEAD"
+          test "$(git rev-parse HEAD^)" = "$base"
+          test "$(git diff --name-only "$base" HEAD)" = ".github/workflows/main1054-composed-photo-review-HOLD.yml"
+          test "$(git rev-parse HEAD:scripts/test-parallel94-native-p88-browser.mjs)" = 4f75a40cf153fa4b4d139d782b202dbe7bc55e41
+          test "$(git rev-parse HEAD:.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml)" = 9cda77f35a8cfbede447e43d3824afa315e8c606
+          test "$(git rev-parse HEAD:public/outfit-worker-p94.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse HEAD:public/app.js)" = 881bddaed4e7371c9e2ec8ecab007f6bf51e65cd
+          git checkout --detach "$base"
+          test "$(git rev-parse HEAD)" = "$base"
+          git log -1 --format='tested application %H tree %T'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Execute inherited continuous native local journey (synthetic owner, no hosted cloud)
+        run: |
+          node --check scripts/test-parallel94-native-p88-browser.mjs
+          node scripts/test-parallel94-native-p88-browser.mjs
+      - name: Require terminal continuous journey receipt
+        shell: bash
+        run: |
+          node --input-type=module - <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/parallel94-native-p88-browser/'+process.env.M58_ENGINE+'/'+process.env.P94_WIDTH+'/P91-LIFECYCLE.json','utf8'));
+          assert.equal(r.engine,process.env.M58_ENGINE);
+          for(const k of ['uninterruptedSourceExportRestore','ownerRecovery','originalPhotoByteTamperRefused'])assert.equal(r[k],true,k);
+          assert.equal(r.writeRetries,0);
+          assert.equal(r.extraTamperReloads,0);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.releaseAuthorized,false);
+          console.log('COMPOSED_LOCAL_JOURNEY_PASS',process.env.M58_ENGINE,process.env.P94_WIDTH);
+          JS
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: composed-local-${{ matrix.engine }}-${{ matrix.width }}-HOLD
+          path: benchmark/parallel94-native-p88-browser/${{ matrix.engine }}/${{ matrix.width }}/P91-LIFECYCLE.json
+          if-no-files-found: error
