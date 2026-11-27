@@ -103,3 +103,19 @@ test('owner styling metadata changes invalidate comparison, including in-place s
  assert.equal(runComparison("item.seasons=['Summer'];"+initial+"item.seasons.push('Winter');return !!stylistComparisonDraft.current();"),false);
  assert.equal(runComparison("item.seasons=['Summer'];"+initial+"item.seasons=['Summer'];return !!stylistComparisonDraft.current();"),true);
 });
+
+test('atomic outfit save fingerprint includes original photograph ownership',()=>{
+ const source=readFileSync('public/outfit-board.js','utf8');
+ const facts=source.slice(source.indexOf('function outfitSavedItemFacts'),source.indexOf('function outfitWardrobeChanged'));
+ const fingerprint=new Function(readFileSync('public/taxonomy.js','utf8')+String.fromCharCode(10)+facts+String.fromCharCode(10)+'return outfitSavedItemFacts;')();
+ const row={id:'garment',ownerId:'owner-a',category:'Tops',itemType:'T-shirt',
+  originalPhoto:{image:'data:image/jpeg;base64,AAAA',sha256:'same',ownerId:'owner-a'}};
+ const expected=fingerprint(row);
+ const same=other=>{const actual=fingerprint(other);return expected.length===actual.length&&expected.every((v,i)=>v===actual[i]);};
+ assert.equal(same({...row,originalPhoto:{...row.originalPhoto}}),true);
+ assert.equal(same({...row,originalPhoto:{...row.originalPhoto,ownerId:'owner-b'}}),false);
+ const removed={...row,originalPhoto:{...row.originalPhoto}};delete removed.originalPhoto.ownerId;
+ assert.equal(same(removed),false);
+ assert.equal(same({...row,originalPhoto:{...row.originalPhoto,sha256:'different'}}),false);
+ assert.equal(same({...row,ownerId:'owner-b'}),false);
+});
