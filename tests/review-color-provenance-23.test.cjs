@@ -10,7 +10,10 @@ const adjustCode=(()=>{
  const start=app.indexOf('form.onsubmit=async event=>{');
  const end=app.indexOf('dialog.onclose=',start);
  assert.ok(start>0&&end>start,'actual new photo save handler must be located');
- return app.slice(start,end);
+ const helperStart=app.indexOf(' const setPhotoOperation=(pending');
+ const helperEnd=app.indexOf(' cancel.type=remove.type=',helperStart);
+ assert.ok(helperStart>0&&helperEnd>helperStart,'actual photo operation feedback helper must be located');
+ return app.slice(helperStart,helperEnd)+app.slice(start,end);
 })();
 const savedCode=(()=>{
  const start=app.indexOf('f.onsubmit=async e=>{e.preventDefault();if(saving)return;');
@@ -24,7 +27,7 @@ const savedCode=(()=>{
 async function newPhotoSubmit(source){
  let persisted,closed=false;
  const item=clone(source),sandbox={
-  form:{},save:{disabled:false},item,draft:clone(source),collect:()=>N(clone(source)),
+  form:{},save:{disabled:false},operationStatus:{textContent:''},item,draft:clone(source),collect:()=>N(clone(source)),
   batch:[{id:source.id}],items:[],captureProof01Active:false,
   expectedSavedRow:null,expectedDraftRow:clone(source),correction10:false,
   // This isolated handler executes without the surrounding Adjust dialog.
