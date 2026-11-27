@@ -185,3 +185,23 @@ header{padding-top:22px;padding-bottom:18px}.brand-mark{background:#7043ba;color
  #closet .filters{grid-template-columns:minmax(0,1fr)}
  .closet-category-caption{overflow-wrap:anywhere}
 }
+
+.outfit-comparison { margin-block: 1rem; }
+.outfit-comparison h3 { margin-top: 0; }
+.outfit-comparison .comparison-choice { display: grid; gap: .4rem; max-width: 25rem; }
+.outfit-comparison select { min-height: 44px; max-width: 100%; padding-inline: .6rem; }
+.comparison-pieces { list-style: none; padding: 0; display: grid; gap: .75rem; }
+.comparison-piece {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 70px;
+  gap: .25rem .75rem;
+  align-items: start;
+  border-top: 1px solid var(--line);
+  padding-top: .75rem;
+  overflow-wrap: anywhere;
+}
+.comparison-piece img { grid-area: 1 / 2 / span 3; width: 70px; height: 76px; object-fit: contain; }
+.comparison-piece .actions { grid-column: 1 / -1; }
+.outfit-comparison .actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.outfit-comparison button { min-height: 44px; max-width: 100%; }
+.outfit-comparison button[aria-pressed="true"] { border-color: currentColor; font-weight: 700; }

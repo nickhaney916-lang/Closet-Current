@@ -43,5 +43,11 @@ function matchOutfit(components,closet,season=''){
  }
  return result;
 }
-function safeInspirationUrl(value){try{const url=new URL(value);return ['https:','http:'].includes(url.protocol)?url.href:'';}catch{return '';}}
+function safeInspirationUrl(value){
+ if(typeof value!=='string')return '';
+ try{
+  const url=new URL(value);
+  return ['https:','http:'].includes(url.protocol)&&!url.username&&!url.password?url.href:'';
+ }catch{return '';}
+}
 function shopSearch(component,size,budget){return 'https://www.google.com/search?tbm=shop&q='+encodeURIComponent([component.color,component.itemType!=='Unknown'?component.itemType:component.label,component.sleeveLength!=='Unknown'&&component.sleeveLength!=='Not applicable'?component.sleeveLength:'',size?'size '+size:'',budget>0?'under $'+budget:''].filter(Boolean).join(' '));}

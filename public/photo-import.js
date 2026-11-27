@@ -31,7 +31,7 @@ async function readPhotoBatch(files,decode,onPhoto,{shouldContinue=()=>true}={})
   }catch(error){
    if(!shouldContinue()){cancelled=true;break;}
    reason=error instanceof Error?error.message:'unknown error';
-   errors.push(file.name+(error?.code==='CAPTURE_STORAGE_FAILED'?': photo not saved to device; free storage and retry before leaving this page':': could not open; try JPEG or PNG'));
+   errors.push(file.name+(error?.code==='CAPTURE_STORAGE_FAILED'?': photo not saved to device; free storage and retry before leaving this page':error?.code==='PHOTO_IMPORT_INPUT'?': '+reason:': could not open; try another JPEG'));
    results.push({name:file.name,status:'error',reason});
   }
  }
