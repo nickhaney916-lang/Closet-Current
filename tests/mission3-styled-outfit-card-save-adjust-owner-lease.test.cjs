@@ -11,7 +11,7 @@ function between(a,b){
  assert.ok(start>=0&&end>start,'Source callback not found '+a);
  return source.slice(start,end);
 }
-const lease=between('function beginStyledCollectionCardOwnerLease(result,card){','function renderStyledCollection(){');
+const lease=between('function beginStyledCollectionCardOwnerLease(result,card){','function renderStyledCollection(');
 const editCode=between('  edit.onclick=async()=>{',"  const status=node('p',null,'fine styled-save-status');");
 const updateCode=between('  const updateSaveState=(phase,message)=>{','  refresh.onclick=async()=>{');
 const refreshCode=between('  refresh.onclick=async()=>{','  save.onclick=async()=>{');

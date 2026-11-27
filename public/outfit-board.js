@@ -324,12 +324,13 @@ window.addEventListener('closet:session-locked',()=>{
  }
  $('boardSaveStatus').textContent='Signed-out private outfit cleared. Reopen Outfit Builder.';
 });
-async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraft=null,expectedClothing=null,replaceCurrent=null,manageSaved=null,rejectDuplicate=false}={}){
+async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraft=null,expectedClothing=null,replaceCurrent=null,manageSaved=null,rejectDuplicate=false,comparison=null}={}){
  if(nativeLossless04Active)throw Error('Unsafe native outfit write blocked; use lossless Save changes or Save outfit');
  if(!db){$('boardSaveStatus').textContent='Browser storage is unavailable. Keep this page open.';throw Error('Browser storage is unavailable.');}
  const ownerDB=db,auth=window.closetAuth,owner=auth?.user?.id;
  const assertOwner=()=>{
   auth?.assertCurrent?.();
+  comparison?.assertCurrent();
   if(!owner||window.closetAuth!==auth||auth.user?.id!==owner||db!==ownerDB||ownerDB.name!=='closet-current-user-'+owner||
      (replaceDraft&&(replaceDraft.ownerDB!==ownerDB||replaceDraft.auth!==auth||replaceDraft.owner!==owner)))
    throw Error('Your account changed. Reopen your closet before saving this outfit.');
@@ -358,7 +359,15 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
   const draftSlots=replacement===null&&!manageSaved?Object.entries(current.slots):[];
   const draftStores=draftSlots.length?['state','items']:'state';
   const tx=ownerDB.transaction(candidate||proof33?['state','items']:draftStores,'readwrite'),store=tx.objectStore('state');
-  let failure,saved,keepStoredDraft=Boolean(manageSaved);
+  let failure,saved,keepStoredDraft=Boolean(manageSaved||comparison);
+  if(comparison){
+   const keys=tx.objectStore('items').getAllKeys();
+   keys.onsuccess=()=>{try{
+    assertOwner();
+    if(keys.result.length!==comparison.ids.size||keys.result.some(id=>!comparison.ids.has(id)))
+     throw outfitWardrobeChanged();
+   }catch(error){failure=error;tx.abort();}};
+  }
   if(candidate||proof33)for(const [slotId,id]of Object.entries(candidate?.slots||current.slots)){
    const selected=tx.objectStore('items').get(id);
    selected.onsuccess=()=>{try{
@@ -366,7 +375,7 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
     const row=selected.result,slot=outfitSlots.find(x=>x.id===slotId),
      expected=expectedClothing?.[id],actual=row?outfitSavedItemFacts(row):null;
     if(!row||!slot||!slotAllows(slot,normalizeClothing(row))||
-       (row.ownerId&&row.ownerId!==owner)||proof33&&!proof33.matches(id,row)||
+       (row.ownerId&&row.ownerId!==owner)||(comparison&&!stylistPieceReady(row))||proof33&&!proof33.matches(id,row)||
        candidate&&(!expected||!actual||expected.length!==actual.length||
          !expected.every((v,i)=>v===actual[i])))
      throw outfitWardrobeChanged();
@@ -386,7 +395,7 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
   request.onsuccess=()=>{try{
    assertOwner();proof33?.assertCurrent();
    const observed=JSON.stringify(request.result?.current??null),expected=replaceDraft?replaceDraft.stored:boardExpectedStoredDraft;
-   if(replacement===null&&!manageSaved&&observed!==expected){
+   if(replacement===null&&!keepStoredDraft&&observed!==expected){
     boardConflictDraft={ownerDB,auth,owner,stored:observed};
     if(!candidate){const error=Error('Another tab changed this outfit draft.');error.code='OUTFIT_DRAFT_CONFLICT';throw error;}
     keepStoredDraft=true;
