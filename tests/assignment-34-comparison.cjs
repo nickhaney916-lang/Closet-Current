@@ -44,3 +44,53 @@ test('focus, season, audience, footwear and dress structure are hard constraints
  assert.equal(engine.stylistOwnedSubstitute(restrictions,board({top:'tee',shoes:'boots'}),'shoes',work,null),null);
  assert.equal(engine.stylistOwnedSubstitute(rows,board({top:'tee',bottom:'jeans',shoes:'laundry'}),'top',context,null),null);
 });
+
+
+// Exercise the actual controller using synthetic rows and simulated DOM controls.
+// These are unit regressions, not native browser proof.
+const comparisonControllerSource=readFileSync('public/stylist-comparison.js','utf8');
+const comparisonHarness=`
+let lease=true,owner=true;
+const item={id:'a',ownerId:'owner',category:'Tops',itemType:'T-shirt',sourceSHA256:'sha1',
+ originalPhoto:{ownerId:'owner',sha256:'sha1',image:'data:image/jpeg;base64,AAAA'}};
+const items=[item],styledCollectionResults=[0,1].map(()=>({
+ board:{slots:{top:'a'}},context:{request:'Casual',audience:'All',season:'Fall'}}));
+const styledCollectionRequestSerial=1,activeTrendLibrary={};
+const styledCollectionResultLease={current:()=>lease};
+const ownerStylistSession=()=>({owner:'owner',ownsSession:()=>owner});
+const stylistPieceReady=x=>!!x?.id&&!x.deleted&&!x.sourceRevoked;
+const outfitSlots=[],boardGaps=()=>[];
+function node(tag,text){return {tag,text,children:[],append(...x){this.children.push(...x)},
+ replaceChildren(){this.children=[]},add(x){this.children.push(x)},setAttribute(){},focus(){}};}
+const panel=node('section');
+const find=(n,id)=>n.id===id?n:n.children.map(c=>find(c,id)).find(Boolean);
+const $=id=>id==='stylistComparison'?panel:find(panel,id);
+function Option(text,value){this.text=text;this.value=value;this.children=[];}
+`;
+const runComparison=(scenario)=>new Function(comparisonHarness+comparisonControllerSource+String.fromCharCode(10)+scenario)();
+test('comparison lease expires on request, owner, classification or original-source mutation',()=>{
+ for(const mutation of ['lease=false','owner=false',"item.ownerId='other'",
+  "item.category='Dresses'","item.itemType='Sweater'","item.sourceSHA256='sha2'",
+  "item.originalPhoto.sha256='sha2'","item.originalPhoto.ownerId='other'",
+  "item.originalPhoto.image='data:image/jpeg;base64,BBBB'",'item.sourceRevoked=true']){
+  assert.equal(runComparison('startStylistComparison();'+mutation+';return !!stylistComparisonDraft.current();'),false,mutation);
+ }
+ assert.equal(runComparison('startStylistComparison();return !!stylistComparisonDraft.current();'),true);
+});
+test('cancelled comparison and stale cancel cannot affect a replacement draft',()=>{
+ assert.equal(runComparison(`startStylistComparison();const old=stylistComparisonDraft;
+  const cancel=$('comparisonCancel').onclick;cancel();
+  if(old.current())return false;
+  startStylistComparison();const fresh=stylistComparisonDraft;
+  cancel();return stylistComparisonDraft===fresh&&!!fresh.current();`),true);
+});
+test('obsolete rendered controls cannot change a live comparison after refresh',()=>{
+ assert.equal(runComparison(`startStylistComparison();const select=$('comparisonChoice');
+  const cancel=$('comparisonCancel');select.value='1';select.onchange();
+  if(stylistComparisonDraft.index!==1)return false;
+  select.value='0';select.onchange();cancel.onclick();
+  if(stylistComparisonDraft?.index!==1)return false;
+  $('comparisonChoice').value='0';$('comparisonChoice').onchange();
+  if(stylistComparisonDraft.index!==0)return false;
+  $('comparisonCancel').onclick();return stylistComparisonDraft===null;`),true);
+});
