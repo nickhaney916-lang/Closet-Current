@@ -32,12 +32,13 @@ jobs:
           test "$(git rev-parse "$base^{tree}")" = 487e6fc47da511cc87652e6ec2219d4135da55fb
           git merge-base --is-ancestor "$base" "$candidate"
           git merge-base --is-ancestor "$candidate" HEAD
-          printf '%s\n' '.github/workflows/main1054-device-check-session-lock-HOLD.yml' 'public/device-check.js' 'scripts/main1054-device-check-session-browser.mjs' 'tests/main1054-device-check-session-lock.cjs' > "$RUNNER_TEMP/expected-paths"
+          printf '%s\n' '.github/workflows/main1054-device-check-session-lock-HOLD.yml' 'public/device-check.js' 'scripts/main1054-device-check-session-browser.mjs' 'tests/device-check-ui.test.cjs' 'tests/main1054-device-check-session-lock.cjs' > "$RUNNER_TEMP/expected-paths"
           git diff --name-only "$base" HEAD > "$RUNNER_TEMP/actual-paths"
           diff -u "$RUNNER_TEMP/expected-paths" "$RUNNER_TEMP/actual-paths"
           test "$(git rev-parse 'HEAD:public/device-check.js')" = '92b9536cf3d7d9a282197f7cf4265cc28024002d'
           test "$(git rev-parse 'HEAD:scripts/main1054-device-check-session-browser.mjs')" = '0312c2d4dc8e33fc1c2de81f15f1b1a3708c9cb2'
           test "$(git rev-parse 'HEAD:tests/main1054-device-check-session-lock.cjs')" = '7fb9abbb7a48d506d4455fe0cdb152f70742fb9c'
+          test "$(git rev-parse 'HEAD:tests/device-check-ui.test.cjs')" = '84d1d97b5cd63b533f84cccecae9ed364b4b174b'
           git log -1 --format='tested commit %H tree %T'
           echo "Application correction source pinned to $candidate"
       - uses: actions/setup-node@v4
