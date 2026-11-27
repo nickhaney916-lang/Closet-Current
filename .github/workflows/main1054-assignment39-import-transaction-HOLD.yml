@@ -50,7 +50,7 @@ jobs:
       - name: Native IndexedDB import at 320, 390 and 430 pixels in Chromium and WebKit
         env:
           CLOSET_IMPORT_BUILD_DIR: dist
-        run: node scripts/test-mission3-default-atomic-import-browser.mjs "${{ runner.temp }}/assignment39"
+        run: node scripts/test-mission3-default-atomic-import-browser.mjs assignment39-receipt
       - name: Full regression
         if: success() || failure()
         run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
@@ -58,6 +58,6 @@ jobs:
         if: success() || failure()
         with:
           name: assignment39-private-import-receipt
-          path: ${{ runner.temp }}/assignment39/
-          if-no-files-found: warn
+          path: assignment39-receipt/
+          if-no-files-found: error
           retention-days: 14
