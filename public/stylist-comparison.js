@@ -1,6 +1,7 @@
 'use strict';
 
 let stylistComparisonDraft=null;
+let stylistComparisonRenderSerial=0;
 
 function startStylistComparison(){
  const session=ownerStylistSession();
@@ -38,6 +39,8 @@ function comparisonPhoto(item,owner){
 }
 
 function renderStylistComparison(focusId){
+ const renderSerial=++stylistComparisonRenderSerial;
+ const renderCurrent=()=>renderSerial===stylistComparisonRenderSerial;
  const panel=$('stylistComparison');
  const wasOpen=stylistComparisonDraft!==null;
  if(stylistComparisonDraft&&!stylistComparisonDraft.current())stylistComparisonDraft=null;
@@ -49,7 +52,7 @@ function renderStylistComparison(focusId){
  heading.id='comparisonHeading';panel.append(heading);
  const button=(text,action,id,disabled=false)=>{
   const control=node('button',text,'secondary');
-  control.id=id;control.type='button';control.disabled=disabled;control.onclick=action;
+  control.id=id;control.type='button';control.disabled=disabled;control.onclick=()=>{if(renderCurrent()&&!control.disabled)return action();};
   return control;
  };
  if(!draft){
@@ -73,6 +76,7 @@ function renderStylistComparison(focusId){
  for(let i=0;i<draft.choices.length;i++)select.add(new Option(result.context.request+' · option '+(i+1),String(i)));
  select.value=String(draft.index);
  select.onchange=()=>{
+  if(!renderCurrent()||select.disabled)return;
   if(!draft.current()||draft.saving)return renderStylistComparison();
   draft.index=Number(select.value);
   draft.board=draft.choices[draft.index].board;
