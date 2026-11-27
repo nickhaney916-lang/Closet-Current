@@ -143,7 +143,7 @@ window.addEventListener('closet:session-locked',()=>{
  memoryReviewRunning=false;
  try{db?.close();}catch{}
  db=null;items=[];batch=[];startupWardrobeRecoveryCount=0;failedDraftCaptures.clear();
- for(const control of document.querySelectorAll('#discard, #refreshReview'))control.disabled=false;
+ for(const control of document.querySelectorAll('#discard, #refreshReview, #applyCategory'))control.disabled=false;
  for(const image of document.querySelectorAll('#appShell img, dialog img')){
   const source=image.getAttribute('src');
   if(source?.startsWith('blob:'))URL.revokeObjectURL(source);
@@ -2706,6 +2706,7 @@ if(new URLSearchParams(location.search).get('index02')==='after'){
 
 for(const c of categories.slice(1))$('batchCategory').append(node('option',c));
 $('applyCategory').onclick=async()=>{
+ const button=$('applyCategory');if(button.disabled)return;
  // A bulk review is bound to the exact signed account, DB and login epoch.
  // Native IndexedDB CAS guards durable photographs; this extra lease guards
  // the UI finalizer against signout and same-owner-ID relogin after commit.
@@ -2721,6 +2722,7 @@ $('applyCategory').onclick=async()=>{
  const stillReviewing=()=>!localPending.size&&!automaticRunning&&!changed.some(x=>
   !batch.includes(x.item)||JSON.stringify(normalizeClothing(x.item))!==
    JSON.stringify(normalizeClothing(x.before)));
+ button.disabled=true;
  try{
   await commitReviewedDraftCAS(changed.map(x=>({before:x.before,after:x.after})),()=>{
    lease.assertLease();
@@ -2740,6 +2742,8 @@ $('applyCategory').onclick=async()=>{
   // A revoked operation may have committed before its callback rejected;
   // fail closed about ACK rather than falsely declaring "not saved."
   message('Could not confirm this category update. Original photos were not discarded. Refresh Photo results before reviewing or trying again.');
+ }finally{
+  try{lease.assertLease();if(button.isConnected)button.disabled=false;}catch{}
  }
 };
 
