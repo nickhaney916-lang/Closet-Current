@@ -1421,8 +1421,9 @@ async function retryFailedPhotoFromCard(item,button){
   }
  }finally{
   if(flights.get(item.id)===flight)flights.delete(item.id);
+  if(lease.current()&&button.isConnected)button.disabled=false;
   if(lease.current()){
-   for(const control of flight.buttons)if(control.isConnected)control.disabled=false;
+   for(const control of flight.buttons)if(control!==button&&control.isConnected)control.disabled=false;
    if(failed)render();
   }
  }
