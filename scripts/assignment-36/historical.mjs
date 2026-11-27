@@ -1,4 +1,4 @@
-import {spawnSync} from 'node:child_process';
+import {execFileSync,spawnSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 
 // Preserve the original runtime entry points. Their historical workflow
@@ -33,19 +33,19 @@ const signedOut = [
  ['assignment-36/audit-auth36.mjs']
 ];
 const backup = [
- ['repro-restore-atomic-01-baseline.mjs'],
  ['test-restore-atomic-01-browser.mjs'],
- ['audit-restore-atomic-01.mjs']
+ ['audit-restore-atomic-01.mjs'],
+ ['@restore-atomic-01-no-deploy.yml']
 ];
-const native = [
- ['build-three-d-31-jeans-proposal.mjs'],
- ['build-three-d-37-second-jeans.mjs'],
- ['build-work47-benchmark.mjs'],
- ...['native-3d-05','native-consumer-board-04','native-restore-3d-06',
-  'native-index-live-07','native-photo-readiness-08','native-mobile-09','user-photo-3d-01',
-  'style-owned-live-03','native-correction-10','native-style-correction-11']
-  .flatMap(name => [['test-'+name+'-browser.mjs'], ['audit-'+name+'.mjs']])
-];
+const native = ['native-3d-05','native-consumer-board-04','native-restore-3d-06',
+ 'native-index-live-07','native-photo-readiness-08','native-mobile-09','user-photo-3d-01',
+ 'style-owned-live-03','native-correction-10','native-style-correction-11']
+ .flatMap(name => {
+  const scripts = [['test-'+name+'-browser.mjs'], ['audit-'+name+'.mjs']];
+  if (name !== 'native-3d-05' && name !== 'user-photo-3d-01')
+   scripts.push(['@'+name+'-no-deploy.yml']);
+  return scripts;
+ });
 
 const groups = {capture, index, review, auth:signedOut, backup, native,
  interrupt:[['assignment-31/browser.mjs']],
@@ -53,8 +53,16 @@ const groups = {capture, index, review, auth:signedOut, backup, native,
   ['@model-review-safe-integration-45-no-deploy.yml']]};
 const [group] = process.argv.slice(2);
 if (!Object.hasOwn(groups, group)) throw Error('Choose one historical runtime group: '+Object.keys(groups).join(', '));
+if (group === 'native') {
+ const donor = '.native05-donor-541';
+ const sha = execFileSync('git',['-C',donor,'rev-parse','HEAD'],{encoding:'utf8'}).trim();
+ if (sha !== 'df6885d6011cb33fb22dceb81a08f35a0ac4dd61')
+  throw Error('The original native 3D donor is not the verified exact commit');
+ readFileSync(donor+'/benchmark/work47/manifest.json');
+}
 const results = [];
 for (const [script, env] of groups[group]) {
+ console.log('Running historical runtime:',script);
  let args = ['scripts/'+script];
  let input;
  if (script.startsWith('@')) {

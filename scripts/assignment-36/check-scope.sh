@@ -7,7 +7,7 @@ head=$(git rev-parse HEAD)
 test "$head" = "${1:?Pass the exact tested head SHA}"
 test "$(git rev-parse "$base^{tree}")" = "$base_tree"
 git merge-base --is-ancestor "$base" "$head"
-test "$(git rev-list --parents -n 1 "$head")" = "$head $base"
+test -z "$(git rev-list --merges "$base..$head")"
 
 expected=$(cat <<'PATHS'
 .github/workflows/assignment-36-owner-recovery-HOLD.yml

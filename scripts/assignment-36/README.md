@@ -1,6 +1,6 @@
 # Cumulative owner recovery acceptance
 
-Assignment #1736 covers the isolated cumulative candidate descending directly from
+Assignment #1736 covers the isolated cumulative candidate with linear ancestry rooted at
 `bba97ce9b6535ed3fd5882501464806560585cdb`. It retains the exact tree of
 the accepted baseline and allows only the additions enumerated by
 `check-scope.sh`. Existing historical workflows, runtime scripts, policies,
@@ -10,13 +10,13 @@ and application code are part of the pinned tree.
 | --- | --- | --- |
 | AUTH36 | `auth` | Original browser test and independent audit of six IndexedDB owner/session cases, both confirmed and unconfirmed logout paths, and 24 PNG hashes and nonblank pixels. |
 | AUTH36 signed HTTP | Baseline run 45917252927, job 140239342905 | Real disposable Supabase Auth, RLS, Storage and refresh/expiry. It belongs to the accepted baseline. The new `signed-postgres` lane exercises the actual browser/cloud controller with disposable signed RS256 credentials and PostgreSQL RLS and Storage policies. |
-| RESTORE-ATOMIC-01 | `backup` | Existing restore repro, two-engine native atomic restore, and independent audit. |
+| RESTORE-ATOMIC-01 | `backup` | Original negative control on pre-fix checkout `56c9a814`, two-engine native atomic restore on the cumulative head, and original independent audits. |
 | INDEX-02, INDEX-04 | `index` | Existing native owner closet/index tests and both original inline evidence audits. |
 | CAPTURE-PROOF-01 | `capture` | Original camera/gallery source proof and audit, plus cumulative native JPEG and camera-to-closet acceptance. |
 | COLOR41, CONFIRM44 | `review` | Original source/save/worker finality and human color/type correction runtime, plus original independent screenshot audits. |
 | LABELSYNC66 | `review` | Original tests run in normal and NAME66 modes and the independent label-sync audit. |
 | MODEL45 | `review`, `model` | Color/type safety prerequisites and the genuine model-enabled runtime and original independent audit. A missing model or execution provider fails the model lane. |
-| NATIVE-CONSUMER-BOARD-04, NATIVE-RESTORE-3D-06, NATIVE-INDEX-LIVE-07, NATIVE-PHOTO-READINESS-08, MOBILE-NATIVE-09 | `native` | Original source builders, original runtime suites, and independent browser evidence audits. |
+| NATIVE-CONSUMER-BOARD-04, NATIVE-RESTORE-3D-06, NATIVE-INDEX-LIVE-07, NATIVE-PHOTO-READINESS-08, MOBILE-NATIVE-09 | `native` | Original source builders on the detached PR541 donor `df6885d6` with SHA-bound photos, original runtime suites on the cumulative head, and independent browser evidence audits. |
 | INDEX-CORRECTION-10, STYLE-OWNED-LIVE-03, NATIVE-INTEGRATION-11, NATIVE-STYLE-CORRECTION-INTEGRATION-11 | `native`, `backup` | Original source correction, current-owner styling and restore runtime/audits. |
 
 The new `chromium` and `webkit` jobs exercise 320, 390 and 430 CSS px.
@@ -24,7 +24,10 @@ They run the built application's normal UI and native IndexedDB with fixture
 HTTP auth. Each case checks a saved outfit through the builder, a default
 download/import round trip, foreign backup rejection, cancellation, fresh
 browser recovery, stale pending save rejection after account switch, and
-independent SHA-256 verification of the retained originals. The `interrupt`
+independent SHA-256 verification of the retained originals. Two assertions use
+the current contract when historical fixtures diverge: saving a second draft
+through the explicit per-row APIs preserves the first pending JPEG, and a
+malformed backup cannot partially write its garment. The original INDEX-04 fixture still runs and reports independently. RESTORE-ATOMIC-01 runs its historical negative control on the verified pre-fix source and its current positive checks on the cumulative candidate. The `interrupt`
 job reuses Assignment 31's committed-write, interrupted-write and retry
 assertions without changing that assignment.
 

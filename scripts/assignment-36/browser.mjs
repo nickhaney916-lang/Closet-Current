@@ -220,11 +220,34 @@ async function exercise(browser, engine, width) {
   verifyPhoto(reopened.pending[0], draftA);
   assert.deepEqual(reopened.board, baseline.board);
 
+  const secondDraft = await garment('other-pending','Independent reviewed piece',ownerA,'commons-0080');
+  secondDraft.ownerReviewed = false;
+  await ownerTab.evaluate(async row => {
+   await persistDraft({required:true,mode:'insert',record:row});
+   await savePiece({...row,ownerReviewed:true,userAdjusted:true},[],{expectedDraftRow:row});
+  },secondDraft);
+  const afterSecondSave = await readState(ownerTab);
+  assert.equal(afterSecondSave.saved.length,2);
+  verifyPhoto(afterSecondSave.saved.find(row => row.id === secondDraft.id),secondDraft);
+  assert.equal(afterSecondSave.pending.length,1);
+  verifyPhoto(afterSecondSave.pending[0],draftA);
+  assert.deepEqual(afterSecondSave.board,reopened.board);
+
   const disposable = await makeContext();
   const recovery = await open(disposable);
   await login(recovery, ownerA);
   assert.deepEqual((await readState(recovery)).saved, []);
   await openMyCloset(recovery, true);
+  // The historical negative control expected a partial write. The current
+  // default contract rejects the whole backup before any installation.
+  const malformed = {...backup,outfitBoard:{...backup.outfitBoard,
+   saved:Array(51).fill(outfit)}};
+  await recovery.locator('#import').setInputFiles({...backupFile,buffer:Buffer.from(JSON.stringify(malformed))});
+  await reportStatus(recovery,'^LEGACY_ATOMIC_INVALID_BOARD$');
+  const rejected = await readState(recovery);
+  assert.deepEqual(rejected.saved,[]);
+  assert.equal(rejected.board?.saved?.length ?? 0,0);
+
   recovery.once('dialog', dialog => dialog.dismiss());
   await recovery.locator('#import').setInputFiles(backupFile);
   await reportStatus(recovery, 'Import canceled');
@@ -245,7 +268,7 @@ async function exercise(browser, engine, width) {
   assert.deepEqual(externalWrites, []);
   return {engine,width,result:'PASS',sourceA:savedA.sourceSHA256,sourceB:savedB.sourceSHA256,
    pending:draftA.sourceSHA256,stableSavedOutfit:true,staleWriteRejected:true,
-   defaultV3Restored:true,foreignBackupRejected:true,fixtureHttpAuth:true};
+   defaultV3Restored:true,foreignBackupRejected:true,fixtureHttpAuth:true,pendingSurvivesIndependentSave:true,malformedBackupIsAtomic:true};
  } finally {
   for (const context of contexts) await context.close();
  }
