@@ -992,7 +992,10 @@ function mountPendingIdentitySuggestion(form,item,editorSession,dialog,canApply)
 function adjustPhoto(item){
  if(stream||cameraOpening)stopCamera();
  const dialog=document.createElement('dialog');dialog.className='photo-adjust clothing-editor';
- const form=node('form'),draft=structuredClone(item),collect=clothingFields(form,draft);
+ let dirty=false;
+ const markDirty=()=>{dirty=true;};
+ const form=node('form'),draft=structuredClone(item),collect=clothingFields(form,draft,markDirty);
+ form.addEventListener('input',markDirty);form.addEventListener('change',markDirty);
  const editorSession=photoEditorSessionLease();
  if(batch.includes(item)&&!items.some(x=>x.id===item.id))
   mountPendingIdentitySuggestion(form,item,editorSession,dialog,()=>!save.disabled);
@@ -1021,11 +1024,17 @@ function adjustPhoto(item){
  operationStatus.setAttribute('aria-atomic','true');
  operationStatus.style.cssText='position:sticky;bottom:0;z-index:3;margin:0;background:#fff;overflow-wrap:anywhere';
  const setPhotoOperation=(pending,text='')=>{
-  save.disabled=pending;form.inert=pending;operationStatus.textContent=text;
+  if(pending){save.disabled=true;form.inert=true;}
+  else{save.disabled=false;form.inert=false;}
+  operationStatus.textContent=text;
  };
  const reportPhotoOperationError=text=>{setPhotoOperation(false,text);message(text);};
- cancel.type=remove.type='button';cancel.onclick=()=>{if(!save.disabled)dialog.close();};
- dialog.oncancel=event=>{if(save.disabled)event.preventDefault();};
+ const closePhotoEditor=()=>{
+  if(save.disabled)return;
+  if(!editorSession.current()||!dirty||confirm('Discard your unsaved clothing changes?'))dialog.close();
+ };
+ cancel.type=remove.type='button';cancel.onclick=closePhotoEditor;
+ dialog.oncancel=event=>{event.preventDefault();closePhotoEditor();};
  // PHOTO120 only for actual *unsaved* camera captures, not a saved-piece edit.
  // Owner must explicitly confirm category/type/color and garment source before
  // the separately SHA-proven atomic research commit. Never auto-check them.
