@@ -53,6 +53,7 @@ try {
     await page.evaluate(() => Promise.all([closetReady,outfitBoardReady]));
     await page.evaluate(() => switchView('stylist'));
     await page.locator('#stylistOccasion').selectOption('Casual');
+    await page.locator('details').filter({has:page.locator('#stylistSeason')}).locator('summary').click();
     await page.locator('#stylistSeason').selectOption('Spring');
    };
    const seed = async () => {
