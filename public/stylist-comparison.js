@@ -3,17 +3,22 @@
 let stylistComparisonDraft=null;
 let stylistComparisonRenderSerial=0;
 
+function comparisonStylingFacts(item){
+ return JSON.stringify([item.color,item.pattern,item.sleeveLength,item.seasons]);
+}
+
 function startStylistComparison(){
  const session=ownerStylistSession();
  if(!session||!styledCollectionResults.length||!styledCollectionResultLease?.current())return;
  const results=styledCollectionResults,serial=styledCollectionRequestSerial;
  const wardrobe=new Map(items.map(item=>[item.id,item]));
- const provenance=new Map(items.map(item=>[item.id,{original:item.originalPhoto,ownerId:item.ownerId,category:item.category,itemType:item.itemType,sourceSHA256:item.sourceSHA256,originalSHA256:item.originalPhoto?.sha256,originalOwnerId:item.originalPhoto?.ownerId,originalImage:item.originalPhoto?.image,ready:stylistPieceReady(item)}]));
+ const provenance=new Map(items.map(item=>[item.id,{original:item.originalPhoto,ownerId:item.ownerId,category:item.category,itemType:item.itemType,stylingFacts:comparisonStylingFacts(item),sourceSHA256:item.sourceSHA256,originalSHA256:item.originalPhoto?.sha256,originalOwnerId:item.originalPhoto?.ownerId,originalImage:item.originalPhoto?.image,ready:stylistPieceReady(item)}]));
  const current=()=>stylistComparisonDraft===draft&&session.ownsSession()&&styledCollectionResultLease?.current()&&results===styledCollectionResults&&
   serial===styledCollectionRequestSerial&&items.length===wardrobe.size&&
   items.every(item=>wardrobe.get(item.id)===item&&provenance.get(item.id).original===item.originalPhoto&&
    provenance.get(item.id).ownerId===item.ownerId&&provenance.get(item.id).category===item.category&&
-   provenance.get(item.id).itemType===item.itemType&&provenance.get(item.id).sourceSHA256===item.sourceSHA256&&
+   provenance.get(item.id).itemType===item.itemType&&provenance.get(item.id).stylingFacts===comparisonStylingFacts(item)&&
+   provenance.get(item.id).sourceSHA256===item.sourceSHA256&&
    provenance.get(item.id).originalSHA256===item.originalPhoto?.sha256&&provenance.get(item.id).originalOwnerId===item.originalPhoto?.ownerId&&
    provenance.get(item.id).originalImage===item.originalPhoto?.image&&provenance.get(item.id).ready===stylistPieceReady(item));
  const closet=items.filter(item=>!item.ownerId||item.ownerId===session.owner);
