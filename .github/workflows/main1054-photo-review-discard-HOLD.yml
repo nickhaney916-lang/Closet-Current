@@ -28,11 +28,12 @@ jobs:
           base=5e75631b55aca18ad060ca7c074a5e99c3480cfb
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
           test "$PR_BASE" = "$base"
-          test "$(git rev-parse HEAD^)" = 8f321edcacacf1f24aecf47d3529c40436336b0f
-          test "$(git rev-parse HEAD^^)" = 8a3b5a629ce335b5fc5f34ca7bf9c3f192eafb96
-          test "$(git rev-parse HEAD^^^^^^^)" = "$base"
+          test "$(git rev-parse HEAD^)" = 07cc82637c9c68761c969541919256e116903bdf
+          test "$(git rev-parse HEAD^^)" = 49deca098828501b5f1c95f6335419b8cebaf8c2
+          test "$(git rev-parse HEAD^^^^)" = 8a3b5a629ce335b5fc5f34ca7bf9c3f192eafb96
+          test "$(git rev-parse HEAD^^^^^^^^^)" = "$base"
           test "$(git rev-parse HEAD:public/app.js)" = d5dec3d6f3e2ed3f0efcf5c4a457e31b27584be7
-          printf '%s\n' '.github/workflows/main1054-photo-review-discard-HOLD.yml' 'public/app.js' 'scripts/main1054-photo-review-discard-browser.mjs' > "$RUNNER_TEMP/expected-paths"
+          printf '%s\n' '.github/workflows/main1054-photo-review-discard-HOLD.yml' 'public/app.js' 'scripts/main1054-photo-review-discard-browser.mjs' 'tests/mission3-reviewed-editor-postcommit-lease.test.cjs' > "$RUNNER_TEMP/expected-paths"
           git diff --name-only "$base" HEAD > "$RUNNER_TEMP/actual-paths"
           diff -u "$RUNNER_TEMP/expected-paths" "$RUNNER_TEMP/actual-paths"
           git log -1 --format='tested commit %H tree %T'
