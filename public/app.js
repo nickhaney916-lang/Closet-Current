@@ -1024,7 +1024,9 @@ function adjustPhoto(item){
  operationStatus.setAttribute('aria-atomic','true');
  operationStatus.style.cssText='position:sticky;bottom:0;z-index:3;margin:0;background:#fff;overflow-wrap:anywhere';
  const setPhotoOperation=(pending,text='')=>{
-  save.disabled=pending;form.inert=pending;operationStatus.textContent=text;
+  if(pending){save.disabled=true;form.inert=true;}
+  else{save.disabled=false;form.inert=false;}
+  operationStatus.textContent=text;
  };
  const reportPhotoOperationError=text=>{setPhotoOperation(false,text);message(text);};
  const closePhotoEditor=()=>{
