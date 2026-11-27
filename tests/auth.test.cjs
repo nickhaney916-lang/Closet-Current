@@ -238,3 +238,38 @@ test('incomplete startup refresh stays locked and preserves the previous credent
  assert.equal(a.window.closetAuth.user.id,'fixture-owner');
  assert.equal(JSON.parse(a.saved.get('closet-current-auth-v1')).refresh_token,'new-refresh');
 });
+
+
+test('successful login clears the submitted password and restores masking before unlocking',async()=>{
+ const a=app(async()=>response({access_token:'test-access',refresh_token:'test-refresh',user:{id:'test-user'},expires_in:3600}));
+ a.get('authPasswordToggle').onclick();
+ assert.equal(a.get('authPassword').type,'text');
+ await a.submit();
+ assert.equal(a.window.closetAuth.user.id,'test-user');
+ assert.equal(a.get('authGate').hidden,true);
+ assert.equal(a.get('authPassword').value,'');
+ assert.equal(a.get('authPassword').type,'password');
+ assert.equal(a.get('authPasswordToggle').title,'Show password');
+});
+test('cross-tab session lock clears and masks any residual password before showing login',async()=>{
+ const a=app(async()=>response({access_token:'test-access',refresh_token:'test-refresh',user:{id:'test-user'},expires_in:3600}));
+ await a.submit();
+ a.get('authPassword').value='synthetic-residual';
+ a.get('authPasswordToggle').onclick();
+ a.saved.delete('closet-current-auth-v1');
+ a.listeners.storage({key:'closet-current-auth-v1'});
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.get('appShell').hidden,true);
+ assert.equal(a.get('authGate').hidden,false);
+ assert.equal(a.get('authPassword').value,'');
+ assert.equal(a.get('authPassword').type,'password');
+ assert.equal(a.get('authPasswordToggle').title,'Show password');
+});
+test('failed login keeps the entered password for an explicit retry',async()=>{
+ const a=app(async()=>response({error_code:'invalid_credentials',msg:'Invalid login credentials'},false));
+ await a.submit();
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.get('authPassword').value,'test-password-only');
+ assert.equal(a.get('authPassword').type,'password');
+ assert.equal(a.get('authSubmit').disabled,false);
+});
