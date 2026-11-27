@@ -1013,6 +1013,17 @@ function adjustPhoto(item){
   suggestion.append(use);form.prepend(suggestion);
  }
  const save=node('button','Save changes','primary'),cancel=node('button','Cancel','secondary'),remove=node('button','Remove photo','secondary');
+ // Keep feedback outside the inert form so it remains visible and announced
+ // throughout the pending operation, including on small scrolling dialogs.
+ const operationStatus=node('p',null,'fine photo-operation-status');
+ operationStatus.setAttribute('role','status');
+ operationStatus.setAttribute('aria-live','polite');
+ operationStatus.setAttribute('aria-atomic','true');
+ operationStatus.style.cssText='position:sticky;bottom:0;z-index:3;margin:0;background:#fff;overflow-wrap:anywhere';
+ const setPhotoOperation=(pending,text='')=>{
+  save.disabled=pending;form.inert=pending;operationStatus.textContent=text;
+ };
+ const reportPhotoOperationError=text=>{setPhotoOperation(false,text);message(text);};
  cancel.type=remove.type='button';cancel.onclick=()=>{if(!save.disabled)dialog.close();};
  dialog.oncancel=event=>{if(save.disabled)event.preventDefault();};
  // PHOTO120 only for actual *unsaved* camera captures, not a saved-piece edit.
@@ -1096,11 +1107,11 @@ function adjustPhoto(item){
    editorSession.assertCurrent();
    if(expectedSavedRow){
     if(!confirm('Delete this closet piece? It will also be removed from saved outfits and the current outfit draft. Other pieces and outfit names will be kept.'))return;
-    editorSession.assertCurrent();save.disabled=true;form.inert=true;
+    editorSession.assertCurrent();setPhotoOperation(true,'Removing photo…');
     await removeItem(item.id,expectedSavedRow);
    }
    else if(expectedDraftRow){
-    save.disabled=true;form.inert=true;
+    setPhotoOperation(true,'Removing photo…');
     await persistDraft({required:true,mode:'remove',expected:expectedDraftRow});
    }
    else throw Error('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS');
@@ -1113,13 +1124,12 @@ function adjustPhoto(item){
    }
    editorSession.assertCurrent();dialog.close();render();
   }catch(error){if(!editorSession.current())return;
-   save.disabled=false;form.inert=false;
-   message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?
+   reportPhotoOperationError(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?
    'This clothing piece changed in another tab. Reload My Closet before removing it.':
    'This pending photo changed or could not be removed. Nothing else was deleted. Reload Photo results and try again.');}};
  form.onsubmit=async event=>{
   event.preventDefault();if(save.disabled)return;
-  save.disabled=true;form.inert=true;
+  setPhotoOperation(true,'Saving changes…');
   try{
   editorSession.assertCurrent();
   const value={...collect(),name:(typeof draft.name==='string'?draft.name.trim():'')||
@@ -1220,8 +1230,7 @@ function adjustPhoto(item){
   // This editor cannot report a late old-owner failure to a newly signed
   // account, even if its native transaction committed before revocation.
   if(!editorSession.current())return;
-  save.disabled=false;form.inert=false;
-  message(typeof reviewedCapture120!=='undefined'&&reviewedCapture120?'Reviewed garment was not saved. '+String(error.message||error)+
+  reportPhotoOperationError(typeof reviewedCapture120!=='undefined'&&reviewedCapture120?'Reviewed garment was not saved. '+String(error.message||error)+
    ' Your original photo remains available for review.':
    correction10?'Saved garment not overwritten. '+String(error.message||error)+
    '. Reopen Adjust to review the latest clothing details.':
@@ -1238,7 +1247,7 @@ function adjustPhoto(item){
    'Could not save changes. Try again.');
  }};
  dialog.onclose=()=>{if(editorSession.current()&&batch.includes(item)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
- const actions=node('div',null,'actions');actions.append(save,cancel,remove);form.append(actions);dialog.append(form);document.body.append(dialog);dialog.showModal();
+ const actions=node('div',null,'actions');actions.append(save,cancel,remove);form.append(actions);dialog.append(form,operationStatus);document.body.append(dialog);dialog.showModal();
  // An explicit research URL can mount the original M1 comparison policy in
  // the genuine native owner Photo Results editor. Its output only changes
  // UNSAVED select fields. M3 canonical JPEG/owner-review/IDB CAS remains writer.
