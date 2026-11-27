@@ -3222,7 +3222,7 @@ function memoryReviewOwnerLease(){
  return {epoch,ownerDB,owner,current};
 }
 function scheduleMemoryReview(){
- if(typeof ClothingMemory==='undefined'||memoryReviewTimer||memoryReviewRunning)return;
+ if(typeof ClothingMemory==='undefined'||document.hidden||memoryReviewTimer||memoryReviewRunning)return;
  const lease=memoryReviewOwnerLease();
  if(!lease.current())return;
  const timer=setTimeout(()=>{
@@ -3258,7 +3258,7 @@ async function reviewRecognitionMemory(){
  }finally{
   if(lease.current()){
    memoryReviewRunning=false;refreshRecognitionMemorySurfaces();
-   if(completed===8&&!memoryReviewTimer){
+   if(completed===8&&!memoryReviewTimer&&!document.hidden){
     const timer=setTimeout(()=>{
      if(memoryReviewTimer!==timer||!lease.current())return;
      memoryReviewTimer=null;reviewRecognitionMemory().catch(()=>{});
@@ -3269,7 +3269,11 @@ async function reviewRecognitionMemory(){
  }
 }
 closetReady.then(scheduleMemoryReview);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleMemoryReview();});
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden){
+  if(memoryReviewTimer!==null){clearTimeout(memoryReviewTimer);memoryReviewTimer=null;}
+ }else scheduleMemoryReview();
+});
 function pauseCameraOnInterruption(){
  // Invalidate even a brief hidden->visible or BFCache transition.
  ++mediaLifecycleEpoch;
