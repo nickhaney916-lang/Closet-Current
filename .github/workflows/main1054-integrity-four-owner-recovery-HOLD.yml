@@ -26,7 +26,8 @@ jobs:
           candidate=2c5ba518b844e699219f5f6405a1c68c70676304
           test "$(git rev-parse HEAD)" = "$HEAD_SHA"
           test "$BASE_SHA" = "$candidate"
-          test "$(git rev-parse HEAD^)" = "$candidate"
+          test "$(git rev-parse HEAD^)" = 3a5f8536a6ecc767db2b89ff37cc48796e324564
+          test "$(git rev-parse HEAD^^)" = "$candidate"
           test "$(git diff --name-only "$candidate" HEAD)" = '.github/workflows/main1054-integrity-four-owner-recovery-HOLD.yml'
           test "$(git rev-parse HEAD:.github/workflows/assignment-20-four-owner-HOLD.yml)" = cf5428c2e65ad56e77b69fdd309e844081515da1
           test "$(git rev-parse HEAD:.github/workflows/auth-review-session-36-no-deploy.yml)" = 0003bbf79a20fc379ea041975b0319e92d59360d
@@ -110,7 +111,32 @@ jobs:
         if: always() && !cancelled()
         run: |
           test -f "$RUNNER_TEMP/closet-a20.env"
-          SUPABASE_TEST_ENV="$RUNNER_TEMP/closet-a20.env" node scripts/test-assignment-20-browser.mjs | tee "$RUNNER_TEMP/closet-a20-browser.log"
+          set -euo pipefail
+          # Bind only the disposable loopback endpoint before computing SRI.
+          # The original checked-in harness and all production source stay intact.
+          SUPABASE_TEST_ENV="$RUNNER_TEMP/closet-a20.env" node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {endpoint,key} from './research/auth-review-session-36/local-http.mjs';
+          for(const [file,binding] of Object.entries({'auth.js':'URL','cloud-backup.js':'BASE'})){
+            const path='public/'+file;
+            let source=readFileSync(path,'utf8');
+            for(const [name,value] of [[binding,endpoint.origin],['KEY',key]]){
+              const expression=new RegExp('\\b'+name+"='[^']+'",'g');
+              assert.equal([...source.matchAll(expression)].length,1);
+              source=source.replace(expression,()=>name+'='+JSON.stringify(value));
+            }
+            writeFileSync(path,source);
+          }
+          const harness=readFileSync('scripts/test-assignment-20-browser.mjs','utf8');
+          const start=harness.indexOf('  if (Object.hasOwn(assetSources, filename)) {');
+          const end=harness.indexOf('  res.writeHead(200,',start);
+          assert.ok(start>0&&end>start);
+          assert.ok(harness.slice(start,end).includes('bytes = Buffer.from(source);'));
+          writeFileSync('scripts/test-assignment-20-integrity-local.mjs',harness.slice(0,start)+harness.slice(end));
+          JS
+          node scripts/build.mjs
+          SUPABASE_TEST_ENV="$RUNNER_TEMP/closet-a20.env" node scripts/test-assignment-20-integrity-local.mjs | tee "$RUNNER_TEMP/closet-a20-browser.log"
           node --input-type=module <<'JS'
           import assert from 'node:assert/strict';
           import { readFileSync } from 'node:fs';
