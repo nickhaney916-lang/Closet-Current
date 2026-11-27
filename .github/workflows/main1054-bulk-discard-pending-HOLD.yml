@@ -35,9 +35,12 @@ jobs:
           base=3a3778d864a7b3e6317e0a304d8067448d1062a3
           test "$PR_BASE" = "$base"
           test "$(git rev-parse HEAD)" = "$PR_HEAD"
-          test "$(git rev-parse HEAD^)" = f32ad4f956e3a7923ad964f0a3da09b5e44ea92d
-          test "$(git rev-parse HEAD^^)" = d886cc5fe38382658a8d0bb5fae6f9e9842f8947
-          test "$(git rev-parse HEAD^^^)" = "$base"
+          test "$(git rev-parse HEAD^)" = 8eef1a81830e7b8f6aa9bccdf3dc705dfdaede9a
+          test "$(git rev-parse HEAD^^)" = 657b172babb07aecac9cbad22b7a2e23fca5a074
+          test "$(git rev-parse HEAD^^^)" = f32ad4f956e3a7923ad964f0a3da09b5e44ea92d
+          test "$(git rev-parse HEAD^^^^)" = d886cc5fe38382658a8d0bb5fae6f9e9842f8947
+          test "$(git rev-parse HEAD^^^^^)" = "$base"
+          test "$(git rev-parse HEAD:public/app.js)" = bda9515f2b6d0350bebcebe5fd71210c53b8a67d
           test "$(git rev-parse HEAD:scripts/build.mjs)" = d2349622d1ea3977ba1f0710d247bd047a21785c
           printf '%s\n' '.github/workflows/main1054-bulk-discard-pending-HOLD.yml' 'public/app.js' 'scripts/main1054-bulk-discard-pending-browser.mjs' > "$RUNNER_TEMP/expected-paths"
           git diff --name-only "$base" HEAD > "$RUNNER_TEMP/actual-paths"
