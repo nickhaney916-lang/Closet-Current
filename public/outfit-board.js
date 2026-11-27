@@ -336,6 +336,8 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
    throw Error('Your account changed. Reopen your closet before saving this outfit.');
  };
  assertOwner();
+ // Pin the live comparison roster before waiting for the queued transaction.
+ const expectedComparisonRoster=comparison?new Map(items.map(row=>[row.id,outfitSavedItemFacts(row)])):null;
  const current=structuredClone(replaceCurrent===null?currentBoard:replaceCurrent),candidate=appendSaved?structuredClone(appendSaved):null,
   replacement=replaceSaved===null?null:structuredClone(replaceSaved);
  let proof33=null,picker33Gate=null;
@@ -361,11 +363,14 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
   const tx=ownerDB.transaction(candidate||proof33?['state','items']:draftStores,'readwrite'),store=tx.objectStore('state');
   let failure,saved,keepStoredDraft=Boolean(manageSaved||comparison);
   if(comparison){
-   const keys=tx.objectStore('items').getAllKeys();
-   keys.onsuccess=()=>{try{
+   const roster=tx.objectStore('items').getAll();
+   roster.onsuccess=()=>{try{
     assertOwner();
-    if(keys.result.length!==comparison.ids.size||keys.result.some(id=>!comparison.ids.has(id)))
-     throw outfitWardrobeChanged();
+    if(roster.result.length!==comparison.ids.size||expectedComparisonRoster.size!==comparison.ids.size||
+       roster.result.some(row=>{
+        const expected=expectedComparisonRoster.get(row.id),actual=outfitSavedItemFacts(row);
+        return !comparison.ids.has(row.id)||!expected||expected.length!==actual.length||!expected.every((v,i)=>v===actual[i]);
+       }))throw outfitWardrobeChanged();
    }catch(error){failure=error;tx.abort();}};
   }
   if(candidate||proof33)for(const [slotId,id]of Object.entries(candidate?.slots||current.slots)){
