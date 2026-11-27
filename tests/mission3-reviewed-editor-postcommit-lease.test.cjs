@@ -26,7 +26,11 @@ const newer={id:'new-session-item',ownerId:'B',image:photo,
  name:'Red coat',category:'Outerwear',itemType:'Coat',color:'Red'};
 function deferred(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});promise.catch(()=>{});return {promise,resolve,reject};}
 function element(tag,text=''){
+ const events=new EventTarget();
  return {tag,textContent:text,children:[],style:{},open:false,isConnected:false,
+  addEventListener:events.addEventListener.bind(events),
+  removeEventListener:events.removeEventListener.bind(events),
+  dispatchEvent:events.dispatchEvent.bind(events),
   disabled:false,checked:tag==='input',hidden:false,
   append(...children){this.children.push(...children);},
   prepend(...children){this.children.unshift(...children);},
