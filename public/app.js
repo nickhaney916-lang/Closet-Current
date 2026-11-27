@@ -1096,9 +1096,13 @@ function adjustPhoto(item){
    editorSession.assertCurrent();
    if(expectedSavedRow){
     if(!confirm('Delete this closet piece? It will also be removed from saved outfits and the current outfit draft. Other pieces and outfit names will be kept.'))return;
-    editorSession.assertCurrent();await removeItem(item.id,expectedSavedRow);
+    editorSession.assertCurrent();save.disabled=true;form.inert=true;
+    await removeItem(item.id,expectedSavedRow);
    }
-   else if(expectedDraftRow)await persistDraft({required:true,mode:'remove',expected:expectedDraftRow});
+   else if(expectedDraftRow){
+    save.disabled=true;form.inert=true;
+    await persistDraft({required:true,mode:'remove',expected:expectedDraftRow});
+   }
    else throw Error('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS');
    editorSession.assertCurrent();
    items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);
@@ -1109,6 +1113,7 @@ function adjustPhoto(item){
    }
    editorSession.assertCurrent();dialog.close();render();
   }catch(error){if(!editorSession.current())return;
+   save.disabled=false;form.inert=false;
    message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?
    'This clothing piece changed in another tab. Reload My Closet before removing it.':
    'This pending photo changed or could not be removed. Nothing else was deleted. Reload Photo results and try again.');}};
