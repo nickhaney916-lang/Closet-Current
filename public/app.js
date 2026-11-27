@@ -143,6 +143,7 @@ window.addEventListener('closet:session-locked',()=>{
  memoryReviewRunning=false;
  try{db?.close();}catch{}
  db=null;items=[];batch=[];startupWardrobeRecoveryCount=0;failedDraftCaptures.clear();
+ const discardControl=$('discard');if(discardControl)discardControl.disabled=false;
  for(const image of document.querySelectorAll('#appShell img, dialog img')){
   const source=image.getAttribute('src');
   if(source?.startsWith('blob:'))URL.revokeObjectURL(source);
@@ -2151,6 +2152,7 @@ $('refreshReview').onclick=async()=>{
  }
 };
 $('discard').onclick=async()=>{
+ const discardControl=$('discard');if(discardControl.disabled)return;
  // Confirmed destructive review is authorized for exactly one owner/auth/DB
  // and capture epoch. An IDB CAS protects the source, but cannot by itself
  // prevent a completed old-session callback from clearing the next UI.
@@ -2170,6 +2172,7 @@ $('discard').onclick=async()=>{
  try{lease.assertLease();}catch{return;}
  if(!stillReviewing())
   return message('Photo results changed during confirmation. Nothing was discarded by this action. Review the photos and try again.');
+ discardControl.disabled=true;
  try{
   await commitReviewedDraftCAS(reviewed.map(x=>({before:x.before,after:null})),()=>{
    lease.assertLease();
@@ -2189,6 +2192,8 @@ $('discard').onclick=async()=>{
   // them to reconcile the exact private draft before attempting a retry.
   try{lease.assertLease();}catch{return;}
   message('Could not confirm whether those unfinished photos were discarded. Review and refresh Photo results from private device storage before retrying.');
+ }finally{
+  try{lease.assertLease();if(discardControl.isConnected)discardControl.disabled=false;}catch{}
  }
 };
 $('export').onclick=async()=>{
