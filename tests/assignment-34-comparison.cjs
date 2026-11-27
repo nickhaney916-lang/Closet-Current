@@ -149,3 +149,38 @@ test('atomic outfit save fingerprint detects concurrent garment lifecycle change
  assert.equal(same({...row,availability:undefined}),true);
  assert.equal(same({...row,deleted:false,sourceRevoked:false}),true);
 });
+
+test('outfit persistence rejects explicitly foreign original photograph owners',async()=>{
+ const source=readFileSync('public/outfit-board.js','utf8');
+ const part=source.slice(source.indexOf('async function persistBoardState'),source.indexOf('async function saveOwnedOutfit'));
+ // Simulate IDB request ordering and rollback; no native database claim.
+ const harness=`
+ const structuredClone=x=>JSON.parse(JSON.stringify(x));
+ const row={id:'a',ownerId:'owner',category:'Tops',itemType:'T-shirt',originalPhoto:{ownerId:photoOwner}};
+ const currentBoard={slots:{top:'a'}},outfitSlots=[{id:'top'}];
+ let boardPendingWrites=0,boardExpectedStoredDraft='null',boardCommittedDraft=null,boardConflictDraft=null,savedOutfitBoards=[],stored=null;
+ const nativeLossless04Active=false,normalizeClothing=x=>({...x,seasons:[]}),slotAllows=()=>true,stylistPieceReady=()=>true,queued=fn=>fn();
+ const window={closetAuth:{user:{id:'owner'}}};
+ const db={name:'closet-current-user-owner',transaction(){
+  const requests=[];let aborted=false,staged=null;
+  const req=result=>{const r={result};requests.push(r);return r;};
+  const tx={objectStore(name){return name==='items'?{get:()=>req(row)}:{get:()=>req(undefined),put:value=>{staged=value;}};},
+   abort(){aborted=true;}};
+  Promise.resolve().then(()=>{while(requests.length&&!aborted)requests.shift().onsuccess?.();
+   if(aborted)tx.onabort?.();else{stored=staged;tx.oncomplete?.();}});
+  return tx;
+ }};
+ `;
+ const scenario=`
+ return (async()=>{try{
+  await persistBoardState(mode==='saved'?{appendSaved:currentBoard,expectedClothing:{a:outfitSavedItemFacts(row)}}:{});
+  return {accepted:true,written:!!stored};
+ }catch(e){return {accepted:false,written:!!stored,code:e.code};}})();
+ `;
+ for(const mode of ['saved','draft'])for(const [owner,expected] of [['owner',true],['other',false],[undefined,true]]){
+  const result=await new Function('photoOwner','mode',harness+part+scenario)(owner,mode);
+  assert.equal(result.accepted,expected);
+  assert.equal(result.written,expected);
+  if(!expected)assert.equal(result.code,'OUTFIT_WARDROBE_CHANGED');
+ }
+});
