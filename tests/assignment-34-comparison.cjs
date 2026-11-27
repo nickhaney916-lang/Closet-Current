@@ -202,3 +202,48 @@ test('comparison lease expires on original source and garment piece identity cha
  assert.equal(runComparison(initial+'return !!stylistComparisonDraft.current();'),true);
  assert.equal(runComparison(initial+"item.outfitSourceId='source-a';item.sourcePieceKey='piece-a';return !!stylistComparisonDraft.current();"),true);
 });
+
+test('comparison outfit persistence rejects same-ID durable wardrobe edits',async()=>{
+ const source=readFileSync('public/outfit-board.js','utf8');
+ const part=source.slice(source.indexOf('async function persistBoardState'),source.indexOf('async function saveOwnedOutfit'));
+ // Simulated IDB ordering and rollback; native transaction acceptance is separate.
+ const harness=`
+ const structuredClone=x=>JSON.parse(JSON.stringify(x));
+ const items=[{id:'a',ownerId:'owner',category:'Tops',itemType:'T-shirt',color:'Black'},
+  {id:'b',ownerId:'owner',category:'Shoes',itemType:'Sneakers',color:'White',availability:'ready'}];
+ const durable=structuredClone(items);
+ if(change==='color')durable[1].color='Red';
+ if(change==='availability')durable[1].availability='laundry';
+ if(change==='owner')durable[1].ownerId='other';
+ if(change==='removed')durable.pop();
+ if(change==='added')durable.push({...durable[1],id:'c'});
+ const currentBoard={slots:{top:'a'}},outfitSlots=[{id:'top'}];
+ let boardPendingWrites=0,boardExpectedStoredDraft='null',boardCommittedDraft=null,boardConflictDraft=null,savedOutfitBoards=[],stored=null;
+ const nativeLossless04Active=false,normalizeClothing=x=>({...x,seasons:[]}),slotAllows=()=>true,stylistPieceReady=()=>true,queued=fn=>fn();
+ const window={closetAuth:{user:{id:'owner'}}};
+ const db={name:'closet-current-user-owner',transaction(){
+  const requests=[];let aborted=false,staged=null;
+  const req=result=>{const r={result};requests.push(r);return r;};
+  const tx={objectStore(name){return name==='items'?{
+   get:id=>req(durable.find(row=>row.id===id)),getAllKeys:()=>req(durable.map(row=>row.id)),getAll:()=>req(durable)
+  }:{get:()=>req(undefined),put:value=>{staged=value;}};},abort(){aborted=true;}};
+  Promise.resolve().then(()=>{while(requests.length&&!aborted)requests.shift().onsuccess?.();
+   if(aborted)tx.onabort?.();else{stored=staged;tx.oncomplete?.();}});
+  return tx;
+ }};
+ `;
+ const scenario=`
+ return (async()=>{try{
+  await persistBoardState({appendSaved:currentBoard,expectedClothing:{a:outfitSavedItemFacts(items[0])},
+   comparison:{ids:new Set(items.map(x=>x.id)),assertCurrent(){}}});
+  return {accepted:true,written:!!stored};
+ }catch(e){return {accepted:false,written:!!stored,code:e.code};}})();
+ `;
+ for(const change of ['none','color','availability','owner','removed','added']){
+  const result=await new Function('change',harness+part+scenario)(change);
+  const expected=change==='none';
+  assert.equal(result.accepted,expected,change);
+  assert.equal(result.written,expected,change);
+  if(!expected)assert.equal(result.code,'OUTFIT_WARDROBE_CHANGED',change);
+ }
+});
