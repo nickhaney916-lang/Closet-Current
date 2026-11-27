@@ -1509,9 +1509,17 @@ function openSavedClothingEditor(item,{reviewRow,returnFocus}={}){
   f.style.maxWidth='100%';f.style.minWidth='0';
  }const editStatus=node('p',null,'fine');editStatus.setAttribute('role','status');editStatus.setAttribute('aria-live','polite');editStatus.style.cssText='grid-column:1 / -1;margin:0;white-space:normal;overflow-wrap:anywhere';
  const protectUnsaved=event=>{if(dirty||saving){event.preventDefault();event.returnValue='';}};window.addEventListener('beforeunload',protectUnsaved);f.addEventListener('input',()=>dirty=true);f.addEventListener('change',()=>dirty=true);
+ // Lock only the editable content so the pending/error status stays available.
+ // Inert also prevents keyboard edits without changing individual disabled states.
+ const editContent=[...f.children].filter(child=>!child.inert);
+ const setSaving=value=>{
+  saving=value;
+  ok.disabled=cancel.disabled=value;
+  for(const child of editContent)child.inert=value;
+ };
  const closeEditor=()=>{if(saving)return;if(!dirty||confirm('Discard your unsaved clothing changes?'))dialog.close();};
  dialog.addEventListener('cancel',event=>{event.preventDefault();closeEditor();});
- cancel.type='button';cancel.onclick=closeEditor;f.onsubmit=async e=>{e.preventDefault();if(saving)return;try{assertEditor();}catch{return;}saving=true;ok.disabled=cancel.disabled=true;editStatus.textContent='Saving changes…';try{assertEditor();const updated={...collect(),name:draft.name.trim()||'Closet piece'};
+ cancel.type='button';cancel.onclick=closeEditor;f.onsubmit=async e=>{e.preventDefault();if(saving)return;try{assertEditor();}catch{return;}setSaving(true);editStatus.textContent='Saving changes…';try{assertEditor();const updated={...collect(),name:draft.name.trim()||'Closet piece'};
   const reviewedRow=typeof reviewRow==='undefined'?null:reviewRow;
   const manual=!!reviewedRow&&!nativeCorrection10Active();
   let durableUpdate;
@@ -1586,7 +1594,7 @@ function openSavedClothingEditor(item,{reviewRow,returnFocus}={}){
     'Changes were not saved. Check the original photo and sign-in, then reopen Adjust details.':
    'Changes could not be saved.';
   editStatus.textContent=errorMessage;message(errorMessage);
-  saving=false;ok.disabled=cancel.disabled=false;}};/* Saved editor actions */{
+  setSaving(false);}};/* Saved editor actions */{
   const actionRow=node('div',null,'actions native-correction10-actions');
   actionRow.style.cssText='position:sticky;bottom:0;z-index:3;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;background:#fff;padding:12px 3px max(12px,env(safe-area-inset-bottom,0px));border-top:1px solid #d9ddd2;min-width:0';
   for(const button of [ok,cancel]){
