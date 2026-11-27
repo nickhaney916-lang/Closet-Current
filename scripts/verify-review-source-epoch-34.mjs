@@ -19,27 +19,52 @@ const patterns=[
  ['C','#479c58','#f5dbac']
 ];
 const sources={};
+const cropRegion={left:88,top:68,width:260,height:200};
+const cropBounds={x:cropRegion.left/520,y:cropRegion.top/400,
+ width:cropRegion.width/520,height:cropRegion.height/400};
 for(const [id,shirt,bg] of patterns){
  const svg='<svg width="520" height="400" xmlns="http://www.w3.org/2000/svg">'+
   '<rect width="520" height="400" fill="'+bg+'"/>'+
   '<path d="M150 60 L202 25 L318 25 L365 60 L435 180 L365 220 L335 170 L335 356 L178 356 L178 170 L119 218 L90 173 Z" fill="'+shirt+'"/>'+
   '<path d="M203 25 Q260 111 319 25" fill="none" stroke="#494949" stroke-width="6"/></svg>';
  const jpeg=await sharp(Buffer.from(svg)).jpeg({quality:91}).toBuffer();
+ const crop=await sharp(jpeg).extract(cropRegion).jpeg().toBuffer();
  sources[id]={image:'data:image/jpeg;base64,'+jpeg.toString('base64'),
-  sha256:SHA(jpeg),width:520,height:400};
+  sha256:SHA(jpeg),width:520,height:400,
+  crop:'data:image/jpeg;base64,'+crop.toString('base64')};
 }
 const html='<!doctype html><html lang="en"><head><meta name="viewport" content="width=device-width,initial-scale=1">'+
  '<style>body{font:15px/1.4 system-ui;margin:8px}main{max-width:850px;margin:auto}button{padding:8px;border:1px solid #bbb;border-radius:7px}</style>'+
  '</head><body><main><h2>Closet Current · source-epoch review safety</h2><section id="wholeOutfitCapture"></section>'+
  '<input id="outfitCamera" type="file" hidden><input id="outfitUpload" type="file" hidden></main></body></html>';
+const modules=new Set([
+ '/research/cancel-reviewed-capture-74/cancel-review-guard.mjs',
+ '/research/capture-proof-01/source-proof.mjs',
+ '/research/crop-background-color-safety-85/color-safety.mjs',
+ '/research/master-consolidation-1054/p88-source-key-adapter-55.mjs',
+ '/research/multi-garment-capture-01/atomic-group.mjs',
+ '/research/multi-garment-capture-01/detection-intake-58.mjs',
+ '/research/multi-garment-capture-01/flatlay-contrast-29.mjs',
+ '/research/multi-garment-capture-01/previously-saved-review-80.mjs',
+ '/research/multi-garment-capture-01/review-save-finality-34.mjs',
+ '/research/multi-garment-capture-01/review-triage-28.mjs',
+ '/research/multi-garment-capture-01/review-ui.mjs',
+ '/research/multi-garment-capture-01/scene-class-guard-32.mjs',
+ '/research/multi-garment-capture-01/source-near-duplicate-67.mjs',
+ '/research/parallel96-highres/source-derivative-intake96.mjs',
+ '/research/photo-switch-guard-68/source-discard-guard.mjs',
+ '/research/remove-reviewed-garment-76/remove-review-guard.mjs',
+ '/research/same-original-photo-review-72/repeat-source-guard.mjs',
+ '/research/verified-photo-switch-70/source-preflight.mjs'
+]);
 const server=createServer(async(req,res)=>{
  try{
   if(req.method!=='GET')throw Error('Writes forbidden');
   const path=new URL(req.url,'http://localhost').pathname;
   if(path==='/'){res.writeHead(200,{'content-type':'text/html'}).end(html);return;}
-  if(!/^\/research\/multi-garment-capture-01\/(review-ui|atomic-group|review-triage-28|flatlay-contrast-29|scene-class-guard-32|review-save-finality-34)\.mjs$/.test(path)&&
-     path!=='/research/capture-proof-01/source-proof.mjs')throw Error('Unapproved path '+path);
-  res.writeHead(200,{'content-type':'text/javascript'}).end(await readFile(root+path));
+  if(!modules.has(path))throw Error('Unapproved path '+path);
+  const bytes=await readFile(root+path);
+  res.writeHead(200,{'content-type':'text/javascript'}).end(bytes);
  }catch{res.writeHead(404).end();}
 });
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
@@ -62,14 +87,14 @@ try{
     const page=await ctx.newPage();
     page.on('pageerror',e=>errors.push({engine,width,error:e.message.slice(0,150)}));
     await page.goto(origin,{waitUntil:'load'});
-    await page.evaluate(async sources=>{
+    await page.evaluate(async ({sources,cropBounds})=>{
      const db=await new Promise((resolve,reject)=>{
       const r=indexedDB.open('closet-current-user-owner34',1);
       r.onupgradeneeded=()=>r.result.createObjectStore('items',{keyPath:'id'});
       r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
      });
      const control={pending:new Map(),db,owner:'owner34',saved:0,refreshed:0,
-      workerCount:0,staleCrop:null,sources};
+      workerCount:0,saveCrop:null,sources};
      window.__race34=control;
      class FixtureWorker{
       constructor(){this.closed=false;this.onmessage=null;control.workerCount++;}
@@ -89,7 +114,7 @@ try{
      }
      window.Worker=FixtureWorker;
      window.openPhotoCrop=(_piece,handlers)=>{
-      control.staleCrop=handlers.save;
+      control.saveCrop=handlers.save;
       return new Promise(()=>{});
      };
      const {mountMultiGarmentCapture24}=await import('/research/multi-garment-capture-01/review-ui.mjs');
@@ -106,7 +131,10 @@ try{
       refreshNative:async()=>{control.refreshed++;}
      });
      if(!control.module.active)throw Error('Native multi24 review failed to mount');
-     control.start=name=>control.module.startFile(new File([name],name,{type:'image/jpeg'}));
+     control.start=name=>{
+      const bytes=Uint8Array.from(atob(sources[name].image.split(',')[1]),character=>character.charCodeAt(0));
+      return control.module.startFile(new File([bytes],name,{type:'image/jpeg'}));
+     };
      control.resolve=name=>{
       const done=control.pending.get(name);
       if(!done)throw Error('Missing deferred proof '+name);
@@ -118,8 +146,11 @@ try{
       const r=db.transaction('items').objectStore('items').getAll();
       r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
      });
-     control.confirm=()=>{
+     control.confirm=async name=>{
       const root=document.getElementById('multi24Research'),find=()=>control.card();
+      [...find().querySelectorAll('button')].find(x=>x.textContent==='Adjust crop/mask').click();
+      await control.saveCrop({image:sources[name].crop,cropBounds,maskApplied:false});
+      if(find().dataset.cropReviewed55!=='confirmed')throw Error('Crop review did not complete');
       let card=find();const category=card.querySelector('select');
       if(category.value!=='Uncategorized')throw Error('Unverified model class was prefilled');
       category.value='Tops';category.dispatchEvent(new Event('change',{bubbles:true}));
@@ -135,7 +166,7 @@ try{
       return save;
      };
      return true;
-    },sources);
+    },{sources,cropBounds});
 
     // The older source A resolves AFTER source B; A must never replace B.
     await page.evaluate(()=>{window.__race34.start('A');window.__race34.start('B');
@@ -166,7 +197,7 @@ try{
     await page.evaluate(()=>{
      const a=window.__race34;
      [...a.card().querySelectorAll('button')].find(x=>x.textContent==='Adjust crop/mask').click();
-     if(!a.staleCrop)throw Error('Crop editor callback not captured');
+     if(!a.saveCrop)throw Error('Crop editor callback not captured');
      a.start('C');a.resolve('C');
     });
     await page.waitForFunction(()=>{
@@ -177,7 +208,7 @@ try{
      const a=window.__race34;
      let rejected=false;
      try{
-      await a.staleCrop({image:a.sources.B.image,
+      await a.saveCrop({image:a.sources.B.image,
        cropBounds:{x:.17,y:.17,width:.5,height:.5},maskApplied:false});
      }catch(e){rejected=/stale crop|Source changed/.test(String(e));}
      return {rejected,current:a.current()===a.sources.C.image,
@@ -191,8 +222,8 @@ try{
 
     // Once a save starts, ordinary Cancel is disabled. A trusted session
     // invalidation may still revoke the pending source before preflight writes.
-    await page.evaluate(()=>{
-     const a=window.__race34,save=a.confirm();
+    await page.evaluate(async()=>{
+     const a=window.__race34,save=await a.confirm('C');
      save.click();
      const root=document.getElementById('multi24Research');
      const cancel=[...root.querySelectorAll('button')].find(x=>x.textContent==='Cancel extraction');
@@ -217,7 +248,7 @@ try{
      const a=window.__race34;
      return a.current()===a.sources.B.image&&!!a.card();
     },null,{timeout:15000});
-    await page.evaluate(()=>window.__race34.confirm().click());
+    await page.evaluate(async()=>(await window.__race34.confirm('B')).click());
     await page.waitForFunction(()=>window.__race34.saved===1,null,{timeout:20000});
     const result=await page.evaluate(async()=>{
      const a=window.__race34,r=(await a.dbRows())[0];
