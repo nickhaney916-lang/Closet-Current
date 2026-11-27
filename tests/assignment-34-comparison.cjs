@@ -184,3 +184,12 @@ test('outfit persistence rejects explicitly foreign original photograph owners',
   if(!expected)assert.equal(result.code,'OUTFIT_WARDROBE_CHANGED');
  }
 });
+
+test('comparison rejects foreign original photo owners before choices or substitutions',()=>{
+ assert.equal(runComparison('startStylistComparison();return !!stylistComparisonDraft;'),true);
+ assert.equal(runComparison("item.originalPhoto.ownerId='other';startStylistComparison();return !!stylistComparisonDraft;"),false);
+ assert.equal(runComparison("item.ownerId='other';startStylistComparison();return !!stylistComparisonDraft;"),false);
+ assert.equal(runComparison('delete item.originalPhoto.ownerId;startStylistComparison();return !!stylistComparisonDraft;'),true);
+ assert.equal(runComparison("items.push({...item,id:'b',originalPhoto:{...item.originalPhoto,ownerId:'other'}});startStylistComparison();return stylistComparisonDraft.closet.some(x=>x.id==='b');"),false);
+ assert.equal(runComparison("items.push({...item,id:'b'});startStylistComparison();return stylistComparisonDraft.closet.some(x=>x.id==='b');"),true);
+});
