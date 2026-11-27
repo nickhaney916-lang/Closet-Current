@@ -135,6 +135,7 @@ test('previous-owner delayed weekly timer cannot clear a newer owner timer or st
  let id=0;
  const ctx={
   captureOperationEpoch:0,db:a.db,window:{closetAuth:{user:{id:ownerA}}},
+  document:{hidden:false},
   ClothingMemory:{},setTimeout:fn=>{tasks.set(++id,fn);return id;},clearTimeout:()=>{},
   reviewRecognitionMemory:()=>{calls.push('review');return Promise.resolve();}
  };
