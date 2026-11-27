@@ -29,8 +29,9 @@ jobs:
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
           test "$PR_BASE" = "$base"
           test "$(git rev-parse "$base^{tree}")" = 6069716f3c3c95d71fc0fa5aaa19ec615dad7f27
-          test "$(git rev-parse HEAD^)" = "$base"
-          printf '%s\n' '.github/workflows/main1054-saved-editor-pending-HOLD.yml' 'public/app.js' 'scripts/main1054-saved-editor-pending-browser.mjs' > "$RUNNER_TEMP/expected-paths"
+          test "$(git rev-parse HEAD^)" = "a3c3d3f4a0874c545074e99ce532103e77bc9bb9"
+          test "$(git rev-parse HEAD~2)" = "$base"
+          printf '%s\n' '.github/workflows/main1054-saved-editor-pending-HOLD.yml' 'public/app.js' 'scripts/main1054-saved-editor-pending-browser.mjs' 'tests/confirmed-edit-memory-44.test.cjs' 'tests/review-color-provenance-23.test.cjs' > "$RUNNER_TEMP/expected-paths"
           git diff --name-only "$base" HEAD > "$RUNNER_TEMP/actual-paths"
           diff -u "$RUNNER_TEMP/expected-paths" "$RUNNER_TEMP/actual-paths"
           git log -1 --format='tested commit %H tree %T'

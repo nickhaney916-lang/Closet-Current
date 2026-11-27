@@ -14,7 +14,10 @@ const normalize=x=>context.normalized44(x);
 const start=app.indexOf('f.onsubmit=async e=>{e.preventDefault();if(saving)return;');
 const stop=app.indexOf('/* Saved editor actions */',start);
 assert.ok(start>0&&stop>start,'must execute real My Closet saved editor submit, not a duplicated algorithm');
-const submitCode=app.slice(start,stop);
+const savingStart=app.indexOf(' const setSaving=value=>{');
+const savingEnd=app.indexOf(' const closeEditor=',savingStart);
+assert.ok(savingStart>0&&savingEnd>savingStart,'actual saved editor pending-state helper must be located');
+const submitCode=app.slice(savingStart,savingEnd)+app.slice(start,stop);
 const base=()=>({
  id:'jacket44',ownerId:'owner44',name:'Jacket',category:'Outerwear',itemType:'Jacket',
  color:'Gray',colorSource:'photo-estimate',notes:'',pattern:'Solid',fit:'Regular',
@@ -46,7 +49,7 @@ async function runSavedEdit(before,formData,{cas=false,stale=false}={}){
  let closed=false,rendered=0,refreshes=0,attempted=0,errors=[];
  const readCurrent=()=>readOne(db,original.id);
  const sandbox={
-  f:{},saving:false,cancel:{disabled:false},editStatus:{textContent:''},ok:{disabled:false},item:clone(original),draft:clone(edited),
+  f:{},editContent:[],saving:false,cancel:{disabled:false},editStatus:{textContent:''},ok:{disabled:false},item:clone(original),draft:clone(edited),
   collect:()=>normalize(clone(edited)),expectedSavedRow:cas?clone(original):null,
   ClothingMemory,nativeCorrection10Active:()=>cas,saveEditedGarment:async next=>{attempted++;await putOne(db,next);},queued:work=>work(),
   async commitOwnerCorrection10(next,expected){
