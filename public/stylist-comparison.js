@@ -8,7 +8,7 @@ function startStylistComparison(){
  const results=styledCollectionResults,serial=styledCollectionRequestSerial;
  const wardrobe=new Map(items.map(item=>[item.id,item]));
  const provenance=new Map(items.map(item=>[item.id,{original:item.originalPhoto,ready:stylistPieceReady(item)}]));
- const current=()=>session.ownsSession()&&results===styledCollectionResults&&
+ const current=()=>session.ownsSession()&&styledCollectionResultLease?.current()&&results===styledCollectionResults&&
   serial===styledCollectionRequestSerial&&items.length===wardrobe.size&&
   items.every(item=>wardrobe.get(item.id)===item&&provenance.get(item.id).original===item.originalPhoto&&
    provenance.get(item.id).ready===stylistPieceReady(item));
