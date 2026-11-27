@@ -143,7 +143,7 @@ window.addEventListener('closet:session-locked',()=>{
  memoryReviewRunning=false;
  try{db?.close();}catch{}
  db=null;items=[];batch=[];startupWardrobeRecoveryCount=0;failedDraftCaptures.clear();
- for(const control of document.querySelectorAll('#discard'))control.disabled=false;
+ for(const control of document.querySelectorAll('#discard, #refreshReview'))control.disabled=false;
  for(const image of document.querySelectorAll('#appShell img, dialog img')){
   const source=image.getAttribute('src');
   if(source?.startsWith('blob:'))URL.revokeObjectURL(source);
@@ -2146,7 +2146,8 @@ $('refreshReview').onclick=async()=>{
  // must also belong to the exact original signed account and login epoch.
  let lease;
  try{lease=ownerWardrobeMutationLease();}catch{return;}
- const button=$('refreshReview');button.disabled=true;
+ const button=$('refreshReview');if(button.disabled)return;
+ button.disabled=true;
  try{lease.assertLease();await refreshOwnerDraftFromDevice();}
  catch{}
  finally{
