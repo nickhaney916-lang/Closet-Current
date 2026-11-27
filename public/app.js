@@ -1397,7 +1397,16 @@ async function retryFailedPhotoFromCard(item,button){
  let lease;
  try{lease=ownerFailedPhotoRetryLease(item);}catch{return;}
  if(!button.isConnected)return;
+ // The same unfinished original can be rendered in two grids or re-rendered
+ // during a required storage retry. Scope one flight to its exact owner lease.
+ const flights=retryFailedPhotoFromCard.pending??=new Map();
+ const existing=flights.get(item.id);
+ if(existing?.lease.current()){
+  existing.buttons.add(button);button.disabled=true;return;
+ }
+ const flight={lease,buttons:new Set([button])};flights.set(item.id,flight);
  button.disabled=true;
+ let failed=false;
  try{
   lease.assert();
   await retryUncommittedCapture(item);
@@ -1405,12 +1414,16 @@ async function retryFailedPhotoFromCard(item,button){
  }catch{
   // A browser exception may contain original JPEG details. Show no raw text.
   // The required private commit remains UNSAVED until independently confirmed.
-  if(lease.current()&&button.isConnected){
+  if(lease.current()&&[...flight.buttons].some(control=>control.isConnected)){
    message('Photo is still not saved. Check device storage, then retry from Photo results. Keep this page open to retain the photo.');
-   render();
+   failed=true;
   }
  }finally{
-  if(lease.current()&&button.isConnected)button.disabled=false;
+  if(flights.get(item.id)===flight)flights.delete(item.id);
+  if(lease.current()){
+   for(const control of flight.buttons)if(control.isConnected)control.disabled=false;
+   if(failed)render();
+  }
  }
 }
 // Only a verified original with a failed *required* IndexedDB commit may be
@@ -1473,6 +1486,8 @@ function renderPhotoResults(grid,results){
    retry.type='button';retry.dataset.itemId=item.id;
    retry.setAttribute('aria-label','Retry saving this unsaved original photograph privately');
    retry.onclick=()=>retryFailedPhotoFromCard(item,retry);
+   const flight=retryFailedPhotoFromCard.pending?.get(item.id);
+   if(flight?.lease.current()){flight.buttons.add(retry);retry.disabled=true;}
    body.append(retry);
   }
   const adjust=node('button','Adjust','secondary');adjust.type='button';adjust.onclick=()=>adjustPhoto(item);body.append(adjust,cropButton(item));
