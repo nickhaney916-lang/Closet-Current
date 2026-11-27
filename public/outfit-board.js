@@ -449,7 +449,7 @@ function outfitSavedItemFacts(item){
  return [row.id,row.ownerId||null,row.category,row.itemType,row.color,row.colorSource,
   row.pattern,row.sleeveLength,row.fit,row.material,row.occasion,
   [...row.seasons].sort().join('|'),row.image,row.sourceSHA256,
-  row.sourcePieceKey,row.outfitSourceId,row.sourceRevoked===true,row.originalPhoto?.image,row.originalPhoto?.sha256,row.originalPhoto?.ownerId,
+  row.sourcePieceKey,row.outfitSourceId,Boolean(row.sourceRevoked),Boolean(row.deleted),row.availability??'ready',row.originalPhoto?.image,row.originalPhoto?.sha256,row.originalPhoto?.ownerId,
   row.photoOnly===true,row.sourceHashVerified===true,
   row.sourceCropReviewed===true,row.ownerReviewed===true,
   row.sourcePhotoOriginal===true,row.singleGarmentVerified===true,
