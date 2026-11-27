@@ -217,3 +217,24 @@ for(const [name,fail] of [['offline',async()=>{throw new TypeError('offline');}]
 test('empty 204 is still rejected for login',async()=>{
  const a=app(async()=>({ok:true,status:204,json:async()=>{throw Error('empty');}}));await a.submit();assert.equal(a.window.closetAuth.user,null);assert.match(a.get('authStatus').textContent,/unreadable response/);
 });
+
+test('incomplete startup refresh stays locked and preserves the previous credential for retry',async()=>{
+ const saved={epoch:'fixture-epoch',access_token:'old-access',refresh_token:'old-refresh'};
+ const valid={user:{id:'fixture-owner'},access_token:'new-access',refresh_token:'new-refresh'};
+ for(const data of [{...valid,refresh_token:undefined},{...valid,access_token:undefined},
+  {...valid,refresh_token:' '},{...valid,refresh_token:42},{...valid,user:undefined}]){
+  const a=app(async()=>response(data),{},saved);
+  await new Promise(setImmediate);
+  assert.equal(a.window.closetAuth.user,null);
+  assert.equal(a.saved.get('closet-current-auth-v1'),JSON.stringify(saved));
+  assert.match(a.get('authStatus').textContent,/private wardrobe stays locked/);
+  assert.equal(a.get('authSubmit').disabled,false);
+  a.get('authEmail').value='';a.get('authPassword').value='';
+  a.listeners.online();
+  assert.equal(a.reloaded(),true);
+ }
+ const a=app(async()=>response(valid),{},saved);
+ await new Promise(setImmediate);
+ assert.equal(a.window.closetAuth.user.id,'fixture-owner');
+ assert.equal(JSON.parse(a.saved.get('closet-current-auth-v1')).refresh_token,'new-refresh');
+});
