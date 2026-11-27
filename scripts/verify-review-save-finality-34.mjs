@@ -12,15 +12,31 @@ const drawing=Buffer.from('<svg width="700" height="520" xmlns="http://www.w3.or
 const originalBytes=await sharp(drawing).jpeg({quality:87}).toBuffer();
 const originalData='data:image/jpeg;base64,'+originalBytes.toString('base64');
 const originalSHA=createHash('sha256').update(originalBytes).digest('hex');
+const cropRegion={left:91,top:42,width:301,height:405};
+const cropBounds={x:cropRegion.left/700,y:cropRegion.top/520,
+ width:cropRegion.width/700,height:cropRegion.height/520};
+const cropBytes=await sharp(originalBytes).extract(cropRegion).jpeg().toBuffer();
+const cropData='data:image/jpeg;base64,'+cropBytes.toString('base64');
 const html='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font:15px system-ui;margin:12px;background:#fafafa}button{padding:8px}</style></head><body><main><h2>Local reviewed garment save</h2><section id="wholeOutfitCapture"></section><input id="outfitUpload" type="file" hidden><input id="outfitCamera" type="file" hidden></main></body></html>';
 const allowed=new Set([
- '/research/multi-garment-capture-01/review-ui.mjs',
+ '/research/cancel-reviewed-capture-74/cancel-review-guard.mjs',
+ '/research/capture-proof-01/source-proof.mjs',
+ '/research/crop-background-color-safety-85/color-safety.mjs',
+ '/research/master-consolidation-1054/p88-source-key-adapter-55.mjs',
  '/research/multi-garment-capture-01/atomic-group.mjs',
- '/research/multi-garment-capture-01/review-triage-28.mjs',
+ '/research/multi-garment-capture-01/detection-intake-58.mjs',
  '/research/multi-garment-capture-01/flatlay-contrast-29.mjs',
- '/research/multi-garment-capture-01/scene-class-guard-32.mjs',
+ '/research/multi-garment-capture-01/previously-saved-review-80.mjs',
  '/research/multi-garment-capture-01/review-save-finality-34.mjs',
- '/research/capture-proof-01/source-proof.mjs'
+ '/research/multi-garment-capture-01/review-triage-28.mjs',
+ '/research/multi-garment-capture-01/review-ui.mjs',
+ '/research/multi-garment-capture-01/scene-class-guard-32.mjs',
+ '/research/multi-garment-capture-01/source-near-duplicate-67.mjs',
+ '/research/parallel96-highres/source-derivative-intake96.mjs',
+ '/research/photo-switch-guard-68/source-discard-guard.mjs',
+ '/research/remove-reviewed-garment-76/remove-review-guard.mjs',
+ '/research/same-original-photo-review-72/repeat-source-guard.mjs',
+ '/research/verified-photo-switch-70/source-preflight.mjs'
 ]);
 const server=createServer(async(req,res)=>{
  try{
@@ -28,7 +44,8 @@ const server=createServer(async(req,res)=>{
   if(req.method!=='GET')throw Error('blocked method');
   if(path==='/'){res.writeHead(200,{'content-type':'text/html'}).end(html);return;}
   if(!allowed.has(path))throw Error('blocked path');
-  res.writeHead(200,{'content-type':'text/javascript'}).end(await readFile(root+path));
+  const bytes=await readFile(root+path);
+  res.writeHead(200,{'content-type':'text/javascript'}).end(bytes);
  }catch{res.writeHead(404).end();}
 });
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
@@ -51,7 +68,7 @@ try{
     const page=await ctx.newPage();
     page.on('pageerror',error=>errors.push({engine,width,error:error.message.slice(0,160)}));
     await page.goto(origin,{waitUntil:'load'});
-    await page.evaluate(async({originalData,originalSHA})=>{
+    await page.evaluate(async({originalData,originalSHA,cropData,cropBounds})=>{
      const owner='review34-account';
      const db=await new Promise((resolve,reject)=>{
       const r=indexedDB.open('closet-current-user-'+owner,1);
@@ -78,6 +95,9 @@ try{
       terminate(){this.closed=true;}
      }
      window.Worker=FakeWorker;
+     window.openPhotoCrop=(_piece,handlers)=>handlers.save({
+      image:cropData,cropBounds,maskApplied:false
+     });
      const {mountMultiGarmentCapture24}=await import('/research/multi-garment-capture-01/review-ui.mjs');
      const mounted=mountMultiGarmentCapture24({
       doc:document,active:true,
@@ -101,17 +121,19 @@ try{
      const input=document.getElementById('outfitUpload');
      Object.defineProperty(input,'files',{configurable:true,value:[file]});
      input.dispatchEvent(new Event('change',{bubbles:true}));
-    },{originalData,originalSHA});
+    },{originalData,originalSHA,cropData,cropBounds});
     await page.waitForFunction(()=>document.querySelectorAll('article.multi24-card').length===1);
     const card=page.locator('article.multi24-card');
     assert.equal(await card.locator('select').first().inputValue(),'Uncategorized');
+    await card.getByRole('button',{name:'Adjust crop/mask',exact:true}).click();
+    await page.waitForFunction(()=>document.querySelector('article.multi24-card')?.dataset.cropReviewed55==='confirmed');
     await card.locator('select').first().selectOption('Tops');
     await card.locator('select').nth(1).selectOption('T-shirt');
     await card.locator('input[type=text]').fill('Red');
     await card.locator('input[type=checkbox]').check();
     const save=page.getByRole('button',{name:'Save confirmed pieces together'});
     await save.click();
-    await page.waitForFunction(()=>window.__audit34.queued===1,{timeout:10000});
+    await page.waitForFunction(()=>window.__audit34.queued===1,null,{timeout:10000});
     const during=await page.evaluate(()=>{
      const root=document.getElementById('multi24Research');
      const cancel=[...root.querySelectorAll('button')].find(x=>x.textContent==='Cancel extraction');
@@ -135,7 +157,7 @@ try{
     assert.equal(during.saved,0);
     assert.equal(during.reviewedColor,'Red');
     assert.equal(during.sourceUnchanged,true);
-    assert.match(during.status,/Saving is in progress|Saving the exact confirmed snapshot|Checking duplicate/);
+    assert.match(during.status,/Saving is in progress.*Cancellation is unavailable/);
     const pendingFile=engine+'-'+width+'-save-pending.png';
     const pendingImage=await page.screenshot({path:out+'/'+pendingFile,fullPage:true});
     await page.evaluate(()=>window.__releaseCommit34());
