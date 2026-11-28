@@ -137,3 +137,51 @@ test('authorized v6 supports a history-only owner with no remaining wardrobe',as
  await commitDefaultAtomicM3({...args,prepared,confirmed:true});
  assert.deepEqual(await get(dest.ownerDB,'state',key),history);
 });
+
+test('combined v6 preserves the exact source event order at all supported history capacities',async t=>{
+ for(const count of [0,1,25,50,100]){
+  const source=await profile(t),dest=await profile(t);
+  const history=row(Array.from({length:count},(_,i)=>event(i)));
+  const bytes=Buffer.from([255,216,7,38,19,255,217]),image='data:image/jpeg;base64,'+bytes.toString('base64');
+  const sha=createHash('sha256').update(bytes).digest('hex');
+  await put(source.ownerDB,'items',{id:'shirt',ownerId,name:'Shirt',category:'Tops',itemType:'T-shirt',image,sourceSHA256:sha,originalPhoto:{image,sha256:sha}});
+  await put(source.ownerDB,'state',history);
+  const {data}=await exportDurableOwnerBackupM3({...source,researchWearV6:true});
+  const args={...dest,data,researchWearV6:true};
+  const prepared=await prepareDefaultAtomicM3(args);
+  await commitDefaultAtomicM3({...args,prepared,confirmed:true});
+  assert.deepEqual(await get(dest.ownerDB,'state',key),history);
+  assert.equal((await get(dest.ownerDB,'items','shirt')).originalPhoto.image,image);
+  const repeat=await prepareDefaultAtomicM3(args);
+  await commitDefaultAtomicM3({...args,prepared:repeat,confirmed:true});
+  assert.deepEqual(await get(dest.ownerDB,'state',key),history);
+ }
+});
+
+test('combined v6 fails closed on overflow, conflicting events, stale undo and lease loss',async t=>{
+ const source=await profile(t),dest=await profile(t);
+ const history=row(Array.from({length:100},(_,i)=>event(i)));
+ await put(source.ownerDB,'state',history);
+ const {data}=await exportDurableOwnerBackupM3({...source,researchWearV6:true});
+ const separate=row([event(100)]);
+ await put(dest.ownerDB,'state',separate);
+ const args={...dest,data,researchWearV6:true};
+ await assert.rejects(prepareDefaultAtomicM3(args),/100 events/);
+ assert.deepEqual(await get(dest.ownerDB,'state',key),separate);
+ const conflicting=row([{...event(0),name:'Different'}]);
+ await put(dest.ownerDB,'state',conflicting);
+ await assert.rejects(prepareDefaultAtomicM3(args),/Conflicting/);
+ assert.deepEqual(await get(dest.ownerDB,'state',key),conflicting);
+ await put(dest.ownerDB,'state',row([event(0)]));
+ const prepared=await prepareDefaultAtomicM3(args);
+ // Simulate the durable result of an undo while the restore is awaiting consent.
+ await put(dest.ownerDB,'state',row([]));
+ await assert.rejects(commitDefaultAtomicM3({...args,prepared,confirmed:true}),/CONFLICT/);
+ assert.deepEqual(await get(dest.ownerDB,'state',key),row([]));
+ const fresh=await prepareDefaultAtomicM3(args);
+ let active=true;
+ await assert.rejects(commitDefaultAtomicM3({...args,prepared:fresh,confirmed:true,
+  assertLease(){if(!active)throw Error('stale owner');},onStage(){active=false;}}),/stale owner/);
+ assert.deepEqual(await get(dest.ownerDB,'state',key),row([]));
+ assert.equal(await get(dest.ownerDB,'state','cloud-sync'),undefined);
+});
