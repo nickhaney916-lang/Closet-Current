@@ -724,7 +724,7 @@ function renderOutfitBoard(){
  }else currentBoard=cleanOutfitBoard(currentBoard,items);
  mission4Preview1054ReconcileRedraw();
  const top=items.find(x=>x.id===currentBoard.slots.top),dress=top?.category==='Dresses';
- $('outfitFigure').classList.toggle('has-outer-coat',currentBoard.layerCount>=3);const slots=$('boardSlots'),focusedSlot=slots.contains(document.activeElement)?document.activeElement.dataset.boardSlot:null;slots.replaceChildren();
+ const slots=$('boardSlots'),focusedSlot=slots.contains(document.activeElement)?document.activeElement.dataset.boardSlot:null;slots.replaceChildren();
  for(const slot of outfitSlots){
   if((!nativeLossless04Active&&dress&&slot.level)||slot.extra&&currentBoard.layerCount<slot.level)continue;
   const item=items.find(x=>x.id===currentBoard.slots[slot.id]),idea=currentBoard.ideas[slot.id],covered=dress&&slot.id==='bottom';
