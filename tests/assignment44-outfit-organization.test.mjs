@@ -80,3 +80,60 @@ test('local v5 restore preserves identities, owner references, metadata and orig
  assert.equal((await get(db,'items','shirt')).originalPhoto.image,image);
  assert.equal(await get(foreign.ownerDB,'state','outfit-board'),undefined);
 });
+
+for(const [garmentCount,outfitCount] of [[25,1],[100,10],[250,25],[500,50]]){
+ test(`v5 organization round-trip: ${garmentCount} garments / ${outfitCount} outfits, history and rollback`,async t=>{
+  const owner=await authenticate(),db=owner.ownerDB;
+  t.after(()=>db.close());
+  // Tiny synthetic distinct byte streams exercise the importer's byte/SHA
+  // contract, not image decoding or recognition accuracy.
+  const garments=Array.from({length:garmentCount},(_,i)=>{
+   const source=Buffer.from([255,216,i>>8,i&255,17,255,217]);
+   const picture='data:image/jpeg;base64,'+source.toString('base64');
+   const hash=createHash('sha256').update(source).digest('hex');
+   return {id:'garment-'+i,ownerId:owner.ownerId,name:'Piece '+i,
+    category:'Tops',itemType:'T-shirt',image:picture,sourceSHA256:hash,
+    originalPhoto:{image:picture,sha256:hash}};
+  });
+  const current={name:'Draft',slots:{top:garments[0].id}};
+  const board=migrateOutfitOrganization({id:'outfit-board',current,
+   saved:Array.from({length:outfitCount},(_,i)=>({name:'Twin',slots:{top:garments[i].id},savedAt:legacy.savedAt}))},owner.ownerId);
+  board.organization={...board.organization,
+   favoriteGarmentIds:garments.map(row=>row.id),favoriteOutfitIds:board.saved.map(row=>row.savedOutfitId),
+   collections:[{id:randomUUID(),name:'All',garmentIds:garments.map(row=>row.id),outfitIds:board.saved.map(row=>row.savedOutfitId)}]};
+  const history={id:'outfit-wear-history-v1',owner:owner.ownerId,events:[
+   {id:'wear-1',name:'Earlier outfit',slots:{top:'historically-removed'},day:'2026-11-26',at:Date.parse('2026-11-26T12:00:00Z')}]};
+  const unrelated={id:'assignment44-unrelated',value:'keep'};
+  await new Promise((resolve,reject)=>{
+   const tx=db.transaction(['items','state'],'readwrite');
+   for(const row of garments)tx.objectStore('items').put(row);
+   for(const row of [board,history,unrelated])tx.objectStore('state').put(row);
+   tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+  });
+  const {data}=await exportDurableOwnerBackupM3(owner);
+  assert.equal(data.version,5);
+  assert.equal(data.items.length,garmentCount);
+  assert.deepEqual(data.outfitBoard.saved,board.saved);
+  assert.deepEqual(data.outfitBoard.organization,board.organization);
+  const reduced={...board,saved:[],organization:{...board.organization,
+   favoriteOutfitIds:[],collections:[]}};
+  await put(db,'state',reduced);
+  const prepared=await prepareDefaultAtomicM3({...owner,data});
+  await assert.rejects(commitDefaultAtomicM3({...owner,prepared,confirmed:true,onStage(){throw Error('capacity rollback');}}),/capacity rollback/);
+  assert.deepEqual(await get(db,'state','outfit-board'),reduced);
+  assert.deepEqual(await get(db,'state',history.id),history);
+  assert.deepEqual(await get(db,'state',unrelated.id),unrelated);
+  await commitDefaultAtomicM3({...owner,prepared,confirmed:true});
+  assert.deepEqual(await get(db,'state','outfit-board'),board);
+  assert.deepEqual(await get(db,'state',history.id),history);
+  assert.deepEqual(await get(db,'state',unrelated.id),unrelated);
+  const after=await exportDurableOwnerBackupM3(owner);
+  assert.deepEqual(after.data.items.map(row=>[row.id,row.originalPhoto.image,row.sourceSHA256]),
+   data.items.map(row=>[row.id,row.originalPhoto.image,row.sourceSHA256]));
+  assert.deepEqual(after.data.outfitBoard,data.outfitBoard);
+  // Downgrade with an ordinary legacy backup is explicitly refused.
+  const legacyData={format:'closet-current',version:3,items:[],outfitBoard:{current,saved:[]}};
+  await assert.rejects(prepareDefaultAtomicM3({...owner,data:legacyData}),/version 5/);
+  assert.deepEqual(await get(db,'state','outfit-board'),board);
+ });
+}
