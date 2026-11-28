@@ -23,12 +23,14 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Verify candidate and workflow-only scope
+      - name: Verify candidate and test-only scope
         run: |
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
-          test "$(git rev-parse HEAD^)" = "$CANDIDATE"
+          git merge-base --is-ancestor "$CANDIDATE" HEAD
           test "$(git rev-parse "$CANDIDATE^{tree}")" = 1e65da2cf0fc93f2a7453e2259a92eaebeabcb8e
-          test "$(git diff --name-only "$CANDIDATE" HEAD)" = ".github/workflows/main1054-1736-cumulative-runtime-HOLD.yml"
+          printf '%s\n' ".github/workflows/main1054-1736-cumulative-runtime-HOLD.yml" "scripts/test-parallel99-normal-app-browser.mjs" > "$RUNNER_TEMP/expected-paths"
+          git diff --name-only "$CANDIDATE" HEAD | diff -u "$RUNNER_TEMP/expected-paths" -
+          test "$(git rev-parse HEAD:scripts/test-parallel99-normal-app-browser.mjs)" = 0e7d8b6c7ba95b2c88fee154c2bf3389a03805b7
           git log -1 --format='commit %H tree %T'
       - uses: actions/setup-node@v4
         with:
