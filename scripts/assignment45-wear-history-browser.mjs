@@ -95,7 +95,7 @@ try{
      const {exportDurableOwnerBackupM3}=await import('/public/native-default-verified-backup-export-m3.mjs');
      const {exportOwnerWearSection}=await import('/public/outfit-wear-portability-transaction.mjs');
      const args={ownerDB:db,ownerId:history.owner,assertLease:()=>window.closetAuth.assertCurrent()};
-     return {data:(await exportDurableOwnerBackupM3(args)).data,section:await exportOwnerWearSection(args)};
+     return {data:(await exportDurableOwnerBackupM3(args)).data,section:await exportOwnerWearSection(args),combined:(await exportDurableOwnerBackupM3({...args,researchWearV6:true})).data};
     },{fixtures,history});
     assert.equal(backup.data.version,5);
     // Actual normal wardrobe import on a separate browser profile.
@@ -144,6 +144,30 @@ try{
     assert.deepEqual(actual.data.outfitBoard.organization,backup.data.outfitBoard.organization);
     assert.equal(actual.data.items[0].originalPhoto.image,fixtures[0].originalPhoto.image);
     console.log('A45 NATIVE HISTORY PASS',engine,width,'separate profile, foreign refusal, rollback, offline restore, retry, reload, exact history and original');
+    const combined=await profile(owner);
+    assert.equal(backup.combined.version,6);
+    const receipt=await combined.page.evaluate(async data=>{
+     const {prepareDefaultAtomicM3,commitDefaultAtomicM3}=await import('/public/native-default-atomic-import-m3.mjs');
+     const {exportOwnerWearSection}=await import('/public/outfit-wear-portability-transaction.mjs');
+     const args={ownerDB:db,ownerId:window.closetAuth.user.id,assertLease:()=>window.closetAuth.assertCurrent(),normalizeClothing,validLook,cleanOutfitBoard,researchWearV6:true};
+     const prepared=await prepareDefaultAtomicM3({...args,data});
+     let rollback=false;
+     try{await commitDefaultAtomicM3({...args,prepared,confirmed:true,onStage(){throw Error('combined abort');}});}catch(e){rollback=e.message==='combined abort';}
+     const empty=await readAll(),history=await exportOwnerWearSection(args);
+     await commitDefaultAtomicM3({...args,prepared,confirmed:true});
+     return {rollback,empty:empty.length,history:history.events};
+    },backup.combined);
+    assert.deepEqual(receipt,{rollback:true,empty:0,history:[]});
+    await combined.page.reload({waitUntil:'domcontentloaded'});await ready(combined.page,owner);
+    const recovered=await combined.page.evaluate(async()=>{
+     const {exportDurableOwnerBackupM3}=await import('/public/native-default-verified-backup-export-m3.mjs');
+     return (await exportDurableOwnerBackupM3({ownerDB:db,ownerId:window.closetAuth.user.id,assertLease:()=>window.closetAuth.assertCurrent(),researchWearV6:true})).data;
+    });
+    assert.deepEqual(recovered.wearHistory,backup.combined.wearHistory);
+    assert.deepEqual(recovered.outfitBoard.saved,backup.combined.outfitBoard.saved);
+    assert.deepEqual(recovered.outfitBoard.organization,backup.combined.outfitBoard.organization);
+    assert.equal(recovered.items[0].originalPhoto.image,fixtures[0].originalPhoto.image);
+    console.log('A45 NATIVE COMBINED V6 PASS',engine,width);
    }finally{for(const context of contexts)await context.close();}
   }
  }finally{await browser.close();}
