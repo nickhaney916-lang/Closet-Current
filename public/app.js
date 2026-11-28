@@ -2240,14 +2240,6 @@ $('discard').onclick=async()=>{
   try{lease.assertLease();if(discardControl.isConnected)discardControl.disabled=false;}catch{}
  }
 };
-// A45: isolated fixture UI only. Real accounts and hosted origins must
-// retain the ordinary v3/v5 path, even if a research URL is supplied.
-function wearBackupV6ResearchUI(){
- const query=new URLSearchParams(location.search);
- return query.get('wearBackupV6')==='research'&&location.hostname==='127.0.0.1'&&
-  ['synthetic-assignment-45-a','synthetic-assignment-45-b'].includes(window.closetAuth?.user?.id)&&
-  !['restoreAtomic01','losslessV4M3','nativeLossless04','legacyAtomicM3'].some(key=>query.get(key)==='research');
-}
 $('export').onclick=async()=>{
  // An export started by owner A must never download owner B's wardrobe if
  // startup, an async native backup, or a same-ID re-login finishes later.
@@ -2346,11 +2338,12 @@ $('export').onclick=async()=>{
   const {exportDurableOwnerBackupM3}=
    await import('./native-default-verified-backup-export-m3.mjs');
   assertExport();
+  const researchWearV6=wearBackupV6ResearchUI();
   const result=await exportDurableOwnerBackupM3({
    ownerDB:exportLease.ownerDB,
    ownerId:window.closetAuth.user.id,
    assertCompleteWardrobe,assertLease:assertExport,
-   researchWearV6:wearBackupV6ResearchUI(),
+   researchWearV6,
    assertIdle:()=>{
     if(!idle())throw Error('An original photo or outfit changed during backup export. Retry after saving.');
    }
@@ -2360,7 +2353,7 @@ $('export').onclick=async()=>{
   if(blob.size>100*1024*1024)
    throw Error('This backup exceeds the 100 MB import limit. No incomplete backup was downloaded.');
   const url=URL.createObjectURL(blob),a=node('a');
-  a.href=url;a.download=result.data.version===6?'closet-current-research-v6.json':'closet-current-backup.json';
+  a.href=url;a.download=researchWearV6?'closet-current-research-v6.json':'closet-current-backup.json';
   document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
   report(result.data.version===6?
@@ -2383,6 +2376,14 @@ $('export').onclick=async()=>{
   try{exportLease.assertLease();if(button?.isConnected)button.disabled=false;}catch{}
  }
 };
+// A45: isolated fixture UI only. Real accounts and hosted origins must
+// retain the ordinary v3/v5 path, even if a research URL is supplied.
+function wearBackupV6ResearchUI(){
+ const query=new URLSearchParams(location.search);
+ return query.get('wearBackupV6')==='research'&&location.hostname==='127.0.0.1'&&
+  ['synthetic-assignment-45-a','synthetic-assignment-45-b'].includes(window.closetAuth?.user?.id)&&
+  !['restoreAtomic01','losslessV4M3','nativeLossless04','legacyAtomicM3'].some(key=>query.get(key)==='research');
+}
 $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(!db)return message('Browser storage is unavailable.');if(file.size>100*1024*1024)return message('Backup must be smaller than 100 MB.');
  // A file read and owner confirmation may each take arbitrarily long.
  // A backup selected by one account can never be restored into the next.
