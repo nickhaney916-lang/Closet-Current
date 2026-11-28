@@ -146,18 +146,43 @@ try{
     console.log('A45 NATIVE HISTORY PASS',engine,width,'separate profile, foreign refusal, rollback, offline restore, retry, reload, exact history and original');
     const combined=await profile(owner);
     assert.equal(backup.combined.version,6);
+    // Load the already authorized research adapters while connected.
+    // This proves loaded-app offline operation, not offline cold-start.
+    await combined.page.evaluate(async()=>{
+     window.a45Combined={
+      ...await import('/public/native-default-atomic-import-m3.mjs'),
+      ...await import('/public/outfit-wear-portability-transaction.mjs'),
+      ...await import('/public/native-default-verified-backup-export-m3.mjs')
+     };
+    });
+    await combined.context.setOffline(true);
+    try{
     const receipt=await combined.page.evaluate(async data=>{
-     const {prepareDefaultAtomicM3,commitDefaultAtomicM3}=await import('/public/native-default-atomic-import-m3.mjs');
-     const {exportOwnerWearSection}=await import('/public/outfit-wear-portability-transaction.mjs');
+     const {prepareDefaultAtomicM3,commitDefaultAtomicM3,exportOwnerWearSection,exportDurableOwnerBackupM3}=window.a45Combined;
      const args={ownerDB:db,ownerId:window.closetAuth.user.id,assertLease:()=>window.closetAuth.assertCurrent(),normalizeClothing,validLook,cleanOutfitBoard,researchWearV6:true};
      const prepared=await prepareDefaultAtomicM3({...args,data});
      let rollback=false;
      try{await commitDefaultAtomicM3({...args,prepared,confirmed:true,onStage(){throw Error('combined abort');}});}catch(e){rollback=e.message==='combined abort';}
      const empty=await readAll(),history=await exportOwnerWearSection(args);
+     const board=await new Promise((resolve,reject)=>{
+      const request=db.transaction('state','readonly').objectStore('state').get('outfit-board');
+      request.onsuccess=()=>resolve(request.result);
+      request.onerror=()=>reject(request.error);
+     });
      await commitDefaultAtomicM3({...args,prepared,confirmed:true});
-     return {rollback,empty:empty.length,history:history.events};
+     const repeat=await prepareDefaultAtomicM3({...args,data});
+     await commitDefaultAtomicM3({...args,prepared:repeat,confirmed:true});
+     const {data:offlineBackup}=await exportDurableOwnerBackupM3(args);
+     return {rollback,empty:empty.length,history:history.events,abortedSaved:board?.saved?.length??0,offline:!navigator.onLine,offlineBackup};
     },backup.combined);
-    assert.deepEqual(receipt,{rollback:true,empty:0,history:[]});
+    const {offlineBackup,...checks}=receipt;
+    assert.deepEqual(checks,{rollback:true,empty:0,history:[],abortedSaved:0,offline:true});
+    assert.deepEqual(offlineBackup.wearHistory,backup.combined.wearHistory);
+    assert.deepEqual(offlineBackup.outfitBoard.saved,backup.combined.outfitBoard.saved);
+    assert.deepEqual(offlineBackup.outfitBoard.organization,backup.combined.outfitBoard.organization);
+    assert.equal(offlineBackup.items[0].originalPhoto.image,fixtures[0].originalPhoto.image);
+    console.log('A45 NATIVE COMBINED OFFLINE V6 PASS',engine,width);
+    }finally{await combined.context.setOffline(false);}
     await combined.page.reload({waitUntil:'domcontentloaded'});await ready(combined.page,owner);
     const recovered=await combined.page.evaluate(async()=>{
      const {exportDurableOwnerBackupM3}=await import('/public/native-default-verified-backup-export-m3.mjs');
