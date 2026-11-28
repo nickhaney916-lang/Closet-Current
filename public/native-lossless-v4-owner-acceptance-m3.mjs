@@ -1,3 +1,4 @@
+import {hasOutfitOrganization} from './outfit-organization.mjs';
 /**
  * MISSION3-V4-OWNER-ACCEPTANCE — explicit research-only owner workflow.
  * Integrates the verified RESTORE01 v4 validation and atomic IndexedDB
@@ -70,6 +71,7 @@ async function verifiedTarget(data,ownerId,check){
  const target=structuredClone(data);
  if(!target||target.format!=='closet-current'||target.version!==4||
     target.ownerId!==ownerId)fail('OWNER_BOUND_V4_REQUIRED');
+ if(hasOutfitOrganization(target.state?.['outfit-board']))fail('ORGANIZATION_REQUIRES_LOCAL_V5');
  const json=exact(target);
  if(new TextEncoder().encode(json).byteLength>MAX_BYTES)
   fail('EXCEEDS_100MB_FILE_LIMIT');
@@ -88,6 +90,7 @@ export async function exportLosslessV4M3({
  check();
  const first=await readOwnerSnapshot01(ownerDB,check);
  check();
+ if(hasOutfitOrganization(first.restore.state['outfit-board']))fail('ORGANIZATION_REQUIRES_LOCAL_V5');
  const backup=exportBackup01({ownerId,rows:first.rows});
  const {target,receipt,json}=await verifiedTarget(backup,ownerId,check);
  // The checksum effort can be lengthy on 60 drafts. Recheck the exact
@@ -112,6 +115,7 @@ export async function restoreLosslessV4M3({
  check();
  const {target,receipt}=await verifiedTarget(data,ownerId,check);
  const before=await readOwnerSnapshot01(ownerDB,check);
+ if(hasOutfitOrganization(before.restore.state['outfit-board']))fail('ORGANIZATION_REQUIRES_LOCAL_V5');
  check();
  const yes=await confirm({
   incoming:receipt,existing:before.rows.items.length,

@@ -1,3 +1,4 @@
+import {hasOutfitOrganization,outfitBackupVersion,validateOutfitOrganization} from './outfit-organization.mjs';
 import {distinctReviewedSharedOriginal157} from './native-reviewed-shared-original-157.mjs';
 /**
  * Mission 3 — unflagged v3 backup export from ONE signed-owner durable
@@ -163,6 +164,7 @@ export async function exportDurableOwnerBackupM3({
  inspectOwner(looks,ownerId);
  const storedBoard=state.get('outfit-board');
  let outfitBoard;
+ const organized=hasOutfitOrganization(storedBoard);
  if(storedBoard){
   inspectOwner(storedBoard,ownerId);
   if(!Array.isArray(storedBoard.saved)||storedBoard.saved.length>50||
@@ -178,10 +180,12 @@ export async function exportDurableOwnerBackupM3({
   }
   outfitBoard={current:structuredClone(storedBoard.current),
    saved:structuredClone(storedBoard.saved)};
+  if(organized)outfitBoard.organization=structuredClone(validateOutfitOrganization(storedBoard,ids,ownerId));
  }
- if(!items.length&&!looks.length&&!(outfitBoard?.saved?.length))
+ if(!items.length&&!looks.length&&!(outfitBoard?.saved?.length)&&!organized)
   fail('EMPTY_CLOSET');
- const data={format:'closet-current',version:3,items,looks};
+ const data={format:'closet-current',version:organized?outfitBackupVersion:3,items,looks};
+ if(organized)data.ownerId=ownerId;
  if(outfitBoard)data.outfitBoard=outfitBoard;
  check();
  const json=JSON.stringify(data);
