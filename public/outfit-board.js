@@ -324,6 +324,9 @@ window.addEventListener('closet:session-locked',()=>{
  }
  $('boardSaveStatus').textContent='Signed-out private outfit cleared. Reopen Outfit Builder.';
 });
+// Assignment 44 isolated synthetic-data research only. Do not enable on ordinary accounts:
+// backup, cloud restore and all read adapters are not yet identity-compatible.
+const assignment44IdentityResearch= new URLSearchParams(location.search).get('assignment44Identity')==='research';
 async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraft=null,expectedClothing=null,replaceCurrent=null,manageSaved=null,rejectDuplicate=false,comparison=null}={}){
  if(nativeLossless04Active)throw Error('Unsafe native outfit write blocked; use lossless Save changes or Save outfit');
  if(!db){$('boardSaveStatus').textContent='Browser storage is unavailable. Keep this page open.';throw Error('Browser storage is unavailable.');}
@@ -335,6 +338,9 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
      (replaceDraft&&(replaceDraft.ownerDB!==ownerDB||replaceDraft.auth!==auth||replaceDraft.owner!==owner)))
    throw Error('Your account changed. Reopen your closet before saving this outfit.');
  };
+ assertOwner();
+ if(assignment44IdentityResearch&&replaceSaved!==null)throw Error('Identity research restore is not supported yet.');
+ const identityWrite=assignment44IdentityResearch?(await import('./saved-outfit-identity.mjs')).prepareSavedOutfitWrite:null;
  assertOwner();
  // Pin the live comparison roster before waiting for the queued transaction.
  const expectedComparisonRoster=comparison?new Map(items.map(row=>[row.id,outfitSavedItemFacts(row)])):null;
@@ -421,9 +427,14 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
      error.code='OUTFIT_DUPLICATE';throw error;
     }
    }
-   if(manageSaved)saved.splice(manageSaved.index,1,...(candidate?[candidate]:[]));
-   else if(candidate)saved.push(candidate);
-   const put=()=>store.put({id:'outfit-board',current:keepStoredDraft?(request.result?.current??null):current,saved});
+   if(identityWrite)saved=identityWrite(saved,owner,{candidate,selection:manageSaved});
+   else{
+    if((request.result?.saved||[]).some(row=>row&&('savedOutfitId' in row||'savedOutfitOwnerId' in row)))
+     throw Error('This saved outfit library needs the identity-compatible research adapter. No changes saved.');
+    if(manageSaved)saved.splice(manageSaved.index,1,...(candidate?[candidate]:[]));
+    else if(candidate)saved.push(candidate);
+   }
+   const put=()=>{assertOwner();proof33?.assertCurrent();return store.put({...(identityWrite?request.result:{}),id:'outfit-board',current:keepStoredDraft?(request.result?.current??null):current,saved});};
    if(keepStoredDraft||!draftSlots.length){put();return;}
    // Validate the draft actually being published, even when no named outfit
    // is being saved. The items lock orders this check with garment deletion.
