@@ -26,3 +26,28 @@ export function migrateSavedOutfitIdentity(rows, owner, allocate = () => globalT
   });
   return {saved, changed};
 }
+
+// Called only with the raw committed roster while the owner transaction holds its lock.
+export function prepareSavedOutfitWrite(rows,owner,{candidate=null,selection=null,allocate}={}){
+  if(!Array.isArray(rows))throw Error('Invalid saved outfit roster');
+  if(selection!==null&&(!Number.isInteger(selection.index)||selection.index<0||
+     selection.index>=rows.length||selection.stamp!==JSON.stringify(rows))){
+    const error=Error('Saved outfits changed. Reload, then reopen the outfit to manage it.');
+    error.code='OUTFIT_LIBRARY_CHANGED';throw error;
+  }
+  if(candidate!==null&&(!candidate||typeof candidate!=='object'||Array.isArray(candidate)||
+     Object.prototype.hasOwnProperty.call(candidate,'savedOutfitId')||
+     Object.prototype.hasOwnProperty.call(candidate,'savedOutfitOwnerId')))
+    throw Error('Candidate must not supply saved-outfit identity');
+  const {saved}=migrateSavedOutfitIdentity(rows,owner,allocate);
+  if(selection!==null){
+    const prior=saved[selection.index];
+    if(candidate===null)saved.splice(selection.index,1);
+    else saved[selection.index]={...prior,...candidate,savedOutfitId:prior.savedOutfitId,savedOutfitOwnerId:owner};
+  }else if(candidate!==null){
+    if(saved.length>=50)throw Error('You can save up to 50 outfits.');
+    const next=migrateSavedOutfitIdentity([...saved,candidate],owner,allocate);
+    return next.saved;
+  }
+  return saved;
+}
