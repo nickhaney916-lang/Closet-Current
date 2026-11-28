@@ -173,3 +173,9 @@ jobs:
           (cd "$baseline" && node scripts/build.mjs)
           node scripts/assignment44-outfit-organization-browser.mjs "$ENGINE" "$baseline/dist" baseline
           node scripts/assignment44-outfit-organization-browser.mjs "$ENGINE" dist
+
+      - name: Independent native owner history recovery
+        if: matrix.lane != 'regression'
+        env:
+          ENGINE: ${{ matrix.lane }}
+        run: node scripts/assignment45-wear-history-browser.mjs "$ENGINE" dist
