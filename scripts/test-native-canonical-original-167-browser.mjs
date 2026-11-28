@@ -84,8 +84,14 @@ async function rejectThenRecover(page,engine,width){
  assert.equal(browserDecoding['image/png'],true);
  assert.equal(browserDecoding['image/webp'],true);
  const start=performance.now();
- await input.setInputFiles([...unsupported,file('new-reviewed-blouse.jpg','image/jpeg',capturePhoto)]);
- await page.waitForFunction(count=>window.__lastPhotoImportResult?.results.length===count,unsupported.length+1);
+ // The gallery intake accepts up to ten independent photos per selection.
+ // Keep every original rejection and recovery assertion across two selections.
+ await input.setInputFiles(unsupported.slice(0, 10));
+ await page.waitForFunction(()=>window.__lastPhotoImportResult?.results.length===10);
+ const firstSelection=await page.evaluate(()=>window.__lastPhotoImportResult);
+ const remaining=unsupported.slice(10);
+ await input.setInputFiles([...remaining,file('new-reviewed-blouse.jpg','image/jpeg',capturePhoto)]);
+ await page.waitForFunction(count=>window.__lastPhotoImportResult?.results.length===count,remaining.length+1);
  const evidence=await page.evaluate(async()=>{
   const row=batch[0];
   const image=new Image();image.src=row.image;await image.decode();
@@ -94,6 +100,9 @@ async function rejectThenRecover(page,engine,width){
    photoWidth:image.naturalWidth,photoHeight:image.naturalHeight,photo:row.originalPhoto.sha256,
    orientation:row.originalPhoto.orientation,raw:row.originalPhoto.originalFileSha256};
  });
+ evidence.results.added+=firstSelection.added;
+ evidence.results.errors.unshift(...firstSelection.errors);
+ evidence.results.results.unshift(...firstSelection.results);
  assert.equal(evidence.results.added,1);
  assert.equal(evidence.results.errors.length,unsupported.length);
  assert.equal(evidence.saved,fixtures.length);
