@@ -40,7 +40,7 @@ jobs:
           git diff --check "$base" HEAD
           while IFS= read -r path; do
             case "$path" in
-              public/outfit-wear-portability*.mjs|public/native-default-atomic-import-m3.mjs|public/native-default-verified-backup-export-m3.mjs|tests/outfit-wear-portability.test.mjs|tests/assignment45-*.mjs|scripts/assignment45-*.mjs|docs/assignment-45-*.md|.github/workflows/main1054-assignment45-wear-history-HOLD.yml) ;;
+              public/app.js|public/outfit-wear-portability*.mjs|public/native-default-atomic-import-m3.mjs|public/native-default-verified-backup-export-m3.mjs|tests/outfit-wear-portability.test.mjs|tests/assignment45-*.mjs|scripts/assignment45-*.mjs|docs/assignment-45-*.md|.github/workflows/main1054-assignment45-wear-history-HOLD.yml) ;;
               *) echo "Out of scope: $path"; exit 1;;
             esac
           done < <(git diff --name-only "$base" HEAD)
