@@ -61,8 +61,9 @@ function fixture({native=false,restore=false,ready=false,bridgeReady=false,lossl
  ctx.durableModule={async exportDurableOwnerBackupM3({assertLease,assertIdle}){
   assertLease();assertIdle();
   if(!ctx.items.length)throw Error('Save a closet piece before exporting.');
-  return {json:JSON.stringify({format:'closet-current',version:3,items:ctx.items,
-   outfitBoard:ctx.boardBackup()})};
+  const data={format:'closet-current',version:3,items:ctx.items,
+   outfitBoard:ctx.boardBackup()};
+  return {data,json:JSON.stringify(data)};
  }};
  vm.runInContext(appLease+boardLease+boardExport+handler,ctx,{timeout:1200});
  return {ctx,downloads,created,messages,events,auth,bridge,
