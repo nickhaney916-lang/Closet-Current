@@ -45,7 +45,7 @@ try{
  try{
   for(const width of [320,390,430]){
    const contexts=[];
-   async function profile(id){
+   async function profile(id,research=false){
     const context=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true});
     contexts.push(context);
     await context.route('**/*',async route=>{
@@ -68,7 +68,7 @@ try{
     });
     const page=await context.newPage();
     page.setDefaultTimeout(12000);
-    await page.goto(host);
+    await page.goto(host+(research?'?wearBackupV6=research':''));
     await page.locator('#authEmail').fill(id+'@example.invalid');
     await page.locator('#authPassword').fill('local synthetic fixture');
     await page.locator('#authSubmit').click();
@@ -193,6 +193,35 @@ try{
     assert.deepEqual(recovered.outfitBoard.organization,backup.combined.outfitBoard.organization);
     assert.equal(recovered.items[0].originalPhoto.image,fixtures[0].originalPhoto.image);
     console.log('A45 NATIVE COMBINED V6 PASS',engine,width);
+    // Existing UI controls in explicit synthetic loopback research mode.
+    const ui=await profile(owner,true);
+    await ui.page.evaluate(async()=>{
+     document.getElementById('outfitWearPanel').open=true;
+     await changeOutfitWear('read');
+    });
+    await ui.page.waitForFunction(()=>outfitWearLoaded&&!outfitWearBusy&&outfitWearEvents.length===0);
+    const file={name:'combined-v6.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(backup.combined))};
+    let prompt='';
+    ui.page.once('dialog',async dialog=>{prompt=dialog.message();await dialog.dismiss();});
+    await ui.page.locator('#import').setInputFiles(file);
+    await ui.page.waitForFunction(()=>!document.getElementById('import').disabled);
+    assert.match(prompt,/wear records/);
+    assert.equal(await ui.page.evaluate(()=>items.length),0);
+    assert.equal(await ui.page.evaluate(()=>outfitWearEvents.length),0);
+    ui.page.once('dialog',dialog=>dialog.accept());
+    await ui.page.locator('#import').setInputFiles(file);
+    await ui.page.waitForFunction(()=>!document.getElementById('import').disabled&&outfitWearLoaded&&outfitWearEvents.length===1&&savedOutfitBoards.length===1);
+    assert.deepEqual(await ui.page.evaluate(()=>outfitWearEvents),history.events);
+    const downloadPromise=ui.page.waitForEvent('download');
+    await ui.page.evaluate(()=>document.getElementById('export').click());
+    const download=await downloadPromise;
+    assert.equal(download.suggestedFilename(),'closet-current-research-v6.json');
+    const downloaded=JSON.parse(await readFile(await download.path(),'utf8'));
+    assert.equal(downloaded.version,6);
+    assert.deepEqual(downloaded.wearHistory,backup.combined.wearHistory);
+    assert.deepEqual(downloaded.outfitBoard.saved,backup.combined.outfitBoard.saved);
+    assert.equal(downloaded.items[0].originalPhoto.image,fixtures[0].originalPhoto.image);
+    console.log('A45 RESEARCH UI V6 PASS',engine,width,'cancel, confirm, immediate history refresh, download');
    }finally{for(const context of contexts)await context.close();}
   }
  }finally{await browser.close();}
