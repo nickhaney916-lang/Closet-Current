@@ -383,6 +383,12 @@ function removeItem(id,expected){
      assertCompleteWardrobe(rows.result,states.result,window.closetAuth.user.id);
      const board=states.result.find(row=>row.id==='outfit-board');
      const next=unlinkDeletedGarmentFromOutfits(board,id);
+     if(next?.organization){
+      const organization=next.organization;
+      next.organization={...organization,
+       favoriteGarmentIds:organization.favoriteGarmentIds.filter(value=>value!==id),
+       collections:organization.collections.map(row=>({...row,garmentIds:row.garmentIds.filter(value=>value!==id)}))};
+     }
      const nextState=states.result.map(row=>row===board?next:row);
      assertCompleteWardrobe(rows.result.filter(row=>row.id!==id),nextState,window.closetAuth.user.id);
      if(board&&JSON.stringify(board)!==JSON.stringify(next))state.put(next);
@@ -2325,7 +2331,7 @@ $('export').onclick=async()=>{
  const report=value=>{try{assertExport();message(value);}catch{}};
  try{
   assertExport();
-  if(!idle())throw Error('Save or review all unfinished Photo results and outfit edits before exporting. A v3 backup cannot restore them.');
+  if(!idle())throw Error('Save or review all unfinished Photo results and outfit edits before exporting. The default backup cannot restore them.');
   await pendingWrites;
   assertExport();
   if(!idle())throw Error('Your closet changed while preparing the backup. Finish saving and try again.');
@@ -2348,7 +2354,9 @@ $('export').onclick=async()=>{
   a.href=url;a.download='closet-current-backup.json';
   document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
-  report('Saved clothing, inspiration and outfits downloaded from verified private storage. This v3 backup cannot restore unfinished Photo results; review them before your next export.');
+  report(result.data.version===5?
+   'Version 5 backup downloaded with your outfit favorites and collections. Keep this file for local restore.':
+   'Saved clothing, inspiration and outfits downloaded from verified private storage. This v3 backup cannot restore unfinished Photo results; review them before your next export.');
  }catch(error){
   report(error?.message?.startsWith('M3_EXPORT_UNFINISHED_PHOTOS')?
    'Unfinished photos are on this device but missing from v3 backups. Save or review every Photo result first; no partial backup was downloaded.':

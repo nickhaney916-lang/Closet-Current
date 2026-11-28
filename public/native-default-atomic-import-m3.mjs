@@ -1,3 +1,4 @@
+import {hasOutfitOrganization,outfitBackupVersion,validateOutfitOrganization} from './outfit-organization.mjs';
 import {distinctReviewedSharedOriginal157} from './native-reviewed-shared-original-157.mjs';
 /**
  * MISSION3-DEFAULT-ATOMIC-IMPORT — DRAFT/HOLD release candidate.
@@ -90,7 +91,7 @@ export async function prepareDefaultAtomicM3({
  assertLease();
  const input=structuredClone(data);
  inspectTree(input,ownerId);
- if(!plain(input)||input.format!=='closet-current'||![1,2,3].includes(input.version)||
+ if(!plain(input)||input.format!=='closet-current'||![1,2,3,outfitBackupVersion].includes(input.version)||
     !Array.isArray(input.items)||input.items.length>1000||
     (input.looks!==undefined&&(!Array.isArray(input.looks)||input.looks.length>100)))
   throw Error('LEGACY_ATOMIC_INVALID_BACKUP');
@@ -226,6 +227,12 @@ export async function prepareDefaultAtomicM3({
  ).values()];
  if(nextLooks&&nextLooks.length>100)throw Error('LEGACY_ATOMIC_INSPIRATION_LIMIT');
  let board=null;
+ const organized=input.version===outfitBackupVersion;
+ const inputBoard=input.outfitBoard;
+ if(organized&&input.ownerId!==ownerId)throw Error('Owner-bound version 5 backup required.');
+ if(organized!==hasOutfitOrganization(inputBoard)||
+    !organized&&Array.isArray(inputBoard?.saved)&&inputBoard.saved.some(row=>row&&own(row,'savedOutfitId')))
+  throw Error('Unsupported outfit organization backup version.');
  if(own(input,'outfitBoard')&&input.outfitBoard!==null&&input.outfitBoard!==undefined){
   assertRawBoard(input.outfitBoard,ids);
   const closet=[...allItems.values()].map(normalizeClothing);
@@ -233,7 +240,19 @@ export async function prepareDefaultAtomicM3({
   const cleanSaved=input.outfitBoard.saved.map(row=>cleanOutfitBoard(row,closet));
   verifySlotsUnchanged(input.outfitBoard.current||{},cleanCurrent);
   input.outfitBoard.saved.forEach((row,i)=>verifySlotsUnchanged(row,cleanSaved[i]));
+  const existing=states.get('outfit-board');
+  if(!organized&&hasOutfitOrganization(existing))
+   throw Error('Restore a version 5 backup to replace organized outfits.');
   board={id:'outfit-board',current:cleanCurrent,saved:cleanSaved};
+  if(organized){
+   validateOutfitOrganization(inputBoard,new Set(incoming.map(row=>row.id)),ownerId);
+   board={...board,saved:structuredClone(inputBoard.saved),organization:structuredClone(inputBoard.organization)};
+   if(existing?.saved?.length){
+    const restoredIds=new Set(board.saved.map(row=>row.savedOutfitId));
+    if(existing.saved.some(row=>!restoredIds.has(row.savedOutfitId)))
+     throw Error('This backup would replace other saved outfits. Keep both backups and restore to an empty wardrobe.');
+   }
+  }
  }
  // An import without a replacement board must preserve all current/saved
  // outfit slots when a same-ID garment changes metadata. A T-shirt renamed

@@ -1,0 +1,31 @@
+import {prepareSavedOutfitWrite} from '../public/saved-outfit-identity.mjs';
+function runMutationChecks(prepare){
+ let count=0,serial=0;
+ const alloc=()=>`00000000-0000-4000-8000-${String(++serial).padStart(12,'0')}`;
+ const check=(v,m)=>{if(!v)throw Error(m);count++};
+ const reject=(f,m)=>{let failed=false;try{f()}catch{failed=true}check(failed,m)};
+ const owner='synthetic-a',other='synthetic-b',base={name:'Work',slots:{top:'g1'},createdAt:42,wearHistory:[3]};
+ const raw=[base,{...base}];
+ const saved=prepare(raw,owner,{allocate:alloc});
+ check(saved.length===2&&saved[0].savedOutfitId!==saved[1].savedOutfitId,'legacy identities separate');
+ check(!('savedOutfitId' in raw[0]),'source immutable');
+ const sel={index:1,stamp:JSON.stringify(saved)};
+ const renamed=prepare(saved,owner,{selection:sel,candidate:{name:'Weekend',slots:{top:'g1'}},allocate:alloc});
+ check(renamed[1].savedOutfitId===saved[1].savedOutfitId,'rename identity stable');
+ check(renamed[1].createdAt===42&&renamed[1].wearHistory[0]===3,'metadata preserved');
+ check(renamed[0].name==='Work','unrelated record retained');
+ const copied=prepare(renamed,owner,{candidate:{name:'Weekend',slots:{top:'g1'}},allocate:alloc});
+ check(copied.length===3&&new Set(copied.map(x=>x.savedOutfitId)).size===3,'append separate identity');
+ const deleted=prepare(copied,owner,{selection:{index:1,stamp:JSON.stringify(copied)},allocate:alloc});
+ check(deleted.length===2&&deleted[1].savedOutfitId===copied[2].savedOutfitId,'delete does not reassign');
+ reject(()=>prepare(renamed,owner,{selection:sel,allocate:alloc}),'stale stamp rejected');
+ reject(()=>prepare(saved,other,{allocate:alloc}),'foreign owner rejected');
+ reject(()=>prepare(saved,owner,{candidate:saved[0],allocate:alloc}),'identity spoof rejected');
+ reject(()=>prepare(saved,owner,{selection:{index:4,stamp:JSON.stringify(saved)},allocate:alloc}),'bad index rejected');
+ check(JSON.stringify(prepare(saved,owner,{allocate:()=>{throw Error('allocation')}}))===JSON.stringify(saved),'persisted migration stable');
+ const full=prepare(Array(50).fill(base),owner,{allocate:alloc});
+ reject(()=>prepare(full,owner,{candidate:base,allocate:alloc}),'capacity enforced');
+ reject(()=>prepare(saved,owner,{candidate:base,allocate:()=>saved[0].savedOutfitId}),'duplicate allocation rejected');
+ return count;
+}
+console.log('Assignment 44 mutation checks passed:',runMutationChecks(prepareSavedOutfitWrite));

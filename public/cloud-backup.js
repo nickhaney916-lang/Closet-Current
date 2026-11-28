@@ -45,7 +45,13 @@
    row&&(row.batch?.length||row.looks?.length||row.saved?.length||
     Object.keys(row.current?.slots||{}).length));
  }
- async function snapshot(){let items,state;await transact(['items','state'],'readonly',tx=>{const a=tx.objectStore('items').getAll(),b=tx.objectStore('state').getAll();a.onsuccess=()=>items=a.result;b.onsuccess=()=>state=b.result;});callbacks.assertCompleteWardrobe?.(items,state,user);return {local:{schemaVersion:1,items,state:Object.fromEntries(state.filter(x=>E.stateIds.includes(x.id)).map(x=>[x.id,x]))},m:state.find(x=>x.id==='cloud-sync')||markerDefault()};}
+ function assertCloudOutfitCompatibility(board){
+  if(board&&Object.hasOwn(board,'organization')){
+   const error=Error('Organized outfits require a local version 5 wardrobe backup.');
+   error.code='LOCAL_OUTFIT_ORGANIZATION';throw error;
+  }
+ }
+ async function snapshot(){let items,state;await transact(['items','state'],'readonly',tx=>{const a=tx.objectStore('items').getAll(),b=tx.objectStore('state').getAll();a.onsuccess=()=>items=a.result;b.onsuccess=()=>state=b.result;});assertCloudOutfitCompatibility(state.find(x=>x.id==='outfit-board'));callbacks.assertCompleteWardrobe?.(items,state,user);return {local:{schemaVersion:1,items,state:Object.fromEntries(state.filter(x=>E.stateIds.includes(x.id)).map(x=>[x.id,x]))},m:state.find(x=>x.id==='cloud-sync')||markerDefault()};}
  async function api(path,{body,method='GET',contentType='application/json'}={},again=false,assertActive=()=>{}){
   assertActive();
   if(stopForReview145())throw Error('P145 owner-reviewed mode blocks legacy cloud transport');
@@ -352,6 +358,7 @@
   assertActive();
   if(callbacks.canRestore&&!callbacks.canRestore())return false;
   const local=await decode(document,assertActive);assertActive();
+  if(local.state['outfit-board']?.organization!==undefined)throw Object.assign(Error('Organized outfits require a local version 5 wardrobe backup.'),{code:'LOCAL_OUTFIT_ORGANIZATION'});
   callbacks.assertCompleteWardrobe?.(local.items,Object.values(local.state),user);
   const restoreResearch=new URLSearchParams(location.search).get('restoreAtomic01')==='research';
   const guard=restoreResearch?window.restoreAtomic01Bridge:null;
@@ -382,6 +389,8 @@
       if(m.localRevision!==expectedRevision||m.dirty||m.baseVersion>revision)return;
       // All item and outfit changes share a single transaction. Explicit
       // abort on synchronous quota errors prevents partial local restore.
+      if(stateRows?.result.find(row=>row.id==='outfit-board')?.organization!==undefined)
+       throw Object.assign(Error('Organized outfits require a local version 5 wardrobe backup.'),{code:'LOCAL_OUTFIT_ORGANIZATION'});
       inspect?.(itemRows.result,stateRows.result,user);
       const store=tx.objectStore('items');
       store.clear();for(const item of local.items)store.put(item);
@@ -752,7 +761,7 @@
        ' Keep the app open if possible; this pause could not be saved on this device.'));
      }
     }else{
-     status(e.code==='conflict'?'Changes differ on another device. Both copies are kept; choose Keep both versions in My account.':
+     status(e.code==='LOCAL_OUTFIT_ORGANIZATION'?e.message:e.code==='conflict'?'Changes differ on another device. Both copies are kept; choose Keep both versions in My account.':
       dirtyAtStart?'Saved on this device · cloud backup pending. Retrying when connected.':
       'Cloud connection unavailable. Local items are kept; retrying.');
      if(e.code!=='conflict'){schedule(retryDelay);retryDelay=Math.min(retryDelay*2,60000);}
