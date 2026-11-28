@@ -1,0 +1,178 @@
+name: Main1054 Assignment 46 mobile board visual HOLD
+on:
+  pull_request:
+    branches: [research/main1054-cumulative-photo-intake-HOLD]
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.head_ref == 'research/assignment46-mobile-board-visual-HOLD' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [chromium, webkit, regression]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact parent and isolated retry scope
+        shell: bash
+        env:
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          base=125afe677fcdc4b085a31688e631c3c6576f18e4
+          test "$PR_BASE" = "$base"
+          test "$(git rev-parse HEAD)" = "$PR_HEAD"
+          git merge-base --is-ancestor "$base" HEAD
+          test -z "$(git rev-list --merges "$base"..HEAD)"
+          git diff --check "$base" HEAD
+          while IFS= read -r path; do
+            case "$path" in
+              public/app-theme.css|scripts/assignment46-mobile-board-visual.mjs|.github/workflows/main1054-assignment46-mobile-board-HOLD.yml|docs/assignment-46-*.md) ;;
+              *) echo "Unapproved scope: $path"; exit 1;;
+            esac
+          done < <(git diff --name-only "$base" HEAD)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build twice and compare every output byte
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          cp -a dist "$RUNNER_TEMP/first-build"
+          node scripts/build.mjs
+          diff -qr "$RUNNER_TEMP/first-build" dist
+      - name: Reject unapproved remote and missing local script sources
+        if: matrix.lane == 'regression'
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$RUNNER_TEMP/unapproved-script"
+          mkdir -p "$fixture"
+          cp -a public "$fixture/public"
+          cp scripts/build.mjs "$fixture/build.mjs"
+          cd "$fixture"
+          for source in 'https://unapproved.invalid/script.js' 'missing.js'; do
+            cp "$GITHUB_WORKSPACE/public/index.html" public/index.html
+            printf '\n<script src="%s"></script>\n' "$source" >> public/index.html
+            if node build.mjs > build.log 2>&1; then
+              printf 'Unexpected build success for %s\n' "$source"
+              exit 1
+            fi
+            grep -F 'Unapproved script entry in index.html' build.log
+            test ! -e dist
+          done
+      - if: matrix.lane == 'regression'
+        run: node --test --test-concurrency=1 --test-timeout=60000 tests/*.cjs tests/*.mjs
+      - name: Native retry reproduction and correction on built application
+        if: matrix.lane != 'regression'
+        shell: bash
+        env:
+          BROWSER_ENGINE: ${{ matrix.lane }}
+        run: |
+          set -euo pipefail
+          git show 517d73afe21ac93a27b63db43a5b26e5c8dc57c1:public/app.js > "$RUNNER_TEMP/base-app.js"
+          node scripts/main1054-private-import-pending-browser.mjs "$BROWSER_ENGINE" "$RUNNER_TEMP/base-app.js" baseline
+          git show 8c1f2a4030e55279093717edd1486d9d620ecc8f:public/app.js > "$RUNNER_TEMP/style-base-app.js"
+          node scripts/main1054-reviewed-style-viewer-handoff-browser.mjs "$BROWSER_ENGINE" "$RUNNER_TEMP/style-base-app.js" baseline
+          node scripts/main1054-reviewed-style-viewer-handoff-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-private-import-pending-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-crop-opening-browser.mjs "$BROWSER_ENGINE" dist/photo-crop-editor.js
+          node scripts/main1054-style-card-single-flight-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-private-export-pending-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-bulk-category-pending-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-refresh-session-control-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-bulk-discard-pending-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-private-photo-retry-single-flight-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-photo-review-discard-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          node scripts/main1054-photo-review-operation-feedback-browser.mjs "$BROWSER_ENGINE" dist/app.js
+          baseline="$RUNNER_TEMP/baseline"
+          mkdir -p "$baseline"
+          cp -a public "$baseline/public"
+          git show 25863e9c0b5189fa7eebc629cbe736b123c81b52:scripts/build.mjs > "$baseline/build.mjs"
+          git show 25863e9c0b5189fa7eebc629cbe736b123c81b52:public/sw.js > "$baseline/public/sw.js"
+          (cd "$baseline" && node build.mjs)
+          node scripts/test-built-script-integrity-browser.mjs "$BROWSER_ENGINE" "$baseline/dist" dist
+          git show 8c1f2a4030e55279093717edd1486d9d620ecc8f:scripts/build.mjs > "$baseline/build.mjs"
+          git show 8c1f2a4030e55279093717edd1486d9d620ecc8f:public/sw.js > "$baseline/public/sw.js"
+          (cd "$baseline" && node build.mjs)
+          node scripts/test-local-executable-integrity-browser.mjs "$BROWSER_ENGINE" "$baseline/dist" dist
+
+      - name: Verify stylist baseline RED and candidate GREEN
+        if: matrix.lane == 'regression'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 959d7009bce8b4651a877f3a50fb04d80d0e49a5:public/closet-stylist-engine.js > "$RUNNER_TEMP/stylist-baseline.js"
+          if STYLIST_BASELINE="$RUNNER_TEMP/stylist-baseline.js" node --test --test-reporter=tap tests/assignment41-stylist.test.cjs > "$RUNNER_TEMP/stylist-red.log" 2>&1; then
+            echo 'Expected baseline defects were not reproduced'
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/stylist-red.log"
+          grep -F '# fail 2' "$RUNNER_TEMP/stylist-red.log"
+          node --test tests/assignment41-stylist.test.cjs
+      - name: Verify browser stylist feedback and owner isolation
+        if: matrix.lane != 'regression'
+        env:
+          ENGINE: ${{ matrix.lane }}
+        run: node scripts/test-assignment41-stylist-browser.mjs "$ENGINE"
+
+      - name: Verify hidden recognition-memory scheduler RED and GREEN
+        if: matrix.lane != 'regression'
+        shell: bash
+        env:
+          ENGINE: ${{ matrix.lane }}
+        run: |
+          set -euo pipefail
+          git show 12eed0e749ec46c57bcd5f7dd625706aa069993a:public/app.js > "$RUNNER_TEMP/memory-baseline.js"
+          node scripts/test-memory-review-visibility.mjs "$ENGINE" "$RUNNER_TEMP/memory-baseline.js" dist/app.js
+
+      - name: Verify cumulative photo intake baseline RED and candidate GREEN
+        if: matrix.lane != 'regression'
+        shell: bash
+        env:
+          ENGINE: ${{ matrix.lane }}
+        run: |
+          set -euo pipefail
+          intake_base="$RUNNER_TEMP/intake-base"
+          mkdir -p "$intake_base"
+          git archive 0ed0972b9fc908f2203fa3269bbe61c6a118288b public scripts/build.mjs | tar -x -C "$intake_base"
+          (cd "$intake_base" && node scripts/build.mjs)
+          node scripts/assignment42-photo-intake-browser.mjs "$ENGINE" "$intake_base/dist" baseline
+          node scripts/assignment42-photo-intake-browser.mjs "$ENGINE" dist
+
+      - name: Assignment 46 native mobile visual baseline and candidate
+        if: matrix.lane != 'regression'
+        shell: bash
+        env:
+          ENGINE: ${{ matrix.lane }}
+        run: |
+          set -euo pipefail
+          baseline="$RUNNER_TEMP/a46-base"
+          mkdir -p "$baseline"
+          git archive 125afe677fcdc4b085a31688e631c3c6576f18e4 public scripts/build.mjs | tar -x -C "$baseline"
+          (cd "$baseline" && node scripts/build.mjs)
+          node scripts/assignment46-mobile-board-visual.mjs "$ENGINE" "$baseline/dist" baseline "$RUNNER_TEMP/a46-visual"
+          node scripts/assignment46-mobile-board-visual.mjs "$ENGINE" dist candidate "$RUNNER_TEMP/a46-visual"
+      - name: Preserve synthetic visual screenshots and measurements
+        if: always() && matrix.lane != 'regression'
+        uses: actions/upload-artifact@v4
+        with:
+          name: assignment46-visual-${{ matrix.lane }}
+          path: ${{ runner.temp }}/a46-visual
+          if-no-files-found: warn
+          retention-days: 14
