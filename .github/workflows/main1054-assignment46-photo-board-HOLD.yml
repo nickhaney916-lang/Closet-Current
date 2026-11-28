@@ -38,8 +38,16 @@ jobs:
           BASELINE: bd1df1b2a5dfaf4563e0b945a1601161e3abd341
         run: |
           set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           test "$(git rev-parse HEAD)" = "$PR_HEAD"
-          test "$(git rev-parse HEAD^)" = "$BASELINE"
+          git merge-base --is-ancestor "$BASELINE" HEAD
+          test -z "$(git rev-list --merges "$BASELINE"..HEAD)"
+          while IFS= read -r path; do
+            case "$path" in
+              public/style.css|public/app-theme.css|public/outfit-board.js|scripts/assignment46-board-visual-browser.mjs|.github/workflows/main1054-assignment46-photo-board-HOLD.yml) ;;
+              *) echo "Out of scope: $path"; exit 1 ;;
+            esac
+          done < <(git diff --name-only "$BASELINE" HEAD)
           git diff --check "$BASELINE" HEAD
           node scripts/build.mjs
           cp -a dist "$RUNNER_TEMP/assignment46-first-build"
