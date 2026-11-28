@@ -185,6 +185,29 @@ try{
       buffer:Buffer.from(JSON.stringify(data))});
      await page.waitForFunction(()=>savedOutfitBoards.length===2);
      assert.deepEqual(await page.evaluate(async()=>(await readSavedOutfitOrganization()).saved.map(row=>row.savedOutfitId)),ids);
+     // Exercise the loaded app's local organization transaction during a
+     // genuine browser network interruption. Service-worker navigation while
+     // offline is intentionally outside this synthetic-auth fixture.
+     await context.setOffline(true);
+     try{
+      assert.equal(await page.evaluate(()=>navigator.onLine),false);
+      await page.evaluate(async()=>{
+       const snapshot=await readSavedOutfitOrganization();
+       await snapshot.write({...snapshot.organization,favoriteOutfitIds:[]});
+      });
+      const offline=await page.evaluate(async()=>{
+       const {saved,organization}=await readSavedOutfitOrganization();
+       return {ids:saved.map(row=>row.savedOutfitId),favorites:organization.favoriteOutfitIds};
+      });
+      assert.deepEqual(offline.ids,ids);
+      assert.deepEqual(offline.favorites,[]);
+     }finally{await context.setOffline(false);}
+     await reloadSaved();
+     assert.deepEqual(await page.evaluate(async()=>{
+      const {saved,organization}=await readSavedOutfitOrganization();
+      return {ids:saved.map(row=>row.savedOutfitId),favorites:organization.favoriteOutfitIds};
+     }),{ids,favorites:[]});
+     console.log('OFFLINE-RECONNECT PASS',engine,width);
      await signOut();
      await signIn(secondOwner);
      assert.equal(await page.evaluate(async()=>(await readSavedOutfitOrganization()).saved.length),0);
