@@ -489,6 +489,16 @@ async function readSavedOutfitOrganization(){
  if(nativeLossless04Active)throw Error('Organization is unavailable in this research mode.');
  const {ownerDB,assertLease}=ownerWardrobeMutationLease();
  const identity=await import('./outfit-organization.mjs');
+ // persistBoardState publishes a fresh saved roster after every committed
+ // organization write. Existing cards close over the previous row objects.
+ // Invalidate the previous management selection and rebuild those cards
+ // before returning control, so a subsequent click cannot silently no-op
+ // and leave a different outfit selected for removal or update.
+ const refreshCommittedCards=()=>{
+  assertLease();
+  clearSavedOutfitSelection();
+  renderSavedOutfitBoards();
+ };
  const read=()=>new Promise((resolve,reject)=>{
   assertLease();
   const tx=ownerDB.transaction('state','readonly');
@@ -500,6 +510,7 @@ async function readSavedOutfitOrganization(){
  assertLease();
  if(board?.saved?.length&&!identity.hasOutfitOrganization(board)){
   await persistBoardState({organizationChange:{expected:'null',value:identity.emptyOutfitOrganization()}});
+  refreshCommittedCards();
   board=await read();
   assertLease();
  }
@@ -508,7 +519,7 @@ async function readSavedOutfitOrganization(){
   write:async value=>{
    assertLease();
    await persistBoardState({organizationChange:{expected:JSON.stringify(organization),value:structuredClone(value)}});
-   assertLease();
+   refreshCommittedCards();
   }};
 }
 function outfitSavedItemFacts(item){
