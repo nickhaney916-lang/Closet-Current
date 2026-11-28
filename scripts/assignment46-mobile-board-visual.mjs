@@ -24,10 +24,13 @@ const host='http://127.0.0.1:'+server.address().port+'/public/index.html'; // P1
 const owner='synthetic-assignment-46-a', secondOwner='synthetic-assignment-46-b';
 const specimens=[
  ['tee','Tops','T-shirt','Blue','commons-0001','Blue shirt with a deliberately long owner-approved descriptive name'],
- ['bottom','Bottoms','Jeans','Blue','commons-0002','Everyday denim with a deliberately long descriptive name'],
- ['shoe','Shoes','Sneakers','White','commons-0003','Walking shoes'],
- ['coat','Outerwear','Jacket','Black','commons-0014','Outer layer with a long descriptive name'],
- ['dress','Dresses','Dress','Black','commons-0016','Occasion dress']
+ ['bottom','Bottoms','Jeans','Blue','commons-0021','Everyday denim with a deliberately long descriptive name'],
+ ['shoe','Shoes','Sneakers','White','commons-0080','Walking shoes'],
+ ['coat','Outerwear','Jacket','Black','commons-0060','Outer layer with a long descriptive name'],
+ ['dress','Dresses','Dress','Black','commons-0016','Occasion dress'],
+ ['skirt','Bottoms','Skirt','Tan','commons-0041','Skirt'],
+ ['outer','Outerwear','Jacket','Black','commons-0062','Second jacket'],
+ ['third','Outerwear','Coat','Brown','commons-0068','Third layer coat']
 ];
 const locks=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
 const fixtures=await Promise.all(specimens.map(async ([id,category,itemType,color,fixture,name])=>{
@@ -80,9 +83,9 @@ try{
     }
     await signIn(owner);
     await page.evaluate(async rows=>{await writeAll(rows);items=(await readAll()).map(normalizeClothing);render();switchView('builder');},fixtures);
-    for(const [name,slots] of [['layered',{top:'tee',bottom:'bottom',layer:'coat',shoes:'shoe'}],['dress',{top:'dress',shoes:'shoe'}],['reopened',{top:'tee',bottom:'bottom',shoes:'shoe'}]]){
+    for(const [name,slots] of [['layered',{top:'tee',bottom:'bottom',layer:'coat',shoes:'shoe'}],['dress',{top:'dress',shoes:'shoe'}],['reselected',{top:'tee',bottom:'bottom',shoes:'shoe'}],['skirt',{top:'tee',bottom:'skirt',shoes:'shoe'}],['multiple-layers',{top:'tee',bottom:'bottom',layer:'coat',layer2:'outer',layer3:'third',shoes:'shoe'}]]){
      await page.evaluate(({name,slots})=>{
-      currentBoard=cleanOutfitBoard({name,slots,layerCount:1},items);
+      currentBoard=cleanOutfitBoard({name,slots,layerCount:slots.layer3?3:1},items);
       syncBoardInputs();renderOutfitBoard();
      },{name,slots});
      const figure=page.locator('#outfitFigure');
@@ -110,6 +113,20 @@ try{
      for(const im of measured.images){const fixture=fixtures.find(x=>x.id===slots[im.slot]);assert.equal(im.src,fixture.image);assert.ok(im.naturalWidth>0&&im.naturalHeight>0);assert.equal(im.fit,'contain');delete im.src;}
      if(mode==='candidate'){assert.equal(measured.overlap,0,JSON.stringify(measured));assert.equal(measured.clipped,0,JSON.stringify(measured));}
      await figure.screenshot({path:resolve(out,engine+'-'+width+'-'+name+'-'+mode+'.png'),animations:'disabled'});
+     // Element screenshots can include the fixed bottom nav. Test actual
+     // live scrolling independently, including the final optional control.
+     if(mode==='candidate'){
+      for(const card of await figure.locator('.board-slot:visible').all()){
+       await card.evaluate(element=>element.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'}));
+       const reachable=await card.evaluate(element=>{
+        const r=element.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+        const hit=document.elementFromPoint(x,y);
+        return x>=0&&x<innerWidth&&y>=0&&y<innerHeight&&(hit===element||element.contains(hit));
+       });
+       assert.equal(reachable,true,'Card center obscured after scrolling: '+await card.getAttribute('data-board-slot'));
+      }
+      console.log('A46 SCROLL REACHABLE PASS',engine,width,name);
+     }
      const receipt={engine,width,name,mode,...measured};receipts.push(receipt);
      console.log('A46 VISUAL',JSON.stringify(receipt));
     }
