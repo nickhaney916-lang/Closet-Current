@@ -39,6 +39,10 @@ const root=resolve('dist');
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript',
  '.css':'text/css','.json':'application/json','.jpg':'image/jpeg',
  '.png':'image/png','.svg':'image/svg+xml','.woff2':'font/woff2'};
+const authOrigin='https://hlkgymugtfbirlpunsra.supabase.co';
+const cloudStub='window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};';
+const fixtureScripts=new Map();
+const integrity=bytes=>'sha384-'+createHash('sha384').update(bytes).digest('base64');
 const server=createServer(async(req,res)=>{
  try{
   const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
@@ -58,12 +62,16 @@ const server=createServer(async(req,res)=>{
   const file=resolve(root,'.'+(pathname==='/'?'/index.html':pathname));
   if(!file.startsWith(root+'/'))throw Error('nonpublic path');
   let bytes=await readFile(file);
-  if(audit&&pathname==='/auth.js'){
-   const source=bytes.toString();
-   assert.ok(source.includes(authOrigin),'exact browser auth configuration changed');
-   bytes=Buffer.from(source.replace(authOrigin,origin));
+  if(fixtureScripts.has(pathname))bytes=fixtureScripts.get(pathname).bytes;
+  if(audit&&['/','/index.html','/sw.js'].includes(pathname)){
+   let source=bytes.toString();
+   // Keep both integrity checks active for the loopback-only auth and cloud fixtures.
+   for(const {before,after} of fixtureScripts.values()){
+    assert.ok(source.includes(before),'built fixture integrity entry is missing');
+    source=source.replaceAll(before,after);
+   }
+   bytes=Buffer.from(source);
   }
-  if(audit&&pathname==='/cloud-backup.js')bytes=Buffer.from(cloudStub);
   const localWorkerOnly=audit&&/^\/(local|outfit)-worker\.mjs$/.test(pathname);
   res.writeHead(200,{'content-type':mime[extname(file)]||'application/octet-stream',
    'cache-control':'no-store',
@@ -76,19 +84,30 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const origin='http://127.0.0.1:'+server.address().port;
-const authOrigin='https://hlkgymugtfbirlpunsra.supabase.co';
+if(audit){
+ for(const [path,replace] of [
+  ['/auth.js',source=>{
+   assert.ok(source.includes(authOrigin),'exact browser auth configuration changed');
+   return source.replace(authOrigin,origin);
+  }],
+  ['/cloud-backup.js',()=>cloudStub],
+ ]){
+  const original=await readFile(join(root,path));
+  const bytes=Buffer.from(replace(original.toString()));
+  fixtureScripts.set(path,{bytes,before:integrity(original),after:integrity(bytes)});
+ }
+}
 const stages=[],errors=[],outbound=[],started=Date.now();
 let browser,context,page,stage='startup',backup=null;
 const seenRefresh=new Map();
 const receipt=()=>({engine,width,stage,stages,errors:errors.slice(0,8),
  outbound:outbound.slice(0,8),elapsedMs:Date.now()-started,
  licensedPublicJpegs:originals.map(x=>({id:x.name,sha256:x.sha})),
- normalMode:true,researchFlags:false,syntheticOwnerLabels:true,
+ normalMode:true,researchFlags:false,syntheticOwnerLabels:true,fixtureScriptIntegrity:audit!==null,
  syntheticAuth:true,realInstalledModelPredictionsVerified:false,
  verifiedHostedRLS:false,physicalPhone:false,photoFitted3D:false,
  familyAlpha:'HOLD',releaseAuthorized:false});
 const advance=value=>{stage=value;stages.push(value);};
-const cloudStub='window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};';
 function authReply(url,input){
  if(url.pathname==='/auth/v1/logout')return {status:204,body:''};
  if(url.pathname!=='/auth/v1/token'){
