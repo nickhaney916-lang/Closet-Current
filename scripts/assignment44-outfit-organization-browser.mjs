@@ -46,6 +46,7 @@ try{
   try{
    for(const width of [320,390,430]){
     const context=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true});
+    let authUnavailable=false;
     await context.route('**/*',async route=>{
      const url=new URL(route.request().url());
      if(['data:','blob:'].includes(url.protocol))return route.continue();
@@ -58,6 +59,7 @@ try{
      if(url.hostname==='hlkgymugtfbirlpunsra.supabase.co'&&url.pathname==='/auth/v1/logout')
       return route.fulfill({status:204});
      if(url.hostname==='hlkgymugtfbirlpunsra.supabase.co'&&url.pathname==='/auth/v1/token'){
+      if(authUnavailable)return route.abort();
       const payload=route.request().postDataJSON();
       const id=payload.email?.split('@')[0]||payload.refresh_token;
       if([owner,secondOwner].includes(id))return route.fulfill({status:200,json:{
@@ -133,6 +135,25 @@ try{
      if(process.argv[4]==='baseline'){
       assert.equal(await page.evaluate(()=>typeof readSavedOutfitOrganization),'undefined');
       assert.deepEqual(await page.evaluate(()=>savedOutfitBoards.map(row=>row.savedOutfitId??null)),[null,null]);
+      // Actual historical importer must refuse the new format before any
+      // wardrobe write. Never open a migrated live DB with older code.
+      const refusal=await page.evaluate(async()=>{
+       const {prepareDefaultAtomicM3}=await import('/public/native-default-atomic-import-m3.mjs');
+       const read=()=>new Promise((resolve,reject)=>{
+        const tx=db.transaction(['items','state'],'readonly');
+        const items=tx.objectStore('items').getAll(),state=tx.objectStore('state').get('outfit-board');
+        tx.oncomplete=()=>resolve(JSON.stringify({items:items.result,board:state.result}));
+        tx.onabort=()=>reject(tx.error);
+       });
+       const before=await read(),ownerId=window.closetAuth.user.id;
+       const saved=savedOutfitBoards.map(row=>({...row,savedOutfitId:crypto.randomUUID(),savedOutfitOwnerId:ownerId}));
+       const data={format:'closet-current',version:5,ownerId,items:[],looks:[],outfitBoard:{current:currentBoard,saved,organization:{version:1,favoriteGarmentIds:[],favoriteOutfitIds:[],collections:[]}}};
+       let error='';
+       try{await prepareDefaultAtomicM3({data,ownerDB:db,ownerId,assertLease:()=>window.closetAuth.assertCurrent()});}catch(e){error=e.message;}
+       return {error,unchanged:before===await read()};
+      });
+      assert.deepEqual(refusal,{error:'LEGACY_ATOMIC_INVALID_BACKUP',unchanged:true});
+      console.log('LEGACY-V5-REFUSAL PASS',engine,width);
       console.log('BASELINE',engine,width,'two identical appearances have no durable IDs');
       continue;
      }
@@ -208,6 +229,27 @@ try{
       return {ids:saved.map(row=>row.savedOutfitId),favorites:organization.favoriteOutfitIds};
      }),{ids,favorites:[]});
      console.log('OFFLINE-RECONNECT PASS',engine,width);
+     // Load a fresh document while the synthetic authentication endpoint
+     // is unreachable; local static assets remain available. No claim of
+     // offline service-worker navigation or offline authentication.
+     authUnavailable=true;
+     try{
+      await page.reload({waitUntil:'domcontentloaded'});
+      await page.waitForFunction(()=>document.getElementById('authStatus')?.textContent.includes('Cannot verify your previous login'));
+      const locked=await page.evaluate(()=>({
+       locked:document.getElementById('authGate').hidden===false&&document.getElementById('appShell').hidden===true,
+       signedIn:!!window.closetAuth.user,
+       retained:!!localStorage.getItem('closet-current-auth-v1')
+      }));
+      assert.deepEqual(locked,{locked:true,signedIn:false,retained:true});
+     }finally{authUnavailable=false;}
+     await reloadSaved();
+     const recovered=await page.evaluate(async()=>{
+      const {saved,organization}=await readSavedOutfitOrganization();
+      return {ids:saved.map(row=>row.savedOutfitId),favorites:organization.favoriteOutfitIds,original:items.find(row=>row.id==='tee')?.originalPhoto?.image};
+     });
+     assert.deepEqual(recovered,{ids,favorites:[],original:fixtures[0].originalPhoto.image});
+     console.log('AUTH-UNAVAILABLE-RELOAD PASS',engine,width);
      await signOut();
      await signIn(secondOwner);
      assert.equal(await page.evaluate(async()=>(await readSavedOutfitOrganization()).saved.length),0);
