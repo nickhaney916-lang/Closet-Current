@@ -48,7 +48,13 @@ try{
     const context=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true});
     await context.route('**/*',async route=>{
      const url=new URL(route.request().url());
-     if(['data:','blob:'].includes(url.protocol)||url.hostname==='127.0.0.1')return route.continue();
+     if(['data:','blob:'].includes(url.protocol))return route.continue();
+     if(url.hostname==='127.0.0.1'){
+      // Keep synthetic auth and exact built-app reloads on the intercepted
+      // request path, as in Assignment 42. This is not offline/PWA acceptance.
+      if(url.pathname==='/public/sw.js')return route.abort();
+      return route.continue();
+     }
      if(url.hostname==='hlkgymugtfbirlpunsra.supabase.co'&&url.pathname==='/auth/v1/logout')
       return route.fulfill({status:204});
      if(url.hostname==='hlkgymugtfbirlpunsra.supabase.co'&&url.pathname==='/auth/v1/token'){
@@ -81,6 +87,25 @@ try{
      await page.locator('#authSubmit').click();
      await page.waitForFunction(id=>db?.name==='closet-current-user-'+id&&boardInitialized,id);
     };
+    const reloadSaved=async()=>{
+     await page.reload({waitUntil:'domcontentloaded'});
+     try{
+      await page.waitForFunction(id=>typeof db!=='undefined'&&db?.name==='closet-current-user-'+id&&
+       typeof boardInitialized!=='undefined'&&boardInitialized&&savedOutfitBoards.length===2&&
+       document.getElementById('appShell')?.hidden===false,owner);
+     }catch(error){
+      const state=await page.evaluate(()=>({
+       authGateHidden:document.getElementById('authGate')?.hidden,
+       appShellHidden:document.getElementById('appShell')?.hidden,
+       dbOpen:typeof db!=='undefined'&&!!db,
+       boardReady:typeof boardInitialized!=='undefined'&&boardInitialized,
+       savedCount:typeof savedOutfitBoards==='undefined'?null:savedOutfitBoards.length,
+       serviceWorkerControlled:!!navigator.serviceWorker?.controller
+      })).catch(()=>null);
+      console.error('ASSIGNMENT44 RELOAD FAILURE',engine,width,process.argv[4]||'candidate',JSON.stringify(state),errors.join('\n'));
+      throw error;
+     }
+    };
     const signOut=async()=>{
      await page.locator('.account-menu summary').click();
      await page.locator('#logout').click();
@@ -103,8 +128,7 @@ try{
        tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
       });
      },fixtures);
-     await page.reload();
-     await page.waitForFunction(()=>boardInitialized&&savedOutfitBoards.length===2);
+     await reloadSaved();
      await builder();
      if(process.argv[4]==='baseline'){
       assert.equal(await page.evaluate(()=>typeof readSavedOutfitOrganization),'undefined');
@@ -123,8 +147,7 @@ try{
      const ids=first.saved.map(row=>row.savedOutfitId);
      assert.equal(new Set(ids).size,2);
      assert.equal(first.saved[1].savedAt,'2026-11-26T00:00:00Z');
-     await page.reload();
-     await page.waitForFunction(()=>boardInitialized&&savedOutfitBoards.length===2);
+     await reloadSaved();
      await builder();
      await page.locator('#savedBoards').getByRole('button',{name:'Twin',exact:true}).first().click();
      await page.locator('#boardName').fill('Renamed');
@@ -154,7 +177,9 @@ try{
      page.once('dialog',dialog=>dialog.accept());
      await page.locator('#removeSavedOutfit').click();
      await page.waitForFunction(()=>savedOutfitBoards.length===1);
-     assert.deepEqual(await page.evaluate(async()=>(await readSavedOutfitOrganization()).organization.favoriteOutfitIds),[]);
+     const afterRemove=await page.evaluate(async()=>{const {saved,organization}=await readSavedOutfitOrganization();return {ids:saved.map(row=>row.savedOutfitId),favorites:organization.favoriteOutfitIds};});
+     assert.deepEqual(afterRemove.ids,[ids[0]],'the intended outfit survives deletion of its twin');
+     assert.deepEqual(afterRemove.favorites,[]);
      page.once('dialog',dialog=>dialog.accept());
      await page.locator('#import').setInputFiles({name:'wardrobe.json',mimeType:'application/json',
       buffer:Buffer.from(JSON.stringify(data))});
