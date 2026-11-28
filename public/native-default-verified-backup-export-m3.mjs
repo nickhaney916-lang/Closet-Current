@@ -1,3 +1,4 @@
+import {serializeWearHistory} from './outfit-wear-portability.mjs';
 import {hasOutfitOrganization,outfitBackupVersion,validateOutfitOrganization} from './outfit-organization.mjs';
 import {distinctReviewedSharedOriginal157} from './native-reviewed-shared-original-157.mjs';
 /**
@@ -80,7 +81,7 @@ async function durableRead(ownerDB,assertLease){
  });
 }
 export async function exportDurableOwnerBackupM3({
- ownerDB,ownerId,assertLease,assertIdle=()=>{},assertCompleteWardrobe
+ ownerDB,ownerId,assertLease,assertIdle=()=>{},assertCompleteWardrobe,researchWearV6=false
 }={}){
  if(!ownerDB||typeof ownerId!=='string'||!ownerId||
     ownerDB.name!=='closet-current-user-'+ownerId||
@@ -182,11 +183,15 @@ export async function exportDurableOwnerBackupM3({
    saved:structuredClone(storedBoard.saved)};
   if(organized)outfitBoard.organization=structuredClone(validateOutfitOrganization(storedBoard,ids,ownerId));
  }
- if(!items.length&&!looks.length&&!(outfitBoard?.saved?.length)&&!organized)
+ const history=researchWearV6===true?serializeWearHistory(ownerId,state.get('outfit-wear-history-v1')):null;
+ if(!items.length&&!looks.length&&!(outfitBoard?.saved?.length)&&!organized&&!(history?.events.length))
   fail('EMPTY_CLOSET');
  const data={format:'closet-current',version:organized?outfitBackupVersion:3,items,looks};
  if(organized)data.ownerId=ownerId;
  if(outfitBoard)data.outfitBoard=outfitBoard;
+ // Explicit research opt-in: the same durable snapshot supplies both parts.
+ // Ordinary v3/v5 downloads remain byte-compatible.
+ if(history){data.wardrobeVersion=data.version;data.version=6;data.ownerId=ownerId;data.wearHistory=history;}
  check();
  const json=JSON.stringify(data);
  // The default v1-v3 importer rejects files above this limit.

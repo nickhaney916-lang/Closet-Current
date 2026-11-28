@@ -2338,10 +2338,12 @@ $('export').onclick=async()=>{
   const {exportDurableOwnerBackupM3}=
    await import('./native-default-verified-backup-export-m3.mjs');
   assertExport();
+  const researchWearV6=wearBackupV6ResearchUI();
   const result=await exportDurableOwnerBackupM3({
    ownerDB:exportLease.ownerDB,
    ownerId:window.closetAuth.user.id,
    assertCompleteWardrobe,assertLease:assertExport,
+   researchWearV6,
    assertIdle:()=>{
     if(!idle())throw Error('An original photo or outfit changed during backup export. Retry after saving.');
    }
@@ -2351,10 +2353,11 @@ $('export').onclick=async()=>{
   if(blob.size>100*1024*1024)
    throw Error('This backup exceeds the 100 MB import limit. No incomplete backup was downloaded.');
   const url=URL.createObjectURL(blob),a=node('a');
-  a.href=url;a.download='closet-current-backup.json';
+  a.href=url;a.download=researchWearV6?'closet-current-research-v6.json':'closet-current-backup.json';
   document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
-  report(result.data.version===5?
+  report(result.data.version===6?
+   'Research v6 backup downloaded with '+result.data.wearHistory.events.length+' wear records. Older app versions cannot restore this file. Store it securely.':result.data.version===5?
    'Version 5 backup downloaded with your outfit favorites and collections. Keep this file for local restore.':
    'Saved clothing, inspiration and outfits downloaded from verified private storage. This v3 backup cannot restore unfinished Photo results; review them before your next export.');
  }catch(error){
@@ -2373,6 +2376,14 @@ $('export').onclick=async()=>{
   try{exportLease.assertLease();if(button?.isConnected)button.disabled=false;}catch{}
  }
 };
+// A45: isolated fixture UI only. Real accounts and hosted origins must
+// retain the ordinary v3/v5 path, even if a research URL is supplied.
+function wearBackupV6ResearchUI(){
+ const query=new URLSearchParams(location.search);
+ return query.get('wearBackupV6')==='research'&&location.hostname==='127.0.0.1'&&
+  ['synthetic-assignment-45-a','synthetic-assignment-45-b'].includes(window.closetAuth?.user?.id)&&
+  !['restoreAtomic01','losslessV4M3','nativeLossless04','legacyAtomicM3'].some(key=>query.get(key)==='research');
+}
 $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(!db)return message('Browser storage is unavailable.');if(file.size>100*1024*1024)return message('Backup must be smaller than 100 MB.');
  // A file read and owner confirmation may each take arbitrarily long.
  // A backup selected by one account can never be restored into the next.
@@ -2517,6 +2528,7 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
    }
    return;
   }
+  const researchWearV6=data?.version===6&&wearBackupV6ResearchUI();
   // Default owner-private v1-v3 import must never partially write clothing,
   // inspiration and outfit state, or overwrite a different original JPEG
   // under a colliding garment ID. Exact-source validation happens BEFORE
@@ -2526,7 +2538,8 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
    !photoImportActive&&!videoImportActive&&!automaticRunning&&
    !automaticQueue.length&&!localPending.size&&!failedDraftCaptures.size&&
    !stream&&!document.querySelector('dialog[open]')&&
-   !(typeof boardHasUnsavedDraft==='function'&&boardHasUnsavedDraft());
+   !(typeof boardHasUnsavedDraft==='function'&&boardHasUnsavedDraft())&&
+   (!researchWearV6||!outfitWearBusy);
   if(!idle())throw Error('Finish saving your photos and outfit changes before importing a backup.');
   const {prepareDefaultAtomicM3,commitDefaultAtomicM3}=
    await import('./native-default-atomic-import-m3.mjs');
@@ -2534,13 +2547,13 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
   const ownerId=window.closetAuth?.user?.id;
   const prepared=await prepareDefaultAtomicM3({
    data,ownerDB:importLease.ownerDB,ownerId,assertLease:assertImport,
-   normalizeClothing,validLook,cleanOutfitBoard,assertCompleteWardrobe
+   normalizeClothing,validLook,cleanOutfitBoard,assertCompleteWardrobe,researchWearV6
   });
   assertImport();
   if(!idle())throw Error('Your photo or outfit changed during backup validation. Retry when it is saved.');
   if(!confirm('Import '+prepared.counts.garments+' clothes, '+
      prepared.counts.looks+' inspiration looks and '+
-     prepared.counts.savedOutfits+' outfits in one private transaction? '+
+     prepared.counts.savedOutfits+' outfits'+(researchWearV6?' and '+prepared.wearHistory.events.length+' total wear records (including existing records)':'')+' in one private transaction? '+
      'Matching IDs update only if their original photos match. '+
      'Cancel or any conflict leaves your current wardrobe unchanged.'))
    return importMessage('Import canceled. Your original closet was preserved.');
@@ -2550,24 +2563,35 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
    if(!idle())throw Error('A photo or outfit changed during backup confirmation. Retry when it is saved.');
    return commitDefaultAtomicM3({
     ownerDB:importLease.ownerDB,ownerId,assertLease:assertImport,
-    prepared,confirmed:true
+    prepared,confirmed:true,researchWearV6
    });
   });
   writes=operation.catch(()=>{});
   await operation;
   assertImport();
-  window.closetCloud?.changed?.();
+  if(!researchWearV6)window.closetCloud?.changed?.();
   try{
    if(typeof mission3ReloadOwnerCloudView!=='function')
     throw Error('Owner-private wardrobe refresh unavailable');
    await mission3ReloadOwnerCloudView(importLease,{queueUnreviewed:false});
    assertImport();
-   importMessage('Backup imported atomically. All original photos and outfits were preserved.');
+   if(researchWearV6){
+    const session=outfitWearSession();
+    if(!session||outfitWearBusy)throw Error('Wear history refresh requires reload');
+    outfitWearLoaded=false;outfitWearEvents=[];renderOutfitWearHistory();
+    outfitWearBusy=true;
+    try{
+     const result=await transactOutfitWear(session,'read');
+     assertImport();if(!session.current())throw Error('Wear history session changed');
+     outfitWearEvents=result.events;outfitWearLoaded=true;
+    }finally{if(session.current()){outfitWearBusy=false;renderOutfitWearHistory();}}
+    importMessage('Research v6 backup restored atomically with wear history and original photos.');
+   }else importMessage('Backup imported atomically. All original photos and outfits were preserved.');
   }catch(error){
    // The atomic commit already succeeded; a stale UI refresh cannot undo
    // the import and must not falsely claim nothing was saved on this device.
    assertImport();
-   importMessage('Backup imported atomically. Reload My Closet to refresh the view.');
+   importMessage(researchWearV6?'Research v6 backup committed. Reload My Closet and wear history to refresh the view.':'Backup imported atomically. Reload My Closet to refresh the view.');
   }
  }catch(err){
   const reason=String(err?.message||'');

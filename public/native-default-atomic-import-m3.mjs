@@ -1,3 +1,4 @@
+import {planWearHistoryRestore} from './outfit-wear-portability.mjs';
 import {hasOutfitOrganization,outfitBackupVersion,validateOutfitOrganization} from './outfit-organization.mjs';
 import {distinctReviewedSharedOriginal157} from './native-reviewed-shared-original-157.mjs';
 /**
@@ -84,13 +85,21 @@ function verifySlotsUnchanged(raw,cleaned){
  }
 }
 export async function prepareDefaultAtomicM3({
- data,ownerDB,ownerId,assertLease,normalizeClothing,validLook,cleanOutfitBoard,assertCompleteWardrobe
+ data,ownerDB,ownerId,assertLease,normalizeClothing,validLook,cleanOutfitBoard,assertCompleteWardrobe,researchWearV6=false
 }={}){
  if(!ownerDB||ownerDB.name!=='closet-current-user-'+ownerId||
   typeof assertLease!=='function')throw Error('LEGACY_ATOMIC_SIGNED_OWNER_REQUIRED');
  assertLease();
  const input=structuredClone(data);
  inspectTree(input,ownerId);
+ const combined=researchWearV6===true&&input?.version===6;
+ if(combined){
+  if(input.ownerId!==ownerId||![3,outfitBackupVersion].includes(input.wardrobeVersion)||!own(input,'wearHistory')||
+     Object.keys(input).some(k=>!['format','version','wardrobeVersion','ownerId','items','looks','outfitBoard','wearHistory'].includes(k)))
+   throw Error('Invalid owner-bound version 6 backup.');
+  input.version=input.wardrobeVersion;
+ }else if(input&& (own(input,'wearHistory')||own(input,'wardrobeVersion')))
+  throw Error('Unsupported wear history backup version.');
  if(!plain(input)||input.format!=='closet-current'||![1,2,3,outfitBackupVersion].includes(input.version)||
     !Array.isArray(input.items)||input.items.length>1000||
     (input.looks!==undefined&&(!Array.isArray(input.looks)||input.looks.length>100)))
@@ -220,6 +229,7 @@ export async function prepareDefaultAtomicM3({
  if(allItems.size>1000)throw Error('LEGACY_ATOMIC_CLOSET_LIMIT');
  const ids=new Set(allItems.keys());
  const states=new Map(rows.state.map(row=>[row.id,row]));
+ const wearHistory=combined?planWearHistoryRestore(ownerId,input.wearHistory,states.get('outfit-wear-history-v1')):null;
  const existingLooks=states.get('looks')?.looks||[];
  if(!Array.isArray(existingLooks))throw Error('LEGACY_ATOMIC_EXISTING_LOOKS_INVALID');
  const nextLooks=looks===null?null:[...new Map(
@@ -288,13 +298,14 @@ export async function prepareDefaultAtomicM3({
   incoming:structuredClone(incoming),
   looks:nextLooks===null?null:structuredClone(nextLooks),
   board:board===null?null:structuredClone(board),
+  ...(combined?{wearHistory:structuredClone(wearHistory)}:{}),
   counts:Object.freeze({garments:incoming.length,looks:looks?.length||0,
    savedOutfits:board?.saved.length||0}),
   noDeploy:true,releaseAuthorized:false
  });
 }
 export async function commitDefaultAtomicM3({
- ownerDB,ownerId,assertLease,prepared,confirmed=false,onStage=null
+ ownerDB,ownerId,assertLease,prepared,confirmed=false,onStage=null,researchWearV6=false
 }={}){
  if(confirmed!==true)throw Error('LEGACY_ATOMIC_OWNER_CONFIRMATION_REQUIRED');
  if(!ownerDB||ownerDB.name!=='closet-current-user-'+ownerId||
@@ -302,6 +313,7 @@ export async function commitDefaultAtomicM3({
   throw Error('LEGACY_ATOMIC_OWNER_LEASE_INVALID');
  assertLease();
  const plan=structuredClone(prepared);
+ if(own(plan,'wearHistory')&&researchWearV6!==true)throw Error('Version 6 research authorization required.');
  return new Promise((resolve,reject)=>{
   let tx,done=false;
   const fail=error=>{if(done)return;done=true;try{tx?.abort();}catch{}reject(error);};
@@ -325,6 +337,7 @@ export async function commitDefaultAtomicM3({
      for(const row of plan.incoming)itemStore.put(row);
      if(plan.looks!==null)stateStore.put({id:'looks',looks:plan.looks});
      if(plan.board!==null)stateStore.put(plan.board);
+     if(own(plan,'wearHistory'))stateStore.put(plan.wearHistory);
      stateStore.put({...marker,localRevision:marker.localRevision+1,dirty:true});
      if(onStage)onStage();
      assertLease();
